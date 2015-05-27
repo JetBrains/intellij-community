@@ -60,17 +60,6 @@ public class GrDfaValueFactory extends DfaValueFactory {
       return createValue(((GrParenthesizedExpression)expression).getOperand());
     }
 
-    //if (expression instanceof GrIndexProperty) {
-    //final GrExpression arrayExpression = ((GrIndexProperty)expression).getInvokedExpression();
-    //DfaValue qualifier = createValue(expression);
-    //if (qualifier instanceof DfaVariableValue) {
-    //PsiVariable indexVar = ((GrIndexProperty)expression).getExpressionArguments()[0];
-    //if (indexVar != null) {
-    //  return myFactory.getVarFactory().createVariableValue(indexVar, expression.getType(), false, (DfaVariableValue)qualifier);
-    //}
-    //}
-    //}
-
     if (expression instanceof GrMethodCall) {
       final GrExpression invokedExpression = ((GrMethodCall)expression).getInvokedExpression();
       if (invokedExpression instanceof GrReferenceExpression) {

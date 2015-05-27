@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.flow.value;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -25,14 +26,15 @@ import static com.intellij.codeInspection.dataFlow.value.java.DfaConstValueFacto
 
 public class GrDfaConstValueFactory extends DfaConstValue.Factory {
 
-  private final GrDfaValueFactory myFactory;
+  private final @NotNull GrDfaValueFactory myFactory;
 
-  GrDfaConstValueFactory(GrDfaValueFactory factory) {
+  GrDfaConstValueFactory(@NotNull GrDfaValueFactory factory) {
     super(factory);
     myFactory = factory;
   }
 
-  public DfaValue create(GrLiteral literal) {
+  @Nullable
+  public DfaValue create(@NotNull GrLiteral literal) {
     return create(literal.getType(), literal.getValue());
   }
 

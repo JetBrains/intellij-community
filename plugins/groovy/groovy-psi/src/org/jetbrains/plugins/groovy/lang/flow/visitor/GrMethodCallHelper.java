@@ -73,7 +73,8 @@ public class GrMethodCallHelper<V extends GrStandardInstructionVisitor<V>> exten
   }
 
 
-  public DfaValue getMethodResultValue(GrMethodCallInstruction<V> instruction) {
+  @NotNull
+  public DfaValue getMethodResultValue(@NotNull GrMethodCallInstruction<V> instruction) {
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     if (precalculated != null) {
       return precalculated;
@@ -91,13 +92,15 @@ public class GrMethodCallHelper<V extends GrStandardInstructionVisitor<V>> exten
     return DfaUnknownValue.getInstance();
   }
 
+  @NotNull
   @Override
-  protected DfaValue getMethodResultValue(GrMethodCallInstruction<V> instruction, @Nullable DfaValue qualifierValue) {
+  protected DfaValue getMethodResultValue(@NotNull GrMethodCallInstruction<V> instruction, @Nullable DfaValue qualifierValue) {
     return getMethodResultValue(instruction);
   }
 
+  @NotNull
   @Override
-  protected Producer<PsiType> getProducer(final GrMethodCallInstruction<V> instruction) {
+  protected Producer<PsiType> getReturnTypeProducer(final @NotNull GrMethodCallInstruction<V> instruction) {
     return new Producer<PsiType>() {
       @Nullable
       @Override
@@ -107,13 +110,14 @@ public class GrMethodCallHelper<V extends GrStandardInstructionVisitor<V>> exten
     };
   }
 
+  @NotNull
   @Override
   protected DfaValueFactory getFactory() {
     return myFactory;
   }
 
   @NotNull
-  DfaValue[] popAndCheckCallArguments(GrMethodCallInstruction instruction, DfaMemoryState state) {
+  DfaValue[] popAndCheckCallArguments(@NotNull GrMethodCallInstruction instruction, @NotNull DfaMemoryState state) {
     final List<DfaValue> result = ContainerUtil.newArrayList();
 
     final Stack<DfaValue> arguments = ContainerUtil.newStack();

@@ -19,7 +19,9 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -30,10 +32,11 @@ public class GrDfaVariableValue extends DfaVariableValue {
 
   public static class FactoryImpl extends Factory {
 
-    protected FactoryImpl(DfaValueFactory factory) {
+    protected FactoryImpl(@NotNull DfaValueFactory factory) {
       super(factory);
     }
 
+    @NotNull
     @Override
     protected DfaVariableValue createConcrete(@NotNull PsiModifierListOwner variable,
                                               @Nullable PsiType varType,
@@ -43,7 +46,7 @@ public class GrDfaVariableValue extends DfaVariableValue {
     }
   }
 
-  private GrDfaVariableValue(DfaValueFactory factory,
+  private GrDfaVariableValue(@NotNull DfaValueFactory factory,
                              @NotNull PsiModifierListOwner variable,
                              @Nullable PsiType varType,
                              @Nullable DfaVariableValue qualifier, boolean isNegated) {
@@ -58,54 +61,7 @@ public class GrDfaVariableValue extends DfaVariableValue {
       return nullability;
     }
 
-    Nullness defaultNullability = myFactory.isUnknownMembersAreNullable() ? Nullness.NULLABLE : Nullness.UNKNOWN;
-
-    //if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
-    //  PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
-    //  if (iteratedValue != null) {
-    //    PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-    //    if (itemType != null) {
-    //      return DfaPsiUtil.getElementNullability(itemType, var);
-    //    }
-    //  }
-    //}
-
-    //if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
-    //  List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
-    //  if (initializers.isEmpty()) {
-    //    return defaultNullability;
-    //  }
-    //
-    //  boolean hasUnknowns = false;
-    //  for (PsiExpression expression : initializers) {
-    //    if (!(expression instanceof PsiReferenceExpression)) {
-    //      hasUnknowns = true;
-    //      continue;
-    //    }
-    //    PsiElement target = ((PsiReferenceExpression)expression).resolve();
-    //    if (!(target instanceof PsiParameter)) {
-    //      hasUnknowns = true;
-    //      continue;
-    //    }
-    //    if (NullableNotNullManager.isNullable((PsiParameter)target)) {
-    //      return Nullness.NULLABLE;
-    //    }
-    //    if (!NullableNotNullManager.isNotNull((PsiParameter)target)) {
-    //      hasUnknowns = true;
-    //    }
-    //  }
-    //
-    //  if (hasUnknowns) {
-    //    if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
-    //      return Nullness.NOT_NULL;
-    //    }
-    //    return defaultNullability;
-    //  }
-    //
-    //  return Nullness.NOT_NULL;
-    //}
-
-    return defaultNullability;
+    return myFactory.isUnknownMembersAreNullable() ? Nullness.NULLABLE : Nullness.UNKNOWN;
   }
 
   @Override

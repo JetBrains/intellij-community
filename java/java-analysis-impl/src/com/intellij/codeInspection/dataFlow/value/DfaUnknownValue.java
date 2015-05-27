@@ -25,9 +25,11 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 public class DfaUnknownValue extends DfaValue {
+  
   private static class DfaUnknownValueHolder {
     private static final DfaUnknownValue myInstance = new DfaUnknownValue();
   }
+
   public static DfaUnknownValue getInstance() {
     return DfaUnknownValueHolder.myInstance;
   }
@@ -58,5 +60,4 @@ public class DfaUnknownValue extends DfaValue {
   public int getID() {
     return 0;
   }
-
 }

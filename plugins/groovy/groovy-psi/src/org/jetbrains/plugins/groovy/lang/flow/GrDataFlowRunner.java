@@ -37,7 +37,7 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
 
   @Nullable
   @Override
-  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, V visitor) {
+  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull V visitor) {
     return Collections.singletonList(createMemoryState());
   }
 
@@ -55,7 +55,7 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
 
   @NotNull
   @Override
-  protected GrControlFlowAnalyzerImpl<V> createControlFlowAnalyzer(PsiElement block) {
+  protected GrControlFlowAnalyzerImpl<V> createControlFlowAnalyzer(@NotNull PsiElement block) {
     return new GrControlFlowAnalyzerImpl<V>(myValueFactory, block);
   }
 }

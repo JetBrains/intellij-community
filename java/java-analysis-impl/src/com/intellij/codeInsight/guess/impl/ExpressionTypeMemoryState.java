@@ -26,6 +26,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -62,6 +63,7 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     super(toCopy);
   }
 
+  @NotNull
   @Override
   public DfaMemoryStateImpl createCopy() {
     final ExpressionTypeMemoryState copy = new ExpressionTypeMemoryState(this);

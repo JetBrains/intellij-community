@@ -166,7 +166,7 @@ public abstract class AbstractDataFlowRunner {
   }
 
   @Nullable
-  protected abstract Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor);
+  protected abstract Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor);
 
   @NotNull
   protected abstract DfaMemoryState createMemoryState();
@@ -186,7 +186,7 @@ public abstract class AbstractDataFlowRunner {
   public abstract DfaValueFactory getFactory();
 
   @NotNull
-  protected abstract IControlFlowAnalyzer createControlFlowAnalyzer(PsiElement block);
+  protected abstract IControlFlowAnalyzer createControlFlowAnalyzer(@NotNull PsiElement block);
 
   public final Instruction[] getInstructions() {
     return myInstructions;

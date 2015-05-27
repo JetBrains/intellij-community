@@ -85,6 +85,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  @NotNull
   public DfaMemoryStateImpl createCopy() {
     return new DfaMemoryStateImpl(this);
   }
@@ -829,7 +830,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
 
-  public DfaVariableState getVariableState(DfaVariableValue dfaVar) {
+  public DfaVariableState getVariableState(@NotNull DfaVariableValue dfaVar) {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
     if (state == null) {
@@ -856,7 +857,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myVariableStates;
   }
 
-  protected DfaVariableState createVariableState(final DfaVariableValue var) {
+  @NotNull
+  protected DfaVariableState createVariableState(@NotNull final DfaVariableValue var) {
     return new DfaVariableState(var);
   }
 

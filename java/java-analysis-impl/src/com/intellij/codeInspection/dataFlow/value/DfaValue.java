@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import org.jetbrains.annotations.Nullable;
+
 public class DfaValue {
   private final int myID;
 
-  protected DfaValue(final DfaValueFactory factory) {
+  protected DfaValue(@Nullable final DfaValueFactory factory) {
     myID = factory == null ? 0 : factory.registerValue(this);
   }
 

@@ -89,7 +89,7 @@ public abstract class MethodCallHelper<M> {
     }
 
     for (DfaMemoryState state : states) {
-      final DfaValue contractReturnValue = getDfaContractReturnValue(contract, getProducer(instruction), factory);
+      final DfaValue contractReturnValue = getDfaContractReturnValue(contract, getReturnTypeProducer(instruction), factory);
       state.push(contractReturnValue != null ? contractReturnValue : getMethodResultValue(instruction, null));
       finalStates.add(state);
     }
@@ -118,9 +118,12 @@ public abstract class MethodCallHelper<M> {
   }
 
 
+  @NotNull
   protected abstract DfaValue getMethodResultValue(M instruction, @Nullable DfaValue qualifierValue);
 
-  protected abstract Producer<PsiType> getProducer(M instruction);
+  @NotNull
+  protected abstract Producer<PsiType> getReturnTypeProducer(M instruction);
 
+  @NotNull
   protected abstract DfaValueFactory getFactory();
 }

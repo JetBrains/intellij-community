@@ -39,14 +39,14 @@ public class DfaConstValue extends DfaValue {
 
   public static abstract class Factory {
 
-    private final DfaValueFactory myFactory;
-    protected final DfaConstValue dfaNull;
-    protected final DfaConstValue dfaFalse;
-    protected final DfaConstValue dfaTrue;
-    protected final DfaConstValue dfaFail;
+    private final @NotNull DfaValueFactory myFactory;
+    protected final @NotNull DfaConstValue dfaNull;
+    protected final @NotNull DfaConstValue dfaFalse;
+    protected final @NotNull DfaConstValue dfaTrue;
+    protected final @NotNull DfaConstValue dfaFail;
     protected final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
 
-    protected Factory(DfaValueFactory factory) {
+    protected Factory(@NotNull DfaValueFactory factory) {
       myFactory = factory;
       dfaNull = new DfaConstValue(null, factory, null);
       dfaFalse = new DfaConstValue(Boolean.FALSE, factory, null);
@@ -55,7 +55,7 @@ public class DfaConstValue extends DfaValue {
     }
 
     @Nullable
-    public DfaValue create(PsiType type, Object value) {
+    public DfaValue create(@Nullable PsiType type, @Nullable Object value) {
       if (PsiType.NULL.equals(type)) return dfaNull;
       if (value == null) return null;
       return createFromValue(value, type, null);
@@ -63,9 +63,9 @@ public class DfaConstValue extends DfaValue {
 
     @Nullable
     public abstract DfaValue create(PsiVariable variable);
-    
+
     @NotNull
-    public DfaConstValue createFromValue(Object value, final PsiType type, @Nullable PsiVariable constant) {
+    public DfaConstValue createFromValue(@Nullable Object value, @Nullable PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
 
@@ -86,28 +86,32 @@ public class DfaConstValue extends DfaValue {
       return instance;
     }
 
+    @NotNull
     public DfaConstValue getContractFail() {
       return dfaFail;
     }
 
+    @NotNull
     public DfaConstValue getFalse() {
       return dfaFalse;
     }
 
+    @NotNull
     public DfaConstValue getTrue() {
       return dfaTrue;
     }
 
+    @NotNull
     public DfaConstValue getNull() {
       return dfaNull;
     }
   }
 
-  private final DfaValueFactory myFactory;
-  private final Object myValue;
+  private final @NotNull DfaValueFactory myFactory;
+  private final @Nullable Object myValue;
   private final @Nullable PsiVariable myConstant;
 
-  public DfaConstValue(Object value, DfaValueFactory factory, @Nullable PsiVariable constant) {
+  public DfaConstValue(@Nullable Object value, @NotNull DfaValueFactory factory, @Nullable PsiVariable constant) {
     super(factory);
     myFactory = factory;
     myValue = value;
@@ -120,6 +124,7 @@ public class DfaConstValue extends DfaValue {
     return myValue.toString();
   }
 
+  @Nullable
   public Object getValue() {
     return myValue;
   }

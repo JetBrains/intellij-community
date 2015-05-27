@@ -47,13 +47,15 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
       super(toCopy);
     }
 
+    @NotNull
     @Override
     public DfaMemoryStateImpl createCopy() {
       return new MyDfaMemoryState(this);
     }
 
+    @NotNull
     @Override
-    protected DfaVariableState createVariableState(DfaVariableValue var) {
+    protected DfaVariableState createVariableState(@NotNull DfaVariableValue var) {
       return new ValuableDfaVariableState(var);
     }
 

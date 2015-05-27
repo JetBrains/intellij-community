@@ -53,7 +53,7 @@ public class JavaMethodCallHelper extends MethodCallHelper<MethodCallInstruction
 
   @Override
   @NotNull
-  protected DfaValue getMethodResultValue(MethodCallInstruction instruction, @Nullable DfaValue qualifierValue) {
+  protected DfaValue getMethodResultValue(@NotNull MethodCallInstruction instruction, @Nullable DfaValue qualifierValue) {
     final DfaValueFactory factory = getFactory();
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     if (precalculated != null) {
@@ -91,8 +91,9 @@ public class JavaMethodCallHelper extends MethodCallHelper<MethodCallInstruction
     return DfaUnknownValue.getInstance();
   }
 
+  @NotNull
   @Override
-  protected Producer<PsiType> getProducer(final MethodCallInstruction instruction) {
+  protected Producer<PsiType> getReturnTypeProducer(final @NotNull MethodCallInstruction instruction) {
     return new Producer<PsiType>() {
       @Nullable
       @Override
@@ -102,6 +103,7 @@ public class JavaMethodCallHelper extends MethodCallHelper<MethodCallInstruction
     };
   }
 
+  @NotNull
   @Override
   protected DfaValueFactory getFactory() {
     return myFactory;

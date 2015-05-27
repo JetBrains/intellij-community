@@ -52,6 +52,7 @@ public class DfaVariableValueJava extends DfaVariableValue {
       super(factory);
     }
 
+    @NotNull
     @Override
     protected DfaVariableValue createConcrete(@NotNull PsiModifierListOwner variable,
                                                   @Nullable PsiType varType,

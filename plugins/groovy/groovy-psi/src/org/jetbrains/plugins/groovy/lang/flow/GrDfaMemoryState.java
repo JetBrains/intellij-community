@@ -29,20 +29,21 @@ import java.util.List;
 
 public class GrDfaMemoryState extends DfaMemoryStateImpl {
 
-  public GrDfaMemoryState(DfaValueFactory factory) {
+  public GrDfaMemoryState(@NotNull DfaValueFactory factory) {
     super(factory);
   }
 
-  protected GrDfaMemoryState(DfaMemoryStateImpl toCopy) {
+  protected GrDfaMemoryState(@NotNull DfaMemoryStateImpl toCopy) {
     super(toCopy);
   }
 
   @Override
+  @NotNull
   public GrDfaMemoryState createCopy() {
     return new GrDfaMemoryState(this);
   }
 
-  public boolean coerceTo(boolean to, DfaValue value) {
+  public boolean coerceTo(boolean to, @NotNull DfaValue value) {
     if (value instanceof DfaConstValue) {
       return coercesTo(to, (DfaConstValue)value);
     }
@@ -100,12 +101,13 @@ public class GrDfaMemoryState extends DfaMemoryStateImpl {
   }
 
   @Override
-  public GrDfaVariableState getVariableState(DfaVariableValue dfaVar) {
+  public GrDfaVariableState getVariableState(@NotNull DfaVariableValue dfaVar) {
     return (GrDfaVariableState)super.getVariableState(dfaVar);
   }
 
+  @NotNull
   @Override
-  protected DfaVariableState createVariableState(DfaVariableValue var) {
+  protected DfaVariableState createVariableState(@NotNull DfaVariableValue var) {
     return new GrDfaVariableState(var);
   }
 

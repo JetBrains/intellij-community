@@ -27,7 +27,7 @@ public class DfaBoxedValue extends DfaValue {
   private final DfaValue myWrappedValue;
   private final DfaValueFactory myFactory;
 
-  private DfaBoxedValue(DfaValue valueToWrap, DfaValueFactory factory) {
+  private DfaBoxedValue(@NotNull DfaValue valueToWrap, @NotNull DfaValueFactory factory) {
     super(factory);
     myFactory = factory;
     myWrappedValue = valueToWrap;

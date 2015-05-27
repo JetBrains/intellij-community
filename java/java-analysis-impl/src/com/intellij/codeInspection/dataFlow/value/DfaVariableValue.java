@@ -78,6 +78,7 @@ public abstract class DfaVariableValue extends DfaValue {
       return value.myDependents;
     }
 
+    @NotNull
     protected abstract DfaVariableValue createConcrete(@NotNull PsiModifierListOwner variable,
                                                        @Nullable PsiType varType,
                                                        @Nullable DfaVariableValue qualifier,
@@ -95,7 +96,7 @@ public abstract class DfaVariableValue extends DfaValue {
   private Nullness myInherentNullability;
   private final List<DfaVariableValue> myDependents = new SmartList<DfaVariableValue>();
 
-  protected DfaVariableValue(DfaValueFactory factory,
+  protected DfaVariableValue(@NotNull DfaValueFactory factory,
                              @NotNull PsiModifierListOwner variable,
                              @Nullable PsiType varType,
                              @Nullable DfaVariableValue qualifier,
