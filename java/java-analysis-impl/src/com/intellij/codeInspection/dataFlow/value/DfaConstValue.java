@@ -62,7 +62,7 @@ public class DfaConstValue extends DfaValue {
     }
 
     @Nullable
-    public DfaValue create(PsiVariable variable) {
+    public DfaValue create(@NotNull PsiVariable variable) {
       Object value = variable.computeConstantValue();
       PsiType type = variable.getType();
       if (value == null) {
