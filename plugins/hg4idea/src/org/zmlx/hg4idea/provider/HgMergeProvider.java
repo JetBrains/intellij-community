@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -127,10 +128,10 @@ public class HgMergeProvider implements MergeProvider {
         if (baseRevisionNumber != null) {
           final HgContentRevision base = HgContentRevision.create(myProject, hgFile, baseRevisionNumber);
           //if file doesn't exist in ancestor revision the base revision should be empty
-          mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : new byte[0];
+          mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : ArrayUtil.EMPTY_BYTE_ARRAY;
         }
         else { // no base revision means that the file was added simultaneously with different content in both repositories
-          mergeData.ORIGINAL = new byte[0];
+          mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
         }
         final HgContentRevision server = HgContentRevision.create(myProject, hgFile, serverRevisionNumber);
         mergeData.LAST = server.getContentAsBytes();

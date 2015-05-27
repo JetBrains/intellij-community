@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -515,7 +516,7 @@ public abstract class HgUtil {
   @NotNull
   public static byte[] loadContent(@NotNull Project project, @Nullable HgRevisionNumber revisionNumber, @NotNull HgFile fileToCat) {
     HgCommandResult result = new HgCatCommand(project).execute(fileToCat, revisionNumber, fileToCat.toFilePath().getCharset());
-    return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : new byte[0];
+    return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   public static String removePasswordIfNeeded(@NotNull String path) {
