@@ -21,9 +21,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 
 import java.util.List;
 
@@ -35,6 +37,7 @@ public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase 
   }
 
   public void testAdditionalSubtags() throws Exception {
+    Assume.assumeFalse(SystemInfo.isMac);
     doTest(false);
   }
 
