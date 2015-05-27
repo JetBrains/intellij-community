@@ -1,6 +1,7 @@
 package com.intellij.formatting;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
@@ -16,19 +17,15 @@ import java.util.List;
  */
 public class SpacingBuilder {
   private static class SpacingRule {
-    private final TokenSet myParentType;
-    private final TokenSet myChild1Type;
-    private final TokenSet myChild2Type;
-    private final int myMinSpaces;
-    private final int myMaxSpaces;
-    private final int myMinLF;
-    private final boolean myKeepLineBreaks;
-    private final int myKeepBlankLines;
+    protected final RuleCondition myRuleCondition;
+    protected final int myMinSpaces;
+    protected final int myMaxSpaces;
+    protected final int myMinLF;
+    protected final boolean myKeepLineBreaks;
+    protected final int myKeepBlankLines;
 
-    private SpacingRule(RuleCondition condition, int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
-      myParentType = condition.myParentType;
-      myChild1Type = condition.myChild1Type;
-      myChild2Type = condition.myChild2Type;
+    private SpacingRule(@NotNull RuleCondition condition, int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
+      myRuleCondition = condition;
       myMinSpaces = minSpaces;
       myMaxSpaces = maxSpaces;
       myMinLF = minLF;
@@ -36,14 +33,30 @@ public class SpacingBuilder {
       myKeepBlankLines = keepBlankLines;
     }
 
-    public boolean matches(IElementType parentType, IElementType child1Type, IElementType child2Type) {
-      return ((myParentType == null || myParentType.contains(parentType)) &&
-              (myChild1Type == null || myChild1Type.contains(child1Type)) &&
-              (myChild2Type == null || myChild2Type.contains(child2Type)));
+    public boolean matches(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
+      return myRuleCondition.matches(parentBlock.getNode().getElementType(),
+                                     childBlock1.getNode().getElementType(),
+                                     childBlock2.getNode().getElementType());
     }
 
-    public Spacing createSpacing() {
+    public Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
       return Spacing.createSpacing(myMinSpaces, myMaxSpaces, myMinLF, myKeepLineBreaks, myKeepBlankLines);
+    }
+  }
+
+  private static class DependentLFSpacingRule extends SpacingRule {
+    public DependentLFSpacingRule(@NotNull RuleCondition condition,
+                                  int minSpaces,
+                                  int maxSpaces,
+                                  boolean keepLineBreaks,
+                                  int keepBlankLines) {
+      super(condition, minSpaces, maxSpaces, 1, keepLineBreaks, keepBlankLines);
+    }
+
+    @Override
+    public Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
+      final TextRange range = parentBlock.getNode().getTextRange();
+      return Spacing.createDependentLFSpacing(myMinSpaces, myMaxSpaces, range, myKeepLineBreaks, myKeepBlankLines);
     }
   }
 
@@ -56,6 +69,12 @@ public class SpacingBuilder {
       myParentType = parentType;
       myChild1Type = child1Type;
       myChild2Type = child2Type;
+    }
+
+    private boolean matches(@NotNull IElementType parentType, @NotNull IElementType firstChildType, @NotNull IElementType secondChildType) {
+      return ((myParentType == null || myParentType.contains(parentType)) &&
+              (myChild1Type == null || myChild1Type.contains(firstChildType)) &&
+              (myChild2Type == null || myChild2Type.contains(secondChildType)));
     }
   }
 
@@ -71,15 +90,36 @@ public class SpacingBuilder {
     }
 
     public SpacingBuilder spaceIf(boolean option) {
-      return spaces(option ? 1 : 0);
+      return spaceIf(option, false);
     }
 
-    public SpacingBuilder spaces(final int count) {
-      for (RuleCondition condition : myConditions) {
-        myRules.add(new SpacingRule(condition, count, count, 0,
-                                    myCodeStyleSettings.KEEP_LINE_BREAKS, myCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE));
+    /**
+     * If {@code useParentDependentLFSpacing} is true and parent block spans multiple lines, insert single line break.
+     * Otherwise insert whitespace block with exactly one or no spaces depending on value of {@code option} parameter.
+     *
+     * @see Spacing#createDependentLFSpacing
+     */
+    public SpacingBuilder spaceIf(boolean option, boolean useParentDependentLFSpacing) {
+      return spaces(option ? 1 : 0, useParentDependentLFSpacing);
+    }
+
+    public SpacingBuilder spaces(int count) {
+      return spaces(count, false);
+    }
+
+    /**
+     * If {@code useParentDependentLFSpacing} is true and parent block spans multiple lines, insert single line break.
+     * Otherwise insert whitespace block that contains as many spaces as specified via {@code count} parameter.
+     *
+     * @see Spacing#createDependentLFSpacing
+     */
+    public SpacingBuilder spaces(int count, boolean useParentDependentLFSpacing) {
+      if (useParentDependentLFSpacing) {
+        return parentDependentLFSpacing(count, count, myCodeStyleSettings.KEEP_LINE_BREAKS, myCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE);
       }
-      return SpacingBuilder.this;
+      else {
+        return spacing(count, count, 0, myCodeStyleSettings.KEEP_LINE_BREAKS, myCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE);
+      }
     }
 
     public SpacingBuilder blankLines(int count) {
@@ -115,6 +155,18 @@ public class SpacingBuilder {
     public SpacingBuilder spacing(int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
       for (RuleCondition condition : myConditions) {
         myRules.add(new SpacingRule(condition, minSpaces, maxSpaces,  minLF, keepLineBreaks, keepBlankLines));
+      }
+      return SpacingBuilder.this;
+    }
+
+    /**
+     * Similar to {@link #spacing} but replaced by single line break, if parent block spans multiple lines.
+     *
+     * @see Spacing#createDependentLFSpacing
+     */
+    public SpacingBuilder parentDependentLFSpacing(int minSpaces, int maxSpaces, boolean keepLineBreaks, int keepBlankLines) {
+      for (RuleCondition condition : myConditions) {
+        myRules.add(new DependentLFSpacingRule(condition, minSpaces, maxSpaces, keepLineBreaks, keepBlankLines));
       }
       return SpacingBuilder.this;
     }
@@ -271,12 +323,9 @@ public class SpacingBuilder {
     if (!(parent instanceof ASTBlock) || !(child1 instanceof ASTBlock) || !(child2 instanceof ASTBlock)) {
       return null;
     }
-    IElementType parentType = ((ASTBlock) parent).getNode().getElementType();
-    IElementType child1Type = ((ASTBlock) child1).getNode().getElementType();
-    IElementType child2Type = ((ASTBlock) child2).getNode().getElementType();
     for (SpacingRule rule : myRules) {
-      if (rule.matches(parentType, child1Type, child2Type)) {
-        return rule.createSpacing();
+      if (rule.matches((ASTBlock)parent, (ASTBlock)child1, (ASTBlock) child2)) {
+        return rule.createSpacing((ASTBlock)parent, (ASTBlock)child1, (ASTBlock) child2);
       }
     }
     return null;
