@@ -24,10 +24,10 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +40,11 @@ public class DfaConstValue extends DfaValue {
   public static abstract class Factory {
 
     private final @NotNull DfaValueFactory myFactory;
-    protected final @NotNull DfaConstValue dfaNull;
-    protected final @NotNull DfaConstValue dfaFalse;
-    protected final @NotNull DfaConstValue dfaTrue;
-    protected final @NotNull DfaConstValue dfaFail;
-    protected final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
+    private final @NotNull DfaConstValue dfaNull;
+    private final @NotNull DfaConstValue dfaFalse;
+    private final @NotNull DfaConstValue dfaTrue;
+    private final @NotNull DfaConstValue dfaFail;
+    private final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
 
     protected Factory(@NotNull DfaValueFactory factory) {
       myFactory = factory;
@@ -62,10 +62,35 @@ public class DfaConstValue extends DfaValue {
     }
 
     @Nullable
-    public abstract DfaValue create(PsiVariable variable);
+    public DfaValue create(PsiVariable variable) {
+      Object value = variable.computeConstantValue();
+      PsiType type = variable.getType();
+      if (value == null) {
+        Boolean boo = computeJavaLangBooleanFieldReference(variable);
+        if (boo != null) {
+          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
+          return myFactory.getBoxedFactory().createBoxed(unboxed);
+        }
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
+          return dfaNull;
+        }
+        return null;
+      }
+      return createFromValue(value, type, variable);
+    }
+
+    @Nullable
+    private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
+      if (!(variable instanceof PsiField)) return null;
+      PsiClass psiClass = ((PsiField)variable).getContainingClass();
+      if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
+      @NonNls String name = variable.getName();
+      return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
+    }
 
     @NotNull
-    public DfaConstValue createFromValue(@Nullable Object value, @Nullable PsiType type, @Nullable PsiVariable constant) {
+    public DfaConstValue createFromValue(@Nullable Object value, final @Nullable PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
 
