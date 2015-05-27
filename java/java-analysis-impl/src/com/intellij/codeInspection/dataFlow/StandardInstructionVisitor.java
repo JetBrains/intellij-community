@@ -594,11 +594,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  public boolean isRedundantInstanceof(Instruction instruction) {
-    return instruction instanceof InstanceofInstruction &&
-           !myUsefulInstanceofs.contains(instruction) &&
-           !((InstanceofInstruction)instruction).isConditionConst() &&
-           myReachable.contains(instruction);
+  public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
+    return !myUsefulInstanceofs.contains(instruction) && !instruction.isConditionConst() && myReachable.contains(instruction);
   }
 
   public boolean canBeNull(BinopInstruction instruction) {
