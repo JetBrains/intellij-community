@@ -25,7 +25,6 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,13 +61,6 @@ public abstract class StructuralSearchProfile {
   }
 
   public abstract boolean isMyLanguage(@NotNull Language language);
-
-  public boolean isMyFile(PsiFile file, @NotNull Language language, Language... patternLanguages) {
-    if (isMyLanguage(language) && ArrayUtil.find(patternLanguages, language) >= 0) {
-      return true;
-    }
-    return false;
-  }
 
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,
