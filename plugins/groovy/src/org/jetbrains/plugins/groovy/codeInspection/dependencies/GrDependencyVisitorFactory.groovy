@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.dependencies
 
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.packageDependencies.DependenciesBuilder
 import com.intellij.packageDependencies.DependencyVisitorFactory
 import com.intellij.psi.PsiElement
@@ -61,8 +60,6 @@ class GrDependencyVisitorFactory extends DependencyVisitorFactory {
 
     @Override
     void visitElement(GroovyPsiElement element) {
-      ProgressIndicatorProvider.checkCanceled()
-
       super.visitElement(element)
 
       element.references.each { PsiReference ref ->
