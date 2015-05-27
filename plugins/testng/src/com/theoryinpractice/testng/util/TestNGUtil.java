@@ -203,7 +203,7 @@ public class TestNGUtil {
       }
       return true;
     }
-    if (element instanceof PsiDocCommentOwner && hasTestJavaDoc((PsiDocCommentOwner) element, checkJavadoc))
+    if (element instanceof PsiDocCommentOwner && checkJavadoc && getTextJavaDoc((PsiDocCommentOwner)element) != null)
       return true;
     //now we check all methods for the test annotation
     if (element instanceof PsiClass) {
@@ -217,7 +217,7 @@ public class TestNGUtil {
           return true;
         }
         if (AnnotationUtil.isAnnotated(method, FACTORY_ANNOTATION_FQN, false, true)) return true;
-        if (hasTestJavaDoc(method, checkJavadoc)) return true;
+        if (checkJavadoc && getTextJavaDoc(method) != null) return true;
       }
       return false;
     } else if (element instanceof PsiMethod) {
@@ -231,7 +231,7 @@ public class TestNGUtil {
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
           return !isPrivate && !element.hasModifierProperty(PsiModifier.STATIC) && !hasConfig(element);
         }
-        else if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
+        else if (checkJavadoc && getTextJavaDoc(psiClass) != null) return true;
       }
     }
     return false;
@@ -240,13 +240,6 @@ public class TestNGUtil {
   public static boolean isDisabled(PsiAnnotation annotation) {
     final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("enabled");
     return attributeValue != null && attributeValue.textMatches("false");
-  }
-
-  private static boolean hasTestJavaDoc(@NotNull PsiDocCommentOwner element, final boolean checkJavadoc) {
-    if (checkJavadoc) {
-      return getTextJavaDoc(element) != null;
-    }
-    return false;
   }
 
   private static PsiDocTag getTextJavaDoc(@NotNull final PsiDocCommentOwner element) {
