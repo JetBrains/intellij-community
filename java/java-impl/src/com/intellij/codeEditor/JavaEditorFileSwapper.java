@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaEditorFileSwapper extends EditorFileSwapper {
@@ -76,12 +77,12 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
   }
 
   @Nullable
-  public static VirtualFile findSourceFile(Project project, VirtualFile file) {
+  public static VirtualFile findSourceFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if ((psiFile instanceof PsiCompiledFile && psiFile instanceof PsiClassOwner)) {
-      PsiClass clsClass = ((PsiClassOwner)psiFile).getClasses()[0];
-      if ((clsClass instanceof ClsClassImpl)) {
-        PsiClass sourceClass = ((ClsClassImpl)clsClass).getSourceMirrorClass();
+    if (psiFile instanceof PsiCompiledFile && psiFile instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
+      if (classes.length != 0 && classes[0] instanceof ClsClassImpl) {
+        PsiClass sourceClass = ((ClsClassImpl)classes[0]).getSourceMirrorClass();
         if (sourceClass != null) {
           VirtualFile result = sourceClass.getContainingFile().getVirtualFile();
           assert result != null : sourceClass;
