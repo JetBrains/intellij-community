@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,13 @@
  */
 package com.intellij.idea;
 
+import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author mike
@@ -23,41 +29,60 @@ import junit.framework.TestCase;
 public class LockSupportTest extends TestCase {
   public void testLock() throws Exception {
     final SocketLock lock = new SocketLock();
+    File temp = FileUtil.createTempDirectory("c", null);
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock("abc", "cba"));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock(temp.getPath() + "/c", temp.getPath() + "/s"));
     }
     finally {
       lock.dispose();
+
+      FileUtil.delete(temp);
     }
   }
 
   public void testTwoLocks() throws Exception {
-    final SocketLock lock1 = new SocketLock();
-    final SocketLock lock2 = new SocketLock();
-
+    List<SocketLock> toClose = new ArrayList<SocketLock>();
+    File temp = FileUtil.createTempDirectory("c", null);
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1", "1-"));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1.1", "1-1"));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("2", "2-"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock1.lock("2", "2-"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1", "1-"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1.1", "1-1"));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose).lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose).lock(temp.getPath() + "/1.1", temp.getPath() + "/1-1"));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose).lock(temp.getPath() + "/2", temp.getPath() + "/2-"));
+
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose).lock(temp.getPath() + "/2", temp.getPath() + "/2-"));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose).lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose).lock(temp.getPath() + "/1.1", temp.getPath() + "/1-1"));
     }
     finally {
-      lock1.dispose();
-      lock2.dispose();
+      for (SocketLock lock : toClose) {
+        lock.dispose();
+      }
+
+      FileUtil.delete(temp);
     }
+  }
+
+  @NotNull
+  private static SocketLock createLock(@NotNull List<SocketLock> toClose) {
+    SocketLock lock1 = new SocketLock();
+    toClose.add(lock1);
+    return lock1;
   }
 
   public void testDispose() throws Exception {
     final SocketLock lock1 = new SocketLock();
     final SocketLock lock2 = new SocketLock();
 
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1", "1-"));
-    assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1", "1-"));
+    File temp = FileUtil.createTempDirectory("c", null);
+    try {
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
 
-    lock1.dispose();
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("1", "1-"));
-    lock2.dispose();
+      lock1.dispose();
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock(temp.getPath() + "/1", temp.getPath() + "/1-"));
+      lock2.dispose();
+    }
+    finally {
+      FileUtil.delete(temp);
+    }
   }
 }
