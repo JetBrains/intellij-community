@@ -82,6 +82,9 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
           getManager().findDirectory(parent);
         }
       }
+      if (target != getBaseLanguage() && !getLanguages().contains(target)) {
+        return null;
+      }
       file = createFile(target);
       if (file == null) return null;
       if (myOriginal != null) {
