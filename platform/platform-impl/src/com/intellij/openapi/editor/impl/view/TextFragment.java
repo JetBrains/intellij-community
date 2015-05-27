@@ -149,17 +149,17 @@ class TextFragment implements LineFragment {
   }
 
   @Override
-  public int xToVisualColumn(float startX, float x) {
+  public int[] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     for (int i = 0; i < myCharPositions.length; i++) {
       float newPos = myCharPositions[i];
       if (relX < (newPos + prevPos) / 2) {
-        return i;
+        return new int[] {i, relX < prevPos ? 0 : 1};
       }
       prevPos = newPos;
     }
-    return myCharPositions.length;
+    return new int[] {myCharPositions.length, relX < myCharPositions[myCharPositions.length - 1] ? 0 : 1};
   }
 
   @Override
@@ -212,11 +212,13 @@ class TextFragment implements LineFragment {
     }
 
     @Override
-    public int xToVisualColumn(float startX, float x) {
-      float parentStartX = startX - getX(visualColumnToParent(0));
-      int parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
-      int column = parentColumn - visualColumnToParent(0);
-      return Math.min(getLength(), Math.max(0, column));
+    public int[] xToVisualColumn(float startX, float x) {
+      int startColumnInParent = visualColumnToParent(0);
+      float parentStartX = startX - getX(startColumnInParent);
+      int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
+      int column = parentColumn[0] - startColumnInParent;
+      int length = getLength();
+      return column < 0 ? new int[] {0, 0} : column > length ? new int[] {length, 1} : new int[] {column, parentColumn[1]};
     }
 
     private int visualColumnToParent(int column) {

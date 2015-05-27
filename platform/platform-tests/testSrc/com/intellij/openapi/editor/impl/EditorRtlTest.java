@@ -44,130 +44,175 @@ public class EditorRtlTest extends AbstractEditorTest {
   public void testPositionCalculations() throws IOException {
     init("llrr");
     
-    checkOffsetConversions(0, lp(0), vp(0), xy(0));
-    checkOffsetConversions(1, lp(1), vp(1), xy(10));
-    checkOffsetConversions(2, lp(2), vp(2), vp(4), xy(20), xy(40));
-    checkOffsetConversions(3, lp(3), vp(3), xy(30));
-    checkOffsetConversions(4, lp(4), vp(2), vp(4), xy(20), xy(40));
+    checkOffsetConversions(0, lP(0), vL(0), vR(0), xy(0));
+    checkOffsetConversions(1, lP(1), vL(1), vR(1), xy(10));
+    checkOffsetConversions(2, lP(2), vL(2), vL(4), xy(20), xy(40));
+    checkOffsetConversions(3, lP(3), vR(3), vL(3), xy(30));
+    checkOffsetConversions(4, lP(4), vR(2), vR(4), xy(20), xy(40));
     
-    checkLPConversions(lp(0), 0, vp(0)); 
-    checkLPConversions(lp(1), 1, vp(1)); 
-    checkLPConversions(lp(2), 2, vp(2), vp(4)); 
-    checkLPConversions(lp(3), 3, vp(3)); 
-    checkLPConversions(lp(4), 4, vp(2), vp(4)); 
-    checkLPConversions(lp(5), 4, vp(5)); 
-    checkLPConversions(lp(1, 0), 4, vp(1, 0)); 
+    checkLPConversions(lP(0), 0, vL(0)); 
+    checkLPConversions(lS(0), 0, vR(0)); 
+    checkLPConversions(lP(1), 1, vL(1)); 
+    checkLPConversions(lS(1), 1, vR(1)); 
+    checkLPConversions(lP(2), 2, vL(2)); 
+    checkLPConversions(lS(2), 2, vL(4)); 
+    checkLPConversions(lP(3), 3, vR(3)); 
+    checkLPConversions(lS(3), 3, vL(3)); 
+    checkLPConversions(lP(4), 4, vR(2)); 
+    checkLPConversions(lS(4), 4, vR(4)); 
+    checkLPConversions(lP(5), 4, vL(5)); 
+    checkLPConversions(lS(5), 4, vR(5)); 
+    checkLPConversions(l(1, 0, false), 4, v(1, 0, false)); 
+    checkLPConversions(l(1, 0, true), 4, v(1, 0, true)); 
     
-    checkVPConversions(vp(0), lp(0), xy(0));
-    checkVPConversions(vp(1), lp(1), xy(10));
-    checkVPConversions(vp(2), lp(2), lp(4), xy(20));
-    checkVPConversions(vp(3), lp(3), xy(30));
-    checkVPConversions(vp(4), lp(2), lp(4), xy(40));
-    checkVPConversions(vp(5), lp(5), xy(50));
-    checkVPConversions(vp(1, 0), lp(1, 0), xy(0, 10));
+    checkVPConversions(vL(0), lP(0), xy(0));
+    checkVPConversions(vR(0), lS(0), xy(0));
+    checkVPConversions(vL(1), lP(1), xy(10));
+    checkVPConversions(vR(1), lS(1), xy(10));
+    checkVPConversions(vL(2), lP(2), xy(20));
+    checkVPConversions(vR(2), lP(4), xy(20));
+    checkVPConversions(vL(3), lS(3), xy(30));
+    checkVPConversions(vR(3), lP(3), xy(30));
+    checkVPConversions(vL(4), lS(2), xy(40));
+    checkVPConversions(vR(4), lS(4), xy(40));
+    checkVPConversions(vL(5), lP(5), xy(50));
+    checkVPConversions(vR(5), lS(5), xy(50));
+    checkVPConversions(v(1, 0, false), l(1, 0, false), xy(0, 10));
+    checkVPConversions(v(1, 0, true), l(1, 0, true), xy(0, 10));
     
-    checkXYConversion(xy(0),  vp(0));
-    checkXYConversion(xy(12), vp(1));
-    checkXYConversion(xy(19), vp(2));
-    checkXYConversion(xy(21), vp(2));
-    checkXYConversion(xy(27), vp(3));
-    checkXYConversion(xy(39), vp(4));
-    checkXYConversion(xy(41), vp(4));
-    checkXYConversion(xy(51), vp(5));
+    checkXYConversion(xy(0),  vR(0));
+    checkXYConversion(xy(12), vR(1));
+    checkXYConversion(xy(19), vL(2));
+    checkXYConversion(xy(21), vR(2));
+    checkXYConversion(xy(27), vL(3));
+    checkXYConversion(xy(39), vL(4));
+    checkXYConversion(xy(41), vR(4));
+    checkXYConversion(xy(51), vR(5));
   }
   
   public void testNumberInsideRtlText() throws IOException {
     init("rr12rr");
 
-    checkOffsetConversions(0, lp(0), vp(0), vp(6), xy(0), xy(60));
-    checkOffsetConversions(1, lp(1), vp(5), xy(50));
-    checkOffsetConversions(2, lp(2), vp(4), vp(2), xy(40), xy(20));
-    checkOffsetConversions(3, lp(3), vp(3), xy(30));
-    checkOffsetConversions(4, lp(4), vp(4), vp(2), xy(40), xy(20));
-    checkOffsetConversions(5, lp(5), vp(1), xy(10));
-    checkOffsetConversions(6, lp(6), vp(0), vp(6), xy(0), xy(60));
+    checkOffsetConversions(0, lP(0), vL(0), vL(6), xy(0), xy(60));
+    checkOffsetConversions(1, lP(1), vR(5), vL(5), xy(50));
+    checkOffsetConversions(2, lP(2), vR(4), vR(2), xy(40), xy(20));
+    checkOffsetConversions(3, lP(3), vL(3), vR(3), xy(30));
+    checkOffsetConversions(4, lP(4), vL(4), vL(2), xy(40), xy(20));
+    checkOffsetConversions(5, lP(5), vR(1), vL(1), xy(10));
+    checkOffsetConversions(6, lP(6), vR(0), vR(6), xy(0), xy(60));
     
-    checkLPConversions(lp(0), 0, vp(0), vp(6));
-    checkLPConversions(lp(1), 1, vp(5));
-    checkLPConversions(lp(2), 2, vp(4), vp(2));
-    checkLPConversions(lp(3), 3, vp(3));
-    checkLPConversions(lp(4), 4, vp(4), vp(2));
-    checkLPConversions(lp(5), 5, vp(1));
-    checkLPConversions(lp(6), 6, vp(0), vp(6));
+    checkLPConversions(lP(0), 0, vL(0));
+    checkLPConversions(lS(0), 0, vL(6));
+    checkLPConversions(lP(1), 1, vR(5));
+    checkLPConversions(lS(1), 1, vL(5));
+    checkLPConversions(lP(2), 2, vR(4));
+    checkLPConversions(lS(2), 2, vR(2));
+    checkLPConversions(lP(3), 3, vL(3));
+    checkLPConversions(lS(3), 3, vR(3));
+    checkLPConversions(lP(4), 4, vL(4));
+    checkLPConversions(lS(4), 4, vL(2));
+    checkLPConversions(lP(5), 5, vR(1));
+    checkLPConversions(lS(5), 5, vL(1));
+    checkLPConversions(lP(6), 6, vR(0));
+    checkLPConversions(lS(6), 6, vR(6));
 
-    checkVPConversions(vp(0), lp(0), lp(6), xy(0));
-    checkVPConversions(vp(1), lp(5), xy(10));
-    checkVPConversions(vp(2), lp(4), lp(2), xy(20));
-    checkVPConversions(vp(3), lp(3), xy(30));
-    checkVPConversions(vp(4), lp(4), lp(2), xy(40));
-    checkVPConversions(vp(5), lp(1), xy(50));
-    checkVPConversions(vp(6), lp(0), lp(6), xy(60));
+    checkVPConversions(vL(0), lP(0), xy(0));
+    checkVPConversions(vR(0), lP(6), xy(0));
+    checkVPConversions(vL(1), lS(5), xy(10));
+    checkVPConversions(vR(1), lP(5), xy(10));
+    checkVPConversions(vL(2), lS(4), xy(20));
+    checkVPConversions(vR(2), lS(2), xy(20));
+    checkVPConversions(vL(3), lP(3), xy(30));
+    checkVPConversions(vR(3), lS(3), xy(30));
+    checkVPConversions(vL(4), lP(4), xy(40));
+    checkVPConversions(vR(4), lP(2), xy(40));
+    checkVPConversions(vL(5), lS(1), xy(50));
+    checkVPConversions(vR(5), lP(1), xy(50));
+    checkVPConversions(vL(6), lS(0), xy(60));
+    checkVPConversions(vR(6), lS(6), xy(60));
 
-    checkXYConversion(xy(1), vp(0));
-    checkXYConversion(xy(9), vp(1));
-    checkXYConversion(xy(19), vp(2));
-    checkXYConversion(xy(21), vp(2));
-    checkXYConversion(xy(30), vp(3));
-    checkXYConversion(xy(39), vp(4));
-    checkXYConversion(xy(41), vp(4));
-    checkXYConversion(xy(50), vp(5));
-    checkXYConversion(xy(59), vp(6));
-    checkXYConversion(xy(61), vp(6));
+    checkXYConversion(xy(1), vR(0));
+    checkXYConversion(xy(9), vL(1));
+    checkXYConversion(xy(19), vL(2));
+    checkXYConversion(xy(21), vR(2));
+    checkXYConversion(xy(30), vR(3));
+    checkXYConversion(xy(39), vL(4));
+    checkXYConversion(xy(41), vR(4));
+    checkXYConversion(xy(50), vR(5));
+    checkXYConversion(xy(59), vL(6));
+    checkXYConversion(xy(61), vR(6));
   }
   
   public void testFolding() throws IOException {
     init("rrrrrr");
     addCollapsedFoldRegion(2, 4, "...");
     
-    checkOffsetConversions(0, lp(0), vp(0), vp(2), xy(0), xy(20));
-    checkOffsetConversions(1, lp(1), vp(1), xy(10));
-    checkOffsetConversions(2, lp(2), vp(0), vp(2), xy(0), xy(20));
-    checkOffsetConversions(3, lp(3), vp(2), xy(20));
-    checkOffsetConversions(4, lp(4), vp(5), vp(7), xy(50), xy(70));
-    checkOffsetConversions(5, lp(5), vp(6), xy(60));
-    checkOffsetConversions(6, lp(6), vp(5), vp(7), xy(50), xy(70));
+    checkOffsetConversions(0, lP(0), vL(0), vL(2), xy(0), xy(20));
+    checkOffsetConversions(1, lP(1), vR(1), vL(1), xy(10));
+    checkOffsetConversions(2, lP(2), vR(0), vR(2), xy(0), xy(20));
+    checkOffsetConversions(3, lP(3), vR(2), vR(2), xy(20));
+    checkOffsetConversions(4, lP(4), vL(5), vL(7), xy(50), xy(70));
+    checkOffsetConversions(5, lP(5), vR(6), vL(6), xy(60));
+    checkOffsetConversions(6, lP(6), vR(5), vR(7), xy(50), xy(70));
     
-    checkLPConversions(lp(0), 0, vp(0), vp(2));
-    checkLPConversions(lp(1), 1, vp(1));
-    checkLPConversions(lp(2), 2, vp(0), vp(2));
-    checkLPConversions(lp(3), 3, vp(2));
-    checkLPConversions(lp(4), 4, vp(5), vp(7));
-    checkLPConversions(lp(5), 5, vp(6));
-    checkLPConversions(lp(6), 6, vp(5), vp(7));
-    checkLPConversions(lp(7), 6, vp(8));
+    checkLPConversions(lP(0), 0, vL(0));
+    checkLPConversions(lS(0), 0, vL(2));
+    checkLPConversions(lP(1), 1, vR(1));
+    checkLPConversions(lS(1), 1, vL(1));
+    checkLPConversions(lP(2), 2, vR(0));
+    checkLPConversions(lS(2), 2, vR(2));
+    checkLPConversions(lP(3), 3, vR(2));
+    checkLPConversions(lS(3), 3, vR(2));
+    checkLPConversions(lP(4), 4, vL(5));
+    checkLPConversions(lS(4), 4, vL(7));
+    checkLPConversions(lP(5), 5, vR(6));
+    checkLPConversions(lS(5), 5, vL(6));
+    checkLPConversions(lP(6), 6, vR(5));
+    checkLPConversions(lS(6), 6, vR(7));
+    checkLPConversions(lP(7), 6, vL(8));
+    checkLPConversions(lS(7), 6, vR(8));
     
-    checkVPConversions(vp(0), lp(0), lp(2), xy(0));
-    checkVPConversions(vp(1), lp(1), xy(10));
-    checkVPConversions(vp(2), lp(0), lp(2), xy(20));
-    checkVPConversions(vp(3), lp(2), xy(30));
-    checkVPConversions(vp(4), lp(2), xy(40));
-    checkVPConversions(vp(5), lp(4), lp(6), xy(50));
-    checkVPConversions(vp(6), lp(5), xy(60));
-    checkVPConversions(vp(7), lp(4), lp(6), xy(70));
-    checkVPConversions(vp(8), lp(7), xy(80));
+    checkVPConversions(vL(0), lP(0), xy(0));
+    checkVPConversions(vR(0), lP(2), xy(0));
+    checkVPConversions(vL(1), lS(1), xy(10));
+    checkVPConversions(vR(1), lP(1), xy(10));
+    checkVPConversions(vL(2), lS(0), xy(20));
+    checkVPConversions(vR(2), lS(2), xy(20));
+    checkVPConversions(vL(3), lS(2), xy(30));
+    checkVPConversions(vR(3), lS(2), xy(30));
+    checkVPConversions(vL(4), lS(2), xy(40));
+    checkVPConversions(vR(4), lS(2), xy(40));
+    checkVPConversions(vL(5), lP(4), xy(50));
+    checkVPConversions(vR(5), lP(6), xy(50));
+    checkVPConversions(vL(6), lS(5), xy(60));
+    checkVPConversions(vR(6), lP(5), xy(60));
+    checkVPConversions(vL(7), lS(4), xy(70));
+    checkVPConversions(vR(7), lS(6), xy(70));
+    checkVPConversions(vL(8), lP(7), xy(80));
+    checkVPConversions(vR(8), lS(7), xy(80));
     
-    checkXYConversion(xy(1), vp(0));
-    checkXYConversion(xy(9), vp(1));
-    checkXYConversion(xy(19), vp(2));
-    checkXYConversion(xy(21), vp(2));
-    checkXYConversion(xy(30), vp(3));
-    checkXYConversion(xy(39), vp(4));
-    checkXYConversion(xy(41), vp(4));
-    checkXYConversion(xy(50), vp(5));
-    checkXYConversion(xy(59), vp(6));
-    checkXYConversion(xy(69), vp(7));
-    checkXYConversion(xy(71), vp(7));
-    checkXYConversion(xy(81), vp(8));
+    checkXYConversion(xy(1), vR(0));
+    checkXYConversion(xy(9), vL(1));
+    checkXYConversion(xy(19), vL(2));
+    checkXYConversion(xy(21), vR(2));
+    checkXYConversion(xy(30), vR(3));
+    checkXYConversion(xy(39), vL(4));
+    checkXYConversion(xy(41), vR(4));
+    checkXYConversion(xy(50), vR(5));
+    checkXYConversion(xy(59), vL(6));
+    checkXYConversion(xy(69), vL(7));
+    checkXYConversion(xy(71), vR(7));
+    checkXYConversion(xy(81), vR(8));
   }
   
   public void testFoldingWhenLineContainsSeveralFragments() throws IOException {
     init("r r");
     addCollapsedFoldRegion(1, 2, "...");
     
-    checkOffsetConversions(0, lp(0), vp(0), vp(1), xy(0), xy(10));
-    checkOffsetConversions(1, lp(1), vp(0), vp(1), xy(0), xy(10));
-    checkOffsetConversions(2, lp(2), vp(4), vp(5), xy(40), xy(50));
-    checkOffsetConversions(3, lp(3), vp(4), vp(5), xy(40), xy(50));
+    checkOffsetConversions(0, lP(0), vL(0), vL(1), xy(0), xy(10));
+    checkOffsetConversions(1, lP(1), vR(0), vR(1), xy(0), xy(10));
+    checkOffsetConversions(2, lP(2), vL(4), vL(5), xy(40), xy(50));
+    checkOffsetConversions(3, lP(3), vR(4), vR(5), xy(40), xy(50));
   }
 
   private void init(String text) throws IOException {
@@ -175,8 +220,11 @@ public class EditorRtlTest extends AbstractEditorTest {
   }
 
   private static void checkOffsetConversions(int offset,
-                                            LogicalPosition logicalPosition, VisualPosition visualPosition, Point xy) {
-    checkOffsetConversions(offset, logicalPosition, visualPosition, visualPosition, xy, xy);
+                                             LogicalPosition logicalPosition,
+                                             VisualPosition visualPositionTowardsSmallerOffsets,
+                                             VisualPosition visualPositionTowardsLargerOffsets,
+                                             Point xy) {
+    checkOffsetConversions(offset, logicalPosition, visualPositionTowardsSmallerOffsets, visualPositionTowardsLargerOffsets, xy, xy);
   }
 
   private static void checkOffsetConversions(int offset, 
@@ -185,13 +233,13 @@ public class EditorRtlTest extends AbstractEditorTest {
                                              VisualPosition visualPositionTowardsLargerOffsets, 
                                              Point xyTowardsSmallerOffsets, 
                                              Point xyTowardsLargerOffsets) {
-    assertEquals("Wrong offset->logicalPosition calculation", logicalPosition, myEditor.offsetToLogicalPosition(offset));
-    assertEquals("Wrong beforeOffset->visualPosition calculation",
-                 visualPositionTowardsSmallerOffsets, ((EditorImpl)myEditor).offsetToVisualPosition(offset, false));
+    assertLogicalPositionsEqual("Wrong offset->logicalPosition calculation", logicalPosition, myEditor.offsetToLogicalPosition(offset));
+    assertVisualPositionsEqual("Wrong beforeOffset->visualPosition calculation",
+                               visualPositionTowardsSmallerOffsets, ((EditorImpl)myEditor).offsetToVisualPosition(offset, false));
     assertEquals("Wrong beforeOffset->visualLine calculation", 
                  visualPositionTowardsSmallerOffsets.line, ((EditorImpl)myEditor).offsetToVisualLine(offset));
-    assertEquals("Wrong afterOffset->visualPosition calculation", 
-                 visualPositionTowardsLargerOffsets, ((EditorImpl)myEditor).offsetToVisualPosition(offset, true));
+    assertVisualPositionsEqual("Wrong afterOffset->visualPosition calculation",
+                               visualPositionTowardsLargerOffsets, ((EditorImpl)myEditor).offsetToVisualPosition(offset, true));
     assertEquals("Wrong afterOffset->visualLine calculation", 
                  visualPositionTowardsLargerOffsets.line, ((EditorImpl)myEditor).offsetToVisualLine(offset));
     assertEquals("Wrong beforeOffset->xy calculation", xyTowardsSmallerOffsets, ((EditorImpl)myEditor).offsetToXY(offset, false));
@@ -199,54 +247,58 @@ public class EditorRtlTest extends AbstractEditorTest {
   }
 
   private static void checkLPConversions(LogicalPosition logicalPosition, int offset, VisualPosition visualPosition) {
-    checkLPConversions(logicalPosition, offset, visualPosition, visualPosition);
-  }
-  
-  private static void checkLPConversions(LogicalPosition logicalPosition,
-                                        int offset, 
-                                         VisualPosition visualPositionTowardsSmallerLogicalColumns,
-                                         VisualPosition visualPositionTowardsLargerLogicalColumns) {
     assertEquals("Wrong logicalPosition->offset calculation", offset, myEditor.logicalPositionToOffset(logicalPosition));
-    assertEquals("Wrong beforeLogicalPosition->visualPosition calculation", 
-                 visualPositionTowardsSmallerLogicalColumns, ((EditorImpl)myEditor).logicalToVisualPosition(logicalPosition, true, false));
-    assertEquals("Wrong afterLogicalPosition->visualPosition calculation",
-                 visualPositionTowardsLargerLogicalColumns, ((EditorImpl)myEditor).logicalToVisualPosition(logicalPosition, true, true));
+    assertVisualPositionsEqual("Wrong beforeLogicalPosition->visualPosition calculation",
+                               visualPosition, myEditor.logicalToVisualPosition(logicalPosition));
   }
 
   private static void checkVPConversions(VisualPosition visualPosition, LogicalPosition logicalPosition, Point xy) {
-    checkVPConversions(visualPosition, logicalPosition, logicalPosition, xy);
-  }
-
-  private static void checkVPConversions(VisualPosition visualPosition, 
-                                         LogicalPosition logicalPositionTowardsSmallerVisualColumns, 
-                                         LogicalPosition logicalPositionTowardsLargerVisualColumns, 
-                                         Point xy) {
-    assertEquals("Wrong beforeVisualPosition->logicalPosition calculation", 
-                 logicalPositionTowardsSmallerVisualColumns, ((EditorImpl)myEditor).visualToLogicalPosition(visualPosition, true, false));
-    assertEquals("Wrong afterVisualPosition->logicalPosition calculation", 
-                 logicalPositionTowardsLargerVisualColumns, ((EditorImpl)myEditor).visualToLogicalPosition(visualPosition, true, true));
+    assertLogicalPositionsEqual("Wrong beforeVisualPosition->logicalPosition calculation",
+                                logicalPosition, myEditor.visualToLogicalPosition(visualPosition));
     assertEquals("Wrong visualPosition->xy calculation", xy, myEditor.visualPositionToXY(visualPosition));
   }
   
   private static void checkXYConversion(Point xy,
                                        VisualPosition visualPosition) {
-    assertEquals("Wrong xy->visualPosition calculation", visualPosition, myEditor.xyToVisualPosition(xy));
+    assertVisualPositionsEqual("Wrong xy->visualPosition calculation", visualPosition, myEditor.xyToVisualPosition(xy));
+  }
+
+  private static void assertLogicalPositionsEqual(String message, LogicalPosition expectedPosition, LogicalPosition actualPosition) {
+    assertEquals(message, expectedPosition, actualPosition);
+    assertEquals(message + " (direction flag)", expectedPosition.leansForward, actualPosition.leansForward);
+  }
+
+  private static void assertVisualPositionsEqual(String message, VisualPosition expectedPosition, VisualPosition actualPosition) {
+    assertEquals(message, expectedPosition, actualPosition);
+    assertEquals(message + " (direction flag)", expectedPosition.leansRight, actualPosition.leansRight);
   }
   
-  private static LogicalPosition lp(int column) {
+  // logical position leaning to the preceding character
+  private static LogicalPosition lP(int column) {
     return new LogicalPosition(0, column);
   }
   
-  private static LogicalPosition lp(int line, int column) {
-    return new LogicalPosition(line, column);
+  // logical position leaning to the succeeding character
+  private static LogicalPosition lS(int column) {
+    return new LogicalPosition(0, column, true);
   }
   
-  private static VisualPosition vp(int column) {
+  private static LogicalPosition l(int line, int column, boolean leanTowardsLargerColumns) {
+    return new LogicalPosition(line, column, leanTowardsLargerColumns);
+  }
+ 
+  // visual position leaning to the left
+  private static VisualPosition vL(int column) {
     return new VisualPosition(0, column);
   }
+
+  // visual position leaning to the right
+  private static VisualPosition vR(int column) {
+    return new VisualPosition(0, column, true);
+  }
   
-  private static VisualPosition vp(int line, int column) {
-    return new VisualPosition(line, column);
+  private static VisualPosition v(int line, int column, boolean leanTowardsLargerColumns) {
+    return new VisualPosition(line, column, leanTowardsLargerColumns);
   }
   
   private static Point xy(int x) {

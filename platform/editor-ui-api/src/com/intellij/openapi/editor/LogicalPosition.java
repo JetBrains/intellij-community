@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,19 @@ import java.awt.Point;
  * Represents a logical position in the editor. Logical positions ignore folding -
  * for example, if the top 10 lines of the document are folded, the 10th line in the document
  * will have the line number 10 in its logical position.
- * <p/>
+ * <p>
  * Logical position may store additional parameters that define its mapping to {@link VisualPosition}. Rationale is that
  * single logical <code>(line; column)</code> pair matches soft wrap-introduced virtual space, i.e. different visual positions
  * correspond to the same logical position. It's convenient to store exact visual location details within the logical
  * position in order to relief further {@code 'logical position' -> 'visual position'} mapping.
- * <p/>
+ * <p>
+ * Logical position corresponds to a boundary between two characters and can be associated with either a preceding or succeeding character 
+ * (see {@link #leansForward}). This association makes a difference in a bidirectional text, where a mapping from logical to visual position 
+ * is not continuous.
+ * <p>
  * <b>Note:</b> two objects of this class are considered equal if their logical line and column are equal. I.e. all logical positions
- * for soft wrap-introduced virtual space and the first document symbol after soft wrap are considered to be equal.
+ * for soft wrap-introduced virtual space and the first document symbol after soft wrap are considered to be equal. Value of 
+ * {@link #leansForward} flag doesn't impact the equality of logical positions.
  *
  * @see Editor#offsetToLogicalPosition(int)
  * @see Editor#logicalPositionToOffset(LogicalPosition)
@@ -87,19 +92,45 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    */
   public final int foldingColumnDiff;
 
+  /**
+   * If <code>true</code>, this position is associated with succeeding character (in logical order), otherwise it's associated with 
+   * preceding character. This can make difference in bidirectional text, where logical positions which differ only in this flag's value
+   * can have different visual positions.
+   * <p>
+   * This field has no impact on equality and comparison relationships between <code>LogicalPosition</code> instances.
+   */
+  public final boolean leansForward;
+
+  /**
+   * This field provides the value of {@link VisualPosition#leansRight} field of visual position corresponding to current position.
+   * It has meaning only if {@link #visualPositionAware} is set.
+   */
+  public final boolean visualPositionLeansRight;
+
   public LogicalPosition(int line, int column) throws IllegalArgumentException {
-    this(line, column, 0, 0, 0, 0, 0, false);
+    this(line, column, 0, 0, 0, 0, 0, false, false, false);
+  }
+
+  public LogicalPosition(int line, int column, boolean leansForward) throws IllegalArgumentException {
+    this(line, column, 0, 0, 0, 0, 0, false, leansForward, leansForward);
   }
 
   public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
-                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException
-  {
+                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException {
     this(line, column, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines,
-      foldingColumnDiff, true);
+      foldingColumnDiff, true, false, false);
+  }
+
+  public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
+                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean leansForward,
+                         boolean visualPositionLeansRight) throws IllegalArgumentException {
+    this(line, column, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines,
+      foldingColumnDiff, true, leansForward, visualPositionLeansRight);
   }
 
   private LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
-                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean visualPositionAware)
+                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean visualPositionAware,
+                          boolean leansForward, boolean visualPositionLeansRight)
     throws IllegalArgumentException {
     if (column + softWrapColumnDiff + foldingColumnDiff < 0) {
       throw new IllegalArgumentException(String.format(
@@ -120,6 +151,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     this.foldedLines = foldedLines;
     this.foldingColumnDiff = foldingColumnDiff;
     this.visualPositionAware = visualPositionAware;
+    this.leansForward = leansForward;
+    this.visualPositionLeansRight = visualPositionLeansRight;
   }
 
   /**
@@ -133,7 +166,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   public VisualPosition toVisualPosition() {
     return new VisualPosition(
       line + softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine - foldedLines,
-      column + softWrapColumnDiff + foldingColumnDiff
+      column + softWrapColumnDiff + foldingColumnDiff,
+      visualPositionLeansRight
     );
   }
 
@@ -142,9 +176,16 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * reference to its visual position.
    */
   public LogicalPosition withoutVisualPositionInfo() {
-    return new LogicalPosition(line, column);
+    return new LogicalPosition(line, column, leansForward);
   }
 
+  /**
+   * Constructs a new <code>LogicalPosition</code> instance with a given value of {@link #leansForward} flag.
+   */
+  public LogicalPosition leanForward(boolean value) {
+    return new LogicalPosition(line, column, value);
+  }
+  
   public boolean equals(Object o) {
     if (!(o instanceof LogicalPosition)) return false;
     final LogicalPosition logicalPosition = (LogicalPosition) o;

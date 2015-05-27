@@ -43,7 +43,10 @@ interface LineFragment {
   float visualColumnToX(float startX, int column);
 
   // column is visual
-  int xToVisualColumn(float startX, float x);
+  // returns array of two elements 
+  // - first one is visual column, 
+  // - second one is 1 if target location is closer to larger columns and 0 otherwise
+  int[] xToVisualColumn(float startX, float x);
 
   // offsets are visual
   float offsetToX(float startX, int startOffset, int offset);

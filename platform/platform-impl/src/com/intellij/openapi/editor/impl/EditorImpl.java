@@ -1417,7 +1417,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset) {
-    return offsetToVisualPosition(offset, true);
+    return offsetToVisualPosition(offset, false);
   }
 
   @NotNull
@@ -3868,13 +3868,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
-    return logicalToVisualPosition(logicalPos, softWrapAware, true);
-  }
-
-  @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware, 
-                                                boolean leanTowardsLargerLogicalColumns) {
-    if (myUseNewRendering) return myView.logicalToVisualPosition(logicalPos, leanTowardsLargerLogicalColumns);
+    if (myUseNewRendering) return myView.logicalToVisualPosition(logicalPos);
     return doLogicalToVisualPosition(logicalPos, softWrapAware,0);
   }
 
@@ -4018,13 +4012,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware) {
-    return visualToLogicalPosition(visiblePos, softWrapAware, true);
-  }
-  
-  @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware, 
-                                                 boolean leanTowardsLargerVisualColumns) {
-    if (myUseNewRendering) return myView.visualToLogicalPosition(visiblePos, leanTowardsLargerVisualColumns);
+    if (myUseNewRendering) return myView.visualToLogicalPosition(visiblePos);
     assertReadAccess();
     if (softWrapAware) {
       return mySoftWrapModel.visualToLogicalPosition(visiblePos);
@@ -4157,7 +4145,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     return new LogicalPosition(
       line, column, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
-      pos.foldedLines, pos.foldingColumnDiff
+      pos.foldedLines, pos.foldingColumnDiff, pos.leansForward, pos.visualPositionLeansRight
     );
   }
 

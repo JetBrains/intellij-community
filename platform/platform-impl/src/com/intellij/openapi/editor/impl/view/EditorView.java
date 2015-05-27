@@ -126,15 +126,15 @@ public class EditorView implements Disposable {
   }
 
   @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean leanTowardsLargerLogicalColumns) {
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos) {
     assertIsDispatchThread();
-    return myMapper.logicalToVisualPosition(pos, leanTowardsLargerLogicalColumns);
+    return myMapper.logicalToVisualPosition(pos);
   }
 
   @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos, boolean leanTowardsLargerVisualColumns) {
+  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
-    return myMapper.visualToLogicalPosition(pos, leanTowardsLargerVisualColumns);
+    return myMapper.visualToLogicalPosition(pos);
   }
 
   @NotNull
@@ -216,7 +216,7 @@ public class EditorView implements Disposable {
   int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
     int maxWidth = 0;
     for (int i = startVisualLine; i <= endVisualLine; i++) {
-      int logicalLine = visualToLogicalPosition(new VisualPosition(i, 0), false).line;
+      int logicalLine = visualToLogicalPosition(new VisualPosition(i, 0)).line;
       if (logicalLine >= myDocument.getLineCount()) break;
       int startOffset = myDocument.getLineStartOffset(logicalLine);
       float x = 0;

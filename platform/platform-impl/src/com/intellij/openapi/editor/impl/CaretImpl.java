@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -493,7 +493,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     LogicalPosition logicalPositionToUse;
     if (pos.visualPositionAware) {
       logicalPositionToUse = new LogicalPosition(
-        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff, 
+        pos.leansForward, pos.visualPositionLeansRight
       );
     }
     else {
@@ -819,8 +820,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   }
 
   private void updateVisualLineInfo() {
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0), true, false));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0), true, false));
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
   void updateCaretPosition(@NotNull final DocumentEventImpl event) {

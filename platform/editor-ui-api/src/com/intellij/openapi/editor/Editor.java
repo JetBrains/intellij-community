@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,6 +213,9 @@ public interface Editor extends UserDataHolder {
 
   /**
    * Maps an offset in the document to a logical position.
+   * <p>
+   * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will 
+   * have {@link LogicalPosition#leansForward leansForward} value set to <code>false</code>.
    *
    * @param offset the offset in the document.
    * @return the corresponding logical position.
@@ -222,6 +225,9 @@ public interface Editor extends UserDataHolder {
 
   /**
    * Maps an offset in the document to a visual position.
+   * <p>
+   * It's assumed that original position is associated with character immediately preceding given offset, 
+   * {@link VisualPosition#leansRight leansRight} value for visual position will be determined correspondingly.
    *
    * @param offset the offset in the document.
    * @return the corresponding visual position.

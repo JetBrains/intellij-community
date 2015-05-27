@@ -407,8 +407,13 @@ class LineLayout {
     }
 
     // x is expected to be between startX and endX for this fragment
-    int xToVisualColumn(float x) {
-      return startVisualColumn + delegate.xToVisualColumn(startX, x);
+    // returns array of two elements 
+    // - first one is visual column, 
+    // - second one is 1 if target location is closer to larger columns and 0 otherwise
+    int[] xToVisualColumn(float x) {
+      int[] column = delegate.xToVisualColumn(startX, x);
+      column[0] += startVisualColumn;
+      return column;
     }
 
     // column is expected to be between startVisualColumn and endVisualColumn for this fragment
