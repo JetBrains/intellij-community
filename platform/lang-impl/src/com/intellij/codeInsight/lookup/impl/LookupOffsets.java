@@ -143,10 +143,10 @@ public class LookupOffsets extends DocumentAdapter {
     myRemovedPrefix = 0;
   }
 
-  void restorePrefix(int lookupStart) {
-    if (myInitialPrefix != null) {
-      myEditor.getDocument().replaceString(lookupStart, myEditor.getCaretModel().getOffset(), myInitialPrefix);
-    }
+  void restorePrefix() {
+    if (myInitialPrefix == null || !myLookupStartMarker.isValid()) return;
+
+    myEditor.getDocument().replaceString(myLookupStartMarker.getStartOffset(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
   }
 
   void disposeMarkers() {
