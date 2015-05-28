@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,22 +29,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author maxim
  */
-public abstract class NamedObjectProviderBinding implements ProviderBinding {
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new THashMap<String, List<ProviderInfo<ElementPattern>>>(5);
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<String, List<ProviderInfo<ElementPattern>>>(5);
+abstract class NamedObjectProviderBinding<Provider> implements ProviderBinding<Provider> {
+  private final Map<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMap = new THashMap<String, List<ProviderInfo<Provider,ElementPattern>>>(5);
+  private final Map<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<String, List<ProviderInfo<Provider, ElementPattern>>>(5);
 
-  public void registerProvider(@NonNls @NotNull String[] names,
-                               @NotNull ElementPattern filter,
-                               boolean caseSensitive,
-                               @NotNull PsiReferenceProvider provider,
-                               final double priority) {
-    final Map<String, List<ProviderInfo<ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
+  void registerProvider(@NonNls @NotNull String[] names,
+                        @NotNull ElementPattern filter,
+                        boolean caseSensitive,
+                        @NotNull Provider provider,
+                        final double priority) {
+    final Map<String, List<ProviderInfo<Provider, ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (final String attributeName : names) {
       String key = caseSensitive ? attributeName : attributeName.toLowerCase();
@@ -90,14 +91,16 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   @Nullable
   protected abstract String getName(final PsiElement position);
 
-  private static void addMatchingProviders(final PsiElement position,
-                                           @Nullable final List<ProviderInfo<ElementPattern>> providerList,
-                                           @NotNull List<ProviderInfo<ProcessingContext>> ret,
-                                           PsiReferenceService.Hints hints) {
+  static <Provider> void addMatchingProviders(@NotNull PsiElement position,
+                                              @Nullable final List<ProviderInfo<Provider, ElementPattern>> providerList,
+                                              @NotNull Collection<ProviderInfo<Provider, ProcessingContext>> output,
+                                              @NotNull PsiReferenceService.Hints hints) {
     if (providerList == null) return;
 
-    for(ProviderInfo<ElementPattern> trinity:providerList) {
-      if (hints != PsiReferenceService.Hints.NO_HINTS && !trinity.provider.acceptsHints(position, hints)) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < providerList.size(); i++) {
+      ProviderInfo<Provider, ElementPattern> info = providerList.get(i);
+      if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)info.provider).acceptsHints(position, hints)) {
         continue;
       }
 
@@ -107,12 +110,12 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
       }
       boolean suitable = false;
       try {
-        suitable = trinity.processingContext.accepts(position, context);
+        suitable = info.processingContext.accepts(position, context);
       }
       catch (IndexNotReadyException ignored) {
       }
       if (suitable) {
-        ret.add(new ProviderInfo<ProcessingContext>(trinity.provider, context, trinity.priority));
+        output.add(new ProviderInfo<Provider, ProcessingContext>(info.provider, context, info.priority));
       }
     }
   }
