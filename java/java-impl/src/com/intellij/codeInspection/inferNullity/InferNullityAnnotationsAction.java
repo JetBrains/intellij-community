@@ -113,7 +113,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         });
       }
-    }, "Check applicability...", true, project)) {
+    }, "Check Applicability...", true, project)) {
       return;
     }
     if (!modulesWithLL.isEmpty()) {
@@ -295,7 +295,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         });
       }
-    }, "Preprocess usages", true, project)) return;
+    }, "Preprocess Usages", true, project)) return;
 
     if (convertUsagesRef.isNull()) return;
     final Usage[] usages = convertUsagesRef.get();
