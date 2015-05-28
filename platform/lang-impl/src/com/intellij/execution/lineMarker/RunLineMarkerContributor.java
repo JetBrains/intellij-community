@@ -25,8 +25,5 @@ public abstract class RunLineMarkerContributor {
   final static LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<RunLineMarkerContributor>("com.intellij.runLineMarkerContributor");
 
   @Nullable
-  public abstract RunLineMarkerInfo getLineMarkerInfo(PsiElement element);
-
-  @Nullable
   public abstract AnAction getAdditionalAction(PsiElement element);
 }
