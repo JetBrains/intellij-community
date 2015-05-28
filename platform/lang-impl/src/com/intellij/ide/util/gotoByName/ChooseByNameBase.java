@@ -275,9 +275,14 @@ public abstract class ChooseByNameBase {
 
     @Override
     public Object getData(String dataId) {
+      if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
+        return myTextField == null ? null : myTextField.getText();
+      }
+
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return myModel.getHelpId();
       }
+
       if (myCalcElementsThread != null) {
         return null;
       }
