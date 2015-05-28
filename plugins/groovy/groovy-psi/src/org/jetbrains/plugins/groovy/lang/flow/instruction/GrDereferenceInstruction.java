@@ -24,11 +24,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GrDereferenceInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
 
   private final @NotNull GrExpression myExpression;
-  private final @NotNull String myText;
 
   public GrDereferenceInstruction(@NotNull GrExpression expression) {
     myExpression = expression;
-    myText = expression.getText();
   }
 
   @NotNull
@@ -43,6 +41,6 @@ public class GrDereferenceInstruction<V extends GrInstructionVisitor<V>> extends
 
   @Override
   public String toString() {
-    return "DEREFERENCE: " + myText;
+    return "DEREFERENCE";
   }
 }
