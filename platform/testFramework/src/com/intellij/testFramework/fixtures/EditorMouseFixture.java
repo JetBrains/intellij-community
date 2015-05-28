@@ -18,8 +18,9 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.SystemInfo;
+import org.junit.Assert;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -107,6 +108,8 @@ public class EditorMouseFixture {
   }
   
   public EditorMouseFixture dragToXY(int x, int y) {
+    Assert.assertFalse("Cannot test mouse dragging: editor visible size is not set. Use EditorTestUtil.setEditorVisibleSize(width, height)", 
+                       myEditor.getScrollingModel().getVisibleArea().isEmpty());
     JComponent component = myEditor.getContentComponent();
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_DRAGGED,
