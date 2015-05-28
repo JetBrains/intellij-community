@@ -27,6 +27,7 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ThreeState;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
@@ -124,6 +125,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   @Override
   public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
+    // extra check for obsolete nodes - tree root was changed
+    // too dangerous to put this into isObsolete - it is called from anywhere, not only EDT
+    if (isObsolete() || !TreeUtil.isAncestor(getTree().getRoot(), this)) return;
+
     setIcon(icon);
     myValuePresentation = valuePresentation;
     myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
