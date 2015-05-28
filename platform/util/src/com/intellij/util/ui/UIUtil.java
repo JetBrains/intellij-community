@@ -2280,19 +2280,14 @@ public class UIUtil {
   }
 
   public static Point getCenterPoint(Dimension container, Dimension child) {
-    return getCenterPoint(new Rectangle(new Point(), container), child);
+    return getCenterPoint(new Rectangle(container), child);
   }
 
   public static Point getCenterPoint(Rectangle container, Dimension child) {
-    Point result = new Point();
-
-    Point containerLocation = container.getLocation();
-    Dimension containerSize = container.getSize();
-
-    result.x = containerLocation.x + containerSize.width / 2 - child.width / 2;
-    result.y = containerLocation.y + containerSize.height / 2 - child.height / 2;
-
-    return result;
+    return new Point(
+      container.x + (container.width - child.width) / 2,
+      container.y + (container.height - child.height) / 2
+    );
   }
 
   public static String toHtml(String html) {
