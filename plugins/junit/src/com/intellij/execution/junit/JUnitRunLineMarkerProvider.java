@@ -22,6 +22,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +33,21 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class JUnitRunLineMarkerProvider implements LineMarkerProvider {
+
+  private static final Function<PsiElement, String> TOOLTIP_PROVIDER = new Function<PsiElement, String>() {
+    @Override
+    public String fun(PsiElement element) {
+      return "Run Test";
+    }
+  };
+
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (element instanceof PsiClass && JUnitUtil.isTestClass((PsiClass)element, false, true))
-      return new RunLineMarkerInfo(element, JUnitConfigurationType.getInstance().getIcon(), null);
+      return new RunLineMarkerInfo(element, JUnitConfigurationType.getInstance().getIcon(), TOOLTIP_PROVIDER);
     if (element instanceof PsiMethod && JUnitUtil.isTestMethod(new PsiLocation<PsiMethod>((PsiMethod)element)))
-      return new RunLineMarkerInfo(element, JUnitConfigurationType.getInstance().getIcon(), null);
+      return new RunLineMarkerInfo(element, JUnitConfigurationType.getInstance().getIcon(), TOOLTIP_PROVIDER);
     return null;
 
   }
