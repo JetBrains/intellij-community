@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
@@ -29,6 +30,25 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
   }
 
   public void testSuperMethodRaisesNotImplementerError() {
+    doTest();
+  }
+
+  // PY-16035
+  public void testHiddenForAbstractSubclassWithExplicitMetaclass() {
+    doTest();
+  }
+
+  // PY-16035
+  public void testHiddenForAbstractSubclassWithExplicitMetaclassPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  // PY-16035
+  public void testHiddenForAbstractSubclassWithAbstractMethod() {
     doTest();
   }
 
