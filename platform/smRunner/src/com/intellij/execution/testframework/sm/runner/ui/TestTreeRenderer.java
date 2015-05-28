@@ -45,9 +45,8 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
   private final TestConsoleProperties myConsoleProperties;
   private SMRootTestProxyFormatter myAdditionalRootFormatter;
-  private int myDurationWidth = 20;
+  private int myDurationWidth = -1;
   private int myRow;
-  private Object myProperty;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
@@ -61,6 +60,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
                                     final int row,
                                     final boolean hasFocus) {
     myRow = row;
+    myDurationWidth = -1;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
     final Object userObj = node.getUserObject();
     if (userObj instanceof SMTRunnerNodeDescriptor) {
@@ -83,10 +83,9 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
       String durationString = testProxy.getDurationString();
       if (durationString != null) {
-        durationString = "  [" + durationString + "]";
-        myDurationWidth = tree.getFontMetrics(tree.getFont()).stringWidth(durationString);
-        myProperty = tree.getClientProperty(ExpandableItemsHandler.EXPANDED_RENDERER);
-        if (myProperty != null) {
+        durationString = "  " + durationString;
+        myDurationWidth = getFontMetrics(getFont()).stringWidth(durationString);
+        if (isExpandableHandlerVisibleForCurrentRow()) {
           append(durationString);
         }
       }
@@ -104,7 +103,9 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    return myProperty != null ? preferredSize : JBUI.size(preferredSize.width + myDurationWidth, preferredSize.height);
+    return myDurationWidth < 0 || isExpandableHandlerVisibleForCurrentRow() 
+           ? preferredSize 
+           : JBUI.size(preferredSize.width + myDurationWidth, preferredSize.height);
   }
 
   public TestConsoleProperties getConsoleProperties() {
@@ -124,9 +125,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   protected void doPaint(Graphics2D g) {
     
     super.doPaint(g);
-    final ExpandableItemsHandler<Integer> handler = ((Tree)myTree).getExpandableItemsHandler();
-    final Collection<Integer> items = handler.getExpandedItems();
-    if (Registry.is("tests_view_inline_statistics") && myRow >= 0 && !(items.size() == 1 && myRow == items.iterator().next())) {
+    if (Registry.is("tests_view_inline_statistics") && myRow >= 0 && !isExpandableHandlerVisibleForCurrentRow()) {
       Rectangle visibleRect = myTree.getVisibleRect();
       final Rectangle bounds = getBounds();
       Object node = myTree.getPathForRow(myRow).getLastPathComponent();
@@ -136,7 +135,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
           final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
           String durationString = testProxy.getDurationString();
           if (durationString != null) {
-            durationString = "  [" + durationString+ "]";
+            durationString = "  " + durationString;
             final Rectangle fullRowRect =
               new Rectangle(visibleRect.x, visibleRect.y + bounds.y, visibleRect.width - bounds.x, bounds.height);
             paintRowData(durationString, fullRowRect, g, myTree.isRowSelected(myRow));
@@ -144,6 +143,12 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
         }
       }
     }
+  }
+
+  private boolean isExpandableHandlerVisibleForCurrentRow() {
+    final ExpandableItemsHandler<Integer> handler = ((Tree)myTree).getExpandableItemsHandler();
+    final Collection<Integer> items = handler.getExpandedItems();
+    return items.size() == 1 && myRow == items.iterator().next();
   }
 
   private  void paintRowData(String duration, Rectangle bounds, Graphics2D g, boolean isSelected) {
