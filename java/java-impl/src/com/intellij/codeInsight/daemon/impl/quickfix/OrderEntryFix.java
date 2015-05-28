@@ -27,6 +27,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -176,14 +178,12 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              final LocateLibraryDialog dialog = new LocateLibraryDialog(currentModule, PathManager.getLibPath(), "annotations.jar",
-                                                                         QuickFixBundle.message("add.library.annotations.description"));
-              if (dialog.showAndGet()) {
+              final String libraryPath = locateAnnotationsJar(currentModule);
+              if (libraryPath != null) {
                 new WriteCommandAction(project) {
                   @Override
                   protected void run(final Result result) throws Throwable {
-                    addBundledJarToRoots(project, editor, currentModule, reference, "org.jetbrains.annotations." + referenceName,
-                                         dialog.getResultingLibraryPath());
+                    addBundledJarToRoots(project, editor, currentModule, reference, "org.jetbrains.annotations." + referenceName, libraryPath);
                   }
                 }.execute();
               }
@@ -372,19 +372,24 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   public static boolean ensureAnnotationsJarInPath(final Module module) {
     if (isAnnotationsJarInPath(module)) return true;
     if (module == null) return false;
-    final LocateLibraryDialog dialog = new LocateLibraryDialog(
-      module, PathManager.getLibPath(), "annotations.jar",
-      QuickFixBundle.message("add.library.annotations.description"));
-    if (dialog.showAndGet()) {
+    final String libraryPath = locateAnnotationsJar(module);
+    if (libraryPath != null) {
       new WriteCommandAction(module.getProject()) {
         @Override
         protected void run(final Result result) throws Throwable {
-          addJarToRoots(dialog.getResultingLibraryPath(), module, null);
+          addJarToRoots(libraryPath, module, null);
         }
       }.execute();
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  public static String locateAnnotationsJar(@NotNull Module module) {
+    String jarName = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module).isAtLeast(LanguageLevel.JDK_1_8) ? "annotations-java8.jar" : "annotations.jar";
+    final LocateLibraryDialog dialog = new LocateLibraryDialog(module, PathManager.getLibPath(), jarName, QuickFixBundle.message("add.library.annotations.description"));
+    return dialog.showAndGet() ? dialog.getResultingLibraryPath() : null;
   }
 
   public static boolean isAnnotationsJarInPath(Module module) {

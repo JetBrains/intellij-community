@@ -22,14 +22,11 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -160,11 +157,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            final LocateLibraryDialog dialog =
-              new LocateLibraryDialog(modulesWithoutAnnotations.iterator().next(), PathManager.getLibPath(), "annotations.jar",
-                                      QuickFixBundle.message("add.library.annotations.description"));
-            if (dialog.showAndGet()) {
-              final String path = dialog.getResultingLibraryPath();
+            final String path = OrderEntryFix.locateAnnotationsJar(modulesWithoutAnnotations.iterator().next());
+            if (path != null) {
               new WriteCommandAction(project) {
                 @Override
                 protected void run(@NotNull final Result result) throws Throwable {
