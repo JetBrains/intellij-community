@@ -73,7 +73,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     final DfaVariableValue dfaVariableValue = getFactory().getVarFactory().createVariableValue(variable, false);
     myAnalyzer.push(dfaVariableValue, initializer);
     initializer.accept(myAnalyzer);
-    boxUnbox(variable.getDeclaredType(), initializer.getNominalType());
+    boxUnbox(initializer, variable.getDeclaredType(), initializer.getNominalType());
     myAnalyzer.addInstruction(new GrAssignInstruction(dfaVariableValue, initializer, true));
     processDelayed();
   }
@@ -94,7 +94,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       @Override
       public int runArguments() {
         final int result = super.runArguments();
-        boxUnbox(left.getNominalType(), right.getNominalType());
+        boxUnbox(right, left.getNominalType(), right.getNominalType());
         return result;
       }
     });
@@ -191,9 +191,12 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     }
   }
 
-  void boxUnbox(PsiType expectedType, PsiType actualType) {
-    if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
-      myAnalyzer.addInstruction(new GrUnboxInstruction<V>());
+  void boxUnbox(@NotNull GrExpression anchor, @Nullable PsiType expectedType, @Nullable PsiType actualType) {
+    if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && !TypeConversionUtil.isPrimitiveAndNotNull(actualType)) {
+      if (expectedType == PsiType.BOOLEAN) {
+        myAnalyzer.addInstruction(new GrCoerceToBooleanInstruction<V>());
+      }
+      myAnalyzer.addInstruction(new GrUnboxInstruction<V>(anchor));
     }
     else if (TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(actualType)) {
       myAnalyzer.addInstruction(new GrBoxInstruction<V>());

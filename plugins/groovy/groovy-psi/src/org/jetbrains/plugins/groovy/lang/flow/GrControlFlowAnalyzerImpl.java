@@ -234,7 +234,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (arrayDeclaration != null) {
       for (GrExpression dimension : arrayDeclaration.getBoundExpressions()) {
         dimension.accept(this);
-        expressionHelper.boxUnbox(PsiType.INT, dimension.getType());
+        expressionHelper.boxUnbox(dimension, PsiType.INT, dimension.getType());
         pop();
       }
       exceptionHelper.addConditionalRuntimeThrow();
@@ -1076,7 +1076,12 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (shouldCheckReturn(element)) {
       final PsiElement containingMethod = PsiTreeUtil.getParentOfType(element, GrMethod.class, GrClosableBlock.class);
       if (containingMethod instanceof GrMethod) {
-        expressionHelper.boxUnbox(((GrMethod)containingMethod).getReturnType(), ((GrExpression)element).getType());
+        final PsiType returnType = ((GrMethod)containingMethod).getReturnType();
+        if (returnType != PsiType.VOID) {
+          final GrExpression expression = (GrExpression)element;
+          final GrMethod method = (GrMethod)containingMethod;
+          expressionHelper.boxUnbox(expression, method.getReturnType(), expression.getType());
+        }
       }
       addInstruction(new CheckReturnValueInstruction<V>(element));
       expressionHelper.processDelayed();

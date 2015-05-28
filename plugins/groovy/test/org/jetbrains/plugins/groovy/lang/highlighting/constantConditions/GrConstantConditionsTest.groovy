@@ -20,56 +20,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class GrConstantConditionsTest extends GrConstantConditionsTestBase {
 
-  void "test initialization"() {
-    testHighlighting '''
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.annotations.NotNull
-
-def nullInitialization() {
-    @NotNull b = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>
-}
-
-def nullableInitialization(@Nullable a) {
-    @NotNull b = <warning descr="Expression 'a' might evaluate to null but is assigned to a variable that is annotated with @NotNull">a</warning>
-}
-
-def unknownInitialization(a) {
-    @NotNull b = a
-}
-'''
-  }
-
-  void "test assignments"() {
-    testHighlighting '''
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.annotations.NotNull
-
-def nullAssignment() {
-    @NotNull b
-    b = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>
-}
-
-def nullableAssignment(@Nullable a) {
-    @NotNull b
-    b = <warning descr="Expression 'a' might evaluate to null but is assigned to a variable that is annotated with @NotNull">a</warning>
-}
-
-def unknownAssignment(a) {
-    @NotNull b
-    b = a
-}
-
-def "assign not-null to nullable"(@NotNull a) {
-    @Nullable b = a
-    @NotNull c = b
-}
-
-def "assign nullable to unknown"() {
-    def a = null
-    @NotNull b = <warning descr="Expression 'a' might evaluate to null but is assigned to a variable that is annotated with @NotNull">a</warning>
-}
-'''
-  }
+  void "test initialization and assignments"() { doTest() }
 
   void "test qualifiers"() {
     testHighlighting '''

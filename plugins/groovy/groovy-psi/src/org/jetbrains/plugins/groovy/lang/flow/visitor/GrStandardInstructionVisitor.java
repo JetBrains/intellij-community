@@ -80,6 +80,9 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   @Override
   public DfaInstructionState<V>[] visitUnboxInstruction(GrUnboxInstruction<V> instruction, DfaMemoryState state) {
     final DfaValue value = state.pop();
+    if (!checkNotNullable(state, value, unboxingNullable, instruction.getAnchor())) {
+      forceNotNull(myRunner.getFactory(), state, value);
+    }
     state.push(myFactory.getBoxedFactory().createUnboxed(value));
     return nextInstruction(instruction, state);
   }

@@ -19,8 +19,20 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public class GrUnboxInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
+
+  private final @NotNull GrExpression anchor;
+
+  public GrUnboxInstruction(@NotNull GrExpression anchor) {
+    this.anchor = anchor;
+  }
+
+  @NotNull
+  public GrExpression getAnchor() {
+    return anchor;
+  }
 
   @Override
   public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
