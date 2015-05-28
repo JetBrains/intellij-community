@@ -17,9 +17,9 @@ package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -72,6 +73,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
+  private int myChangesCount = -1;
+  private int myConflictsCount = -1;
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -220,8 +223,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
+        myChangesCount = 0;
+        myConflictsCount = 0;
         for (MergeLineFragment fragment : fragments) {
-          myDiffChanges.add(new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy));
+          SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy);
+          myDiffChanges.add(change);
+          if (change.getDiffType() != TextDiffType.CONFLICT) myChangesCount++;
+          if (change.getDiffType() == TextDiffType.CONFLICT) myConflictsCount++;
         }
 
         myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
@@ -261,6 +269,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       change.destroyHighlighter();
     }
     myInvalidDiffChanges.clear();
+
+    myChangesCount = -1;
+    myConflictsCount = -1;
 
     myFoldingModel.destroy();
 
@@ -574,9 +585,22 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   private class MyStatusPanel extends StatusPanel {
+    @Nullable
     @Override
-    protected int getChangesCount() {
-      return myDiffChanges.size() + myInvalidDiffChanges.size();
+    protected String getMessage() {
+      if (myChangesCount < 0 || myConflictsCount < 0) return null;
+      if (myChangesCount == 0 && myConflictsCount == 0) {
+        return DiffBundle.message("merge.dialog.all.conflicts.resolved.message.text");
+      }
+      return makeCounterWord(myChangesCount, "change") + ". " + makeCounterWord(myConflictsCount, "conflict");
+    }
+
+    @NotNull
+    private String makeCounterWord(int number, @NotNull String word) {
+      if (number == 0) {
+        return "No " + StringUtil.pluralize(word);
+      }
+      return number + " " + StringUtil.pluralize(word, number);
     }
   }
 
