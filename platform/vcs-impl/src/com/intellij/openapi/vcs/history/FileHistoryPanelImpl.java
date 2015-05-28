@@ -1104,7 +1104,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
       if (Boolean.TRUE.equals(nonLocal)) return null;
 
-      return e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      if (file == null || file.isDirectory()) return null;
+
+      VirtualFile localVirtualFile = getVirtualFile();
+      if (localVirtualFile.getFileType().isBinary() && myFilePath.getFileType().isBinary()) return null;
+
+      return file;
     }
 
     @Nullable
