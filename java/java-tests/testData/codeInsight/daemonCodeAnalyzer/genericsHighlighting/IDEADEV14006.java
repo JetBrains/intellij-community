@@ -13,6 +13,6 @@ class Test2 {}
 
 class Test {
     public void test(TestIF<?> testIF) {
-        testIF.run<error descr="'run(capture<? extends TestIF2<? extends Test2>>)' in 'TestIF' cannot be applied to '()'">()</error>;
+        testIF.run<error descr="'run(capture<?>)' in 'TestIF' cannot be applied to '()'">()</error>;
     }
 }
