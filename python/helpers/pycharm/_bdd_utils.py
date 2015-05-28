@@ -9,7 +9,7 @@ import os
 import time
 import abc
 import tcmessages
-from utils import VersionAgnosticUtils
+from _jb_utils import VersionAgnosticUtils
 
 __author__ = 'Ilya.Kazakevich'
 
