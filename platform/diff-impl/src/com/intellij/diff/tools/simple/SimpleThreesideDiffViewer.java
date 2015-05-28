@@ -72,7 +72,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull private final MyStatusPanel myStatusPanel;
 
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
-  @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
   private int myChangesCount = -1;
   private int myConflictsCount = -1;
 
@@ -265,11 +264,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
     myDiffChanges.clear();
 
-    for (SimpleThreesideDiffChange change : myInvalidDiffChanges) {
-      change.destroyHighlighter();
-    }
-    myInvalidDiffChanges.clear();
-
     myChangesCount = -1;
     myConflictsCount = -1;
 
@@ -314,13 +308,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     for (SimpleThreesideDiffChange change : myDiffChanges) {
       if (change.processChange(line1, line2, shift, side)) {
         invalid.add(change);
+        change.destroyHighlighter();
       }
     }
-
-    if (!invalid.isEmpty()) {
-      myDiffChanges.removeAll(invalid);
-      myInvalidDiffChanges.addAll(invalid);
-    }
+    myDiffChanges.removeAll(invalid);
   }
 
   @Override

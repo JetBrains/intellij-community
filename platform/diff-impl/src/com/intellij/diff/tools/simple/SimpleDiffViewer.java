@@ -70,7 +70,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final StatusPanel myStatusPanel;
 
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<SimpleDiffChange>();
-  @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -281,11 +280,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
     myDiffChanges.clear();
 
-    for (SimpleDiffChange change : myInvalidDiffChanges) {
-      change.destroyHighlighter();
-    }
-    myInvalidDiffChanges.clear();
-
     myFoldingModel.destroy();
 
     myContentPanel.repaintDivider();
@@ -322,13 +316,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     for (SimpleDiffChange change : myDiffChanges) {
       if (change.processChange(line1, line2, shift, side)) {
         invalid.add(change);
+        change.destroyHighlighter();
       }
     }
-
-    if (!invalid.isEmpty()) {
-      myDiffChanges.removeAll(invalid);
-      myInvalidDiffChanges.addAll(invalid);
-    }
+    myDiffChanges.removeAll(invalid);
   }
 
   @Override
@@ -840,7 +831,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class MyStatusPanel extends StatusPanel {
     @Override
     protected int getChangesCount() {
-      return myDiffChanges.size() + myInvalidDiffChanges.size();
+      return myDiffChanges.size();
     }
   }
 
