@@ -37,6 +37,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,14 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
-    if (XDebuggerManager.getInstance(myProject).getCurrentSession() == null) {
+    XDebugSession session = XDebuggerManager.getInstance(myProject).getCurrentSession();
+    if (session == null) {
+      FILE_PROCESSED_KEY.set(file, null);
+      return null;
+    }
+
+    XSourcePosition position = session.getCurrentPosition();
+    if (position == null || !file.equals(position.getFile())) {
       FILE_PROCESSED_KEY.set(file, null);
       return null;
     }
