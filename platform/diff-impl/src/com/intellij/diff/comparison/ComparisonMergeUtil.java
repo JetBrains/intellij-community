@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class MergeUtil {
+public class ComparisonMergeUtil {
   @NotNull
   public static List<MergeLineFragment> buildFair(@NotNull FairDiffIterable fragments1,
                                                   @NotNull FairDiffIterable fragments2,
