@@ -212,6 +212,17 @@ class LineLayout {
     return false;
   }
 
+  boolean isDirectionBoundary(int offset) {
+    boolean prevIsRtl = false;
+    for (BidiRun run : myBidiRunsInLogicalOrder) {
+      boolean curIsRtl = run.isRtl();
+      if (offset == run.startOffset && curIsRtl != prevIsRtl) return true;
+      if (offset < run.endOffset) return false;
+      prevIsRtl = curIsRtl;
+    }
+    return prevIsRtl;
+  }
+  
   private static class BidiRun {
     private final byte level;
     private final int startOffset;

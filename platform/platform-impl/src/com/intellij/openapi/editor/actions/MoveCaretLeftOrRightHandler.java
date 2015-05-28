@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,8 +69,14 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
         }
       }
     }
-    final boolean scrollToCaret = (!(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret())
-                                  && caret == editor.getCaretModel().getPrimaryCaret();
-    caretModel.moveCaretRelatively(myDirection == Direction.RIGHT ? 1 : -1, 0, false, false, scrollToCaret);
+    VisualPosition currentPosition = caret.getVisualPosition();
+    if (caret.isAtDirectionBoundary() && (myDirection == Direction.RIGHT ^ currentPosition.leansRight)) {
+      caret.moveToVisualPosition(currentPosition.leanRight(!currentPosition.leansRight));
+    }
+    else {
+      final boolean scrollToCaret = (!(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret())
+                                    && caret == editor.getCaretModel().getPrimaryCaret();
+      caretModel.moveCaretRelatively(myDirection == Direction.RIGHT ? 1 : -1, 0, false, false, scrollToCaret);
+    }
   }
 }
