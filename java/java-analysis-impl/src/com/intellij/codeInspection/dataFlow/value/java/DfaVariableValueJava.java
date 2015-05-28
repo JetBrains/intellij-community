@@ -24,20 +24,16 @@
  */
 package com.intellij.codeInspection.dataFlow.value.java;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.FieldNullabilityCalculator;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
@@ -92,38 +88,10 @@ public class DfaVariableValueJava extends DfaVariableValue {
     }
 
     if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
-      List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
-      if (initializers.isEmpty()) {
-        return defaultNullability;
+      final Nullness fieldNullability = FieldNullabilityCalculator.calculateNullability((PsiField)var);
+      if (fieldNullability != Nullness.UNKNOWN) {
+        return fieldNullability;
       }
-
-      boolean hasUnknowns = false;
-      for (PsiExpression expression : initializers) {
-        if (!(expression instanceof PsiReferenceExpression)) {
-          hasUnknowns = true;
-          continue;
-        }
-        PsiElement target = ((PsiReferenceExpression)expression).resolve();
-        if (!(target instanceof PsiParameter)) {
-          hasUnknowns = true;
-          continue;
-        }
-        if (NullableNotNullManager.isNullable((PsiParameter)target)) {
-          return Nullness.NULLABLE;
-        }
-        if (!NullableNotNullManager.isNotNull((PsiParameter)target)) {
-          hasUnknowns = true;
-        }
-      }
-
-      if (hasUnknowns) {
-        if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
-          return Nullness.NOT_NULL;
-        }
-        return defaultNullability;
-      }
-
-      return Nullness.NOT_NULL;
     }
 
     return defaultNullability;

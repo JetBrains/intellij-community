@@ -382,6 +382,6 @@
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
 
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
-
+    <fieldNullabilityCalculator implementation="com.intellij.codeInspection.dataFlow.JavaFieldNullabilityCalculator"/>
   </extensions>
 </idea-plugin>

@@ -242,5 +242,6 @@
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
     <extensionPoint name="runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate"/>
+    <extensionPoint name="fieldNullabilityCalculator" interface="com.intellij.codeInspection.dataFlow.FieldNullabilityCalculator"/>
   </extensionPoints>
 </idea-plugin>
