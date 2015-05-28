@@ -89,7 +89,10 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private void internListToLift(LookupElement longer) {
-    myToLift.put(longer, myListInterner.intern(myToLift.get(longer)));
+    final Collection<LookupElement> elements = myToLift.get(longer);
+    if (elements.size() > 10) return;
+
+    myToLift.put(longer, myListInterner.intern(elements));
   }
 
   private void calculateToLift(LookupElement element) {
