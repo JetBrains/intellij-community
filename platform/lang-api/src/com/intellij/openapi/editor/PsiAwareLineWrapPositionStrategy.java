@@ -96,7 +96,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
         TextRange textRange = element.getTextRange();
         int start = Math.max(textRange.getStartOffset(), startOffset);
         int end = Math.min(textRange.getEndOffset(), endOffset);
-        int result = doCalculateWrapPosition(document, project, start, end, end, false, virtual);
+        int result = doCalculateWrapPosition(document, project, start, end, maxPreferredOffset, false, virtual);
         if (result >= 0) {
           return result;
         }
