@@ -26,49 +26,49 @@ public class RestApiTest {
   Rule
   public fun getChain(): RuleChain = _chain
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "", status = 400)
   public fun fileEmptyRequest() {
     doTest()
   }
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "foo.txt", relativeToProject = true, status = 200)
   public fun relativeToProject() {
     doTest()
   }
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, status = 200)
   public fun relativeToProjectWithLine() {
     doTest()
   }
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "foo.txt", relativeToProject = true, line = 1, column = 13, status = 200)
   public fun relativeToProjectWithLineAndColumn() {
     doTest()
   }
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "fileInExcludedDir.txt", excluded = true, status = 200)
   public fun inExcludedDir() {
     doTest()
   }
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "bar/42/foo.txt", doNotCreate = true, status = 404)
   public fun relativeNonExistent() {
     doTest()
   }
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "_tmp_", doNotCreate = true, status = 404)
   public fun absoluteNonExistent() {
     doTest()
   }
 
-  Test
+  Test(timeout = 60000)
   TestDescriptor(filePath = "_tmp_", status = 200)
   public fun absolute() {
     doTest()
