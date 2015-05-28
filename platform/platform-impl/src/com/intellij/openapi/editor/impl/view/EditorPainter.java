@@ -656,9 +656,9 @@ class EditorPainter {
         g.fillRect(x, y, lineWidth, lineHeight);
         if (myDocument.getTextLength() > 0 && caret != null && !myView.getLineLayout(caret.getLogicalPosition().line).isLtr()) {
           g.fillPolygon(new int[]{
-                          isRtl ? x + lineWidth - 1 : x,
-                          isRtl ? x + lineWidth - 1 - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
-                          isRtl ? x + lineWidth - 1 : x
+                          isRtl ? x + lineWidth : x,
+                          isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
+                          isRtl ? x + lineWidth : x
                         },
                         new int[]{y, y, y + CARET_DIRECTION_MARK_SIZE}, 3);
         }
