@@ -242,4 +242,9 @@ public class InjectedCaret implements Caret {
   public boolean isAtRtlLocation() {
     return myDelegate.isAtRtlLocation();
   }
+
+  @Override
+  public boolean isAtDirectionBoundary() {
+    return myDelegate.isAtDirectionBoundary();
+  }
 }

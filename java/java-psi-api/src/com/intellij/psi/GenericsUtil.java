@@ -509,7 +509,7 @@ public class GenericsUtil {
       final PsiType bound = ((PsiWildcardType)type).getBound();
       return eliminateWildcards(bound != null ? bound : ((PsiWildcardType)type).getExtendsBound(), false);//object
     } else if (type instanceof PsiCapturedWildcardType && !eliminateInTypeArguments) {
-      return eliminateWildcards(((PsiCapturedWildcardType)type).getWildcard(), eliminateInTypeArguments);
+      return ((PsiCapturedWildcardType)type).getUpperBound();
     }
     return type;
   }

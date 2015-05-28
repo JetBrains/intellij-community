@@ -235,6 +235,29 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertLogicalPositionsEqual("Wrong logical position", lF(1), myEditor.getCaretModel().getLogicalPosition());
   }
 
+  public void testNavigationWithArrowKeys() throws Exception {
+    init("llrrll\nllrrll");
+    assertCaretPosition(vL(0));
+    right();
+    assertCaretPosition(vL(1));
+    right();
+    assertCaretPosition(vL(2));
+    right();
+    assertCaretPosition(vR(2));
+    right();
+    assertCaretPosition(vL(3));
+    right();
+    assertCaretPosition(vL(4));
+    down();
+    assertCaretPosition(v(1, 4, false));
+    left();
+    assertCaretPosition(v(1, 3, true));
+    left();
+    assertCaretPosition(v(1, 2, true));
+    up();
+    assertCaretPosition(vR(2));
+  }
+
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
   }
@@ -298,6 +321,10 @@ public class EditorRtlTest extends AbstractEditorTest {
   private static void assertVisualPositionsEqual(String message, VisualPosition expectedPosition, VisualPosition actualPosition) {
     assertEquals(message, expectedPosition, actualPosition);
     assertEquals(message + " (direction flag)", expectedPosition.leansRight, actualPosition.leansRight);
+  }
+
+  private static void assertCaretPosition(VisualPosition visualPosition) {
+    assertVisualPositionsEqual("Wrong caret position", visualPosition, myEditor.getCaretModel().getVisualPosition());
   }
   
   // logical position leaning backward

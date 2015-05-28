@@ -574,6 +574,22 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction("EditorSelectLine");
   }
 
+  protected static void left() {
+    executeAction("EditorLeft");
+  }
+
+  protected static void right() {
+    executeAction("EditorRight");
+  }
+
+  protected static void up() {
+    executeAction("EditorUp");
+  }
+
+  protected static void down() {
+    executeAction("EditorDown");
+  }
+
   protected static void lineComment() {
     new CommentByLineCommentAction().actionPerformedImpl(getProject(), getEditor());
   }

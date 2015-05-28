@@ -6,6 +6,6 @@ interface B<T extends Cloneable> {
 
 class D {
     void bar(B<?> x, List<?> y) {
-        x.foo<error descr="'foo(java.util.List<? super capture<? extends java.lang.Cloneable>>)' in 'B' cannot be applied to '(java.util.List<capture<?>>)'">(y)</error>;
+        x.foo<error descr="'foo(java.util.List<? super capture<?>>)' in 'B' cannot be applied to '(java.util.List<capture<?>>)'">(y)</error>;
     }
 }

@@ -77,6 +77,13 @@ public class VisualPosition {
     return line > other.line;
   }
 
+  /**
+   * Constructs a new <code>VisualPosition</code> instance with a given value of {@link #leansRight} flag.
+   */
+  public VisualPosition leanRight(boolean value) {
+    return new VisualPosition(line, column, value);
+  }
+
   @NonNls
   public String toString() {
     return "VisualPosition: (" + line + ", " + column+")" + (leansRight ? " leans right" : "");

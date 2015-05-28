@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,7 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(editor.getDocument().getImmutableCharSequence(), lineStartOffset, lineEndOffset);
-    List<BidiRun> runs = createRuns(chars);
+    List<BidiRun> runs = createRuns(editor, chars);
     for (BidiRun run : runs) {
       IterationState it = new IterationState(editor, lineStartOffset + run.startOffset, lineStartOffset + run.endOffset, 
                                              false, false, false, false);
@@ -101,7 +100,7 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(text);
-    List<BidiRun> runs = createRuns(chars);
+    List<BidiRun> runs = createRuns(editor, chars);
     for (BidiRun run : runs) {
       addFragments(run, chars, run.startOffset, run.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
       assert !run.fragments.isEmpty();
@@ -109,8 +108,8 @@ class LineLayout {
     return runs;
   }
   
-  private static List<BidiRun> createRuns(char[] text) {
-    if (Registry.is("editor.disable.rtl")) return Collections.singletonList(new BidiRun((byte)0, 0, text.length));
+  private static List<BidiRun> createRuns(EditorImpl editor, char[] text) {
+    if (editor.myDisableRtl) return Collections.singletonList(new BidiRun((byte)0, 0, text.length));
     Bidi bidi = new Bidi(text, 0, null, 0, text.length, Bidi.DIRECTION_LEFT_TO_RIGHT);
     int runCount = bidi.getRunCount();
     List<BidiRun> runs = new ArrayList<BidiRun>(runCount);
@@ -212,6 +211,17 @@ class LineLayout {
     return false;
   }
 
+  boolean isDirectionBoundary(int offset) {
+    boolean prevIsRtl = false;
+    for (BidiRun run : myBidiRunsInLogicalOrder) {
+      boolean curIsRtl = run.isRtl();
+      if (offset == run.startOffset && curIsRtl != prevIsRtl) return true;
+      if (offset < run.endOffset) return false;
+      prevIsRtl = curIsRtl;
+    }
+    return prevIsRtl;
+  }
+  
   private static class BidiRun {
     private final byte level;
     private final int startOffset;

@@ -2085,6 +2085,15 @@ public class UIUtil {
     return new Color(actual.getRed(), actual.getGreen(), actual.getBlue(), alpha);
   }
 
+  /**
+   * @param component to check whether it can be focused or not
+   * @return {@code true} if component is not {@code null} and can be focused
+   * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
+   */
+  public static boolean isFocusable(JComponent component) {
+    return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
+  }
+
   public static void requestFocus(@NotNull final JComponent c) {
     if (c.isShowing()) {
       c.requestFocus();

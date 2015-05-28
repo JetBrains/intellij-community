@@ -566,7 +566,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
               if (oldElement.getClass().equals(newElement.getClass())) {
                 treeEvent.setOldParent(oldParentDir);
                 treeEvent.setNewParent(newParentDir);
-                treeEvent.setChild(newElement);
+                treeEvent.setChild(oldElement);
                 myManager.childMoved(treeEvent);
               }
               else {

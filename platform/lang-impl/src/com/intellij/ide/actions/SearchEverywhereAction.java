@@ -1761,6 +1761,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   }
                 }
               }
+            } else {
+              classes.add(o);
             }
             return true;
           }

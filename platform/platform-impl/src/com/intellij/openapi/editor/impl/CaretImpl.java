@@ -267,6 +267,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
         int newLineNumber = visualCaret.line + lineShift;
         int newColumnNumber = visualCaret.column + columnShift;
+        boolean newLeansRight = lineShift == 0 && columnShift != 0 ? columnShift < 0 : visualCaret.leansRight;
+        
         if (desiredX >= 0) {
           newColumnNumber = myEditor.xyToVisualPosition(new Point(desiredX, Math.max(0, newLineNumber) * myEditor.getLineHeight())).column;
         }
@@ -305,13 +307,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
         VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
         if (!myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
-          LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
+          LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber, newLeansRight));
           int offset = myEditor.logicalPositionToOffset(log);
           if (offset >= document.getTextLength()) {
-            int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength()).column;
+            int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength(), true).column;
             // We want to move caret to the last column if if it's located at the last line and 'Down' is pressed.
             if (lastOffsetColumn > newColumnNumber) {
               newColumnNumber = lastOffsetColumn;
+              newLeansRight = true;
               desiredX = -1;
               lastColumnNumber = -1;
             }
@@ -321,7 +324,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
             if (offset >= 0 && offset < document.getTextLength()) {
               if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == myOffset)) {
                 if (columnShift <= 0) {
-                  newColumnNumber = myEditor.offsetToVisualPosition(offset).column;
+                  newColumnNumber = myEditor.offsetToVisualPosition(offset, true).column;
                 }
                 else {
                   SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
@@ -339,7 +342,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
           }
         }
 
-        pos = new VisualPosition(newLineNumber, newColumnNumber);
+        pos = new VisualPosition(newLineNumber, newColumnNumber, newLeansRight);
         if (columnShift != 0 && lineShift == 0 && myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
           LogicalPosition logical = myEditor.visualToLogicalPosition(pos);
           int softWrapOffset = myEditor.logicalPositionToOffset(logical);
@@ -1464,6 +1467,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   @Override
   public boolean isAtRtlLocation() {
     return myEditor.myUseNewRendering && myEditor.myView.isRtlLocation(myOffset, myLogicalCaret.leansForward);
+  }
+
+  @Override
+  public boolean isAtDirectionBoundary() {
+    return myEditor.myUseNewRendering && myEditor.myView.isDirectionBoundary(myOffset);
   }
 
   /**

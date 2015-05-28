@@ -97,8 +97,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean ACTIVATE_RIGHT_EDITOR_ON_CLOSE = false;
   @Deprecated
   public boolean ANTIALIASING_IN_EDITOR = true;
-  public boolean ANTIALIASING_IN_IDE = !UIUtil.isRetina() && ANTIALIASING_IN_EDITOR;
-  public LCDRenderingScope LCD_RENDERING_SCOPE = LCDRenderingScope.IDE;
+  public boolean ANTIALIASING_IN_IDE = ANTIALIASING_IN_EDITOR;
+  public LCDRenderingScope LCD_RENDERING_SCOPE = UIUtil.isRetina() ? LCDRenderingScope.OFF : LCDRenderingScope.IDE;
   public boolean USE_LCD_RENDERING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;

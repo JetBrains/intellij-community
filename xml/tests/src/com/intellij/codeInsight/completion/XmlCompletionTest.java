@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -346,6 +347,18 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     configureByFile(getTestName(true) + ".xml");
     assertEmpty(myFixture.getLookupElements());
     checkResultByFile(getTestName(true) + ".xml");
+  }
+
+  public void testAttributeNoQuotes() throws Throwable {
+    boolean oldInsertQuotes = WebEditorOptions.getInstance().isInsertQuotesForAttributeValue();
+    WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(false);
+    try {
+      configureByFile(getTestName(false) + ".xml");
+      selectItem(myFixture.getLookupElements()[0], '\t');
+      checkResultByFile(getTestName(false) + "_after.xml");
+    } finally {
+      WebEditorOptions.getInstance().setInsertQuotesForAttributeValue(oldInsertQuotes);
+    }
   }
 
   public void testBeforeAttributeNameWithPrefix() throws Exception {

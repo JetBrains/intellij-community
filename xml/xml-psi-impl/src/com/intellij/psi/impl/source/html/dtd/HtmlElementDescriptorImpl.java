@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -70,6 +71,30 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     if (!myCaseSensitive) name = name.toLowerCase();
 
     XmlElementDescriptor xmlElementDescriptor = getElementDescriptor(name, element);
+    if (xmlElementDescriptor == null && "html".equals(getName())) {
+      XmlTag head = null;
+      XmlTag body = null;
+
+      for (XmlTag child : PsiTreeUtil.getChildrenOfTypeAsList(contextTag, XmlTag.class)) {
+        if ("head".equals(child.getName())) head = child;
+        if ("body".equals(child.getName())) body = child;
+      }
+      if (head == null) {
+        if (body == null || element.getTextOffset() < body.getTextOffset()) {
+          XmlElementDescriptor headDescriptor = getElementDescriptor("head", contextTag);
+          if (headDescriptor != null) {
+            xmlElementDescriptor = headDescriptor.getElementDescriptor(element, contextTag);
+          }
+        }
+      }
+      if (xmlElementDescriptor == null && body == null) {
+        XmlElementDescriptor bodyDescriptor = getElementDescriptor("body", contextTag);
+        if (bodyDescriptor != null) {
+          xmlElementDescriptor = bodyDescriptor.getElementDescriptor(element, contextTag);
+        }
+      }
+
+    }
     if (xmlElementDescriptor == null && myRelaxed) {
       xmlElementDescriptor = RelaxedHtmlFromSchemaElementDescriptor.getRelaxedDescriptor(this, element);
     }
