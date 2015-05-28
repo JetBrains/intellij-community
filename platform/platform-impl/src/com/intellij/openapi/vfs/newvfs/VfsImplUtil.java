@@ -231,7 +231,7 @@ public class VfsImplUtil {
         public void run() {
           LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         }
-      }, ModalityState.defaultModalityState());
+      }, ModalityState.NON_MODAL);
     }
 
     @SuppressWarnings("unchecked") T t = (T)handler;
