@@ -92,14 +92,14 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     return foldRegion.getPlaceholderText().length();
   }
 
-  private int getVisualColumnForXInsideFoldRegion(FoldRegion foldRegion, float x) {
+  private int[] getVisualColumnForXInsideFoldRegion(FoldRegion foldRegion, float x) {
     LineLayout layout = myView.getFoldRegionLayout(foldRegion);
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
       if (x <= fragment.getEndX()) {
         return fragment.xToVisualColumn(x);
       }
     }
-    return getFoldRegionWidthInColumns(foldRegion);
+    return new int[] {getFoldRegionWidthInColumns(foldRegion), 1};
   }
 
   private float getXForVisualColumnInsideFoldRegion(FoldRegion foldRegion, int column) { 
@@ -209,11 +209,18 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
              myDelegate.visualToLogicalColumn(column);
     }
 
-    int xToVisualColumn(float x) {
-      return myDelegate == null ? 
-             getStartVisualColumn() + 
-             getVisualColumnForXInsideFoldRegion(myFoldRegion, x - (myCurrentX - getFoldRegionWidthInPixels(myFoldRegion))) : 
-             myDelegate.xToVisualColumn(x);
+    // returns array of two elements 
+    // - first one is visual column, 
+    // - second one is 1 if target location is closer to larger columns and 0 otherwise
+    int[] xToVisualColumn(float x) {
+      if (myDelegate == null) {
+        int[] column = getVisualColumnForXInsideFoldRegion(myFoldRegion, x - (myCurrentX - getFoldRegionWidthInPixels(myFoldRegion)));
+        column[0] += getStartVisualColumn();
+        return column;
+      }
+      else {
+        return myDelegate.xToVisualColumn(x);
+      }
     }
 
     float visualColumnToX(int column) {

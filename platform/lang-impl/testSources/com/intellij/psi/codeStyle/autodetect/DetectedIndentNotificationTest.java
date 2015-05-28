@@ -66,6 +66,31 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     assert isNotificationShown(vFile);
   }
 
+  public void test_DoNotNotify_IfIndentDetected_AndNotificationDisabled() throws Exception {
+    mySettings.SHOW_DETECTED_INDENT_NOTIFICATION = false;
+    myFixture.configureByText("Test.java",
+                              "class Test {\n" +
+                              "  public void main() {\n" +
+                              "    int a;<caret>\n" +
+                              "    int b;\n" +
+                              "  }\n" +
+                              "}");
+
+    PsiFile file = myFixture.getFile();
+    VirtualFile vFile = file.getVirtualFile();
+
+    assert !isNotificationShown(vFile);
+    myFixture.type('\n');
+    myFixture.checkResult("class Test {\n" +
+                          "  public void main() {\n" +
+                          "    int a;\n" +
+                          "    <caret>\n" +
+                          "    int b;\n" +
+                          "  }\n" +
+                          "}");
+    assert !isNotificationShown(vFile);
+  }
+
   public void testNoNotification_WhenNothingDetected() throws Exception {
     myFixture.configureByText("Test.java",
                               "class Test {\n" +

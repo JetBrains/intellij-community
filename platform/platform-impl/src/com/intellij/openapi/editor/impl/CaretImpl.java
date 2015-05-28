@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -428,24 +428,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     int softWrapLinesBefore = pos.softWrapLinesBeforeCurrentLogicalLine;
     int softWrapLinesCurrent = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
+    boolean leansForward = pos.leansForward;
+    boolean leansRight = pos.visualPositionLeansRight;
 
     Document doc = myEditor.getDocument();
-
-    if (column < 0) {
-      if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical column to zero as it is negative (").append(column).append(")\n");
-      }
-      column = 0;
-      softWrapColumns = 0;
-    }
-    if (line < 0) {
-      if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical line to zero as it is negative (").append(line).append(")\n");
-      }
-      line = 0;
-      softWrapLinesBefore = 0;
-      softWrapLinesCurrent = 0;
-    }
 
     int lineCount = doc.getLineCount();
     if (lineCount == 0) {
@@ -473,6 +459,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       if (column > lineEndColumnNumber) {
         int oldColumn = column;
         column = lineEndColumnNumber;
+        leansForward = true;
+        leansRight = true;
         if (softWrapColumns != 0) {
           softWrapColumns -= column - lineEndColumnNumber;
         }
@@ -493,11 +481,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     LogicalPosition logicalPositionToUse;
     if (pos.visualPositionAware) {
       logicalPositionToUse = new LogicalPosition(
-        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff, 
+        leansForward, leansRight
       );
     }
     else {
-      logicalPositionToUse = new LogicalPosition(line, column);
+      logicalPositionToUse = new LogicalPosition(line, column, leansForward);
     }
     final int offset = myEditor.logicalPositionToOffset(logicalPositionToUse);
     if (debugBuffer != null) {
@@ -643,10 +632,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myDesiredX = -1;
     int column = pos.column;
     int line = pos.line;
-
-    if (column < 0) column = 0;
-
-    if (line < 0) line = 0;
+    boolean leanRight = pos.leansRight;
 
     int lastLine = myEditor.getVisibleLineCount() - 1;
     if (lastLine <= 0) {
@@ -663,6 +649,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       int lineEndColumn = EditorUtil.getLastVisualLineColumnNumber(myEditor, line);
       if (column > lineEndColumn) {
         column = lineEndColumn;
+        leanRight = true;
       }
 
       if (column < 0 && line > 0) {
@@ -671,7 +658,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
       }
     }
 
-    myVisibleCaret = new VisualPosition(line, column);
+    myVisibleCaret = new VisualPosition(line, column, leanRight);
 
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldPosition = myLogicalCaret;
@@ -819,8 +806,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   }
 
   private void updateVisualLineInfo() {
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0), true, false));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0), true, false));
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
   void updateCaretPosition(@NotNull final DocumentEventImpl event) {
@@ -1472,6 +1459,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   @Override
   public String toString() {
     return "Caret at " + myVisibleCaret + (mySelectionMarker == null ? "" : (", selection marker: " + mySelectionMarker.toString()));
+  }
+
+  @Override
+  public boolean isAtRtlLocation() {
+    return myEditor.myUseNewRendering && myEditor.myView.isRtlLocation(myOffset, myLogicalCaret.leansForward);
   }
 
   /**

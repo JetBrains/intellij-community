@@ -265,7 +265,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     reportNullableArguments(visitor, holder, reportedAnchors);
     reportNullableAssignments(visitor, holder, reportedAnchors);
     reportUnboxedNullables(visitor, holder, reportedAnchors);
-    reportNullableReturns(visitor, holder, reportedAnchors, getScopeMethod(scope));
+    reportNullableReturns(visitor, holder, reportedAnchors, scope);
     if (SUGGEST_NULLABLE_ANNOTATIONS) {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
     }
@@ -507,15 +507,19 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void reportNullableReturns(DataFlowInstructionVisitor visitor,
                                      ProblemsHolder holder,
                                      Set<PsiElement> reportedAnchors,
-                                     @Nullable PsiMethod method) {
+                                     @NotNull PsiElement block) {
+    final PsiMethod method = getScopeMethod(block);
     if (method == null || NullableStuffInspectionBase.isNullableNotInferred(method, true)) return;
 
     boolean notNullRequired = NullableNotNullManager.isNotNull(method);
     if (!notNullRequired && !SUGGEST_NULLABLE_ANNOTATIONS) return;
 
     PsiType returnType = method.getReturnType();
-    // no warnings for Void methods (where only null can be possibly returned), or in void lambdas, where the last expression is not returned anyway
-    if (returnType == null || returnType == PsiType.VOID || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
+    // no warnings in void lambdas, where the expression is not returned anyway
+    if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && returnType == PsiType.VOID) return;
+    
+    // no warnings for Void methods, where only null can be possibly returned
+    if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
 
     for (PsiElement statement : visitor.getProblems(NullabilityProblem.nullableReturn)) {
       assert statement instanceof PsiExpression; 

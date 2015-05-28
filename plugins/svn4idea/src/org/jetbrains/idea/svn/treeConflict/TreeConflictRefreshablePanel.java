@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.AbstractRefreshablePanel;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -40,6 +39,7 @@ import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -476,8 +476,9 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       myVcs = vcs;
       myPeg = peg;
       try {
-        myPath = FilePathImpl.createNonLocal(
-          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(), version.isDirectory());
+        myPath = VcsUtil.getFilePathOnNonLocal(
+          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(),
+          version.isDirectory());
       }
       catch (SVNException e) {
         throw new VcsException(e);

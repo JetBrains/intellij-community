@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -942,7 +943,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
             public void run() {
               vp.refresh(false, true, new Runnable() {
                 public void run() {
-                  myFilePath.refresh();
                   action.finish();
                 }
               });
@@ -1046,7 +1046,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         writeContentToIOFile(revision);
       }
       else {
-        Document document = myFilePath.getDocument();
+        Document document = null;
+        VirtualFile virtualFile = myFilePath.getVirtualFile();
+        if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
+          document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        }
         if (document == null) {
           writeContentToFile(revision);
         }

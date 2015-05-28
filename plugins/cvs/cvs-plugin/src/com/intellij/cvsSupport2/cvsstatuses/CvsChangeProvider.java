@@ -200,7 +200,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder,
                            final ProgressIndicator progress) throws VcsException {
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
+    final FilePath filePath = VcsUtil.getFilePath(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = createRevisionNumber(entry.getRevision(), status);
     processStatus(filePath, file, status, number, builder);

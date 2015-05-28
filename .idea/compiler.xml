@@ -31,6 +31,8 @@
     </annotationProcessing>
     <bytecodeTargetLevel target="1.6">
       <module name="annotations" target="1.5" />
+      <module name="annotations-common" target="1.5" />
+      <module name="annotations-java8" target="1.8" />
       <module name="community-tests" target="1.8" />
       <module name="gradle-jps-plugin" target="1.6" />
       <module name="groovy-rt-constants" target="1.5" />

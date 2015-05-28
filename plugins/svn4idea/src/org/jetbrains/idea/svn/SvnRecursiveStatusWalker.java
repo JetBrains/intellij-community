@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
@@ -206,9 +207,8 @@ public class SvnRecursiveStatusWalker {
     final Processor<File> checkDirProcessor = new Processor<File>() {
       @Override
       public boolean process(File file) {
-        final FilePath path = VcsUtil.getFilePath(file, true);
-        path.hardRefresh();
-        VirtualFile vf = path.getVirtualFile();
+        FilePath path = VcsUtil.getFilePath(file, true);
+        VirtualFile vf = VfsUtil.findFileByIoFile(file, true);
         if (vf != null && isIgnoredIdeaLevel(vf)) {
           lastIgnored.set(file);
           myReceiver.processIgnored(vf);

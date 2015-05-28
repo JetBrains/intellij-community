@@ -42,7 +42,7 @@ public interface FilePath {
   VirtualFile getVirtualFileParent();
 
   /**
-   * @return the {@link java.io.File} that corresponds to the path. The path might be non-existent or not local.
+   * @return the {@link File} that corresponds to the path. The path might be non-existent or not local.
    * @see #isNonLocal()
    */
   @NotNull
@@ -54,8 +54,18 @@ public interface FilePath {
   @NotNull
   String getName();
 
+  /**
+   * @return the path to the file in the format suitable for displaying in the UI,
+   * e.g. for local file it is the path to this file with system separators.
+   */
+  @NotNull
   String getPresentableUrl();
 
+  /**
+   * @deprecated to remove in IDEA 16.
+   * Use {@link com.intellij.openapi.fileEditor.FileDocumentManager#getDocument(VirtualFile)} directly.
+   */
+  @Deprecated
   @Nullable
   Document getDocument();
 
@@ -63,24 +73,34 @@ public interface FilePath {
   Charset getCharset();
 
   /**
-   * Get character set, considering the project defaults and a virtual file
-   *
-   * @param project the project which settings will be consulted
-   * @return the character set of the file
+   * @return the character set, considering the project settings and the virtual file corresponding to this FilePath (if it exists).
    */
   @NotNull
-  Charset getCharset(Project project);
+  Charset getCharset(@Nullable Project project);
 
   /**
-   * @return the type of the file
+   * @return the type of the file.
    */
   @NotNull
   FileType getFileType();
 
+  /**
+   * @deprecated to remove in IDEA 16.
+   * Use {@code com.intellij.openapi.vfs.VfsUtil#findFileByPath} or {@code com.intellij.openapi.vfs.LocalFileSystem#findFileByPath} instead.
+   */
+  @Deprecated
   void refresh();
 
+  /**
+   * @deprecated to remove in IDEA 16.
+   * Use {@code com.intellij.openapi.vfs.LocalFileSystem#refreshAndFindFileByPath} instead.
+   */
+  @Deprecated
   void hardRefresh();
 
+  /**
+   * @return the path to the file represented by this file path in the system-independent format.
+   */
   @NotNull
   String getPath();
 
@@ -99,7 +119,7 @@ public interface FilePath {
   boolean isUnder(@NotNull FilePath parent, boolean strict);
 
   /**
-   * @return the parent path or null if there are no parent
+   * @return the parent path or null if there is no parent of this file.
    */
   @Nullable
   FilePath getParentPath();

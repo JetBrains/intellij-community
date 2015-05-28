@@ -20,11 +20,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author Rustam Vishnyakov
@@ -67,7 +64,8 @@ public abstract class FileIndentOptionsProvider {
    * @param file  The file to check.
    * @return <code>true</code> if the file can be silently accepted without a warning.
    */
-  public boolean isAcceptedWithoutWarning(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {
+  @SuppressWarnings("UnusedParameters")
+  public boolean isAcceptedWithoutWarning(@Nullable Project project, @NotNull VirtualFile file) {
     return false;
   }
 

@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -356,12 +355,10 @@ public class SvnChangeList implements CommittedChangeList {
           return Boolean.FALSE;
         }
       });
-      final SvnRepositoryContentRevision contentRevision =
-        SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localPath, getRevision(isBeforeRevision));
-      if (knownAsDirectory) {
-        ((FilePathImpl) contentRevision.getFile()).setIsDirectory(true);
-      }
-      return contentRevision;
+      long revision = getRevision(isBeforeRevision);
+      return localPath == null
+             ? SvnRepositoryContentRevision.createForRemotePath(myVcs, myRepositoryRoot, path, knownAsDirectory, revision)
+             : SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localPath, revision);
     }
 
     public List<Change> getList() {

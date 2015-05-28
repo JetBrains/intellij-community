@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -296,4 +296,10 @@ public interface Caret extends UserDataHolderEx, Disposable {
    */
   @Nullable
   Caret clone(boolean above);
+
+  /**
+   * Returns <code>true</code> if caret is located in RTL text fragment. In that case visual column number is inversely related
+   * to offset and logical column number in the vicinity of caret.
+   */
+  boolean isAtRtlLocation();
 }

@@ -1417,12 +1417,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset) {
-    return offsetToVisualPosition(offset, true);
+    return offsetToVisualPosition(offset, false);
   }
 
+  @Override
   @NotNull
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets) {
-    if (myUseNewRendering) return myView.offsetToVisualPosition(offset, leanTowardsLargerOffsets);
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward) {
+    if (myUseNewRendering) return myView.offsetToVisualPosition(offset, leanForward);
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
@@ -3868,13 +3869,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware) {
-    return logicalToVisualPosition(logicalPos, softWrapAware, true);
-  }
-
-  @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware, 
-                                                boolean leanTowardsLargerLogicalColumns) {
-    if (myUseNewRendering) return myView.logicalToVisualPosition(logicalPos, leanTowardsLargerLogicalColumns);
+    if (myUseNewRendering) return myView.logicalToVisualPosition(logicalPos);
     return doLogicalToVisualPosition(logicalPos, softWrapAware,0);
   }
 
@@ -4018,13 +4013,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware) {
-    return visualToLogicalPosition(visiblePos, softWrapAware, true);
-  }
-  
-  @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware, 
-                                                 boolean leanTowardsLargerVisualColumns) {
-    if (myUseNewRendering) return myView.visualToLogicalPosition(visiblePos, leanTowardsLargerVisualColumns);
+    if (myUseNewRendering) return myView.visualToLogicalPosition(visiblePos);
     assertReadAccess();
     if (softWrapAware) {
       return mySoftWrapModel.visualToLogicalPosition(visiblePos);
@@ -4108,14 +4097,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int softWrapLinesBeforeTargetLogicalLine = pos.softWrapLinesBeforeCurrentLogicalLine;
     int softWrapLinesOnTargetLogicalLine = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
-
-    if (line < 0) {
-      line = 0;
-      column = 0;
-      softWrapLinesBeforeTargetLogicalLine = 0;
-      softWrapLinesOnTargetLogicalLine = 0;
-      softWrapColumns = 0;
-    }
+    boolean leansForward = pos.leansForward;
+    boolean leansRight = pos.visualPositionLeansRight;
 
     final int totalLines = myDocument.getLineCount();
     if (totalLines <= 0) {
@@ -4140,6 +4123,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int lineEndColumn = calcColumnNumber(lineEndOffset, line);
       if (column > lineEndColumn) {
         column = lineEndColumn;
+        leansForward = true;
+        leansRight = true;
         if (softWrapColumns != 0) {
           softWrapColumns -= column - lineEndColumn;
         }
@@ -4155,10 +4140,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
     }
-    return new LogicalPosition(
-      line, column, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
-      pos.foldedLines, pos.foldingColumnDiff
-    );
+    return pos.visualPositionAware ? 
+           new LogicalPosition(
+             line, column, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
+             pos.foldedLines, pos.foldingColumnDiff, leansForward, leansRight
+           ) : 
+           new LogicalPosition(line, column, leansForward);
   }
 
   private boolean checkIgnore(@NotNull MouseEvent e, boolean isFinalCheck) {
@@ -4611,7 +4598,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void setCursorPosition() {
     final List<CaretRectangle> caretPoints = new ArrayList<CaretRectangle>();
     for (Caret caret : getCaretModel().getAllCarets()) {
-      boolean isRtl = myUseNewRendering && myView.isRtlLocation(caret.getOffset());
+      boolean isRtl = caret.isAtRtlLocation();
       VisualPosition caretPosition = caret.getVisualPosition();
       Point pos1 = visualPositionToXY(caretPosition);
       Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, Math.max(0, caretPosition.column + (isRtl ? -1 : 1))));

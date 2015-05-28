@@ -204,9 +204,10 @@ class LineLayout {
     return myBidiRunsInLogicalOrder.length == 0 || myBidiRunsInLogicalOrder.length == 1 && !myBidiRunsInLogicalOrder[0].isRtl();
   }
   
-  boolean isRtlLocation(int offset) {
+  boolean isRtlLocation(int offset, boolean leanForward) {
+    if (offset == 0 && !leanForward) return false;
     for (BidiRun run : myBidiRunsInLogicalOrder) {
-      if (offset < run.endOffset) return run.isRtl();
+      if (offset < run.endOffset || offset == run.endOffset && !leanForward) return run.isRtl();
     }
     return false;
   }
@@ -236,7 +237,7 @@ class LineLayout {
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
       BidiRun run = new BidiRun(level, start, end);
-      int offset = 0;
+      int offset = startOffset;
       for (LineFragment fragment : fragments) {
         if (end <= offset) break;
         int endOffset = offset + fragment.getLength();
@@ -407,8 +408,13 @@ class LineLayout {
     }
 
     // x is expected to be between startX and endX for this fragment
-    int xToVisualColumn(float x) {
-      return startVisualColumn + delegate.xToVisualColumn(startX, x);
+    // returns array of two elements 
+    // - first one is visual column, 
+    // - second one is 1 if target location is closer to larger columns and 0 otherwise
+    int[] xToVisualColumn(float x) {
+      int[] column = delegate.xToVisualColumn(startX, x);
+      column[0] += startVisualColumn;
+      return column;
     }
 
     // column is expected to be between startVisualColumn and endVisualColumn for this fragment
