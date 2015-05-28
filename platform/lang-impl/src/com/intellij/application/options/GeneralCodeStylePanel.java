@@ -78,6 +78,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myMarkerOptionsPanel;
   private JPanel myAdditionalSettingsPanel;
   private JCheckBox myAutodetectIndentsBox;
+  private JCheckBox myShowDetectedIndentNotification;
   private final SmartIndentOptionsEditor myIndentOptionsEditor;
   private final JScrollPane myScrollPane;
 
@@ -101,6 +102,14 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       public void actionPerformed(ActionEvent e) {
         boolean tagsEnabled = myEnableFormatterTags.isSelected();
         setFormatterTagControlsEnabled(tagsEnabled);
+      }
+    });
+
+    myAutodetectIndentsBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean isDetectIndent = myAutodetectIndentsBox.isSelected();
+        myShowDetectedIndentNotification.setEnabled(isDetectIndent);
       }
     });
 
@@ -163,6 +172,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
 
     settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
+    if (myShowDetectedIndentNotification.isEnabled()) {
+      settings.SHOW_DETECTED_INDENT_NOTIFICATION = myShowDetectedIndentNotification.isSelected();
+    }
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
@@ -235,6 +247,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     if (settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected()) return true;
 
+    if (myShowDetectedIndentNotification.isEnabled()
+        && settings.SHOW_DETECTED_INDENT_NOTIFICATION != myShowDetectedIndentNotification.isSelected())
+    {
+      return true;
+    }
+
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
@@ -274,6 +292,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
 
     myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
+    myShowDetectedIndentNotification.setEnabled(myAutodetectIndentsBox.isSelected());
+    myShowDetectedIndentNotification.setSelected(settings.SHOW_DETECTED_INDENT_NOTIFICATION);
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);
