@@ -18,6 +18,7 @@ package com.intellij.vcsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +36,13 @@ public class VcsSelectionUtil {
     if (selectionFromEditor != null) {
       return selectionFromEditor;
     }
-    final VcsSelectionProvider[] providers = Extensions.getExtensions(VcsSelectionProvider.EP_NAME);
-    for(VcsSelectionProvider provider: providers) {
-      final VcsSelection vcsSelection = provider.getSelection(context);
-      if (vcsSelection != null) return vcsSelection;
+    for(VcsSelectionProvider provider: Extensions.getExtensions(VcsSelectionProvider.EP_NAME)) {
+      try {
+        final VcsSelection vcsSelection = provider.getSelection(context);
+        if (vcsSelection != null) return vcsSelection;
+      }
+      catch (IndexNotReadyException ignored) {
+      }
     }
     return null;
   }

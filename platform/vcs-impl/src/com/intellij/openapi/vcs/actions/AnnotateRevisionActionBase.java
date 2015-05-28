@@ -49,7 +49,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     if (fileRevision == null) return false;
 
     VirtualFile file = getFile(e);
-    if (file == null || file.isDirectory() || file.getFileType().isBinary()) return false;
+    if (file == null) return false;
 
     AbstractVcs vcs = getVcs(e);
     if (vcs == null) return false;

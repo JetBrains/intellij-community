@@ -203,6 +203,11 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
     return false;
   }
 
+  @Override
+  public boolean isAtDirectionBoundary() {
+    return false;
+  }
+
   private SelectionModel getSelectionModel() {
     return myEditor.getSelectionModel();
   }

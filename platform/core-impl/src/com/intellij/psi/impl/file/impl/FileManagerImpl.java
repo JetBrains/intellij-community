@@ -131,6 +131,7 @@ public class FileManagerImpl implements FileManager {
 
   private void checkLanguageChange() {
     Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
     myVFileToViewProviderMap.clear();
     for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
@@ -140,6 +141,7 @@ public class FileManagerImpl implements FileManager {
       }
     }
     myVFileToViewProviderMap.putAll(fileToPsiFileMap);
+    markInvalidations(originalFileToPsiFileMap);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -175,15 +177,25 @@ public class FileManagerImpl implements FileManager {
       myConnection.disconnect();
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+    clearViewProviders();
+
     myDisposed = true;
+  }
+
+  private void clearViewProviders() {
+    for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
+      if (provider instanceof SingleRootFileViewProvider) {
+        ((SingleRootFileViewProvider)provider).markInvalidated();
+      }
+    }
+    myVFileToViewProviderMap.clear();
   }
 
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    myVFileToViewProviderMap.clear();
+    clearViewProviders();
     myVFileToPsiDirMap.clear();
-    processQueue();
     ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
   }
 
@@ -222,9 +234,11 @@ public class FileManagerImpl implements FileManager {
   @Override
   public void setViewProvider(@NotNull final VirtualFile virtualFile, @Nullable final FileViewProvider fileViewProvider) {
     FileViewProvider prev = findCachedViewProvider(virtualFile);
+    if (prev == fileViewProvider) return;
     if (prev != null) {
       DebugUtil.startPsiModification(null);
       try {
+        ((SingleRootFileViewProvider)prev).markInvalidated();
         DebugUtil.onInvalidated(prev);
       }
       finally {
@@ -450,7 +464,10 @@ public class FileManagerImpl implements FileManager {
           myVFileToPsiDirMap.remove(file);
         }
         else {
-          myVFileToViewProviderMap.remove(file);
+          FileViewProvider viewProvider = myVFileToViewProviderMap.remove(file);
+          if (viewProvider instanceof SingleRootFileViewProvider) {
+            ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+          }
         }
         return true;
       }
@@ -499,6 +516,7 @@ public class FileManagerImpl implements FileManager {
 
     // note: important to update directories map first - findFile uses findDirectory!
     Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
     if (useFind) {
       myVFileToViewProviderMap.clear();
     }
@@ -535,6 +553,17 @@ public class FileManagerImpl implements FileManager {
     }
     myVFileToViewProviderMap.clear();
     myVFileToViewProviderMap.putAll(fileToPsiFileMap);
+
+    markInvalidations(originalFileToPsiFileMap);
+  }
+
+  private void markInvalidations(Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
+    for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
+      FileViewProvider viewProvider = entry.getValue();
+      if (viewProvider instanceof SingleRootFileViewProvider && myVFileToViewProviderMap.get(entry.getKey()) != viewProvider) {
+        ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+      }
+    }
   }
 
   @Override

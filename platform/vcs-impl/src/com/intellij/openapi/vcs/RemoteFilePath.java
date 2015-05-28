@@ -68,6 +68,7 @@ public class RemoteFilePath implements FilePath {
     return PathUtil.getFileName(myPath);
   }
 
+  @NotNull
   @Override
   public String getPresentableUrl() {
     return getPath();

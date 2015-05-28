@@ -50,7 +50,13 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (needToInsertQuotes) {
       int offset = editor.getCaretModel().getOffset();
-      editor.getDocument().insertString(offset, "\"\"");
+      PsiElement fileContext = file.getContext();
+      String toInsert= "\"\"";
+
+      if(fileContext != null) {
+        if (fileContext.getText().startsWith("\"")) toInsert = "''";
+      }
+      editor.getDocument().insertString(offset, toInsert);
       editor.getCaretModel().moveToOffset(offset + 1);
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
     }

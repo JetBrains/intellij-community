@@ -16,6 +16,9 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,8 +52,11 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     myExistential = existential;
     myContext = context;
     myParameter = parameter;
+    myUpperBound = PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
   }
 
+  private static RecursionGuard guard = RecursionManager.createGuard("captureGuard");
+  
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof PsiCapturedWildcardType)) {
@@ -58,7 +64,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     }
 
     final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
-    if (!myContext.equals(captured.myContext) || !myExistential.equals(captured.myExistential)) {
+    if (!myContext.equals(captured.myContext) || myExistential.isSuper() && !myExistential.equals(captured.myExistential)) {
       return false;
     }
 
@@ -66,12 +72,24 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
       return false;
     }
 
-    return true;
+    if (myParameter != null) {
+      final Boolean sameUpperBounds = guard.doPreventingRecursion(myContext, true, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return Comparing.equal(myUpperBound, captured.myUpperBound);
+        }
+      });
+
+      if (sameUpperBounds != null && sameUpperBounds) {
+        return true;
+      }
+    }
+    return myExistential.equals(captured.myExistential);
   }
 
   @Override
   public int hashCode() {
-    return myExistential.hashCode() + 31 * myContext.hashCode();
+    return myUpperBound.hashCode() + 31 * myContext.hashCode();
   }
 
   @NotNull
@@ -125,14 +143,14 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
 
   public PsiType getUpperBound () {
     final PsiType bound = myExistential.getBound();
-    if (myExistential.isExtends()) {
+    if (myExistential.isExtends() && myParameter == null) {
       return bound;
     }
     else if (bound instanceof PsiCapturedWildcardType) {
       return PsiWildcardType.createSuper(myContext.getManager(), ((PsiCapturedWildcardType)bound).getUpperBound());
     }
     else {
-      return myUpperBound != null ? myUpperBound : PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+      return myUpperBound;
     }
   }
 

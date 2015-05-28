@@ -268,6 +268,14 @@ public class EditorView implements Disposable {
     return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line), leanForward);
   }
 
+  public boolean isDirectionBoundary(int offset) {
+    assertIsDispatchThread();
+    if (myDocument.getTextLength() == 0) return false;
+    int line = myDocument.getLineNumber(offset);
+    LineLayout layout = getLineLayout(line);
+    return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line));
+  }
+
   @NotNull
   LineLayout getLineLayout(int line) {
     return myTextLayoutCache.getLineLayout(line);

@@ -20,7 +20,7 @@ package com.intellij.codeInsight.intention;
  * Marked actions are shown higher in the list of available quick fixes.
  *
  * @author Dmitry Avdeev
- * @see com.intellij.codeInsight.intention.IntentionAction
+ * @see IntentionAction
  * @see com.intellij.codeInspection.LocalQuickFix
  */
 public interface HighPriorityAction {

@@ -302,4 +302,11 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * to offset and logical column number in the vicinity of caret.
    */
   boolean isAtRtlLocation();
+
+  /**
+   * Returns <code>true</code> if caret is located at a boundary between LTR and RTL text fragments. Caret can located at any side of the
+   * boundary, exact location can be determined from directionality flags of caret's logical and visual position 
+   * ({@link LogicalPosition#leansForward} and {@link VisualPosition#leansRight}).
+   */
+  boolean isAtDirectionBoundary();
 }

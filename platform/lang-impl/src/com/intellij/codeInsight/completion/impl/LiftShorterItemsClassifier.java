@@ -94,21 +94,29 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private void internListToLift(LookupElement longer) {
-    myToLift.put(longer, myListInterner.intern(myToLift.get(longer)));
+    final Collection<LookupElement> elements = myToLift.get(longer);
+    if (elements.size() > 10) return;
+    
+    myToLift.put(longer, myListInterner.intern(elements));
   }
 
   private void calculateToLift(LookupElement element) {
     boolean hasChanges = false;
-    for (String string : element.getAllLookupStrings()) {
-      for (int len = 1; len < string.length(); len++) {
-        String prefix = string.substring(0, len);
-        for (LookupElement shorterElement : myElements.get(prefix)) {
-          if (myCondition.shouldLift(shorterElement, element)) {
-            hasChanges = true;
-            myToLift.putValue(element, shorterElement);
+    try {
+      for (String string : element.getAllLookupStrings()) {
+        for (int len = 1; len < string.length(); len++) {
+          String prefix = string.substring(0, len);
+          for (LookupElement shorterElement : myElements.get(prefix)) {
+            if (myCondition.shouldLift(shorterElement, element)) {
+              hasChanges = true;
+              myToLift.putValue(element, shorterElement);
+            }
           }
         }
       }
+    }
+    catch (ConcurrentModificationException e) {
+      throw new RuntimeException("Error while traversing lookup strings of " + element + " of " + element.getClass(), e);
     }
     if (hasChanges) {
       internListToLift(element);
