@@ -258,6 +258,15 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   @Override
+  public void visitConstructorInvocation(GrConstructorInvocation invocation) {
+    startElement(invocation);
+    callHelper.processRegularCall(
+      invocation, null, invocation.advancedResolve(), callHelper.new CallBasedArguments(invocation), DfaUnknownValue.getInstance()
+    );
+    finishElement(invocation);
+  }
+
+  @Override
   public void visitAnonymousClassDefinition(GrAnonymousClassDefinition definition) {
     startElement(definition);
 

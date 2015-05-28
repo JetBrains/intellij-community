@@ -16,12 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.flow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.FieldNullabilityCalculator;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -59,6 +58,13 @@ public class GrDfaVariableValue extends DfaVariableValue {
     Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
     if (nullability != Nullness.UNKNOWN) {
       return nullability;
+    }
+
+    if (var instanceof GrField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
+      final Nullness fieldNullability = FieldNullabilityCalculator.calculateNullability((PsiField)var);
+      if (fieldNullability != Nullness.UNKNOWN) {
+        return fieldNullability;
+      }
     }
 
     return myFactory.isUnknownMembersAreNullable() ? Nullness.NULLABLE : Nullness.UNKNOWN;

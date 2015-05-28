@@ -56,7 +56,7 @@ class GrGenericContractChecker<V extends GrGenericStandardInstructionVisitor<V>>
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
   public GrGenericContractChecker(GrMethod method, MethodContract contract) {
-    super(method.getProject(), false);
+    super(false, false);
     myMethod = method;
     myContract = contract;
   }

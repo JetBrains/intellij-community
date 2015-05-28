@@ -28,6 +28,7 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.dataflow.GrConstantConditionsInspection;
 import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowAnalyzerImpl;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
@@ -96,7 +97,7 @@ public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
     final Collection<GrControlFlowOwner> owners = PsiTreeUtil.findChildrenOfType(owner, GrControlFlowOwner.class);
     if (!owners.isEmpty()) {
       GrControlFlowAnalyzerImpl analyzer = new GrControlFlowAnalyzerImpl(
-        new GrDfaValueFactory(owner.getProject(), false), owners.iterator().next()
+        new GrDfaValueFactory(GrConstantConditionsInspection.isWithinConstructorOrInitializer(owner), false), owners.iterator().next()
       );
       ControlFlow flow = analyzer.buildControlFlow();
       System.out.println(owner.getText());

@@ -286,11 +286,11 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
    * Assuming that qualifier is not processed yet.
    * Processes regular calls.
    */
-  private void processRegularCall(@NotNull PsiElement highlight,
-                                  @Nullable GrExpression qualifier,
-                                  @NotNull GroovyResolveResult result,
-                                  @NotNull Arguments arguments,
-                                  @Nullable DfaValue returnValue) {
+  void processRegularCall(@NotNull PsiElement highlight,
+                          @Nullable GrExpression qualifier,
+                          @NotNull GroovyResolveResult result,
+                          @NotNull Arguments arguments,
+                          @Nullable DfaValue returnValue) {
     final PsiElement element = result.getElement();
     if (qualifier != null && element instanceof GrGdkMethod) {
       // simulate static method call

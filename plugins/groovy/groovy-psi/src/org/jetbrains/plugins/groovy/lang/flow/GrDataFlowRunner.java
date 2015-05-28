@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.flow;
 
 import com.intellij.codeInspection.dataFlow.AbstractDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +30,8 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
 
   private final GrDfaValueFactory myValueFactory;
 
-  public GrDataFlowRunner(Project project, boolean unknownMembersAreNullable) {
-    myValueFactory = new GrDfaValueFactory(project, unknownMembersAreNullable);
+  public GrDataFlowRunner(boolean honorFieldInitializers, boolean unknownMembersAreNullable) {
+    myValueFactory = new GrDfaValueFactory(honorFieldInitializers, unknownMembersAreNullable);
   }
 
   @Nullable

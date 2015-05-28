@@ -253,4 +253,6 @@ def passingNotNullToNotAnnotated(@NotNull a) {
   }
 
   void "test qualified expressions"() { doTest() }
+
+  void "test honor field initializers"() { doTest() }
 }

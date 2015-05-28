@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.java.DfaExpressionFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,13 +43,11 @@ public class GrDfaValueFactory extends DfaValueFactory {
 
   private final GrDfaVariableValue.FactoryImpl myVarFactory;
   private final GrDfaConstValueFactory myConstFactory;
-  private final PsiElementFactory myElementFactory;
 
-  public GrDfaValueFactory(Project project, boolean unknownMembersAreNullable) {
-    super(false, unknownMembersAreNullable);
+  public GrDfaValueFactory(boolean honorFieldInitializers, boolean unknownMembersAreNullable) {
+    super(honorFieldInitializers, unknownMembersAreNullable);
     myVarFactory = new GrDfaVariableValue.FactoryImpl(this);
     myConstFactory = new GrDfaConstValueFactory(this);
-    myElementFactory = PsiElementFactory.SERVICE.getInstance(project);
   }
 
   public DfaValue createValue(GrExpression expression) {
@@ -113,7 +110,7 @@ public class GrDfaValueFactory extends DfaValueFactory {
 
     if (resolved instanceof PsiClass) {
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      final PsiClassType type = myElementFactory.createType((PsiClass)resolved, substitutor);
+      final PsiClassType type = PsiElementFactory.SERVICE.getInstance(resolved.getProject()).createType((PsiClass)resolved, substitutor);
       return createTypeValue(type, Nullness.NOT_NULL);
     }
 

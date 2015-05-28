@@ -24,6 +24,8 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
@@ -97,7 +99,7 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
 
   private static void check(@NotNull PsiElement owner, @NotNull ProblemsHolder holder, final boolean onTheFly, boolean unknownAreNullable) {
     final GrDataFlowRunner<GrStandardInstructionVisitor> dfaRunner =
-      new GrDataFlowRunner<GrStandardInstructionVisitor>(owner.getProject(), unknownAreNullable) {
+      new GrDataFlowRunner<GrStandardInstructionVisitor>(!isWithinConstructorOrInitializer(owner), unknownAreNullable) {
         @Override
         protected boolean shouldCheckTimeLimit() {
           if (!onTheFly) return false;
@@ -199,5 +201,13 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
       text = String.format("Condition <code>#ref</code> is always %b", isTrue);
     }
     holder.registerProblem(element, text);
+  }
+
+  public static boolean isWithinConstructorOrInitializer(PsiElement element) {
+    while (element != null) {
+      element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, GrClassInitializer.class);
+      if (element instanceof GrClassInitializer || element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) return true;
+    }
+    return false;
   }
 }

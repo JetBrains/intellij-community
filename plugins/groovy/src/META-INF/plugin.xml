@@ -604,6 +604,7 @@
 
     <regExpLanguageHost forClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl"
                         implementationClass="org.jetbrains.plugins.groovy.regexp.GroovyRegExpHost"/>
+    <fieldNullabilityCalculator implementation="org.jetbrains.plugins.groovy.lang.flow.GrFieldNullabilityCalculator"/>
 
     <localInspection shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                      groupPath="Groovy"
