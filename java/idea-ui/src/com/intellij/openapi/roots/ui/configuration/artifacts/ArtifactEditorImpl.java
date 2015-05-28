@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -263,10 +264,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     splitter.setSecondComponent(rightPanel);
     if (Registry.is("ide.new.project.settings")) {
       splitter.getDivider().setBackground(UIUtil.getPanelBackground());
-      treePanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-      rightPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-      scrollPaneWrap.setBorder(new EmptyBorder(0,0,0,0));
-      leftPanel.setBorder(new EmptyBorder(0,0,0,0));
+      treePanel.setBorder(JBUI.Borders.empty());
+      rightPanel.setBorder(JBUI.Borders.empty());
+      scrollPaneWrap.setBorder(JBUI.Borders.empty());
+      leftPanel.setBorder(JBUI.Borders.empty());
     }
 
 

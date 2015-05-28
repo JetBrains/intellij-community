@@ -36,6 +36,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ClassMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.lang.reflect.Type;
@@ -205,7 +205,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   private static <T extends JComponent> T removeBorder(final T component) {
-    component.setBorder(new EmptyBorder(0, 0, 0, 0));
+    component.setBorder(JBUI.Borders.empty());
     return component;
   }
 }

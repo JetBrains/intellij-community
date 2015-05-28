@@ -31,10 +31,12 @@
     </annotationProcessing>
     <bytecodeTargetLevel target="1.6">
       <module name="annotations" target="1.5" />
+      <module name="community-tests" target="1.8" />
       <module name="gradle-jps-plugin" target="1.6" />
       <module name="groovy-rt-constants" target="1.5" />
       <module name="groovy_rt" target="1.5" />
       <module name="intellilang-jps-plugin" target="1.6" />
+      <module name="IntelliLang-tests" target="1.8" />
       <module name="java-runtime" target="1.3" />
       <module name="javac2" target="1.5" />
       <module name="javaFX-jps-plugin" target="1.6" />
@@ -44,10 +46,12 @@
       <module name="jps-model-impl" target="1.6" />
       <module name="jps-model-serialization" target="1.6" />
       <module name="jps-standalone-builder" target="1.6" />
-      <module name="json-tests" target="1.8"/>
+      <module name="json-tests" target="1.8" />
       <module name="junit_rt" target="1.3" />
       <module name="maven-jps-plugin" target="1.6" />
       <module name="remote-servers-agent-rt" target="1.5" />
+      <module name="svn4idea-tests" target="1.8" />
+      <module name="tasks-tests" target="1.8" />
       <module name="testng_rt" target="1.5" />
       <module name="ui-designer-jps-plugin" target="1.6" />
       <module name="util-rt" target="1.6" />
@@ -65,4 +69,3 @@
     <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>
 </project>
-
