@@ -161,6 +161,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       psiFile = createFile();
       boolean set = myPsiFile.compareAndSet(null, psiFile);
       if (!set) {
+        if (psiFile instanceof PsiFileImpl) {
+          ((PsiFileImpl)psiFile).markInvalidated();
+        }
         psiFile = myPsiFile.get();
       }
     }
@@ -304,6 +307,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
+  @SuppressWarnings("UnusedParameters")
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile, final long contentSize) {
     return contentSize > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
   }
@@ -446,7 +450,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void forceCachedPsi(@NotNull PsiFile psiFile) {
-    myPsiFile.set(psiFile);
+    PsiFile prev = myPsiFile.getAndSet(psiFile);
+    if (prev != psiFile && prev instanceof PsiFileImpl) {
+      ((PsiFileImpl)prev).markInvalidated();
+    }
     ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
   }
 
@@ -474,6 +481,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
+  }
+
+  public void markInvalidated() {
+    PsiFile psiFile = myPsiFile.get();
+    if (psiFile instanceof PsiFileImpl) {
+      ((PsiFileImpl)psiFile).markInvalidated();
+    }
   }
 
   private interface Content {
