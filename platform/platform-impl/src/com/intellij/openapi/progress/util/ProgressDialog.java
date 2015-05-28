@@ -59,11 +59,9 @@ class ProgressDialog implements Disposable {
 
       myTextLabel.setText(text != null && !text.isEmpty() ? text : " ");
 
-      if (myProgressBar.isShowing()) {
-        final int perc = (int)(fraction * 100);
-        myProgressBar.setIndeterminate(perc == 0 || myProgressWindow.isIndeterminate());
-        myProgressBar.setValue(perc);
-      }
+      final int perc = (int)(fraction * 100);
+      myProgressBar.setIndeterminate(perc == 0 || myProgressWindow.isIndeterminate());
+      myProgressBar.setValue(perc);
 
       myText2Label.setText(getTitle2Text(text2, myText2Label.getWidth()));
 
