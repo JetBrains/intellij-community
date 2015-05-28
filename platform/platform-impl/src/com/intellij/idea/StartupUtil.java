@@ -243,6 +243,11 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
+    if (Main.isHeadless()) {
+      // fast fix, disable in tests
+      return true;
+    }
+
     assert ourLock == null;
     ourLock = new SocketLock();
     if (ourLock.getAcquiredPort() == -1) {
