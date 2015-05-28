@@ -21,11 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.traceBackParsers.LinkInTrace;
+import com.jetbrains.python.traceBackParsers.TraceBackParser;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -33,31 +34,34 @@ import java.util.regex.Pattern;
 public class PythonTracebackFilter implements Filter {
   private final Project myProject;
   private final String myWorkingDirectory;
-  private final Pattern myMatchingPattern = Pattern.compile("File \"([^\"]+)\", line (\\d+)");
 
-  public PythonTracebackFilter(Project project) {
+  public PythonTracebackFilter(final Project project) {
     myProject = project;
     myWorkingDirectory = null;
   }
 
-  public PythonTracebackFilter(Project project, @Nullable String workingDirectory) {
+  public PythonTracebackFilter(final Project project, @Nullable final String workingDirectory) {
     myProject = project;
     myWorkingDirectory = workingDirectory;
   }
 
-  public Result applyFilter(String line, int entireLength) {
-    //   File "C:\Progs\Crack\psidc\scummdc.py", line 72, in ?
-    Matcher matcher = myMatchingPattern.matcher(line);
-    if (matcher.find()) {
-      String fileName = matcher.group(1).replace('\\', '/');
-      int lineNumber = Integer.parseInt(matcher.group(2));
-      VirtualFile vFile = findFileByName(fileName);
-      
+  @Override
+  @Nullable
+  public final Result applyFilter(@NotNull final String line, final int entireLength) {
+
+    for (final TraceBackParser parser : TraceBackParser.PARSERS) {
+      final LinkInTrace linkInTrace = parser.findLinkInTrace(line);
+      if (linkInTrace == null) {
+        continue;
+      }
+      final int lineNumber = linkInTrace.getLineNumber();
+      final VirtualFile vFile = findFileByName(linkInTrace.getFileName());
+
       if (vFile != null) {
-        OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(myProject, vFile, lineNumber - 1);
+        final OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(myProject, vFile, lineNumber - 1);
         final int textStartOffset = entireLength - line.length();
-        int startPos = line.indexOf('\"') + 1;
-        int endPos = line.indexOf('\"', startPos);
+        final int startPos = linkInTrace.getStartPos();
+        final int endPos = linkInTrace.getEndPos();
         return new Result(startPos + textStartOffset, endPos + textStartOffset, hyperlink);
       }
     }
@@ -65,7 +69,7 @@ public class PythonTracebackFilter implements Filter {
   }
 
   @Nullable
-  protected VirtualFile findFileByName(String fileName) {
+  protected VirtualFile findFileByName(@NotNull final String fileName) {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fileName);
     if (vFile == null && !StringUtil.isEmptyOrSpaces(myWorkingDirectory)) {
       vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(myWorkingDirectory, fileName));

@@ -77,8 +77,10 @@ public class FileUtilRt {
     private static Method ourFilesDeleteIfExistsMethod;
     private static Method ourFilesWalkMethod;
     private static Method ourFileToPathMethod;
+    private static Method ourPathToFileMethod;
     private static Object ourDeletionVisitor;
     private static Class ourNoSuchFileExceptionClass;
+    private static Class ourAccessDeniedExceptionClass;
 
     static {
       boolean initSuccess = false;
@@ -87,8 +89,10 @@ public class FileUtilRt {
         final Class<?> visitorClass = Class.forName("java.nio.file.FileVisitor");
         final Class<?> filesClass = Class.forName("java.nio.file.Files");
         ourNoSuchFileExceptionClass = Class.forName("java.nio.file.NoSuchFileException");
+        ourAccessDeniedExceptionClass = Class.forName("java.nio.file.AccessDeniedException");
 
         ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
+        ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
         final Class<?> fileVisitResultClass = Class.forName("java.nio.file.FileVisitResult");
@@ -121,8 +125,24 @@ public class FileUtilRt {
                   return Boolean.TRUE;
                 }
                 catch (InvocationTargetException e) {
-                  if (!(e.getCause() instanceof IOException)) {
+                  final Throwable cause = e.getCause();
+                  if (!(cause instanceof IOException)) {
                     return Boolean.FALSE;
+                  }
+                  if (ourAccessDeniedExceptionClass.isInstance(cause)) {
+                    // file is read-only: fallback to standard java.io API
+                    try {
+                      final File file = (File)ourPathToFileMethod.invoke(fileObject);
+                      if (file == null) {
+                        return Boolean.FALSE;
+                      }
+                      if (file.delete() || !file.exists()) {
+                        return Boolean.TRUE;
+                      }
+                    }
+                    catch (Throwable ignored) {
+                      return Boolean.FALSE;
+                    }
                   }
                 }
                 catch (IllegalAccessException e) {

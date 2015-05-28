@@ -23,6 +23,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.KeyStrokeAdapter;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -47,8 +48,7 @@ public class ShortcutTextField extends JTextField {
       ){
         return;
       }
-
-      setKeyStroke(KeyStroke.getKeyStroke(keyCode, e.getModifiers()));
+      setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
     }
   }
 

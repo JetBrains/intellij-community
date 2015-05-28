@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -70,6 +71,7 @@ import java.util.List;
 import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
+  private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   public static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
@@ -81,7 +83,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @NotNull private final VcsLogUiImpl myUI;
   private final VcsLogDataHolder myLogDataHolder;
-  private final GraphCommitCellRender myGraphCommitCellRender;
   private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   private final TableModelListener myColumnSizeInitializer = new TableModelListener() {
@@ -104,18 +105,13 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
   });
 
-  @NotNull private VisiblePack myDataPack;
-
   public VcsLogGraphTable(@NotNull VcsLogUiImpl UI, @NotNull final VcsLogDataHolder logDataHolder, @NotNull VisiblePack initialDataPack) {
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
-    myDataPack = initialDataPack;
-    myGraphCommitCellRender =
-      new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, myDataPack.getVisibleGraph(), this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
-    setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
+    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, this));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);
@@ -133,6 +129,15 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
     TableScrollingUtil.installActions(this, false);
+
+    setModel(new GraphTableModel(initialDataPack, myLogDataHolder, myUI));
+  }
+
+  public void updateDataPack(@NotNull VisiblePack visiblePack) {
+    VcsLogGraphTable.Selection previousSelection = getSelection();
+    getGraphTableModel().setVisiblePack(visiblePack);
+    previousSelection.restore(visiblePack.getVisibleGraph(), true);
+    setPaintBusy(false);
   }
 
   @Override
@@ -300,11 +305,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     return true;
   }
 
-  public void updateDataPack(@NotNull VisiblePack dataPack) {
-    myDataPack = dataPack;
-    myGraphCommitCellRender.updateVisibleGraph(dataPack.getVisibleGraph());
-  }
-
   public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
     myHighlighters.add(highlighter);
   }
@@ -332,9 +332,16 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
-    final RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
-
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
+
+    VisibleGraph<Integer> visibleGraph = getVisibleGraph();
+    if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
+      LOG.error("Visible graph has " + visibleGraph.getVisibleCommitCount() + " commits, yet we want row " + row);
+      return VcsCommitStyleFactory.createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground());
+    }
+
+    final RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
+
     VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
       .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
                    dummyRendererComponent.getBackground());
@@ -407,7 +414,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
       // since fireTableDataChanged clears selection we restore it here
       if (previousSelection != null) {
-        previousSelection.restore(myDataPack.getVisibleGraph(), answer == null || answer.getCommitToJump() != null);
+        previousSelection.restore(getVisibleGraph(), answer == null || answer.getCommitToJump() != null);
       }
     }
 
@@ -421,7 +428,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       setCursor(answer.getCursorToSet());
     }
     if (answer.getCommitToJump() != null) {
-      Integer row = myDataPack.getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
+      Integer row = getGraphTableModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
       if (row != null && row >= 0) {
         jumpToRow(row);
       }
@@ -429,6 +436,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     }
   }
 
+  @NotNull
   private GraphTableModel getGraphTableModel() {
     return (GraphTableModel)getModel();
   }
@@ -438,19 +446,21 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     return new Selection(this);
   }
 
-  public static class Selection {
+  private static class Selection {
     @NotNull private final VcsLogGraphTable myTable;
     @NotNull private final TIntHashSet mySelectedCommits;
     @Nullable private final Integer myVisibleSelectedCommit;
     @Nullable private final Integer myDelta;
+    private final boolean myScrollToTop;
 
 
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
       List<Integer> selectedRows = ContainerUtil.sorted(toList(myTable.getSelectedRows()));
       Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(myTable);
+      myScrollToTop = visibleRows.first - 1 == 0;
 
-      VisibleGraph<Integer> graph = myTable.myDataPack.getVisibleGraph();
+      VisibleGraph<Integer> graph = myTable.getVisibleGraph();
 
       mySelectedCommits = new TIntHashSet();
 
@@ -495,15 +505,25 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         });
 
       }
-      if (scrollToSelection && toSelectAndScroll.second != null) {
-        assert myDelta != null;
-        Rectangle startRect = myTable.getCellRect(toSelectAndScroll.second, 0, true);
-        myTable.scrollRectToVisible(new Rectangle(startRect.x, Math.max(startRect.y - myDelta, 0), startRect.width, myTable.getVisibleRect().height));
+      if (scrollToSelection) {
+        if (myScrollToTop) {
+          scrollToRow(0, 0);
+        }
+        else if (toSelectAndScroll.second != null) {
+          assert myDelta != null;
+          scrollToRow(toSelectAndScroll.second, myDelta);
+        }
       }
       // sometimes commits that were selected are now collapsed
       // currently in this case selection disappears
       // in the future we need to create a method in LinearGraphController that allows to calculate visible commit for our commit
       // or answer from collapse action could return a map that gives us some information about what commits were collapsed and where
+    }
+
+    private void scrollToRow(Integer row, Integer delta) {
+      Rectangle startRect = myTable.getCellRect(row, 0, true);
+      myTable.scrollRectToVisible(
+        new Rectangle(startRect.x, Math.max(startRect.y - delta, 0), startRect.width, myTable.getVisibleRect().height));
     }
 
     @NotNull
@@ -591,12 +611,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return;
       }
       Point point = calcPoint4Graph(e.getPoint());
-      Collection<? extends PrintElement> printElements = myDataPack.getVisibleGraph().getRowInfo(row).getPrintElements();
+      Collection<? extends PrintElement> printElements = getVisibleGraph().getRowInfo(row).getPrintElements();
       PrintElement printElement = myGraphCellPainter.mouseOver(printElements, point.x, point.y);
 
       Selection previousSelection = getSelection();
       GraphAnswer<Integer> answer =
-        myDataPack.getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
+        getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
       handleAnswer(answer, actionType == GraphAction.Type.MOUSE_CLICK && printElement != null, previousSelection);
     }
 
@@ -621,6 +641,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       // Do nothing
     }
 
+  }
+
+  @NotNull
+  public VisibleGraph<Integer> getVisibleGraph() {
+    return getGraphTableModel().getVisiblePack().getVisibleGraph();
   }
 
   @NotNull
@@ -790,7 +815,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         return false;
       }
       Point point = calcPoint4Graph(e.getPoint());
-      Collection<? extends PrintElement> printElements = myDataPack.getVisibleGraph().getRowInfo(row).getPrintElements();
+      Collection<? extends PrintElement> printElements = getVisibleGraph().getRowInfo(row).getPrintElements();
       PrintElement printElement = myGraphCellPainter.mouseOver(printElements, point.x, point.y);
       return printElement == null;
     }

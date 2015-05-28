@@ -19,11 +19,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.actions.validate.TestErrorReporter;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.XSComplexTypeDecl;
 import org.apache.xerces.impl.xs.XSElementDecl;
@@ -49,7 +49,7 @@ import java.util.Vector;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
-public class XmlConstraintsTest extends CodeInsightFixtureTestCase {
+public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
 
   public void testXercesGrammar() throws Exception {
     XSModel xsModel = getXSModel("test.xml", "test.xsd");
@@ -152,10 +152,5 @@ public class XmlConstraintsTest extends CodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/xml/tests/testData/constraints";
-  }
-
-  @Override
-  protected boolean isCommunity() {
-    return true;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +34,7 @@ import java.util.List;
  * @author traff
  */
 public class PathMappingSettings implements Cloneable {
+
   @NotNull
   private List<PathMapping> myPathMappings;
 

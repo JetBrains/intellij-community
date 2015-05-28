@@ -360,7 +360,9 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     @Override
     public JComponent createComponent() {
-      myPanel = new CodeStyleMainPanel(ensureModel(), myFactory);
+      if (myPanel == null) {
+        myPanel = new CodeStyleMainPanel(ensureModel(), myFactory);
+      }
       return myPanel;
     }
 

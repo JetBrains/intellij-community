@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
@@ -905,7 +906,10 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     RemoteException,
     org.eclipse.aether.resolution.ArtifactResolutionException {
 
-    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+    final String mavenVersion = getMavenVersion();
+    // org.eclipse.aether.RepositorySystem.newResolutionRepositories() method doesn't exist in aether-api-0.9.0.M2.jar used before maven 3.2.5
+    // see https://youtrack.jetbrains.com/issue/IDEA-140208 for details
+    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING || StringUtil.compareVersionNumbers(mavenVersion, "3.2.5") < 0) {
       MavenExecutionRequest request = new DefaultMavenExecutionRequest();
       request.setRemoteRepositories(repos);
       try {

@@ -271,7 +271,7 @@ public class GitBranchUtil {
     if (state == GitRepository.State.DETACHED) {
       String currentRevision = repository.getCurrentRevision();
       assert currentRevision != null : "Current revision can't be null in DETACHED state, only on the fresh repository.";
-      return currentRevision.substring(0, 7);
+      return DvcsUtil.getShortHash(currentRevision);
     }
 
     String prefix = "";

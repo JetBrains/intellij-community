@@ -85,6 +85,8 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
       getJDomJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries());
     assertEnumeratorRoots(orderEntries(myModule).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes());
+
+    assertOrderedEquals(orderEntries(myModule).getAllLibrariesAndSdkClassesRoots(), getRtJarJdk17(), getJDomJar());
   }
 
   public void testModuleDependencyScope() throws Exception {

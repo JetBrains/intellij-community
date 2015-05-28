@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,11 +68,22 @@ public class XVariablesView extends XVariablesViewBase {
   }
 
   @Override
-  protected void clear() {
-    XDebuggerTree tree = getTree();
+  public void dispose() {
+    clearInlineData(getTree());
+    super.dispose();
+  }
+
+  private static void clearInlineData(XDebuggerTree tree) {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
     tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
+    tree.updateEditor();
+  }
+
+  @Override
+  protected void clear() {
+    XDebuggerTree tree = getTree();
     tree.setSourcePosition(null);
+    clearInlineData(tree);
 
     XDebuggerTreeNode node;
     XDebugSession session = getSession(getPanel());

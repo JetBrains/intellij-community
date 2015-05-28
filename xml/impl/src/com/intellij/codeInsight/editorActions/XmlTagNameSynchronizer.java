@@ -34,10 +34,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -238,7 +235,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       if (myMarkers.isEmpty()) return;
 
       boolean fitsInMarker = fitsInMarker(offset, oldLength);
-      if (!fitsInMarker) {
+      if (!fitsInMarker || myMarkers.size() != myEditor.getCaretModel().getCaretCount()) {
         clearMarkers();
         beforeDocumentChange(event);
       }

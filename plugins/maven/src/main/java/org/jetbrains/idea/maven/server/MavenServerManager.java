@@ -288,6 +288,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
 
         final String currentMavenVersion = forceMaven2 ? "2.2.1" : getCurrentMavenVersion();
+        params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, currentMavenVersion);
         String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
         if (StringUtil.compareVersionNumbers(currentMavenVersion, "3.3.1") >= 0
             && StringUtil.compareVersionNumbers(version, "1.7") < 0) {

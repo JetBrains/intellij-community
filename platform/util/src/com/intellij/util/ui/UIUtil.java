@@ -1631,22 +1631,28 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    g.setColor(getPanelBackground());
-    g.fillRect(x, 0, width, height);
-
-    ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
-    g.fillRect(x, 0, width, height);
-
-    g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
-    if (drawTopLine) g.drawLine(x, 0, width, 0);
-    if (drawBottomLine) g.drawLine(x, height - 1, width, height - 1);
-
-    g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
-    g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
-
-    if (active) {
-      g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+    height++;
+    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
+    try {
+      g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
+
+      ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+      g.fillRect(x, 0, width, height);
+
+      g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
+      if (drawTopLine) g.drawLine(x, 0, width, 0);
+      if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
+
+      g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
+      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+
+      if (active) {
+        g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+        g.fillRect(x, 0, width, height);
+      }
+    } finally {
+      config.restore();
     }
   }
 
@@ -1771,41 +1777,6 @@ public class UIUtil {
     Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
       g2d.addRenderingHints(map);
-      setHintingForLCDText(g2d);
-    }
-  }
-
-  private static int THEME_BASED_TEXT_LCD_CONTRAST = 0;
-  private static int BEST_DARK_LCD_CONTRAST = 250;
-  private static int BEST_LIGHT_LCD_CONTRAST = 100;
-
-
-  public static void setHintingForLCDText(Graphics2D g2d) {
-    if (SystemInfo.isJetbrainsJvm && Registry.is("force.subpixel.hinting")) {
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-
-      // According to JavaDoc we can set values form 100 to 250
-      // So we can use 0 as a special flag
-      int registryLcdContrastValue = Registry.intValue("lcd.contrast.value");
-      if (registryLcdContrastValue == THEME_BASED_TEXT_LCD_CONTRAST) {
-          if (isUnderDarcula()) {
-            registryLcdContrastValue = BEST_DARK_LCD_CONTRAST;
-          } else {
-            registryLcdContrastValue = BEST_LIGHT_LCD_CONTRAST;
-          }
-      }
-
-      // Wrong values prevent IDE from start
-      // So we have to be careful
-      if (registryLcdContrastValue < 100) {
-        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
-        registryLcdContrastValue = 100;
-      } else if (registryLcdContrastValue > 250) {
-        LOG.warn("Wrong value of text LCD contrast " + registryLcdContrastValue);
-        registryLcdContrastValue = 250;
-      }
-
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, registryLcdContrastValue);
     }
   }
 
@@ -3314,6 +3285,11 @@ public class UIUtil {
   @NotNull
   public static String rightArrow() {
     return FontUtil.rightArrow(getLabelFont());
+  }
+
+  @NotNull
+  public static String upArrow(@NotNull String defaultValue) {
+    return FontUtil.upArrow(getLabelFont(), defaultValue);
   }
 
   public static EmptyBorder getTextAlignBorder(@NotNull JToggleButton alignSource) {

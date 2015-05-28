@@ -30,6 +30,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.psi.ManifestTokenType;
 import org.jetbrains.lang.manifest.header.HeaderParserRepository;
@@ -40,6 +41,8 @@ import org.jetbrains.lang.manifest.psi.ManifestToken;
  * @author Robert F. Beeger (robert@beeger.net)
  */
 public class HeaderValuePartImpl extends ASTWrapperPsiElement implements HeaderValuePart {
+  private static final TokenSet SPACES = TokenSet.create(ManifestTokenType.SIGNIFICANT_SPACE, ManifestTokenType.NEWLINE);
+
   private final HeaderParserRepository myRepository;
 
   public HeaderValuePartImpl(ASTNode node) {
@@ -59,13 +62,9 @@ public class HeaderValuePartImpl extends ASTWrapperPsiElement implements HeaderV
     StringBuilder builder = new StringBuilder();
 
     for (PsiElement element = getFirstChild(); element != null; element = element.getNextSibling()) {
-      if (element instanceof ManifestToken) {
-        ManifestTokenType tokenType = ((ManifestToken)element).getTokenType();
-        if (tokenType == ManifestTokenType.NEWLINE || tokenType == ManifestTokenType.SIGNIFICANT_SPACE) {
-          continue;
-        }
+      if (!(isSpace(element))) {
+        builder.append(element.getText());
       }
-      builder.append(element.getText());
     }
 
     return builder.toString().trim();
@@ -74,17 +73,29 @@ public class HeaderValuePartImpl extends ASTWrapperPsiElement implements HeaderV
   @NotNull
   @Override
   public TextRange getHighlightingRange() {
+    int endOffset = getTextRange().getEndOffset();
     PsiElement last = getLastChild();
-    if (last instanceof ManifestToken && ((ManifestToken)last).getTokenType() == ManifestTokenType.NEWLINE) {
-      int start = getTextOffset();
-      PsiElement prev = last.getPrevSibling();
-      return new TextRange(start, prev != null ? prev.getTextRange().getEndOffset() : start);
+    while (isSpace(last)) {
+      endOffset -= last.getTextLength();
+      last = last.getPrevSibling();
     }
-    return getTextRange();
+
+    int startOffset = getTextOffset();
+    PsiElement first = getFirstChild();
+    while (startOffset < endOffset && isSpace(first)) {
+      startOffset += first.getTextLength();
+      first = first.getNextSibling();
+    }
+
+    return new TextRange(startOffset, endOffset);
   }
 
   @Override
   public String toString() {
     return "HeaderValuePart";
+  }
+
+  private static boolean isSpace(PsiElement element) {
+    return element instanceof ManifestToken && SPACES.contains(((ManifestToken)element).getTokenType());
   }
 }

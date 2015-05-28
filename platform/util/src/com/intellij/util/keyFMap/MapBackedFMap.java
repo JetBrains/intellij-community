@@ -21,6 +21,8 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.keyFMap.ArrayBackedFMap.getKeysByIndices;
+
 class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int exclude) {
     super(oldMap.size());
@@ -84,6 +86,12 @@ class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   public <V> V get(@NotNull Key<V> key) {
     //noinspection unchecked
     return (V)get(key.hashCode());
+  }
+
+  @NotNull
+  @Override
+  public Key[] getKeys() {
+    return getKeysByIndices(keys());
   }
 
   @Override

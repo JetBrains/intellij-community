@@ -24,8 +24,7 @@ class YappiProfile(object):
         self.stats = yappi.convert2pstats(yappi.get_func_stats()).stats
 
     def getstats(self):
-        if self.stats is None:
-            self.create_stats()
+        self.create_stats()
 
         return self.stats
 

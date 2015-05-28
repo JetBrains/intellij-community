@@ -384,7 +384,7 @@ public class ResolveImportUtil {
             rate += 100;
           }
           for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
-            rate += rater.getRate(target);
+            rate += rater.getImportElementRate(target);
           }
         }
         ret.poke(target, rate);
@@ -396,7 +396,7 @@ public class ResolveImportUtil {
   /**
    * @param element what we test (identifier, reference, import element, etc)
    * @return the how the element relates to an enclosing import statement, if any
-   * @see com.jetbrains.python.psi.resolve.PointInImport
+   * @see PointInImport
    */
   @NotNull
   public static PointInImport getPointInImport(@NotNull PsiElement element) {

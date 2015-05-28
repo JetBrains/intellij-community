@@ -1,9 +1,14 @@
 class TestPyTest:
     def testOne(self):
+        print("I am test1")
         assert 5 == 2*2
 
     def testTwo(self):
         assert True
+
+    def testFail(self):
+        print("I will fail")
+        assert False
 
 def testThree():
     assert 4 == 2*2

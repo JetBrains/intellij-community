@@ -3,7 +3,7 @@
 Fetches arguments from optparse-based Django (< 1.8)
 """
 __author__ = 'Ilya.Kazakevich'
-from _parser import _utils
+from django_manage_commands_provider._parser import _utils
 
 
 # noinspection PyUnusedLocal
@@ -20,7 +20,7 @@ def process_command(dumper, command, parser):
     :type parser optparse.OptionParser
     :type command django.core.management.base.BaseCommand
     """
-    dumper.set_arguments(command.args)
+    dumper.set_arguments(str(command.args)) # args should be string, but in some buggy cases it is not
     # TODO: support subcommands
     for opt in command.option_list:
         num_of_args = int(opt.nargs) if opt.nargs else 0

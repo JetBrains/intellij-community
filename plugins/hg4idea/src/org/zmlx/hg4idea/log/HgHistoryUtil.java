@@ -93,6 +93,14 @@ public class HgHistoryUtil {
     return getCommitRecords(project, result, baseParser);
   }
 
+  @NotNull
+  public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
+                                                             @NotNull final VirtualFile root,
+                                                             int limit,
+                                                             @NotNull List<String> parameters) throws VcsException {
+    return history(project, root, limit, parameters, false);
+  }
+
   /**
    * <p>Get & parse hg log detailed output with commits, their parents and their changes.
    * For null destination return log command result</p>
@@ -104,13 +112,14 @@ public class HgHistoryUtil {
   public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
                                                              @NotNull final VirtualFile root,
                                                              int limit,
-                                                             @NotNull List<String> parameters) throws VcsException {
+                                                             @NotNull List<String> parameters,
+                                                             boolean silent) throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
-    return createFullCommitsFromResult(project, root, result, version, false);
+    return createFullCommitsFromResult(project, root, result, version, silent);
   }
 
   public static List<? extends VcsFullCommitDetails> createFullCommitsFromResult(@NotNull Project project,

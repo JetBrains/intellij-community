@@ -712,7 +712,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
         try {
           myInDocumentUpdate = true;
-          String[] strings = addedText.split("\\r");
+          String[] strings = addedText.split("\\r", -1); // limit must be any negative number to avoid discarding of trailing empty strings
           for (int i = 0; i < strings.length - 1; i++) {
             document.insertString(document.getTextLength(), strings[i]);
             int lastLine = document.getLineCount() - 1;

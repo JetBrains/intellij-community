@@ -18,11 +18,14 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyInspection;
-import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 
 import java.util.List;
 
+/**
+ * @author yole
+ */
 public class PySuppressInspectionsTest extends PyTestCase {
   public void testSuppressedForStatement() {
     doTestHighlighting(PyUnresolvedReferencesInspection.class);
@@ -43,15 +46,7 @@ public class PySuppressInspectionsTest extends PyTestCase {
   public void testSuppressForImport() {  // PY-2240
     doTestHighlighting(PyUnresolvedReferencesInspection.class);
   }
-  
-  public void testSuppressInsideInjection() {
-    doTestHighlighting(PyUnresolvedReferencesInspection.class);
-  }
 
-  public void testSuppressOutsideInjection() {
-    doTestHighlighting(PyUnresolvedReferencesInspection.class);
-  }
-  
   private void doTestHighlighting(final Class<? extends PyInspection> inspectionClass) {
     myFixture.configureByFile("inspections/suppress/" + getTestName(true) + ".py");
     myFixture.enableInspections(inspectionClass);

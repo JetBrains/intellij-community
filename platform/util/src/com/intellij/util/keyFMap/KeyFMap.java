@@ -36,6 +36,9 @@ public interface KeyFMap {
   @Nullable
   <V> V get(@NotNull Key<V> key);
 
+  @NotNull
+  Key[] getKeys();
+
   String toString();
 
   boolean isEmpty();

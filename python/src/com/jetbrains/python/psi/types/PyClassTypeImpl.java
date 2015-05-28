@@ -37,6 +37,7 @@ import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -190,8 +191,15 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
     if (classMember != null) {
-      return ResolveResultList.to(classMember);
+      final ResolveResultList list = new ResolveResultList();
+      int rate = RatedResolveResult.RATE_NORMAL;
+      for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+        rate += rater.getMemberRate(classMember, this, context);
+      }
+      list.poke(classMember, rate);
+      return list;
     }
+
 
     if (inherited) {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {

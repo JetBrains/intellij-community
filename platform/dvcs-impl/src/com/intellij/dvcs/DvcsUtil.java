@@ -71,6 +71,7 @@ public class DvcsUtil {
   private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
   private static final int SHORT_HASH_LENGTH = 8;
+  private static final int LONG_HASH_LENGTH = 40;
 
   public static void installStatusBarWidget(@NotNull Project project, @NotNull StatusBarWidget widget) {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
@@ -163,13 +164,13 @@ public class DvcsUtil {
 
   @NotNull
   public static String getShortHash(@NotNull String hash) {
-    if (hash.length() == 0) return "";
-    if (hash.length() == 40) return hash.substring(0, SHORT_HASH_LENGTH);
-    if (hash.length() > 40)  // revision string encoded with date too
-    {
-      return hash.substring(hash.indexOf("[") + 1, SHORT_HASH_LENGTH);
+    if (hash.length() < SHORT_HASH_LENGTH) {
+      LOG.debug("Unexpectedly short hash: [" + hash + "]");
     }
-    return hash;
+    if (hash.length() > LONG_HASH_LENGTH) {
+      LOG.debug("Unexpectedly long hash: [" + hash + "]");
+    }
+    return hash.substring(0, Math.min(SHORT_HASH_LENGTH, hash.length()));
   }
 
   @NotNull

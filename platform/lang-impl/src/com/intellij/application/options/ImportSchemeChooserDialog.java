@@ -1,7 +1,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -26,10 +25,10 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
   private final static String UNNAMED_SCHEME_ITEM = "<" + ApplicationBundle.message("code.style.scheme.import.unnamed") + ">";
   private final List<String> myNames = new ArrayList<String>();
 
-  public ImportSchemeChooserDialog(@NotNull Component parent,
+  public ImportSchemeChooserDialog(@NotNull Project project,
                                    String[] schemeNames,
                                    final @Nullable String currScheme) {
-    super(parent, false);
+    super(project, false);
     if (schemeNames.length > 0) {
       myNames.addAll(Arrays.asList(schemeNames));
     }

@@ -6,7 +6,7 @@ class A(B):
 <warning descr="Python version 3.0, 3.1, 3.2, 3.3, 3.4, 3.5 do not have method reduce">reduce()</warning>
 <warning descr="Python version 2.4 does not have method all">all()</warning>
 
-<warning descr="Python version 3.0, 3.1, 3.2, 3.3, 3.4 do not have method buffer">buffer()</warning>
+<warning descr="Python version 3.0, 3.1, 3.2, 3.3, 3.4, 3.5 do not have method buffer">buffer()</warning>
 
 def foo(a,b,c):
     print (a,b,c)

@@ -106,6 +106,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         if (!inSameFile(location, myModule)) {
           importElements.addAll(myModule.getImportTargets());
         }
+        final List<PyFromImportStatement> imports = myModule.getFromImports();
+        for (PyFromImportStatement anImport : imports) {
+          Collections.addAll(importElements, anImport.getImportElements());
+        }
       }
       final List<? extends RatedResolveResult> implicitMembers = resolveImplicitPackageMember(name, importElements);
       if (implicitMembers != null) {
@@ -183,6 +187,18 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         final QualifiedName implicitSubModuleQName = importedQName.append(visibleName);
         if (implicitSubModuleQName != null) {
           importedQNames.add(implicitSubModuleQName);
+        }
+      }
+      else {
+        final List<PsiElement> elements = ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement, element.getImportedQName());
+        for (PsiElement psiElement : elements) {
+          if (psiElement instanceof PsiFile) {
+            final VirtualFile virtualFile = ((PsiFile)psiElement).getVirtualFile();
+            final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(element, virtualFile);
+            if (qName != null) {
+              importedQNames.add(qName);
+            }
+          }
         }
       }
     }

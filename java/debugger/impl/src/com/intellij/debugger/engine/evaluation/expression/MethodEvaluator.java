@@ -20,6 +20,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.Patches;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -180,7 +181,7 @@ public class MethodEvaluator implements Evaluator {
         return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
       }
       // fix for default methods in interfaces, see IDEA-124066
-      if (myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
+      if (Patches.JDK_BUG_ID_8042123 && myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
         try {
           return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
         } catch (EvaluateException e) {

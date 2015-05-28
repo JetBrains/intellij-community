@@ -343,6 +343,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         @Override
         public void run() {
+          mySerializationManagerEx.flushNameStorage();
+
           if (lastModCount == myLocalModCount) {
             flushAllIndices(lastModCount);
           }
@@ -700,9 +702,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    if (!HeavyProcessLatch.INSTANCE.isRunning() && modCount == myLocalModCount) { // do not interfere with 'main' jobs
-      mySerializationManagerEx.flushNameStorage();
-    }
     ContentHashesSupport.flushContentHashes();
   }
 
@@ -1739,13 +1738,25 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (currentFC != null && currentFC.getUserData(ourPhysicalContentKey) == null) {
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
+
     // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
+    // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
     final Computable<Boolean> update = index.update(inputId, currentFC);
 
-    scheduleUpdate(indexId,
-                   createUpdateComputableWithBufferingDisabled(update),
-                   createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
-    );
+    try {
+      scheduleUpdate(indexId,
+                     createUpdateComputableWithBufferingDisabled(update),
+                     createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
+      );
+    } catch (RuntimeException exception) {
+      Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
+      if (causeToRebuildIndex != null) {
+        LOG.error("Exception in update single index:" + exception);
+        requestRebuild(indexId, exception);
+        return;
+      }
+      throw exception;
+    }
   }
 
   static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");

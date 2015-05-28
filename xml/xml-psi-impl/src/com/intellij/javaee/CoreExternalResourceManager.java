@@ -119,6 +119,16 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   }
 
   @Override
+  public XMLSchemaVersion getXmlSchemaVersion(@NotNull Project project) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String getCatalogPropertiesFile() {
     throw new UnsupportedOperationException();
   }

@@ -8,9 +8,8 @@ You may also need "get_what_to_run_by_env" that gets folder (current or passed a
 import os
 import time
 import abc
-import sys
 import tcmessages
-
+from utils import VersionAgnosticUtils
 
 __author__ = 'Ilya.Kazakevich'
 
@@ -227,47 +226,3 @@ class BddRunner(object):
         Implement it! It should launch tests using your BDD. Use "self._" functions to report results.
         """
         pass
-
-
-class VersionAgnosticUtils(object):
-    """
-    "six" emulator: this class fabrics appropriate tool to use regardless python version.
-    Use it to write code that works both on py2 and py3
-    """
-
-    @staticmethod
-    def __new__(cls, *more):
-        """
-        Fabrics Py2 or Py3 instance based on py version
-        """
-        real_class = _Py3KUtils if sys.version_info >= (3, 0) else _Py2Utils
-        return super(cls, real_class).__new__(real_class, *more)
-
-    def to_unicode(self, obj):
-        """
-
-        :param obj: string to convert to unicode
-        :return: unicode string
-        """
-
-        raise NotImplementedError()
-
-
-
-class _Py2Utils(VersionAgnosticUtils):
-    """
-    Util for Py2
-    """
-    def to_unicode(self, obj):
-        if isinstance(obj, unicode):
-            return obj
-        return unicode(obj.decode("utf-8"))
-
-
-
-class _Py3KUtils(VersionAgnosticUtils):
-    """
-    Util for Py3
-    """
-    def to_unicode(self, obj):
-        return str(obj)

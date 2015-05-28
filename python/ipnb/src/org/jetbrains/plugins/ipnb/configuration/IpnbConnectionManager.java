@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +34,6 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.IpnbConsole;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
@@ -302,7 +302,25 @@ public final class IpnbConnectionManager implements ProjectComponent {
         @Override
         public void run() {
           new RunContentExecutor(myProject, processHandler)
-            .withConsole(new IpnbConsole(myProject, processHandler))
+            .withTitle("IPython Notebook")
+            .withStop(new Runnable() {
+              @Override
+              public void run() {
+                processHandler.destroyProcess();
+                UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
+              }
+            }, new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                return !processHandler.isProcessTerminated();
+              }
+            })
+            .withRerun(new Runnable() {
+              @Override
+              public void run() {
+                startIpythonServer(url, fileEditor);
+              }
+            })
             .run();
         }
       });

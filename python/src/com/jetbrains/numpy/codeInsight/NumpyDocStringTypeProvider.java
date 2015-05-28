@@ -17,6 +17,8 @@ package com.jetbrains.numpy.codeInsight;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.numpy.documentation.NumPyDocString;
 import com.jetbrains.numpy.documentation.NumPyDocStringParameter;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -43,13 +46,18 @@ import java.util.*;
  */
 public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
+  public static String NDARRAY = "numpy.core.multiarray.ndarray";
+
+  private static String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.Iterable";
 
   static {
-    NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", "numpy.core.multiarray.ndarray");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", NDARRAY);
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", NDARRAY);
     // 184 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "numpy.core.multiarray.ndarray or collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array-like", "numpy.core.multiarray.ndarray or collections.Iterable");
+
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", NDARRAY_OR_ITERABLE);
+
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array-like", NDARRAY_OR_ITERABLE);
     // Parameters marked as 'data-type' actually get any Python type identifier such as 'bool' or
     // an instance of 'numpy.core.multiarray.dtype', however the type checker isn't able to check it.
     // 30 occurrences
@@ -58,8 +66,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     // 16 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex");
     // 10 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array", "numpy.core.multiarray.ndarray or collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.array", "numpy.core.multiarray.ndarray or collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array", NDARRAY_OR_ITERABLE);
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.array", NDARRAY_OR_ITERABLE);
     // 9 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("any", "object");
     // 5 occurrences
@@ -83,7 +91,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if (isInsideNumPy(function)) {
+    if (isApplicable(function)) {
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumPyDocString docString = NumPyDocString.forFunction(function, callee);
       if (docString != null) {
@@ -140,7 +148,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter parameter, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    if (isInsideNumPy(function)) {
+    if (isApplicable(function)) {
       final String name = parameter.getName();
       if (name != null) {
         final PyType type = getParameterType(function, name);
@@ -155,15 +163,27 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static boolean isInsideNumPy(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     final PsiFile file = element.getContainingFile();
+
     if (file != null) {
       final PyPsiFacade facade = getPsiFacade(element);
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         final String name = facade.findShortestImportableName(virtualFile, element);
-        return name != null && name.startsWith("numpy.");
+        return name != null && (name.startsWith("numpy.") || name.startsWith("matplotlib."));
       }
     }
     return false;
+  }
+
+  private static boolean isApplicable(@NotNull PsiElement element) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module != null){
+      if (PyDocumentationSettings.getInstance(module).isNumpyFormat(element.getContainingFile())) {
+        return true;
+      }
+    }
+
+    return isInsideNumPy(element);
   }
 
   private static PyPsiFacade getPsiFacade(@NotNull PsiElement anchor) {
@@ -237,7 +257,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   private static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
     for (String typeName : NumPyDocString.getNumpyUnionType(typeString)) {
-      if (anchor instanceof PyFunction && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
+      if (anchor instanceof PyFunction && isInsideNumPy(anchor) && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
           ("array_like".equals(typeName) || "ndarray".equals(typeName))) {
         return true;
       }
@@ -258,7 +278,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       }
       if (parameter != null) {
         if (isUfuncType(function, parameter.getType())) {
-          return getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number|numpy.core.multiarray.ndarray", function);
+          return getPsiFacade(function).parseTypeAnnotation("T <= numbers.Number or numpy.core.multiarray.ndarray or collections.Iterable", function);
         }
         final PyType numpyDocType = parseNumpyDocType(function, parameter.getType());
         if ("size".equals(parameterName)) {

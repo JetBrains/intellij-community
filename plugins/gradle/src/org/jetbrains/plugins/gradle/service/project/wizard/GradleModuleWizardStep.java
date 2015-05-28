@@ -356,7 +356,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     protected EditorEx createEditor() {
       final EditorEx editor = super.createEditor();
       editor.setHorizontalScrollbarVisible(true);
-      editor.setCaretEnabled(true);
+      editor.setCaretEnabled(isEnabled());
       editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
       editor.setBorder(UIUtil.getTextFieldBorder());
@@ -364,6 +364,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
       editor.getComponent().setPreferredSize(null);
       editor.getSettings().setUseSoftWraps(myUseSoftWraps);
       return editor;
+    }
+
+    @Override
+    protected void setViewerEnabled(boolean enabled) {
+      // do not reset com.intellij.ui.EditorTextField.myIsViewer field
     }
   }
 

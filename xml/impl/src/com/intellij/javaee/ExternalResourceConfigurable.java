@@ -47,10 +47,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   private JPanel myPanel;
   private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
-  private String myDefaultHtmlDoctype;
   private AddEditRemovePanel<NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
-  private HtmlLanguageLevelForm myHtmlLanguageLevelForm;
   @Nullable private final Project myProject;
   private final List<NameLocationPair> myNewPairs;
 
@@ -129,27 +127,11 @@ public class ExternalResourceConfigurable extends BaseConfigurable
         return editIgnoreLocation(o);
       }
     };
-    if (myProject != null) {
-      myHtmlLanguageLevelForm = new HtmlLanguageLevelForm(myProject);
-      myHtmlLanguageLevelForm.addListener(new HtmlLanguageLevelForm.MyListener() {
-        @Override
-        public void doctypeChanged() {
-          if (!myHtmlLanguageLevelForm.getDoctype().equals(myDefaultHtmlDoctype)) {
-            setModified(true);
-          }
-        }
-      });
-    }
 
     myPanel.add(myExtPanel,
                 new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     myPanel.add(myIgnorePanel,
                 new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    if (myProject != null) {
-      myPanel.add(myHtmlLanguageLevelForm.getContentPanel(),
-                  new GridBagConstraints(0, 2, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0),
-                                         0, 0));
-    }
 
     myExtPanel.setData(myPairs);
     myIgnorePanel.setData(myIgnoredUrls);
@@ -186,9 +168,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable
         for (Object myIgnoredUrl : myIgnoredUrls) {
           String url = (String)myIgnoredUrl;
           manager.addIgnoredResource(url);
-        }
-        if (myProject != null) {
-          manager.setDefaultHtmlDoctype(myHtmlLanguageLevelForm.getDoctype(), myProject);
         }
       }
     });
@@ -236,11 +215,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable
       }
      }
 
-    if (myProject != null) {
-      myDefaultHtmlDoctype = manager.getDefaultHtmlDoctype(myProject);
-      myHtmlLanguageLevelForm.resetFromDoctype(myDefaultHtmlDoctype);
-    }
-
     setModified(!myNewPairs.isEmpty());
   }
 
@@ -249,7 +223,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     myPanel = null;
     myExtPanel = null;
     myIgnorePanel = null;
-    myHtmlLanguageLevelForm = null;
   }
 
   @Override

@@ -17,15 +17,18 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -36,6 +39,23 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class GeneralCommandLineTest {
+
+  private static final String[] ARGUMENTS = {
+    "with space",
+    "\"quoted\"",
+    "\"quoted with spaces\"",
+    "",
+    "  ",
+    "param 1",
+    "\"",
+    "quote\"inside",
+    "space \"and \"quotes\" inside",
+    "\"space \"and \"quotes\" inside\"",
+    "param2",
+    "trailing slash\\",
+     // "two trailing slashes\\\\" /* doesn't work on Windows*/
+  };
+
   @Test
   public void printCommandLine() {
     GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -89,8 +109,9 @@ public class GeneralCommandLineTest {
     File dir = FileUtil.createTempDirectory("path with spaces 'and quotes' и юникодом ", ".tmp");
     try {
       GeneralCommandLine commandLine = makeJavaCommand(ParamPassingTest.class, dir);
+      commandLine.addParameter("test");
       String output = execAndGetOutput(commandLine, null);
-      assertEquals("=====\n=====\n", StringUtil.convertLineSeparators(output));
+      assertEquals("test\n", StringUtil.convertLineSeparators(output));
     }
     finally {
       FileUtil.delete(dir);
@@ -98,20 +119,62 @@ public class GeneralCommandLineTest {
   }
 
   @Test
-  public void argumentsPassing() throws Exception {
-    String[] parameters = {
-      "with space", "\"quoted\"", "\"quoted with spaces\"", "", "  ", "param 1", "\"", "param2", "trailing slash\\"
-    };
-
+  public void testPassingArgumentsToJavaApp() throws Exception {
     GeneralCommandLine commandLine = makeJavaCommand(ParamPassingTest.class, null);
-    commandLine.addParameters(parameters);
+    String[] args = ArrayUtil.mergeArrays(ARGUMENTS, "&<>()@^|", "\"&<>()@^|\"");
+    commandLine.addParameters(args);
     String output = execAndGetOutput(commandLine, null);
-    assertEquals("=====\n" + StringUtil.join(parameters, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return ParamPassingTest.format(s);
-      }
-    }, "\n") + "\n=====\n", StringUtil.convertLineSeparators(output));
+    assertParamPassingTestOutput(output, args);
+  }
+
+  @Test
+  public void testPassingArgumentsToJavaAppThroughWinShell() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    // passing "^" argument doesn't work for cmd.exe
+    String[] args = ARGUMENTS;
+    GeneralCommandLine commandLine = makeJavaCommand(ParamPassingTest.class, null);
+    String oldExePath = commandLine.getExePath();
+    commandLine.setExePath("cmd.exe");
+    // the test will fails if "call" is omitted
+    commandLine.getParametersList().prependAll("/D", "/C", "call", oldExePath);
+    commandLine.addParameters(args);
+    String output = execAndGetOutput(commandLine, null);
+    assertParamPassingTestOutput(output, args);
+  }
+
+  @Test
+  public void testPassingArgumentsToJavaAppThroughCmdScriptAndWinShell() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    // passing "^" argument doesn't work for cmd.exe
+    String[] args = ARGUMENTS;
+    File cmdScript = createCmdFileLaunchingJavaApp();
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.setExePath("cmd.exe");
+    // the test will fails if "call" is omitted
+    commandLine.addParameters("/D", "/C", "call", cmdScript.getAbsolutePath());
+    commandLine.addParameters(args);
+    String output = execAndGetOutput(commandLine, null);
+    assertParamPassingTestOutput(output, args);
+  }
+
+  @NotNull
+  private File createCmdFileLaunchingJavaApp() throws Exception {
+    File cmdScript = FileUtil.createTempFile(new File(PathManager.getTempPath(), "My Program Files" /* path with spaces */),
+                                             "my-script", ".cmd", true, true);
+    GeneralCommandLine commandLine = makeJavaCommand(ParamPassingTest.class, null);
+    FileUtil.writeToFile(cmdScript, "@" + commandLine.getCommandLineString() + " %*");
+    if (!cmdScript.setExecutable(true, true)) {
+      throw new ExecutionException("Failed to make temp file executable: " + cmdScript);
+    }
+    return cmdScript;
+  }
+
+  private static void assertParamPassingTestOutput(@NotNull String actualOutput, @NotNull String... expectedOutputParameters) {
+    String content = StringUtil.join(expectedOutputParameters, "\n");
+    if (expectedOutputParameters.length > 0) {
+      content += "\n";
+    }
+    assertEquals(content, StringUtil.convertLineSeparators(actualOutput));
   }
 
   @Test
@@ -250,11 +313,19 @@ public class GeneralCommandLineTest {
 
   private static String execAndGetOutput(GeneralCommandLine commandLine, @Nullable String encoding) throws Exception {
     Process process = commandLine.createProcess();
-    byte[] bytes = FileUtil.loadBytes(process.getInputStream());
-    String output = encoding != null ? new String(bytes, encoding) : new String(bytes);
+    String stdOut = loadTextFromStream(process.getInputStream(), encoding);
+    String stdErr = loadTextFromStream(process.getErrorStream(), encoding);
     int result = process.waitFor();
-    assertEquals("Command:\n" + commandLine.getCommandLineString() + "\nOutput:\n" + output, 0, result);
-    return output;
+    assertEquals("Command:\n" + commandLine.getCommandLineString()
+                 + "\nStandard output:\n" + stdOut
+                 + "\nStandard error:\n" + stdErr,
+                 0, result);
+    return stdOut;
+  }
+
+  private static String loadTextFromStream(@NotNull InputStream stream, @Nullable String encoding) throws IOException {
+    byte[] bytes = FileUtil.loadBytes(stream);
+    return encoding != null ? new String(bytes, encoding) : new String(bytes);
   }
 
   private GeneralCommandLine makeJavaCommand(Class<?> testClass, @Nullable File copyTo) throws IOException, URISyntaxException {

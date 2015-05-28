@@ -37,6 +37,8 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(SliceBackwardTest.class);
     suite.addTestSuite(SmartTypeCompletionDfaTest.class);
     suite.addTestSuite(NormalCompletionDfaTest.class);
+    suite.addTestSuite(NullableStuffInspectionTest.class);
+    suite.addTestSuite(NullableStuffInspection14Test.class);
     return suite;
   }
 }

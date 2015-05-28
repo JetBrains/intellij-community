@@ -24,6 +24,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -44,6 +45,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.HashMap;
@@ -76,6 +78,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   public static final String GROUP_EXE_OPTIONS = "Exe Options";
   public static final String GROUP_DEBUGGER = "Debugger";
+  public static final String GROUP_PROFILER = "Profiler";
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
@@ -130,6 +133,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
+    consoleView.addMessageFilter(new UrlFilter());
 
     addTracebackFilter(project, consoleView, processHandler);
 
@@ -144,8 +148,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
         .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (RemoteProcessHandlerBase)processHandler));
     }
     else {
-      consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectory()));
+      consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectorySafe()));
     }
+    consoleView.addMessageFilter(new UrlFilter()); // Url filter is always nice to have
   }
 
   private TextConsoleBuilder createConsoleBuilder(Project project) {
@@ -216,6 +221,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public GeneralCommandLine generateCommandLine() throws ExecutionException {
     GeneralCommandLine commandLine = createCommandLine();
 
+    commandLine.withCharset(EncodingProjectManager.getInstance(myConfig.getProject()).getDefaultCharset());
+
     setRunnerPath(commandLine);
 
     // define groups
@@ -242,6 +249,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     ParametersList params = commandLine.getParametersList();
     params.addParamsGroup(GROUP_EXE_OPTIONS);
     params.addParamsGroup(GROUP_DEBUGGER);
+    params.addParamsGroup(GROUP_PROFILER);
     params.addParamsGroup(GROUP_SCRIPT);
   }
 

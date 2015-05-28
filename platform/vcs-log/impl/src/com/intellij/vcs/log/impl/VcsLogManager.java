@@ -84,7 +84,7 @@ public class VcsLogManager implements Disposable {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
-              if (!Disposer.isDisposed(myUi)) {
+              if (myUi != null && !Disposer.isDisposed(myUi)) {
                 myUi.setVisiblePack(pack);
               }
             }
@@ -106,7 +106,7 @@ public class VcsLogManager implements Disposable {
         }
       };
     }
-    refreshLogOnVcsEvents(logProviders);
+    refreshLogOnVcsEvents(logProviders, myLogRefresher);
     logDataHolder.initialize();
 
     // todo fix selection
@@ -122,14 +122,14 @@ public class VcsLogManager implements Disposable {
     return myUi.getMainFrame().getMainComponent();
   }
 
-  private void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogRefresher refresher) {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
       providers2roots.putValue(entry.getValue(), entry.getKey());
     }
 
     for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
-      entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), myLogRefresher);
+      entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
     }
   }
 
@@ -165,6 +165,8 @@ public class VcsLogManager implements Disposable {
 
   @Override
   public void dispose() {
+    myLogRefresher = null;
+    myUi = null;
   }
 
   private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {
@@ -185,7 +187,7 @@ public class VcsLogManager implements Disposable {
       myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
       myTabName = contentTabName;
 
-      Disposer.register(myToolWindow.getContentManager(), this);
+      Disposer.register(dataHolder, this);
 
       myPostponedEventsListener = new MyRefreshPostponedEventsListener();
       myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);

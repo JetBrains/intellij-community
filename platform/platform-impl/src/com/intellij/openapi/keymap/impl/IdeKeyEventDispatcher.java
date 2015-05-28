@@ -53,6 +53,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComponentWithMnemonics;
+import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -339,7 +340,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
+    KeyStroke originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
+    if (originalKeyStroke == null) {
+      return false;
+    }
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
     updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(myFirstKeyStroke, keyStroke), myContext.isModalContext());
@@ -406,7 +410,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
+    KeyStroke originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
+    if (originalKeyStroke == null) {
+      return false;
+    }
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
     if (myKeyGestureProcessor.processInitState()) {

@@ -112,6 +112,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteParameterAndUpdateJavadocRef() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
     doSingleFileTest();
   }

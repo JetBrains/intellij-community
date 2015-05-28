@@ -72,11 +72,7 @@ import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.graph.Dependency;
-import org.sonatype.aether.impl.internal.DefaultArtifactResolver;
-import org.sonatype.aether.impl.internal.DefaultRepositorySystem;
 import org.sonatype.aether.repository.LocalRepositoryManager;
-import org.sonatype.aether.resolution.ArtifactRequest;
-import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
@@ -874,54 +870,20 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   private Artifact resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
-    throws
-    ArtifactResolutionException,
-    ArtifactNotFoundException,
-    RemoteException,
-    org.sonatype.aether.resolution.ArtifactResolutionException {
+    throws ArtifactResolutionException, ArtifactNotFoundException {
 
-    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-      MavenExecutionRequest request = new DefaultMavenExecutionRequest();
-      request.setRemoteRepositories(repos);
-      try {
-        getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(request, myMavenSettings);
-        getComponent(MavenExecutionRequestPopulator.class).populateDefaults(request);
-      }
-      catch (MavenExecutionRequestPopulationException e) {
-        throw new RuntimeException(e);
-      }
-
-      getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
-      return artifact;
+    MavenExecutionRequest request = new DefaultMavenExecutionRequest();
+    request.setRemoteRepositories(repos);
+    try {
+      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(request, myMavenSettings);
+      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(request);
     }
-    else {
-      final MavenExecutionRequest request =
-        createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
-      for (ArtifactRepository artifactRepository : repos) {
-        request.addRemoteRepository(artifactRepository);
-      }
-
-      DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-      RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
-
-      final org.sonatype.aether.impl.ArtifactResolver artifactResolver = getComponent(org.sonatype.aether.impl.ArtifactResolver.class);
-      final org.sonatype.aether.spi.log.Logger logger = new MyLogger();
-
-      if (artifactResolver instanceof DefaultArtifactResolver) {
-        ((DefaultArtifactResolver)artifactResolver).setLogger(logger);
-      }
-
-      final org.sonatype.aether.RepositorySystem repositorySystem = getComponent(org.sonatype.aether.RepositorySystem.class);
-      if (repositorySystem instanceof DefaultRepositorySystem) {
-        ((DefaultRepositorySystem)repositorySystem).setLogger(logger);
-      }
-
-      final ArtifactResult artifactResult = repositorySystem.resolveArtifact(
-        repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact),
-                                                     RepositoryUtils.toRepos(request.getRemoteRepositories()), null));
-
-      return RepositoryUtils.toArtifact(artifactResult.getArtifact());
+    catch (MavenExecutionRequestPopulationException e) {
+      throw new RuntimeException(e);
     }
+
+    getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
+    return artifact;
   }
 
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {

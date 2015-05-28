@@ -49,6 +49,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +109,10 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     }
     if (file == null) return null;
     final Sdk sdk = getFileSdk(project, file);
-    return PythonSdkType.getLanguageLevelForSdk(sdk);
+    if (sdk != null) {
+      return PythonSdkType.getLanguageLevelForSdk(sdk);
+    }
+    return PyUtil.guessLanguageLevel(project);
   }
 
   @Nullable

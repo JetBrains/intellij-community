@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -53,7 +55,11 @@ public class CurrentRevision implements VcsFileRevision {
 
   public byte[] getContent() throws IOException, VcsException {
     try {
-      Document document = FileDocumentManager.getInstance().getDocument(myFile);
+      Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+        public Document compute() {
+          return FileDocumentManager.getInstance().getDocument(myFile);
+        }
+      });
       if (document != null) {
         return document.getText().getBytes(myFile.getCharset().name());
       }

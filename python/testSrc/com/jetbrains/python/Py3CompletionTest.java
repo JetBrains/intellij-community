@@ -151,4 +151,9 @@ public class Py3CompletionTest extends PyTestCase {
       }
     });
   }
+
+  // PY-11214
+  public void testDunderNext() {
+    doTest();
+  }
 }

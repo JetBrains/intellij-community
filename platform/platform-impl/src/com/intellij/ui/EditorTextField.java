@@ -594,7 +594,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   public void setEnabled(boolean enabled) {
     if (isEnabled() != enabled) {
       super.setEnabled(enabled);
-      myIsViewer = !enabled;
+      setViewerEnabled(enabled);
       EditorEx editor = myEditor;
       if (editor == null) {
         return;
@@ -603,6 +603,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       initEditor();
       revalidate();
     }
+  }
+
+  protected void setViewerEnabled(boolean enabled) {
+    myIsViewer = !enabled;
   }
 
   @Override

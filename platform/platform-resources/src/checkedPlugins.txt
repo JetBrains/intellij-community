@@ -2,6 +2,7 @@ org.intellij.scala
 org.jetbrains.kotlin
 org.jetbrains.plugins.ruby
 com.jetbrains.php
+Pythonid
 org.intellij.clojure
 NodeJS
 com.jetbrains.lang.ejs

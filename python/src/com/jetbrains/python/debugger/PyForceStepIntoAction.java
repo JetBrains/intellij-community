@@ -21,13 +21,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
-import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
+import com.intellij.xdebugger.impl.actions.ForceStepIntoAction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import org.jetbrains.annotations.NotNull;
 
-public class PyForceStepIntoAction extends XDebuggerActionBase {
+public class PyForceStepIntoAction extends ForceStepIntoAction {
   @Override
   protected boolean isEnabled(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -42,11 +39,5 @@ public class PyForceStepIntoAction extends XDebuggerActionBase {
     }
 
     return super.isEnabled(e);
-  }
-
-  @NotNull
-  @Override
-  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getForceStepIntoHandler();
   }
 }

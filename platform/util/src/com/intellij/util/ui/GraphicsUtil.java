@@ -71,8 +71,6 @@ public class GraphicsUtil {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                            enableAA ? RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
-
-      UIUtil.setHintingForLCDText(g);
     }
   }
 

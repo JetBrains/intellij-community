@@ -21,7 +21,7 @@ import re
 import _bdd_utils
 from distutils import version
 from behave import __version__ as behave_version
-
+from utils import VersionAgnosticUtils
 _MAX_STEPS_SEARCH_FEATURES = 5000  # Do not look for features in folder that has more that this number of children
 _FEATURES_FOLDER = 'features'  # "features" folder name.
 
@@ -136,7 +136,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         :param element feature/suite/step
         """
         element.location.file = element.location.filename  # To preserve _bdd_utils contract
-        utils = _bdd_utils.VersionAgnosticUtils()
+        utils = VersionAgnosticUtils()
         if isinstance(element, Step):
             # Process step
             step_name = u"{0} {1}".format(utils.to_unicode(element.keyword), utils.to_unicode(element.name))

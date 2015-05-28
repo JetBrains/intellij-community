@@ -188,7 +188,9 @@ public class Foundation {
   public static String getEncodingName(long nsStringEncoding) {
     long cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
     ID pointer = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
-    return toStringViaUTF8(pointer);
+    String name = toStringViaUTF8(pointer);
+    if ("macintosh".equals(name)) name = "MacRoman"; // JDK8 does not recognize IANA's "macintosh" alias
+    return name;
   }
 
   public static long getEncodingCode(@Nullable String encodingName) {

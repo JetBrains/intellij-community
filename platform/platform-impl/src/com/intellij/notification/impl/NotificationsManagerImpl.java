@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -269,7 +270,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null));
-    text.setText(NotificationsUtil.buildHtml(notification, "width:" + Math.min(350, label.getPreferredSize().width) + "px;"));
+    text.setText(NotificationsUtil.buildHtml(notification, "width:" + Math.min(JBUI.scale(350), label.getPreferredSize().width) + "px;"));
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -302,8 +303,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setSize(preferredSize);
     
     Dimension paneSize = new Dimension(text.getPreferredSize());
-    int maxHeight = Math.min(400, window.getComponent().getHeight() - 20);
-    int maxWidth = Math.min(600, window.getComponent().getWidth() - 20);
+    int maxHeight = Math.min(JBUI.scale(400), window.getComponent().getHeight() - 20);
+    int maxWidth = Math.min(JBUI.scale(600), window.getComponent().getWidth() - 20);
     if (paneSize.height > maxHeight) {
       pane.setPreferredSize(new Dimension(Math.min(maxWidth, paneSize.width + UIUtil.getScrollBarWidth()), maxHeight));
     } else if (paneSize.width > maxWidth) {

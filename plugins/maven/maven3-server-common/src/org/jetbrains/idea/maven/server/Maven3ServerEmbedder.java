@@ -19,6 +19,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -32,9 +33,15 @@ import java.util.List;
 public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
 
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
+  private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
 
   public Maven3ServerEmbedder(MavenServerSettings settings) {
     initLog4J(settings);
+  }
+
+  @Nullable
+  public String getMavenVersion() {
+    return MAVEN_VERSION;
   }
 
   @SuppressWarnings({"unchecked"})

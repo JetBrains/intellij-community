@@ -75,21 +75,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    PermanentGraph<Integer> previousPermGraph = myVisiblePack.getPermanentGraph();
-    VcsLogGraphTable.Selection previousSelection = getTable().getSelection();
+    boolean permGraphChanged = myVisiblePack.getPermanentGraph() != pack.getPermanentGraph();
 
     myVisiblePack = pack;
-    boolean permGraphChanged = previousPermGraph != myVisiblePack.getPermanentGraph();
-
-    GraphTableModel currentModel = getModel();
-    if (currentModel == null) {
-      getTable().setModel(new GraphTableModel(myVisiblePack, myLogDataHolder, this));
-    }
-    else {
-      currentModel.setVisiblePack(myVisiblePack);
-      previousSelection.restore(myVisiblePack.getVisibleGraph(), true);
-    }
-    getTable().setPaintBusy(false);
 
     myMainFrame.updateDataPack(myVisiblePack);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
@@ -374,5 +362,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     getTable().removeAllHighlighters();
+    myVisiblePack = VisiblePack.EMPTY;
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -827,14 +828,22 @@ public class PyUtil {
     return guessLanguageLevel(project);
   }
 
-  private static LanguageLevel guessLanguageLevel(@NotNull Project project) {
+  @NotNull
+  public static LanguageLevel guessLanguageLevel(@NotNull Project project) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     if (moduleManager != null) {
+      LanguageLevel maxLevel = null;
       for (Module projectModule : moduleManager.getModules()) {
         final Sdk sdk = PythonSdkType.findPythonSdk(projectModule);
         if (sdk != null) {
-          return PythonSdkType.getLanguageLevelForSdk(sdk);
+          final LanguageLevel level = PythonSdkType.getLanguageLevelForSdk(sdk);
+          if (maxLevel == null || maxLevel.isOlderThan(level)) {
+            maxLevel = level;
+          }
         }
+      }
+      if (maxLevel != null) {
+        return maxLevel;
       }
     }
     return LanguageLevel.getDefault();
@@ -1801,6 +1810,16 @@ public class PyUtil {
   public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
     return type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType();
+  }
+
+  public static boolean isInScratchFile(@NotNull PsiElement element) {
+    final ScratchFileService service = ScratchFileService.getInstance();
+    final PsiFile file = element.getContainingFile();
+    if (file != null) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      return service != null && virtualFile != null && service.getRootType(virtualFile) != null;
+    }
+    return false;
   }
 
   /**

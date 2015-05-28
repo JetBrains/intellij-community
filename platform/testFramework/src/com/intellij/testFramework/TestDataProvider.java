@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class TestDataProvider implements DataProvider {
+public class TestDataProvider implements DataProvider, DataContext {
   private final Project myProject;
 
   public TestDataProvider(@NotNull Project project) {

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.VisualPosition;
 
 /**
  * @author Dennis.Ushakov
@@ -62,6 +63,17 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
            "<divv>\n" +
            "<divv></divv>\n" +
            "</divv>");
+  }
+
+  public void testMultiCaretAdding() {
+    doTest("<div<caret>></div>\n" +
+           "<div></div>\n", "\b\b\biii",
+           "<iii></iii>\n" +
+           "<div></div>\n");
+    myFixture.getEditor().getCaretModel().addCaret(new VisualPosition(1, 4));
+    type("\b");
+    myFixture.checkResult("<ii></ii>\n" +
+                          "<di></di>\n");
   }
 
   public void testAfterUndo() {

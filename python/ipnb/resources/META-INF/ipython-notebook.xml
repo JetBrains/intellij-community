@@ -8,7 +8,7 @@
     <fileEditorProvider implementation="org.jetbrains.plugins.ipnb.editor.IpnbEditorProvider"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
 
-    <projectConfigurable groupId="tools" instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
+    <projectConfigurable groupId="language"  instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
                          id="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable" displayName="IPython Notebook"
                          nonDefaultProject="true"/>
     <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
