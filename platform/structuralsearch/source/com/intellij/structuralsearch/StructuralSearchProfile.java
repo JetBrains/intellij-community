@@ -218,10 +218,6 @@ public abstract class StructuralSearchProfile {
                                 StringBuilder result,
                                 int offset,
                                 HashMap<String, MatchResult> matchMap) {
-    return defaultHandleSubstitution(info, match, result, offset);
-  }
-
-  public static int defaultHandleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, int offset) {
     if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean forceAddingNewLine = false;
@@ -231,7 +227,7 @@ public abstract class StructuralSearchProfile {
 
         for (final MatchResult matchResult : match.getAllSons()) {
           final PsiElement currentElement = matchResult.getMatch();
-          
+
           if (buf.length() > 0) {
             if (info.isArgumentContext()) {
               buf.append(',');
@@ -253,13 +249,21 @@ public abstract class StructuralSearchProfile {
       offset = Replacer.insertSubstitution(result, offset, info, replacementString);
       if (forceAddingNewLine && info.isStatementContext()) {
         result.insert(info.getStartIndex() + offset + 1, '\n');
-        offset ++;
+        offset++;
       }
     }
     return offset;
   }
 
-  public int processAdditionalOptions(ParameterInfo info, int offset, StringBuilder result, MatchResult r) {
+  public int handleNoSubstitution(ParameterInfo info, int offset, StringBuilder result) {
+    if (info.isHasCommaBefore()) {
+      result.delete(info.getBeforeDelimiterPos() + offset, info.getBeforeDelimiterPos() + 1 + offset);
+      --offset;
+    }
+    else if (info.isHasCommaAfter()) {
+      result.delete(info.getAfterDelimiterPos() + offset, info.getAfterDelimiterPos() + 1 + offset);
+      --offset;
+    }
     return offset;
   }
 

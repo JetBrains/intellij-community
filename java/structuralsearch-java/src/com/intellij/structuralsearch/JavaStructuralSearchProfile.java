@@ -557,9 +557,17 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public int processAdditionalOptions(ParameterInfo info, int offset, StringBuilder result, MatchResult r) {
-    if (info.isStatementContext()) {
-      return removeExtraSemicolon(info, offset, result, r);
+  public int handleNoSubstitution(ParameterInfo info, int offset, StringBuilder result) {
+    final int newOffset = super.handleNoSubstitution(info, offset, result);
+    if (newOffset != offset) {
+      return newOffset;
+    }
+    if (info.isVariableInitializerContext()) {
+      result.delete(info.getBeforeDelimiterPos() + offset, info.getAfterDelimiterPos() + offset - 1);
+      offset -= (info.getAfterDelimiterPos() - info.getBeforeDelimiterPos() - 1);
+    }
+    else if (info.isStatementContext()) {
+      return removeExtraSemicolon(info, offset, result, null);
     }
     return offset;
   }
@@ -580,7 +588,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, HashMap<String, MatchResult> matchMap) {
-    if(info.getElement() ==null) {
+    if(!(info.getElement() instanceof PsiTypeElement)) {
       // no specific handling for name of method parameter since it is handled with type
       return;
     }

@@ -27,8 +27,8 @@ import java.util.*;
  * Time: 15:34:57
  */
 public final class ReplacementBuilder {
-  private String replacement;
-  private List<ParameterInfo> parameterizations;
+  private final String replacement;
+  private final List<ParameterInfo> parameterizations = new ArrayList<ParameterInfo>();
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
 
@@ -82,10 +82,6 @@ public final class ReplacementBuilder {
       }
       info.setAfterDelimiterPos(pos);
 
-      if (parameterizations==null) {
-        parameterizations = new ArrayList<ParameterInfo>();
-      }
-
       parameterizations.add(info);
     }
 
@@ -136,44 +132,27 @@ public final class ReplacementBuilder {
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    HashMap<String, MatchResult> matchMap = new HashMap<String, MatchResult>();
+    final HashMap<String, MatchResult> matchMap = new HashMap<String, MatchResult>();
     fill(match, matchMap);
 
-    int offset = 0;
-
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);
+    assert profile != null;
 
+    int offset = 0;
     for (final ParameterInfo info : parameterizations) {
       MatchResult r = matchMap.get(info.getName());
       if (info.isReplacementVariable()) {
         offset = Replacer.insertSubstitution(result, offset, info, generateReplacement(info, match));
       }
       else if (r != null) {
-        offset = profile != null ? profile.handleSubstitution(info, r, result, offset, matchMap) : StructuralSearchProfile.defaultHandleSubstitution(info, r, result, offset);
+        offset = profile.handleSubstitution(info, r, result, offset, matchMap);
       }
       else {
-        if (info.isHasCommaBefore()) {
-          result.delete(info.getBeforeDelimiterPos() + offset, info.getBeforeDelimiterPos() + 1 + offset);
-          --offset;
-        }
-        else if (info.isHasCommaAfter()) {
-          result.delete(info.getAfterDelimiterPos() + offset, info.getAfterDelimiterPos() + 1 + offset);
-          --offset;
-        }
-        else if (info.isVariableInitializerContext()) {
-          //if (info.afterDelimiterPos > 0) {
-            result.delete(info.getBeforeDelimiterPos() + offset, info.getAfterDelimiterPos() + offset - 1);
-            offset -= (info.getAfterDelimiterPos() - info.getBeforeDelimiterPos() - 1);
-          //}
-        } else if (profile != null) {
-          offset = profile.processAdditionalOptions(info, offset, result, r);
-        }
-        offset = Replacer.insertSubstitution(result, offset, info, "");
+        offset = profile.handleNoSubstitution(info, offset, result);
       }
     }
 
-    replacementInfo.variableMap = (HashMap<String, MatchResult>)matchMap.clone();
-    matchMap.clear();
+    replacementInfo.variableMap = matchMap;
     return result.toString();
   }
 
@@ -190,10 +169,7 @@ public final class ReplacementBuilder {
 
   @Nullable
   public ParameterInfo findParameterization(String name) {
-    if (parameterizations==null) return null;
-
     for (final ParameterInfo info : parameterizations) {
-
       if (info.getName().equals(name)) {
         return info;
       }
@@ -202,17 +178,7 @@ public final class ReplacementBuilder {
     return null;
   }
 
-  public void clear() {
-    replacement = null;
-
-    if (parameterizations!=null) {
-      parameterizations.clear();
-      parameterizations = null;
-    }
-  }
-
   public void addParametrization(@NotNull ParameterInfo e) {
-    assert parameterizations != null;
     parameterizations.add(e);
   }
 }
