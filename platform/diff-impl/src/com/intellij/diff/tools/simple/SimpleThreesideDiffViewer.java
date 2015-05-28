@@ -177,26 +177,22 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     try {
       indicator.checkCanceled();
 
-      List<DiffContent> contents = myRequest.getContents();
-      final Document[] documents = new Document[3];
-      documents[0] = ((DocumentContent)contents.get(0)).getDocument();
-      documents[1] = ((DocumentContent)contents.get(1)).getDocument();
-      documents[2] = ((DocumentContent)contents.get(2)).getDocument();
-
-      CharSequence[] sequences = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
+      final List<DiffContent> contents = myRequest.getContents();
+      List<CharSequence> sequences = ApplicationManager.getApplication().runReadAction(new Computable<List<CharSequence>>() {
         @Override
-        public CharSequence[] compute() {
-          CharSequence[] sequences = new CharSequence[3];
-          sequences[0] = documents[0].getImmutableCharSequence();
-          sequences[1] = documents[1].getImmutableCharSequence();
-          sequences[2] = documents[2].getImmutableCharSequence();
-          return sequences;
+        public List<CharSequence> compute() {
+          return ContainerUtil.map(contents, new Function<DiffContent, CharSequence>() {
+            @Override
+            public CharSequence fun(DiffContent diffContent) {
+              return ((DocumentContent)diffContent).getDocument().getImmutableCharSequence();
+            }
+          });
         }
       });
 
       ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
-      FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
-      FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
+      FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences.get(1), sequences.get(0), comparisonPolicy, indicator);
+      FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences.get(1), sequences.get(2), comparisonPolicy, indicator);
       List<MergeLineFragment> mergeFragments = ComparisonMergeUtil.buildFair(fragments1, fragments2, indicator);
 
       return apply(mergeFragments, comparisonPolicy);
