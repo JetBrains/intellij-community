@@ -123,6 +123,10 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  public void testSimpleMethodReference() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() {
     doTest(true);
   }
