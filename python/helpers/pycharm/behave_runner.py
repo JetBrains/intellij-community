@@ -21,7 +21,7 @@ import re
 import _bdd_utils
 from distutils import version
 from behave import __version__ as behave_version
-from utils import VersionAgnosticUtils
+from _jb_utils import VersionAgnosticUtils
 _MAX_STEPS_SEARCH_FEATURES = 5000  # Do not look for features in folder that has more that this number of children
 _FEATURES_FOLDER = 'features'  # "features" folder name.
 
