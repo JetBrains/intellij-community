@@ -238,7 +238,7 @@ public class FileAttributesReadingTest {
 
   @Test
   public void junction() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeTrue(SystemInfo.isWinVistaOrNewer);
 
     final File target = FileUtil.createTempDirectory(myTempDirectory, "temp.", ".dir");
     final File path = FileUtil.createTempFile(myTempDirectory, "junction.", ".dir", false);
@@ -250,7 +250,7 @@ public class FileAttributesReadingTest {
     assertTrue(attributes.isWritable());
 
     final String resolved1 = FileSystemUtil.resolveSymLink(junction);
-    assertEquals(SystemInfo.isWinVistaOrNewer ? target.getPath() : junction.getPath(), resolved1);
+    assertEquals(target.getPath(), resolved1);
 
     FileUtil.delete(target);
 
@@ -260,7 +260,7 @@ public class FileAttributesReadingTest {
     assertTrue(attributes.isWritable());
 
     final String resolved2 = FileSystemUtil.resolveSymLink(junction);
-    assertEquals(SystemInfo.isWinVistaOrNewer ? null : junction.getPath(), resolved2);
+    assertEquals(null, resolved2);
   }
 
   @Test
