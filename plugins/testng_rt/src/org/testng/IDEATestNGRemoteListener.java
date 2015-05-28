@@ -127,11 +127,8 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     for (int i = idx; i < parentsHierarchy.size(); i++) {
       String fqName = parentsHierarchy.get(parentsHierarchy.size() - 1 - i);
       String currentClassName = getShortName(fqName);
-      myPrintStream.print("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName));
-      if (provideLocation) {
-        myPrintStream.print("\' locationHint = \'java:suite://" + escapeName(fqName));
-      }
-      myPrintStream.println("\']");
+      myPrintStream.println("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName) +
+                            (provideLocation ? "\' locationHint = \'java:suite://" + escapeName(fqName) : "") + "\']");
       myCurrentSuites.add(currentClassName);
     }
     return false;
