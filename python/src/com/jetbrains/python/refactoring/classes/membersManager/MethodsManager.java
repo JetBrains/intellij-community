@@ -42,7 +42,6 @@ import java.util.*;
  * @author Ilya.Kazakevich
  */
 class MethodsManager extends MembersManager<PyFunction> {
-  private static final String ABC_META_CLASS = "ABCMeta";
 
   /**
    * Some decorators should be copied with methods if method is marked abstract. Here is list.
@@ -123,7 +122,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     // Add imports for ABC if needed
     for (final PsiFile file : filesToCheckImport) {
       addImportFromAbc(file, PyNames.ABSTRACTMETHOD);
-      addImportFromAbc(file, ABC_META_CLASS);
+      addImportFromAbc(file, PyNames.ABC_META_CLASS);
       PyClassRefactoringUtil.optimizeImports(file); //To remove redundant imports
     }
   }
@@ -146,11 +145,11 @@ class MethodsManager extends MembersManager<PyFunction> {
       // Add (metaclass= for Py3K
       PyClassRefactoringUtil
         .addSuperClassExpressions(aClass.getProject(), aClass, null, Collections.singletonList(Pair.create(PyNames.METACLASS,
-                                                                                                           ABC_META_CLASS)));
+                                                                                                           PyNames.ABC_META_CLASS)));
     }
     else {
       // Add __metaclass__ for Py2
-      PyClassRefactoringUtil.addClassAttributeIfNotExist(aClass, PyNames.DUNDER_METACLASS, ABC_META_CLASS);
+      PyClassRefactoringUtil.addClassAttributeIfNotExist(aClass, PyNames.DUNDER_METACLASS, PyNames.ABC_META_CLASS);
     }
     return true;
   }
