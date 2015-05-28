@@ -99,7 +99,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     if (result == null) {
       synchronized (myData) {
-        addToAdoptedChildren(ignoreCase, name);
+        if (!allChildrenLoaded()) {
+          myData.addAdoptedName(name, getFileSystem().isCaseSensitive());
+        }
       }
     }
 
