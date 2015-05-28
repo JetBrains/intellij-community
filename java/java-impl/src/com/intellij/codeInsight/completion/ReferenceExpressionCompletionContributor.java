@@ -476,9 +476,17 @@ public class ReferenceExpressionCompletionContributor {
   public static PsiReferenceExpression createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
     if (qualifierItem.getObject() instanceof PsiClass) {
+      final String qname = ((PsiClass)qualifierItem.getObject()).getQualifiedName();
+      if (qname == null) return null;
+      
+      final String text = qname + ".xxx";
       try {
-        return (PsiReferenceExpression)factory
-          .createExpressionFromText(((PsiClass)qualifierItem.getObject()).getQualifiedName() + ".xxx", place);
+        final PsiExpression expr = factory.createExpressionFromText(text, place);
+        if (expr instanceof PsiReferenceExpression) {
+          return (PsiReferenceExpression)expr;
+        }
+        LOG.error("Unexpected type: " + expr.getType() + " from text " + text);
+        return null;
       }
       catch (IncorrectOperationException e) {
         LOG.info(e);
