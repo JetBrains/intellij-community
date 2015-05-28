@@ -147,7 +147,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         }
       };
       registrar.register(fix);
-      return Arrays.asList((LocalQuickFix)fix);
+      return Collections.singletonList((LocalQuickFix)fix);
     }
 
     if (isAnnotation(psiElement) && AnnotationUtil.isJetbrainsAnnotation(referenceName)) {
@@ -192,7 +192,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         }
       };
       registrar.register(fix);
-      return Arrays.asList((LocalQuickFix)fix);
+      return Collections.singletonList((LocalQuickFix)fix);
     }
 
     List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
@@ -225,14 +225,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
           if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library)) continue;
           OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
-          if (entryForFile != null) {
-            if (entryForFile instanceof ExportableOrderEntry &&
+          if (entryForFile != null &&
+              !(entryForFile instanceof ExportableOrderEntry &&
                 ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST &&
-                !ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile)) {
-            }
-            else {
-              continue;
-            }
+                !ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile))) {
+            continue;
           }
           final OrderEntryFix fix = new OrderEntryFix() {
             @Override
