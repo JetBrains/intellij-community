@@ -16,14 +16,16 @@
 package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class StatusPanel extends JPanel {
+public class StatusPanel extends JPanel {
   private final JLabel myTextLabel;
   private final AnimatedIcon myBusySpinner;
 
@@ -40,9 +42,9 @@ public abstract class StatusPanel extends JPanel {
   }
 
   public void update() {
-    int count = getChangesCount();
-    myTextLabel.setVisible(count != -1);
-    myTextLabel.setText(DiffBundle.message("diff.count.differences.status.text", count));
+    String message = getMessage();
+    myTextLabel.setVisible(message != null);
+    myTextLabel.setText(StringUtil.notNullize(message));
   }
 
   public void setBusy(boolean busy) {
@@ -56,5 +58,14 @@ public abstract class StatusPanel extends JPanel {
     }
   }
 
-  protected abstract int getChangesCount();
+  @Nullable
+  protected String getMessage() {
+    int count = getChangesCount();
+    if (count == -1) return null;
+    return DiffBundle.message("diff.count.differences.status.text", count);
+  }
+
+  protected int getChangesCount() {
+    return -1;
+  }
 }

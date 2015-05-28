@@ -44,12 +44,12 @@ import java.util.List;
 public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
   public static final Logger LOG = Logger.getInstance(TwosideBinaryDiffViewer.class);
 
-  @NotNull private final MyStatusPanel myStatusPanel;
+  @NotNull private final StatusPanel myStatusPanel;
 
   public TwosideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
 
-    myStatusPanel = new MyStatusPanel();
+    myStatusPanel = new StatusPanel();
     new MyFocusOppositePaneAction().setupAction(myPanel);
   }
 
@@ -157,17 +157,6 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     public void actionPerformed(@NotNull AnActionEvent e) {
       setCurrentSide(getCurrentSide().other());
       myContext.requestFocus();
-    }
-  }
-
-  //
-  // Helpers
-  //
-
-  private static class MyStatusPanel extends StatusPanel {
-    @Override
-    protected int getChangesCount() {
-      return -1;
     }
   }
 }
