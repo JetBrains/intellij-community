@@ -21,11 +21,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
  * @author mike
  */
+@Bombed(day = 10, month = Calendar.JUNE)
 public class LockSupportTest extends TestCase {
   public void testLock() throws Exception {
     final SocketLock lock = new SocketLock();
