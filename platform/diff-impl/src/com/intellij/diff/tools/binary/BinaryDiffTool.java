@@ -29,12 +29,15 @@ public class BinaryDiffTool implements FrameDiffTool {
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (OnesideBinaryDiffViewer.canShowRequest(context, request)) return new OnesideBinaryDiffViewer(context, request);
     if (TwosideBinaryDiffViewer.canShowRequest(context, request)) return new TwosideBinaryDiffViewer(context, request);
+    if (ThreesideBinaryDiffViewer.canShowRequest(context, request)) return new ThreesideBinaryDiffViewer(context, request);
     throw new IllegalArgumentException(request.toString());
   }
 
   @Override
   public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return OnesideBinaryDiffViewer.canShowRequest(context, request) || TwosideBinaryDiffViewer.canShowRequest(context, request);
+    return OnesideBinaryDiffViewer.canShowRequest(context, request) ||
+           TwosideBinaryDiffViewer.canShowRequest(context, request) ||
+           ThreesideBinaryDiffViewer.canShowRequest(context, request);
   }
 
   @NotNull
