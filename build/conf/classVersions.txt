@@ -35,6 +35,8 @@
 
 1.5 => plugins/Groovy/lib/groovy_rt.jar
 1.5 => lib/annotations.jar
+1.8 => lib/annotations-java8.jar
+1.8 => redist/annotations-java8.jar
 
 1.6 => plugins/gradle/lib/gradle-jps-plugin.jar
 
