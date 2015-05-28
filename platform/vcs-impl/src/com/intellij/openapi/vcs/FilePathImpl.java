@@ -21,7 +21,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -41,12 +40,6 @@ public class FilePathImpl implements FilePath {
   public FilePathImpl(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
     myIsDirectory = isDirectory;
-  }
-
-  @NotNull
-  public FilePath createChild(@NotNull  String subPath, boolean isDirectory) {
-    if (StringUtil.isEmptyOrSpaces(subPath)) return this;
-    return new FilePathImpl(myPath + File.separator + subPath, isDirectory);
   }
 
   @Override
