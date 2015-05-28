@@ -19,7 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.MergeUtil;
+import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -195,7 +195,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
       FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
       FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
-      List<MergeLineFragment> mergeFragments = MergeUtil.buildFair(fragments1, fragments2, indicator);
+      List<MergeLineFragment> mergeFragments = ComparisonMergeUtil.buildFair(fragments1, fragments2, indicator);
 
       return apply(mergeFragments, comparisonPolicy);
     }
