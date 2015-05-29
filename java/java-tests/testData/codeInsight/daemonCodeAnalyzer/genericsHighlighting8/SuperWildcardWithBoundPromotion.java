@@ -35,7 +35,7 @@ class Test {
     }
 
     void bug1(Parametrized<? super T> param) {
-      <error descr="Inferred type 'capture<? super T>' for type parameter 'I' is not within its bound; should extend 'java.lang.Number'">foo(param)</error>;
+      foo<error descr="'foo(Test.Parametrized<I>)' in 'Test.Bug1' cannot be applied to '(Test.Parametrized<capture<? super T>>)'">(param)</error>;
     }
 
 
