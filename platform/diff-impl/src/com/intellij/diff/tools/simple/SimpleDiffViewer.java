@@ -612,14 +612,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @CalledWithWriteLock
   public void replaceChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
     if (!change.isValid()) return;
+    Side outputSide = sourceSide.other();
 
-    final Document document1 = getEditor1().getDocument();
-    final Document document2 = getEditor2().getDocument();
-
-    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
-                               change.getStartLine(sourceSide.other()), change.getEndLine(sourceSide.other()),
-                               sourceSide.select(document1, document2),
-                               change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+    DiffUtil.applyModification(getEditor(outputSide).getDocument(), change.getStartLine(outputSide), change.getEndLine(outputSide),
+                               getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
 
     change.destroyHighlighter();
     myDiffChanges.remove(change);
@@ -629,14 +625,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   public void appendChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
     if (!change.isValid()) return;
     if (change.getStartLine(sourceSide) == change.getEndLine(sourceSide)) return;
+    Side outputSide = sourceSide.other();
 
-    final Document document1 = getEditor1().getDocument();
-    final Document document2 = getEditor2().getDocument();
-
-    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
-                               change.getEndLine(sourceSide.other()), change.getEndLine(sourceSide.other()),
-                               sourceSide.select(document1, document2),
-                               change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+    DiffUtil.applyModification(getEditor(outputSide).getDocument(), change.getEndLine(outputSide), change.getEndLine(outputSide),
+                               getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
 
     change.destroyHighlighter();
     myDiffChanges.remove(change);
