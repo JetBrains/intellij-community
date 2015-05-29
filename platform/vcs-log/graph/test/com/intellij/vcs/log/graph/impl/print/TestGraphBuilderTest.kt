@@ -31,19 +31,16 @@ public class TestGraphBuilderTest : AbstractTestWithTwoTextFile("testParser") {
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun specialElements() {
     doTest("specialElements")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun notLoadNode() {
     doTest("notLoadNode")
   }
