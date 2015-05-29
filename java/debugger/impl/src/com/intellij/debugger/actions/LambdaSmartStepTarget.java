@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,16 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,6 +46,20 @@ public class LambdaSmartStepTarget extends SmartStepTarget{
 
   public int getOrdinal() {
     return myOrdinal;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Nodes.Function;
+  }
+
+  @NotNull
+  @Override
+  public String getPresentation() {
+    String typeText = PsiFormatUtil.formatType(myLambda.getType(), 0, PsiSubstitutor.EMPTY);
+    String label = getLabel();
+    return label != null ? label + typeText : typeText;
   }
 
   public boolean equals(Object o) {
