@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     if (providerBinding == null) {
       myNamedBindingsMap.put(scopeClass, providerBinding = new NamedObjectProviderBinding() {
         @Override
-        protected String getName(final PsiElement position) {
+        protected String getName(@NotNull final PsiElement position) {
           return nameCondition.getPropertyValue(position);
         }
       });
