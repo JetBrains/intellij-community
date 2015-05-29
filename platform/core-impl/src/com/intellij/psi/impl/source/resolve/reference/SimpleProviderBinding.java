@@ -35,19 +35,19 @@ import java.util.List;
  * Time: 16:52:28
  * To change this template use Options | File Templates.
  */
-public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<Provider, ElementPattern>>();
+public class SimpleProviderBinding implements ProviderBinding {
+  private final List<ProviderInfo<ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<ElementPattern>>();
 
-  public void registerProvider(Provider provider, ElementPattern pattern, double priority) {
-    myProviderPairs.add(new ProviderInfo<Provider, ElementPattern>(provider, pattern, priority));
+  public void registerProvider(PsiReferenceProvider provider, ElementPattern pattern, double priority) {
+    myProviderPairs.add(new ProviderInfo<ElementPattern>(provider, pattern, priority));
   }
 
   @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
-                                              @NotNull List<ProviderInfo<Provider, ProcessingContext>> list,
+                                              @NotNull List<ProviderInfo<ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
-    for (ProviderInfo<Provider, ElementPattern> trinity : myProviderPairs) {
-      if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)trinity.provider).acceptsHints(position, hints)) {
+    for (ProviderInfo<ElementPattern> trinity : myProviderPairs) {
+      if (hints != PsiReferenceService.Hints.NO_HINTS && !trinity.provider.acceptsHints(position, hints)) {
         continue;
       }
 
@@ -62,14 +62,14 @@ public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider
       catch (IndexNotReadyException ignored) {
       }
       if (suitable) {
-        list.add(new ProviderInfo<Provider, ProcessingContext>(trinity.provider, context, trinity.priority));
+        list.add(new ProviderInfo<ProcessingContext>(trinity.provider, context, trinity.priority));
       }
     }
   }
 
   @Override
-  public void unregisterProvider(@NotNull final Provider provider) {
-    for (final ProviderInfo<Provider, ElementPattern> trinity : new ArrayList<ProviderInfo<Provider, ElementPattern>>(myProviderPairs)) {
+  public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
+    for (final ProviderInfo<ElementPattern> trinity : new ArrayList<ProviderInfo<ElementPattern>>(myProviderPairs)) {
       if (trinity.provider.equals(provider)) {
         myProviderPairs.remove(trinity);
       }

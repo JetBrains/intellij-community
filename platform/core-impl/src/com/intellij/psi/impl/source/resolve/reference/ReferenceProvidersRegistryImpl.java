@@ -31,11 +31,11 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION = new LanguageExtension<PsiReferenceContributor>(PsiReferenceContributor.EP_NAME.getName());
   private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION = new LanguageExtension<PsiReferenceProviderBean>(PsiReferenceProviderBean.EP_NAME.getName());
 
-  private static final Comparator<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>> PRIORITY_COMPARATOR =
-    new Comparator<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>>() {
+  private static final Comparator<ProviderBinding.ProviderInfo<ProcessingContext>> PRIORITY_COMPARATOR =
+    new Comparator<ProviderBinding.ProviderInfo<ProcessingContext>>() {
       @Override
-      public int compare(ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext> o1,
-                         ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext> o2) {
+      public int compare(ProviderBinding.ProviderInfo<ProcessingContext> o1,
+                         ProviderBinding.ProviderInfo<ProcessingContext> o2) {
         return Comparing.compare(o2.priority, o1.priority);
       }
     };
@@ -99,7 +99,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   @Override
   protected PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context,
                                                         @NotNull PsiReferenceService.Hints hints) {
-    List<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>> providers = getRegistrar(context.getLanguage()).getPairsByElement(context, hints);
+    List<ProviderBinding.ProviderInfo<ProcessingContext>> providers = getRegistrar(context.getLanguage()).getPairsByElement(context, hints);
 
     if (providers.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
@@ -114,7 +114,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     List<PsiReference> result = new ArrayList<PsiReference>();
     final double maxPriority = providers.get(0).priority;
     next:
-    for (ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext> trinity : providers) {
+    for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
       final PsiReference[] refs;
       try {
         refs = trinity.provider.getReferencesByElement(context, trinity.processingContext);

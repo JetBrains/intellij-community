@@ -40,18 +40,18 @@ import java.util.Map;
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
-  private final Map<Class<?>, SimpleProviderBinding<PsiReferenceProvider>> myBindingsMap = ContainerUtil.newTroveMap();
-  private final Map<Class<?>, NamedObjectProviderBinding<PsiReferenceProvider>> myNamedBindingsMap = ContainerUtil.newTroveMap();
+  private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = ContainerUtil.newTroveMap();
+  private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = ContainerUtil.newTroveMap();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final ConcurrentFactoryMap<Class, ProviderBinding<PsiReferenceProvider>[]> myBindingCache;
+  private final ConcurrentFactoryMap<Class, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
   public PsiReferenceRegistrarImpl(final Language language) {
-    myBindingCache = new ConcurrentFactoryMap<Class, ProviderBinding<PsiReferenceProvider>[]>() {
+    myBindingCache = new ConcurrentFactoryMap<Class, ProviderBinding[]>() {
       @Nullable
       @Override
-      protected ProviderBinding<PsiReferenceProvider>[] create(Class key) {
-        List<ProviderBinding<PsiReferenceProvider>> result = ContainerUtil.newSmartList();
+      protected ProviderBinding[] create(Class key) {
+        List<ProviderBinding> result = ContainerUtil.newSmartList();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
           if (bindingClass.isAssignableFrom(key)) {
             result.add(myBindingsMap.get(bindingClass));
@@ -107,9 +107,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       break;
     }
 
-    SimpleProviderBinding<PsiReferenceProvider> providerBinding = myBindingsMap.get(scope);
+    SimpleProviderBinding providerBinding = myBindingsMap.get(scope);
     if (providerBinding == null) {
-      myBindingsMap.put(scope, providerBinding = new SimpleProviderBinding<PsiReferenceProvider>());
+      myBindingsMap.put(scope, providerBinding = new SimpleProviderBinding());
     }
     providerBinding.registerProvider(provider, pattern, priority);
 
@@ -117,8 +117,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
-    ProviderBinding<PsiReferenceProvider> providerBinding = myBindingsMap.get(scope);
-    providerBinding.unregisterProvider(provider);
+    myBindingsMap.get(scope).unregisterProvider(provider);
   }
 
 
@@ -129,10 +128,10 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
                                               @NotNull PsiReferenceProvider provider,
                                               final double priority,
                                               @NotNull ElementPattern pattern) {
-    NamedObjectProviderBinding<PsiReferenceProvider> providerBinding = myNamedBindingsMap.get(scopeClass);
+    NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
 
     if (providerBinding == null) {
-      myNamedBindingsMap.put(scopeClass, providerBinding = new NamedObjectProviderBinding<PsiReferenceProvider>() {
+      myNamedBindingsMap.put(scopeClass, providerBinding = new NamedObjectProviderBinding() {
         @Override
         protected String getName(final PsiElement position) {
           return nameCondition.getPropertyValue(position);
@@ -151,14 +150,14 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   @NotNull
-  List<ProviderBinding.ProviderInfo<PsiReferenceProvider,ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
+  List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
                                                                                                @NotNull PsiReferenceService.Hints hints) {
 
-    final ProviderBinding<PsiReferenceProvider>[] bindings = myBindingCache.get(element.getClass());
+    final ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
-    List<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>> ret = ContainerUtil.newSmartList();
-    for (ProviderBinding<PsiReferenceProvider> binding : bindings) {
+    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = ContainerUtil.newSmartList();
+    for (ProviderBinding binding : bindings) {
       binding.addAcceptableReferenceProviders(element, ret, hints);
     }
     return ret;
