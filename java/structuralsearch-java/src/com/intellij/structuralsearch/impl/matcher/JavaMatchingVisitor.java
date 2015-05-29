@@ -2,7 +2,6 @@ package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -34,7 +33,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC, PsiModifier.ABSTRACT, PsiModifier.FINAL,
     PsiModifier.NATIVE, PsiModifier.SYNCHRONIZED, PsiModifier.STRICTFP, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.DEFAULT
   };
-  public static final Key<List<PsiCatchSection>> UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY = Key.create("UnmatchedCatchSection");
   private final GlobalMatchingVisitor myMatchingVisitor;
   private PsiClass myClazz;
 
@@ -1334,7 +1332,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiTryStatement try2 = (PsiTryStatement)myMatchingVisitor.getElement();
 
     myMatchingVisitor.setResult(myMatchingVisitor.matchSons(try1.getTryBlock(), try2.getTryBlock()));
-
     if (!myMatchingVisitor.getResult()) return;
 
     final PsiResourceList resourceList1 = try1.getResourceList();
@@ -1354,6 +1351,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(false);
     }
     else {
+      final List<PsiElement> unmatchedElements = new ArrayList<PsiElement>();
+
       if (resourceList1 != null) {
         if (resourceList2 == null) {
           myMatchingVisitor.setResult(false);
@@ -1366,11 +1365,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           resourceVariables2.toArray(new PsiResourceVariable[resourceVariables2.size()])));
         if (!myMatchingVisitor.getResult()) return;
       }
+      else if (resourceList2 != null){
+        unmatchedElements.add(resourceList2);
+      }
 
-      final List<PsiCatchSection> unmatchedCatchSections = new ArrayList<PsiCatchSection>();
-
-      ContainerUtil.addAll(unmatchedCatchSections, catches2);
-
+      ContainerUtil.addAll(unmatchedElements, catches2);
       for (PsiCatchSection catchSection : catches1) {
         final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catchSection);
         final PsiElement pinnedNode = handler.getPinnedNode(null);
@@ -1380,15 +1379,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           if (!myMatchingVisitor.getResult()) return;
         }
         else {
-          int j;
-          for (j = 0; j < unmatchedCatchSections.size(); ++j) {
-            if (handler.match(catchSection, unmatchedCatchSections.get(j), myMatchingVisitor.getMatchContext())) {
-              unmatchedCatchSections.remove(j);
+          boolean matched = false;
+          for (int j = 0; j < unmatchedElements.size(); ++j) {
+            if (handler.match(catchSection, unmatchedElements.get(j), myMatchingVisitor.getMatchContext())) {
+              unmatchedElements.remove(j);
+              matched = true;
               break;
             }
           }
-
-          if (j == catches2.length) {
+          if (!matched) {
             myMatchingVisitor.setResult(false);
             return;
           }
@@ -1397,10 +1396,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       if (finally1 != null) {
         myMatchingVisitor.setResult(myMatchingVisitor.matchSons(finally1, finally2));
+      } else if (finally2 != null) {
+        unmatchedElements.add(finally2);
       }
 
-      if (myMatchingVisitor.getResult() && unmatchedCatchSections.size() > 0) {
-        try2.putUserData(UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY, unmatchedCatchSections);
+      if (myMatchingVisitor.getResult() && unmatchedElements.size() > 0) {
+        try2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
       }
     }
   }

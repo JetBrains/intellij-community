@@ -5,7 +5,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.structuralsearch.impl.matcher.JavaMatchingVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -282,14 +283,24 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         replacement = handleSymbolReplacement(replacement, el);
 
         if (replacement instanceof PsiTryStatement) {
-          final List<PsiCatchSection> unmatchedCatchSections = el.getUserData(JavaMatchingVisitor.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY);
-          if (unmatchedCatchSections != null) {
-            final PsiTryStatement tryStatement = (PsiTryStatement)replacement;
+          final PsiTryStatement tryStatement = (PsiTryStatement)replacement;
+          final List<PsiElement> unmatchedElements = el.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
+          if (unmatchedElements != null) {
+            final PsiElement firstElement = unmatchedElements.get(0);
+            if (firstElement instanceof PsiResourceList) addElementAfterAnchor(tryStatement, firstElement, tryStatement.getFirstChild());
             final PsiCatchSection[] catches = tryStatement.getCatchSections();
             final PsiElement anchor = catches.length == 0 ? tryStatement.getTryBlock() : catches[catches.length - 1];
-            for (int i = unmatchedCatchSections.size() - 1; i >= 0; --i) {
-              replacement.addAfter(unmatchedCatchSections.get(i), anchor);
-              replacement.addAfter(createWhiteSpace(replacement), anchor);
+            for (int i = unmatchedElements.size() - 1; i >= 0; i--) {
+              final PsiElement element = unmatchedElements.get(i);
+              if ((element instanceof PsiCatchSection)) addElementAfterAnchor(tryStatement, element, anchor);
+            }
+            final PsiElement lastElement = unmatchedElements.get(unmatchedElements.size() - 1);
+            if (lastElement instanceof PsiCodeBlock) {
+              final PsiElement finallyKeyword = PsiTreeUtil.skipSiblingsBackward(lastElement, PsiWhiteSpace.class);
+              assert finallyKeyword != null;
+              final PsiElement finallyAnchor = tryStatement.getLastChild();
+              addElementAfterAnchor(tryStatement, lastElement, finallyAnchor);
+              addElementAfterAnchor(tryStatement, finallyKeyword, finallyAnchor);
             }
           }
         }
@@ -434,6 +445,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         element.getParent().deleteChildRange(firstToDelete, lastToDelete);
       }
     }
+  }
+
+  private static void addElementAfterAnchor(PsiElement parentElement, PsiElement element, PsiElement anchor) {
+    parentElement.addAfter(element, anchor);
+    final PsiElement sibling = element.getPrevSibling();
+    if (sibling instanceof PsiWhiteSpace) parentElement.addAfter(sibling, anchor); // recycle whitespace
   }
 
   @Override

@@ -2015,6 +2015,30 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                              "}\n";
     final String actualResult1 = replacer.testReplace(in1, what1, by1, options);
     assertEquals("Replacing try/finally should leave unmatched catch sections alone", expected1, actualResult1);
+
+    final String in2 = "try (AutoCloseable a = null) {" +
+                       "  System.out.println(1);" +
+                       "} catch (Exception e) {" +
+                       "  System.out.println(2);" +
+                       "} finally {" +
+                       "  System.out.println(3);" +
+                       "}";
+    final String what2 = "try {" +
+                         "  '_Statement*;" +
+                         "}";
+    final String by2 = "try {" +
+                       "  /* comment */" +
+                       "  $Statement$;" +
+                       "}";
+    final String expected2 = "try (AutoCloseable a = null) {" +
+                             "  /* comment */  System.out.println(1);" +
+                             "} catch (Exception e) {" +
+                             "  System.out.println(2);" +
+                             "} finally {" +
+                             "  System.out.println(3);" +
+                             "}";
+    final String actualResult2 = replacer.testReplace(in2, what2, by2, options);
+    assertEquals("Replacing try/finally should also keep unmatched resource lists and finally blocks", expected2, actualResult2);
   }
 
   public void testReplaceExtraSemicolon() {
