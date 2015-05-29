@@ -1,4 +1,5 @@
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.annotations.NotNull
 
 class SomeClass {}
 

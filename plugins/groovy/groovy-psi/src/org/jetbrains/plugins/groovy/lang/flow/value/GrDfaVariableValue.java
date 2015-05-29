@@ -64,7 +64,7 @@ public class GrDfaVariableValue extends DfaVariableValue {
       return nullability;
     }
 
-    if (var instanceof GrField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
+    if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
       final Nullness fieldNullability = FieldNullabilityCalculator.calculateNullability((PsiField)var);
       if (fieldNullability != Nullness.UNKNOWN) {
         return fieldNullability;
