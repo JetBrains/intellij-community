@@ -23,6 +23,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -350,6 +351,8 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
         }
       }
     });
+    final String message = String.format("Following output is searched for hightlighed strings: %s \n", editor.getDocument().getText());
+    Logger.getInstance(getClass()).warn(message);
     return Pair.create(resultRanges, resultStrings);
   }
 
