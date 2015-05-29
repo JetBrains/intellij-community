@@ -75,6 +75,37 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
+  public void testParallelTestExecutionPreserveInvocationCount() throws Exception {
+
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ISuite)null);
+    final MockTestNGResult[] results = new MockTestNGResult[] {new MockTestNGResult("ATest", "testName"), new MockTestNGResult("ATest", "testName1"), new MockTestNGResult("ATest", "testName")};
+    for (MockTestNGResult result : results) {
+      listener.onTestStart(result);
+      listener.onTestFinished(result);
+    }
+    listener.onFinish((ISuite)null);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName1' locationHint='java:test://ATest.testName1|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName1']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName (1)' locationHint='java:test://ATest.testName|[1|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName (1)']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
   public void testSkipMethodAfterStartTest() throws Exception {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
