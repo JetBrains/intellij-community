@@ -198,7 +198,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
-    return !(loc.method().isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
+    Method method = loc.method();
+    if (method.isSynthetic()) {
+      return false;
+    }
+    return !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
