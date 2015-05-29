@@ -22,7 +22,7 @@ import java.util.List;
 
 public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDifferenceIterable {
   @NotNull
-  protected abstract List<T> getChanges();
+  protected abstract List<? extends T> getChanges();
 
   @NotNull
   protected abstract EditorEx getEditor();
