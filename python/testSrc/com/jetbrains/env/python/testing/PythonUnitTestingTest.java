@@ -114,7 +114,9 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
         Assert.assertThat("No lines highlighted", fileNames, Matchers.not(Matchers.empty()));
         // PyTest highlights file:line_number
         Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.anyOf(Matchers.endsWith("reference_tests.py:13"),
-                                                                                               Matchers.endsWith("reference_tests.py:7"))));
+                                                                                               Matchers.endsWith("reference_tests.py:7"),
+                                                                                               Matchers.endsWith("reference_tests.py"),
+                                                                                               Matchers.endsWith("reference_tests.py:12"))));
       }
     });
   }
