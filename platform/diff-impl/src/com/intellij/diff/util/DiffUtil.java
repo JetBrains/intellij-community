@@ -47,6 +47,7 @@ import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
@@ -684,6 +685,62 @@ public class DiffUtil {
 
   public static int getLineCount(@NotNull Document document) {
     return Math.max(document.getLineCount(), 1);
+  }
+
+  //
+  // Updating ranges on change
+  //
+
+  public static int countLinesShift(@NotNull DocumentEvent e) {
+    return StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+  }
+
+  @NotNull
+  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift) {
+    return updateRangeOnModification(start, end, changeStart, changeEnd, shift, false);
+  }
+
+  @NotNull
+  public static UpdatedLineRange updateRangeOnModification(int start, int end, int changeStart, int changeEnd, int shift, boolean greedy) {
+    if (end <= changeStart) { // change before
+      return new UpdatedLineRange(start, end, false);
+    }
+    if (start >= changeEnd) { // change after
+      return new UpdatedLineRange(start + shift, end + shift, false);
+    }
+
+    if (start <= changeStart && end >= changeEnd) { // change inside
+      return new UpdatedLineRange(start, end + shift, false);
+    }
+
+    // range is damaged. We don't know new boundaries.
+    // But we can try to return approximate new position
+    int newChangeEnd = changeEnd + shift;
+
+    if (start >= changeStart && end <= changeEnd) { // fully inside change
+      return greedy ? new UpdatedLineRange(changeStart, newChangeEnd, true) :
+                      new UpdatedLineRange(newChangeEnd, newChangeEnd, true);
+    }
+
+    if (start < changeStart) { // bottom boundary damaged
+      return greedy ? new UpdatedLineRange(start, newChangeEnd, true) :
+                      new UpdatedLineRange(start, changeStart, true);
+    } else { // top boundary damaged
+      return greedy ? new UpdatedLineRange(changeStart, end + shift, true) :
+                      new UpdatedLineRange(newChangeEnd, end + shift, true);
+    }
+  }
+
+  public static class UpdatedLineRange {
+    public final int startLine;
+    public final int endLine;
+    public final boolean damaged;
+
+    public UpdatedLineRange(int startLine, int endLine, boolean damaged) {
+      this.startLine = startLine;
+      this.endLine = endLine;
+      this.damaged = damaged;
+    }
   }
 
   //

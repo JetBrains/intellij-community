@@ -306,17 +306,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return;
     }
 
-    int offset1 = e.getOffset();
-    int offset2 = e.getOffset() + e.getOldLength();
-
-    if (StringUtil.endsWithChar(e.getOldFragment(), '\n') &&
-        StringUtil.endsWithChar(e.getNewFragment(), '\n')) {
-      offset2--;
-    }
-
-    int line1 = e.getDocument().getLineNumber(offset1);
-    int line2 = e.getDocument().getLineNumber(offset2) + 1;
-    int shift = StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+    int line1 = e.getDocument().getLineNumber(e.getOffset());
+    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    int shift = DiffUtil.countLinesShift(e);
 
     List<SimpleDiffChange> invalid = new ArrayList<SimpleDiffChange>();
     for (SimpleDiffChange change : myDiffChanges) {
