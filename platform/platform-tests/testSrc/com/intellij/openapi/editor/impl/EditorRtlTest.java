@@ -305,6 +305,15 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertVisualCaretLocation(2, true);
   }
   
+  public void testMovingCaretWhenSelectionStartsOnDirectionBoundary() throws Exception {
+    init("lr");
+    right();
+    right();
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+    right();
+    assertVisualCaretLocation(2, true);
+  }
+  
   public void testMoveCaretWithSelection() throws Exception {
     init("lr");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
