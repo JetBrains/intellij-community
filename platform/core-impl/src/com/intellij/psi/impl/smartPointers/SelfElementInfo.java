@@ -35,16 +35,16 @@ import java.lang.ref.SoftReference;
 * User: cdr
 */
 public class SelfElementInfo implements SmartPointerElementInfo {
-  protected final VirtualFile myVirtualFile;
+  private final VirtualFile myVirtualFile;
   private Reference<RangeMarker> myMarkerRef; // create marker only in case of live document
   private volatile int mySyncStartOffset;
   private volatile int mySyncEndOffset;
-  protected volatile boolean mySyncMarkerIsValid;
+  volatile boolean mySyncMarkerIsValid;
   private final Class myType;
-  protected final Project myProject;
-  @SuppressWarnings({"UnusedDeclaration"})
+  private final Project myProject;
+  @SuppressWarnings("UnusedDeclaration")
   private volatile RangeMarker myRangeMarker; //maintains hard reference during modification
-  protected final Language myLanguage;
+  private final Language myLanguage;
 
   SelfElementInfo(@NotNull Project project,
                   @NotNull ProperTextRange range,
@@ -157,7 +157,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return restoreFromFile(file);
   }
 
-  protected PsiElement restoreFromFile(@NotNull PsiFile file) {
+  private PsiElement restoreFromFile(@NotNull PsiFile file) {
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 

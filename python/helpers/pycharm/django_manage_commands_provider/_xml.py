@@ -24,7 +24,7 @@ TODO: Since Django 1.8 we can fetch much more info from argparse like positional
 """
 from xml.dom import minidom
 from xml.dom.minidom import Element
-from utils import VersionAgnosticUtils
+from _jb_utils import VersionAgnosticUtils
 
 __author__ = 'Ilya.Kazakevich'
 

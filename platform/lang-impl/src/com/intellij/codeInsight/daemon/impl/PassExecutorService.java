@@ -46,7 +46,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -60,20 +59,22 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author cdr
  */
-public class PassExecutorService implements Disposable {
+class PassExecutorService implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
   private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
 
   private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Job<Void>>();
   private final Project myProject;
-  protected volatile boolean isDisposed;
+  private volatile boolean isDisposed;
   private final AtomicInteger nextPassId = new AtomicInteger(100);
 
-  public PassExecutorService(@NotNull Project project) {
+  PassExecutorService(@NotNull Project project) {
     myProject = project;
   }
 
@@ -83,7 +84,7 @@ public class PassExecutorService implements Disposable {
     isDisposed = true;
   }
 
-  public void cancelAll(boolean waitForTermination) {
+  void cancelAll(boolean waitForTermination) {
     for (Job<Void> submittedPass : mySubmittedPasses.values()) {
       submittedPass.cancel();
     }
@@ -116,10 +117,12 @@ public class PassExecutorService implements Disposable {
     MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
     MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = MultiMap.createSmart();
     MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = MultiMap.createSmart();
+    Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
+
     for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
       FileEditor fileEditor = entry.getKey();
       HighlightingPass[] passes = entry.getValue();
-      Document document = null;
+      Document document;
       if (fileEditor instanceof TextEditor) {
         Editor editor = ((TextEditor)fileEditor).getEditor();
         LOG.assertTrue(!(editor instanceof EditorWindow));
@@ -128,6 +131,9 @@ public class PassExecutorService implements Disposable {
       else {
         VirtualFile virtualFile = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);
         document = virtualFile == null ? null : FileDocumentManager.getInstance().getDocument(virtualFile);
+      }
+      if (document != null) {
+        vFiles.add(FileDocumentManager.getInstance().getFile(document));
       }
 
       int prevId = 0;
@@ -185,7 +191,7 @@ public class PassExecutorService implements Disposable {
       assertConsistency(freePasses, toBeSubmitted, threadsToStartCountdown);
     }
 
-    log(updateProgress, null, "---------------------starting------------------------ " + threadsToStartCountdown.get(), freePasses);
+    log(updateProgress, null, vFiles + " ----- starting " + threadsToStartCountdown.get(), freePasses);
 
     for (ScheduledPass dependentPass : dependentPasses) {
       mySubmittedPasses.put(dependentPass, Job.NULL_JOB);
@@ -227,7 +233,7 @@ public class PassExecutorService implements Disposable {
       id2Visits.put(succId, Pair.create(succ, newPred));
       assert newPred >= 0;
       if (newPred == 0) {
-        checkConsistency((succ), id2Visits);
+        checkConsistency(succ, id2Visits);
       }
     }
   }
@@ -534,7 +540,7 @@ public class PassExecutorService implements Disposable {
   }
 
   @NotNull
-  public List<TextEditorHighlightingPass> getAllSubmittedPasses() {
+  List<TextEditorHighlightingPass> getAllSubmittedPasses() {
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());
     for (ScheduledPass scheduledPass : mySubmittedPasses.keySet()) {
       if (!scheduledPass.myUpdateProgress.isCanceled()) {
@@ -548,24 +554,25 @@ public class PassExecutorService implements Disposable {
   private static void sortById(@NotNull List<TextEditorHighlightingPass> result) {
     ContainerUtil.quickSort(result, new Comparator<TextEditorHighlightingPass>() {
       @Override
-      public int compare(TextEditorHighlightingPass o1, TextEditorHighlightingPass o2) {
+      public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
         return o1.getId() - o2.getId();
       }
     });
   }
 
-  private static final ConcurrentMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
   private static int getThreadNum() {
-    return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
+    Matcher matcher = Pattern.compile("JobScheduler FJ pool (\\d*)/(\\d*)").matcher(Thread.currentThread().getName());
+    String num = matcher.matches() ? matcher.group(1) : null;
+    return StringUtil.parseInt(num, 0);
   }
 
-  public static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls @NotNull Object... info) {
+  static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls @NotNull Object... info) {
     if (LOG.isDebugEnabled()) {
       CharSequence docText = pass == null ? "" : StringUtil.first(pass.getDocument().getCharsSequence(), 10, true);
       synchronized (PassExecutorService.class) {
         StringBuilder s = new StringBuilder();
         for (Object o : info) {
-          s.append(o.toString()).append(" ");
+          s.append(o).append(" ");
         }
         String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
                          + " " + pass + " "
@@ -584,12 +591,12 @@ public class PassExecutorService implements Disposable {
     indicator.putUserDataIfAbsent(THROWABLE_KEY, e);
   }
   @TestOnly
-  public static Throwable getSavedException(@NotNull DaemonProgressIndicator indicator) {
+  static Throwable getSavedException(@NotNull DaemonProgressIndicator indicator) {
     return indicator.getUserData(THROWABLE_KEY);
   }
 
   // return true if terminated
-  public boolean waitFor(int millis) throws Throwable {
+  boolean waitFor(int millis) throws Throwable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     try {
       for (Job<Void> job : mySubmittedPasses.values()) {

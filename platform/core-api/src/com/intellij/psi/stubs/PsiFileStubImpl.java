@@ -20,6 +20,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   public void setPsi(@NotNull final T psi) {
     myFile = psi;
   }
-  
+
   public void clearPsi(@NotNull String reason) {
     myInvalidationReason = reason;
     myFile = null;
@@ -73,6 +74,9 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   public void setStubRoots(@NotNull PsiFileStub[] roots) {
+    if (roots.length == 0) {
+      Logger.getInstance(getClass()).error("Incorrect psi file stub roots count" + this + "," + getStubType());
+    }
     myStubRoots = roots;
   }
 }

@@ -485,7 +485,7 @@ public class ReferenceExpressionCompletionContributor {
         if (expr instanceof PsiReferenceExpression) {
           return (PsiReferenceExpression)expr;
         }
-        LOG.error("Unexpected type: " + expr.getType() + " from text " + text);
+        LOG.error("Unexpected type: " + expr.getClass() + " from text " + text);
         return null;
       }
       catch (IncorrectOperationException e) {

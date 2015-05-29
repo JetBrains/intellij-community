@@ -27,18 +27,11 @@ import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 
 public class DiffHyperlink implements Printable {
@@ -66,94 +59,21 @@ public class DiffHyperlink implements Printable {
     myPrintOneLine = printOneLine;
   }
 
+  /**
+   * Use {@link ViewAssertEqualsDiffAction#openDiff(DataContext, DiffHyperlink)} 
+   */
+  @Deprecated
   public void openDiff(Project project) {
-    openMultiDiff(project, null);
+    ViewAssertEqualsDiffAction.openDiff(DataManager.getInstance().getDataContext(), this);
   }
 
+  /**
+   * Use {@link ViewAssertEqualsDiffAction#openDiff(DataContext, DiffHyperlink)}
+   */
+  @Deprecated
   public void openMultiDiff(final Project project,
                             final AbstractTestProxy.AssertEqualsDiffChain chain) {
-    final SimpleDiffRequest diffData = createRequest(project, chain, myFilePath, myExpected, myActual);
-    DiffManager.getInstance().getIdeaDiffTool().show(diffData);
-  }
-
-  private SimpleDiffRequest createRequest(final Project project,
-                                          final AbstractTestProxy.AssertEqualsDiffChain chain,
-                                          String filePath, String expected, String actual) {
-    String expectedTitle = ExecutionBundle.message("diff.content.expected.title");
-    final DiffContent expectedContent;
-    final VirtualFile vFile;
-    if (filePath != null && (vFile = LocalFileSystem.getInstance().findFileByPath(filePath)) != null) {
-      expectedContent = DiffContent.fromFile(project, vFile);
-      expectedTitle += " (" + vFile.getPresentableUrl() + ")";
-    } else {
-      expectedContent = new SimpleContent(expected);
-    }
-    final SimpleDiffRequest diffData = new SimpleDiffRequest(project, getTitle());
-    if (chain != null) {
-      diffData.setToolbarAddons(new DiffRequest.ToolbarAddons() {
-        @Override
-        public void customize(DiffToolbar toolbar) {
-          toolbar.addAction(new NextPrevAction("Compare Previous Failure", AllIcons.Actions.Prevfile, chain) {
-            {
-              registerCustomShortcutSet(ActionManager.getInstance().getAction("PreviousTab").getShortcutSet(), null);
-            }
-
-            @Override
-            protected DiffHyperlink getNextId() {
-              return chain.getPrevious();
-            }
-          });
-          toolbar.addAction(new NextPrevAction("Compare Next Failure", AllIcons.Actions.Nextfile, chain) {
-            {
-              registerCustomShortcutSet(ActionManager.getInstance().getAction("NextTab").getShortcutSet(), null);
-            }
-
-            @Override
-            protected DiffHyperlink getNextId() {
-              return chain.getNext();
-            }
-          });
-        }
-      });
-    }
-    diffData.setContents(expectedContent, new SimpleContent(actual));
-    diffData.setContentTitles(expectedTitle, ExecutionBundle.message("diff.content.actual.title"));
-    diffData.addHint(DiffTool.HINT_SHOW_FRAME);
-    diffData.addHint(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES);
-    diffData.setGroupKey("#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
-    return diffData;
-  }
-
-  abstract class NextPrevAction extends AnAction {
-
-    private final AbstractTestProxy.AssertEqualsDiffChain myChain;
-
-    public NextPrevAction(@Nullable String text, @Nullable Icon icon,
-                          final AbstractTestProxy.AssertEqualsDiffChain chain) {
-      super(text, text, icon);
-      myChain = chain;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      final DiffViewer viewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
-      LOG.assertTrue(viewer != null);
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      final DiffHyperlink nextProvider = getNextId();
-      myChain.setCurrent(nextProvider);
-      final SimpleDiffRequest nextRequest = createRequest(project, myChain,
-                                                          nextProvider.getFilePath(), nextProvider.getLeft(), nextProvider.getRight());
-      viewer.setDiffRequest(nextRequest);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      final DiffViewer viewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      e.getPresentation().setEnabled(project != null && viewer != null);
-    }
-
-    protected abstract DiffHyperlink getNextId();
+    ViewAssertEqualsDiffAction.openDiff(DataManager.getInstance().getDataContext(), this);
   }
 
   protected String getTitle() {

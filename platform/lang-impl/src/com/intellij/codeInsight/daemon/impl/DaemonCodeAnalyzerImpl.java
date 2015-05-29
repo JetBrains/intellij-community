@@ -239,6 +239,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
                                            @NotNull final ProgressIndicator progress) {
+    setUpdateByTimerEnabled(true); // by default we disable daemon while in modal dialog, but here we need to re-enable it because otherwise the paused daemon will conflict with our started passes
+    restart(); // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
+
     final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
@@ -255,10 +258,18 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
       });
 
-      for (TextEditorHighlightingPass pass : passes) {
-        pass.doCollectInformation(progress);
-        result.addAll(pass.getInfos());
+      LOG.debug("All passes for " + psiFile.getName()+ " started (" + passes+"). progress canceled: "+progress.isCanceled());
+      try {
+        for (TextEditorHighlightingPass pass : passes) {
+          pass.doCollectInformation(progress);
+          result.addAll(pass.getInfos());
+        }
       }
+      catch (ProcessCanceledException e) {
+        LOG.debug("Canceled: " + progress);
+        throw e;
+      }
+      LOG.debug("All passes for " + psiFile.getName()+ " run. progress canceled: "+progress.isCanceled()+"; infos: "+result);
     }
 
     return result;
@@ -548,7 +559,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
-    PassExecutorService.log(myUpdateProgress, null, "CancelX", reason, start);
+    PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, start);
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();
@@ -873,5 +884,4 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private List<Editor> getActiveEditors() {
     return myEditorTracker.getActiveEditors();
   }
-
 }

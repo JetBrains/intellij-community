@@ -137,10 +137,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("annotations-common")
         module("annotations")
       }
-      jar("annotations-java8.jar") {
-        module("annotations-common")
-        module("annotations-java8")
-      }
       jar("jdkAnnotations.jar") {
         fileset(dir: "${home}/java/jdkAnnotations")
       }
@@ -215,6 +211,13 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         fileset(dir: "$home/lib/ant") {
           exclude(name: "**/src/**")
         }
+      }
+    }
+
+    dir("redist") {
+      jar("annotations-java8.jar") {
+        module("annotations-common")
+        module("annotations-java8")
       }
     }
 
