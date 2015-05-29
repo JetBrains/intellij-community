@@ -34,7 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -1023,8 +1022,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     @Override
     public Color getFileColorFor(Object object) {
       VirtualFile file = null;
-      if (object instanceof FilePathImpl) {
-        file = LocalFileSystem.getInstance().findFileByPath(((FilePathImpl)object).getPath());
+      if (object instanceof FilePath) {
+        file = LocalFileSystem.getInstance().findFileByPath(((FilePath)object).getPath());
       } else if (object instanceof Change) {
         file = ((Change)object).getVirtualFile();
       }
