@@ -239,37 +239,45 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
                                            @NotNull final ProgressIndicator progress) {
-    setUpdateByTimerEnabled(true); // by default we disable daemon while in modal dialog, but here we need to re-enable it because otherwise the paused daemon will conflict with our started passes
-    restart(); // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
+    // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
+    myFileStatusMap.markAllFilesDirty("prepare to run main passes");
+    stopProcess(false, "disable background daemon");
+    myPassExecutorService.cancelAll(true);
 
-    final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
-      List<TextEditorHighlightingPass> passes =
-        TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
-                                                                                             HighlightInfoProcessor.getEmpty());
+    final List<HighlightInfo> result;
+    try {
+      result = new ArrayList<HighlightInfo>();
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
+        List<TextEditorHighlightingPass> passes =
+          TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
+                                                                                               HighlightInfoProcessor.getEmpty());
 
-      Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
-        @Override
-        public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
-          if (o1 instanceof GeneralHighlightingPass) return -1;
-          if (o2 instanceof GeneralHighlightingPass) return 1;
-          return 0;
+        Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
+          @Override
+          public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
+            if (o1 instanceof GeneralHighlightingPass) return -1;
+            if (o2 instanceof GeneralHighlightingPass) return 1;
+            return 0;
+          }
+        });
+
+        LOG.debug("All passes for " + psiFile.getName()+ " started (" + passes+"). progress canceled: "+progress.isCanceled());
+        try {
+          for (TextEditorHighlightingPass pass : passes) {
+            pass.doCollectInformation(progress);
+            result.addAll(pass.getInfos());
+          }
         }
-      });
-
-      LOG.debug("All passes for " + psiFile.getName()+ " started (" + passes+"). progress canceled: "+progress.isCanceled());
-      try {
-        for (TextEditorHighlightingPass pass : passes) {
-          pass.doCollectInformation(progress);
-          result.addAll(pass.getInfos());
+        catch (ProcessCanceledException e) {
+          LOG.debug("Canceled: " + progress);
+          throw e;
         }
+        LOG.debug("All passes for " + psiFile.getName()+ " run. progress canceled: "+progress.isCanceled()+"; infos: "+result);
       }
-      catch (ProcessCanceledException e) {
-        LOG.debug("Canceled: " + progress);
-        throw e;
-      }
-      LOG.debug("All passes for " + psiFile.getName()+ " run. progress canceled: "+progress.isCanceled()+"; infos: "+result);
+    }
+    finally {
+      stopProcess(true, "re-enable background daemon after main passes run");
     }
 
     return result;

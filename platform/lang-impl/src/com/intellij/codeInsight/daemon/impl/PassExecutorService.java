@@ -597,7 +597,6 @@ class PassExecutorService implements Disposable {
 
   // return true if terminated
   boolean waitFor(int millis) throws Throwable {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     try {
       for (Job<Void> job : mySubmittedPasses.values()) {
         job.waitForCompletion(millis);
