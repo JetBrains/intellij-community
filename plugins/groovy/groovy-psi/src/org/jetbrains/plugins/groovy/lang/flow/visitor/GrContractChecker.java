@@ -34,7 +34,7 @@ import java.util.Set;
 public class GrContractChecker extends GrGenericContractChecker<GrStandardInstructionVisitor> {
   private final boolean myOnTheFly;
 
-  public GrContractChecker(GrMethod method, MethodContract contract, boolean onTheFly) {
+  public GrContractChecker(@NotNull GrMethod method, @NotNull MethodContract contract, boolean onTheFly) {
     super(method, contract);
     myOnTheFly = onTheFly;
   }
@@ -55,7 +55,7 @@ class GrGenericContractChecker<V extends GrGenericStandardInstructionVisitor<V>>
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
-  public GrGenericContractChecker(GrMethod method, MethodContract contract) {
+  public GrGenericContractChecker(@NotNull GrMethod method, @NotNull MethodContract contract) {
     super(false, false);
     myMethod = method;
     myContract = contract;
