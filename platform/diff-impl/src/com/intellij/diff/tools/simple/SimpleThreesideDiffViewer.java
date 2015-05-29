@@ -30,6 +30,10 @@ import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
+import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
@@ -288,17 +292,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       return;
     }
 
-    int offset1 = e.getOffset();
-    int offset2 = e.getOffset() + e.getOldLength();
-
-    if (StringUtil.endsWithChar(e.getOldFragment(), '\n') &&
-        StringUtil.endsWithChar(e.getNewFragment(), '\n')) {
-      offset2--;
-    }
-
-    int line1 = e.getDocument().getLineNumber(offset1);
-    int line2 = e.getDocument().getLineNumber(offset2) + 1;
-    int shift = StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+    int line1 = e.getDocument().getLineNumber(e.getOffset());
+    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    int shift = DiffUtil.countLinesShift(e);
 
     List<SimpleThreesideDiffChange> invalid = new ArrayList<SimpleThreesideDiffChange>();
     for (SimpleThreesideDiffChange change : myDiffChanges) {

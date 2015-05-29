@@ -58,7 +58,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
@@ -547,17 +546,12 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
 
         Document twosideDocument = getDocument(myMasterSide);
 
-        int offset1 = e.getOffset();
-        int offset2 = e.getOffset() + e.getOldLength();
+        LineCol onesideStartPosition = LineCol.fromOffset(myDocument, e.getOffset());
+        LineCol onesideEndPosition = LineCol.fromOffset(myDocument, e.getOffset() + e.getOldLength());
 
-        if (StringUtil.endsWithChar(e.getOldFragment(), '\n') &&
-            StringUtil.endsWithChar(e.getNewFragment(), '\n')) {
-          offset2--;
-        }
-
-        LineCol onesideStartPosition = LineCol.fromOffset(myDocument, offset1);
-        LineCol onesideEndPosition = LineCol.fromOffset(myDocument, offset2);
-        int shift = StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+        int line1 = onesideStartPosition.line;
+        int line2 = onesideEndPosition.line + 1;
+        int shift = DiffUtil.countLinesShift(e);
 
         int twosideStartLine = transferLineFromOnesideStrict(myMasterSide, onesideStartPosition.line);
         int twosideEndLine = transferLineFromOnesideStrict(myMasterSide, onesideEndPosition.line);
@@ -573,11 +567,11 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
         twosideDocument.replaceString(twosideStartOffset, twosideEndOffset, e.getNewFragment());
 
         for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
-          change.processChange(onesideStartPosition.line, onesideEndPosition.line + 1, shift);
+          change.processChange(line1, line2, shift);
         }
 
         LineNumberConvertor lineNumberConvertor = myChangedBlockData.getLineNumberConvertor();
-        lineNumberConvertor.handleOnesideChange(onesideStartPosition.line, onesideEndPosition.line + 1, shift, myMasterSide);
+        lineNumberConvertor.handleOnesideChange(line1, line2, shift, myMasterSide);
       }
       finally {
         // TODO: we can avoid marking state out-of-date in some simple cases (like in SimpleDiffViewer)

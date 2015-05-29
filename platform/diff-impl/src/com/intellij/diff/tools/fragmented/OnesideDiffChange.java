@@ -19,6 +19,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.DiffUtil.UpdatedLineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
@@ -164,30 +165,9 @@ public class OnesideDiffChange {
   }
 
   public void processChange(int oldLine1, int oldLine2, int shift) {
-    if (myLine2 <= oldLine1) return;
-    if (myLine1 >= oldLine2) {
-      myLine1 += shift;
-      myLine2 += shift;
-      return;
-    }
-
-    if (myLine1 <= oldLine1 && myLine2 >= oldLine2) {
-      myLine2 += shift;
-      return;
-    }
-
-    // range is destroyed. We don't know new boundaries.
-    // Anything below is just a guess in attempt to keep changes ordered.
-    int newLine2 = oldLine2 + shift;
-    if (myLine2 < oldLine2) {
-      if (myLine2 > newLine2) myLine2 = newLine2;
-    }
-    else {
-      myLine2 += shift; // end of change is outside of modified range - just shift
-    }
-
-    if (myLine1 < oldLine1) myLine1 = Math.min(myLine1, newLine2);
-    if (myLine1 > myLine2) myLine1 = myLine2;
+    UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(myLine1, myLine2, oldLine1, oldLine2, shift);
+    myLine1 = newRange.startLine;
+    myLine2 = newRange.endLine;
   }
 
   //
