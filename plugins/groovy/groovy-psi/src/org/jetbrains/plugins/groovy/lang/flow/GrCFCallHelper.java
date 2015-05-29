@@ -23,13 +23,10 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrDereferenceInstruction;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstruction;
@@ -156,31 +153,17 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
 
   /**
    * Assuming that qualifier is not processed yet
-   * Here we choose hoe to process each particular call
+   * Here we choose how to process each particular call
    */
   private void processMethodCall(@NotNull GrExpression invokedExpression, @NotNull GrMethodCall call) {
     if (invokedExpression instanceof GrReferenceExpression) {
       final GrReferenceExpression reference = (GrReferenceExpression)invokedExpression;
-      if (JavaStylePropertiesUtil.isPropertyAccessor(call)) {
-        // getter call
-        // a.getStuff()
-        processMethodCall(call, reference, new CallBasedArguments(call));
+      final GroovyResolveResult callResolveResult = call.advancedResolve();
+      if (callResolveResult.getElement() instanceof PsiMethod && callResolveResult.isInvokedOnProperty()) {
+        processCallableCall(call);
       }
       else {
-        final GroovyResolveResult result = reference.advancedResolve();
-        final PsiElement element = result.getElement();
-        if (element instanceof PsiParameter || element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) {
-          // callable parameter call
-          // a()
-          // callable property call
-          // a.stuff() (same as a.getStuff()() or a.getStuff().call() or a.stuff.call())
-          processCallableCall(call);
-        }
-        else {
-          // simple method call
-          // a.foo()
-          processMethodCall(call, reference, new CallBasedArguments(call));
-        }
+        processMethodCall(call, reference, new CallBasedArguments(call));
       }
     }
     else {

@@ -255,4 +255,17 @@ def passingNotNullToNotAnnotated(@NotNull a) {
   void "test qualified expressions"() { doTest() }
 
   void "test honor field initializers"() { doTest() }
+
+  void "test effectively unqualified"() {
+    testHighlighting '''\
+class TestEffectivelyUnqualified {
+
+    def field
+
+    def getter() { if (getField() == field) {} }
+
+    def method() { if (<warning descr="Condition 'this.field == field' is always true">this.field == field</warning>) {} }
+}
+'''
+  }
 }

@@ -23,7 +23,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.java.DfaExpressionFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 
 
@@ -143,9 +142,6 @@ public class GrDfaValueFactory extends DfaValueFactory {
     if (resolved instanceof PsiVariable) {
       return (PsiModifierListOwner)resolved;
     }
-    else if (resolved instanceof GrAccessorMethod) {
-      return ((GrAccessorMethod)resolved).getProperty();
-    }
     else if (resolved instanceof GrReflectedMethod) {
       return getModifierListOwner(((GrReflectedMethod)resolved).getBaseMethod());
     }
@@ -184,16 +180,12 @@ public class GrDfaValueFactory extends DfaValueFactory {
   }
 
   public static boolean isEffectivelyUnqualified(GrReferenceExpression refExpression) {
-    GrExpression qualifier = refExpression.getQualifierExpression();
+    final GrExpression qualifier = refExpression.getQualifierExpression();
     if (qualifier == null) {
       return true;
     }
-    if (qualifier instanceof GrConstructorInvocation) {
-      final GrReferenceExpression thisQualifier = ((GrConstructorInvocation)qualifier).getInvokedExpression();
-      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      if (innerMostClass == thisQualifier.resolve()) {
-        return true;
-      }
+    if (GrFieldControlFlowPolicy.isThisRef(qualifier)) {
+      return true;
     }
     return false;
   }

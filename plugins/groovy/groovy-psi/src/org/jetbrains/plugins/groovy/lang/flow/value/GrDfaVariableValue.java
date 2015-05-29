@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 
 public class GrDfaVariableValue extends DfaVariableValue {
 
@@ -54,8 +55,11 @@ public class GrDfaVariableValue extends DfaVariableValue {
 
   @Override
   protected Nullness calcInherentNullability() {
-    PsiModifierListOwner var = getPsiVariable();
-    Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
+    final PsiModifierListOwner var = getPsiVariable();
+    final Nullness nullability = DfaPsiUtil.getElementNullability(
+      getVariableType(),
+      var instanceof GrAccessorMethod ? ((GrAccessorMethod)var).getProperty() : var
+    );
     if (nullability != Nullness.UNKNOWN) {
       return nullability;
     }
