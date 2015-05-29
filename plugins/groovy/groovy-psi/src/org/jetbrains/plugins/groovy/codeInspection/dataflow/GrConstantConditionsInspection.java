@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
@@ -148,6 +149,8 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
 
       for (final PsiElement element : visitor.getProblems(passingNullableArgumentToNonAnnotatedParameter)) {
         if (!alreadyReported.add(element)) continue;
+        final PsiElement parent = element.getParent();
+        if (parent instanceof GrSwitchStatement && ((GrSwitchStatement)parent).getCondition() == element) continue;
         final String text = GrInspectionUtil.isNull(element)
                             ? "Passing <code>null</code> argument to non annotated parameter"
                             : "Argument <code>#ref</code> #loc might be null but passed to non annotated parameter";

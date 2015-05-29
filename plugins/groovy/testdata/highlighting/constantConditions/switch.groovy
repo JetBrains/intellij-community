@@ -1,4 +1,3 @@
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
 class SomeClass {}
@@ -51,7 +50,7 @@ def switchUnknown(a) {
 
 
 def testSwitchNullable(@Nullable a) {
-  switch (<warning descr="Argument 'a' might be null but passed to non annotated parameter">a</warning>) {
+  switch (a) {
     case 0:
       if (<warning descr="Condition 'a == null' is always false">a == null</warning>) {}
       if (<warning descr="Condition 'a != null' is always true">a != null</warning>) {}
