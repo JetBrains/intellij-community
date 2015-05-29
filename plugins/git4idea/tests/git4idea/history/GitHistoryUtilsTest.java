@@ -316,7 +316,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
   @NotNull
   private static FilePath toFilePath(@NotNull File file) {
-    return VcsUtil.getFilePath(file, file.isDirectory());
+    return VcsUtil.getFilePath(file);
   }
 
   @Test(enabled = false)

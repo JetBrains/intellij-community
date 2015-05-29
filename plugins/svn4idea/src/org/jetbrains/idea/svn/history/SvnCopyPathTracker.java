@@ -24,7 +24,6 @@ import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -74,6 +73,6 @@ public class SvnCopyPathTracker {
       LOG.info("Cannot find local path for url: " + absolutePath);
       return null;
     }
-    return VcsUtil.getFilePath(new File(localPath), false);
+    return VcsUtil.getFilePath(localPath, false);
   }
 }

@@ -130,7 +130,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       final String conflictFile = data.getConflictFile();
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
-      final FilePath filePath = VcsUtil.getFilePath(conflictIoFile, conflictIoFile.isDirectory());
+      final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
       final Change change = myChangeListManager.getChange(filePath);
       Assert.assertNotNull(change);
       Assert.assertTrue(change instanceof ConflictedSvnChange);
@@ -240,7 +240,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       final String conflictFile = data.getConflictFile();
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
-      final FilePath filePath = VcsUtil.getFilePath(conflictIoFile, conflictIoFile.isDirectory());
+      final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
       final Change change = myChangeListManager.getChange(filePath);
       Assert.assertNotNull(change);
       Assert.assertTrue(change instanceof ConflictedSvnChange);

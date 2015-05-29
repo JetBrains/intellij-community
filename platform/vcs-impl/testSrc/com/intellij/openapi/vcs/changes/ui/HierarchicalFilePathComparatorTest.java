@@ -22,8 +22,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.io.File;
-
 import static junit.framework.Assert.assertEquals;
 
 public class HierarchicalFilePathComparatorTest {
@@ -97,7 +95,7 @@ public class HierarchicalFilePathComparatorTest {
 
   @NotNull
   private static FilePath filePath(@NotNull String path) throws Exception {
-    return VcsUtil.getFilePath(new File(path), StringUtil.endsWithChar(path, '/'));
+    return VcsUtil.getFilePath(path, StringUtil.endsWithChar(path, '/'));
   }
 
 }

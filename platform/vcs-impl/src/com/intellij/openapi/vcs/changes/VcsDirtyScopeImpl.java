@@ -484,14 +484,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
 
     if (!myDirtyFiles.isEmpty()) {
-      FilePath parent;
-      VirtualFile vParent = path.getVirtualFileParent();
-      if (vParent != null && vParent.isValid()) {
-        parent = VcsUtil.getFilePath(vParent);
-      }
-      else {
-        parent = VcsUtil.getFilePath(path.getIOFile().getParentFile(), true);
-      }
+      FilePath parent = path.getParentPath();
       return isInDirtyFiles(path) || isInDirtyFiles(parent);
     }
 

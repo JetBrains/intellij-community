@@ -423,7 +423,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     private SvnRepositoryContentRevision createRevision(final SvnRepositoryContentRevision previousRevision, final boolean isDir) {
       return previousRevision == null ? null :
              SvnRepositoryContentRevision.create(myVcs, previousRevision.getFullPath(),
-                                                 VcsUtil.getFilePath(previousRevision.getFile().getIOFile(), isDir),
+                                                 VcsUtil.getFilePath(previousRevision.getFile().getPath(), isDir),
                                                  previousRevision.getRevisionNumber().getRevision().getNumber());
     }
 

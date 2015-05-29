@@ -134,7 +134,7 @@ public class GitContentRevision implements ContentRevision {
                                                boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
     final FilePath file;
     if (project.isDisposed()) {
-      file = VcsUtil.getFilePath(new File(makeAbsolutePath(vcsRoot, path, unescapePath)), false);
+      file = VcsUtil.getFilePath(makeAbsolutePath(vcsRoot, path, unescapePath), false);
     } else {
       file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
     }

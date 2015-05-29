@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +46,7 @@ public class ApplyPatchContext {
   }
 
   public void registerBeforeRename(final VirtualFile file) {
-    FilePath path = VcsUtil.getFilePath(new File(file.getPath()), file.isDirectory());
+    FilePath path = VcsUtil.getFilePath(file);
     myPathsBeforeRename.put(file, path);
   }
 
