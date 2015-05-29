@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -199,7 +198,6 @@ public class VfsImplUtil {
     checkSubscription();
 
     ArchiveHandler handler;
-    boolean refresh = false;
 
     synchronized (ourLock) {
       Pair<ArchiveFileSystem, ArchiveHandler> record = ourHandlers.get(localPath);
@@ -219,19 +217,8 @@ public class VfsImplUtil {
             handlers.add(finalRootPath);
           }
         });
-        refresh = true;
       }
       handler = record.second;
-    }
-
-    if (refresh) {
-      final File file = handler.getFile();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-        }
-      }, ModalityState.NON_MODAL);
     }
 
     @SuppressWarnings("unchecked") T t = (T)handler;
