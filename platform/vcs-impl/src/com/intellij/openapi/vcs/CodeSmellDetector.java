@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.codeInsight.CodeSmellInfo;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -36,10 +37,11 @@ public abstract class CodeSmellDetector {
    *
    * @param files the files to analyze.
    * @return the list of problems found during the analysis.
-   * @throws com.intellij.openapi.progress.ProcessCanceledException if the analysis was cancelled by the user.
+   * @throws ProcessCanceledException if the analysis was cancelled by the user.
    * @since 5.1
    */
-  public abstract List<CodeSmellInfo> findCodeSmells(List<VirtualFile> files) throws ProcessCanceledException;
+  @NotNull
+  public abstract List<CodeSmellInfo> findCodeSmells(@NotNull List<VirtualFile> files) throws ProcessCanceledException;
 
   /**
    * Shows the specified list of problems found during pre-checkin code analysis in a Messages pane.
@@ -47,6 +49,6 @@ public abstract class CodeSmellDetector {
    * @param smells the problems to show.
    * @since 5.1
    */
-  public abstract void showCodeSmellErrors(final List<CodeSmellInfo> smells);
+  public abstract void showCodeSmellErrors(@NotNull List<CodeSmellInfo> smells);
 
 }

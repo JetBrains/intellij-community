@@ -132,7 +132,9 @@ class PassExecutorService implements Disposable {
         VirtualFile virtualFile = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);
         document = virtualFile == null ? null : FileDocumentManager.getInstance().getDocument(virtualFile);
       }
-      vFiles.add(((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor));
+      if (document != null) {
+        vFiles.add(FileDocumentManager.getInstance().getFile(document));
+      }
 
       int prevId = 0;
       for (final HighlightingPass pass : passes) {
