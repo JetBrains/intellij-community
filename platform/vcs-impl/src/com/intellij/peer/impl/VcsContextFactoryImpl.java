@@ -18,7 +18,7 @@ package com.intellij.peer.impl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -45,12 +45,12 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {
-    return new FilePathImpl(virtualFile.getPath(), virtualFile.isDirectory());
+    return new LocalFilePath(virtualFile.getPath(), virtualFile.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file) {
     VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
-    return vf != null ? createFilePathOn(vf) : new FilePathImpl(file.getPath(), file.isDirectory());
+    return vf != null ? createFilePathOn(vf) : new LocalFilePath(file.getPath(), file.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector) {
@@ -62,7 +62,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(final File file, final boolean isDirectory) {
-    return new FilePathImpl(file.getPath(), isDirectory);
+    return new LocalFilePath(file.getPath(), isDirectory);
   }
 
   @NotNull
@@ -82,7 +82,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @NotNull
   @Override
   public FilePath createFilePath(@NotNull VirtualFile parent, @NotNull String fileName, boolean isDirectory) {
-    return new FilePathImpl(parent.getPath() + "/" + fileName, isDirectory);
+    return new LocalFilePath(parent.getPath() + "/" + fileName, isDirectory);
   }
 
   public LocalChangeList createLocalChangeList(Project project, @NotNull final String name) {
@@ -92,6 +92,6 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @NotNull
   @Override
   public FilePath createFilePath(@NotNull String path, boolean isDirectory) {
-    return new FilePathImpl(path, isDirectory);
+    return new LocalFilePath(path, isDirectory);
   }
 }

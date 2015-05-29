@@ -16,13 +16,13 @@
 package com.intellij.cvsSupport2;
 
 import com.intellij.cvsSupport2.changeBrowser.CvsRepositoryLocation;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.LocalFilePath;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CvsFilePath extends FilePathImpl {
+public class CvsFilePath extends LocalFilePath {
 
   private final CvsRepositoryLocation myRepositoryLocation;
 

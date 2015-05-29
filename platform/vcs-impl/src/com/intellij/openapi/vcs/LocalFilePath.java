@@ -33,11 +33,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.Charset;
 
-public class FilePathImpl implements FilePath {
+public class LocalFilePath implements FilePath {
   @NotNull private final String myPath;
   private final boolean myIsDirectory;
 
-  public FilePathImpl(@NotNull String path, boolean isDirectory) {
+  public LocalFilePath(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
     myIsDirectory = isDirectory;
   }
@@ -47,7 +47,7 @@ public class FilePathImpl implements FilePath {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    FilePathImpl path = (FilePathImpl)o;
+    LocalFilePath path = (LocalFilePath)o;
 
     if (myIsDirectory != path.myIsDirectory) return false;
     if (!FileUtil.PATH_HASHING_STRATEGY.equals(myPath, path.myPath)) return false;
@@ -91,7 +91,7 @@ public class FilePathImpl implements FilePath {
   @Nullable
   public FilePath getParentPath() {
     String parent = PathUtil.getParentPath(myPath);
-    return parent.isEmpty() ? null : new FilePathImpl(parent, true);
+    return parent.isEmpty() ? null : new LocalFilePath(parent, true);
   }
 
   @Override
