@@ -190,11 +190,10 @@ public class VfsImplUtil {
     return getHandler(vfs, localPath, producer);
   }
 
-  //made public for Kotlin
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
-                                                         @NotNull String localPath,
-                                                         @NotNull Function<String, T> producer) {
+                                                        @NotNull String localPath,
+                                                        @NotNull Function<String, T> producer) {
     checkSubscription();
 
     ArchiveHandler handler;
