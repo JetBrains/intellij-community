@@ -304,6 +304,14 @@ public class EditorRtlTest extends AbstractEditorTest {
     right();
     assertVisualCaretLocation(2, true);
   }
+  
+  public void testMoveCaretWithSelection() throws Exception {
+    init("lr");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+    assertEquals(0, myEditor.getSelectionModel().getSelectionStart());
+    assertEquals(2, myEditor.getSelectionModel().getSelectionEnd());
+  }
 
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
