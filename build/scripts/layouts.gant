@@ -214,6 +214,13 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       }
     }
 
+    dir("redist") {
+      jar("annotations-java8.jar") {
+        module("annotations-common")
+        module("annotations-java8")
+      }
+    }
+
     layoutCommunityPlugins(home)
 
     dir("plugins") {
