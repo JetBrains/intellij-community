@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
@@ -291,6 +292,17 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertVisualCaretLocation(3, true);
     right();
     assertVisualCaretLocation(4, true);
+  }
+  
+  public void testMovingCaretWhenSelectionExists() throws Exception {
+    init("rrr");
+    right();
+    right();
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+    assertEquals(1, myEditor.getSelectionModel().getSelectionStart());
+    assertEquals(2, myEditor.getSelectionModel().getSelectionEnd());
+    right();
+    assertVisualCaretLocation(2, true);
   }
 
   private void init(String text) throws IOException {
