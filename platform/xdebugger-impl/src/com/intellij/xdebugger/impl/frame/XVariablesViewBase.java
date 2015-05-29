@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,14 +44,11 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
 
 /**
  * @author nik
@@ -76,7 +72,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     tree.setSourcePosition(position);
     tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
     final Project project = tree.getProject();
-    project.putUserData(XVariablesView.DEBUG_VARIABLES, new THashMap<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>>());
+    project.putUserData(XVariablesView.DEBUG_VARIABLES, new XVariablesView.InlineVariablesInfo());
     project.putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new ObjectLongHashMap<VirtualFile>());
     Object newEqualityObject = stackFrame.getEqualityObject();
     if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject)

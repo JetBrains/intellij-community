@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +39,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -60,11 +60,11 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return null;
     }
 
-    final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = project.getUserData(XVariablesView.DEBUG_VARIABLES);
+    XVariablesView.InlineVariablesInfo data = project.getUserData(XVariablesView.DEBUG_VARIABLES);
     final ObjectLongHashMap<VirtualFile> timestamps = project.getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
     final Document doc = FileDocumentManager.getInstance().getDocument(file);
 
-    if (map == null || timestamps == null || doc == null) {
+    if (data == null || timestamps == null || doc == null) {
       return null;
     }
 
@@ -77,9 +77,13 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     if (timestamp == -1 || timestamp < doc.getModificationStamp()) {
       return null;
     }
-    Set<XValueNodeImpl> values = map.get(Pair.create(file, lineNumber));
+    List<XValueNodeImpl> values = data.get(file, lineNumber);
     if (values != null && !values.isEmpty()) {
-      final int bpLine = getCurrentBreakPointLineInFile(values, file);
+      XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
+      final int bpLine = getCurrentBreakPointLineInFile(session, file);
+      boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
+      final TextAttributes attributes = bpLine == lineNumber && isTopFrame ? getTopFrameSelectedAttributes() : getNormalAttributes();
+
       ArrayList<VariableText> result = new ArrayList<VariableText>();
       for (XValueNodeImpl value : values) {
         SimpleColoredText text = new SimpleColoredText();
@@ -103,9 +107,6 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         catch (Exception ignored) {
           continue;
         }
-        XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
-        boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
-        final TextAttributes attributes = bpLine == lineNumber && isTopFrame ? getTopFrameSelectedAttributes() : getNormalAttributes();
 
         final String name = value.getName();
         if (StringUtil.isEmpty(text.toString())) {
@@ -136,12 +137,6 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
           variableValue.produceChangedParts(res.infos);
         }
       }
-      Collections.sort(result, new Comparator<VariableText>() {
-        @Override
-        public int compare(VariableText o1, VariableText o2) {
-          return o1.length - o2.length;
-        }
-      });
       final List<LineExtensionInfo> infos = new ArrayList<LineExtensionInfo>();
       for (VariableText text : result) {
         infos.addAll(text.infos);
@@ -151,10 +146,8 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     return null;
   }
 
-  private static int getCurrentBreakPointLineInFile(Set<XValueNodeImpl> values, VirtualFile file) {
+  private static int getCurrentBreakPointLineInFile(@Nullable XDebugSession session, VirtualFile file) {
     try {
-      final XValueNodeImpl node = values.iterator().next();
-      final XDebugSession session = XDebugView.getSession(node.getTree());
       if (session != null) {
         final XSourcePosition position = session.getCurrentPosition();
         if (position != null && position.getFile().equals(file)) {

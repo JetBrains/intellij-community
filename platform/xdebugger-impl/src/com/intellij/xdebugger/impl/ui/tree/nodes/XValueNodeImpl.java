@@ -18,8 +18,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author nik
@@ -151,21 +146,21 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
       final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
         @Override
-        public void computed(@NotNull VirtualFile file, @NotNull Document document, int line) {
-          final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+        public void computed(XSourcePosition position) {
+          if (position == null) return;
+          VirtualFile file = position.getFile();
+          final Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (document == null) return;
+
+          XVariablesView.InlineVariablesInfo data = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
           final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-          if (map == null || timestamps == null) {
+          if (data == null || timestamps == null) {
             return;
           }
 
-          Pair<VirtualFile, Integer> key = Pair.create(file, line);
-          Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
-          Set<XValueNodeImpl> old = map.put(key, presentations);
+          data.put(file, position, XValueNodeImpl.this);
           timestamps.put(file, document.getModificationStamp());
-          presentations.add(XValueNodeImpl.this);
-          if (old != null) {
-            presentations.addAll(old);
-          }
+
           myTree.updateEditor();
         }
       };
@@ -174,16 +169,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         class ValueDeclaration implements XInlineSourcePosition {
           @Override
           public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-            final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map =
-              myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-            final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-            if (map == null || timestamps == null || sourcePosition == null) return;
-            VirtualFile file = sourcePosition.getFile();
-            if (!Comparing.equal(debuggerPosition.getFile(), sourcePosition.getFile())) return;
-            final Document doc = FileDocumentManager.getInstance().getDocument(file);
-            if (doc == null) return;
-            int line = sourcePosition.getLine();
-            callback.computed(file, doc, line);
+            callback.computed(sourcePosition);
           }
         }
         class NearestValuePosition extends ValueDeclaration implements XNearestSourcePosition {}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,18 @@ package com.intellij.xdebugger.frame;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class XInlineDebuggerDataCallback {
-  public abstract void computed(@NotNull VirtualFile file, @NotNull Document document, int line);
+  /**
+   * @deprecated use {@link #computed(XSourcePosition)} instead
+   */
+  @Deprecated
+  public void computed(@NotNull VirtualFile file, @SuppressWarnings("UnusedParameters") @NotNull Document document, int line) {
+    computed(XDebuggerUtil.getInstance().createPosition(file, line));
+  }
+
+  public abstract void computed(XSourcePosition position);
 }
