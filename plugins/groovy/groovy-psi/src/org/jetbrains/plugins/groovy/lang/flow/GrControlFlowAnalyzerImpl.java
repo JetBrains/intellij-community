@@ -333,11 +333,12 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     final GrExpression condition = switchStatement.getCondition();
     if (condition == null) {
-      finishElement(switchStatement);
-      return;
+      pushUnknown();
     }
-    condition.accept(this);
-
+    else {
+      condition.accept(this);
+    }
+    
     GotoInstruction fallbackGoto = null;
     for (GrCaseSection section : switchStatement.getCaseSections()) {
       startElement(section);
@@ -374,7 +375,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
    * @param section
    * @return empty gotos to statements block
    */
-  private List<ConditionalGotoInstruction> processCaseSection(@NotNull GrExpression condition, @NotNull GrCaseSection section) {
+  private List<ConditionalGotoInstruction> processCaseSection(@Nullable GrExpression condition, @NotNull GrCaseSection section) {
     final List<ConditionalGotoInstruction> result = ContainerUtil.newArrayList();
     final GrCaseLabel[] labels = section.getCaseLabels();
     for (int i = 0, length = labels.length; i < length; i++) {
@@ -408,7 +409,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     return result;
   }
 
-  private void processCaseCall(@NotNull GrExpression condition, @NotNull GrCaseLabel caseLabel) {
+  private void processCaseCall(@Nullable GrExpression condition, @NotNull GrCaseLabel caseLabel) {
     final GrExpression caseValue = caseLabel.getValue();
     if (caseValue == null) {
       pushUnknown();

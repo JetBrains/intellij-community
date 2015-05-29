@@ -354,7 +354,12 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       counter++;
     }
     for (GrExpression expression : expressionArguments) {
-      expression.accept(myAnalyzer);
+      if (expression == null) {
+        myAnalyzer.pushUnknown();
+      }
+      else {
+        expression.accept(myAnalyzer);
+      }
       counter++;
     }
     for (GrClosableBlock block : closureArguments) {
