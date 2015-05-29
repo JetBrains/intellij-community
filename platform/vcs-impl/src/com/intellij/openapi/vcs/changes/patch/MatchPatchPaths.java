@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -35,14 +36,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/25/12
- * Time: 5:51 PM
- */
 public class MatchPatchPaths {
-  private final int ourBigFileBound = 100000;
+  private static final int BIG_FILE_BOUND = 100000;
   private final Project myProject;
   private final VirtualFile myBaseDir;
 
@@ -51,7 +46,7 @@ public class MatchPatchPaths {
     myBaseDir = myProject.getBaseDir();
   }
 
-  public List<FilePatchInProgress> execute(final List<TextFilePatch> list) {
+  public List<FilePatchInProgress> execute(@NotNull final List<TextFilePatch> list) {
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
 
     final List<PatchAndVariants> candidates = new ArrayList<PatchAndVariants>(list.size());
@@ -75,7 +70,7 @@ public class MatchPatchPaths {
     for (TextFilePatch patch : newOrWithoutMatches) {
       final String[] strings = patch.getAfterName().replace('\\', '/').split("/");
       Pair<VirtualFile, Integer> best = null;
-      for (int i = strings.length - 2; i >= 0; -- i) {
+      for (int i = strings.length - 2; i >= 0; --i) {
         final String name = strings[i];
         final Collection<VirtualFile> files = findFilesFromIndex(directoryDetector, name);
         if (! files.isEmpty()) {
@@ -98,16 +93,16 @@ public class MatchPatchPaths {
           patchInProgress.up();
         }
         result.putValue(best.getFirst(), patchInProgress);
-      } else {
+      }
+      else {
         final FilePatchInProgress patchInProgress = new FilePatchInProgress(patch, null, myBaseDir);
         result.putValue(myBaseDir, patchInProgress);
       }
     }
   }
 
-  private void selectByContext(List<PatchAndVariants> candidates, MultiMap<VirtualFile, FilePatchInProgress> result) {
-    for (Iterator<PatchAndVariants> iterator = candidates.iterator(); iterator.hasNext(); ) {
-      final PatchAndVariants candidate = iterator.next();
+  private static void selectByContext(List<PatchAndVariants> candidates, MultiMap<VirtualFile, FilePatchInProgress> result) {
+    for (final PatchAndVariants candidate : candidates) {
       int maxLines = -100;
       FilePatchInProgress best = null;
       for (FilePatchInProgress variant : candidate.getVariants()) {
@@ -121,14 +116,15 @@ public class MatchPatchPaths {
     }
   }
 
-  private void filterExactMatches(List<PatchAndVariants> candidates, MultiMap<VirtualFile, FilePatchInProgress> result) {
+  private static void filterExactMatches(List<PatchAndVariants> candidates, MultiMap<VirtualFile, FilePatchInProgress> result) {
     for (Iterator<PatchAndVariants> iterator = candidates.iterator(); iterator.hasNext(); ) {
       final PatchAndVariants candidate = iterator.next();
       if (candidate.getVariants().size() == 1) {
         final FilePatchInProgress oneCandidate = candidate.getVariants().get(0);
         result.putValue(oneCandidate.getBase(), oneCandidate);
         iterator.remove();
-      } else {
+      }
+      else {
         final List<FilePatchInProgress> exact = new ArrayList<FilePatchInProgress>(candidate.getVariants().size());
         for (FilePatchInProgress patch : candidate.getVariants()) {
           if (patch.getCurrentStrip() == 0) {
@@ -139,7 +135,8 @@ public class MatchPatchPaths {
           final FilePatchInProgress patchInProgress = exact.get(0);
           putSelected(result, candidate.getVariants(), patchInProgress);
           iterator.remove();
-        } else if (! exact.isEmpty()) {
+        }
+        else if (!exact.isEmpty()) {
           candidate.getVariants().retainAll(exact);
         }
       }
@@ -165,7 +162,8 @@ public class MatchPatchPaths {
       }
       if (files.isEmpty()) {
         newOrWithoutMatches.add(patch);
-      } else {
+      }
+      else {
         final List<FilePatchInProgress> variants = ObjectsConvertor.convert(files, new Convertor<VirtualFile, FilePatchInProgress>() {
           @Override
           public FilePatchInProgress convert(VirtualFile o) {
@@ -174,8 +172,9 @@ public class MatchPatchPaths {
         }, ObjectsConvertor.NOT_NULL);
         if (variants.isEmpty()) {
           newOrWithoutMatches.add(patch); // just to be sure
-        } else {
-          candidates.add(new PatchAndVariants(patch, variants));
+        }
+        else {
+          candidates.add(new PatchAndVariants(variants));
         }
       }
     }
@@ -190,9 +189,9 @@ public class MatchPatchPaths {
     });
   }
 
-  private void putSelected(MultiMap<VirtualFile, FilePatchInProgress> result,
-                           final List<FilePatchInProgress> variants,
-                           FilePatchInProgress patchInProgress) {
+  private static void putSelected(MultiMap<VirtualFile, FilePatchInProgress> result,
+                                  final List<FilePatchInProgress> variants,
+                                  FilePatchInProgress patchInProgress) {
     patchInProgress.setAutoBases(ObjectsConvertor.convert(variants, new Convertor<FilePatchInProgress, VirtualFile>() {
       @Override
       public VirtualFile convert(FilePatchInProgress o) {
@@ -202,16 +201,17 @@ public class MatchPatchPaths {
     result.putValue(patchInProgress.getBase(), patchInProgress);
   }
 
-  private int getMatchingLines(final FilePatchInProgress patch) {
+  private static int getMatchingLines(final FilePatchInProgress patch) {
     final VirtualFile base = patch.getCurrentBase();
     if (base == null) return -1;
     String text;
     try {
-      if (base.getLength() > ourBigFileBound) {
+      if (base.getLength() > BIG_FILE_BOUND) {
         // partially
-        text = VfsUtil.loadText(base, ourBigFileBound);
-      } else {
-        text = VfsUtil.loadText(base);
+        text = VfsUtilCore.loadText(base, BIG_FILE_BOUND);
+      }
+      else {
+        text = VfsUtilCore.loadText(base);
       }
     }
     catch (IOException e) {
@@ -221,16 +221,10 @@ public class MatchPatchPaths {
   }
 
   private static class PatchAndVariants {
-    private final TextFilePatch myPatch;
     private final List<FilePatchInProgress> myVariants;
 
-    private PatchAndVariants(TextFilePatch patch, List<FilePatchInProgress> variants) {
-      myPatch = patch;
+    private PatchAndVariants(List<FilePatchInProgress> variants) {
       myVariants = variants;
-    }
-
-    public TextFilePatch getPatch() {
-      return myPatch;
     }
 
     public List<FilePatchInProgress> getVariants() {
@@ -238,21 +232,19 @@ public class MatchPatchPaths {
     }
   }
 
-  private Pair<VirtualFile, Integer> compareNames(final String beforeName, final VirtualFile file) {
+  private static Pair<VirtualFile, Integer> compareNames(final String beforeName, final VirtualFile file) {
     if (beforeName == null) return null;
     final String[] parts = beforeName.replace('\\', '/').split("/");
     return compareNamesImpl(parts, file.getParent(), parts.length - 2);
   }
 
-  private Pair<VirtualFile, Integer> compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
-    VirtualFile previous = parent;
+  private static Pair<VirtualFile, Integer> compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
     while ((parent != null) && (idx >= 0)) {
-      if (! parent.getName().equals(parts[idx])) {
+      if (!parent.getName().equals(parts[idx])) {
         return new Pair<VirtualFile, Integer>(parent, idx + 1);
       }
-      previous = parent;
       parent = parent.getParent();
-      -- idx;
+      --idx;
     }
     return new Pair<VirtualFile, Integer>(parent, idx + 1);
   }
