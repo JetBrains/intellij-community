@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -33,11 +34,11 @@ import java.util.List;
  * Time: 16:52:28
  * To change this template use Options | File Templates.
  */
-class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<Provider, ElementPattern>>();
+class SimpleProviderBinding implements ProviderBinding {
+  private final List<ProviderInfo<ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<ElementPattern>>();
 
-  void registerProvider(Provider provider, ElementPattern pattern, double priority) {
-    myProviderPairs.add(new ProviderInfo<Provider, ElementPattern>(provider, pattern, priority));
+  void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern pattern, double priority) {
+    myProviderPairs.add(new ProviderInfo<ElementPattern>(provider, pattern, priority));
   }
 
   @Override

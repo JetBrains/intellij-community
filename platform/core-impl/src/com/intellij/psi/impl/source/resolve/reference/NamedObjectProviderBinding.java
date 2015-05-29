@@ -36,16 +36,16 @@ import java.util.Map;
 /**
  * @author maxim
  */
-abstract class NamedObjectProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final Map<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMap = new THashMap<String, List<ProviderInfo<Provider,ElementPattern>>>(5);
-  private final Map<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<String, List<ProviderInfo<Provider, ElementPattern>>>(5);
+public abstract class NamedObjectProviderBinding implements ProviderBinding {
+  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new THashMap<String, List<ProviderInfo<ElementPattern>>>(5);
+  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<String, List<ProviderInfo<ElementPattern>>>(5);
 
-  void registerProvider(@NonNls @NotNull String[] names,
-                        @NotNull ElementPattern filter,
-                        boolean caseSensitive,
-                        @NotNull Provider provider,
-                        final double priority) {
-    final Map<String, List<ProviderInfo<Provider, ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
+  public void registerProvider(@NonNls @NotNull String[] names,
+                               @NotNull ElementPattern filter,
+                               boolean caseSensitive,
+                               @NotNull PsiReferenceProvider provider,
+                               final double priority) {
+    final Map<String, List<ProviderInfo<ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (final String attributeName : names) {
       String key = caseSensitive ? attributeName : attributeName.toLowerCase();
@@ -89,18 +89,18 @@ abstract class NamedObjectProviderBinding<Provider> implements ProviderBinding<P
   }
 
   @Nullable
-  protected abstract String getName(final PsiElement position);
+  protected abstract String getName(@NotNull PsiElement position);
 
-  static <Provider> void addMatchingProviders(@NotNull PsiElement position,
-                                              @Nullable final List<ProviderInfo<Provider, ElementPattern>> providerList,
-                                              @NotNull Collection<ProviderInfo<Provider, ProcessingContext>> output,
-                                              @NotNull PsiReferenceService.Hints hints) {
+  static void addMatchingProviders(@NotNull PsiElement position,
+                                   @Nullable final List<ProviderInfo<ElementPattern>> providerList,
+                                   @NotNull Collection<ProviderInfo<ProcessingContext>> output,
+                                   @NotNull PsiReferenceService.Hints hints) {
     if (providerList == null) return;
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < providerList.size(); i++) {
-      ProviderInfo<Provider, ElementPattern> info = providerList.get(i);
-      if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)info.provider).acceptsHints(position, hints)) {
+      ProviderInfo<ElementPattern> info = providerList.get(i);
+      if (hints != PsiReferenceService.Hints.NO_HINTS && !info.provider.acceptsHints(position, hints)) {
         continue;
       }
 
@@ -115,7 +115,7 @@ abstract class NamedObjectProviderBinding<Provider> implements ProviderBinding<P
       catch (IndexNotReadyException ignored) {
       }
       if (suitable) {
-        output.add(new ProviderInfo<Provider, ProcessingContext>(info.provider, context, info.priority));
+        output.add(new ProviderInfo<ProcessingContext>(info.provider, context, info.priority));
       }
     }
   }
