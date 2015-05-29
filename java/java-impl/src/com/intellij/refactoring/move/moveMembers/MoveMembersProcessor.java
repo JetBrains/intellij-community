@@ -313,7 +313,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static void analyzeConflictsOnUsages(UsageInfo[] usages,
                                                Set<PsiMember> membersToMove,
                                                String newVisibility,
-                                               PsiClass targetClass,
+                                               @NotNull PsiClass targetClass,
                                                Map<PsiMember, PsiModifierList> modifierListCopies,
                                                MultiMap<PsiElement, String> conflicts) {
     for (UsageInfo usage : usages) {
