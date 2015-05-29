@@ -40,6 +40,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
@@ -407,17 +409,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    if (navigatable instanceof XInlineSourcePosition && !(navigatable instanceof XNearestSourcePosition)
-        && !(myValueDescriptor instanceof ThisDescriptorImpl || myValueDescriptor instanceof LocalVariableDescriptor)) {
-      return;
-    }
+    computeSourcePosition(navigatable, false);
+  }
+
+  private void computeSourcePosition(@NotNull final XNavigatable navigatable, final boolean inline) {
     myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
-        if (navigatable instanceof XInlineSourcePosition) {
-          return Priority.LOWEST;
-        }
-        return Priority.NORMAL;
+        return inline ? Priority.LOWEST : Priority.NORMAL;
       }
 
       @Override
@@ -430,15 +429,32 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            final boolean nearest = navigatable instanceof XNearestSourcePosition;
-            SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), nearest);
+            SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), false);
             if (position != null) {
               navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+            }
+            if (inline && (myValueDescriptor instanceof ThisDescriptorImpl || myValueDescriptor instanceof LocalVariableDescriptor)) {
+              position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), true);
+              if (position != null) {
+                navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
+              }
             }
           }
         });
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public ThreeState computeInlineDebuggerData(@NotNull final XInlineDebuggerDataCallback callback) {
+    computeSourcePosition(new XNavigatable() {
+      @Override
+      public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+        callback.computed(sourcePosition);
+      }
+    }, true);
+    return ThreeState.YES;
   }
 
   private DebuggerContextImpl getDebuggerContext() {
