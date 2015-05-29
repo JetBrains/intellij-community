@@ -72,7 +72,7 @@ public class DfaConstValue extends DfaValue {
           return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
         PsiExpression initializer = variable.getInitializer();
-        if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
+        if (initializer != null && initializer.getType() == PsiType.NULL && initializer.textMatches(PsiKeyword.NULL)) {
           return dfaNull;
         }
         return null;

@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -98,7 +99,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   @Override
   @Nullable
   public Object computeConstantValue() {
-    return null;
+    return GroovyConstantExpressionEvaluator.evaluate(getInitializerGroovy());
   }
 
   @Override
