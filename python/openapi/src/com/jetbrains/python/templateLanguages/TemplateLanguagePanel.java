@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,8 +48,9 @@ public class TemplateLanguagePanel extends JPanel {
     descriptor.setShowFileSystemRoots(true);
     List<String> templateConfigurations = TemplatesService.getAllTemplateLanguages();
     for (String configuration : templateConfigurations) {
-      if (!configuration.equals(TemplatesService.WEB2PY))
+      if (!configuration.equals(TemplatesService.WEB2PY)) {
         myTemplateLanguage.addItem(configuration);
+      }
     }
     myTemplatesFolder.setText(DEFAULT_TEMPLATES_FOLDER);
     myTemplatesFolder.addKeyListener(new KeyAdapter() {
@@ -56,8 +58,9 @@ public class TemplateLanguagePanel extends JPanel {
       public void keyTyped(KeyEvent e) {
         final int dot = myTemplatesFolder.getCaret().getDot();
         final int index = myTemplatesFolder.getText().indexOf(File.separator);
-        if (index >= dot)
+        if (index >= dot) {
           myTemplateFolderModified = true;
+        }
       }
     });
   }
@@ -66,9 +69,10 @@ public class TemplateLanguagePanel extends JPanel {
     return myTemplatesFolder.getText();
   }
 
+  @Nullable
   public String getTemplateLanguage() {
     final Object selectedItem = myTemplateLanguage.getSelectedItem();
-    return selectedItem != null ? (String)selectedItem : null;
+    return selectedItem != null && !selectedItem.toString().equals(TemplatesService.NONE) ? (String)selectedItem : null;
   }
 
   public void setTemplateLanguage(String language) {
