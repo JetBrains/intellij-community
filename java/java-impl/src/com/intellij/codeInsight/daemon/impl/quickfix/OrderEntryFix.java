@@ -384,8 +384,17 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   @Nullable
   public static String locateAnnotationsJar(@NotNull Module module) {
-    String jarName = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module).isAtLeast(LanguageLevel.JDK_1_8) ? "annotations-java8.jar" : "annotations.jar";
-    final LocateLibraryDialog dialog = new LocateLibraryDialog(module, PathManager.getLibPath(), jarName, QuickFixBundle.message("add.library.annotations.description"));
+    String jarName;
+    String libPath;
+    if (EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module).isAtLeast(LanguageLevel.JDK_1_8)) {
+      jarName = "annotations-java8.jar";
+      libPath = new File(PathManager.getHomePath(), "redist").getAbsolutePath();
+    }
+    else {
+      jarName = "annotations.jar";
+      libPath = PathManager.getLibPath();
+    }
+    final LocateLibraryDialog dialog = new LocateLibraryDialog(module, libPath, jarName, QuickFixBundle.message("add.library.annotations.description"));
     return dialog.showAndGet() ? dialog.getResultingLibraryPath() : null;
   }
 
