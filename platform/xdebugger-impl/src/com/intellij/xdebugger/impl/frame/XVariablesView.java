@@ -110,7 +110,7 @@ public class XVariablesView extends XVariablesViewBase {
       = new THashMap<Pair<VirtualFile, Integer>, Set<Entry>>();
 
     @Nullable
-    public List<XValueNodeImpl> get(VirtualFile file, int line) {
+    public List<XValueNodeImpl> get(@NotNull VirtualFile file, int line) {
       synchronized (myData) {
         Set<Entry> entries = myData.get(Pair.create(file, line));
         if (entries == null) return null;
@@ -123,7 +123,7 @@ public class XVariablesView extends XVariablesViewBase {
       }
     }
 
-    public void put(VirtualFile file, XSourcePosition position, XValueNodeImpl node) {
+    public void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node) {
       synchronized (myData) {
         Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
         Set<Entry> entries = myData.get(key);
@@ -139,18 +139,36 @@ public class XVariablesView extends XVariablesViewBase {
       private final long myOffset;
       private final XValueNodeImpl myNode;
 
-      public Entry(long offset, XValueNodeImpl node) {
+      public Entry(long offset, @NotNull XValueNodeImpl node) {
         myOffset = offset;
         myNode = node;
       }
 
       @Override
       public int compareTo(Entry o) {
+        if (myNode == o.myNode) return 0;
         int res = Comparing.compare(myOffset, o.myOffset);
         if (res == 0) {
           return XValueNodeImpl.COMPARATOR.compare(myNode, o.myNode);
         }
         return res;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Entry entry = (Entry)o;
+
+        if (!myNode.equals(entry.myNode)) return false;
+
+        return true;
+      }
+
+      @Override
+      public int hashCode() {
+        return myNode.hashCode();
       }
     }
   }
