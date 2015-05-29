@@ -99,6 +99,13 @@ public class UIUtil {
     kit.setStyleSheet(null);
   }
 
+  private static volatile InvocationManager ourInvocationManager = new DefaultInvocationManager();
+
+  @SuppressWarnings("unused") // Used in upsource
+  public static void setInvocationManager(@NotNull InvocationManager invocationManager) {
+    ourInvocationManager = invocationManager;
+  }
+
   public static int getMultiClickInterval() {
     Object property = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
     if (property instanceof Integer) {
@@ -2345,12 +2352,11 @@ public class UIUtil {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ourInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(runnable);
+      ourInvocationManager.invokeLater(runnable);
     }
   }
 
@@ -2364,12 +2370,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ourInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
       try {
-        SwingUtilities.invokeAndWait(runnable);
+        ourInvocationManager.invokeAndWait(runnable);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -2407,12 +2413,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ourInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
       final Ref<Throwable> ref = Ref.create();
-      SwingUtilities.invokeAndWait(new Runnable() {
+      ourInvocationManager.invokeAndWait(new Runnable() {
         @Override
         public void run() {
           try {
@@ -3373,5 +3379,33 @@ public class UIUtil {
       }
     }
     return false;
+  }
+
+  public interface InvocationManager {
+
+    boolean isEventDispatchThread();
+
+    void invokeLater(@NotNull Runnable task);
+
+    void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException;
+  }
+
+  private static class DefaultInvocationManager implements InvocationManager {
+    @Override
+    public boolean isEventDispatchThread() {
+      return SwingUtilities.isEventDispatchThread();
+    }
+
+    @Override
+    public void invokeLater(@NotNull Runnable task) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(task);
+    }
+
+    @Override
+    public void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeAndWait(task);
+    }
   }
 }
