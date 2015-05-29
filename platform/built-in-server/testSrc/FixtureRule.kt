@@ -26,7 +26,6 @@ public class FixtureRule() : ExternalResource() {
 
   override fun before() {
     PlatformTestCase.initPlatformLangPrefix()
-    UsefulTestCase.replaceIdeEventQueueSafely()
 
     invokeAndWaitIfNeed { projectFixture.setUp() }
   }
