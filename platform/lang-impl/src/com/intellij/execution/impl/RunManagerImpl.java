@@ -38,7 +38,6 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -65,7 +64,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new THashMap<String, Boolean>();
-  private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<RunConfiguration, List<BeforeRunTask>>();
+  private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = ContainerUtil.createConcurrentWeakMap();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
