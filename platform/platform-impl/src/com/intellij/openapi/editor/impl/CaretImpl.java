@@ -1471,7 +1471,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
   @Override
   public boolean isAtDirectionBoundary() {
-    return myEditor.myUseNewRendering && myEditor.myView.isDirectionBoundary(myOffset);
+    return myEditor.myUseNewRendering && myVirtualSpaceOffset == 0 && myEditor.myView.isDirectionBoundary(myOffset);
   }
 
   /**

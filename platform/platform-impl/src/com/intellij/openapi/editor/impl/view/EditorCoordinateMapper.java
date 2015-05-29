@@ -172,7 +172,7 @@ class EditorCoordinateMapper {
       maxVisualColumn = maxColumn;
       logicalLine = fragment.getEndLogicalLine();
     }
-    return new LogicalPosition(logicalLine, column - maxVisualColumn + maxLogicalColumn, pos.leansRight);
+    return new LogicalPosition(logicalLine, column - maxVisualColumn + maxLogicalColumn, true);
   }
 
   @NotNull

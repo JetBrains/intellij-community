@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.util.registry.Registry;
@@ -69,7 +70,7 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkVPConversions(vR(3), lB(3), xy(30));
     checkVPConversions(vL(4), lF(2), xy(40));
     checkVPConversions(vR(4), lF(4), xy(40));
-    checkVPConversions(vL(5), lB(5), xy(50));
+    checkVPConversions(vL(5), lF(5), xy(50));
     checkVPConversions(vR(5), lF(5), xy(50));
     checkVPConversions(v(1, 0, false), l(1, 0, false), xy(0, 10));
     checkVPConversions(v(1, 0, true), l(1, 0, true), xy(0, 10));
@@ -167,7 +168,7 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkVPConversions(vR(6), lB(5), xy(60));
     checkVPConversions(vL(7), lF(4), xy(70));
     checkVPConversions(vR(7), lF(6), xy(70));
-    checkVPConversions(vL(8), lB(7), xy(80));
+    checkVPConversions(vL(8), lF(7), xy(80));
     checkVPConversions(vR(8), lF(7), xy(80));
     
     checkXYConversion(xy(1), vR(0));
@@ -257,6 +258,22 @@ public class EditorRtlTest extends AbstractEditorTest {
     up();
     assertCaretPosition(vR(2));
   }
+  
+  public void testMovingIntoVirtualSpace() throws Exception {
+    init("r");
+    myEditor.getSettings().setVirtualSpace(true);
+    assertVisualCaretLocation(0, false);
+    right();
+    assertVisualCaretLocation(0, true);
+    right();
+    assertVisualCaretLocation(1, true);
+    right();
+    assertVisualCaretLocation(1, false);
+    right();
+    assertVisualCaretLocation(2, false);
+    right();
+    assertVisualCaretLocation(3, false);
+  }
 
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
@@ -325,6 +342,17 @@ public class EditorRtlTest extends AbstractEditorTest {
 
   private static void assertCaretPosition(VisualPosition visualPosition) {
     assertVisualPositionsEqual("Wrong caret position", visualPosition, myEditor.getCaretModel().getVisualPosition());
+  }
+
+  private static void assertVisualCaretLocation(int visualColumn, boolean reversedDirection) {
+    assertEquals(1, myEditor.getCaretModel().getCaretCount());
+    Caret caret = myEditor.getCaretModel().getPrimaryCaret();
+    assertEquals(visualColumn, caret.getVisualPosition().column);
+    assertEquals(reversedDirection, caret.isAtRtlLocation());
+  }
+  
+  private static void assertCaretPosition(LogicalPosition logicalPosition) {
+    assertLogicalPositionsEqual("Wrong caret position", logicalPosition, myEditor.getCaretModel().getLogicalPosition());
   }
   
   // logical position leaning backward
