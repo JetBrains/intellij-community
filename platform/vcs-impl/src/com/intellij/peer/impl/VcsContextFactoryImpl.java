@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author yole
-*/
 public class VcsContextFactoryImpl implements VcsContextFactory {
   public VcsContext createCachedContextOn(AnActionEvent event) {
     return VcsContextWrapper.createCachedInstanceOn(event);
@@ -45,12 +42,12 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {
-    return new LocalFilePath(virtualFile.getPath(), virtualFile.isDirectory());
+    return createFilePath(virtualFile.getPath(), virtualFile.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file) {
     VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
-    return vf != null ? createFilePathOn(vf) : new LocalFilePath(file.getPath(), file.isDirectory());
+    return vf != null ? createFilePathOn(vf) : createFilePath(file.getPath(), file.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector) {
@@ -62,7 +59,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(final File file, final boolean isDirectory) {
-    return new LocalFilePath(file.getPath(), isDirectory);
+    return createFilePath(file.getPath(), isDirectory);
   }
 
   @NotNull
@@ -82,7 +79,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @NotNull
   @Override
   public FilePath createFilePath(@NotNull VirtualFile parent, @NotNull String fileName, boolean isDirectory) {
-    return new LocalFilePath(parent.getPath() + "/" + fileName, isDirectory);
+    return createFilePath(parent.getPath() + "/" + fileName, isDirectory);
   }
 
   public LocalChangeList createLocalChangeList(Project project, @NotNull final String name) {
