@@ -274,6 +274,24 @@ public class EditorRtlTest extends AbstractEditorTest {
     right();
     assertVisualCaretLocation(3, false);
   }
+  
+  public void testMovingThroughFoldedRegion() throws Exception {
+    init("rrr");
+    addCollapsedFoldRegion(1, 2, "..");
+    assertVisualCaretLocation(0, false);
+    right();
+    assertVisualCaretLocation(0, true);
+    right();
+    assertVisualCaretLocation(1, true);
+    right();
+    assertVisualCaretLocation(1, true);
+    right();
+    assertVisualCaretLocation(2, true);
+    right();
+    assertVisualCaretLocation(3, true);
+    right();
+    assertVisualCaretLocation(4, true);
+  }
 
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
@@ -295,11 +313,11 @@ public class EditorRtlTest extends AbstractEditorTest {
                                              Point xyTowardsLargerOffsets) {
     assertLogicalPositionsEqual("Wrong offset->logicalPosition calculation", logicalPosition, myEditor.offsetToLogicalPosition(offset));
     assertVisualPositionsEqual("Wrong beforeOffset->visualPosition calculation",
-                               visualPositionTowardsSmallerOffsets, ((EditorImpl)myEditor).offsetToVisualPosition(offset, false));
+                               visualPositionTowardsSmallerOffsets, myEditor.offsetToVisualPosition(offset, false));
     assertEquals("Wrong beforeOffset->visualLine calculation", 
                  visualPositionTowardsSmallerOffsets.line, ((EditorImpl)myEditor).offsetToVisualLine(offset));
     assertVisualPositionsEqual("Wrong afterOffset->visualPosition calculation",
-                               visualPositionTowardsLargerOffsets, ((EditorImpl)myEditor).offsetToVisualPosition(offset, true));
+                               visualPositionTowardsLargerOffsets, myEditor.offsetToVisualPosition(offset, true));
     assertEquals("Wrong afterOffset->visualLine calculation", 
                  visualPositionTowardsLargerOffsets.line, ((EditorImpl)myEditor).offsetToVisualLine(offset));
     assertEquals("Wrong beforeOffset->xy calculation", xyTowardsSmallerOffsets, ((EditorImpl)myEditor).offsetToXY(offset, false));
@@ -349,10 +367,6 @@ public class EditorRtlTest extends AbstractEditorTest {
     Caret caret = myEditor.getCaretModel().getPrimaryCaret();
     assertEquals(visualColumn, caret.getVisualPosition().column);
     assertEquals(reversedDirection, caret.isAtRtlLocation());
-  }
-  
-  private static void assertCaretPosition(LogicalPosition logicalPosition) {
-    assertLogicalPositionsEqual("Wrong caret position", logicalPosition, myEditor.getCaretModel().getLogicalPosition());
   }
   
   // logical position leaning backward
