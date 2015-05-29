@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
@@ -325,6 +326,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
     mySegment.setNameId(myId, FileNameCache.storeName(newName));
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
     parent.addChild(this);
   }
 

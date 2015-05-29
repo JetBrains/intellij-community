@@ -134,8 +134,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       list.add(candidate);
     }
 
-    for (List<PsiClass> sameNamedClasses : classes.values()) {
-      if (!processSameNamedClasses(consumer, aClass, sameNamedClasses)) return false;
+    if (!classes.isEmpty()) {
+      final VirtualFile jarFile = getJarFile(aClass);
+      for (List<PsiClass> sameNamedClasses : classes.values()) {
+        if (!processSameNamedClasses(consumer, sameNamedClasses, jarFile)) return false;
+      }
     }
 
     if (p.includeAnonymous()) {
@@ -196,12 +199,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     });
   }
 
-  private static boolean processSameNamedClasses(Processor<PsiClass> consumer, PsiClass aClass, List<PsiClass> sameNamedClasses) {
+  private static boolean processSameNamedClasses(Processor<PsiClass> consumer, List<PsiClass> sameNamedClasses, final VirtualFile jarFile) {
     // if there is a class from the same jar, prefer it
     boolean sameJarClassFound = false;
 
-    VirtualFile jarFile = getJarFile(aClass);
-    if (jarFile != null) {
+    if (jarFile != null && sameNamedClasses.size() > 1) {
       for (PsiClass sameNamedClass : sameNamedClasses) {
         boolean fromSameJar = Comparing.equal(getJarFile(sameNamedClass), jarFile);
         if (fromSameJar) {

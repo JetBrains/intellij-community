@@ -72,7 +72,7 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
 
     //ensure fork when whole project is used
     persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
-    final RegistryValue smRunnerProperty = Registry.get("junit_sm_runner");
+    final RegistryValue smRunnerProperty = Registry.get("junit_sm");
     final boolean oldValue = smRunnerProperty.asBoolean();
     try {
       //check old format

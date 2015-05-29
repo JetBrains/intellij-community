@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorNotifications;
@@ -49,9 +48,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
+
   @Override
   public void setUp() throws Exception {
-    PlatformTestCase.initPlatformLangPrefix();
     super.setUp();
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 
@@ -31,12 +30,6 @@ import java.util.Arrays;
  * Time: 15:10:10
  */
 public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    PlatformTestCase.initPlatformLangPrefix();
-    super.setUp();
-  }
 
   // util methods
     private static String getInputDataFileName(String testName) {

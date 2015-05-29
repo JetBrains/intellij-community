@@ -108,10 +108,9 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   private static ElementPattern createPattern(String[] tagNames, String... attributeNames) {
-    return XmlPatterns.xmlAttributeValue()
-      .withParent(XmlPatterns.xmlAttribute().withLocalName(attributeNames)
-                    .withParent(XmlPatterns.xmlTag().withName(tagNames)
-                                  .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin"))));
+    return XmlPatterns.xmlAttributeValue(attributeNames)
+      .withSuperParent(2, XmlPatterns.xmlTag().withName(tagNames)
+                                  .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")));
   }
 
 

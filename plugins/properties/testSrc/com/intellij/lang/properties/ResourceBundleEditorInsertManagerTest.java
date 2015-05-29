@@ -15,8 +15,8 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.editor.ResourceBundlePropertiesInsertManager;
-import com.intellij.lang.properties.editor.ResourceBundlePropertiesInsertManagerImpl;
+import com.intellij.lang.properties.editor.ResourceBundlePropertiesUpdateManager;
+import com.intellij.lang.properties.editor.ResourceBundlePropertiesUpdateManagerImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiFile;
@@ -39,26 +39,27 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
     myFixture.configureByFile(getTestName(true) + "/p_fr.properties");
     final PsiFile file = myFixture.configureByFile(getTestName(true) + "/p_ru.properties");
     final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-    final ResourceBundlePropertiesInsertManager manager = ResourceBundlePropertiesInsertManagerImpl.create(propertiesFile.getResourceBundle());
+    final ResourceBundlePropertiesUpdateManager
+      manager = ResourceBundlePropertiesUpdateManagerImpl.create(propertiesFile.getResourceBundle());
     manager.reload();
-    assertTrue(((ResourceBundlePropertiesInsertManagerImpl)manager).isAlphaSorted());
+    assertTrue(((ResourceBundlePropertiesUpdateManagerImpl)manager).isAlphaSorted());
   }
 
   public void testAddToAlphaOrdered() {
     doTest(new TestAction() {
       @Override
-      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager) {
+      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesUpdateManagerImpl manager) {
         assertTrue(manager.isAlphaSorted());
         manager.insertNewProperty("l", "v");
-        manager.insertTranslation("d", "v", baseFile);
-        manager.insertTranslation("r", "v", translationFile);
+        manager.insertOrUpdateTranslation("d", "v", baseFile);
+        manager.insertOrUpdateTranslation("r", "v", translationFile);
         manager.insertNewProperty("a", "v");
-        manager.insertTranslation("a", "v", translationFile);
+        manager.insertOrUpdateTranslation("a", "v", translationFile);
         manager.insertNewProperty("z", "v");
-        manager.insertTranslation("z", "v", translationFile);
-        manager.insertTranslation("l", "v", translationFile);
-        manager.insertTranslation("e", "v", translationFile);
-        manager.insertTranslation("t", "v", baseFile);
+        manager.insertOrUpdateTranslation("z", "v", translationFile);
+        manager.insertOrUpdateTranslation("l", "v", translationFile);
+        manager.insertOrUpdateTranslation("e", "v", translationFile);
+        manager.insertOrUpdateTranslation("t", "v", baseFile);
       }
     });
   }
@@ -66,13 +67,13 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
   public void testAddToOrdered() {
     doTest(new TestAction() {
       @Override
-      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager) {
+      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesUpdateManagerImpl manager) {
         assertFalse(manager.isAlphaSorted());
         manager.insertNewProperty("bnm", "v");
         manager.insertNewProperty("uio", "v");
-        manager.insertTranslation("uio", "v", translationFile);
-        manager.insertTranslation("qwe", "v", translationFile);
-        manager.insertTranslation("zxc", "v", baseFile);
+        manager.insertOrUpdateTranslation("uio", "v", translationFile);
+        manager.insertOrUpdateTranslation("qwe", "v", translationFile);
+        manager.insertOrUpdateTranslation("zxc", "v", baseFile);
       }
     });
   }
@@ -80,13 +81,13 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
   public void testAddToUnordered() {
     doTest(new TestAction() {
       @Override
-      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager) {
+      public void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesUpdateManagerImpl manager) {
         assertFalse(manager.isAlphaSorted());
-        manager.insertTranslation("bnm", "v", translationFile);
+        manager.insertOrUpdateTranslation("bnm", "v", translationFile);
         manager.insertNewProperty("ghj", "v");
-        manager.insertTranslation("ghj", "v", translationFile);
+        manager.insertOrUpdateTranslation("ghj", "v", translationFile);
         manager.insertNewProperty("uio", "v");
-        manager.insertTranslation("uio", "v", translationFile);
+        manager.insertOrUpdateTranslation("uio", "v", translationFile);
       }
     });
   }
@@ -97,15 +98,15 @@ public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsi
     final PropertiesFile basePropertiesFile = PropertiesImplUtil.getPropertiesFile(baseFile);
     assertNotNull(basePropertiesFile);
     final ResourceBundle bundle = basePropertiesFile.getResourceBundle();
-    final ResourceBundlePropertiesInsertManager manager = ResourceBundlePropertiesInsertManagerImpl.create(bundle);
-    assertInstanceOf(manager, ResourceBundlePropertiesInsertManagerImpl.class);
+    final ResourceBundlePropertiesUpdateManager manager = ResourceBundlePropertiesUpdateManagerImpl.create(bundle);
+    assertInstanceOf(manager, ResourceBundlePropertiesUpdateManagerImpl.class);
     testAction.doTestAction(basePropertiesFile, PropertiesImplUtil.getPropertiesFile(translationFile),
-                            (ResourceBundlePropertiesInsertManagerImpl)manager);
+                            (ResourceBundlePropertiesUpdateManagerImpl)manager);
     myFixture.checkResultByFile(getTestName(true) + "/p.properties", getTestName(true) + "/p-after.properties", true);
     myFixture.checkResultByFile(getTestName(true) + "/p_en.properties", getTestName(true) + "/p-after_en.properties",true);
   }
 
   private interface TestAction {
-    void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesInsertManagerImpl manager);
+    void doTestAction(PropertiesFile baseFile, PropertiesFile translationFile, ResourceBundlePropertiesUpdateManagerImpl manager);
   }
 }

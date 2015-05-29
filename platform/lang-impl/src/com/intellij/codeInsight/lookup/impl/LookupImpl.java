@@ -1027,7 +1027,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void restorePrefix() {
-    myOffsets.restorePrefix(getLookupStart());
+    myOffsets.restorePrefix();
   }
 
   private static String staticDisposeTrace = null;

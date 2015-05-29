@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.SLRUMap;
@@ -69,7 +70,7 @@ public class FragmentedDiffRequestFromChange {
   }
 
   public PreparedFragmentedContent getRanges(Change change) throws VcsException {
-    final FilePath filePath = ChangesUtil.getFilePath(change);
+    FilePath filePath = ChangesUtil.getFilePath(change);
 
     final RangesCalculator calculator = new RangesCalculator();
     calculator.execute(change, filePath, myRangesCache, LineStatusTrackerManager.getInstance(myProject));
@@ -83,8 +84,7 @@ public class FragmentedDiffRequestFromChange {
     FragmentedContent fragmentedContent = new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges, change);
     VirtualFile file = filePath.getVirtualFile();
     if (file == null) {
-      filePath.hardRefresh();
-      file = filePath.getVirtualFile();
+      file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
     }
     return new PreparedFragmentedContent(myProject, fragmentedContent,
                                     filePath.getName(), filePath.getFileType(),

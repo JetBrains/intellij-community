@@ -120,7 +120,8 @@ public class VfsData {
     if (o == ourDeadMarker) {
       throw reportDeadFileAccess(new VirtualFileImpl(id, segment, parent));
     }
-    assert segment.getNameId(id) > 0;
+    final int nameId = segment.getNameId(id);
+    assert nameId > 0 : "nameId=" + nameId + "; data=" + o + "; parent=" + parent;
 
     return o instanceof DirectoryData ? new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem())
                                       : new VirtualFileImpl(id, segment, parent);

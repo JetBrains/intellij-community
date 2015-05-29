@@ -58,11 +58,6 @@ import java.util.Collection;
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   protected CodeInsightTestFixture myTestFixture;
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected HighlightingTestBase() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

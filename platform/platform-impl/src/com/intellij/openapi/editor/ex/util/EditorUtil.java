@@ -79,7 +79,7 @@ public final class EditorUtil {
 
     int resultLogLine = Math.min(lastLogLine, lastLine);
     VisualPosition resVisStart = editor.offsetToVisualPosition(document.getLineStartOffset(resultLogLine));
-    VisualPosition resVisEnd = editor.offsetToVisualPosition(document.getLineEndOffset(resultLogLine));
+    VisualPosition resVisEnd = editor.offsetToVisualPosition(document.getLineEndOffset(resultLogLine), true);
 
     // Target logical line is not soft wrap affected.
     if (resVisStart.line == resVisEnd.line) {

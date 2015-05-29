@@ -77,7 +77,15 @@ public class ComparisonFailureData {
       if (filePath != null) {
         attrs.put("expectedFile", filePath);
       }
-      attrs.put("message", "Comparison Failure:");
+      final int expectedIdx = trace.indexOf("expected");
+      final String comparisonFailureMessage;
+      if (expectedIdx > 0) {
+        comparisonFailureMessage = trace.substring(0, expectedIdx);
+      }
+      else {
+        comparisonFailureMessage = "Comparison Failure: ";
+      }
+      attrs.put("message", comparisonFailureMessage);
     }
     else {
       attrs.put("details", trace);

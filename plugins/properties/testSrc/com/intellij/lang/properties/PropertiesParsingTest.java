@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.lang.properties.psi.impl.PropertiesASTFactory;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.ParsingTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 
 /**
  * @author max
@@ -29,7 +28,6 @@ public class PropertiesParsingTest extends ParsingTestCase {
 
   public PropertiesParsingTest() {
     super("", "properties", new PropertiesParserDefinition());
-    PlatformTestCase.initPlatformLangPrefix();
   }
 
   @Override

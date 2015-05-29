@@ -114,8 +114,8 @@ public class CyclicDependenciesAction extends AnAction{
       return null;
     }
 
-    Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    if (modulesArray != null) {
+    final Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    if (modulesArray != null && modulesArray.length > 0) {
       return new AnalysisScope(modulesArray);
     }
 

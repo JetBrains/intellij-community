@@ -19,6 +19,8 @@
  */
 package com.intellij.lang;
 
+import com.intellij.codeInsight.CodeInsightActionHandler;
+
 public class CodeInsightActions {
   public static final LanguageExtension<LanguageCodeInsightActionHandler>
     IMPLEMENT_METHOD = new LanguageExtension<LanguageCodeInsightActionHandler>("com.intellij.codeInsight.implementMethod");
@@ -29,8 +31,8 @@ public class CodeInsightActions {
   public static final LanguageExtension<LanguageCodeInsightActionHandler>
     DELEGATE_METHODS = new LanguageExtension<LanguageCodeInsightActionHandler>("com.intellij.codeInsight.delegateMethods");
 
-  public static final LanguageExtension<LanguageCodeInsightActionHandler>
-    GOTO_SUPER = new LanguageExtension<LanguageCodeInsightActionHandler>("com.intellij.codeInsight.gotoSuper");
+  public static final LanguageExtension<CodeInsightActionHandler>
+    GOTO_SUPER = new LanguageExtension<CodeInsightActionHandler>("com.intellij.codeInsight.gotoSuper");
 
   private CodeInsightActions() {
   }

@@ -16,14 +16,12 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiElement;
+import com.intellij.util.xml.DefinesXml;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.dom.DomElementXmlDescriptor;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DefinesXml;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,11 +34,12 @@ public class DomDescriptorProvider implements XmlElementDescriptorProvider {
   public XmlElementDescriptor getDescriptor(final XmlTag tag) {
     Project project = tag.getProject();
     if (project.isDefault()) return null;
-    final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
-    if (domElement != null) {
-      final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
+    
+    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomManager(project).getDomHandler(tag);
+    if (handler != null) {
+      final DefinesXml definesXml = handler.getAnnotation(DefinesXml.class);
       if (definesXml != null) {
-        return new DomElementXmlDescriptor(domElement);
+        return new DomElementXmlDescriptor(handler);
       }
       final PsiElement parent = tag.getParent();
       if (parent instanceof XmlTag) {

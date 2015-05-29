@@ -110,6 +110,11 @@ public class Py3QuickFixTest extends PyTestCase {
     });
   }
 
+  // PY-16036, PY-11561
+  public void testAddCallSuperSelfNameAndAnnotationPreserved() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+
   // PY-8991
   public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
     runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {

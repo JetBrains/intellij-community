@@ -143,6 +143,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
+  @Deprecated
   public interface AssertEqualsDiffChain {
     DiffHyperlink getPrevious();
     DiffHyperlink getCurrent();

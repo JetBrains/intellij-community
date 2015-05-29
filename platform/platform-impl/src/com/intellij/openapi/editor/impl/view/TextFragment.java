@@ -73,11 +73,11 @@ class TextFragment implements LineFragment {
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
-    assert startOffset >= 0; 
-    assert endOffset <= myCharPositions.length;
-    assert startOffset < endOffset;
-    if (startOffset == 0 && endOffset == myCharPositions.length) {
+  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+    assert startColumn >= 0; 
+    assert endColumn <= myCharPositions.length;
+    assert startColumn < endColumn;
+    if (startColumn == 0 && endColumn == myCharPositions.length) {
       g.drawGlyphVector(myGlyphVector, x, y);
     }
     else {
@@ -87,8 +87,8 @@ class TextFragment implements LineFragment {
       // We also cannot clone myGlyphVector without casting to sun.font.StandardGlyphVector, 
       // as clone() method is not public in GlyphVector (even though it's Cloneable).
       // So we are modifying glyph positions in-place, and restore them after painting.
-      int logicalStartOffset = isRtl() ? myCharPositions.length - endOffset : startOffset;
-      int logicalEndOffset = isRtl() ? myCharPositions.length - startOffset : endOffset;
+      int logicalStartOffset = isRtl() ? myCharPositions.length - endColumn : startColumn;
+      int logicalEndOffset = isRtl() ? myCharPositions.length - startColumn : endColumn;
       int glyphCount = myGlyphVector.getNumGlyphs();
       Point2D[] savedPositions = new Point2D[glyphCount + 1];
       int lastPaintedGlyph = -1;
@@ -105,7 +105,7 @@ class TextFragment implements LineFragment {
       savedPositions[glyphCount] = myGlyphVector.getGlyphPosition(glyphCount);
       myGlyphVector.setGlyphPosition(glyphCount, savedPositions[lastPaintedGlyph + 1]);
       try {
-        g.drawGlyphVector(myGlyphVector, x - getX(startOffset), y);
+        g.drawGlyphVector(myGlyphVector, x - getX(startColumn), y);
       }
       finally {
         for (int i = 0; i <= glyphCount; i++) {
@@ -149,17 +149,17 @@ class TextFragment implements LineFragment {
   }
 
   @Override
-  public int xToVisualColumn(float startX, float x) {
+  public int[] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     for (int i = 0; i < myCharPositions.length; i++) {
       float newPos = myCharPositions[i];
       if (relX < (newPos + prevPos) / 2) {
-        return i;
+        return new int[] {i, relX <= prevPos ? 0 : 1};
       }
       prevPos = newPos;
     }
-    return myCharPositions.length;
+    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
   }
 
   @Override
@@ -212,11 +212,13 @@ class TextFragment implements LineFragment {
     }
 
     @Override
-    public int xToVisualColumn(float startX, float x) {
-      float parentStartX = startX - getX(visualColumnToParent(0));
-      int parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
-      int column = parentColumn - visualColumnToParent(0);
-      return Math.min(getLength(), Math.max(0, column));
+    public int[] xToVisualColumn(float startX, float x) {
+      int startColumnInParent = visualColumnToParent(0);
+      float parentStartX = startX - getX(startColumnInParent);
+      int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
+      int column = parentColumn[0] - startColumnInParent;
+      int length = getLength();
+      return column < 0 ? new int[] {0, 0} : column > length ? new int[] {length, 1} : new int[] {column, parentColumn[1]};
     }
 
     private int visualColumnToParent(int column) {
@@ -224,8 +226,8 @@ class TextFragment implements LineFragment {
     }
 
     @Override
-    public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
-      TextFragment.this.draw(g, x, y, visualColumnToParent(startOffset), visualColumnToParent(endOffset));
+    public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+      TextFragment.this.draw(g, x, y, visualColumnToParent(startColumn), visualColumnToParent(endColumn));
     }
 
     @NotNull

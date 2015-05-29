@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -264,7 +263,8 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     };
   }
 
-  IntentionListStep getSubStep(final IntentionActionWithTextCaching action, final String title) {
+  @NotNull
+  IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, final String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (final IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, getIcon(optionIntention)));
@@ -309,7 +309,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
         if (weight1 != weight2) {
           return weight2 - weight1;
         }
-        return Comparing.compare(o1.getText(), o2.getText());
+        return o1.compareTo(o2);
       }
     });
     return result;
@@ -353,6 +353,9 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     if (myCachedInspectionFixes.contains(action)) {
       return 10;
+    }
+    if (myCachedGutters.contains(action)) {
+      return 5;
     }
     if (action.getAction() instanceof EmptyIntentionAction) {
       return -10;

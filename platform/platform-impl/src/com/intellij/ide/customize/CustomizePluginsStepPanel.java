@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -146,7 +146,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
     JBScrollPane scrollPane =
       new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.getVerticalScrollBar().setUnitIncrement(10);
-    scrollPane.setBorder(new EmptyBorder(0, 0, 0, 0)); // to disallow resetting border on LaF change
+    scrollPane.setBorder(JBUI.Borders.empty()); // to disallow resetting border on LaF change
     return scrollPane;
   }
 

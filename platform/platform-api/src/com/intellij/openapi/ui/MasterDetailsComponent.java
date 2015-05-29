@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
@@ -192,7 +191,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         decorator.setActionGroup(group);
       }
       //left.add(myNorthPanel, BorderLayout.NORTH);
-      myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
+      myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(JBUI.Borders.empty()).createPanel();
       myNorthPanel.setVisible(false);
     } else {
       left.add(myNorthPanel, BorderLayout.NORTH);

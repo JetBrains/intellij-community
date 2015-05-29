@@ -34,11 +34,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public synchronized void onStart(final ISuite suite) {
     myPrintStream.println("##teamcity[enteredTheMatrix]");
-    onSuiteStart(suite.getName(), false);
   }
 
   public synchronized void onFinish(ISuite suite) {
-    onSuiteFinish(suite.getName());
+    for (int i = myCurrentSuites.size() - 1; i >= 0; i--) {
+      onSuiteFinish(myCurrentSuites.remove(i));
+    }
+    myCurrentSuites.clear();
   }
 
   public synchronized void onConfigurationSuccess(ITestResult result) {
@@ -77,12 +79,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public synchronized void onStart(ITestContext context) {}
 
-  public synchronized void onFinish(ITestContext context) {
-    for (int i = myCurrentSuites.size() - 1; i >= 0; i--) {
-      onSuiteFinish(myCurrentSuites.remove(i));
-    }
-    myCurrentSuites.clear();
-  }
+  public synchronized void onFinish(ITestContext context) {}
 
   public void onTestStart(ExposedTestResult result) {
     final String testMethodName = result.getMethodName();
@@ -91,10 +88,8 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       myInvocationCount = 0;
       myMethodName = testMethodName;
     }
-    String paramString = getParamsString(parameters, myInvocationCount);
-    if (paramString != null) {
-      myParamsMap.put(result, paramString);
-    }
+    final String paramString = getParamsString(parameters, myInvocationCount);
+    myParamsMap.put(result, paramString);
     onTestStart(result, paramString, myInvocationCount);
     myInvocationCount++;
   }
@@ -132,11 +127,8 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     for (int i = idx; i < parentsHierarchy.size(); i++) {
       String fqName = parentsHierarchy.get(parentsHierarchy.size() - 1 - i);
       String currentClassName = getShortName(fqName);
-      myPrintStream.print("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName));
-      if (provideLocation) {
-        myPrintStream.print("\' locationHint = \'java:suite://" + escapeName(fqName));
-      }
-      myPrintStream.println("\']");
+      myPrintStream.println("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName) +
+                            (provideLocation ? "\' locationHint = \'java:suite://" + escapeName(fqName) : "") + "\']");
       myCurrentSuites.add(currentClassName);
     }
     return false;
@@ -175,7 +167,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestSkipped(ExposedTestResult result) {
-    onTestStart(result);
+    if (!myParamsMap.containsKey(result)) {
+      onTestStart(result);
+    }
     myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
     onTestFinished(result);
   }
@@ -205,7 +199,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
         if (i > 0) {
           buf.append(", ");
         }
-        buf.append(parameters[i].toString());
+        buf.append(parameters[i]);
       }
       paramString = "[" + buf.toString() + "]";
     }

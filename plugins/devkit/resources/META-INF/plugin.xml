@@ -17,7 +17,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
-    <runLineMarkerContributor implementation="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>

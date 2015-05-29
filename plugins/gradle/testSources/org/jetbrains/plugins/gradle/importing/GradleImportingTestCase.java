@@ -111,6 +111,11 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   public void tearDown() throws Exception {
+    if (myJdkHome == null) {
+      //super.setUp() wasn't called
+      return;
+    }
+
     try {
       new WriteAction() {
         @Override

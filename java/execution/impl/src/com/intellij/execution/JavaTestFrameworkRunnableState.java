@@ -160,7 +160,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   }
 
   protected boolean isSmRunnerUsed() {
-    return Registry.is(getFrameworkId() + "_sm_runner");
+    return Registry.is(getFrameworkId() + "_sm");
   }
 
   @Override

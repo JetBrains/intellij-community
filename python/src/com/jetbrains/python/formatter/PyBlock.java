@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -685,18 +686,21 @@ public class PyBlock implements ASTBlock {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
       final PsiElement psi1 = node1.getPsi();
       final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
+
+      final IElementType childType1 = node1.getElementType();
       if (psi1 instanceof PyImportStatementBase && psi2 instanceof PyImportStatementBase &&
           psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
         return Spacing.createSpacing(0, 0, 2, true, 1);
       }
 
-      if (node1.getElementType() == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
+      final CommonCodeStyleSettings settings = myContext.getSettings();
+      if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
         if (needLineBreakInStatement()) {
-          return Spacing.createSpacing(0, 0, 1, true, myContext.getSettings().KEEP_BLANK_LINES_IN_CODE);
+          return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
 
-      if ((node1.getElementType() == PyElementTypes.FUNCTION_DECLARATION || node1.getElementType() == PyElementTypes.CLASS_DECLARATION)
+      if ((childType1 == PyElementTypes.FUNCTION_DECLARATION || childType1 == PyElementTypes.CLASS_DECLARATION)
           && myNode.getElementType() instanceof PyFileElementType) {
 
         if (psi2 instanceof PsiComment) {

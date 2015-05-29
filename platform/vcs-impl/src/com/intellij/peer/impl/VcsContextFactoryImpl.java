@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
@@ -44,40 +45,53 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {
-    return new FilePathImpl(virtualFile);
+    return new FilePathImpl(virtualFile.getPath(), virtualFile.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file) {
-    return FilePathImpl.create(file);
+    VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
+    return vf != null ? createFilePathOn(vf) : new FilePathImpl(file.getPath(), file.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (virtualFile != null) {
-      // detector information (loaded here lazily) is not needed - we have real file
-      return FilePathImpl.create(file);
+      return createFilePathOn(virtualFile);
     }
-    return FilePathImpl.create(file, detector.fun(file).booleanValue());
+    return createFilePathOn(file, detector.fun(file).booleanValue());
   }
 
   public FilePath createFilePathOn(final File file, final boolean isDirectory) {
-    return FilePathImpl.create(file, isDirectory);
+    return new FilePathImpl(file.getPath(), isDirectory);
   }
 
   @NotNull
-    public FilePath createFilePathOnNonLocal(final String path, final boolean isDirectory) {
-    return FilePathImpl.createNonLocal(path, isDirectory);
+  public FilePath createFilePathOnNonLocal(final String path, final boolean isDirectory) {
+    return new RemoteFilePath(path, isDirectory);
   }
 
   public FilePath createFilePathOnDeleted(final File file, final boolean isDirectory) {
-    return FilePathImpl.createForDeletedFile(file, isDirectory);
+    return createFilePathOn(file, isDirectory);
   }
 
-  public FilePath createFilePathOn(final VirtualFile parent, final String name) {
-    return new FilePathImpl(parent, name, false);
+  @NotNull
+  public FilePath createFilePathOn(@NotNull final VirtualFile parent, @NotNull final String name) {
+    return createFilePath(parent, name, false);
+  }
+
+  @NotNull
+  @Override
+  public FilePath createFilePath(@NotNull VirtualFile parent, @NotNull String fileName, boolean isDirectory) {
+    return new FilePathImpl(parent.getPath() + "/" + fileName, isDirectory);
   }
 
   public LocalChangeList createLocalChangeList(Project project, @NotNull final String name) {
     return LocalChangeListImpl.createEmptyChangeListImpl(project, name);
+  }
+
+  @NotNull
+  @Override
+  public FilePath createFilePath(@NotNull String path, boolean isDirectory) {
+    return new FilePathImpl(path, isDirectory);
   }
 }

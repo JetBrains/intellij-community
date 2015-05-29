@@ -384,6 +384,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   @NotNull
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward) {
+    return logicalToVisualPosition(offsetToLogicalPosition(offset).leanForward(leanForward));
+  }
+
+  @Override
+  @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
     return offsetToLogicalPosition(offset, true);
   }
@@ -875,7 +881,6 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   public int getExpectedCaretOffset() {
-    int offset = myDelegate.getExpectedCaretOffset();
-    return offset == -1 || !myDocumentWindow.containsRange(offset,offset) ? -1 : myDocumentWindow.hostToInjected(offset);
+    return myDocumentWindow.hostToInjected(myDelegate.getExpectedCaretOffset());
   }
 }

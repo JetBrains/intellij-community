@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.SystemInfo;
+import org.junit.Assert;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -37,13 +38,16 @@ public class EditorMouseFixture {
     myEditor = editor;
   }
 
-  public EditorMouseFixture pressAt(int visualLine, int visualColumn) {
-    return pressAt(1, visualLine, visualColumn);
+  public EditorMouseFixture pressAtXY(int x, int y) {
+    return pressAt(1, new Point(x, y));
   }
 
-  private EditorMouseFixture pressAt(int clickCount, int visualLine, int visualColumn) {
+  public EditorMouseFixture pressAt(int visualLine, int visualColumn) {
+    return pressAt(1, getPoint(visualLine, visualColumn));
+  }
+
+  private EditorMouseFixture pressAt(int clickCount, Point p) {
     JComponent component = myEditor.getContentComponent();
-    Point p = getPoint(visualLine, visualColumn);
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_PRESSED,
                                            System.currentTimeMillis(),
@@ -91,22 +95,28 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture doubleClickAt(int visualLine, int visualColumn) {
-    return clickAt(visualLine, visualColumn).pressAt(2, visualLine, visualColumn).release(2);
+    return clickAt(visualLine, visualColumn).pressAt(2, getPoint(visualLine, visualColumn)).release(2);
   }
 
   public EditorMouseFixture tripleClickAt(int visualLine, int visualColumn) {
-    return doubleClickAt(visualLine, visualColumn).pressAt(3, visualLine, visualColumn).release(3);
+    return doubleClickAt(visualLine, visualColumn).pressAt(3, getPoint(visualLine, visualColumn)).release(3);
   }
 
   public EditorMouseFixture dragTo(int visualLine, int visualColumn) {
-    JComponent component = myEditor.getContentComponent();
     Point p = getPoint(visualLine, visualColumn);
+    return dragToXY(p.x, p.y);
+  }
+  
+  public EditorMouseFixture dragToXY(int x, int y) {
+    Assert.assertFalse("Cannot test mouse dragging: editor visible size is not set. Use EditorTestUtil.setEditorVisibleSize(width, height)", 
+                       myEditor.getScrollingModel().getVisibleArea().isEmpty());
+    JComponent component = myEditor.getContentComponent();
     component.dispatchEvent(new MouseEvent(component,
                                            myLastId = MouseEvent.MOUSE_DRAGGED,
                                            System.currentTimeMillis(),
                                            getModifiers(),
-                                           myX = p.x,
-                                           myY = p.y,
+                                           myX = x,
+                                           myY = y,
                                            1,
                                            false,
                                            myButton));

@@ -7,7 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.management import ManagementUtility, get_commands, BaseCommand
 
 from django_manage_commands_provider._parser import _optparse, _argparse
-from utils import VersionAgnosticUtils
+from _jb_utils import VersionAgnosticUtils
 
 
 __author__ = 'Ilya.Kazakevich'

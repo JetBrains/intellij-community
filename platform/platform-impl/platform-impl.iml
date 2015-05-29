@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="diff-api" />
     <orderEntry type="module" module-name="built-in-server" scope="RUNTIME" />
     <orderEntry type="library" name="imgscalr" level="project" />
+    <orderEntry type="module" module-name="built-in-server-api" />
   </component>
 </module>

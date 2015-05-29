@@ -128,7 +128,7 @@ public class HgChangeProvider implements ChangeProvider {
           && resolveStatus.get(afterFile) == HgResolveStatusEnum.UNRESOLVED) {
         builder.processChange(
           new Change(
-            new HgContentRevision(myProject, beforeFile, parentRevision),
+            HgContentRevision.create(myProject, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, workingRevision),
             FileStatus.MERGED_WITH_CONFLICTS
           ), myVcsKey);
@@ -182,7 +182,7 @@ public class HgChangeProvider implements ChangeProvider {
         if (root != null && HgUtil.isHgRoot(root)) {
           final HgRevisionNumber beforeRevisionNumber = new HgWorkingCopyRevisionsCommand(myProject).tip(root);
           final ContentRevision beforeRevision = (beforeRevisionNumber == null ? null :
-                                                  new HgContentRevision(myProject, new HgFile(myProject, vf), beforeRevisionNumber));
+                                                  HgContentRevision.create(myProject, new HgFile(myProject, vf), beforeRevisionNumber));
           builder.processChange(new Change(beforeRevision, CurrentContentRevision.create(filePath), FileStatus.MODIFIED), myVcsKey);
         }
       }
@@ -212,7 +212,7 @@ public class HgChangeProvider implements ChangeProvider {
         HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
         HgFile beforeFile, HgFile afterFile) {
         processChange(
-          new HgContentRevision(project, beforeFile, parentRevision),
+          HgContentRevision.create(project, beforeFile, parentRevision),
           null,
           FileStatus.DELETED,
           builder,
@@ -259,9 +259,9 @@ public class HgChangeProvider implements ChangeProvider {
         } else {
           // The original file does not exists so this is a rename.
           processChange(
-            new HgContentRevision(project, beforeFile, parentRevision),
+            HgContentRevision.create(project, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, currentNumber),
-            HgChangeProvider.RENAMED,
+            RENAMED,
             builder,
             vcsKey
           );
@@ -275,7 +275,7 @@ public class HgChangeProvider implements ChangeProvider {
         HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
         HgFile beforeFile, HgFile afterFile) {
         processChange(
-          new HgContentRevision(project, beforeFile, parentRevision),
+          HgContentRevision.create(project, beforeFile, parentRevision),
           HgCurrentContentRevision.create(afterFile, currentNumber),
           FileStatus.MODIFIED,
           builder,

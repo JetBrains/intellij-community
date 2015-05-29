@@ -920,9 +920,12 @@ public class GenericsHighlightUtil {
     }
     try {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
-      if (superMethod != null && method.getContainingClass().isInterface() && "clone".equals(superMethod.getName())) {
-        final PsiClass containingClass = superMethod.getMethod().getContainingClass();
-        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+      if (superMethod != null && method.getContainingClass().isInterface()) {
+        final PsiMethod psiMethod = superMethod.getMethod();
+        final PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass != null && 
+            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
+            psiMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
           superMethod = null;
         }
       }

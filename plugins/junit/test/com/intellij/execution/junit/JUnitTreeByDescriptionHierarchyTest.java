@@ -92,6 +92,38 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void testSameShortNames() throws Exception {
+    final Description rootDescription = Description.createSuiteDescription("root");
+    final ArrayList<Description> tests = new ArrayList<Description>();
+    for (String className : new String[]{"a.MyTest", "b.MyTest"}) {
+      final Description aTestClass = Description.createSuiteDescription(className);
+      rootDescription.addChild(aTestClass);
+      final Description testDescription = Description.createTestDescription(className, "testMe");
+      tests.add(testDescription);
+      aTestClass.addChild(testDescription);
+    }
+    doTest(rootDescription, tests, "##teamcity[suiteTreeStarted name='MyTest' locationHint='java:suite://a.MyTest']\n" +
+                                   "##teamcity[suiteTreeNode name='testMe' locationHint='java:test://a.MyTest.testMe']\n" +
+                                   "##teamcity[suiteTreeEnded name='MyTest']\n" +
+                                   "##teamcity[suiteTreeStarted name='MyTest' locationHint='java:suite://b.MyTest']\n" +
+                                   "##teamcity[suiteTreeNode name='testMe' locationHint='java:test://b.MyTest.testMe']\n" +
+                                   "##teamcity[suiteTreeEnded name='MyTest']\n",
+           "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+           "##teamcity[testSuiteStarted name='MyTest']\n" +
+   
+           "##teamcity[testStarted name='testMe' locationHint='java:test://a.MyTest.testMe']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testMe']\n" +
+           "##teamcity[testSuiteFinished name='MyTest']\n" +
+           "##teamcity[testSuiteStarted name='MyTest']\n" +
+           "##teamcity[testStarted name='testMe' locationHint='java:test://b.MyTest.testMe']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testMe']\n" +
+           "##teamcity[testSuiteFinished name='MyTest']\n");
+  }
+
+  @Test
   public void testSingleParameterizedClass() throws Exception {
     final String className = "a.TestA";
     final Description aTestClassDescription = Description.createSuiteDescription(className);
@@ -170,12 +202,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
   private static void doTest(Description root, List<Description> tests, String expectedTree, String expectedStart) throws Exception {
     final StringBuffer buf = new StringBuffer();
-    final JUnit4TestListener sender = new JUnit4TestListener(new PrintStream(new OutputStream() {
-      @Override
-      public void write(int b) throws IOException {
-        buf.append(new String(new byte[]{(byte)b}));
-      }
-    }));
+    final JUnit4TestListener sender = createListener(buf);
     sender.sendTree(root);
 
     Assert.assertEquals("output: " + buf, expectedTree, StringUtil.convertLineSeparators(buf.toString()));
@@ -217,12 +244,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     }
 
     final StringBuffer buf = new StringBuffer();
-    final JUnit4TestListener sender = new JUnit4TestListener(new PrintStream(new OutputStream() {
-      @Override
-      public void write(int b) throws IOException {
-        buf.append(new String(new byte[]{(byte)b}));
-      }
-    }));
+    final JUnit4TestListener sender = createListener(buf);
   
     sender.testRunStarted(root);
     for (Description test : tests) {
@@ -242,6 +264,20 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='testName']\n" +
                                           "##teamcity[testSuiteFinished name='TestB']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  private static JUnit4TestListener createListener(final StringBuffer buf) {
+    return new JUnit4TestListener(new PrintStream(new OutputStream() {
+      @Override
+      public void write(int b) throws IOException {
+        buf.append(new String(new byte[]{(byte)b}));
+      }
+    })) {
+      @Override
+      protected long currentTime() {
+        return 0;
+      }
+    };
   }
 
   @Test
@@ -340,12 +376,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
-    new JUnit4TestListener(new PrintStream(new OutputStream() {
-      @Override
-      public void write(int b) throws IOException {
-        buf.append(new String(new byte[]{(byte)b}));
-      }
-    })).sendTree(description);
+    createListener(buf).sendTree(description);
 
     Assert.assertEquals("output: " + buf, expected, StringUtil.convertLineSeparators(buf.toString()));
   }

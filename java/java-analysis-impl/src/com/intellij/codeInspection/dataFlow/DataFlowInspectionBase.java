@@ -34,6 +34,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -168,7 +169,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
-      createDescription(dfaRunner, holder, visitor, onTheFly);
+      createDescription(dfaRunner, holder, visitor, onTheFly, scope);
 
       MultiMap<PsiElement,DfaMemoryState> nestedClosures = dfaRunner.getNestedClosures();
       for (PsiElement closure : nestedClosures.keySet()) {
@@ -226,7 +227,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
   }
 
-  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor, final boolean onTheFly) {
+  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor, final boolean onTheFly, PsiElement scope) {
     Pair<Set<Instruction>, Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
@@ -264,9 +265,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     reportNullableArguments(visitor, holder, reportedAnchors);
     reportNullableAssignments(visitor, holder, reportedAnchors);
     reportUnboxedNullables(visitor, holder, reportedAnchors);
-    if (!runner.isInNullableMethod() && runner.isInMethod() && (runner.isInNotNullMethod() || SUGGEST_NULLABLE_ANNOTATIONS)) {
-      reportNullableReturns(runner, visitor, holder, reportedAnchors);
-    }
+    reportNullableReturns(visitor, holder, reportedAnchors, scope);
     if (SUGGEST_NULLABLE_ANNOTATIONS) {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
     }
@@ -497,13 +496,37 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private static void reportNullableReturns(StandardDataFlowRunner runner, DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
+  @Nullable
+  private static PsiMethod getScopeMethod(PsiElement block) {
+    PsiElement parent = block.getParent();
+    if (parent instanceof PsiMethod) return (PsiMethod)parent;
+    if (parent instanceof PsiLambdaExpression) return LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+    return null;
+  }
+
+  private void reportNullableReturns(DataFlowInstructionVisitor visitor,
+                                     ProblemsHolder holder,
+                                     Set<PsiElement> reportedAnchors,
+                                     @NotNull PsiElement block) {
+    final PsiMethod method = getScopeMethod(block);
+    if (method == null || NullableStuffInspectionBase.isNullableNotInferred(method, true)) return;
+
+    boolean notNullRequired = NullableNotNullManager.isNotNull(method);
+    if (!notNullRequired && !SUGGEST_NULLABLE_ANNOTATIONS) return;
+
+    PsiType returnType = method.getReturnType();
+    // no warnings in void lambdas, where the expression is not returned anyway
+    if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && returnType == PsiType.VOID) return;
+    
+    // no warnings for Void methods, where only null can be possibly returned
+    if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
+
     for (PsiElement statement : visitor.getProblems(NullabilityProblem.nullableReturn)) {
       assert statement instanceof PsiExpression; 
       final PsiExpression expr = (PsiExpression)statement;
       if (!reportedAnchors.add(expr)) continue;
 
-      if (runner.isInNotNullMethod()) {
+      if (notNullRequired) {
         final String text = isNullLiteralExpression(expr)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull")
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull");

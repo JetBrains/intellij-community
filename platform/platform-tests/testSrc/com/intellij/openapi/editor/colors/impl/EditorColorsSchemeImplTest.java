@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -34,10 +33,6 @@ import static java.util.Collections.singletonList;
 
 public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase {
   EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
-
-  static {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),

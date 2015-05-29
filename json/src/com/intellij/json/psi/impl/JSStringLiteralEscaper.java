@@ -45,13 +45,14 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
       }
       return true;
     }
-    int index = 0;
 
+    int index = 0;
+    final int outOffset = outChars.length();
     while (index < chars.length()) {
       char c = chars.charAt(index++);
 
-      sourceOffsets[outChars.length()] = index - 1;
-      sourceOffsets[outChars.length() + 1] = index;
+      sourceOffsets[outChars.length() - outOffset] = index - 1;
+      sourceOffsets[outChars.length() + 1 - outOffset] = index;
 
       if (c != '\\') {
         outChars.append(c);
@@ -179,7 +180,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
         }
       }
 
-      sourceOffsets[outChars.length()] = index;
+      sourceOffsets[outChars.length() - outOffset] = index;
     }
     return true;
   }

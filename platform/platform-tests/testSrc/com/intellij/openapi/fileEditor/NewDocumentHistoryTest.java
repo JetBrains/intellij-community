@@ -4,7 +4,6 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 /**
@@ -12,10 +11,6 @@ import com.intellij.testFramework.PlatformTestUtil;
  *         Date: 4/29/13
  */
 public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
-
-  public NewDocumentHistoryTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   public void testBackNavigationBetweenEditors() throws Exception {
     PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new FileEditorManagerTest.MyFileEditorProvider(), getTestRootDisposable());

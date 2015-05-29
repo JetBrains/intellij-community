@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,14 +75,14 @@ public class HgMergeProvider implements MergeProvider {
           // the second one is "their" revision pulled from the parent repo,
           // first parent is the local change.
           // to retrieve the base version we get the parent of the local change, i.e. the [only] parent of the first parent.
-          //Whick one is local revision depends on which one is merged with,
-          // i.e if you update to 17 revision and then merge it woth 23, so 17 is your local and 17->parent is your base revision.
+          //Which one is local revision depends on which one is merged with,
+          // i.e if you update to 17 revision and then merge it with 23, so 17 is your local and 17->parent is your base revision.
           // This may produce misunderstanding when you update your project with merging (your update firstly to next revisions  and then
           // merge with previous). see http://hgbook.red-bean.com/read/managing-releases-and-branchy-development.html
           final Couple<HgRevisionNumber> parents = command.parents(repo, file);
           serverRevisionNumber = parents.second;
           localRevisionNumber = parents.first;
-          final HgContentRevision local = new HgContentRevision(myProject, hgFile, localRevisionNumber);
+          final HgContentRevision local = HgContentRevision.create(myProject, hgFile, localRevisionNumber);
           mergeData.CURRENT = local.getContentAsBytes();
           // we are sure that we have a common ancestor, because otherwise we'll get "repository is unrelated" error while pulling,
           // due to different root changesets which is prohibited.
@@ -125,14 +126,14 @@ public class HgMergeProvider implements MergeProvider {
         }
 
         if (baseRevisionNumber != null) {
-          final HgContentRevision base = new HgContentRevision(myProject, hgFile, baseRevisionNumber);
+          final HgContentRevision base = HgContentRevision.create(myProject, hgFile, baseRevisionNumber);
           //if file doesn't exist in ancestor revision the base revision should be empty
-          mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : new byte[0];
+          mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : ArrayUtil.EMPTY_BYTE_ARRAY;
         }
         else { // no base revision means that the file was added simultaneously with different content in both repositories
-          mergeData.ORIGINAL = new byte[0];
+          mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
         }
-        final HgContentRevision server = new HgContentRevision(myProject, hgFile, serverRevisionNumber);
+        final HgContentRevision server = HgContentRevision.create(myProject, hgFile, serverRevisionNumber);
         mergeData.LAST = server.getContentAsBytes();
         file.refresh(false, false);
       }

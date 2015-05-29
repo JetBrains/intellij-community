@@ -39,7 +39,6 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PlatformTestCase.initPlatformLangPrefix();
     myPropertyToAdd = (Property)PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv");
   }
 

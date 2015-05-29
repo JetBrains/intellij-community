@@ -140,9 +140,6 @@ public abstract class DomManager extends CompositeModificationTracker implements
    */
   public abstract ConverterManager getConverterManager();
 
-  @Deprecated
-  public abstract void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory);
-
   public abstract ModelMerger createModelMerger();
 
 

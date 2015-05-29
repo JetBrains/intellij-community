@@ -49,6 +49,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -227,7 +228,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     final String addContentRoots = JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS");
     myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
-    myAddSourceRoots = addSourceRoots == null|| Boolean.parseBoolean(addSourceRoots);
+    myAddSourceRoots = addSourceRoots == null || Boolean.parseBoolean(addSourceRoots);
     getConfigurationModule().readExternal(element);
 
     setMappingSettings(PathMappingSettings.readExternal(element));
@@ -412,12 +413,27 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     final VirtualFile virtualFile = location.getVirtualFile();
     if (virtualFile != null) {
       String path = virtualFile.getCanonicalPath();
-      if (pyClass != null)
+      if (pyClass != null) {
         path += "::" + pyClass.getName();
-      if (pyFunction != null)
+      }
+      if (pyFunction != null) {
         path += "::" + pyFunction.getName();
+      }
       return path;
     }
     return null;
+  }
+
+  /**
+   * @return working directory to run, never null, does its best to return project dir if empty.
+   * Unlike {@link #getWorkingDirectory()} it does not simply take directory from config.
+   */
+  @NotNull
+  public String getWorkingDirectorySafe() {
+    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : myWorkingDirectory;
+    if (result == null) {
+      return new File(".").getAbsolutePath();
+    }
+    return result;
   }
 }

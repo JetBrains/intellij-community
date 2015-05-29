@@ -50,6 +50,12 @@
       <localInspection language="JAVA" shortName="TestNGMethodNamingConvention" displayName="TestNG test method naming convention"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.TestNGMethodNamingConventionInspection"/>
+      <localInspection language="JAVA" shortName="DuplicatedDataProviderNames" displayName="Duplicated data provider names"
+                       groupName="TestNG" enabledByDefault="true" level="ERROR"
+                       implementationClass="com.theoryinpractice.testng.inspection.DuplicatedDataProviderNamesInspection"/>
+      <localInspection language="JAVA" shortName="DataProviderReturnType" displayName="Invalid data provider return type"
+                       groupName="TestNG" enabledByDefault="true" level="ERROR"
+                       implementationClass="com.theoryinpractice.testng.inspection.DataProviderReturnTypeInspection"/>
 
       <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>

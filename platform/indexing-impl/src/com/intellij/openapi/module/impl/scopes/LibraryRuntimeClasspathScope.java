@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ import java.util.*;
  */
 public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
-  private final LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
+  private final Set<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
 
-  private int myCachedHashCode = 0;
+  private int myCachedHashCode;
 
-  public LibraryRuntimeClasspathScope(final Project project, final List<Module> modules) {
+  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Module[] modules) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Set<Sdk> processedSdk = new THashSet<Sdk>();
@@ -63,7 +63,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     }
   }
 
-  public LibraryRuntimeClasspathScope(Project project, LibraryOrderEntry entry) {
+  public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull LibraryOrderEntry entry) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Collections.addAll(myEntries, entry.getRootFiles(OrderRootType.CLASSES));
@@ -89,12 +89,13 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
                             @NotNull final Set<Module> processedModules,
                             @NotNull final Set<Library> processedLibraries,
                             @NotNull final Set<Sdk> processedSdk,
-                            Condition<OrderEntry> condition) {
+                            @NotNull Condition<OrderEntry> condition) {
     if (!processedModules.add(module)) return;
 
-    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<LinkedHashSet<VirtualFile>>() {
-      public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
-                                                               final LinkedHashSet<VirtualFile> value) {
+    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<Set<VirtualFile>>() {
+      @Override
+      public Set<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
+                                                               final Set<VirtualFile> value) {
         final Library library = libraryOrderEntry.getLibrary();
         if (library != null && processedLibraries.add(library)) {
           ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
@@ -102,15 +103,16 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
         return value;
       }
 
-      public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
-                                                                    final LinkedHashSet<VirtualFile> value) {
+      @Override
+      public Set<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
+                                                                    final Set<VirtualFile> value) {
         processedModules.add(moduleSourceOrderEntry.getOwnerModule());
         ContainerUtil.addAll(value, moduleSourceOrderEntry.getRootModel().getSourceRoots());
         return value;
       }
 
       @Override
-      public LinkedHashSet<VirtualFile> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, LinkedHashSet<VirtualFile> value) {
+      public Set<VirtualFile> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Set<VirtualFile> value) {
         final Module depModule = moduleOrderEntry.getModule();
         if (depModule != null) {
           ContainerUtil.addAll(value, ModuleRootManager.getInstance(depModule).getSourceRoots());
@@ -118,7 +120,8 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
         return value;
       }
 
-      public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
+      @Override
+      public Set<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Set<VirtualFile> value) {
         final Sdk jdk = jdkOrderEntry.getJdk();
         if (jdk != null && processedSdk.add(jdk)) {
           ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
@@ -128,12 +131,13 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     }, myEntries);
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     return myEntries.contains(getFileRoot(file));
   }
 
   @Nullable
-  private VirtualFile getFileRoot(VirtualFile file) {
+  private VirtualFile getFileRoot(@NotNull VirtualFile file) {
     if (myIndex.isLibraryClassFile(file)) {
       return myIndex.getClassRootForFile(file);
     }
@@ -146,6 +150,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return null;
   }
 
+  @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     final VirtualFile r1 = getFileRoot(file1);
     final VirtualFile r2 = getFileRoot(file2);
@@ -157,14 +162,17 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   @TestOnly
+  @NotNull
   public List<VirtualFile> getRoots() {
     return new ArrayList<VirtualFile>(myEntries);
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return false;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return true;
   }

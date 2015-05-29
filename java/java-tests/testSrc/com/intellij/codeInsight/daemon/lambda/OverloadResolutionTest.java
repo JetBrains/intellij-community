@@ -118,6 +118,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testPrimitiveVarargsAreNoMoreSpecificThanNonPrimitiveWhenNoArgIsActuallyProvided() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,9 +97,10 @@ public interface Editor extends UserDataHolder {
    * Returns the markup model for the editor. This model contains editor-specific highlighters
    * (for example, highlighters added by "Highlight usages in file"), which are painted in addition
    * to the highlighters contained in the markup model for the document.
+   * <p>
+   * See also com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument(Document, Project, boolean).
    *
    * @return the markup model instance.
-   * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(com.intellij.openapi.editor.Document, com.intellij.openapi.project.Project, boolean)
    */
   @NotNull
   MarkupModel getMarkupModel();
@@ -213,6 +214,9 @@ public interface Editor extends UserDataHolder {
 
   /**
    * Maps an offset in the document to a logical position.
+   * <p>
+   * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will 
+   * have {@link LogicalPosition#leansForward leansForward} value set to <code>false</code>.
    *
    * @param offset the offset in the document.
    * @return the corresponding logical position.
@@ -222,12 +226,30 @@ public interface Editor extends UserDataHolder {
 
   /**
    * Maps an offset in the document to a visual position.
+   * <p>
+   * It's assumed that original position is associated with character immediately preceding given offset, 
+   * {@link VisualPosition#leansRight leansRight} value for visual position will be determined correspondingly.
    *
    * @param offset the offset in the document.
    * @return the corresponding visual position.
    */
   @NotNull
   VisualPosition offsetToVisualPosition(int offset);
+
+  /**
+   * Maps an offset in the document to a visual position.
+   * <p>
+   * It's assumed that original position is associated with character immediately preceding given offset, 
+   * {@link VisualPosition#leansRight leansRight} value for visual position will be determined correspondingly.
+   *
+   * @param offset the offset in the document.
+   * @param leanForward if <code>true</code>, original position is associated with character after given offset, if <code>false</code> - 
+   *                    with character before given offset. This can make a difference in bidirectional text (see {@link LogicalPosition},
+   *                    {@link VisualPosition})
+   * @return the corresponding visual position.
+   */
+  @NotNull
+  VisualPosition offsetToVisualPosition(int offset, boolean leanForward);
 
   /**
    * Maps the pixel coordinates in the editor to a logical position.

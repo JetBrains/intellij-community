@@ -50,6 +50,9 @@ public class DomPatterns {
     return new GenericDomValuePattern<T>(aClass);
   }
 
+  /**
+   * @deprecated use {@link #tagWithDom(String, ElementPattern)} and  {@link #attributeWithDom(String, ElementPattern)}
+   */
   public static XmlElementPattern.Capture withDom(final ElementPattern<? extends DomElement> pattern) {
     return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>("tagWithDom") {
       @Override
@@ -73,6 +76,10 @@ public class DomPatterns {
 
   public static XmlTagPattern.Capture tagWithDom(String tagName, ElementPattern<? extends DomElement> domPattern) {
     return XmlPatterns.xmlTag().withLocalName(tagName).and(withDom(domPattern));
+  }
+
+  public static XmlNamedElementPattern.XmlAttributePattern attributeWithDom(String tagName, ElementPattern<? extends DomElement> domPattern) {
+    return XmlPatterns.xmlAttribute().withLocalName(tagName).and(withDom(domPattern));
   }
 
   public static PsiElementPattern.Capture<PomTargetPsiElement> domTargetElement(final ElementPattern<? extends DomElement> pattern) {

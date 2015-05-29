@@ -50,12 +50,12 @@ microba.jar
 miglayout-swing.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar
-netty-all-4.1.0.Beta4.jar
+netty-all-4.1.0.Beta5.jar
 oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar
 proxy-vole_20131209.jar
-pty4j-0.4.15.jar
+pty4j-0.4.16.jar
 purejavacomm.jar
 resolver.jar
 rhino-js-1_7R4.jar

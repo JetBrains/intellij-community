@@ -26,7 +26,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -79,7 +78,7 @@ public class TestNGConfigurationType implements ConfigurationType
             if (Comparing.equal(location.getModule(), configurationModule)) return true;
 
             final Module predefinedModule =
-              ((TestNGConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject())).getConfigurationTemplate(myFactory)
+              ((TestNGConfiguration)RunManagerEx.getInstanceEx(location.getProject()).getConfigurationTemplate(myFactory)
                 .getConfiguration()).getConfigurationModule().getModule();
             return Comparing.equal(predefinedModule, configurationModule);
 

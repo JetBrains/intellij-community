@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
@@ -54,16 +54,18 @@ public class EditorView implements Disposable {
   private final TextLayoutCache myTextLayoutCache;
   private final TabFragment myTabFragment;
     
-  private String myPrefixText;
-  private LineLayout myPrefixLayout;
-  private TextAttributes myPrefixAttributes;
+  private String myPrefixText; // accessed only in EDT
+  private LineLayout myPrefixLayout; // guarded by myLock
+  private TextAttributes myPrefixAttributes; // accessed only in EDT
   
-  private int myPlainSpaceWidth;
-  private int myLineHeight;
-  private int myDescent;
-  private int myCharHeight;
-  private int myTabSize;
-
+  private int myPlainSpaceWidth; // accessed only in EDT
+  private int myLineHeight; // guarded by myLock
+  private int myDescent; // guarded by myLock
+  private int myCharHeight; // guarded by myLock
+  private int myTabSize; // guarded by myLock
+  
+  private final Object myLock = new Object();
+  
   public EditorView(EditorImpl editor) {
     myFontRenderContext = createFontRenderContext();
     myEditor = editor;
@@ -114,61 +116,77 @@ public class EditorView implements Disposable {
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(int offset) {
+    assertIsReadAccess();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
+    assertIsReadAccess();
     return myMapper.logicalPositionToOffset(pos);
   }
 
   @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean leanTowardsLargerLogicalColumns) {
-    return myMapper.logicalToVisualPosition(pos, leanTowardsLargerLogicalColumns);
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos) {
+    assertIsDispatchThread();
+    return myMapper.logicalToVisualPosition(pos);
   }
 
   @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos, boolean leanTowardsLargerVisualColumns) {
-    return myMapper.visualToLogicalPosition(pos, leanTowardsLargerVisualColumns);
+  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
+    assertIsDispatchThread();
+    return myMapper.visualToLogicalPosition(pos);
   }
 
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets) {
+    assertIsDispatchThread();
     return myMapper.offsetToVisualPosition(offset, leanTowardsLargerOffsets);
   }
 
   public int offsetToVisualLine(int offset) {
+    assertIsDispatchThread();
     return myMapper.offsetToVisualLine(offset);
   }
 
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
+    assertIsDispatchThread();
     return myMapper.xyToVisualPosition(p);
   }
 
   @NotNull
   public Point visualPositionToXY(@NotNull VisualPosition pos) {
+    assertIsDispatchThread();
     return myMapper.visualPositionToXY(pos);
   }
 
   @NotNull
   public Point offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
+    assertIsDispatchThread();
     return myMapper.offsetToXY(offset, leanTowardsLargerOffsets);
   }
 
   public void setPrefix(String prefixText, TextAttributes attributes) {
+    assertIsDispatchThread();
     myPrefixText = prefixText;
-    myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
-                     new LineLayout(this, prefixText, attributes.getFontType(), myFontRenderContext);
+    synchronized (myLock) {
+      myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
+                       new LineLayout(this, prefixText, attributes.getFontType(), myFontRenderContext);
+    }
     myPrefixAttributes = attributes;
     mySizeManager.invalidateRange(0, 0);
   }
 
   public float getPrefixTextWidthInPixels() {
-    return myPrefixLayout == null ? 0 : myPrefixLayout.getWidth();
+    synchronized (myLock) {
+      return myPrefixLayout == null ? 0 : myPrefixLayout.getWidth();
+    }
   }
 
   LineLayout getPrefixLayout() {
-    return myPrefixLayout;
+    synchronized (myLock) {
+      return myPrefixLayout;
+    }
   }
 
   TextAttributes getPrefixAttributes() {
@@ -176,21 +194,29 @@ public class EditorView implements Disposable {
   }
 
   public void paint(Graphics2D g) {
+    assertIsDispatchThread();
     myPainter.paint(g);
   }
 
+  public void repaintCarets() {
+    assertIsDispatchThread();
+    myPainter.repaintCarets();
+  }
+
   public Dimension getPreferredSize() {
+    assertIsDispatchThread();
     return mySizeManager.getPreferredSize();
   }
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
+    assertIsDispatchThread();
     return getMaxWidthInLineRange(offsetToVisualLine(startOffset), offsetToVisualLine(endOffset));
   }
   
   int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
     int maxWidth = 0;
     for (int i = startVisualLine; i <= endVisualLine; i++) {
-      int logicalLine = visualToLogicalPosition(new VisualPosition(i, 0), false).line;
+      int logicalLine = visualToLogicalPosition(new VisualPosition(i, 0)).line;
       if (logicalLine >= myDocument.getLineCount()) break;
       int startOffset = myDocument.getLineStartOffset(logicalLine);
       float x = 0;
@@ -203,17 +229,21 @@ public class EditorView implements Disposable {
   }
 
   public void reinitSettings() {
+    assertIsDispatchThread();
     myPlainSpaceWidth = -1;
-    myLineHeight = -1;
-    myDescent = -1;
-    myCharHeight = -1;
-    myTabSize = -1;
+    synchronized (myLock) {
+      myLineHeight = -1;
+      myDescent = -1;
+      myCharHeight = -1;
+      myTabSize = -1;
+    }
     reset();
     setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
     invalidateFoldRegionLayouts();
   }
   
   public void invalidateRange(int startOffset, int endOffset) {
+    assertIsDispatchThread();
     int textLength = myDocument.getTextLength();
     if (startOffset > endOffset || startOffset >= textLength || endOffset < 0) {
       return;
@@ -225,8 +255,28 @@ public class EditorView implements Disposable {
   }
 
   public void reset() {
+    assertIsDispatchThread();
     mySizeManager.reset();
     myTextLayoutCache.resetToDocumentSize();
+  }
+  
+  public boolean isRtlLocation(int offset, boolean leanForward) {
+    assertIsDispatchThread();
+    if (myDocument.getTextLength() == 0) return false;
+    int line = myDocument.getLineNumber(offset);
+    LineLayout layout = getLineLayout(line);
+    return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line), leanForward);
+  }
+
+  public boolean isDirectionBoundary(@NotNull VisualPosition visualPosition) {
+    assertIsDispatchThread();
+    if (myDocument.getTextLength() == 0) return false;
+    LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
+    int offset = logicalPositionToOffset(logicalPosition);
+    if (!visualPosition.equals(offsetToVisualPosition(offset, logicalPosition.leansForward))) return false;
+    int line = myDocument.getLineNumber(offset);
+    LineLayout layout = getLineLayout(line);
+    return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line));
   }
 
   @NotNull
@@ -244,46 +294,56 @@ public class EditorView implements Disposable {
   }
 
   public int getLineHeight() {
-    if (myLineHeight < 0) {
-      EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-      FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN));
-      int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fontMetrics);
-      myLineHeight = (int)(fontMetricsHeight * (myEditor.isOneLineMode() ? 1 : colorsScheme.getLineSpacing()));
-      if (myLineHeight <= 0) {
-        myLineHeight = fontMetricsHeight;
+    synchronized (myLock) {
+      if (myLineHeight < 0) {
+        EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
+        FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN));
+        int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fontMetrics);
+        myLineHeight = (int)(fontMetricsHeight * (myEditor.isOneLineMode() ? 1 : colorsScheme.getLineSpacing()));
         if (myLineHeight <= 0) {
-          myLineHeight = 12;
+          myLineHeight = fontMetricsHeight;
+          if (myLineHeight <= 0) {
+            myLineHeight = 12;
+          }
         }
       }
+      return myLineHeight;
     }
-    return myLineHeight;
   }
 
   public int getAscent() {
-    return getLineHeight() - getDescent();
+    synchronized (myLock) {
+      return getLineHeight() - getDescent();
+    }
   }
 
   public int getCharHeight() {
-    if (myCharHeight < 0) {
-      FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-      myCharHeight = FontLayoutService.getInstance().charWidth(fontMetrics, 'a');
+    synchronized (myLock) {
+      if (myCharHeight < 0) {
+        FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+        myCharHeight = FontLayoutService.getInstance().charWidth(fontMetrics, 'a');
+      }
+      return myCharHeight;
     }
-    return myCharHeight;
   }
 
   public int getDescent() {
-    if (myDescent < 0) {
-      FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-      myDescent = FontLayoutService.getInstance().getDescent(fontMetrics);
+    synchronized (myLock) {
+      if (myDescent < 0) {
+        FontMetrics fontMetrics = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+        myDescent = FontLayoutService.getInstance().getDescent(fontMetrics);
+      }
+      return myDescent;
     }
-    return myDescent;
   }
   
   public int getTabSize() {
-    if (myTabSize < 0) {
-      myTabSize = EditorUtil.getTabSize(myEditor);
+    synchronized (myLock) {
+      if (myTabSize < 0) {
+        myTabSize = EditorUtil.getTabSize(myEditor);
+      }
+      return myTabSize;
     }
-    return myTabSize;
   }
 
   private static FontRenderContext createFontRenderContext() {
@@ -313,5 +373,13 @@ public class EditorView implements Disposable {
     for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
       region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
     }
+  }
+  
+  private static void assertIsDispatchThread() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+  }
+  
+  private static void assertIsReadAccess() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 }

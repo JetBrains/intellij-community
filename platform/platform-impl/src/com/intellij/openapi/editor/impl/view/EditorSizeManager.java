@@ -34,6 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collection;
 
+/**
+ * Calculates width (in pixels) of editor contents.
+ */
 class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener {
   private final EditorView myView;
   private final EditorImpl myEditor;

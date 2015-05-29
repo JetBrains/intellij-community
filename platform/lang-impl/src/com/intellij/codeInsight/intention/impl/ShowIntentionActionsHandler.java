@@ -69,6 +69,19 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
+    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    codeAnalyzer.autoImportReferenceAtCursor(editor, file); //let autoimport complete
+
+    ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
+    ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
+    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+    if (hintComponent != null) {
+      IntentionHintComponent.PopupUpdateResult result = hintComponent.updateActions(intentions);
+      if (result == IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE) {
+        hintComponent.hide();
+      }
+    }
+
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
     //intentions check isWritable before modification: if (!file.isWritable()) return;
@@ -77,12 +90,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (state != null && !state.isFinished()) {
       return;
     }
-
-    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    codeAnalyzer.autoImportReferenceAtCursor(editor, file); //let autoimport complete
-
-    ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
-    ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
 
     if (!intentions.isEmpty()) {
       IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);

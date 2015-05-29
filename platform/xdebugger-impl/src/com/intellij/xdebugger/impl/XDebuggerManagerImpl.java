@@ -60,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
@@ -76,7 +77,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final XDebuggerWatchesManager myWatchesManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
-  private XDebugSessionImpl myActiveSession;
+  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<XDebugSessionImpl>();
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
@@ -254,16 +255,14 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         ExecutionManager.getInstance(myProject).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
       }
     }
-    if (myActiveSession == session) {
-      myActiveSession = null;
+    if (myActiveSession.compareAndSet(session, null)) {
       onActiveSessionChanged();
     }
   }
 
   public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection,
                                final @Nullable GutterIconRenderer gutterIconRenderer) {
-    boolean sessionChanged = myActiveSession != session;
-    myActiveSession = session;
+    boolean sessionChanged = myActiveSession.getAndSet(session) != session;
     updateExecutionPoint(position, useSelection, gutterIconRenderer);
     if (sessionChanged) {
       onActiveSessionChanged();
@@ -324,7 +323,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @Override
   @Nullable
   public XDebugSessionImpl getCurrentSession() {
-    return myActiveSession;
+    return myActiveSession.get();
   }
 
   @Override

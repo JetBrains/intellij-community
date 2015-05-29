@@ -340,6 +340,7 @@ public abstract class TreeTraverser<T> {
     public T next() {
       T result = queue.remove();
       for (T t : children(result)) {
+        if (paths.containsKey(t)) continue;
         queue.add(t);
         paths.put(t, result);
       }

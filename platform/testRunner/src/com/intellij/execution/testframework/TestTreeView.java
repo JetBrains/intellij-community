@@ -21,23 +21,18 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +42,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.List;
@@ -175,50 +169,5 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
-  }
-
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-    if (Registry.is("tests_view_inline_statistics")) {
-      Rectangle visibleRect = getVisibleRect();
-      Rectangle clip = g.getClipBounds();
-      for (int row = 0; row < getRowCount(); row++) {
-        Rectangle rowBounds = getRowBounds(row);
-        rowBounds.x = 0;
-        rowBounds.width = Integer.MAX_VALUE;
-
-        if (rowBounds.intersects(clip)) {
-          Object node = getPathForRow(row).getLastPathComponent();
-          if (node instanceof DefaultMutableTreeNode) {
-            Object data = ((DefaultMutableTreeNode)node).getUserObject();
-            if (data instanceof BaseTestProxyNodeDescriptor) {
-              final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
-              final String durationString = testProxy.getDurationString();
-              if (durationString != null) {
-                final Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
-                paintRowData(this, durationString, fullRowRect, (Graphics2D)g, isRowSelected(row), hasFocus());
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static void paintRowData(Tree tree, String duration, Rectangle bounds, Graphics2D g, boolean isSelected, boolean hasFocus) {
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
-    g.setFont(metrics.getFont().deriveFont(Font.ITALIC, UIUtil.getFontSize(UIUtil.FontSize.MINI)));
-    int totalWidth = metrics.stringWidth(duration);
-    int x = bounds.x + bounds.width - totalWidth;
-    g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground());
-    g.fillRect(x, bounds.y, totalWidth, bounds.height);
-    int fontHeight = (int)metrics.getMaxCharBounds(g).getHeight();
-    g.translate(0, bounds.y - 1);
-    g.setColor(isSelected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
-    g.drawString(duration, x, fontHeight);
-    g.translate(0, -bounds.y + 1);
-    config.restore();
   }
 }

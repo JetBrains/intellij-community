@@ -19,12 +19,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.TextAttributes;
 
 import java.awt.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Iterator over visual line's fragments. Fragment's text has the same font and directionality. Collapsed fold regions are also represented
+ * as fragments.
+ */
 class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
 
   static Iterable<Fragment> create(final EditorView view, final int offset) {
@@ -89,14 +92,14 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     return foldRegion.getPlaceholderText().length();
   }
 
-  private int getVisualColumnForXInsideFoldRegion(FoldRegion foldRegion, float x) {
+  private int[] getVisualColumnForXInsideFoldRegion(FoldRegion foldRegion, float x) {
     LineLayout layout = myView.getFoldRegionLayout(foldRegion);
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
       if (x <= fragment.getEndX()) {
         return fragment.xToVisualColumn(x);
       }
     }
-    return getFoldRegionWidthInColumns(foldRegion);
+    return new int[] {getFoldRegionWidthInColumns(foldRegion), 1};
   }
 
   private float getXForVisualColumnInsideFoldRegion(FoldRegion foldRegion, int column) { 
@@ -206,11 +209,18 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
              myDelegate.visualToLogicalColumn(column);
     }
 
-    int xToVisualColumn(float x) {
-      return myDelegate == null ? 
-             getStartVisualColumn() + 
-             getVisualColumnForXInsideFoldRegion(myFoldRegion, x - (myCurrentX - getFoldRegionWidthInPixels(myFoldRegion))) : 
-             myDelegate.xToVisualColumn(x);
+    // returns array of two elements 
+    // - first one is visual column, 
+    // - second one is 1 if target location is closer to larger columns and 0 otherwise
+    int[] xToVisualColumn(float x) {
+      if (myDelegate == null) {
+        int[] column = getVisualColumnForXInsideFoldRegion(myFoldRegion, x - (myCurrentX - getFoldRegionWidthInPixels(myFoldRegion)));
+        column[0] += getStartVisualColumn();
+        return column;
+      }
+      else {
+        return myDelegate.xToVisualColumn(x);
+      }
     }
 
     float visualColumnToX(int column) {
@@ -266,18 +276,20 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       return myFoldRegion;
     }
 
-    // offsets are absolute
-    void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
+    // columns are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
       if (myDelegate == null) {
-        LineLayout foldRegionLayout = myView.getFoldRegionLayout(myFoldRegion);
-        TextAttributes attributes = myView.getEditor().getFoldingModel().getPlaceholderAttributes();
-        myView.getPainter().paintLineLayoutWithEffect(g, foldRegionLayout, x, y, 
-                                                      attributes == null ? null : attributes.getEffectColor(),
-                                                      attributes == null ? null : attributes.getEffectType());
+        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
+          int fragmentStart = fragment.getStartVisualColumn();
+          int fragmentEnd = fragment.getEndVisualColumn();
+          if (fragmentStart < endRelativeColumn && fragmentEnd > startRelativeColumn) {
+            fragment.draw(g, fragment.getStartX(), y, 
+                          Math.max(0, startRelativeColumn - fragmentStart), Math.min(fragmentEnd, endRelativeColumn) - fragmentStart);
+          }
+        }
       }
       else {
-        int lineStartOffset = myDocument.getLineStartOffset(myCurrentStartLogicalLine);
-        myDelegate.draw(g, x, y, startOffset - lineStartOffset, endOffset - lineStartOffset);
+        myDelegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
       }
     }
   }

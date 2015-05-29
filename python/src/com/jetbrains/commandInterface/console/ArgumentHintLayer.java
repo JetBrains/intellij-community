@@ -172,7 +172,7 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
                                                                    : argumentText);
 
     // Update caret position (if known)
-    final CaretRectangle[] locations = consoleEditor.getCaretLocations();
+    final CaretRectangle[] locations = consoleEditor.getCaretLocations(true);
     if (locations != null) {
       final CaretRectangle rectangle = locations[0];
       myCaretPositionPx = rectangle.myPoint.x;

@@ -962,7 +962,6 @@ public class ChangesCacheFile {
           return new ProcessingResult(true, AFTER_DOES_NOT_MATTER_ALIEN_PATH);
         }
 
-        localPath.refresh();
         final VirtualFile file = localPath.getVirtualFile();
         if (isDeletedFile(myDeletedFiles, afterRevision, myReplacedFiles)) {
           debug("Found deleted file");
@@ -1011,7 +1010,6 @@ public class ChangesCacheFile {
           debug("Skipping deleted file outside of incoming files: " + beforeRevision.getFile());
           return new ProcessingResult(true, BEFORE_DOES_NOT_MATTER_OUTSIDE);
         }
-        beforeRevision.getFile().refresh();
         if (beforeRevision.getFile().getVirtualFile() == null || myCreatedFiles.contains(beforeRevision.getFile())) {
           // if not deleted from vcs, mark as incoming, otherwise file already deleted
           final boolean locallyDeleted = myClManager.isContainedInLocallyDeleted(beforeRevision.getFile());

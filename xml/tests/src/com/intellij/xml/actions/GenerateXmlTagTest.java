@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.xml.actions;
 
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -27,10 +26,6 @@ import java.io.File;
  * @author Dmitry Avdeev
  */
 public class GenerateXmlTagTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  public GenerateXmlTagTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
 
   public void testGenerate() throws Exception {
     myFixture.configureByFile("web-app_2_5.xsd");

@@ -22,10 +22,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,13 +41,6 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return myPatch;
   }
 
-  private FilePath getTarget(final VirtualFile file) {
-    if (myPatch.isNewFile()) {
-      return new FilePathImpl(file, myPatch.getBeforeFileName(), false);
-    }
-    return VcsUtil.getFilePath(file);
-  }
-
   public Result apply(final VirtualFile fileToPatch,
                       final ApplyPatchContext context,
                       final Project project,
@@ -58,7 +49,6 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     if (LOG.isDebugEnabled()) {
       LOG.debug("apply patch called for : " + fileToPatch.getPath());
     }
-    context.addAffectedFile(getTarget(fileToPatch));
     if (myPatch.isNewFile()) {
       applyCreate(fileToPatch, commitContext);
     } else if (myPatch.isDeletedFile()) {
@@ -90,7 +80,6 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
         context.registerBeforeRename(file);
         file.rename(FilePatch.class, afterNameComponents [afterNameComponents.length-1]);
-        context.addAffectedFile(file);
       }
       boolean needMove = (beforeNameComponents.length != afterNameComponents.length);
       if (!needMove) {
@@ -103,7 +92,6 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
         }
         context.registerBeforeRename(file);
         file.move(FilePatch.class, moveTarget);
-        context.addAffectedFile(file);
       }
     }
     return file;
@@ -125,7 +113,6 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     VirtualFile oldDir = findFileToPatchByComponents(context, beforeNameComponents, changedIndex+1);
     VirtualFile newDir = findFileToPatchByComponents(context.getPrepareContext(), afterNameComponents, changedIndex+1);
     if (oldDir != null && newDir == null) {
-      context.addPendingRename(oldDir, afterNameComponents [changedIndex]);
       return false;
     }
     return true;
@@ -162,7 +149,6 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
           }
         }
         else {
-          context.registerMissingDirectory(patchedDir, pathNameComponents, i);
           return null;
         }
       }

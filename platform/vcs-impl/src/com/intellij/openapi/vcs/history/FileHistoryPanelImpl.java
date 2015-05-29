@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -942,7 +943,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
             public void run() {
               vp.refresh(false, true, new Runnable() {
                 public void run() {
-                  myFilePath.refresh();
                   action.finish();
                 }
               });
@@ -1046,7 +1046,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         writeContentToIOFile(revision);
       }
       else {
-        Document document = myFilePath.getDocument();
+        Document document = null;
+        VirtualFile virtualFile = myFilePath.getVirtualFile();
+        if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
+          document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        }
         if (document == null) {
           writeContentToFile(revision);
         }
@@ -1100,7 +1104,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
       if (Boolean.TRUE.equals(nonLocal)) return null;
 
-      return e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      if (file == null || file.isDirectory()) return null;
+
+      VirtualFile localVirtualFile = getVirtualFile();
+      if (localVirtualFile.getFileType().isBinary() && myFilePath.getFileType().isBinary()) return null;
+
+      return file;
     }
 
     @Nullable

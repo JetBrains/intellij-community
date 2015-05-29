@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,14 +66,18 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     final PsiFile file = context.getFile();
 
     final CharSequence chars = document.getCharsSequence();
-    if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") && !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
+    final boolean insertQuotes = WebEditorOptions.getInstance().isInsertQuotesForAttributeValue();
+    final boolean hasQuotes = CharArrayUtil.regionMatches(chars, caretOffset, "=\"");
+    if (!hasQuotes && !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
       PsiElement fileContext = file.getContext();
       String toInsert= "=\"\"";
 
       if(fileContext != null) {
         if (fileContext.getText().startsWith("\"")) toInsert = "=''";
       }
-      
+
+      if (!insertQuotes) toInsert = "=";
+
       if (caretOffset >= document.getTextLength() || "/> \n\t\r".indexOf(document.getCharsSequence().charAt(caretOffset)) < 0) {
         document.insertString(caretOffset, toInsert + " ");
       }
@@ -85,7 +90,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
-    editor.getCaretModel().moveToOffset(caretOffset + 2);
+    editor.getCaretModel().moveToOffset(caretOffset + (insertQuotes || hasQuotes ? 2 : 1));
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
     AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);

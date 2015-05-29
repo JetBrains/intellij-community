@@ -36,6 +36,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -61,8 +62,9 @@ public class StartupUtil {
     return !Arrays.asList(args).contains(NO_SPLASH);
   }
 
-  public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {
-    ourLock.setActivateListener(consumer);
+  public synchronized static void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
+    // method called by app after startup
+    ourLock.setExternalInstanceListener(consumer);
   }
 
   public synchronized static int getAcquiredPort() {
@@ -241,15 +243,18 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
-    if (ourLock == null) {
-      ourLock = new SocketLock();
+    if (Main.isHeadless()) {
+      // fast fix, disable in tests
+      return true;
     }
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), true, args);
-    if (activateStatus == SocketLock.ActivateStatus.NO_INSTANCE) {
-      activateStatus = ourLock.lock(PathManager.getSystemPath(), false);
+    assert ourLock == null;
+    ourLock = new SocketLock();
+    if (ourLock.getAcquiredPort() == -1) {
+      return false;
     }
 
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), PathManager.getSystemPath(), args);
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
       if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
         String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";

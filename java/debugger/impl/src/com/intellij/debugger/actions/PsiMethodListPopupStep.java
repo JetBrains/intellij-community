@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,8 @@ package com.intellij.debugger.actions;
 
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,38 +57,13 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
     return true;
   }
 
-  public Icon getIconFor(SmartStepTarget aValue) {
-    if (aValue instanceof MethodSmartStepTarget) {
-      return ((MethodSmartStepTarget)aValue).getMethod().getIcon(0);
-    }
-    if (aValue instanceof LambdaSmartStepTarget) {
-      return AllIcons.Nodes.Function;
-    }
-    return null;
+  public Icon getIconFor(SmartStepTarget avalue) {
+    return avalue.getIcon();
   }
 
   @NotNull
-    public String getTextFor(SmartStepTarget value) {
-    final String label = value.getLabel();
-    final String formatted;
-    if (value instanceof MethodSmartStepTarget) {
-      final PsiMethod method = ((MethodSmartStepTarget)value).getMethod();
-      formatted = PsiFormatUtil.formatMethod(
-        method,
-        PsiSubstitutor.EMPTY,
-        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-        PsiFormatUtil.SHOW_TYPE,
-        999
-      );
-    }
-    else if (value instanceof LambdaSmartStepTarget){
-      final PsiLambdaExpression lambda = ((LambdaSmartStepTarget)value).getLambda();
-      formatted = PsiFormatUtil.formatType(lambda.getType(), 0, PsiSubstitutor.EMPTY);
-    }
-    else {
-      formatted = "";
-    }
-    return label != null? label + formatted : formatted;
+  public String getTextFor(SmartStepTarget value) {
+    return value.getPresentation();
   }
 
   public ListSeparator getSeparatorAbove(SmartStepTarget value) {
@@ -132,7 +102,7 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
     return false;
   }
 
-  public MnemonicNavigationFilter getMnemonicNavigationFilter() {
+  public MnemonicNavigationFilter<SmartStepTarget> getMnemonicNavigationFilter() {
     return null;
   }
 
@@ -140,7 +110,7 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
     return false;
   }
 
-  public SpeedSearchFilter getSpeedSearchFilter() {
+  public SpeedSearchFilter<SmartStepTarget> getSpeedSearchFilter() {
     return null;
   }
 

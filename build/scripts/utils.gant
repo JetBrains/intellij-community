@@ -862,10 +862,11 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
   }
   ant.copy(todir: "$zipDir/bin/mac") {
     fileset(dir: "$distMac/bin") {
-      include(name: "idea*.vmoptions")
+      include(name: "idea.vmoptions")
       include(name: "idea.properties")
     }
   }
+  ant.copy(file: "$distMac/bin/idea.vmoptions", tofile: "$zipDir/bin/mac/idea64.vmoptions")
 
   ant.zip(zipfile: zipPath, duplicate: "fail") {
     commonPaths.each {

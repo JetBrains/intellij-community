@@ -363,7 +363,18 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   @Override
   public String getDurationString() {
-    return TestsPresentationUtil.getDurationPresentation(this);
+    switch (getMagnitudeInfo()) {
+      case COMPLETE_INDEX:
+      case PASSED_INDEX:
+      case FAILED_INDEX:
+      case ERROR_INDEX:
+      case IGNORED_INDEX:
+      case SKIPPED_INDEX:
+      case TERMINATED_INDEX:  
+        return  TestsPresentationUtil.getDurationPresentation(this);
+      default:
+        return null;
+    }
   }
 
   @Override

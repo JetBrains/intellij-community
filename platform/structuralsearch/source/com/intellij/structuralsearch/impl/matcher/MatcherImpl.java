@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -275,13 +274,8 @@ public class MatcherImpl {
   }
 
   private boolean findMatches(MatchOptions options, CompiledPattern compiledPattern) {
-    LanguageFileType languageFileType = (LanguageFileType)options.getFileType();
-    final Language patternLanguage = languageFileType.getLanguage();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(patternLanguage);
-    assert profile != null;
-    final Language patternLanguage2 = patternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
     SearchScope searchScope = compiledPattern.getScope();
-    boolean ourOptimizedScope = searchScope != null;
+    final boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
 
     if (searchScope instanceof GlobalSearchScope) {
@@ -291,7 +285,7 @@ public class MatcherImpl {
         public boolean processFile(final VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
             ++totalFilesToScan;
-            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, patternLanguage, patternLanguage2));
+            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir));
           }
           return true;
         }
@@ -313,13 +307,7 @@ public class MatcherImpl {
         final PsiElement psiElement = elementsToScan[i];
 
         if (psiElement == null) continue;
-        final Language language = psiElement.getLanguage();
-
-        PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
-
-        //if (profile.isMyFile(file, language, patternLanguage, patternLanguage2)) {
-          scheduler.addOneTask(new MatchOnePsiFile(psiElement));
-        //}
+        scheduler.addOneTask(new MatchOnePsiFile(psiElement));
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
@@ -546,30 +534,28 @@ public class MatcherImpl {
       ++scannedFilesCount;
 
       if (files.size() == 0) return;
-      final PsiFile psiFile = files.get(0).getContainingFile();
 
-      if (psiFile!=null) {
-        final Runnable action = new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                if (project.isDisposed()) return;
-                final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-                final Document document = manager.getDocument(psiFile);
-                if (document != null) manager.commitDocument(document);
-              }
-            });
-          }
-        };
-
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          action.run();
-        } else {
-          ApplicationManager.getApplication().invokeAndWait(
-            action,
-            ModalityState.defaultModalityState()
-          );
+      final Runnable action = new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              if (project.isDisposed()) return;
+              final PsiFile psiFile = files.get(0).getContainingFile();
+              final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+              final Document document = manager.getDocument(psiFile);
+              if (document != null) manager.commitDocument(document);
+            }
+          });
         }
+      };
+
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        action.run();
+      } else {
+        ApplicationManager.getApplication().invokeAndWait(
+          action,
+          ModalityState.defaultModalityState()
+        );
       }
 
       if (project.isDisposed()) return;
@@ -688,18 +674,9 @@ public class MatcherImpl {
 
   private class MatchOneVirtualFile extends MatchOneFile {
     private final VirtualFile myFile;
-    private final StructuralSearchProfile myProfile;
-    private final Language myOurPatternLanguage;
-    private final Language myOurPatternLanguage2;
 
-    public MatchOneVirtualFile(VirtualFile file,
-                               StructuralSearchProfile profile,
-                               Language ourPatternLanguage,
-                               Language ourPatternLanguage2) {
+    public MatchOneVirtualFile(VirtualFile file) {
       myFile = file;
-      myProfile = profile;
-      myOurPatternLanguage = ourPatternLanguage;
-      myOurPatternLanguage2 = ourPatternLanguage2;
     }
 
     @NotNull
@@ -717,9 +694,7 @@ public class MatcherImpl {
           final List<PsiElement> elementsToProcess = new SmartList<PsiElement>();
 
           for (Language lang : viewProvider.getLanguages()) {
-            //if (myProfile.isMyFile(file, lang, myOurPatternLanguage, myOurPatternLanguage2)) {
-              elementsToProcess.add(viewProvider.getPsi(lang));
-            //}
+            elementsToProcess.add(viewProvider.getPsi(lang));
           }
 
           return elementsToProcess;

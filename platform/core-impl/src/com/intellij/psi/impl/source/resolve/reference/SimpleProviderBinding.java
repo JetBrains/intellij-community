@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
@@ -35,41 +34,23 @@ import java.util.List;
  * Time: 16:52:28
  * To change this template use Options | File Templates.
  */
-public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<Provider, ElementPattern>>();
+class SimpleProviderBinding implements ProviderBinding {
+  private final List<ProviderInfo<ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<ElementPattern>>();
 
-  public void registerProvider(Provider provider, ElementPattern pattern, double priority) {
-    myProviderPairs.add(new ProviderInfo<Provider, ElementPattern>(provider, pattern, priority));
+  void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern pattern, double priority) {
+    myProviderPairs.add(new ProviderInfo<ElementPattern>(provider, pattern, priority));
   }
 
   @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
-                                              @NotNull List<ProviderInfo<Provider, ProcessingContext>> list,
+                                              @NotNull List<ProviderInfo<ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
-    for (ProviderInfo<Provider, ElementPattern> trinity : myProviderPairs) {
-      if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)trinity.provider).acceptsHints(position, hints)) {
-        continue;
-      }
-
-      final ProcessingContext context = new ProcessingContext();
-      if (hints != PsiReferenceService.Hints.NO_HINTS) {
-        context.put(PsiReferenceService.HINTS, hints);
-      }
-      boolean suitable = false;
-      try {
-        suitable = trinity.processingContext.accepts(position, context);
-      }
-      catch (IndexNotReadyException ignored) {
-      }
-      if (suitable) {
-        list.add(new ProviderInfo<Provider, ProcessingContext>(trinity.provider, context, trinity.priority));
-      }
-    }
+    NamedObjectProviderBinding.addMatchingProviders(position, myProviderPairs, list, hints);
   }
 
   @Override
-  public void unregisterProvider(@NotNull final Provider provider) {
-    for (final ProviderInfo<Provider, ElementPattern> trinity : new ArrayList<ProviderInfo<Provider, ElementPattern>>(myProviderPairs)) {
+  public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
+    for (final ProviderInfo<ElementPattern> trinity : new ArrayList<ProviderInfo<ElementPattern>>(myProviderPairs)) {
       if (trinity.provider.equals(provider)) {
         myProviderPairs.remove(trinity);
       }

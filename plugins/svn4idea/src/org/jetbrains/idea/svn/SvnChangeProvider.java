@@ -301,7 +301,7 @@ public class SvnChangeProvider implements ChangeProvider {
     FilePath path = changedFile.getFilePath();
 
     return SvnContentRevision
-      .createBaseRevision(myVcs, forDeleted ? FilePathImpl.createForDeletedFile(status.getFile(), path.isDirectory()) : path,
+      .createBaseRevision(myVcs, forDeleted ? VcsUtil.getFilePath(status.getFile(), path.isDirectory()) : path,
                           status.getRevision());
   }
 

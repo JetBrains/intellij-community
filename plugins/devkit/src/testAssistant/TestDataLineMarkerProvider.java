@@ -39,7 +39,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
   public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
   public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
 
-  public AnAction getAction(@NotNull PsiElement element) {
+  public AnAction getAdditionalAction(@NotNull PsiElement element) {
 
     if (!(element instanceof PsiMethod) &&
         !(element instanceof PsiClass)) {

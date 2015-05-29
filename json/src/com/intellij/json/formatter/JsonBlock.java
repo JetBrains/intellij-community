@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.json.JsonElementTypes.*;
-import static com.intellij.json.JsonParserDefinition.*;
+import static com.intellij.json.JsonParserDefinition.JSON_CONTAINERS;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_COLON;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_VALUE;
 import static com.intellij.json.psi.JsonPsiUtil.hasElementType;
@@ -165,24 +165,6 @@ public class JsonBlock implements ASTBlock {
   @Nullable
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-    final CommonCodeStyleSettings commonSettings = getCommonSettings();
-    final ASTNode leftChild = child1 instanceof JsonBlock ? ((JsonBlock)child1).myNode : null;
-    final ASTNode rightChild = child2 instanceof JsonBlock ? ((JsonBlock)child2).myNode : null;
-    // This causes braces/brackets to be on their own lines if whole object/array spans several lines.
-    if (leftChild != null && rightChild != null) {
-      if (hasElementType(leftChild, JSON_BRACES) ^ hasElementType(rightChild, JSON_BRACES)) {
-        final int numSpaces = commonSettings.SPACE_WITHIN_BRACES ? 1 : 0;
-        return Spacing.createDependentLFSpacing(numSpaces, numSpaces, myNode.getTextRange(),
-                                                commonSettings.KEEP_LINE_BREAKS,
-                                                commonSettings.KEEP_BLANK_LINES_IN_CODE);
-      }
-      else if (hasElementType(leftChild, JSON_BRACKETS) ^ hasElementType(rightChild, JSON_BRACKETS)) {
-        final int numSpaces = commonSettings.SPACE_WITHIN_BRACKETS ? 1 : 0;
-        return Spacing.createDependentLFSpacing(numSpaces, numSpaces, myNode.getTextRange(),
-                                                commonSettings.KEEP_LINE_BREAKS,
-                                                commonSettings.KEEP_BLANK_LINES_IN_CODE);
-      }
-    }
     return mySpacingBuilder.getSpacing(this, child1, child2);
   }
 

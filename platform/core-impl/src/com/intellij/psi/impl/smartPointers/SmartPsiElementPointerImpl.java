@@ -188,7 +188,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @NotNull
-  public SmartPointerElementInfo getElementInfo() {
+  SmartPointerElementInfo getElementInfo() {
     return myElementInfo;
   }
 

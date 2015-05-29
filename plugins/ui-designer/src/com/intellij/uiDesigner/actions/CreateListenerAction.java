@@ -21,7 +21,10 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +43,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -211,7 +213,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
 
         PsiStatement stmt = factory.createStatementFromText(builder.toString(), constructor);
         stmt = (PsiStatement)body.addAfter(stmt, body.getLastBodyElement());
-        JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
+        stmt = (PsiStatement)JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
 
         if (boundFields.length > 1) {
           PsiElement anchor = stmt;
@@ -224,23 +226,32 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
           }
         }
 
-        final Ref<PsiClass> newClassRef = new Ref<PsiClass>();
-        stmt.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitClass(PsiClass aClass) {
-            newClassRef.set(aClass);
-          }
-        });
-        final PsiClass newClass = newClassRef.get();
-        final SmartPsiElementPointer ptr = SmartPointerManager.getInstance(myClass.getProject()).createSmartPsiElementPointer(newClass);
-        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(newClass);
+        final SmartPsiElementPointer ptr = SmartPointerManager.getInstance(myClass.getProject()).createSmartPsiElementPointer(stmt);
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myClass);
         final FileEditor[] fileEditors =
-          virtualFile != null ? FileEditorManager.getInstance(newClass.getProject()).openFile(virtualFile, true, true) : null;
+          virtualFile != null ? FileEditorManager.getInstance(myClass.getProject()).openFile(virtualFile, true, true) : null;
         IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
           public void run() {
-            final PsiClass newClass = (PsiClass)ptr.getElement();
+            final PsiElement anonymousClassStatement = ptr.getElement();
+            if (anonymousClassStatement == null) {
+              return;
+            }
+
+            final Ref<PsiClass> newClassRef = new Ref<PsiClass>();
+            anonymousClassStatement.accept(new JavaRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitClass(PsiClass aClass) {
+                newClassRef.set(aClass);
+              }
+            });
+            final PsiClass newClass = newClassRef.get();
+
             final Editor editor = getEditor();
             if (editor != null && newClass != null) {
+              PsiElement brace = newClass.getLBrace();
+              if (brace != null) {
+                editor.getCaretModel().moveToOffset(brace.getTextOffset());
+              }
               CommandProcessor.getInstance().executeCommand(myClass.getProject(), new Runnable() {
                 public void run() {
                   if (!OverrideImplementExploreUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {

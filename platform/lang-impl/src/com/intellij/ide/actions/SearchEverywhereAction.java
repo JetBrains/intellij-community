@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
@@ -113,7 +114,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -675,6 +675,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final Project project = e.getProject();
     if (project == null) return;
 
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        LookupManager.getInstance(project).hideActiveLookup();
+      }
+    });
+
     updateComponents();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
@@ -763,7 +771,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       })
       .createPopup();
-    myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
+    myBalloon.getContent().setBorder(JBUI.Borders.empty());
     final Window window = WindowManager.getInstance().suggestParentWindow(project);
 
     project.getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -939,6 +947,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   };
                 }
               }
+        } else if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
+          return myPopupField == null ? null : myPopupField.getText();
         }
         return null;
       }
@@ -1751,6 +1761,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   }
                 }
               }
+            } else {
+              classes.add(o);
             }
             return true;
           }

@@ -19,15 +19,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  static {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   private CodeStyleSettings mySettings;
 
@@ -69,6 +64,31 @@ public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixt
     assert !isNotificationShown(vFile);
     myFixture.type('\n');
     assert isNotificationShown(vFile);
+  }
+
+  public void test_DoNotNotify_IfIndentDetected_AndNotificationDisabled() throws Exception {
+    mySettings.SHOW_DETECTED_INDENT_NOTIFICATION = false;
+    myFixture.configureByText("Test.java",
+                              "class Test {\n" +
+                              "  public void main() {\n" +
+                              "    int a;<caret>\n" +
+                              "    int b;\n" +
+                              "  }\n" +
+                              "}");
+
+    PsiFile file = myFixture.getFile();
+    VirtualFile vFile = file.getVirtualFile();
+
+    assert !isNotificationShown(vFile);
+    myFixture.type('\n');
+    myFixture.checkResult("class Test {\n" +
+                          "  public void main() {\n" +
+                          "    int a;\n" +
+                          "    <caret>\n" +
+                          "    int b;\n" +
+                          "  }\n" +
+                          "}");
+    assert !isNotificationShown(vFile);
   }
 
   public void testNoNotification_WhenNothingDetected() throws Exception {

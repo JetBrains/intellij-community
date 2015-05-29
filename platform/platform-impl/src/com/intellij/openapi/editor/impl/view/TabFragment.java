@@ -51,7 +51,7 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
+  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
   }
 
   @NotNull
@@ -80,24 +80,28 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public int xToVisualColumn(float startX, float x) {
-    if (x <= startX) return 0;
+  public int[] xToVisualColumn(float startX, float x) {
+    if (x <= startX) return new int[] {0, 0};
     float nextTabStop = getNextTabStop(startX);
-    if (x >= nextTabStop) return getVisualColumnCount(startX);
+    if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};
+    int column, columnWithoutRounding;
     if (myEditor.getSettings().isCaretInsideTabs()) {
       int plainSpaceWidth = myView.getPlainSpaceWidth();
-      return ((int)(x - startX) + plainSpaceWidth / 2) / plainSpaceWidth;
+      column = ((int)(x - startX) + plainSpaceWidth / 2) / plainSpaceWidth;
+      columnWithoutRounding = ((int)(x - startX - 1)) / plainSpaceWidth;
     }
     else {
-      return x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
+      column = x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
+      columnWithoutRounding = 0;
     }
+    return new int[] {column, column == columnWithoutRounding ? 1 : 0};
   }
 
   @Override
   public float visualColumnToX(float startX, int column) {
     if (column <= 0) return startX;
     if (column >= getVisualColumnCount(startX)) return getNextTabStop(startX); 
-    return myView.getPlainSpaceWidth() * column;
+    return startX + myView.getPlainSpaceWidth() * column;
   }
 
   private static int trimOffset(int offset) {

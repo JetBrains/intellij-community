@@ -67,9 +67,6 @@ public class DataFlowRunner {
     return myValueFactory;
   }
 
-  protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
-  }
-
   @Nullable
   private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class);
@@ -101,8 +98,6 @@ public class DataFlowRunner {
                                           boolean ignoreAssertions,
                                           @NotNull Collection<DfaMemoryState> initialStates) {
     try {
-      prepareAnalysis(psiBlock, initialStates);
-
       final ControlFlow flow = createControlFlowAnalyzer().buildControlFlow(psiBlock, ignoreAssertions);
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
 

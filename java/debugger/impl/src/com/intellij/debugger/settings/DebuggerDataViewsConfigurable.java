@@ -24,8 +24,6 @@ import com.intellij.debugger.ui.tree.render.ToStringRenderer;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.ui.RegistryCheckBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
@@ -65,7 +63,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private ClassFilterEditor myToStringFilterEditor;
 
   private Project myProject;
-  private RegistryCheckBox myAutoTooltip;
 
   public DebuggerDataViewsConfigurable(@Nullable Project project) {
     myProject = project;
@@ -152,11 +149,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     panel.add(myCbAutoscroll, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
 
 
-    myAutoTooltip = new RegistryCheckBox(Registry.get("debugger.valueTooltipAutoShow"),
-                                         DebuggerBundle.message("label.base.renderer.configurable.autoTooltip"),
-                                         DebuggerBundle.message("label.base.renderer.configurable.autoTooltip.description",
-                                                                Registry.stringValue("ide.forcedShowTooltip")));
-    panel.add(myAutoTooltip, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     final JPanel showPanel = new JPanel(new GridBagLayout());
     showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show", true));
 
@@ -219,8 +211,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     PrimitiveRenderer primitiveRenderer = rendererSettings.getPrimitiveRenderer();
     primitiveRenderer.setShowHexValue(myCbHexValue.isSelected());
 
-    myAutoTooltip.save();
-
     rendererSettings.fireRenderersChanged();
   }
 
@@ -273,8 +263,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private boolean areGeneralSettingsModified() {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     return generalSettings.AUTOSCROLL_TO_NEW_LOCALS != myCbAutoscroll.isSelected() ||
-           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected() ||
-           myAutoTooltip.isChanged();
+           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected();
   }
 
   private boolean areDefaultRenderersModified() {
