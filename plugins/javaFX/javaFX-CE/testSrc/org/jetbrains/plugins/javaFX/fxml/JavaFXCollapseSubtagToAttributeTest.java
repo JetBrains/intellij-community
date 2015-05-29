@@ -31,13 +31,18 @@ import java.util.List;
 
 public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase {
   @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Assume.assumeFalse(SystemInfo.isMac);
+  }
+
+  @Override
   protected void setUpModule() {
     super.setUpModule();
     PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
   }
 
   public void testAdditionalSubtags() throws Exception {
-    Assume.assumeFalse(SystemInfo.isMac);
     doTest(false);
   }
 
