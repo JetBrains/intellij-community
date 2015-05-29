@@ -85,6 +85,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   public void reinstallHighlighter() {
     destroyHighlighter();
     installHighlighter();
+    myViewer.repaintDividers();
   }
 
   private void createHighlighter(@NotNull ThreeSide side) {
@@ -106,16 +107,16 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       if (end < document.getTextLength()) end++;
     }
 
-    if (!isResolved()) myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type));
+    myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type, false, HighlighterTargetArea.EXACT_RANGE, isResolved()));
 
     if (startLine == endLine) {
       if (startLine != 0) {
-        myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
+        myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true, isResolved()));
       }
     }
     else {
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false));
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false));
+      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, isResolved()));
+      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, isResolved()));
     }
   }
 

@@ -26,16 +26,21 @@ import java.awt.*;
 public class DiffLineMarkerRenderer implements LineMarkerRenderer {
   @NotNull private final TextDiffType myDiffType;
   private final boolean myIgnoredFoldingOutline;
+  private final boolean myResolved;
 
   public DiffLineMarkerRenderer(@NotNull TextDiffType diffType) {
     this(diffType, false);
   }
 
   public DiffLineMarkerRenderer(@NotNull TextDiffType diffType, boolean ignoredFoldingOutline) {
-    myDiffType = diffType;
-    myIgnoredFoldingOutline = ignoredFoldingOutline;
+    this(diffType, ignoredFoldingOutline, false);
   }
 
+  public DiffLineMarkerRenderer(@NotNull TextDiffType diffType, boolean ignoredFoldingOutline, boolean resolved) {
+    myDiffType = diffType;
+    myIgnoredFoldingOutline = ignoredFoldingOutline;
+    myResolved = resolved;
+  }
 
   @Override
   public void paint(Editor editor, Graphics g, Rectangle range) {
@@ -49,26 +54,28 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     int height = range.height;
 
     if (height > 2) {
-      if (myIgnoredFoldingOutline) {
-        int xOutline = gutter.getWhitespaceSeparatorOffset();
+      if (!myResolved) {
+        if (myIgnoredFoldingOutline) {
+          int xOutline = gutter.getWhitespaceSeparatorOffset();
 
-        g.setColor(myDiffType.getIgnoredColor(editor));
-        g.fillRect(xOutline, y, x2 - xOutline, height);
+          g.setColor(myDiffType.getIgnoredColor(editor));
+          g.fillRect(xOutline, y, x2 - xOutline, height);
 
-        g.setColor(color);
-        g.fillRect(x1, y, xOutline - x1, height);
+          g.setColor(color);
+          g.fillRect(x1, y, xOutline - x1, height);
+        }
+        else {
+          g.setColor(color);
+          g.fillRect(x1, y, x2 - x1, height);
+        }
       }
-      else {
-        g.setColor(color);
-        g.fillRect(x1, y, x2 - x1, height);
-      }
-      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color);
-      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y + height - 1, color);
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color, false, myResolved);
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y + height - 1, color, false, myResolved);
     }
     else {
       // range is empty - insertion or deletion
       // Draw 2 pixel line in that case
-      DiffDrawUtil.drawDoubleChunkBorderLine(g2, x1, x2, y - 1, color);
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color, true, myResolved);
     }
   }
 }
