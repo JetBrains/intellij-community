@@ -38,6 +38,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -429,6 +430,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     final String id = THREAD_DUMP_CONTENT_PREFIX + " #" + myCurrentThreadDumpId;
     final Content content = ui.createContent(id, panel, id, null, null);
+    content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     ui.addContent(content);

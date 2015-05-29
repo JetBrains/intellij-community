@@ -26,10 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.ActiveRunnable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -81,6 +78,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
                                         QuickActionProvider, DockContainer.Dialog {
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
+  public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
   @NonNls private static final String LAYOUT = "Runner.Layout";
   @NonNls private static final String SETTINGS = "XDebugger.Settings";
@@ -642,6 +640,16 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       @Override
       public void contentAdded(final ContentManagerEvent event) {
         initUi();
+        if (event.getContent().getUserData(LIGHTWEIGHT_CONTENT_MARKER) == Boolean.TRUE) {
+          myLayoutSettings.setLightWeight(event.getContent());
+          Disposer.register(event.getContent(), new Disposable() {
+            @Override
+            public void dispose() {
+              myLayoutSettings.clearStateFor(event.getContent());
+            }
+          });
+        }
+
 
         GridImpl grid = getGridFor(event.getContent(), true);
         if (grid == null) {
