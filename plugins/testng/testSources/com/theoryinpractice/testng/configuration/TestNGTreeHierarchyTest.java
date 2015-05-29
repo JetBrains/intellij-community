@@ -104,6 +104,26 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testFinished name='testName (1)']\n" +
                                           "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
+  
+  @Test
+  public void testFailureWithoutStart() throws Exception {
+
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ISuite)null);
+    listener.onTestFailure(new MockTestNGResult("ATest", "testName", new Exception(), ArrayUtil.EMPTY_OBJECT_ARRAY));
+    listener.onFinish((ISuite)null);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "##teamcity[testFailed name='testName' details='java.lang.Exception|r|n\tat com.theoryinpractice.testng.configuration.TestNGTreeHierarchyTest.testFailureWithoutStart(TestNGTreeHierarchyTest.java:114)|r|n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)|r|n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)|r|n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)|r|n\tat java.lang.reflect.Method.invoke(Method.java:497)|r|n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)|r|n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)|r|n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)|r|n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)|r|n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)|r|n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)|r|n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)|r|n\tat org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)|r|n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)|r|n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)|r|n\tat org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)|r|n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)|r|n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:363)|r|n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)|r|n\tat com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:88)|r|n\tat com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:228)|r|n\tat com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:74)|r|n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)|r|n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)|r|n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)|r|n\tat java.lang.reflect.Method.invoke(Method.java:497)|r|n\tat com.intellij.rt.execution.application.AppMain.main(AppMain.java:140)|r|n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)|r|n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)|r|n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)|r|n\tat java.lang.reflect.Method.invoke(Method.java:497)|r|n\tat com.intellij.rt.execution.CommandLineWrapper.main(CommandLineWrapper.java:130)|r|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
 
   @Test
   public void testSkipMethodAfterStartTest() throws Exception {

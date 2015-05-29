@@ -149,6 +149,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestFailure(ExposedTestResult result) {
+    if (!myParamsMap.containsKey(result)) {
+      onTestStart(result);
+    }
     Throwable ex = result.getThrowable();
     String methodName = getTestMethodNameWithParams(result);
     final Map<String, String> attrs = new HashMap<String, String>();
