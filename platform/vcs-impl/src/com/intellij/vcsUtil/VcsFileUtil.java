@@ -274,28 +274,6 @@ public class VcsFileUtil {
   }
 
   /**
-   * Refresh files
-   *
-   * @param project       a project
-   * @param affectedFiles affected files and directories
-   */
-  public static void refreshFiles(Project project, List<FilePath> affectedFiles) {
-    final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
-    for (FilePath file : affectedFiles) {
-      VirtualFile vFile = VcsUtil.getVirtualFile(file.getIOFile());
-      if (vFile != null) {
-        vFile.refresh(false, true);
-      }
-      if (file.isDirectory()) {
-        dirty.dirDirtyRecursively(file);
-      }
-      else {
-        dirty.fileDirty(file);
-      }
-    }
-  }
-
-  /**
    * The get the possible base for the path. It tries to find the parent for the provided path.
    *
    * @param file the file to get base for
