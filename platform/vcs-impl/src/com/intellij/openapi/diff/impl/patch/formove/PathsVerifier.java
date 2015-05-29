@@ -26,16 +26,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -110,7 +113,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     }
     return affected;
   }
-  
+
   private void addAllFilePath(final Collection<VirtualFile> files, final Collection<FilePath> paths) {
     for (VirtualFile file : files) {
       paths.add(VcsUtil.getFilePath(file));
@@ -337,9 +340,12 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     if (patch instanceof TextFilePatch) {
       myTextPatches.add(Pair.create(file, ApplyFilePatchFactory.create((TextFilePatch)patch)));
     } else {
-      final ApplyFilePatchBase<BinaryType> applyBinaryPatch = (ApplyFilePatchBase<BinaryType>) ((patch instanceof BinaryFilePatch) ? ApplyFilePatchFactory
-        .create((BinaryFilePatch) patch) :
-              ApplyFilePatchFactory.create((ShelveChangesManager.ShelvedBinaryFilePatch) patch));
+      final ApplyFilePatchBase<BinaryType> applyBinaryPatch = (ApplyFilePatchBase<BinaryType>)((patch instanceof BinaryFilePatch)
+                                                                                               ? ApplyFilePatchFactory
+                                                                                                 .create((BinaryFilePatch)patch)
+                                                                                               :
+                                                                                               ApplyFilePatchFactory.create(
+                                                                                                 (ShelveChangesManager.ShelvedBinaryFilePatch)patch));
       myBinaryPatches.add(Pair.create(file, applyBinaryPatch));
     }
     myWritableFiles.add(file);
@@ -512,13 +518,38 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
     public VirtualFile doMove() throws IOException {
       final VirtualFile oldParent = myCurrent.getParent();
-      if (! Comparing.equal(myCurrent.getName(), myNewName)) {
+      boolean needRename = !Comparing.equal(myCurrent.getName(), myNewName);
+      boolean needMove = !myNewParent.equals(oldParent);
+      if (needRename) {
+        if (needMove) {
+          File oldParentFile = VfsUtilCore.virtualToIoFile(oldParent);
+          File targetAfterRenameFile = new File(oldParentFile, myNewName);
+          if (targetAfterRenameFile.exists() && myCurrent.exists()) {
+            // if there is a conflict during first rename we have to rename to third name, then move, then rename to final target
+            performRenameWithConflicts(oldParentFile);
+            return myCurrent;
+          }
+        }
         myCurrent.rename(PatchApplier.class, myNewName);
       }
-      if (! myNewParent.equals(oldParent)) {
+      if (needMove) {
         myCurrent.move(PatchApplier.class, myNewParent);
       }
       return myCurrent;
+    }
+
+    private void performRenameWithConflicts(@NotNull File oldParent) throws IOException {
+      File tmpFileWithUniqueName = FileUtil.createTempFile(oldParent, "tempFileToMove", null, false);
+      File newParentFile = VfsUtilCore.virtualToIoFile(myNewParent);
+      File destFile = new File(newParentFile, tmpFileWithUniqueName.getName());
+      while (destFile.exists()) {
+        destFile = new File(newParentFile,
+                            FileUtil.createTempFile(oldParent, FileUtil.getNameWithoutExtension(destFile.getName()), null, false)
+                              .getName());
+      }
+      myCurrent.rename(PatchApplier.class, destFile.getName());
+      myCurrent.move(PatchApplier.class, myNewParent);
+      myCurrent.rename(PatchApplier.class, myNewName);
     }
   }
 

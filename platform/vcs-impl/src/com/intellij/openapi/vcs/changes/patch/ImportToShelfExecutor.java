@@ -48,7 +48,7 @@ import java.util.*;
  *         Date: 2/25/11
  *         Time: 6:21 PM
  */
-public class ImportToShelfExecutor implements ApplyPatchExecutor {
+public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   public static final String IMPORT_TO_SHELF = "Import to shelf";
   private final Project myProject;
 
@@ -62,7 +62,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
   }
 
   @Override
-  public void apply(final MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
+  public void apply(final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
                     LocalChangeList localList,
                     final String fileName,
                     final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -75,8 +75,8 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
         for (VirtualFile virtualFile : patchGroups.keySet()) {
           final File ioCurrentBase = new File(virtualFile.getPath());
           allPatches.addAll(ObjectsConvertor.convert(patchGroups.get(virtualFile),
-                                                     new Convertor<FilePatchInProgress, TextFilePatch>() {
-                                                       public TextFilePatch convert(FilePatchInProgress o) {
+                                                     new Convertor<TextFilePatchInProgress, TextFilePatch>() {
+                                                       public TextFilePatch convert(TextFilePatchInProgress o) {
                                                          final TextFilePatch was = o.getPatch();
                                                          was.setBeforeName(FileUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase,
                                                                                             new File(ioCurrentBase, was.getBeforeName()))));

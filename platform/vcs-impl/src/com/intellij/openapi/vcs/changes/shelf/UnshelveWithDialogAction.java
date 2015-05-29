@@ -28,9 +28,12 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author irengrig
@@ -46,17 +49,22 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(changeLists[0].PATH));
+    ShelvedChangeList changeList = changeLists[0];
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(changeList.PATH));
     if (virtualFile == null) {
       VcsBalloonProblemNotifier.showOverChangesView(project, "Can not find path file", MessageType.ERROR);
       return;
     }
-    if (! changeLists[0].getBinaryFiles().isEmpty()) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Binary file(s) would be skipped.", MessageType.WARNING);
-    }
+    List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches =
+      ContainerUtil.map(changeList.getBinaryFiles(), new Function<ShelvedBinaryFile, ShelveChangesManager.ShelvedBinaryFilePatch>() {
+        @Override
+        public ShelveChangesManager.ShelvedBinaryFilePatch fun(ShelvedBinaryFile file) {
+          return new ShelveChangesManager.ShelvedBinaryFilePatch(file);
+        }
+      });
     final ApplyPatchDifferentiatedDialog dialog =
       new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project), Collections.<ApplyPatchExecutor>emptyList(),
-                                         ApplyPatchMode.UNSHELVE, virtualFile);
+                                         ApplyPatchMode.UNSHELVE, virtualFile, binaryShelvedPatches);
     dialog.setHelpId("reference.dialogs.vcs.unshelve");
     dialog.show();
   }

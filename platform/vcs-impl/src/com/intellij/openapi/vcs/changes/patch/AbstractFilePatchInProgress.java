@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -29,11 +27,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,24 +42,22 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class FilePatchInProgress implements Strippable {
-  private final TextFilePatch myPatch;
+public abstract class AbstractFilePatchInProgress<T extends FilePatch> implements Strippable {
+  protected final T myPatch;
   private final PatchStrippable myStrippable;
-  private final FilePatchStatus myStatus;
+  protected final FilePatchStatus myStatus;
 
   private VirtualFile myBase;
-  private File myIoCurrentBase;
-  private VirtualFile myCurrentBase;
+  protected File myIoCurrentBase;
+  protected VirtualFile myCurrentBase;
   private boolean myBaseExists;
-  private ContentRevision myNewContentRevision;
+  protected ContentRevision myNewContentRevision;
   private ContentRevision myCurrentRevision;
   private final List<VirtualFile> myAutoBases;
-  private volatile Boolean myConflicts;
+  protected volatile Boolean myConflicts;
 
-  private File myAfterFile;
-
-  public FilePatchInProgress(final TextFilePatch patch, final Collection<VirtualFile> autoBases, final VirtualFile baseDir) {
-    myPatch = patch.pathsOnlyCopy();
+  protected AbstractFilePatchInProgress(final T patch, final Collection<VirtualFile> autoBases, final VirtualFile baseDir) {
+    myPatch = patch; //should be a copy of FilePatch! because names may be changes during processing variants
     myStrippable = new PatchStrippable(patch);
     myAutoBases = new ArrayList<VirtualFile>();
     if (autoBases != null) {
@@ -70,7 +66,8 @@ public class FilePatchInProgress implements Strippable {
     myStatus = getStatus(myPatch);
     if (myAutoBases.isEmpty()) {
       setNewBase(baseDir);
-    } else {
+    }
+    else {
       setNewBase(myAutoBases.get(0));
     }
   }
@@ -85,13 +82,14 @@ public class FilePatchInProgress implements Strippable {
     }
   }
 
-  private static FilePatchStatus getStatus(final TextFilePatch patch) {
-    final String beforeName = patch.getBeforeName().replace("\\", "/");
-    final String afterName = patch.getAfterName().replace("\\", "/");
-    
+  private FilePatchStatus getStatus(final T patch) {
+    final String beforeName = PathUtil.toSystemIndependentName(patch.getBeforeName());
+    final String afterName = PathUtil.toSystemIndependentName(patch.getAfterName());
+
     if (patch.isNewFile() || (beforeName == null)) {
       return FilePatchStatus.ADDED;
-    } else if (patch.isDeletedFile() || (afterName == null)) {
+    }
+    else if (patch.isDeletedFile() || (afterName == null)) {
       return FilePatchStatus.DELETED;
     }
 
@@ -107,7 +105,6 @@ public class FilePatchInProgress implements Strippable {
     myBase = base;
     myNewContentRevision = null;
     myCurrentRevision = null;
-    myAfterFile = null;
     myConflicts = null;
 
     final String beforeName = myPatch.getBeforeName();
@@ -115,7 +112,8 @@ public class FilePatchInProgress implements Strippable {
       myIoCurrentBase = PathMerger.getFile(new File(myBase.getPath()), beforeName);
       myCurrentBase = myIoCurrentBase == null ? null : VcsUtil.getVirtualFileWithRefresh(myIoCurrentBase);
       myBaseExists = (myCurrentBase != null) && myCurrentBase.exists();
-    } else {
+    }
+    else {
       // creation
       final String afterName = myPatch.getAfterName();
       myBaseExists = true;
@@ -144,11 +142,11 @@ public class FilePatchInProgress implements Strippable {
     return myBase;
   }
 
-  public TextFilePatch getPatch() {
+  public T getPatch() {
     return myPatch;
   }
 
-  public boolean isBaseExists() {
+  private boolean isBaseExists() {
     return myBaseExists;
   }
 
@@ -156,49 +154,30 @@ public class FilePatchInProgress implements Strippable {
     return myBaseExists || FilePatchStatus.ADDED.equals(myStatus);
   }
 
-  public ContentRevision getNewContentRevision() {
-    if (FilePatchStatus.DELETED.equals(myStatus)) return null;
+  protected abstract ContentRevision getNewContentRevision();
 
-    if (myNewContentRevision == null) {
-      myConflicts = null;
-      if (FilePatchStatus.ADDED.equals(myStatus)) {
-        final FilePath newFilePath = VcsUtil.getFilePathOnNonLocal(myIoCurrentBase.getAbsolutePath(), false);
-        final String content = myPatch.getNewFileText();
-        myNewContentRevision = new SimpleContentRevision(content, newFilePath, myPatch.getAfterVersionId());
-      } else {
-        final FilePath newFilePath;
-        if (FilePatchStatus.MOVED_OR_RENAMED.equals(myStatus)) {
-          newFilePath = VcsUtil.getFilePath(PathMerger.getFile(new File(myBase.getPath()), myPatch.getAfterName()), false);
-        } else {
-          newFilePath = (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
-        }
-        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
-        if (myCurrentBase != null) {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              ((LazyPatchContentRevision) myNewContentRevision).getContent();
-            }
-          });
-        }
-      }
-    }
-    return myNewContentRevision;
+  @NotNull
+  protected FilePath detectNewFilePathForMovedOrModified() {
+    return FilePatchStatus.MOVED_OR_RENAMED.equals(myStatus)
+           ? VcsUtil.getFilePath(PathMerger.getFile(new File(myBase.getPath()), myPatch.getAfterName()), false)
+           : (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
   }
 
-  public boolean isConflictingChange() {
+  private boolean isConflictingChange() {
     if (myConflicts == null) {
       if ((myCurrentBase != null) && (myNewContentRevision instanceof LazyPatchContentRevision)) {
-        ((LazyPatchContentRevision) myNewContentRevision).getContent();
-        myConflicts = ((LazyPatchContentRevision) myNewContentRevision).isPatchApplyFailed();
-      } else {
+        ((LazyPatchContentRevision)myNewContentRevision).getContent();
+        myConflicts = ((LazyPatchContentRevision)myNewContentRevision).isPatchApplyFailed();
+      }
+      else {
         myConflicts = false;
       }
     }
     return myConflicts;
   }
 
-  public ContentRevision getCurrentRevision() {
-    if (FilePatchStatus.ADDED.equals(myStatus)) return null; 
+  private ContentRevision getCurrentRevision() {
+    if (FilePatchStatus.ADDED.equals(myStatus)) return null;
     if (myCurrentRevision == null) {
       FilePath filePath = (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
       myCurrentRevision = new CurrentContentRevision(filePath);
@@ -207,15 +186,17 @@ public class FilePatchInProgress implements Strippable {
   }
 
   public static class PatchChange extends Change {
-    private final FilePatchInProgress myPatchInProgress;
+    private final AbstractFilePatchInProgress myPatchInProgress;
 
-    public PatchChange(ContentRevision beforeRevision, ContentRevision afterRevision, FilePatchInProgress patchInProgress) {
+    public PatchChange(ContentRevision beforeRevision, ContentRevision afterRevision, AbstractFilePatchInProgress patchInProgress) {
       super(beforeRevision, afterRevision,
-            patchInProgress.isBaseExists() || FilePatchStatus.ADDED.equals(patchInProgress.getStatus()) ? null : FileStatus.MERGED_WITH_CONFLICTS);
+            patchInProgress.isBaseExists() || FilePatchStatus.ADDED.equals(patchInProgress.getStatus())
+            ? null
+            : FileStatus.MERGED_WITH_CONFLICTS);
       myPatchInProgress = patchInProgress;
     }
 
-    public FilePatchInProgress getPatchInProgress() {
+    public AbstractFilePatchInProgress getPatchInProgress() {
       return myPatchInProgress;
     }
 
@@ -226,17 +207,9 @@ public class FilePatchInProgress implements Strippable {
         @Override
         public DiffRequestPresentable init() throws VcsException {
           if (myPatchInProgress.isConflictingChange()) {
-            final Getter<ApplyPatchForBaseRevisionTexts> revisionTextsGetter = new Getter<ApplyPatchForBaseRevisionTexts>() {
-              @Override
-              public ApplyPatchForBaseRevisionTexts get() {
-                return ApplyPatchForBaseRevisionTexts.create(project, myPatchInProgress.getCurrentBase(),
-                                                             VcsUtil.getFilePath(myPatchInProgress.getCurrentBase()),
-                                                             myPatchInProgress.getPatch(), baseContents);
-              }
-            };
-            return new MergedDiffRequestPresentable(project, revisionTextsGetter,
-                                                    myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
-          } else {
+            return myPatchInProgress.diffRequestForConflictingChanges(project, PatchChange.this, baseContents);
+          }
+          else {
             return new ChangeDiffRequestPresentable(project, PatchChange.this);
           }
         }
@@ -250,6 +223,12 @@ public class FilePatchInProgress implements Strippable {
     }
   }
 
+  @NotNull
+  protected DiffRequestPresentable diffRequestForConflictingChanges(@NotNull Project project,
+                                                                    @NotNull PatchChange change,
+                                                                    @NotNull Getter<CharSequence> baseContents) {
+    return new ChangeDiffRequestPresentable(project, change);
+  }
 
   public List<VirtualFile> getAutoBasesCopy() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(myAutoBases.size() + 1);
@@ -309,7 +288,7 @@ public class FilePatchInProgress implements Strippable {
     private final int[] myParts;
 
     private StripCapablePath(final String path) {
-      final String corrected = path.trim().replace('\\', '/');
+      final String corrected = PathUtil.toSystemIndependentName(path.trim());
       mySourcePath = new StringBuilder(corrected);
       final String[] steps = corrected.split("/");
       myStripMax = steps.length - 1;
@@ -342,13 +321,13 @@ public class FilePatchInProgress implements Strippable {
 
     public void up() {
       if (canUp()) {
-        ++ myCurrentStrip;
+        ++myCurrentStrip;
       }
     }
 
     public void down() {
       if (canDown()) {
-        -- myCurrentStrip;
+        --myCurrentStrip;
       }
     }
 
@@ -392,14 +371,16 @@ public class FilePatchInProgress implements Strippable {
       if (patch.getAfterName() != null) {
         myAfterIdx = 0;
         myParts[cnt] = new StripCapablePath(patch.getAfterName());
-        ++ cnt;
-      } else {
+        ++cnt;
+      }
+      else {
         myAfterIdx = -1;
       }
       if (cnt < size) {
         myParts[cnt] = new StripCapablePath(patch.getBeforeName());
         myBeforeIdx = cnt;
-      } else {
+      }
+      else {
         myBeforeIdx = 0;
       }
     }
@@ -486,7 +467,7 @@ public class FilePatchInProgress implements Strippable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    FilePatchInProgress that = (FilePatchInProgress)o;
+    AbstractFilePatchInProgress that = (AbstractFilePatchInProgress)o;
 
     if (!myStrippable.equals(that.myStrippable)) return false;
 
