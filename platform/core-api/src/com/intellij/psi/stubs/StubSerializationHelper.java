@@ -16,6 +16,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.LogUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
@@ -77,15 +78,22 @@ public class StubSerializationHelper {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
+    boolean doDefaultSerialization = true;
 
     if (rootStub instanceof PsiFileStub) {
       final PsiFileStub[] roots = ((PsiFileStub)rootStub).getStubRoots();
-      DataInputOutputUtil.writeINT(stubOutputStream, roots.length);
-      for (PsiFileStub root : roots) {
-        doSerialize(root, stubOutputStream);
+      if (roots.length == 0) {
+        Logger.getInstance(getClass()).error("Incorrect stub files count during serialization:" + rootStub + "," + rootStub.getStubType());
+      } else {
+        doDefaultSerialization = false;
+        DataInputOutputUtil.writeINT(stubOutputStream, roots.length);
+        for (PsiFileStub root : roots) {
+          doSerialize(root, stubOutputStream);
+        }
       }
     }
-    else {
+
+    if (doDefaultSerialization) {
       DataInputOutputUtil.writeINT(stubOutputStream, 1);
       doSerialize(rootStub, stubOutputStream);
     }
@@ -137,6 +145,9 @@ public class StubSerializationHelper {
       return stubsArray[0];
     }
     else {
+      if (stubFilesCount != 1) {
+        Logger.getInstance(getClass()).error("Incorrect stub files count during deserialization:"+stubFilesCount);
+      }
       return deserialize(inputStream, null);
     }
   }
