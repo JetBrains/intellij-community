@@ -17,3 +17,8 @@ class MyCloneable2 {
     return null;
   }
 }
+
+interface MyFinalizable {
+  <error descr="Method does not override method from its superclass">@Override</error> void finalize();
+  @Override int hashCode();
+}

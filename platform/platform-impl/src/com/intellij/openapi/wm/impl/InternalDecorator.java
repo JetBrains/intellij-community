@@ -649,18 +649,28 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
 
   private final class ToggleContentUiTypeAction extends ToggleAction implements DumbAware {
+
+    boolean seenSeveralContents;
+
     private ToggleContentUiTypeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_CONTENT_UI_TYPE_ACTION_ID));
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      seenSeveralContents = seenSeveralContents || myToolWindow.getContentManager().getContentCount() > 1;
+      super.update(e);
+      e.getPresentation().setVisible(seenSeveralContents);
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
-      return myInfo.getContentUiType() == ToolWindowContentUiType.TABBED;
+      return myInfo.getContentUiType() == ToolWindowContentUiType.COMBO;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      fireContentUiTypeChanges(state ? ToolWindowContentUiType.TABBED : ToolWindowContentUiType.COMBO);
+      fireContentUiTypeChanges(state ? ToolWindowContentUiType.COMBO : ToolWindowContentUiType.TABBED);
     }
   }
 

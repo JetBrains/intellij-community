@@ -48,10 +48,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -838,6 +835,12 @@ public class JavaCompletionUtil {
     Project project = file.getProject();
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document document = manager.getDocument(file);
+    if (document == null) {
+      PsiUtilCore.ensureValid(file);
+      LOG.error("No document for " + file);
+      return;
+    }
+
     manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref != null) {

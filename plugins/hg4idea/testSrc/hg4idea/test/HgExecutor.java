@@ -70,7 +70,7 @@ public class HgExecutor {
     debug("hg " + command);
     HgCommandResult result;
     try {
-      result = new ShellCommand(split, pwd(), null).execute(false);
+      result = new ShellCommand(split, pwd(), null).execute(false, false);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

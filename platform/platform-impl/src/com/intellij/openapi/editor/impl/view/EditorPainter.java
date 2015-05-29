@@ -79,8 +79,8 @@ class EditorPainter {
     
     int startLine = myView.yToVisualLine(Math.max(clip.y, 0));
     int endLine = myView.yToVisualLine(Math.max(clip.y + clip.height, 0));
-    int startOffset = myView.logicalPositionToOffset(myView.visualToLogicalPosition(new VisualPosition(startLine, 0), false));
-    int endOffset = myView.logicalPositionToOffset(myView.visualToLogicalPosition(new VisualPosition(endLine + 1, 0), true));
+    int startOffset = myView.logicalPositionToOffset(myView.visualToLogicalPosition(new VisualPosition(startLine, 0)));
+    int endOffset = myView.logicalPositionToOffset(myView.visualToLogicalPosition(new VisualPosition(endLine + 1, 0, true)));
     
     paintBackground(g, clip, startLine, endLine);
     paintRightMargin(g, clip);
@@ -225,8 +225,7 @@ class EditorPainter {
                                         ? marker.getStartOffset()
                                         : marker.getEndOffset());
     int visualLine = myView.logicalToVisualPosition(new LogicalPosition(line + (marker.getLineSeparatorPlacement() == 
-                                                                                SeparatorPlacement.TOP ? 0 : 1), 0), 
-                                                    false).line;
+                                                                                SeparatorPlacement.TOP ? 0 : 1), 0)).line;
     int y = myView.visualLineToY(visualLine) - 1;
     int endShift = clip.x + clip.width;
     EditorSettings settings = myEditor.getSettings();
@@ -657,9 +656,9 @@ class EditorPainter {
         g.fillRect(x, y, lineWidth, lineHeight);
         if (myDocument.getTextLength() > 0 && caret != null && !myView.getLineLayout(caret.getLogicalPosition().line).isLtr()) {
           g.fillPolygon(new int[]{
-                          isRtl ? x + lineWidth - 1 : x,
-                          isRtl ? x + lineWidth - 1 - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
-                          isRtl ? x + lineWidth - 1 : x
+                          isRtl ? x + lineWidth : x,
+                          isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
+                          isRtl ? x + lineWidth : x
                         },
                         new int[]{y, y, y + CARET_DIRECTION_MARK_SIZE}, 3);
         }
@@ -702,7 +701,7 @@ class EditorPainter {
   
   private void paintLineFragments(Graphics2D g, Rectangle clip, int visualLine, int y, LineFragmentPainter painter) {
     float x = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
-    LogicalPosition logicalPosition = myView.visualToLogicalPosition(new VisualPosition(visualLine, 0), false);
+    LogicalPosition logicalPosition = myView.visualToLogicalPosition(new VisualPosition(visualLine, 0));
     int offset = myDocument.getLineStartOffset(logicalPosition.line);
     int visualLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(myEditor, offset);
     IterationState it = null;
@@ -736,7 +735,8 @@ class EditorPainter {
       }
       else {
         float xNew = fragment.getEndX();
-        painter.paint(g, fragment, 0, fragment.getEndOffset() - fragment.getStartOffset(), getFoldRegionAttributes(foldRegion), x, xNew, y);
+        painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), getFoldRegionAttributes(foldRegion), 
+                      x, xNew, y);
         x = xNew;
         prevEndOffset = -1;
         it = null;

@@ -17,9 +17,11 @@ package org.jetbrains.ide.script;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -28,16 +30,23 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManager.class);
 
-  private final ScriptEngineManager myManager = new ScriptEngineManager();
+  private final Future<ScriptEngineManager> myManagerFuture = PooledThreadExecutor.INSTANCE.submit(new Callable<ScriptEngineManager>() {
+    @Override
+    public ScriptEngineManager call() {
+      return new ScriptEngineManager();
+    }
+  });
 
   @NotNull
   @Override
   public List<String> getLanguages() {
-    return ContainerUtil.map(myManager.getEngineFactories(), new Function<ScriptEngineFactory, String>() {
+    return ContainerUtil.map(getScriptEngineManager().getEngineFactories(), new Function<ScriptEngineFactory, String>() {
       @Override
       public String fun(ScriptEngineFactory factory) {
         return factory.getLanguageName();
@@ -49,7 +58,7 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @Override
   public List<String> getFileExtensions(@Nullable String language) {
     List<String> extensions = ContainerUtil.newArrayList();
-    List<ScriptEngineFactory> factories = myManager.getEngineFactories();
+    List<ScriptEngineFactory> factories = getScriptEngineManager().getEngineFactories();
     for (ScriptEngineFactory factory : factories) {
       if (language == null || factory.getLanguageName().equals(language)) {
         extensions.addAll(factory.getExtensions());
@@ -61,15 +70,32 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @Nullable
   @Override
   public IdeScriptEngine getEngineForLanguage(@NotNull String language) {
-    ScriptEngine engine = myManager.getEngineByName(language);
+    ScriptEngine engine = getScriptEngineManager().getEngineByName(language);
     return createIdeScriptEngine(engine);
   }
 
   @Nullable
   @Override
   public IdeScriptEngine getEngineForFileExtension(@NotNull String extension) {
-    ScriptEngine engine = myManager.getEngineByExtension(extension);
+    ScriptEngine engine = getScriptEngineManager().getEngineByExtension(extension);
     return createIdeScriptEngine(engine);
+  }
+
+  @Override
+  public boolean isInitialized() {
+    return myManagerFuture.isDone();
+  }
+
+  @NotNull
+  private ScriptEngineManager getScriptEngineManager() {
+    ScriptEngineManager manager = null;
+    try {
+      manager = myManagerFuture.get();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return ObjectUtils.assertNotNull(manager);
   }
 
   @Nullable

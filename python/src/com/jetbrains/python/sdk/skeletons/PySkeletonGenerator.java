@@ -29,6 +29,7 @@ import com.intellij.util.Consumer;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -171,12 +172,9 @@ public class PySkeletonGenerator {
 
   protected ProcessOutput getProcessOutput(String homePath, String[] commandLine, Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {
-    return PySdkUtil.getProcessOutput(
-      homePath,
-      commandLine,
-      extraEnv,
-      timeout
-    );
+    final Map<String, String> env = extraEnv != null ? new HashMap<String, String>(extraEnv) : new HashMap<String, String>();
+    PythonEnvUtil.setPythonDontWriteBytecode(env);
+    return PySdkUtil.getProcessOutput(homePath, commandLine, env, timeout);
   }
 
   public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {

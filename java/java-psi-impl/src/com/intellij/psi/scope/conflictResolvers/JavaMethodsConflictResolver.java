@@ -444,12 +444,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static boolean isBoxingHappened(PsiType argType, PsiType parameterType, @NotNull LanguageLevel languageLevel) {
-    if (argType == null) return parameterType instanceof PsiPrimitiveType;
     if (parameterType instanceof PsiClassType) {
       parameterType = ((PsiClassType)parameterType).setLanguageLevel(languageLevel);
     }
 
-    return TypeConversionUtil.boxingConversionApplicable(parameterType, argType);
+    return argType != null && TypeConversionUtil.boxingConversionApplicable(parameterType, argType);
   }
 
   private Specifics isMoreSpecific(@NotNull MethodCandidateInfo info1,

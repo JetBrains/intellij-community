@@ -31,7 +31,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +73,7 @@ public class LibraryScopeCache {
     myProject = project;
   }
 
-  public void clear() {
+  void clear() {
     myLibraryScopes.clear();
     mySdkScopes.clear();
     myLibraryResolveScopeCache.clear();
@@ -82,27 +81,19 @@ public class LibraryScopeCache {
 
   @NotNull
   public GlobalSearchScope getLibrariesOnlyScope() {
-    return getScopeForLibraryUsedIn(Collections.<Module>emptyList());
+    return getScopeForLibraryUsedIn(Module.EMPTY_ARRAY);
   }
 
   @NotNull
-  public GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<Module> modulesLibraryIsUsedIn) {
-    Set<Module> set = new THashSet<Module>(modulesLibraryIsUsedIn);
-    Module[] uniques = set.toArray(new Module[set.size()]);
-    Arrays.sort(uniques, new Comparator<Module>() {
-      @Override
-      public int compare(Module o1, Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-    GlobalSearchScope scope = myLibraryScopes.get(uniques);
+  private GlobalSearchScope getScopeForLibraryUsedIn(@NotNull Module[] modulesLibraryIsUsedIn) {
+    GlobalSearchScope scope = myLibraryScopes.get(modulesLibraryIsUsedIn);
     if (scope != null) {
       return scope;
     }
-    GlobalSearchScope newScope = uniques.length == 0
+    GlobalSearchScope newScope = modulesLibraryIsUsedIn.length == 0
                                  ? new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject))
                                  : new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
-    return ConcurrencyUtil.cacheOrGet(myLibraryScopes, uniques, newScope);
+    return ConcurrencyUtil.cacheOrGet(myLibraryScopes, modulesLibraryIsUsedIn, newScope);
   }
 
   /**
@@ -134,7 +125,17 @@ public class LibraryScopeCache {
       }
     }
 
-    GlobalSearchScope allCandidates = getScopeForLibraryUsedIn(modulesLibraryUsedIn);
+    Comparator<Module> comparator = new Comparator<Module>() {
+      @Override
+      public int compare(@NotNull Module o1, @NotNull Module o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    };
+    Collections.sort(modulesLibraryUsedIn, comparator);
+    List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
+    Module[] uniques = uniquesList.toArray(new Module[uniquesList.size()]);
+
+    GlobalSearchScope allCandidates = getScopeForLibraryUsedIn(uniques);
     if (lib != null) {
       final LibraryRuntimeClasspathScope preferred = new LibraryRuntimeClasspathScope(myProject, lib);
       // prefer current library

@@ -14,9 +14,9 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
@@ -35,7 +34,6 @@ import java.util.List;
 public final class ShellCommand {
 
   private final GeneralCommandLine myCommandLine;
-  private int myExitCode;
 
   public ShellCommand(@Nullable List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
     if (commandLine == null || commandLine.isEmpty()) {
@@ -55,25 +53,13 @@ public final class ShellCommand {
   }
 
   @NotNull
-  public HgCommandResult execute(final boolean showTextOnIndicator) throws ShellCommandException, InterruptedException {
-    final StringWriter out = new StringWriter();
-    final StringWriter err = new StringWriter();
+  public HgCommandResult execute(final boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException, InterruptedException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
       final Process process = myCommandLine.createProcess();
-      final OSProcessHandler processHandler = new OSProcessHandler(process, myCommandLine.toString(), myCommandLine.getCharset());
-
-      processHandler.addProcessListener(new ProcessListener() {
-        public void startNotified(final ProcessEvent event) {
-        }
-
-        public void processTerminated(final ProcessEvent event) {
-          myExitCode = event.getExitCode();
-        }
-
-        @Override
-        public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-        }
+      HgCommandProcessHandler processHandler =
+        new HgCommandProcessHandler(process, myCommandLine.toString(), myCommandLine.getCharset(), isBinary);
+      CapturingProcessAdapter outputAdapter = new CapturingProcessAdapter() {
 
         @Override
         public void onTextAvailable(ProcessEvent event, Key outputType) {
@@ -84,26 +70,25 @@ public final class ShellCommand {
               if (indicator != null && showTextOnIndicator) {
                 indicator.setText2(line);
               }
-              out.write(line);
+              addToOutput(line, ProcessOutputTypes.STDOUT);
             }
           }
-          else if (ProcessOutputTypes.STDERR == outputType) {
-            while (lines.hasNext()) {
-              err.write(lines.next());
-            }
+          else {
+            super.onTextAvailable(event, outputType);
           }
         }
-      });
-
+      };
+      processHandler.addProcessListener(outputAdapter);
       processHandler.startNotify();
       while (!processHandler.waitFor(300)) {
         if (indicator != null && indicator.isCanceled()) {
           processHandler.destroyProcess();
-          myExitCode = 255;
+          outputAdapter.getOutput().setExitCode(255);
           break;
         }
       }
-      return new HgCommandResult(out, err, myExitCode);
+      ProcessOutput output = outputAdapter.getOutput();
+      return new HgCommandResult(output, processHandler.getBinaryOutput());
     }
     catch (ExecutionException e) {
       throw new ShellCommandException(e);

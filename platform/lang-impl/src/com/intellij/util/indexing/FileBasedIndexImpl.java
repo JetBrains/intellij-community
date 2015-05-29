@@ -355,6 +355,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         @Override
         public void run() {
+          mySerializationManagerEx.flushNameStorage();
+
           if (lastModCount == myLocalModCount) {
             flushAllIndices(lastModCount);
           }
@@ -712,9 +714,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    if (!HeavyProcessLatch.INSTANCE.isRunning() && modCount == myLocalModCount) { // do not interfere with 'main' jobs
-      mySerializationManagerEx.flushNameStorage();
-    }
     ContentHashesSupport.flushContentHashes();
   }
 

@@ -947,6 +947,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   };
                 }
               }
+        } else if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
+          return myPopupField == null ? null : myPopupField.getText();
         }
         return null;
       }
@@ -1759,6 +1761,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   }
                 }
               }
+            } else {
+              classes.add(o);
             }
             return true;
           }

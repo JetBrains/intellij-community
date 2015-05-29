@@ -984,16 +984,18 @@ public class InferenceSession {
     }
     else {
       for (PsiType upperType : var.getBounds(InferenceBound.UPPER)) {
-        if (isProperType(upperType) && !TypeConversionUtil.isAssignable(substitutor.substitute(upperType), lowerBound)) {
-          final String incompatibleBoundsMessage;
-          if (type != lowerBound) {
+        if (isProperType(upperType) ) {
+          String incompatibleBoundsMessage = null;
+          if (type != lowerBound && !TypeConversionUtil.isAssignable(substitutor.substitute(upperType), type)) {
             incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
           }
-          else {
+          else if (type == lowerBound && !TypeConversionUtil.isAssignable(substitutor.substitute(upperType), lowerBound)) {
             incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
           }
-          registerIncompatibleErrorMessage(incompatibleBoundsMessage, var.getParameter());
-          return PsiType.NULL;
+          if (incompatibleBoundsMessage != null) {
+            registerIncompatibleErrorMessage(incompatibleBoundsMessage, var.getParameter());
+            return PsiType.NULL;
+          }
         }
       }
     }

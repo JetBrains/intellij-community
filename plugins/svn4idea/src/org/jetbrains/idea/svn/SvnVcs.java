@@ -618,10 +618,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public Info getInfo(@NotNull SVNURL url,
-                         SVNRevision pegRevision,
-                         SVNRevision revision) throws SvnBindException {
-    return getFactory().createInfoClient().doInfo(url, pegRevision, revision);
+  public Info getInfo(@NotNull SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
+    return getFactory().createInfoClient().doInfo(SvnTarget.fromURL(url, pegRevision), revision);
   }
 
   @Nullable

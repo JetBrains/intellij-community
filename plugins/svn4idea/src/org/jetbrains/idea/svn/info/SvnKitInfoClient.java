@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Collection;
@@ -40,7 +40,7 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public Info doInfo(File path, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException {
     try {
       return Info.create(getClient().doInfo(path, revision));
     }
@@ -50,9 +50,11 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(@NotNull SvnTarget target, @Nullable SVNRevision revision) throws SvnBindException {
+    assertUrl(target);
+
     try {
-      return Info.create(getClient().doInfo(url, pegRevision, revision));
+      return Info.create(getClient().doInfo(target.getURL(), target.getPegRevision(), revision));
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

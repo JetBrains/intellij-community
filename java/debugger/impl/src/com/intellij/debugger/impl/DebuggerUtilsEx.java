@@ -38,6 +38,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -47,6 +48,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -428,6 +430,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     final String id = THREAD_DUMP_CONTENT_PREFIX + " #" + myCurrentThreadDumpId;
     final Content content = ui.createContent(id, panel, id, null, null);
+    content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     ui.addContent(content);
@@ -700,6 +703,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new JavaXSourcePosition(position, file);
   }
 
+  private static final Key<VirtualFile> ALTERNATIVE_SOURCE_KEY = new Key<VirtualFile>("DEBUGGER_ALTERNATIVE_SOURCE");
+
+  public static void setAlternativeSource(VirtualFile source, VirtualFile dest) {
+    ALTERNATIVE_SOURCE_KEY.set(source, dest);
+    ALTERNATIVE_SOURCE_KEY.set(dest, null);
+  }
+
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;
@@ -722,12 +732,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
+      VirtualFile file = ALTERNATIVE_SOURCE_KEY.get(myFile);
+      if (file != null) {
+        return file;
+      }
       return myFile;
     }
 
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
+      if (ALTERNATIVE_SOURCE_KEY.get(myFile) != null) {
+        return new OpenFileDescriptor(project, getFile(), getLine(), 0);
+      }
       return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
     }
 

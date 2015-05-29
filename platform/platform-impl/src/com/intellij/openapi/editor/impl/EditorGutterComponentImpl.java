@@ -1354,11 +1354,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public void mousePressed(MouseEvent e) {
-    if (e.isPopupTrigger()) {
+    if (e.isPopupTrigger() || isPopupAction(e)) {
       invokePopup(e);
     } else if (UIUtil.isCloseClick(e)) {
       processClose(e);
     }
+  }
+
+  private boolean isPopupAction(MouseEvent e) {
+    GutterIconRenderer renderer = getGutterRenderer(e);
+    return renderer != null && renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
   }
 
   @Override

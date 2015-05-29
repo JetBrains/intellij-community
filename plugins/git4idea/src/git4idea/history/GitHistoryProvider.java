@@ -20,10 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
@@ -71,7 +68,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
   public AnAction[] getAdditionalActions(Runnable refresher) {
     return new AnAction[] {
       ShowAllAffectedGenericAction.getInstance(),
-      ActionManager.getInstance().getAction("Vcs.CopyRevisionNumberAction"),
+      ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER),
       new SelectRevisionInGitLogAction() };
   }
 

@@ -225,9 +225,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
-      for (LookupElement element : LambdaCompletionProvider.getLambdaVariants(parameters)) {
-        result.addElement(PrioritizedLookupElement.withPriority(element, 1));
-      }
+      result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
     }
 
     PrefixMatcher matcher = result.getPrefixMatcher();

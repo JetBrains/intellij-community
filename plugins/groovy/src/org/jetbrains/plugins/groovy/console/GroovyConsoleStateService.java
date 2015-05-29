@@ -33,8 +33,7 @@ import java.util.Map;
 @State(
   name = "GroovyConsoleState",
   storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyConsole.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
   }
 )
 public class GroovyConsoleStateService implements PersistentStateComponent<GroovyConsoleStateService.MyState> {

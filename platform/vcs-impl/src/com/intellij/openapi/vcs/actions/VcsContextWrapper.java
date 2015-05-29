@@ -62,11 +62,13 @@ public class VcsContextWrapper implements VcsContext {
     return myActionName;
   }
 
-  public static VcsContext createCachedInstanceOn(AnActionEvent event) {
+  @NotNull
+  public static VcsContext createCachedInstanceOn(@NotNull AnActionEvent event) {
     return new CachedVcsContext(createInstanceOn(event));
   }
 
-  public static VcsContextWrapper createInstanceOn(final AnActionEvent event) {
+  @NotNull
+  public static VcsContextWrapper createInstanceOn(@NotNull AnActionEvent event) {
     return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
   }
 

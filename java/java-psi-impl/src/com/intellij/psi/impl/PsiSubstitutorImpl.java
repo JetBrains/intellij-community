@@ -257,8 +257,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         } else {
           PsiType substituted = substituteInternal(original);
           if (original instanceof PsiWildcardType && substituted instanceof PsiCapturedWildcardType) {
-            substituted = PsiCapturedWildcardType.create(((PsiCapturedWildcardType)substituted).getWildcard(),
-                                                         ((PsiCapturedWildcardType)substituted).getContext(), param);
+            final PsiCapturedWildcardType capturedWildcardType = PsiCapturedWildcardType.create(((PsiCapturedWildcardType)substituted).getWildcard(), 
+                                                                                                ((PsiCapturedWildcardType)substituted).getContext(), param);
+            capturedWildcardType.setUpperBound(((PsiCapturedWildcardType)substituted).getUpperBound());
+            substituted = capturedWildcardType;
           }
           //if (substituted == null) return false;
           substMap.put(param, substituted);

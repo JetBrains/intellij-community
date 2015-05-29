@@ -78,7 +78,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
               }
             });
           final FileIndentOptionsProvider provider = indentOptionsProviderRef.get();
-          EditorNotificationInfo info = provider != null && !provider.isAcceptedWithoutWarning(file) && !userOptions.equals(detectedOptions)
+          EditorNotificationInfo info = provider != null && !provider.isAcceptedWithoutWarning(project, file) && !userOptions.equals(detectedOptions)
                                         ? provider.getNotificationInfo(project, file, fileEditor, userOptions, detectedOptions)
                                         : null;
 

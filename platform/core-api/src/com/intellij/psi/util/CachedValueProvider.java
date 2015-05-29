@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * A computation (typically an anonymous class) to used in {@link com.intellij.psi.util.CachedValue} to cache some computation result.
+ * A computation (typically an anonymous class) to used in {@link CachedValue} to cache some computation result.
  * @param <T> the type of the cached value
  */
 public interface CachedValueProvider<T> {
@@ -74,14 +74,14 @@ public interface CachedValueProvider<T> {
      * Dependencies can be following:
      * <ul>
      *   <li/>Instances of {@link com.intellij.openapi.util.ModificationTracker} returning stamps explicitly
-     *   <li/>Constant fields of {@link PsiModificationTracker} class, e.g. {@link com.intellij.psi.util.PsiModificationTracker#MODIFICATION_COUNT}
+     *   <li/>Constant fields of {@link PsiModificationTracker} class, e.g. {@link PsiModificationTracker#MODIFICATION_COUNT}
      *   <li/>{@link com.intellij.psi.PsiElement} or {@link com.intellij.openapi.vfs.VirtualFile} objects. Such cache would be dropped
      *   on any change in the corresponding file
      * </ul>
      *
      * @return the dependency items
      * @see com.intellij.openapi.util.ModificationTracker
-     * @see com.intellij.psi.util.PsiModificationTracker
+     * @see PsiModificationTracker
      * @see com.intellij.openapi.roots.ProjectRootModificationTracker
      */
     @NotNull

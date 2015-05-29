@@ -63,7 +63,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     parameters.add("--xml");
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.list, parameters, null);
-    Info info = myFactory.createInfoClient().doInfo(target.getURL(), target.getPegRevision(), revision);
+    Info info = myFactory.createInfoClient().doInfo(target, revision);
 
     try {
       parseOutput(target.getURL(), command, handler, info != null ? info.getRepositoryRootURL() : null);

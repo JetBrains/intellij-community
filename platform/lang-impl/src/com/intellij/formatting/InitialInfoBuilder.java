@@ -71,7 +71,8 @@ class InitialInfoBuilder {
   private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   private boolean myCollectAlignmentsInsideFormattingRange = false;
 
-  private InitialInfoBuilder(final FormattingDocumentModel model,
+  private InitialInfoBuilder(final Block rootBlock,
+                             final FormattingDocumentModel model,
                              @Nullable final FormatTextRanges affectedRanges,
                              @NotNull CodeStyleSettings settings,
                              final CommonCodeStyleSettings.IndentOptions options,
@@ -81,14 +82,14 @@ class InitialInfoBuilder {
     myModel = model;
     myAffectedRanges = affectedRanges;
     myProgressCallback = progressCallback;
-    myCurrentWhiteSpace = new WhiteSpace(0, true);
+    myCurrentWhiteSpace = new WhiteSpace(getStartOffset(rootBlock), true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
     myInsideFormatRestrictingTag = false;
     myFormatterTagHandler = new FormatterTagHandler(settings);
   }
 
-  public static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
+  protected static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
                                                                     FormattingDocumentModel model,
                                                                     @Nullable final FormatTextRanges affectedRanges,
                                                                     @NotNull CodeStyleSettings settings,
@@ -96,9 +97,30 @@ class InitialInfoBuilder {
                                                                     int interestingOffset,
                                                                     @NotNull FormattingProgressCallback progressCallback)
   {
-    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, settings, options, interestingOffset, progressCallback);
+    InitialInfoBuilder builder = new InitialInfoBuilder(root, model, affectedRanges, settings, options, interestingOffset, progressCallback);
     builder.buildFrom(root, 0, null, null, null, true);
     return builder;
+  }
+
+  private int getStartOffset(@NotNull Block rootBlock) {
+    int minOffset = rootBlock.getTextRange().getStartOffset();
+    if (myAffectedRanges != null) {
+      for (FormatTextRanges.FormatTextRange range : myAffectedRanges.getRanges()) {
+        if (range.getStartOffset() < minOffset) minOffset = range.getStartOffset();
+      }
+    }
+    return minOffset;
+  }
+
+  int getEndOffset() {
+    int maxDocOffset = myModel.getTextLength();
+    int maxOffset = myRootBlockWrapper != null ? myRootBlockWrapper.getEndOffset() : 0;
+    if (myAffectedRanges != null) {
+      for (FormatTextRanges.FormatTextRange range : myAffectedRanges.getRanges()) {
+        if (range.getTextRange().getEndOffset() > maxOffset) maxOffset = range.getTextRange().getEndOffset();
+      }
+    }
+    return   maxOffset < maxDocOffset ? maxOffset : maxDocOffset;
   }
 
   /**

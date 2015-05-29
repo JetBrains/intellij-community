@@ -223,7 +223,7 @@ public class Reverter {
     return new PropertyConsumer() {
       @Override
       public void handleProperty(File path, PropertyData property) throws SVNException {
-        final ThroughRenameInfo info = collector.findToFile(VcsUtil.getFilePath(path, path.isDirectory()), null);
+        final ThroughRenameInfo info = collector.findToFile(VcsUtil.getFilePath(path), null);
         if (info != null) {
           if (!properties.containsKey(info.getTo())) {
             properties.put(info.getTo(), new PropertiesMap());

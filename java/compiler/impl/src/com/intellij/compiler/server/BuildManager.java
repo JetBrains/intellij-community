@@ -1171,6 +1171,13 @@ public class BuildManager implements ApplicationComponent{
 
     cmdLine.setWorkDirectory(workDirectory);
 
+    try {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).beforeBuildProcessStarted(project, sessionId);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+    
     final Process process = cmdLine.createProcess();
 
     final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset) {

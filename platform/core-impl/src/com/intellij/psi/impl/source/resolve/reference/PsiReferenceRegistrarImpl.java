@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.*;
@@ -24,42 +25,52 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
-  private final Map<Class, SimpleProviderBinding<PsiReferenceProvider>> myBindingsMap = new THashMap<Class, SimpleProviderBinding<PsiReferenceProvider>>();
-  private final Map<Class, NamedObjectProviderBinding<PsiReferenceProvider>> myNamedBindingsMap = new THashMap<Class, NamedObjectProviderBinding<PsiReferenceProvider>>();
-  private final FactoryMap<Class, Class[]> myKnownSupers = new ConcurrentFactoryMap<Class, Class[]>() {
-    @Override
-    protected Class[] create(Class key) {
-      final Set<Class> result = new LinkedHashSet<Class>();
-      for (Class candidate : myBindingsMap.keySet()) {
-        if (candidate.isAssignableFrom(key)) {
-          result.add(candidate);
-        }
-      }
-      for (Class candidate : myNamedBindingsMap.keySet()) {
-        if (candidate.isAssignableFrom(key)) {
-          result.add(candidate);
-        }
-      }
-      if (result.isEmpty()) {
-        return ArrayUtil.EMPTY_CLASS_ARRAY;
-      }
-      return result.toArray(new Class[result.size()]);
-    }
-  };
+  private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = ContainerUtil.newTroveMap();
+  private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = ContainerUtil.newTroveMap();
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private final ConcurrentFactoryMap<Class, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
+
+  public PsiReferenceRegistrarImpl(final Language language) {
+    myBindingCache = new ConcurrentFactoryMap<Class, ProviderBinding[]>() {
+      @Nullable
+      @Override
+      protected ProviderBinding[] create(Class key) {
+        List<ProviderBinding> result = ContainerUtil.newSmartList();
+        for (Class<?> bindingClass : myBindingsMap.keySet()) {
+          if (bindingClass.isAssignableFrom(key)) {
+            result.add(myBindingsMap.get(bindingClass));
+          }
+        }
+        for (Class<?> bindingClass : myNamedBindingsMap.keySet()) {
+          if (bindingClass.isAssignableFrom(key)) {
+            result.add(myNamedBindingsMap.get(bindingClass));
+          }
+        }
+        if (language != Language.ANY) {
+          final PsiReferenceRegistrar anyRegistrar = ReferenceProvidersRegistry.getInstance().getRegistrar(Language.ANY);
+          Collections.addAll(result, ((PsiReferenceRegistrarImpl)anyRegistrar).myBindingCache.get(key));
+        }
+        //noinspection unchecked
+        return result.toArray(new ProviderBinding[result.size()]);
+      }
+    };
+  }
 
   public void markInitialized() {
     myInitialized = true;
@@ -73,7 +84,6 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       LOG.error("Reference provider registration is only allowed from PsiReferenceContributor");
     }
 
-    myKnownSupers.clear(); // we should clear the cache
     final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
     final List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
     for (PatternCondition<? super T> _condition : conditions) {
@@ -97,16 +107,17 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       break;
     }
 
-    SimpleProviderBinding<PsiReferenceProvider> providerBinding = myBindingsMap.get(scope);
+    SimpleProviderBinding providerBinding = myBindingsMap.get(scope);
     if (providerBinding == null) {
-      myBindingsMap.put(scope, providerBinding = new SimpleProviderBinding<PsiReferenceProvider>());
+      myBindingsMap.put(scope, providerBinding = new SimpleProviderBinding());
     }
     providerBinding.registerProvider(provider, pattern, priority);
+
+    myBindingCache.clear();
   }
 
   public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
-    ProviderBinding<PsiReferenceProvider> providerBinding = myBindingsMap.get(scope);
-    providerBinding.unregisterProvider(provider);
+    myBindingsMap.get(scope).unregisterProvider(provider);
   }
 
 
@@ -117,12 +128,12 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
                                               @NotNull PsiReferenceProvider provider,
                                               final double priority,
                                               @NotNull ElementPattern pattern) {
-    NamedObjectProviderBinding<PsiReferenceProvider> providerBinding = myNamedBindingsMap.get(scopeClass);
+    NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
 
     if (providerBinding == null) {
-      myNamedBindingsMap.put(scopeClass, providerBinding = new NamedObjectProviderBinding<PsiReferenceProvider>() {
+      myNamedBindingsMap.put(scopeClass, providerBinding = new NamedObjectProviderBinding() {
         @Override
-        protected String getName(final PsiElement position) {
+        protected String getName(@NotNull final PsiElement position) {
           return nameCondition.getPropertyValue(position);
         }
       });
@@ -139,24 +150,16 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   @NotNull
-  List<ProviderBinding.ProviderInfo<PsiReferenceProvider,ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
+  List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
                                                                                                @NotNull PsiReferenceService.Hints hints) {
-    final Class<? extends PsiElement> clazz = element.getClass();
-    List<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>> ret = null;
 
-    for (Class aClass : myKnownSupers.get(clazz)) {
-      SimpleProviderBinding<PsiReferenceProvider> simpleBinding = myBindingsMap.get(aClass);
-      NamedObjectProviderBinding<PsiReferenceProvider> namedBinding = myNamedBindingsMap.get(aClass);
-      if (simpleBinding == null && namedBinding == null) continue;
+    final ProviderBinding[] bindings = myBindingCache.get(element.getClass());
+    if (bindings.length == 0) return Collections.emptyList();
 
-      if (ret == null) ret = new SmartList<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>>();
-      if (simpleBinding != null) {
-        simpleBinding.addAcceptableReferenceProviders(element, ret, hints);
-      }
-      if (namedBinding != null) {
-        namedBinding.addAcceptableReferenceProviders(element, ret, hints);
-      }
+    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = ContainerUtil.newSmartList();
+    for (ProviderBinding binding : bindings) {
+      binding.addAcceptableReferenceProviders(element, ret, hints);
     }
-    return ret == null ? Collections.<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>>emptyList() : ret;
+    return ret;
   }
 }

@@ -278,6 +278,10 @@ public class SemServiceImpl extends SemService{
       map.put(key.getUniqueId(), elements);
     }
 
+    @Override
+    public int hashCode() {
+      return 0; // ConcurrentWeakKeySoftValueHashMap.SoftValue requires hashCode, and this is faster than identityHashCode
+    }
   }
 
 }

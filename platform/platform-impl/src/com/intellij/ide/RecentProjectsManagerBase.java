@@ -501,21 +501,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   protected void doReopenLastProject() {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
     if (generalSettings.isReopenLastProject()) {
-      Collection<String> openPaths;
+      Set<String> openPaths;
+      boolean forceNewFrame = true;
       synchronized (myStateLock) {
         openPaths = ContainerUtil.newLinkedHashSet(myState.openPaths);
-      }
-      if (!openPaths.isEmpty()) {
-        for (String openPath : openPaths) {
-          if (isValidProjectPath(openPath)) {
-            doOpenProject(openPath, null, true);
-          }
+        if (openPaths.isEmpty()) {
+          openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
+          forceNewFrame = false;
         }
       }
-      else {
-        String lastProjectPath = getLastProjectPath();
-        if (lastProjectPath != null) {
-          if (isValidProjectPath(lastProjectPath)) doOpenProject(lastProjectPath, null, false);
+      for (String openPath : openPaths) {
+        if (isValidProjectPath(openPath)) {
+          doOpenProject(openPath, null, forceNewFrame);
         }
       }
     }

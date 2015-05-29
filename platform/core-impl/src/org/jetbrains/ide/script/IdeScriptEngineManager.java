@@ -37,4 +37,6 @@ public abstract class IdeScriptEngineManager {
 
   @Nullable
   public abstract IdeScriptEngine getEngineForFileExtension(@NotNull String extension);
+
+  public abstract boolean isInitialized();
 }

@@ -166,7 +166,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
     return ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
       @Override
       public FilePath fun(File file) {
-        return VcsUtil.getFilePath(file, file.isDirectory());
+        return VcsUtil.getFilePath(file);
       }
     });
   }

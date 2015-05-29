@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 04-Jun-2007
- */
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import com.intellij.openapi.application.PluginPathManager;
 
-public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest{
-  protected String getSourceRoot() {
-    return "javadoc2Annotation";
+/**
+ * @author Dmitry Batkovich
+ */
+public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest {
+  public void test1() {
+    doTest();
   }
 
+  public void test2() {
+    doTest();
+  }
+
+  public void test3() {
+    doTest();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return PluginPathManager.getPluginHomePathRelative("testng") + "/testData/javadoc2Annotation";
+  }
+
+
+  @Override
   protected LocalInspectionTool getEnabledTool() {
     return new ConvertJavadocInspection();
-  }
-
-  @DataProvider
-  public Object[][] data() {
-    return new String[][]{new String[]{"1"}, new String[]{"2"}, new String[]{"3"}};
-  }
-
-  @Test (dataProvider = "data")
-  public void test(String suffix) throws Throwable {
-    doTest(suffix);
   }
 }

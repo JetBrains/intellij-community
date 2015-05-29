@@ -93,7 +93,6 @@ class ProgressDialog implements Disposable {
       update();
     }
   };
-
   JPanel myPanel;
 
   private JLabel myTextLabel;
@@ -137,14 +136,14 @@ class ProgressDialog implements Disposable {
 
     myCancelButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         doCancelAction();
       }
     });
 
     myCancelButton.registerKeyboardAction(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (myCancelButton.isEnabled()) {
           doCancelAction();
         }
@@ -161,7 +160,7 @@ class ProgressDialog implements Disposable {
     myTitlePanel.setActive(true);
     myTitlePanel.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(@NotNull MouseEvent e) {
         final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
         myLastClicked = new RelativePoint(e).getScreenPoint();
         myLastClicked.x -= titleOffset.x;
@@ -171,7 +170,7 @@ class ProgressDialog implements Disposable {
 
     myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
       @Override
-      public void mouseDragged(MouseEvent e) {
+      public void mouseDragged(@NotNull MouseEvent e) {
         if (myLastClicked == null) {
           return;
         }
@@ -202,6 +201,7 @@ class ProgressDialog implements Disposable {
 
   void setShouldShowBackground(final boolean shouldShowBackground) {
     myShouldShowBackground = shouldShowBackground;
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -223,6 +223,7 @@ class ProgressDialog implements Disposable {
 
   void cancel() {
     if (myProgressWindow.myShouldShowCancel) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -244,7 +245,7 @@ class ProgressDialog implements Disposable {
     myBackgroundButton.addActionListener(
       new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           if (myShouldShowBackground) {
             myProgressWindow.background();
           }
@@ -259,11 +260,13 @@ class ProgressDialog implements Disposable {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false;
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(myRepaintRunnable);
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -286,6 +289,7 @@ class ProgressDialog implements Disposable {
   }
 
   void hide() {
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -319,6 +323,7 @@ class ProgressDialog implements Disposable {
     }
     myPopup.pack();
 
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -330,7 +335,7 @@ class ProgressDialog implements Disposable {
             }
           }
 
-          myProgressWindow.getFocusManager().requestFocus(myCancelButton, true);
+          myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
         }
       }
     });

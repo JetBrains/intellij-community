@@ -208,7 +208,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
         return false;
       }
       addPatch(myPatch, beforeFile);
-      final FilePathImpl filePath = new FilePathImpl(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory());
+      FilePath filePath = VcsUtil.getFilePath(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory());
       if (myPatch.isDeletedFile() || myPatch.getAfterName() == null) {
         myDeletedPaths.add(filePath);
       }
@@ -477,7 +477,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   public void doMoveIfNeeded(final VirtualFile file) throws IOException {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
-      myBeforePaths.add(new FilePathImpl(file.getParent(), file.getName(), file.isDirectory()));
+      myBeforePaths.add(VcsUtil.getFilePath(file));
       ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
         @Override
         public VirtualFile compute() throws IOException {

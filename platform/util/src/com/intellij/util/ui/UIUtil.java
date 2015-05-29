@@ -99,6 +99,13 @@ public class UIUtil {
     kit.setStyleSheet(null);
   }
 
+  private static volatile InvocationManager ourInvocationManager = new DefaultInvocationManager();
+
+  @SuppressWarnings("unused") // Used in upsource
+  public static void setInvocationManager(@NotNull InvocationManager invocationManager) {
+    ourInvocationManager = invocationManager;
+  }
+
   public static int getMultiClickInterval() {
     Object property = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
     if (property instanceof Integer) {
@@ -2085,6 +2092,15 @@ public class UIUtil {
     return new Color(actual.getRed(), actual.getGreen(), actual.getBlue(), alpha);
   }
 
+  /**
+   * @param component to check whether it can be focused or not
+   * @return {@code true} if component is not {@code null} and can be focused
+   * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
+   */
+  public static boolean isFocusable(JComponent component) {
+    return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
+  }
+
   public static void requestFocus(@NotNull final JComponent c) {
     if (c.isShowing()) {
       c.requestFocus();
@@ -2280,19 +2296,14 @@ public class UIUtil {
   }
 
   public static Point getCenterPoint(Dimension container, Dimension child) {
-    return getCenterPoint(new Rectangle(new Point(), container), child);
+    return getCenterPoint(new Rectangle(container), child);
   }
 
   public static Point getCenterPoint(Rectangle container, Dimension child) {
-    Point result = new Point();
-
-    Point containerLocation = container.getLocation();
-    Dimension containerSize = container.getSize();
-
-    result.x = containerLocation.x + containerSize.width / 2 - child.width / 2;
-    result.y = containerLocation.y + containerSize.height / 2 - child.height / 2;
-
-    return result;
+    return new Point(
+      container.x + (container.width - child.width) / 2,
+      container.y + (container.height - child.height) / 2
+    );
   }
 
   public static String toHtml(String html) {
@@ -2341,12 +2352,11 @@ public class UIUtil {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ourInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(runnable);
+      ourInvocationManager.invokeLater(runnable);
     }
   }
 
@@ -2360,12 +2370,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ourInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
       try {
-        SwingUtilities.invokeAndWait(runnable);
+        ourInvocationManager.invokeAndWait(runnable);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -2403,12 +2413,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (ourInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
       final Ref<Throwable> ref = Ref.create();
-      SwingUtilities.invokeAndWait(new Runnable() {
+      ourInvocationManager.invokeAndWait(new Runnable() {
         @Override
         public void run() {
           try {
@@ -3369,5 +3379,33 @@ public class UIUtil {
       }
     }
     return false;
+  }
+
+  public interface InvocationManager {
+
+    boolean isEventDispatchThread();
+
+    void invokeLater(@NotNull Runnable task);
+
+    void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException;
+  }
+
+  private static class DefaultInvocationManager implements InvocationManager {
+    @Override
+    public boolean isEventDispatchThread() {
+      return SwingUtilities.isEventDispatchThread();
+    }
+
+    @Override
+    public void invokeLater(@NotNull Runnable task) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(task);
+    }
+
+    @Override
+    public void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeAndWait(task);
+    }
   }
 }

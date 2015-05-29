@@ -265,7 +265,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if (mergeInfoHolder != null) {
       final Status svnStatus = SvnUtil.getStatus(myVcs, mergeInfoHolder);
       if (svnStatus != null && svnStatus.isProperty(StatusType.STATUS_MODIFIED)) {
-        myMergeTarget = VcsUtil.getFilePath(mergeInfoHolder, mergeInfoHolder.isDirectory());
+        myMergeTarget = VcsUtil.getFilePath(mergeInfoHolder);
       }
     }
   }
@@ -300,7 +300,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
       public void onFile(final String filePath, final String groupId) {
-        result.add(FilePathImpl.create(new File(filePath)));
+        result.add(VcsUtil.getFilePath(new File(filePath)));
       }
     });
     ContainerUtil.addIfNotNull(result, myMergeTarget);
@@ -316,7 +316,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     } else {
       UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
         public void onFile(final String filePath, final String groupId) {
-          dirtyScope.addFile(FilePathImpl.create(new File(filePath)));
+          dirtyScope.addFile(VcsUtil.getFilePath(new File(filePath)));
         }
       });
     }

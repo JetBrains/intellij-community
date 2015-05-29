@@ -123,10 +123,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return true;
   }
 
-  public boolean isLineMarkerPlace(PsiElement place, PsiElement sourceElement) {
-    return place == sourceElement;
-  }
-
   public final boolean equals(final Object obj) {
     return super.equals(obj);
   }

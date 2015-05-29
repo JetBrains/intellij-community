@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -36,7 +37,6 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.util.List;
 
 public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
@@ -76,7 +76,7 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
         for (Configurable configurable : getConfigurables()) {
           JComponent component = configurable.createComponent();
           assert component != null;
-          component.setBorder(new EmptyBorder(8, 8, 8, 8));
+          component.setBorder(JBUI.Borders.empty(8, 8));
           myTabbedPane.addTab(configurable.getDisplayName(), component);
         }
       }

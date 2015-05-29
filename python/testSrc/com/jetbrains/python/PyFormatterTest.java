@@ -351,7 +351,8 @@ public class PyFormatterTest extends PyTestCase {
     }
   }
 
-  public void testSpaceInAnnotations() {  // PY-8961
+  // PY-8961, PY-16050
+  public void testSpaceInAnnotations() {
     doTestPy3();
   }
 
@@ -584,6 +585,18 @@ public class PyFormatterTest extends PyTestCase {
   public void testDictWrappingChopDownIfLong() {
     settings().setRightMargin(PythonLanguage.getInstance(), 80);
     getCustomSettings().DICT_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    doTest();
+  }
+
+  // PY-14962
+  public void testForceNewLineAfterLeftBraceInDict() {
+    getCustomSettings().DICT_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-14962
+  public void testForceNewLineBeforeRightBraceInDict() {
+    getCustomSettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
     doTest();
   }
 

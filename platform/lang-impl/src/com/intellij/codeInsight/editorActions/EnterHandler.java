@@ -556,7 +556,11 @@ public class EnterHandler extends BaseEnterHandler {
       codeStyleSettings.ENABLE_JAVADOC_FORMATTING = false;
 
       try {
-        comment = (PsiComment)codeStyleManager.reformat(comment);
+        RangeMarker commentMarker = myDocument.createRangeMarker(comment.getTextRange().getStartOffset(),
+                                                                 comment.getTextRange().getEndOffset());
+        codeStyleManager.reformatNewlyAddedElement(comment.getNode().getTreeParent(), comment.getNode());
+        comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(commentMarker.getStartOffset()), PsiComment.class);
+        commentMarker.dispose();
       }
       finally {
         codeStyleSettings.ENABLE_JAVADOC_FORMATTING = old;

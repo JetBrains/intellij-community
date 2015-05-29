@@ -16,15 +16,12 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Calendar;
 
 public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlightingGenerated8";
@@ -36,7 +33,6 @@ public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestC
 
   public void testEmptyTestT() throws Exception {}
 
-  @Bombed(day = 30, month = Calendar.MAY, year = 2015)
   public void testUnrelatedClasses() throws Exception {
     doTest();
   }

@@ -95,19 +95,19 @@ class EditorCoordinateMapper {
   }
 
   @NotNull
-  VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean leanTowardsLargerLogicalColumns) {
+  VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos) {
     int line = pos.line;
     int column = pos.column;
     int logicalLineCount = myDocument.getLineCount();
     if (line >= logicalLineCount) {
-      return new VisualPosition(line - logicalLineCount + myView.getEditor().getVisibleLineCount(), column);
+      return new VisualPosition(line - logicalLineCount + myView.getEditor().getVisibleLineCount(), column, pos.leansForward);
     }
     int offset = logicalPositionToOffset(pos);
     int visualLine = offsetToVisualLine(offset);
     int maxVisualColumn = 0;
     int maxLogicalColumn = 0;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset)) {
-      if (column == 0 && !leanTowardsLargerLogicalColumns && 
+      if (column == 0 && !pos.leansForward && 
           fragment.getStartVisualColumn() == 0 && fragment.getStartLogicalLine() == line) {
         return new VisualPosition(visualLine, 0);
       }
@@ -117,11 +117,11 @@ class EditorCoordinateMapper {
         int startLogicalColumn = fragment.getStartLogicalColumn();
         int endLogicalColumn = fragment.getEndLogicalColumn();
         if ((line > startLogicalLine || line == startLogicalLine && (column > startLogicalColumn || 
-                                                                     column == startLogicalColumn && leanTowardsLargerLogicalColumns)) && 
+                                                                     column == startLogicalColumn && pos.leansForward)) && 
             (line < endLogicalLine || line == endLogicalLine && column < endLogicalColumn)) {
-          return new VisualPosition(visualLine, fragment.getStartVisualColumn());
+          return new VisualPosition(visualLine, fragment.getStartVisualColumn(), true);
         }
-        if (line == endLogicalLine && column == endLogicalColumn && !leanTowardsLargerLogicalColumns) {
+        if (line == endLogicalLine && column == endLogicalColumn && !pos.leansForward) {
           return new VisualPosition(visualLine, fragment.getEndVisualColumn());
         }
         maxLogicalColumn = startLogicalLine == endLogicalLine ? Math.max(maxLogicalColumn, endLogicalColumn) : endLogicalColumn;
@@ -131,26 +131,26 @@ class EditorCoordinateMapper {
         int maxColumn = fragment.getMaxLogicalColumn();
         if (line == fragment.getStartLogicalLine() &&
             (column > minColumn && column < maxColumn ||
-             column == minColumn && leanTowardsLargerLogicalColumns ||
-             column == maxColumn && !leanTowardsLargerLogicalColumns)) {
-          return new VisualPosition(visualLine, fragment.logicalToVisualColumn(column));
+             column == minColumn && pos.leansForward ||
+             column == maxColumn && !pos.leansForward)) {
+          return new VisualPosition(visualLine, fragment.logicalToVisualColumn(column), fragment.isRtl() ^ pos.leansForward);
         }
         maxLogicalColumn = Math.max(maxLogicalColumn, maxColumn);
       }
       maxVisualColumn = fragment.getEndVisualColumn();
     }
-    return new VisualPosition(visualLine, column - maxLogicalColumn + maxVisualColumn);
+    return new VisualPosition(visualLine, column - maxLogicalColumn + maxVisualColumn, pos.leansForward);
   }
 
   @NotNull
-  LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos, boolean leanTowardsLargerVisualColumns) {
+  LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     int line = pos.line;
     int column = pos.column;
     int logicalLine = visualToLogicalLine(line);
     if (logicalLine >= myDocument.getLineCount()) {
-      return new LogicalPosition(logicalLine, column);
+      return new LogicalPosition(logicalLine, column, pos.leansRight);
     }
-    if (column == 0 && !leanTowardsLargerVisualColumns) {
+    if (column == 0 && !pos.leansRight) {
       return new LogicalPosition(logicalLine, 0);
     }
     int offset = myDocument.getLineStartOffset(logicalLine);
@@ -160,22 +160,24 @@ class EditorCoordinateMapper {
       int minColumn = fragment.getStartVisualColumn();
       int maxColumn = fragment.getEndVisualColumn();
       if (column > minColumn && column < maxColumn ||
-          column == minColumn && leanTowardsLargerVisualColumns ||
-          column == maxColumn && !leanTowardsLargerVisualColumns) {
+          column == minColumn && pos.leansRight ||
+          column == maxColumn && !pos.leansRight) {
         return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(), 
-                                   fragment.visualToLogicalColumn(column));
+                                   fragment.visualToLogicalColumn(column), fragment.isCollapsedFoldRegion() ? 
+                                                                           column < maxColumn : 
+                                                                           fragment.isRtl() ^ pos.leansRight);
       }
       maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) : 
                          fragment.getMaxLogicalColumn();
       maxVisualColumn = maxColumn;
       logicalLine = fragment.getEndLogicalLine();
     }
-    return new LogicalPosition(logicalLine, column - maxVisualColumn + maxLogicalColumn);
+    return new LogicalPosition(logicalLine, column - maxVisualColumn + maxLogicalColumn, true);
   }
 
   @NotNull
   VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets) {
-    return logicalToVisualPosition(offsetToLogicalPosition(offset), leanTowardsLargerOffsets);
+    return logicalToVisualPosition(offsetToLogicalPosition(offset).leanForward(leanTowardsLargerOffsets));
   }
 
   int offsetToVisualLine(int offset) {
@@ -249,7 +251,8 @@ class EditorCoordinateMapper {
                                                                                               myDocument.getLineStartOffset(logicalLine))) {
         float nextX = fragment.getEndX();
         if (p.x <= nextX) {
-          return new VisualPosition(visualLine, fragment.xToVisualColumn(p.x));
+          int[] column = fragment.xToVisualColumn(p.x);
+          return new VisualPosition(visualLine, column[0], column[1] > 0);
         }
         else {
           x = nextX;
@@ -257,7 +260,11 @@ class EditorCoordinateMapper {
         }
       }
     }
-    return new VisualPosition(visualLine, lastColumn + spacePixelsToColumns((int)(p.x - x)));
+    int plainSpaceWidth = myView.getPlainSpaceWidth();
+    int remainingShift = (int)(p.x - x);
+    int additionalColumns = remainingShift <= 0 ? 0 : (remainingShift + plainSpaceWidth / 2) / plainSpaceWidth;
+    return new VisualPosition(visualLine, lastColumn + additionalColumns, 
+                              remainingShift > 0 && additionalColumns == (remainingShift - 1) / plainSpaceWidth);
   }
 
   @NotNull
@@ -281,7 +288,8 @@ class EditorCoordinateMapper {
         }
       }
     }
-    return new Point((int)(spaceColumnsToPixels(column - lastColumn) + x), y);
+    int additionalShift = column <= lastColumn ? 0 : (column - lastColumn) * myView.getPlainSpaceWidth();
+    return new Point((int)(x) + additionalShift, y);
   }
 
   @NotNull
@@ -312,14 +320,5 @@ class EditorCoordinateMapper {
       }
     }
     return new Point((int)x, y);
-  }
-
-  private int spacePixelsToColumns(int pixels) {
-    int plainSpaceWidth = myView.getPlainSpaceWidth();
-    return pixels < 0 ? 0 : (pixels + plainSpaceWidth / 2) / plainSpaceWidth;
-  }
-
-  private int spaceColumnsToPixels(int columns) {
-    return columns < 0 ? 0 : columns * myView.getPlainSpaceWidth();
   }
 }

@@ -34,6 +34,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private boolean myIsReadOnly = false;
   private OpenTHashSet<Change> myChangesBeforeUpdate;
 
+  @NotNull
   public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
     return new LocalChangeListImpl(project, name);
   }

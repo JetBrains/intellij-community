@@ -53,6 +53,7 @@ public class RunnerLayout  {
 
   protected General myGeneral = new General();
   private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<String, Pair<String, LayoutAttractionPolicy>>();
+  private Set<String> myLightWeightIds = null;
 
 
   public RunnerLayout(@NotNull String ID) {
@@ -97,19 +98,7 @@ public class RunnerLayout  {
 
   @NotNull
   public TabImpl createNewTab() {
-    int index = 0;
-    for (TabImpl each : myTabs) {
-      if (!isUsed(each)) return each;
-
-      if (each.getIndex() < Integer.MAX_VALUE) {
-        index = each.getIndex() + 1;
-      }
-      else {
-        break;
-      }
-    }
-
-    return createNewTab(index);
+    return createNewTab(myTabs.size());
   }
 
   private boolean isUsed(@NotNull TabImpl tab) {
@@ -161,6 +150,9 @@ public class RunnerLayout  {
   @NotNull
   public Element write(@NotNull Element parentNode) {
     for (ViewImpl eachState : myViews.values()) {
+      if (myLightWeightIds != null && myLightWeightIds.contains(eachState.getID())) {
+        continue;
+      }
       parentNode.addContent(XmlSerializer.serialize(eachState));
     }
 
@@ -196,7 +188,9 @@ public class RunnerLayout  {
   }
 
   public void clearStateFor(@NotNull Content content) {
-    final ViewImpl view = myViews.remove(getOrCreateContentId(content));
+    String id = getOrCreateContentId(content);
+    myDefaultViews.remove(id);
+    final ViewImpl view = myViews.remove(id);
     if (view != null) {
       final Tab tab = view.getTab();
       if (tab instanceof TabImpl) {
@@ -275,6 +269,16 @@ public class RunnerLayout  {
   public LayoutAttractionPolicy getAttractionPolicy(@NotNull String condition) {
     final Pair<String, LayoutAttractionPolicy> pair = myDefaultFocus.get(condition);
     return pair == null ? new LayoutAttractionPolicy.FocusOnce() : pair.getSecond();
+  }
+
+  /**
+   *   States of contents marked as "lightweight" won't be persisted
+   */
+  public void setLightWeight(Content content) {
+    if (myLightWeightIds == null) {
+      myLightWeightIds = new HashSet<String>();
+    }
+    myLightWeightIds.add(getOrCreateContentId(content));
   }
 
   public static class General {

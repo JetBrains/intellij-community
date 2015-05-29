@@ -126,15 +126,15 @@ public class EditorView implements Disposable {
   }
 
   @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean leanTowardsLargerLogicalColumns) {
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos) {
     assertIsDispatchThread();
-    return myMapper.logicalToVisualPosition(pos, leanTowardsLargerLogicalColumns);
+    return myMapper.logicalToVisualPosition(pos);
   }
 
   @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos, boolean leanTowardsLargerVisualColumns) {
+  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
-    return myMapper.visualToLogicalPosition(pos, leanTowardsLargerVisualColumns);
+    return myMapper.visualToLogicalPosition(pos);
   }
 
   @NotNull
@@ -216,7 +216,7 @@ public class EditorView implements Disposable {
   int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
     int maxWidth = 0;
     for (int i = startVisualLine; i <= endVisualLine; i++) {
-      int logicalLine = visualToLogicalPosition(new VisualPosition(i, 0), false).line;
+      int logicalLine = visualToLogicalPosition(new VisualPosition(i, 0)).line;
       if (logicalLine >= myDocument.getLineCount()) break;
       int startOffset = myDocument.getLineStartOffset(logicalLine);
       float x = 0;
@@ -260,11 +260,23 @@ public class EditorView implements Disposable {
     myTextLayoutCache.resetToDocumentSize();
   }
   
-  public boolean isRtlLocation(int offset) {
+  public boolean isRtlLocation(int offset, boolean leanForward) {
+    assertIsDispatchThread();
     if (myDocument.getTextLength() == 0) return false;
     int line = myDocument.getLineNumber(offset);
     LineLayout layout = getLineLayout(line);
-    return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line));
+    return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line), leanForward);
+  }
+
+  public boolean isDirectionBoundary(@NotNull VisualPosition visualPosition) {
+    assertIsDispatchThread();
+    if (myDocument.getTextLength() == 0) return false;
+    LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
+    int offset = logicalPositionToOffset(logicalPosition);
+    if (!visualPosition.equals(offsetToVisualPosition(offset, logicalPosition.leansForward))) return false;
+    int line = myDocument.getLineNumber(offset);
+    LineLayout layout = getLineLayout(line);
+    return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line));
   }
 
   @NotNull

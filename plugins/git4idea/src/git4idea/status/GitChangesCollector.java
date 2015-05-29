@@ -108,7 +108,7 @@ abstract class GitChangesCollector {
     final List<FilePath> paths = new ArrayList<FilePath>(allPaths.size());
     for (String p : allPaths) {
       final File file = new File(p);
-      paths.add(VcsUtil.getFilePath(file, file.isDirectory()));
+      paths.add(VcsUtil.getFilePath(file));
     }
     return paths;
   }

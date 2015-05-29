@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ import org.jetbrains.annotations.NotNull;
  * Represents a visual position in the editor. Visual positions take folding into account -
  * for example, if the top 10 lines of the document are folded, the 10th line in the document
  * will have the line number 1 in its visual position.
+ * <p>
+ * Visual position corresponds to a boundary between two characters and can be associated with either a preceding or succeeding character 
+ * (see {@link #leansRight}). This association makes a difference in a bidirectional text, where a mapping from visual to logical position 
+ * is not continuous.
  *
  * @see LogicalPosition
  * @see Editor#logicalToVisualPosition(LogicalPosition)
@@ -31,12 +35,25 @@ import org.jetbrains.annotations.NotNull;
 public class VisualPosition {
   public final int line;
   public final int column;
+  /**
+   * If <code>true</code>, this position is associated with succeeding character (in visual order), otherwise it's associated with 
+   * preceding character. This can make difference in bidirectional text, where visual positions which differ only in this flag's value
+   * can correspond to a different logical positions.
+   * <p>
+   * This field has no impact on equality and comparison relationships between <code>VisualPosition</code> instances.
+   */
+  public final boolean leansRight;
 
   public VisualPosition(int line, int column) {
+    this(line, column, false);
+  }
+
+  public VisualPosition(int line, int column, boolean leansRight) {
     if (line < 0) throw new IllegalArgumentException("line must be non negative: "+line);
     if (column < 0) throw new IllegalArgumentException("column must be non negative: "+column);
     this.line = line;
     this.column = column;
+    this.leansRight = leansRight;
   }
 
   /**
@@ -60,9 +77,16 @@ public class VisualPosition {
     return line > other.line;
   }
 
+  /**
+   * Constructs a new <code>VisualPosition</code> instance with a given value of {@link #leansRight} flag.
+   */
+  public VisualPosition leanRight(boolean value) {
+    return new VisualPosition(line, column, value);
+  }
+
   @NonNls
   public String toString() {
-    return "VisualPosition: (" + line + ", " + column+")";
+    return "VisualPosition: (" + line + ", " + column+")" + (leansRight ? " leans right" : "");
   }
 
   @Override

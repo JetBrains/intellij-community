@@ -73,7 +73,6 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
 
     @NotNull
     private Builder init(@NotNull FilePath path) {
-      path.refresh();
       myHighlightFile = path.getVirtualFile();
       myFileType = path.getFileType();
       myCharset = path.getCharset(myProject);

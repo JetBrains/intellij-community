@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,15 +63,9 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.util.Collection;
-import java.util.Set;
 
 
-@State(
-  name = "Encoding",
-  storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/encoding.xml")
-  }
-)
+@State(name = "Encoding", storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
     @Override
@@ -154,7 +148,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
-  public Charset computeCharsetFromContent(@NotNull final VirtualFile virtualFile) {
+  Charset computeCharsetFromContent(@NotNull final VirtualFile virtualFile) {
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) {
       return null;
@@ -183,7 +177,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     clearDocumentQueue();
   }
 
-  public void queueUpdateEncodingFromContent(@NotNull Document document) {
+  void queueUpdateEncodingFromContent(@NotNull Document document) {
     myChangedDocuments.offerIfAbsent(new WeakReference<Document>(document), REFERENCE_EQUALITY);
   }
 
@@ -206,7 +200,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @NotNull
   public Collection<Charset> getFavorites() {
-    Set<Charset> result = new THashSet<Charset>();
+    Collection<Charset> result = new THashSet<Charset>();
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       result.addAll(EncodingProjectManager.getInstance(project).getFavorites());

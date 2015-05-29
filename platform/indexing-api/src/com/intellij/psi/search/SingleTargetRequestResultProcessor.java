@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,9 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
 
     final List<PsiReference> references = ourReferenceService.getReferences(element,
                                                                             new PsiReferenceService.Hints(myTarget, offsetInElement));
-    for (PsiReference ref : references) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < references.size(); i++) {
+      PsiReference ref = references.get(i);
       ProgressManager.checkCanceled();
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && ref.isReferenceTo(myTarget) && !consumer.process(ref)) {
         return false;

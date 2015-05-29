@@ -23,7 +23,6 @@ import sun.swing.SwingUtilities2;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -300,7 +299,7 @@ public class DarculaTitlePane extends JComponent {
     button.setOpaque(false);
     button.putClientProperty("paintActive", Boolean.TRUE);
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName);
-    button.setBorder(new EmptyBorder(0, 0, 0, 0));
+    button.setBorder(JBUI.Borders.empty());
     button.setText(null);
     button.setAction(action);
     button.setIcon(icon);

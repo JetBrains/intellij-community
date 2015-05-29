@@ -14,18 +14,14 @@ package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.util.HgUtil;
-
-import java.io.UnsupportedEncodingException;
 
 public class HgContentRevision implements ContentRevision {
 
@@ -34,45 +30,32 @@ public class HgContentRevision implements ContentRevision {
   @NotNull private final HgRevisionNumber myRevisionNumber;
 
   private FilePath filePath;
-  private String content;
 
-  public HgContentRevision(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
+  protected HgContentRevision(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
     myProject = project;
     myHgFile = hgFile;
     myRevisionNumber = revisionNumber;
   }
 
-  @Nullable
-  public String getContent() throws VcsException {
-    if (StringUtil.isEmptyOrSpaces(content)) {
-      if (myRevisionNumber.isWorkingVersion()) {
-        content = VcsUtil.getFileContent(myHgFile.getFile().getPath());
-      } else {
-        HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
-        content = new HgCatCommand(myProject).execute(fileToCat, myRevisionNumber, getFile().getCharset());
-      }
-    }
-    return content;
+  @NotNull
+  public static HgContentRevision create(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
+    return !hgFile.toFilePath().getFileType().isBinary()
+           ? new HgContentRevision(project, hgFile, revisionNumber)
+           : new HgBinaryContentRevision(project, hgFile, revisionNumber);
   }
 
-  /**
-   * A wrapper for getContent(), that just converts String to byte[]
-   */
   @Nullable
-  public byte[] getContentAsBytes() throws VcsException {
-    final String content = getContent();
-    if (content == null) {
-      return null;
-    }
-    try {
-      final VirtualFile vf = VcsUtil.getVirtualFile(myHgFile.getFile());
-      if (vf == null) {
-        return null;
-      }
-      return content.getBytes(vf.getCharset().name());
-    } catch (UnsupportedEncodingException e) {
-      throw new VcsException("Couldn't retrieve file content due to a UnsupportedEncodingException", e);
-    }
+  @Override
+  public String getContent() throws VcsException {
+    if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileContent(myHgFile.getFile().getPath());
+    final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
+    return CharsetToolkit.bytesToString(HgUtil.loadContent(myProject, myRevisionNumber, fileToCat), getFile().getCharset());
+  }
+
+  public byte[] getContentAsBytes() {
+    if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileByteContent(myHgFile.getFile());
+    final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
+    return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }
 
   @NotNull

@@ -34,9 +34,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -123,11 +121,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       return null;
     }
     return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
-  }
-
-  @Override
-  public boolean isLineMarkerPlace(PsiElement place, PsiElement sourceElement) {
-    return place instanceof PsiMethod && PsiTreeUtil.getParentOfType(place, PsiClass.class) == sourceElement && PsiMethodUtil.isMainMethod((PsiMethod)place);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,20 +226,23 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
        // Lazily create the event:
        if (changeEvent == null) changeEvent = new ChangeEvent(this);
        final ChangeListener each = (ChangeListener)listeners[i + 1];
-       if (each != null && each.getClass().getName().indexOf("apple.laf.CUIAquaTabbedPane") >= 0) {
+       if (each != null) {
+         if (each.getClass().getName().contains("apple.laf.CUIAquaTabbedPane")) {
 
-         SwingUtilities.invokeLater(new Runnable() {
-           @Override
-           public void run() {
-             revalidate();
-             repaint();
-           }
-         });
+           //noinspection SSBasedInspection
+           SwingUtilities.invokeLater(new Runnable() {
+             @Override
+             public void run() {
+               revalidate();
+               repaint();
+             }
+           });
 
-         continue;
+           continue;
+         }
+
+         each.stateChanged(changeEvent);
        }
-
-       each.stateChanged(changeEvent);
      }
    }
  }

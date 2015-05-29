@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -37,7 +38,6 @@ import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
-import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
@@ -132,11 +132,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     if (VcsDataKeys.CHANGES.is(dataId)) {
       return myChanges;
     }
-    else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
-      if (myChangeList instanceof VcsRevisionNumberAware) {
-        return ((VcsRevisionNumberAware)myChangeList).getRevisionNumber();
-      }
-    }
+
     return null;
   }
 
@@ -155,16 +151,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
       @Override
       protected void buildToolBar(DefaultActionGroup toolBarGroup) {
         super.buildToolBar(toolBarGroup);
-        toolBarGroup.add(ActionManager.getInstance().getAction("Vcs.CopyRevisionNumberAction"));
-      }
-
-      @Override
-      public Object getData(@NonNls String dataId) {
-        Object data = super.getData(dataId);
-        if (data != null) {
-          return data;
-        }
-        return ChangeListViewerDialog.this.getData(dataId);
+        toolBarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
       }
 
       @Override

@@ -214,7 +214,7 @@ public static void foo(List<? extends Foo> foos) {
 class OtherBug1 {
   public static void foo(List<? super Foo> foos) {
     final Comparator<Foo> comparator = createComparator();
-    Collections.sort<error descr="'sort(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<capture<? super OtherBug1.Foo>>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">(foos, comparator)</error>;
+    Collections.sort<error descr="'sort(java.util.List<T>, java.util.Comparator<? super T>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">(foos, comparator)</error>;
   }
 
   private static Comparator<Foo> createComparator() {

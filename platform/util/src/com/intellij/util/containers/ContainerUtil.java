@@ -1101,10 +1101,11 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> Iterable<T> iterate(@NotNull final Collection<? extends T> collection, @NotNull final Condition<? super T> condition) {
     if (collection.isEmpty()) return emptyIterable();
     return new Iterable<T>() {
+      @NotNull
       @Override
       public Iterator<T> iterator() {
         return new Iterator<T>() {
-          private Iterator<? extends T> impl = collection.iterator();
+          private final Iterator<? extends T> impl = collection.iterator();
           private T next = findNext();
 
           @Override
@@ -1143,10 +1144,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> Iterable<T> iterateBackward(@NotNull final List<? extends T> list) {
     return new Iterable<T>() {
+      @NotNull
       @Override
       public Iterator<T> iterator() {
         return new Iterator<T>() {
-          private ListIterator<? extends T> it = list.listIterator(list.size());
+          private final ListIterator<? extends T> it = list.listIterator(list.size());
 
           @Override
           public boolean hasNext() {
@@ -1269,7 +1271,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link #append(java.util.List, java.lang.Object[])} or {@link #prepend(java.util.List, java.lang.Object[])} instead
+   * @deprecated Use {@link #append(List, Object[])} or {@link #prepend(List, Object[])} instead
    * @param appendTail specify whether additional values should be appended in front or after the list
    * @return read-only list consisting of the elements from specified list with some additional values
    */
@@ -1338,6 +1340,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
     return new Iterable<T>() {
+      @NotNull
       @Override
       public Iterator<T> iterator() {
         Iterator[] iterators = new Iterator[iterables.length];
@@ -1367,12 +1370,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final T[]... iterables) {
     return new Iterable<T>() {
+      @NotNull
       @Override
       public Iterator<T> iterator() {
         Iterator[] iterators = new Iterator[iterables.length];
-        for (int i = 0, iterablesLength = iterables.length; i < iterablesLength; i++) {
+        for (int i = 0; i < iterables.length; i++) {
           T[] iterable = iterables[i];
-          iterators[i] = Arrays.asList(iterable).iterator();
+          iterators[i] = iterate(iterable);
         }
         @SuppressWarnings("unchecked") Iterator<T> i = concatIterators(iterators);
         return i;
@@ -2132,6 +2136,37 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <E> List<E> flatten(@NotNull Collection<E>[] collections) {
     return flatten(Arrays.asList(collections));
+  }
+
+  /**
+   * Processes the list, remove all duplicates and return the list with unique elements.
+   * @param list must be sorted (according to the comparator), all elements must be not-null
+   */
+  @NotNull
+  public static <T> List<T> removeDuplicatesFromSorted(@NotNull List<T> list, @NotNull Comparator<? super T> comparator) {
+    T prev = null;
+    List<T> result = null;
+    for (int i = 0; i < list.size(); i++) {
+      T t = list.get(i);
+      if (t == null) {
+        throw new IllegalArgumentException("get(" + i + ") = null");
+      }
+      int cmp = prev == null ? -1 : comparator.compare(prev, t);
+      if (cmp < 0) {
+        if (result != null) result.add(t);
+      }
+      else if (cmp == 0) {
+        if (result == null) {
+          result = new ArrayList<T>(list.size());
+          result.addAll(list.subList(0, i));
+        }
+      }
+      else {
+        throw new IllegalArgumentException("List must be sorted but get(" + (i - 1) + ")=" + list.get(i - 1) + " > get(" + i + ")=" + t);
+      }
+      prev = t;
+    }
+    return result == null ? list : result;
   }
 
   /**

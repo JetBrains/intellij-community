@@ -119,7 +119,7 @@ public class Command {
     return ContainerUtil.isEmpty(myTargets) ? null : ContainerUtil.map(myTargets, new Function<File, String>() {
       @Override
       public String fun(File file) {
-        return file.getAbsolutePath();
+        return CommandUtil.format(file.getAbsolutePath(), null);
       }
     });
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.SortByVcsRoots;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FilePathByPathComparator;
@@ -154,9 +155,6 @@ public class TriggerAdditionOrDeletion {
   }
 
   private void processAddition(SortByVcsRoots<FilePath> sortByVcsRoots) {
-    for (FilePath filePath : myExisting) {
-      filePath.hardRefresh();
-    }
     final MultiMap<VcsRoot, FilePath> map = sortByVcsRoots.sort(myExisting);
     myPreparedAddition = new MultiMap<VcsRoot, FilePath>();
     for (VcsRoot vcsRoot : map.keySet()) {
@@ -243,11 +241,10 @@ public class TriggerAdditionOrDeletion {
       while (current != null) {
         VirtualFile vf = current.getVirtualFile();
         if (vf == null) {
-          current.hardRefresh();
-          vf = current.getVirtualFile();
-          if (vf == null) {
-            return;
-          }
+          vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(current.getPath());
+        }
+        if (vf == null) {
+          return;
         }
         if (! VfsUtil.isAncestor(myRoot, vf, true)) return;
 

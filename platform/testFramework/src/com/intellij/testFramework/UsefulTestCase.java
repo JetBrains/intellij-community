@@ -51,6 +51,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -656,6 +657,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  @Contract("null, _ -> fail")
   public static <T> T assertInstanceOf(Object o, Class<T> aClass) {
     Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
     Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));

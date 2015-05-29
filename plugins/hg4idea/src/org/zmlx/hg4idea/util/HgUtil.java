@@ -23,7 +23,10 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
@@ -33,18 +36,21 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
+import org.zmlx.hg4idea.log.HgHistoryUtil;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -473,35 +479,13 @@ public abstract class HgUtil {
     //convert output changes to standart Change class
     for (HgChange hgChange : hgChanges) {
       FileStatus status = convertHgDiffStatus(hgChange.getStatus());
-     if (status != FileStatus.UNKNOWN) {
-        changes.add(createChange(project, root, hgChange.beforeFile().getRelativePath(), revNumber1,
-                                 hgChange.afterFile().getRelativePath(),
-                                 rev2 != null ? rev2.getRevisionNumber() : null, status));
-     }
+      if (status != FileStatus.UNKNOWN) {
+        changes.add(HgHistoryUtil.createChange(project, root, hgChange.beforeFile().getRelativePath(), revNumber1,
+                                               hgChange.afterFile().getRelativePath(),
+                                               rev2 != null ? rev2.getRevisionNumber() : null, status));
+      }
     }
     return changes;
-  }
-
-  @NotNull
-  public static Change createChange(@NotNull final Project project, VirtualFile root,
-                                    @NotNull String fileBefore,
-                                    @Nullable HgRevisionNumber revisionBefore,
-                                    @NotNull String fileAfter,
-                                    @Nullable HgRevisionNumber revisionAfter,
-                                    @NotNull FileStatus aStatus) {
-    HgContentRevision beforeRevision = revisionBefore == null
-                                       ? null
-                                       : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)),
-                                                               revisionBefore);
-    if (revisionAfter == null) {
-      ContentRevision currentRevision =
-        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
-      return new Change(beforeRevision, currentRevision, aStatus);
-    }
-    HgContentRevision afterRevision = new HgContentRevision(project,
-                                                            new HgFile(root, new File(root.getPath(), fileAfter)),
-                                                            revisionAfter);
-    return new Change(beforeRevision, afterRevision, aStatus);
   }
 
   @NotNull
@@ -527,6 +511,12 @@ public abstract class HgUtil {
     else {
       return FileStatus.UNKNOWN;
     }
+  }
+
+  @NotNull
+  public static byte[] loadContent(@NotNull Project project, @Nullable HgRevisionNumber revisionNumber, @NotNull HgFile fileToCat) {
+    HgCommandResult result = new HgCatCommand(project).execute(fileToCat, revisionNumber, fileToCat.toFilePath().getCharset());
+    return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   public static String removePasswordIfNeeded(@NotNull String path) {
@@ -626,7 +616,7 @@ public abstract class HgUtil {
     cmdArgs.add("version");
     cmdArgs.add("-q");
     ShellCommand shellCommand = new ShellCommand(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
-    return shellCommand.execute(false);
+    return shellCommand.execute(false, false);
   }
 
   public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {

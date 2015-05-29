@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1845,16 +1845,21 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (text.length() < 1000) {
         return null;
       }
-      boolean nonWhiteSpaceFound = false;
       int index = 0;
-      for (; index < text.length(); index++) {
-        char c = text.charAt(index);
-        if (c != ' ' && c != '\t') {
-          nonWhiteSpaceFound = true;
-          continue;
-        }
-        if (nonWhiteSpaceFound) {
-          break;
+      if (text.charAt(0) == '"') {
+        index = text.indexOf('"', 1) + 1;
+      }
+      if (index == 0) {
+        boolean nonWhiteSpaceFound = false;
+        for (; index < text.length(); index++) {
+          char c = text.charAt(index);
+          if (c != ' ' && c != '\t') {
+            nonWhiteSpaceFound = true;
+            continue;
+          }
+          if (nonWhiteSpaceFound) {
+            break;
+          }
         }
       }
       assert index <= text.length();

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -64,7 +63,7 @@ public class GitSimplePathsBrowser extends JPanel {
     return ContainerUtil.map(absolutePaths, new Function<String, FilePath>() {
       @Override
       public FilePath fun(String path) {
-        return VcsUtil.getFilePath(new File(path), false);
+        return VcsUtil.getFilePath(path, false);
       }
     });
   }

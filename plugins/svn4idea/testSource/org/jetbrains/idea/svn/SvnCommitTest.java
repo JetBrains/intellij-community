@@ -188,7 +188,7 @@ public class SvnCommitTest extends Svn17TestCase {
 
         checkinFiles(dir, file, file2);
 
-        final FilePath dirPath = VcsUtil.getFilePath(new File(dir.getPath()), true);
+        final FilePath dirPath = VcsUtil.getFilePath(dir.getPath(), true);
         deleteFileInCommand(dir);
 
         myDirtyScopeManager.markEverythingDirty();

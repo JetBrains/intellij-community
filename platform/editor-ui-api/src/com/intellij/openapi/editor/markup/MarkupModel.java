@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * gutter and so on, and for retrieving information about highlighted ranges.
  *
  * @see com.intellij.openapi.editor.Editor#getMarkupModel()
- * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(com.intellij.openapi.editor.Document, com.intellij.openapi.project.Project, boolean)
+ * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, com.intellij.openapi.project.Project, boolean)
  */
 public interface MarkupModel extends UserDataHolder {
   /**

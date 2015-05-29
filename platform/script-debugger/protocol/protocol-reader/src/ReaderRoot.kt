@@ -17,7 +17,6 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
     readInterfaceRecursive(type)
   }
 
-  throws(javaClass<JsonProtocolModelParseException>())
   private fun readInterfaceRecursive(clazz: Class<*>) {
     if (visitedInterfaces.contains(clazz)) {
       return

@@ -44,55 +44,46 @@ public abstract class GraphBuilderTest<CommitId : Comparable<CommitId>> : Abstra
   protected abstract fun getCommitIdManager(): CommitIdManager<CommitId>
 
   Test
-  throws(javaClass<IOException>())
   public fun simple() {
     doTest("simple")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun manyUpNodes() {
     doTest("manyUpNodes")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun manyDownNodes() {
     doTest("manyDownNodes")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun oneNode() {
     doTest("oneNode")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun oneNodeNotFullGraph() {
     doTest("oneNodeNotFullGraph")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun notFullGraph() {
     doTest("notFullGraph")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun parentsOrder() {
     doTest("parentsOrder")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun duplicateParents() {
     doTest("duplicateParents")
   }
