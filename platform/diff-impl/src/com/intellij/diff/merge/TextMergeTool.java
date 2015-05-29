@@ -453,6 +453,10 @@ public class TextMergeTool implements MergeTool {
         }
       }
 
+      public void repaintDividers() {
+        myContentPanel.repaintDividers();
+      }
+
       //
       // Getters
       //
@@ -523,9 +527,10 @@ public class TextMergeTool implements MergeTool {
           for (TextMergeChange mergeChange : myAllMergeChanges) {
             if (!mergeChange.getType().isChange(mySide)) continue;
             Color color = mergeChange.getDiffType().getColor(getEditor(ThreeSide.BASE));
+            boolean isResolved = mergeChange.isResolved();
             if (!handler.process(mergeChange.getStartLine(left), mergeChange.getEndLine(left),
                                  mergeChange.getStartLine(right), mergeChange.getEndLine(right),
-                                 color)) {
+                                 color, isResolved)) {
               return;
             }
           }

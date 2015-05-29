@@ -78,6 +78,28 @@ public class DiffDrawUtil {
     UIUtil.drawLine(g, x1, y, x2, y, null, color);
   }
 
+  public static void drawDottedDoubleChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
+    UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
+    UIUtil.drawBoldDottedLine(g, x1, x2, y, null, color, false);
+  }
+
+  public static void drawDottedChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
+    UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
+  }
+
+  public static void drawChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color,
+                                         boolean doubleLine, boolean dottedLine) {
+    if (dottedLine && doubleLine) {
+      drawDottedDoubleChunkBorderLine(g, x1, x2, y, color);
+    } else if (dottedLine) {
+      drawDottedChunkBorderLine(g, x1, x2, y, color);
+    } else if (doubleLine) {
+      drawDoubleChunkBorderLine(g, x1, x2, y, color);
+    } else {
+      drawChunkBorderLine(g, x1, x2, y, color);
+    }
+  }
+
   public static void drawTrapezium(@NotNull Graphics2D g,
                                    int x1, int x2,
                                    int start1, int end1,
@@ -211,11 +233,16 @@ public class DiffDrawUtil {
     return createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE);
   }
 
-
   @NotNull
   public static RangeHighlighter createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
                                                    boolean ignored, @NotNull HighlighterTargetArea area) {
-    TextAttributes attributes = getTextAttributes(type, editor, ignored, true);
+    return createHighlighter(editor, start, end, type, ignored, area, false);
+  }
+
+  @NotNull
+  public static RangeHighlighter createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
+                                                   boolean ignored, @NotNull HighlighterTargetArea area, boolean resolved) {
+    TextAttributes attributes = resolved ? null : getTextAttributes(type, editor, ignored, true);
 
     RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.SELECTION - 3,
                                                                                start != end ? attributes : null, area);
@@ -223,7 +250,7 @@ public class DiffDrawUtil {
     // TODO: diff looks cool with wide markers. Maybe we can keep them ?
     highlighter.setThinErrorStripeMark(true);
 
-    installGutterRenderer(highlighter, type, ignored);
+    installGutterRenderer(highlighter, type, ignored, resolved);
 
     return highlighter;
   }
@@ -248,7 +275,14 @@ public class DiffDrawUtil {
   public static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
                                            @NotNull TextDiffType type,
                                            boolean ignoredFoldingOutline) {
-    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline));
+    installGutterRenderer(highlighter, type, ignoredFoldingOutline, false);
+  }
+
+  public static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
+                                           @NotNull TextDiffType type,
+                                           boolean ignoredFoldingOutline,
+                                           boolean resolved) {
+    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline, resolved));
   }
 
   public static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter, @NotNull TextDiffType type) {
@@ -264,6 +298,13 @@ public class DiffDrawUtil {
   @NotNull
   public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                   @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
+    return createLineMarker(editor, line, type, placement, doubleLine, false);
+  }
+
+  @NotNull
+  public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
+                                                  @NotNull final SeparatorPlacement placement, final boolean doubleLine,
+                                                  final boolean dottedLine) {
     TextAttributes attributes = getStripeTextAttributes(type, editor);
     LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
       @Override
@@ -271,12 +312,7 @@ public class DiffDrawUtil {
         // TODO: change LineSeparatorRenderer interface ?
         Rectangle clip = g.getClipBounds();
         x2 = clip.x + clip.width;
-        if (doubleLine) {
-          drawDoubleChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
-        }
-        else {
-          drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor));
-        }
+        drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor), doubleLine, dottedLine);
       }
     };
     return createLineMarker(editor, line, placement, attributes, renderer);
