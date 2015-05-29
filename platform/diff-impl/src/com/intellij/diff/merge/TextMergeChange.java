@@ -18,23 +18,30 @@ package com.intellij.diff.merge;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.tools.simple.ThreesideDiffChangeBase;
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUtil.UpdatedLineRange;
-import com.intellij.diff.util.TextDiffType;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
-  @NotNull private final TextMergeTool.TextMergeViewer myViewer;
+  @NotNull private final TextMergeTool.TextMergeViewer myMergeViewer;
+  @NotNull private final TextMergeTool.TextMergeViewer.MyThreesideViewer myViewer;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+
+  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
   private int[] myStartLines = new int[3];
   private int[] myEndLines = new int[3];
@@ -42,7 +49,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeTool.TextMergeViewer viewer) {
     super(fragment, viewer.getViewer().getEditors(), ComparisonPolicy.DEFAULT);
-    myViewer = viewer;
+    myMergeViewer = viewer;
+    myViewer = viewer.getViewer();
 
     for (ThreeSide side : ThreeSide.values()) {
       myStartLines[side.getIndex()] = fragment.getStartLine(side);
@@ -58,6 +66,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     createHighlighter(ThreeSide.BASE);
     if (getType().isLeftChange()) createHighlighter(ThreeSide.LEFT);
     if (getType().isRightChange()) createHighlighter(ThreeSide.RIGHT);
+
+    doInstallActionHighlighters();
   }
 
   public void destroyHighlighter() {
@@ -65,6 +75,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       highlighter.dispose();
     }
     myHighlighters.clear();
+
+    for (MyGutterOperation operation : myOperations) {
+      operation.dispose();
+    }
+    myOperations.clear();
   }
 
   public void reinstallHighlighter() {
@@ -73,7 +88,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   private void createHighlighter(@NotNull ThreeSide side) {
-    Editor editor = side.select(myViewer.getViewer().getEditors());
+    Editor editor = side.select(myViewer.getEditors());
     Document document = editor.getDocument();
 
     TextDiffType type = getDiffType();
@@ -140,5 +155,157 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     boolean rangeAffected = oldLine2 >= line1 && oldLine1 <= line2; // RangeMarker can be updated in a different way
     return newRange.damaged || rangeAffected;
+  }
+
+  //
+  // Gutter actions
+  //
+
+  private void doInstallActionHighlighters() {
+    if (isResolved()) return;
+    myOperations.add(createOperation(ThreeSide.LEFT));
+    myOperations.add(createOperation(ThreeSide.BASE));
+    myOperations.add(createOperation(ThreeSide.RIGHT));
+  }
+
+  @NotNull
+  private MyGutterOperation createOperation(@NotNull ThreeSide side) {
+    EditorEx editor = myViewer.getEditor(side);
+    Document document = editor.getDocument();
+
+    int line = getStartLine(side);
+    int offset = line == DiffUtil.getLineCount(document) ? document.getTextLength() : document.getLineStartOffset(line);
+
+    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
+                                                                               HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                               null,
+                                                                               HighlighterTargetArea.LINES_IN_RANGE);
+    return new MyGutterOperation(side, highlighter);
+  }
+
+  public void updateGutterActions(boolean force) {
+    for (MyGutterOperation operation : myOperations) {
+      operation.update(force);
+    }
+  }
+
+  private class MyGutterOperation {
+    @NotNull private final ThreeSide mySide;
+    @NotNull private final RangeHighlighter myHighlighter;
+
+    private boolean myCtrlPressed;
+    private boolean myShiftPressed;
+
+    private MyGutterOperation(@NotNull ThreeSide side, @NotNull RangeHighlighter highlighter) {
+      mySide = side;
+      myHighlighter = highlighter;
+
+      update(true);
+    }
+
+    public void dispose() {
+      myHighlighter.dispose();
+    }
+
+    public void update(boolean force) {
+      if (!force && !areModifiersChanged()) {
+        return;
+      }
+      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
+    }
+
+    private boolean areModifiersChanged() {
+      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed() ||
+             myShiftPressed != myViewer.getModifierProvider().isShiftPressed();
+    }
+
+    @Nullable
+    public GutterIconRenderer createRenderer() {
+      myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
+      myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
+
+      if (mySide != ThreeSide.BASE) {
+        Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
+        assert versionSide != null;
+
+        if (myShiftPressed) {
+          return createRevertRenderer();
+        }
+        return createApplyRenderer(versionSide);
+      }
+
+      return null;
+    }
+  }
+
+  @Nullable
+  private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), AllIcons.Diff.Arrow, new Runnable() {
+      @Override
+      public void run() {
+        final Document document = myViewer.getEditor(ThreeSide.BASE).getDocument();
+        DiffUtil.executeWriteCommand(document, myViewer.getProject(), "Apply change", new Runnable() {
+          @Override
+          public void run() {
+            myViewer.replaceChange(TextMergeChange.this, side);
+          }
+        });
+        markResolved();
+      }
+    });
+  }
+
+  @Nullable
+  private GutterIconRenderer createRevertRenderer() {
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, new Runnable() {
+      @Override
+      public void run() {
+        markResolved();
+      }
+    });
+  }
+
+  @Nullable
+  private GutterIconRenderer createIconRenderer(@NotNull final String tooltipText,
+                                                @NotNull final Icon icon,
+                                                @NotNull final Runnable perform) {
+    return new GutterIconRenderer() {
+      @NotNull
+      @Override
+      public Icon getIcon() {
+        return icon;
+      }
+
+      public boolean isNavigateAction() {
+        return true;
+      }
+
+      @Nullable
+      @Override
+      public AnAction getClickAction() {
+        return new DumbAwareAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            perform.run();
+          }
+        };
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return obj == this;
+      }
+
+      @Override
+      public int hashCode() {
+        return System.identityHashCode(this);
+      }
+
+      @Nullable
+      @Override
+      public String getTooltipText() {
+        return tooltipText;
+      }
+    };
   }
 }

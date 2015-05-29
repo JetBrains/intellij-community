@@ -29,6 +29,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.KeyboardModifierListener;
 import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
@@ -51,6 +52,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,6 +181,8 @@ public class TextMergeTool implements MergeTool {
     //
 
     public class MyThreesideViewer extends ThreesideTextDiffViewerEx {
+      @NotNull private final ModifierProvider myModifierProvider;
+
       // all changes - both applied and unapplied ones
       @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
       private boolean myInitialRediffDone;
@@ -189,6 +193,13 @@ public class TextMergeTool implements MergeTool {
         super(context, request);
 
         myPanel.setBottomPanel(createBottomPanel());
+        myModifierProvider = new ModifierProvider();
+      }
+
+      @Override
+      protected void onInit() {
+        super.onInit();
+        myModifierProvider.init();
       }
 
       @NotNull
@@ -467,6 +478,33 @@ public class TextMergeTool implements MergeTool {
         return new MyDividerPaintable(side);
       }
 
+      @NotNull
+      public ModifierProvider getModifierProvider() {
+        return myModifierProvider;
+      }
+
+      //
+      // Modification operations
+      //
+
+      @CalledWithWriteLock
+      public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side) {
+        ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
+        ThreeSide outputSide = ThreeSide.BASE;
+
+        DiffUtil.applyModification(getContent(outputSide).getDocument(), change.getStartLine(outputSide), change.getEndLine(outputSide),
+                                   getContent(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+      }
+
+      @CalledWithWriteLock
+      public void appendChange(@NotNull TextMergeChange change, @NotNull Side side) {
+        ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
+        ThreeSide outputSide = ThreeSide.BASE;
+
+        DiffUtil.applyModification(getContent(outputSide).getDocument(), change.getEndLine(outputSide), change.getEndLine(outputSide),
+                                   getContent(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+      }
+
       //
       // Helpers
       //
@@ -493,6 +531,20 @@ public class TextMergeTool implements MergeTool {
           }
         }
       }
+
+      public class ModifierProvider extends KeyboardModifierListener {
+        public void init() {
+          init(myPanel, TextMergeViewer.this);
+        }
+
+        @Override
+        public void onModifiersChanged() {
+          for (TextMergeChange change : myAllMergeChanges) {
+            change.updateGutterActions(false);
+          }
+        }
+      }
+
     }
   }
 }
