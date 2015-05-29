@@ -179,14 +179,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   @Override
   public void visitAssignmentExpression(final GrAssignmentExpression expression) {
-    final GrExpression right = expression.getRValue();
-    if (right == null) {
-      startElement(expression);
-      pushUnknown();
-      finishElement(expression);
-      return;
-    }
     final GrExpression left = expression.getLValue();
+    final GrExpression right = expression.getRValue();
     final IElementType op = expression.getOperationTokenType();
     if (op == mASSIGN) {
       startElement(expression);

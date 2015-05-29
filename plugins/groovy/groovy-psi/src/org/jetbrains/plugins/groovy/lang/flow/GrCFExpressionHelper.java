@@ -83,7 +83,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     return myAnalyzer.factory;
   }
 
-  void assign(@NotNull final GrExpression left, @NotNull final GrExpression right) {
+  void assign(@NotNull final GrExpression left, @Nullable final GrExpression right) {
     assign(left, right, myAnalyzer.callHelper.new Arguments() {
       @NotNull
       @Override
@@ -94,13 +94,15 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       @Override
       public int runArguments() {
         final int result = super.runArguments();
-        boxUnbox(right, left.getNominalType(), right.getNominalType());
+        if (right != null) {
+          boxUnbox(right, left.getNominalType(), right.getNominalType());
+        }
         return result;
       }
     });
   }
 
-  void assign(@NotNull GrExpression left, @NotNull GrExpression anchor, GrCFCallHelper<V>.Arguments argumentsProvider) {
+  void assign(@NotNull GrExpression left, @Nullable GrExpression anchor, GrCFCallHelper<V>.Arguments argumentsProvider) {
     if (left instanceof GrReferenceExpression) {
       final GroovyResolveResult result = ((GrReferenceExpression)left).advancedResolve();
       final PsiElement element = result.getElement();
@@ -176,7 +178,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
 
   void binaryOperation(@NotNull GrExpression anchor,
                        @NotNull GrExpression left,
-                       @NotNull GrExpression right,
+                       @Nullable GrExpression right,
                        @NotNull IElementType operatorToken,
                        @NotNull GroovyResolveResult[] resolveResults) {
     if (resolveResults.length == 1 && resolveResults[0].isValidResult() && !(operatorToken == mEQUAL || operatorToken == mNOT_EQUAL)) {
@@ -185,7 +187,12 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     }
     else {
       left.accept(myAnalyzer);
-      right.accept(myAnalyzer);
+      if (right == null) {
+        myAnalyzer.pushUnknown();
+      }
+      else {
+        right.accept(myAnalyzer);
+      }
       myAnalyzer.addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), anchor));
       processDelayed();
     }
