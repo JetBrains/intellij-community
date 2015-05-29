@@ -359,7 +359,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected List<String> defaultSuggestPropertiesFiles() {
-    return I18nUtil.defaultGetPropertyFiles(myProject);
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
   }
 
   protected PropertiesFile getPropertiesFile() {
