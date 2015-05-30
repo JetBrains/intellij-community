@@ -24,6 +24,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("unchecked")
 public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T> {
 
   public JBPanel(LayoutManager layout, boolean isDoubleBuffered) {
