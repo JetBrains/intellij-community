@@ -73,6 +73,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
+  @NotNull private final FileType myFileType;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -88,10 +89,21 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
                                     @NotNull VirtualFile virtualFile,
                                     final boolean eventSystemEnabled,
                                     @NotNull final FileType fileType) {
-    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType));
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType), fileType);
   }
 
-  protected SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean eventSystemEnabled, @NotNull Language language) {
+  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                       @NotNull VirtualFile virtualFile,
+                                       final boolean eventSystemEnabled,
+                                       @NotNull Language language) {
+    this(manager, virtualFile, eventSystemEnabled, language, virtualFile.getFileType());
+  }
+
+  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                       @NotNull VirtualFile virtualFile,
+                                       final boolean eventSystemEnabled,
+                                       @NotNull Language language,
+                                       @NotNull FileType type) {
     myManager = manager;
     myVirtualFile = virtualFile;
     myEventSystemEnabled = eventSystemEnabled;
@@ -100,6 +112,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
+    myFileType = type;
   }
 
   @Override
@@ -246,8 +259,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         }
       }
 
-      FileType fileType = vFile.getFileType();
-      return createFile(project, vFile, fileType);
+      return createFile(project, vFile, myFileType);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -371,7 +383,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Override
   public FileViewProvider clone() {
     final VirtualFile origFile = getVirtualFile();
-    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
+    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), myFileType, getContents(), origFile.getCharset(), getModificationStamp());
     copy.setOriginalFile(origFile);
     copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     copy.setCharset(origFile.getCharset());
@@ -591,5 +603,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     final PsiFile psi = getPsi(getBaseLanguage());
     assert psi != null;
     return psi;
+  }
+
+  @NotNull
+  @Override
+  public final FileType getFileType() {
+    return myFileType;
   }
 }

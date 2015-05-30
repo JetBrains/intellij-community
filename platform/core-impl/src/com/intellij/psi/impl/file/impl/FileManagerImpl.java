@@ -541,9 +541,7 @@ public class FileManagerImpl implements FileManager {
         }
 
         PsiFile psi = view.getPsi(view.getBaseLanguage());
-        if (psi == null || !psiFile1.getClass().equals(psi.getClass()) ||
-             psiFile1.getViewProvider().getBaseLanguage() != view.getBaseLanguage() // e.g. JSP <-> JSPX
-           ) {
+        if (!areViewProvidersEquivalent(view, psiFile1.getViewProvider())) {
           iterator.remove();
         }
         else if (psi instanceof PsiFileImpl) {
@@ -555,6 +553,21 @@ public class FileManagerImpl implements FileManager {
     myVFileToViewProviderMap.putAll(fileToPsiFileMap);
 
     markInvalidations(originalFileToPsiFileMap);
+  }
+
+  static boolean areViewProvidersEquivalent(@NotNull FileViewProvider view1, @NotNull FileViewProvider view2) {
+    if (view1.getClass() != view2.getClass() || view1.getFileType() != view2.getFileType()) return false;
+
+    Language baseLanguage = view1.getBaseLanguage();
+    if (baseLanguage != view2.getBaseLanguage()) return false;
+
+    if (!view1.getLanguages().equals(view2.getLanguages())) return false;
+    PsiFile psi1 = view1.getPsi(baseLanguage);
+    PsiFile psi2 = view2.getPsi(baseLanguage);
+    if (psi1 == null) return psi2 == null;
+    if (psi1.getClass() != psi2.getClass()) return false;
+
+    return true;
   }
 
   private void markInvalidations(Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
