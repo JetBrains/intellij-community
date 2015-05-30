@@ -99,6 +99,19 @@ public final class ReplacementBuilder {
         );
         if (elements.length > 0) {
           final PsiElement patternNode = elements[0].getParent();
+          patternNode.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitElement(PsiElement element) {
+              super.visitElement(element);
+              final String text = element.getText();
+              if (StructuralSearchUtil.isTypedVariable(text)) {
+                final ParameterInfo parameterInfo = findParameterization(Replacer.stripTypedVariableDecoration(text));
+                if (parameterInfo != null && parameterInfo.getElement() == null) {
+                  parameterInfo.setElement(element);
+                }
+              }
+            }
+          });
           profile.provideAdditionalReplaceOptions(patternNode, options, this);
         }
       } catch (IncorrectOperationException e) {
