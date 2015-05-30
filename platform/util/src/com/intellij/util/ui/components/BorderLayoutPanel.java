@@ -30,6 +30,10 @@ public class BorderLayoutPanel extends JPanel {
     super(new BorderLayout(hgap, vgap));
   }
 
+  public BorderLayoutPanel add(Component comp) {
+    return addToCenter(comp);
+  }
+
   public BorderLayoutPanel addToCenter(Component comp) {
     add(comp);
     return this;
