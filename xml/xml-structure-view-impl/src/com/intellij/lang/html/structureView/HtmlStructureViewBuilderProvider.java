@@ -29,7 +29,7 @@ public class HtmlStructureViewBuilderProvider implements XmlStructureViewBuilder
   @Override
   @Nullable
   public StructureViewBuilder createStructureViewBuilder(@NotNull final XmlFile file) {
-    if (file.getViewProvider().getVirtualFile().getFileType() != HtmlFileType.INSTANCE) return null;
+    if (file.getViewProvider().getFileType() != HtmlFileType.INSTANCE) return null;
 
     return new TreeBasedStructureViewBuilder() {
       @Override
