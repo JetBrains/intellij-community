@@ -15,13 +15,12 @@
  */
 package com.intellij.util.ui.components;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class BorderLayoutPanel extends JPanel {
+public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   public BorderLayoutPanel() {
     this(0, 0);
   }
