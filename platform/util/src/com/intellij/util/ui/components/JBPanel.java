@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.components;
+package com.intellij.util.ui.components;
+
+import com.intellij.util.ui.JBFont;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JBPanel extends JPanel {
+public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T> {
 
   public JBPanel(LayoutManager layout, boolean isDoubleBuffered) {
     super(layout, isDoubleBuffered);
@@ -39,4 +42,27 @@ public class JBPanel extends JPanel {
     super();
   }
 
+  @Override
+  public T withBorder(Border border) {
+    setBorder(border);
+    return (T)this;
+  }
+
+  @Override
+  public T withFont(JBFont font) {
+    setFont(font);
+    return (T)this;
+  }
+
+  @Override
+  public T andTransparent() {
+    setOpaque(false);
+    return (T)this;
+  }
+
+  @Override
+  public T andOpaque() {
+    setOpaque(true);
+    return (T)this;
+  }
 }
