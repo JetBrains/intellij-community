@@ -1284,7 +1284,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     String expectedResult = "class A {\n" +
                             "  public int a = 1;\n" +
-                            "  public int b  ;\n" +
+                            "  public int b ;\n" +
                             "  private int c = 2;\n" +
                             "}";
 
@@ -2258,5 +2258,54 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
     assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
                  "class A {}", replacer.testReplace(in, what, by2, options, false));
+  }
+
+  public void testReplacePolyadicExpression() {
+    final String in1 = "class A {" +
+                      "  int i = 1 + 2 + 3;" +
+                      "}";
+    final String what1 = "1 + '_a+";
+
+    final String by1 = "4";
+    assertEquals("class A {  int i = 4;}", replacer.testReplace(in1, what1, by1, options, false));
+
+    final String by2 = "$a$";
+    assertEquals("class A {  int i = 2+3;}", replacer.testReplace(in1, what1, by2, options, false));
+
+    final String by3 = "$a$+4";
+    assertEquals("class A {  int i = 2+3+4;}", replacer.testReplace(in1, what1, by3, options, false));
+
+    final String what2 = "1 + 2 + 3 + '_a*";
+    final String by4 = "1 + 3 + $a$";
+    assertEquals("class A {  int i = 1 + 3;}", replacer.testReplace(in1, what2, by4, options, false));
+
+    final String by5 = "$a$ + 1 + 3";
+    assertEquals("class A {  int i = 1 + 3;}", replacer.testReplace(in1, what2, by5, options, false));
+
+    final String by6 = "1 + $a$ + 3";
+    assertEquals("class A {  int i = 1  + 3;}", replacer.testReplace(in1, what2, by6, options, false));
+
+    final String in2 = "class A {" +
+                       "  boolean b = true && true;" +
+                       "}";
+    final String what3 = "true && true && '_a*";
+    final String by7 = "true && true && $a$";
+    assertEquals("class A {  boolean b = true && true;}", replacer.testReplace(in2, what3, by7, options, false));
+
+    final String by8 = "$a$ && true && true";
+    assertEquals("class A {  boolean b = true && true;}", replacer.testReplace(in2, what3, by8, options, false));
+
+  }
+
+  public void testReplaceAssert() {
+    final String in = "class A {" +
+                      "  void m(int i) {" +
+                      "    assert 10 > i;" +
+                      "  }" +
+                      "}";
+
+    final String what = "assert '_a > '_b : '_c?;";
+    final String by = "assert $b$ < $a$ : $c$;";
+    assertEquals("class A {  void m(int i) {    assert i < 10 ;  }}", replacer.testReplace(in, what, by, options, false));
   }
 }
