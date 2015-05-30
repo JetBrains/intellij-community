@@ -146,11 +146,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     };
   }
 
-  @TestOnly
-  public void checkConsistency() {
-    getRootIndex().checkConsistency();
-  }
-
   @Override
   public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
     DirectoryInfo info = getInfoForFile(dir);
