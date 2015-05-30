@@ -16,16 +16,16 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -33,7 +33,7 @@ import java.util.Set;
 class PackageDirectoryCache {
   private final RootIndex myRootIndex;
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix;
-  private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
+  private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
   @SuppressWarnings("UnusedDeclaration")
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
@@ -50,23 +50,24 @@ class PackageDirectoryCache {
 
   @NotNull
   List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
-    List<VirtualFile> result = myDirectoriesByPackageNameCache.get(packageName);
-    if (result == null) {
-      if (myNonExistentPackages.contains(packageName)) return Collections.emptyList();
+    PackageInfo info = getPackageInfo(packageName);
+    return info == null ? Collections.<VirtualFile>emptyList() : info.myPackageDirectories;
+  }
 
-      result = ContainerUtil.newSmartList();
+  @Nullable
+  private PackageInfo getPackageInfo(@NotNull final String packageName) {
+    PackageInfo info = myDirectoriesByPackageNameCache.get(packageName);
+    if (info == null) {
+      if (myNonExistentPackages.contains(packageName)) return null;
+
+      List<VirtualFile> result = ContainerUtil.newSmartList();
 
       if (StringUtil.isNotEmpty(packageName) && !StringUtil.startsWithChar(packageName, '.')) {
         int i = packageName.lastIndexOf('.');
         while (true) {
-          String shortName = packageName.substring(i + 1);
-          String parentPackage = i > 0 ? packageName.substring(0, i) : "";
-          for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage)) {
-            VirtualFile child = parentDir.findChild(shortName);
-            if (child != null && child.isDirectory() && myRootIndex.getInfoForFile(child).isInProject()
-                && packageName.equals(myRootIndex.getPackageName(child))) {
-              result.add(child);
-            }
+          PackageInfo parentInfo = getPackageInfo(i > 0 ? packageName.substring(0, i) : "");
+          if (parentInfo != null) {
+            result.addAll(parentInfo.getSubPackageDirectories(packageName.substring(i + 1)));
           }
           if (i < 0) break;
           i = packageName.lastIndexOf('.', i - 1);
@@ -80,13 +81,45 @@ class PackageDirectoryCache {
       }
 
       if (!result.isEmpty()) {
-        myDirectoriesByPackageNameCache.put(packageName, result);
+        myDirectoriesByPackageNameCache.put(packageName, info = new PackageInfo(packageName, result));
       } else {
         myNonExistentPackages.add(packageName);
       }
     }
 
-    return result;
+    return info;
+  }
+
+  private class PackageInfo {
+    final String myQname;
+    final List<VirtualFile> myPackageDirectories;
+    final NotNullLazyValue<MultiMap<String, VirtualFile>> mySubPackages = new VolatileNotNullLazyValue<MultiMap<String, VirtualFile>>() {
+      @NotNull
+      @Override
+      protected MultiMap<String, VirtualFile> compute() {
+        MultiMap<String, VirtualFile> result = MultiMap.createSmart();
+        for (VirtualFile directory : myPackageDirectories) {
+          for (VirtualFile child : directory.getChildren()) {
+            String childName = child.getName();
+            String packageName = myQname.isEmpty() ? childName : myQname + "." + childName;
+            if (child.isDirectory() && myRootIndex.getInfoForFile(child).isInProject() && packageName.equals(myRootIndex.getPackageName(child))) {
+              result.putValue(childName, child);
+            }
+          }
+        }
+        return result;
+      }
+    };
+
+    PackageInfo(String qname, List<VirtualFile> packageDirectories) {
+      this.myQname = qname;
+      this.myPackageDirectories = packageDirectories;
+    }
+
+    @NotNull
+    Collection<VirtualFile> getSubPackageDirectories(String shortName) {
+      return mySubPackages.getValue().get(shortName);
+    }
   }
 
 }
