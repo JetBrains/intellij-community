@@ -20,60 +20,50 @@ import com.intellij.openapi.editor.event.CaretAdapter
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
-import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.impl.event.MarkupModelListener
-import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.ui.ColorUtil
-import com.jetbrains.reactivemodel.*
+import com.intellij.openapi.util.TextRange
+import com.jetbrains.reactivemodel.Path
+import com.jetbrains.reactivemodel.ReactiveModel
 import com.jetbrains.reactivemodel.models.AbsentModel
-import com.jetbrains.reactivemodel.models.MapDiff
+import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.putIn
 import com.jetbrains.reactivemodel.signals.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
-import java.awt.Color
-import java.util.HashMap
 
 public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val editor: Editor, val providesMarkup: Boolean) {
+  val tags = "@@@--^tags"
 
   val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup)
 
   val caretGuard = Guard()
 
   init {
+    reactiveModel.transaction { m -> (path / tags).putIn(m, ListModel(arrayListOf(PrimitiveModel("editor")))) }
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")
 
-    val caretReaction = reaction(true, "update caret in editor from the model", caretSignal, documentHost.documentUpdated) {
-      caret, _ ->
-      if (caret != null) {
-        caret as MapModel
-        if (!caretGuard.locked) {
-          caretGuard.lock {
-            editor.getCaretModel().moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
-          }
-        }
-      }
-      caret
-    }
 
-    val selectionReaction = reaction(true, "update selection in editor from the model", selectionSignal, documentHost.documentUpdated, caretReaction) {
-      selection, _, __ ->
+    val selectionReaction = reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated) { selection, caret, _ ->
 
       selection as MapModel?
+      caret as MapModel?
 
-      if (selection != null) {
-        editor.getSelectionModel().setSelection(
-            (selection["startOffset"] as PrimitiveModel<Int>).value,
-            (selection["endOffset"] as PrimitiveModel<Int>).value)
+      if (!caretGuard.locked) {
+        caretGuard.lock {
+          if (caret != null) {
+            editor.getCaretModel().moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
+          }
+          if (selection != null) {
+            editor.getSelectionModel().setSelection(
+                (selection["startOffset"] as PrimitiveModel<Int>).value,
+                (selection["endOffset"] as PrimitiveModel<Int>).value)
+          } else {
+            editor.getSelectionModel().removeSelection()
+          }
+
+        }
       }
       selection
     }
@@ -86,10 +76,7 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
       override fun caretPositionChanged(e: CaretEvent) {
         if (!caretGuard.locked) {
           caretGuard.lock {
-            val newOffset = editor.logicalPositionToOffset(e.getNewPosition())
-            reactiveModel.transaction { m ->
-              (path / "caret" / "offset").putIn(m, PrimitiveModel(newOffset))
-            }
+            sendSelectionAndCaret()
           }
         }
       }
@@ -102,12 +89,10 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
 
     val selectionListener = object : SelectionListener {
       override fun selectionChanged(e: SelectionEvent) {
-        val textRange = e.getNewRange()
-        reactiveModel.transaction { m ->
-          (path / "selection").putIn(m, MapModel(hashMapOf(
-              "startOffset" to PrimitiveModel(textRange.getStartOffset()),
-              "endOffset" to PrimitiveModel(textRange.getEndOffset())
-          )))
+        if (!caretGuard.locked) {
+          caretGuard.lock {
+            sendSelectionAndCaret()
+          }
         }
       }
     }
@@ -115,6 +100,20 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
     editor.getSelectionModel().addSelectionListener(selectionListener)
     lifetime += {
       editor.getSelectionModel().removeSelectionListener(selectionListener)
+    }
+  }
+
+  private fun sendSelectionAndCaret() {
+    val textRange = TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())
+    val caretOffset = editor.getCaretModel().getOffset()
+    reactiveModel.transaction { m ->
+      val m1 = (path / "selection").putIn(m,
+          MapModel(hashMapOf(
+              "startOffset" to PrimitiveModel(textRange.getStartOffset()),
+              "endOffset" to PrimitiveModel(textRange.getEndOffset())
+          )))
+      (path / "caret" / "offset").putIn(m1, PrimitiveModel(caretOffset))
+
     }
   }
 }
