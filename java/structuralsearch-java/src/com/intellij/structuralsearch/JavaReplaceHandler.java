@@ -209,20 +209,20 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
           if (modifierListOfSearchedElement.getTextLength() == 0 &&
               modifierListOfReplacement.getTextLength() == 0 &&
-              modifierList.getTextLength() > 0
-            ) {
-            PsiElement space = modifierList.getNextSibling();
-            if (!(space instanceof PsiWhiteSpace)) {
-              space = createWhiteSpace(space);
-            }
-
+              modifierList.getTextLength() > 0) {
             modifierListOfReplacement.replace(modifierList);
-            // copy space after modifier list
-            if (space instanceof PsiWhiteSpace) {
-              modifierListOwner.addRangeAfter(space, space, modifierListOwner.getModifierList());
-            }
           } else if (modifierListOfSearchedElement.getTextLength() == 0 && modifierList.getTextLength() > 0) {
-            modifierListOfReplacement.addRange(modifierList.getFirstChild(), modifierList.getLastChild());
+            final PsiModifierList copy = (PsiModifierList)modifierList.copy();
+            for (String modifier : PsiModifier.MODIFIERS) {
+              if (modifierListOfReplacement.hasExplicitModifier(modifier)) {
+                copy.setModifierProperty(modifier, true);
+              }
+            }
+            final PsiElement anchor = copy.getFirstChild();
+            for (PsiAnnotation annotation : modifierListOfReplacement.getAnnotations()) {
+              copy.addBefore(annotation, anchor);
+            }
+            modifierListOfReplacement.replace(copy);
           }
         }
       }
@@ -347,7 +347,6 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         handleModifierList(el, replacement);
 
         if (replacement instanceof PsiClass) {
-          // modifier list
           final PsiStatement[] searchStatements = getCodeBlock().getStatements();
           if (searchStatements.length > 0 &&
               searchStatements[0] instanceof PsiDeclarationStatement &&
@@ -529,10 +528,6 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   private static PsiElement createSemicolon(final PsiElement space) throws IncorrectOperationException {
     final PsiStatement text = JavaPsiFacade.getInstance(space.getProject()).getElementFactory().createStatementFromText(";", null);
     return text.getFirstChild();
-  }
-
-  private static PsiElement createWhiteSpace(final PsiElement space) throws IncorrectOperationException {
-    return PsiParserFacade.SERVICE.getInstance(space.getProject()).createWhiteSpaceFromText(" ");
   }
 
   private static class ModifierListOwnerCollector extends JavaRecursiveElementWalkingVisitor {

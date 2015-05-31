@@ -1119,13 +1119,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s18_2 = "class $A$ { $Other$ }";
 
     actualResult = replacer.testReplace(s16,s17,s18,options);
-    String expectedResult6 = "public  class A { private Log log = LogFactory.createLog();  }\n" +
-                             "final  class B { private Log log = LogFactory.createLog();  }";
+    String expectedResult6 = "public class A { private Log log = LogFactory.createLog();  }\n" +
+                             "final class B { private Log log = LogFactory.createLog();  }";
     assertEquals("Modifier list for class",expectedResult6,actualResult);
 
     actualResult = replacer.testReplace(actualResult,s17_2,s18_2,options);
-    String expectedResult7 = "public   class A {  }\n" +
-                             "final   class B {  }";
+    String expectedResult7 = "public class A {  }\n" +
+                             "final class B {  }";
     assertEquals("Removing field",expectedResult7,actualResult);
 
     String s19 = "public class A extends Object implements Cloneable {}\n";
@@ -1133,7 +1133,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s21 = "class $A$ { private Log log = LogFactory.createLog(); $Other$ }";
 
     actualResult = replacer.testReplace(s19,s20,s21,options);
-    String expectedResult8 = "public  class A extends Object implements Cloneable { private Log log = LogFactory.createLog();  }\n";
+    String expectedResult8 = "public class A extends Object implements Cloneable { private Log log = LogFactory.createLog();  }\n";
     assertEquals("Extends / implements list for class",expectedResult8,actualResult);
 
     String s22 = "public class A<T> { int Afield; }\n";
@@ -1141,7 +1141,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s24 = "class $A$ { private Log log = LogFactory.createLog(); $Other$ }";
 
     actualResult = replacer.testReplace(s22,s23,s24,options);
-    String expectedResult9 = "public  class A<T> { private Log log = LogFactory.createLog(); int Afield; }\n";
+    String expectedResult9 = "public class A<T> { private Log log = LogFactory.createLog(); int Afield; }\n";
     assertEquals("Type parameters for the class",expectedResult9,actualResult);
 
     String s25 = "class A {\n" +
@@ -1152,7 +1152,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s27 = "Object a;";
     String expectedResult10 = "class A {\n" +
                               "  // comment before\n" +
-                              "  protected  Object a; //  comment after\n" +
+                              "  protected Object a; //  comment after\n" +
                               "}";
 
     actualResult = replacer.testReplace(s25,s26,s27,options);
@@ -1321,7 +1321,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "    void f(){}\n" +
                 "}";
 
-    String expectedResult = "public  class X {\n" +
+    String expectedResult = "public class X {\n" +
                             "    /**\n" +
                             "     * ppp\n" +
                             "     */\n" +
@@ -1370,11 +1370,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "   void f($t$ $p$){$s$;}\n" +
                 "}";
 
-    String expectedResult = "public  class X {\n" +
+    String expectedResult = "public class X {\n" +
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private  void f(int i ){//s\n" +
+                            "   private void f(int i ){//s\n" +
                             "}\n" +
                             "}";
 
@@ -1386,11 +1386,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
 
-    String expectedResult2 = "public  class X {\n" +
+    String expectedResult2 = "public class X {\n" +
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private  void f(int i ){int a = 1;\n" +
+                            "   private void f(int i ){int a = 1;\n" +
                             "       //s\n" +
                             "}\n" +
                             "}";
@@ -1438,7 +1438,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult = "/**\n" +
                             "* by: cdr\n" +
                             "*/\n" +
-                            "public  class CC {\n" +
+                            "public class CC {\n" +
                             "  /** My Comment */ int a = 3; // aaa\n" +
                             "// bbb\n" +
                             "   long c = 2;\n" +
@@ -1570,8 +1570,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testSavingAccessModifiersDuringClassReplacement() {
-    String actualResult;
-
     String s43 = "public @Deprecated class Foo implements Comparable<Foo> {\n  int x;\n  void m(){}\n }";
     String s44 = "class 'Class implements '_Interface { '_Content* }";
     String s45 = "@MyAnnotation\n" +
@@ -1580,12 +1578,24 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               "class Foo implements Comparable<Foo> {int x;\n" +
                               "void m(){}}";
 
-    actualResult = replacer.testReplace(s43,s44,s45,options, true);
+    String actualResult = replacer.testReplace(s43, s44, s45, options, true);
     assertEquals(
       "Preserving var modifiers and generic information in type during replacement",
       expectedResult16,
       actualResult
     );
+
+    String in1 = "public class A {" +
+                 "  public class B {}" +
+                 "}";
+    String what1 = "class '_A {" +
+                   "  class '_B {}" +
+                   "}";
+    String by1 = "class $A$ {" +
+                 "  private class $B$ {}" +
+                 "}";
+    String expected1 = "public class A {  private class B {}}";
+    assertEquals("No illegal modifier combinations during replacement", expected1, replacer.testReplace(in1, what1, by1, options));
   }
 
   public void testDontRequireSpecialVarsForUnmatchedContent() {
@@ -1818,7 +1828,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "    { data = ResourceHelper.readResource(s); }\n" +
                             "    mime = MIMEHelper.MIME_MAP[i][1][0];\n" +
                             "    break; }\n" +
-                            "catch(final  Throwable e) { continue; }\n" +
+                            "catch(final Throwable e) { continue; }\n" +
                             "}";
 
     actualResult = replacer.testReplace(code,toFind,replacement,options);
@@ -2193,7 +2203,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String source = "abstract class MyClass implements java.util.List {\n  private String a, b;\n}";
     String search = "class 'Name implements java.util.List {\n  '_ClassContent*\n}";
     String replace = "class $Name$ {\n  $ClassContent$\n}";
-    String expectedResult = "abstract  class MyClass {\n  private String a,b;\n}";
+    String expectedResult = "abstract class MyClass {\n  private String a,b;\n}";
 
     String actualResult = replacer.testReplace(source, search, replace, options, true);
 
@@ -2211,7 +2221,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String replace = "class $TestCase$ implements $others$ {\n    $MyClassContent$\n}";
     String expectedResult = "import java.io.Externalizable;\n" +
                             "import java.io.Serializable;\n" +
-                            "abstract  class MyClass implements Externalizable,Serializable {\n    \n}";
+                            "abstract class MyClass implements Externalizable,Serializable {\n    \n}";
 
     String actualResult = replacer.testReplace(source, search, replace, options, true);
     assertEquals(
