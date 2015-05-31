@@ -34,10 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -47,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNOT_EQUAL;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
 
 public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
@@ -306,8 +304,15 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
                                  @NotNull Arguments arguments,
                                  @Nullable DfaValue returnValue) {
     // evaluate arguments
-    //visitArguments(namedArguments, expressionArguments, closureArguments);
     arguments.runArguments();
+    final PsiElement element = result.getElement();
+    final boolean shouldApplyEquality = element instanceof PsiMethod
+                                        && GrDfaUtil.isEqualsCallOrIsCall((PsiMethod)element);
+    if (shouldApplyEquality) {
+      // qualifier, argument
+      myAnalyzer.addInstruction(new DupInstruction<V>(2, 1));
+      // qualifier, argument, qualifier, argument
+    }
     myAnalyzer.exceptionHelper.addConditionalRuntimeThrow();
     myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(
       highlight,
@@ -318,9 +323,8 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       returnValue
     ));
     myAnalyzer.expressionHelper.processDelayed();
-    final PsiElement resultElement = result.getElement();
-    final List<MethodContract> contracts = resultElement instanceof PsiMethod
-                                           ? ControlFlowAnalyzer.getMethodCallContracts((PsiMethod)resultElement, null)
+    final List<MethodContract> contracts = element instanceof PsiMethod
+                                           ? ControlFlowAnalyzer.getMethodCallContracts((PsiMethod)element, null)
                                            : Collections.<MethodContract>emptyList();
     if (!contracts.isEmpty()) {
       // if a contract resulted in 'fail', handle it
@@ -331,9 +335,18 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.exceptionHelper.returnCheckingFinally(true, highlight);
       ifNotFail.setOffset(myAnalyzer.flow.getInstructionCount());
     }
-
-    if (!myAnalyzer.exceptionHelper.catchStack.isEmpty()) {
-      myAnalyzer.exceptionHelper.addMethodThrows((PsiMethod)result.getElement(), highlight);
+    if (element instanceof PsiMethod && !myAnalyzer.exceptionHelper.catchStack.isEmpty()) {
+      myAnalyzer.exceptionHelper.addMethodThrows((PsiMethod)element, highlight);
+    }
+    if (shouldApplyEquality) {  // we do not really care about return value
+      // qualifier, argument, returnValue
+      myAnalyzer.pop();
+      // qualifier, argument
+      myAnalyzer.addInstruction(new BinopInstruction<V>(
+        highlight instanceof GrBinaryExpression && ((GrBinaryExpression)highlight).getOperationTokenType() == mNOT_EQUAL
+        ? DfaRelation.NE
+        : DfaRelation.EQ, highlight
+      ));
     }
   }
 

@@ -11,13 +11,13 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.flow.GrDfaUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 
@@ -39,7 +39,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
 
   private final @Nullable Map<GrExpression, Pair<PsiParameter, PsiType>> argumentsToParameters;
   private final @Nullable DfaValue myPrecalculatedReturnValue;
-
+  private final boolean myRequiresNotNullQualifier;
 
   public GrMethodCallInstruction(@NotNull GrReferenceExpression propertyGetter,
                                  @NotNull PsiMethod property,
@@ -55,6 +55,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myShouldFlushFields = false;
     argumentsToParameters = null;
     myPrecalculatedReturnValue = precalculatedReturnValue;
+    myRequiresNotNullQualifier = true;
   }
 
   public GrMethodCallInstruction(@NotNull PsiElement call,
@@ -75,15 +76,10 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
       result, call, false, false, myNamedArguments, myExpressionArguments, myClosureArguments
     );
     myPrecalculatedReturnValue = precalculatedReturnValue;
+    myRequiresNotNullQualifier = myTargetMethod == null || GrDfaUtil.requiresNotNullQualifier(myTargetMethod);
   }
 
-  public GrMethodCallInstruction(@NotNull GrExpression call,
-                                 @NotNull GrExpression[] expressionArguments,
-                                 @NotNull GroovyResolveResult result) {
-    this(call, GrNamedArgument.EMPTY_ARRAY, expressionArguments, GrClosableBlock.EMPTY_ARRAY, result, null);
-  }
-
-  public GrMethodCallInstruction(@NotNull GrCallExpression call, @Nullable DfaValue precalculatedReturnValue) {
+  public GrMethodCallInstruction(@NotNull GrNewExpression call, @Nullable DfaValue precalculatedReturnValue) {
     final GroovyResolveResult result = call.advancedResolve();
 
     myCall = call;
@@ -94,12 +90,12 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myReturnType = call.getType();
     myTargetMethod = (PsiMethod)result.getElement();
 
-    myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
-                          && !isPureCall(myTargetMethod);
+    myShouldFlushFields = !(myReturnType != null && myReturnType.getArrayDimensions() > 0) && !isPureCall(myTargetMethod);
     argumentsToParameters = myTargetMethod instanceof GrAccessorMethod ? null : GrClosureSignatureUtil.mapArgumentsToParameters(
       result, call, false, false, call.getNamedArguments(), myExpressionArguments, myClosureArguments
     );
     myPrecalculatedReturnValue = precalculatedReturnValue;
+    myRequiresNotNullQualifier = false;
   }
 
   public Nullness getParameterNullability(GrExpression e) {
@@ -149,6 +145,10 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
   @Nullable
   public DfaValue getPrecalculatedReturnValue() {
     return myPrecalculatedReturnValue;
+  }
+
+  public boolean requiresNotNullQualifier() {
+    return myRequiresNotNullQualifier;
   }
 
   @Override

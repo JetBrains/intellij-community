@@ -149,7 +149,7 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   public DfaInstructionState<V>[] visitMethodCallGroovy(final GrMethodCallInstruction<V> instruction, final DfaMemoryState state) {
     final DfaValue[] argValues = myHelper.popAndCheckCallArguments(instruction, state);
     final DfaValue qualifier = state.pop();
-    if (!checkNotNullable(state, qualifier, callNPE, instruction.getCall())) {
+    if (instruction.requiresNotNullQualifier() && !checkNotNullable(state, qualifier, callNPE, instruction.getCall())) {
       forceNotNull(myRunner.getFactory(), state, qualifier);
     }
 
