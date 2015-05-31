@@ -29,8 +29,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -57,14 +55,6 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   private List<Future<?>> myStartedTasks;
 
   private List<String> myCommits;
-
-  public static Test suite() {
-    TestSuite suite = new TestSuite();
-    for (int i = 0; i < 1000; i++) {
-      suite.addTestSuite(VcsLogRefresherTest.class);
-    }
-    return suite;
-  }
 
   @Override
   public void setUp() throws Exception {
