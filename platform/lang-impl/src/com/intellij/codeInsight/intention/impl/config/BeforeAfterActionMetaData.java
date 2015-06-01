@@ -153,9 +153,6 @@ public abstract class BeforeAfterActionMetaData {
     if (myDescription == null) {
       try {
         final URL dirURL = getDirURL();
-        if (dirURL == null) {
-          return EMPTY_DESCRIPTION;
-        }
         URL descriptionURL = new URL(dirURL.toExternalForm() + "/" + DESCRIPTION_FILE_NAME);
         myDescription = new ResourceTextDescriptor(descriptionURL);
       }
