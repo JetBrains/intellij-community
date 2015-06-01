@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.errorhandling;
+package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
@@ -22,15 +22,27 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ExtendsThrowableInspectionTest extends LightInspectionTestCase {
+public class TestCaseWithConstructorInspectionTest extends LightInspectionTestCase {
 
-  public void testExtendsThrowable() {
-    doTest();
-  }
+  public void testJUnit4TestCaseWithConstructor() { doTest(); }
+  public void testTestCaseWithConstructorInspection1() { doTest(); }
+  public void testTestCaseWithConstructorInspection2() { doTest(); }
+  public void testTestCaseWithConstructorInspection3() { doTest(); }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ExtendsThrowableInspection();
+    return new TestCaseWithConstructorInspection();
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package org.junit; " +
+      "public @interface Test {\n" +
+      "    java.lang.Class<? extends java.lang.Throwable> expected() default org.junit.Test.None.class;" +
+      "}",
+      "package junit.framework;" +
+      "public abstract class TestCase {}"};
   }
 }

@@ -4,7 +4,7 @@ import junit.framework.TestCase;
 
 public class TestCaseWithConstructorInspection1 extends TestCase
 {
-    public TestCaseWithConstructorInspection1()
+    public <warning descr="Initialization logic in constructor 'TestCaseWithConstructorInspection1()' instead of 'setUp()'">TestCaseWithConstructorInspection1</warning>()
     {
         System.out.println("");
     }
