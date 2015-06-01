@@ -15,12 +15,17 @@
  */
 package com.intellij.diff;
 
+import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /*
  * Use ProgressManager.executeProcessUnderProgress() to pass modality state if needed
@@ -46,4 +51,12 @@ public abstract class DiffRequestFactory {
 
   @NotNull
   public abstract String getTitle(@NotNull VirtualFile file);
+
+  @Nullable
+  public abstract MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable String title,
+                                                  @NotNull List<String> contentTitles,
+                                                  @Nullable Consumer<MergeResult> applyCallback);
 }

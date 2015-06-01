@@ -404,11 +404,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     }
   }
 
-  @NotNull
-  public static DiffContent createTextContent(@NotNull byte[] bytes, @NotNull VirtualFile file) {
-    return DiffContentFactory.getInstance().create(CharsetToolkit.bytesToString(bytes, file.getCharset()), file.getFileType());
-  }
-
   public static void checkContentRevision(@Nullable Project project,
                                           @NotNull ContentRevision rev,
                                           @NotNull UserDataHolder context,
