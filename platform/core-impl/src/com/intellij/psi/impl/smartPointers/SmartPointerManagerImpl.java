@@ -231,7 +231,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return false;
     }
     PsiFile containingFile = pointer.getContainingFile();
-    if (containingFile == null) return false;
     synchronized (lock) {
       int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
       if (refCount == 0) {
@@ -240,12 +239,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           element.putUserData(CACHED_SMART_POINTER_KEY, null);
         }
 
+        SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
+        info.cleanup();
+
+        if (containingFile == null) return false;
         VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
         Set<PointerReference> pointers = getPointers(vFile);
         if (pointers == null) return false;
 
-        SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
-        info.cleanup();
 
         for (Iterator<PointerReference> iterator = pointers.iterator(); iterator.hasNext(); ) {
           if (pointer == iterator.next().get()) {
