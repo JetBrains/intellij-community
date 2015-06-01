@@ -177,7 +177,7 @@ public abstract class MvcFramework {
     String appDirName = getApplicationDirectoryName();
 
     for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-      if (root.findChild(appDirName) != null) return root;
+      if (root.isInLocalFileSystem() && root.findChild(appDirName) != null) return root;
     }
 
     return null;
