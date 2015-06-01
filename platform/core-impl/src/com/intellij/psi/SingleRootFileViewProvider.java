@@ -34,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
@@ -48,6 +47,7 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
@@ -71,7 +71,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
-  private final AtomicReference<Ref<PsiFile>> myPsiFile = Atomics.newReference();
+  private final AtomicReference<PsiFile> myPsiFile = Atomics.newReference();
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
@@ -171,19 +171,18 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (target != getBaseLanguage()) {
       return null;
     }
-    Ref<PsiFile> ref = myPsiFile.get();
-    if (ref == null) {
-      PsiFile psiFile = createFile();
-      ref = Ref.create(psiFile);
-      boolean set = myPsiFile.compareAndSet(null, ref);
+    PsiFile psiFile = myPsiFile.get();
+    if (psiFile == null) {
+      psiFile = createFile();
+      boolean set = myPsiFile.compareAndSet(null, psiFile);
       if (!set) {
         if (psiFile instanceof PsiFileImpl) {
           ((PsiFileImpl)psiFile).markInvalidated();
         }
-        ref = myPsiFile.get();
+        psiFile = myPsiFile.get();
       }
     }
-    return ref.get();
+    return psiFile == PsiUtilCore.NULL_PSI_FILE ? null : psiFile;
   }
 
   @Override
@@ -232,8 +231,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
 
   public PsiFile getCachedPsi(@NotNull Language target) {
-    Ref<PsiFile> ref = myPsiFile.get();
-    return ref == null ? null : ref.get();
+    PsiFile file = myPsiFile.get();
+    return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
   }
 
   @NotNull
@@ -466,9 +465,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void forceCachedPsi(@NotNull PsiFile psiFile) {
-    Ref<PsiFile> prevRef = myPsiFile.getAndSet(Ref.create(psiFile));
-    if (prevRef != null && prevRef.get() != psiFile && prevRef.get() instanceof PsiFileImpl) {
-      ((PsiFileImpl)prevRef.get()).markInvalidated();
+    PsiFile prev = myPsiFile.getAndSet(psiFile);
+    if (prev != null && prev != psiFile && prev instanceof PsiFileImpl) {
+      ((PsiFileImpl)prev).markInvalidated();
     }
     ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
   }

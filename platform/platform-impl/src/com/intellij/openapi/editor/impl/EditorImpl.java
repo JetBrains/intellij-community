@@ -1615,6 +1615,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return result + columnsToProcess;
   }
 
+  public int findNearestDirectionBoundary(int offset, boolean lookForward) {
+    return myUseNewRendering ? myView.findNearestDirectionBoundary(offset, lookForward) : -1;
+  }
+
   // TODO: tabbed text width is additive, it should be possible to have buckets, containing arguments / values to start with
   private final int[] myLastStartOffsets = new int[2];
   private final int[] myLastTargetColumns = new int[myLastStartOffsets.length];

@@ -221,7 +221,39 @@ class LineLayout {
     }
     return prevIsRtl;
   }
-  
+
+  int findNearestDirectionBoundary(int offset, boolean lookForward) {
+    if (lookForward) {
+      boolean foundOrigin = false;
+      boolean originIsRtl = false;
+      for (BidiRun run : myBidiRunsInLogicalOrder) {
+        if (foundOrigin) {
+          if (run.isRtl() != originIsRtl) return run.startOffset;
+        }
+        else if (run.endOffset > offset) {
+          foundOrigin = true;
+          originIsRtl = run.isRtl();
+        }
+      }
+      return originIsRtl ? myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset : -1;
+    }
+    else {
+      boolean foundOrigin = false;
+      boolean originIsRtl = false;
+      for (int i = myBidiRunsInLogicalOrder.length - 1; i >= 0; i--) {
+        BidiRun run = myBidiRunsInLogicalOrder[i];
+        if (foundOrigin) {
+          if (run.isRtl() != originIsRtl) return run.endOffset;
+        }
+        else if (run.startOffset < offset) {
+          foundOrigin = true;
+          originIsRtl = run.isRtl();
+        }
+      }
+      return originIsRtl ? 0 : -1;
+    }
+  }
+
   private static class BidiRun {
     private final byte level;
     private final int startOffset;

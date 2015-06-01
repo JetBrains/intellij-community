@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
@@ -65,7 +66,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   @Override
   @NotNull
   public String getText() {
-    return myText;
+    return StringUtil.notNullize(myText);
   }
 
   static void addActions(RangeHighlighterEx info,

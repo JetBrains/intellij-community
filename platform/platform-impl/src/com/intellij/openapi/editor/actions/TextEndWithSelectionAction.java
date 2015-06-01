@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class TextEndWithSelectionAction extends TextComponentEditorAction {
           caret = carets.get(0) == editor.getCaretModel().getPrimaryCaret() ? carets.get(carets.size() - 1) : carets.get(0);
         }
         LogicalPosition leadSelectionPosition = editor.visualToLogicalPosition(caret.getLeadSelectionPosition());
-        LogicalPosition targetPosition = editor.offsetToLogicalPosition(endOffset);
+        LogicalPosition targetPosition = editor.offsetToLogicalPosition(endOffset).leanForward(true);
         editor.getSelectionModel().setBlockSelection(leadSelectionPosition, targetPosition);
       }
       else {
@@ -54,7 +55,12 @@ public class TextEndWithSelectionAction extends TextComponentEditorAction {
           caret = carets.get(0);
         }
         int selectionStart = caret.getLeadSelectionOffset();
-        caret.moveToOffset(endOffset);
+        if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+          editor.getCaretModel().moveToLogicalPosition(editor.offsetToLogicalPosition(endOffset).leanForward(true));
+        }
+        else {
+          caret.moveToOffset(endOffset);
+        }
         caret.setSelection(selectionStart, endOffset);
       }
       ScrollingModel scrollingModel = editor.getScrollingModel();

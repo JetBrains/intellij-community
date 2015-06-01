@@ -18,42 +18,42 @@
        <psi.referenceContributor language="XML" implementation="com.theoryinpractice.testng.TestNGSuiteReferenceContributor"/>
       <library.dependencyScopeSuggester implementation="com.theoryinpractice.testng.configuration.TestNGDependencyScopeSuggester"/>
 
-      <localInspection language="JAVA" shortName="JUnitTestNG" displayName="Convert JUnit Tests to TestNG" groupName="TestNG" enabledByDefault="false"
+      <localInspection groupPath="Java" language="JAVA" shortName="JUnitTestNG" displayName="Convert JUnit Tests to TestNG" groupName="TestNG" enabledByDefault="false"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.JUnitConvertTool"/>
-      <localInspection language="JAVA" shortName="ConvertOldAnnotations" displayName="Convert old @Configuration TestNG annotations" groupName="TestNG"
+      <localInspection groupPath="Java" language="JAVA" shortName="ConvertOldAnnotations" displayName="Convert old @Configuration TestNG annotations" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertOldAnnotationInspection"/>
-      <localInspection language="JAVA" shortName="ConvertJavadoc" displayName="Convert TestNG Javadoc to 1.5 annotations" groupName="TestNG"
+      <localInspection groupPath="Java" language="JAVA" shortName="ConvertJavadoc" displayName="Convert TestNG Javadoc to 1.5 annotations" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertJavadocInspection"/>
-      <localInspection language="JAVA" shortName="ConvertAnnotations" displayName="Convert TestNG annotations to javadocs" groupName="TestNG"
+      <localInspection groupPath="Java" language="JAVA" shortName="ConvertAnnotations" displayName="Convert TestNG annotations to javadocs" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertAnnotationInspection"/>
-      <localInspection language="JAVA" shortName="dependsOnMethodTestNG" displayName="dependsOnMethods problem" groupName="TestNG" enabledByDefault="true"
+      <localInspection groupPath="Java" language="JAVA" shortName="dependsOnMethodTestNG" displayName="dependsOnMethods problem" groupName="TestNG" enabledByDefault="true"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.DependsOnMethodInspection"/>
-      <localInspection language="JAVA" shortName="groupsTestNG" displayName="Groups problem" groupName="TestNG" enabledByDefault="true" level="WARNING"
+      <localInspection groupPath="Java" language="JAVA" shortName="groupsTestNG" displayName="Groups problem" groupName="TestNG" enabledByDefault="true" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.DependsOnGroupsInspection"/>
-      <localInspection language="JAVA" shortName="UndeclaredTests" displayName="Undeclared test" groupName="TestNG" enabledByDefault="false" level="WARNING"
+      <localInspection groupPath="Java" language="JAVA" shortName="UndeclaredTests" displayName="Undeclared test" groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.UndeclaredTestInspection"/>
-      <localInspection language="JAVA" shortName="AssertEqualsBetweenInconvertibleTypesTestNG" displayName="'assertEquals()' between objects of inconvertible types"
+      <localInspection groupPath="Java" language="JAVA" shortName="AssertEqualsBetweenInconvertibleTypesTestNG" displayName="'assertEquals()' between objects of inconvertible types"
                        groupName="TestNG" enabledByDefault="true" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.AssertEqualsBetweenInconvertibleTypesTestNGInspection"/>
-      <localInspection language="JAVA" shortName="ExpectedExceptionNeverThrownTestNG" displayName="Expected exception never thrown in test method body"
+      <localInspection groupPath="Java" language="JAVA" shortName="ExpectedExceptionNeverThrownTestNG" displayName="Expected exception never thrown in test method body"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ExpectedExceptionNeverThrownTestNGInspection"/>
-      <localInspection language="JAVA" suppressId="MessageMissingOnTestNGAssertion" shortName="AssertsWithoutMessagesTestNG"
+      <localInspection groupPath="Java" language="JAVA" suppressId="MessageMissingOnTestNGAssertion" shortName="AssertsWithoutMessagesTestNG"
                        displayName="Message missing on TestNG assertion" groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.AssertsWithoutMessagesTestNGInspection"/>
-      <localInspection language="JAVA" shortName="MisorderedAssertEqualsArgumentsTestNG" displayName="Misordered 'assertEquals()' arguments"
+      <localInspection groupPath="Java" language="JAVA" shortName="MisorderedAssertEqualsArgumentsTestNG" displayName="Misordered 'assertEquals()' arguments"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.MisorderedAssertEqualsArgumentsTestNGInspection"/>
-      <localInspection language="JAVA" shortName="TestNGMethodNamingConvention" displayName="TestNG test method naming convention"
+      <localInspection groupPath="Java" language="JAVA" shortName="TestNGMethodNamingConvention" displayName="TestNG test method naming convention"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.TestNGMethodNamingConventionInspection"/>
-      <localInspection language="JAVA" shortName="DuplicatedDataProviderNames" displayName="Duplicated data provider names"
+      <localInspection groupPath="Java" language="JAVA" shortName="DuplicatedDataProviderNames" displayName="Duplicated data provider names"
                        groupName="TestNG" enabledByDefault="true" level="ERROR"
                        implementationClass="com.theoryinpractice.testng.inspection.DuplicatedDataProviderNamesInspection"/>
-      <localInspection language="JAVA" shortName="DataProviderReturnType" displayName="Invalid data provider return type"
+      <localInspection groupPath="Java" language="JAVA" shortName="DataProviderReturnType" displayName="Invalid data provider return type"
                        groupName="TestNG" enabledByDefault="true" level="ERROR"
                        implementationClass="com.theoryinpractice.testng.inspection.DataProviderReturnTypeInspection"/>
 

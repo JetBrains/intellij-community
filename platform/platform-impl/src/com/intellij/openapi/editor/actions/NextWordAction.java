@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,24 +24,8 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-
 public class NextWordAction extends TextComponentEditorAction {
   public NextWordAction() {
-    super(new Handler());
-  }
-
-  private static class Handler extends EditorActionHandler {
-    public Handler() {
-      super(true);
-    }
-
-    @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretToNextWord(editor, false, editor.getSettings().isCamelWords());
-    }
+    super(new NextPrevWordHandler(true, false, false));
   }
 }

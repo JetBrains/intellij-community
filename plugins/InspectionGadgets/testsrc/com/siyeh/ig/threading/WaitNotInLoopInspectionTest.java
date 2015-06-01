@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.siyeh.ig.threading;
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 13, 2002
- * Time: 9:58:23 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author Bas Leijdekkers
  */
-package com.intellij.openapi.editor.actions;
+public class WaitNotInLoopInspectionTest extends LightInspectionTestCase {
 
-import com.intellij.openapi.editor.actionSystem.EditorAction;
+  public void testWaitNotInLoop() {
+    doTest();
+  }
 
-public class MoveCaretLeftWithSelectionAction extends EditorAction {
-  public MoveCaretLeftWithSelectionAction() {
-    super(new MoveCaretLeftOrRightWithSelectionHandler(false));
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new WaitNotInLoopInspection();
   }
 }

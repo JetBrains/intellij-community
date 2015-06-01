@@ -50,10 +50,14 @@ public class CellRendererPanel extends JPanel {
   // BEGIN no validation methods --------------
   @Override
   public void doLayout() {
-    if (getComponentCount() != 1) return;
-    Rectangle bounds = new Rectangle(getWidth(), getHeight());
-    JBInsets.removeFrom(bounds, getInsets());
-    getComponent(0).setBounds(bounds);
+    if (getComponentCount() == 1) {
+      Rectangle bounds = new Rectangle(getWidth(), getHeight());
+      JBInsets.removeFrom(bounds, getInsets());
+      getComponent(0).setBounds(bounds);
+    }
+    else {
+      super.doLayout();
+    }
   }
 
   @Override

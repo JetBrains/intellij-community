@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ class ThreadingUtils {
     final PsiReferenceExpression methodExpression =
       expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"wait".equals(methodName)) {
+    if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
       return false;
     }
     final PsiMethod method = expression.resolveMethod();
@@ -63,7 +64,7 @@ class ThreadingUtils {
     final PsiReferenceExpression methodExpression =
       expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"notify".equals(methodName) && !"notifyAll".equals(methodName)) {
+    if (!HardcodedMethodConstants.NOTIFY.equals(methodName) && !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
       return false;
     }
     final PsiExpressionList argumentList = expression.getArgumentList();

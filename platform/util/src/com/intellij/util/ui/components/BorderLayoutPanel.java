@@ -34,7 +34,7 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   }
 
   public BorderLayoutPanel addToCenter(Component comp) {
-    add(comp);
+    add(comp, BorderLayout.CENTER);
     return this;
   }
 

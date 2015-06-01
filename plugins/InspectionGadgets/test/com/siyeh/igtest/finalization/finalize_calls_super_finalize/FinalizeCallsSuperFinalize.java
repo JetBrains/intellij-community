@@ -1,8 +1,8 @@
 package com.siyeh.igtest.finalization.finalize_calls_super_finalize;
 
-public class FinalizeDoesntCallSuperFinalizeInspection
+public class FinalizeCallsSuperFinalize
 {
-    public FinalizeDoesntCallSuperFinalizeInspection()
+    public FinalizeCallsSuperFinalize()
     {
     }
 
@@ -13,7 +13,7 @@ public class FinalizeDoesntCallSuperFinalizeInspection
 
     class X {
         @Override
-        protected void finalize() throws Throwable {
+        protected void <warning descr="'finalize()' does not call 'super.finalize()'">finalize</warning>() throws Throwable {
             System.out.println("");
         }
     }
