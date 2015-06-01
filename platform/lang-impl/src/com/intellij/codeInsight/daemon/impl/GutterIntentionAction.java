@@ -56,11 +56,14 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
-    myAction.update(event);
-    myText = event.getPresentation().getText();
-    if (myText == null) myText = myAction.getTemplatePresentation().getText();
-    return myText != null;
+    if (myText == null) {
+      AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
+      myAction.update(event);
+      myText = event.getPresentation().getText();
+      if (myText == null) myText = myAction.getTemplatePresentation().getText();
+      if (myText == null) myText = "";
+    }
+    return StringUtil.isNotEmpty(myText);
   }
 
   @Override
