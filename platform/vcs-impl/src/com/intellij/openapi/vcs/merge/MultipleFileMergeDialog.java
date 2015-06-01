@@ -18,12 +18,14 @@ package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffRequestFactory;
-import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.MergeWindow;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -64,6 +66,8 @@ import java.util.*;
  * @author yole
  */
 public class MultipleFileMergeDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(MultipleFileMergeDialog.class);
+
   private JPanel myRootPanel;
   private JButton myAcceptYoursButton;
   private JButton myAcceptTheirsButton;
@@ -287,6 +291,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   }
 
   private void showMergeDialog() {
+    DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
     for (final VirtualFile file : myTable.getSelection()) {
       final MergeData mergeData;
       try {
@@ -321,9 +326,17 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         }
       };
 
-      DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
-      MergeRequest request = requestFactory.createMergeRequest(myProject, file, byteContents, title, contentTitles, callback);
-      if (request == null) {
+      MergeRequest request;
+      try {
+        if (myProvider.isBinary(file)) { // respect MIME-types in svn
+          request = requestFactory.createBinaryMergeRequest(myProject, file, byteContents, title, contentTitles, callback);
+        }
+        else {
+          request = requestFactory.createMergeRequest(myProject, file, byteContents, title, contentTitles, callback);
+        }
+      }
+      catch (InvalidDiffRequestException e) {
+        LOG.error(e);
         Messages.showErrorDialog(myRootPanel, "Can't show merge dialog");
         break;
       }

@@ -17,7 +17,6 @@ package com.intellij.diff;
 
 import com.intellij.diff.contents.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -117,6 +116,13 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     });
     if (document == null) return null;
     return new FileDocumentContentImpl(project, document, file);
+  }
+
+  @Override
+  @Nullable
+  public FileContent createFile(@Nullable Project project, @NotNull VirtualFile file) {
+    if (file.isDirectory()) return null;
+    return (FileContent)create(project, file);
   }
 
   @Override
