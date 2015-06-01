@@ -192,13 +192,13 @@ public class TextMergeTool implements MergeTool {
       public MyThreesideViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
         super(context, request);
 
-        myPanel.setBottomPanel(createBottomPanel());
         myModifierProvider = new ModifierProvider();
       }
 
       @Override
       protected void onInit() {
         super.onInit();
+        myPanel.setBottomPanel(createBottomPanel());
         myModifierProvider.init();
       }
 
@@ -264,7 +264,7 @@ public class TextMergeTool implements MergeTool {
             myMergeRequest.applyResult(result);
             myMergeContext.closeDialog();
           }
-        });
+        }, myPanel);
       }
 
       //

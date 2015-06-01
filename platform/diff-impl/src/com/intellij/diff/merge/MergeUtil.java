@@ -18,25 +18,29 @@ package com.intellij.diff.merge;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class MergeUtil {
   @NotNull
-  public static JComponent createAcceptActionsPanel(@NotNull AcceptActionProcessor processor) {
+  public static JComponent createAcceptActionsPanel(@NotNull AcceptActionProcessor processor, @Nullable JComponent component) {
     Action left = SimpleAcceptAction.create(MergeResult.LEFT, processor);
     Action right = SimpleAcceptAction.create(MergeResult.RIGHT, processor);
     Action apply = SimpleAcceptAction.create(MergeResult.RESOLVED, processor);
     Action cancel = SimpleAcceptAction.create(MergeResult.CANCEL, processor);
-    return createAcceptActionsPanel(left, right, apply, cancel);
+    if (apply != null) apply.putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
+    return createAcceptActionsPanel(left, right, apply, cancel, component);
   }
 
   public static abstract class AcceptActionProcessor {
@@ -76,7 +80,8 @@ public class MergeUtil {
   public static JComponent createAcceptActionsPanel(@Nullable Action acceptLeft,
                                                     @Nullable Action acceptRight,
                                                     @Nullable Action apply,
-                                                    @Nullable Action cancel) {
+                                                    @Nullable Action cancel,
+                                                    @Nullable JComponent component) {
     JPanel panel = new JPanel();
     BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.X_AXIS);
     panel.setLayout(boxLayout);
@@ -88,23 +93,27 @@ public class MergeUtil {
 
 
     for (Action action : leftActions) {
-      if (action != null) panel.add(createActionButton(action));
+      if (action != null) panel.add(createActionButton(action, component));
     }
 
     panel.add(Box.createGlue());
 
     for (Action action : rightActions) {
-      if (action != null) panel.add(createActionButton(action));
+      if (action != null) panel.add(createActionButton(action, component));
     }
 
     return panel;
   }
 
   @NotNull
-  public static JComponent createActionButton(@NotNull Action action) {
+  public static JButton createActionButton(@NotNull Action action, @Nullable JComponent component) {
     JButton button = new JButton(action);
     if (SystemInfo.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
+    }
+    if (action.getValue(DialogWrapper.DEFAULT_ACTION) == Boolean.TRUE) {
+      Window window = component != null ? UIUtil.getWindow(component) : null;
+      if (window instanceof RootPaneContainer) ((RootPaneContainer)window).getRootPane().setDefaultButton(button);
     }
     return button;
   }

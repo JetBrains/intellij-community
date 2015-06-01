@@ -144,6 +144,11 @@ public class BinaryMergeTool implements MergeTool {
     private class MyThreesideViewer extends ThreesideBinaryDiffViewer {
       public MyThreesideViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
         super(context, request);
+      }
+
+      @Override
+      protected void onInit() {
+        super.onInit();
         myPanel.setBottomPanel(createBottomButtons());
       }
 
@@ -166,7 +171,7 @@ public class BinaryMergeTool implements MergeTool {
             myMergeRequest.applyResult(result);
             myMergeContext.closeDialog();
           }
-        });
+        }, myPanel);
       }
 
       @Override
