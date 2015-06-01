@@ -48,7 +48,6 @@ public class ErrorMergeTool implements MergeTool {
 
       myPanel = new JPanel(new BorderLayout());
       myPanel.add(createComponent(), BorderLayout.CENTER);
-      myPanel.add(createBottomButtons(), BorderLayout.SOUTH);
     }
 
     @NotNull
@@ -79,7 +78,7 @@ public class ErrorMergeTool implements MergeTool {
           if (myMergeRequest instanceof ThreesideMergeRequest) ((ThreesideMergeRequest)myMergeRequest).applyResult(result);
           myMergeContext.closeDialog();
         }
-      });
+      }, myPanel);
     }
 
     @NotNull
@@ -97,6 +96,7 @@ public class ErrorMergeTool implements MergeTool {
     @NotNull
     @Override
     public ToolbarComponents init() {
+      myPanel.add(createBottomButtons(), BorderLayout.SOUTH);
       return new ToolbarComponents();
     }
 
