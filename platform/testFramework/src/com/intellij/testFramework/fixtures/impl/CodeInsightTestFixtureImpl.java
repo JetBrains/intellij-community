@@ -689,7 +689,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     if (element == null) {
       Assert.fail("element not found in file " + myFile.getName() +
-                  " at caret position, offset " + myEditor.getCaretModel().getOffset() + "\"" +
+                  " at caret position, offset " + myEditor.getCaretModel().getOffset() +
                   " psi structure: " + DebugUtil.psiToString(getFile(), true, true));
     }
     return element;
