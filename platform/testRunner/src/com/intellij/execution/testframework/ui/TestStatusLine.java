@@ -54,6 +54,7 @@ public class TestStatusLine extends JPanel {
                                 final long startTime,
                                 final long endTime) {
     myState.clear();
+    if (testsTotal == 0) return;
     if (endTime == 0) {
       myState.append(finishedTestsCount + " of " + testsTotal + " tests" + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
