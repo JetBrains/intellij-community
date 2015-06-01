@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.PsiMethod;
@@ -69,7 +68,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || !TestUtils.isJUnitTestClass(aClass) || AnnotationUtil.isAnnotated(aClass, "org.junit.runner.RunWith", true)) {
+      if (!TestUtils.isJUnitTestClass(aClass) && !TestUtils.isJUnit4TestClass(aClass, false)) {
         return;
       }
       if (MethodUtils.isTrivial(method, false)) {
@@ -84,7 +83,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = initializer.getContainingClass();
-      if (!TestUtils.isJUnitTestClass(aClass)) {
+      if (!TestUtils.isJUnitTestClass(aClass) && !TestUtils.isJUnit4TestClass(aClass, true)) {
         return;
       }
       if (MethodUtils.isTrivial(initializer)) {
