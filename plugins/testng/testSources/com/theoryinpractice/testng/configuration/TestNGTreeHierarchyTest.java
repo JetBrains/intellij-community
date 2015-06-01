@@ -121,7 +121,7 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
-                                          "##teamcity[testFailed name='testName' details='java.lang.Exception|r|n' error='true' message='']\n" +
+                                          "##teamcity[testFailed name='testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='testName']\n" +
                                           "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
@@ -265,7 +265,12 @@ public class TestNGTreeHierarchyTest {
         public void write(int b) throws IOException {
           buf.append(new String(new byte[]{(byte)b}));
         }
-      }));
+      })) {
+      @Override
+      protected String getTrace(Throwable tr) {
+        return StringUtil.convertLineSeparators(super.getTrace(tr));
+      }
+    };
   }
 
   private static class MockTestNGResult implements IDEATestNGRemoteListener.ExposedTestResult {

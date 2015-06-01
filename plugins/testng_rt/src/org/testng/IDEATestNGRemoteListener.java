@@ -212,7 +212,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     return paramString.length() > 0 ? paramString : null;
   }
 
-  private static String getTrace(Throwable tr) {
+  protected String getTrace(Throwable tr) {
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);
     tr.printStackTrace(writer);
