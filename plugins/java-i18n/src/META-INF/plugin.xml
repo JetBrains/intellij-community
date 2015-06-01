@@ -55,7 +55,7 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.capitalization.TitleCapitalizationInspection"/>
     <localInspection language="Properties" shortName="SuspiciousLocalesLanguages"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files"
                      displayName="Suspicious resource bundle locale languages"
                      enabledByDefault="false"
                      level="WARNING"
