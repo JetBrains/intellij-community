@@ -21,8 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
-
 public class TestTreeExpander implements TreeExpander {
   private TestFrameworkRunningModel myModel;
 
@@ -36,9 +34,7 @@ public class TestTreeExpander implements TreeExpander {
   }
 
   public void expandAll() {
-    final JTree treeView = myModel.getTreeView();
-    for (int i = 0; i < treeView.getRowCount(); i++)
-      treeView.expandRow(i);
+    myModel.getTreeBuilder().expandAll(null);
   }
 
   public boolean canExpand() {
