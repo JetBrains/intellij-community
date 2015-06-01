@@ -168,11 +168,10 @@ public class IdeaApplication {
     try {
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       app.load(PathManager.getOptionsPath());
+      myLoaded = true;
 
       myStarter.main(myArgs);
       myStarter = null; //GC it
-
-      myLoaded = true;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
