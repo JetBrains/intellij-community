@@ -28,7 +28,7 @@
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlinePropertyHandler"/>
 
-    <localInspection shortName="HardCodedStringLiteral" alternativeId="nls" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
+    <localInspection groupPath="Java" shortName="HardCodedStringLiteral" alternativeId="nls" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
     <localInspection groupPath="Java"  language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
