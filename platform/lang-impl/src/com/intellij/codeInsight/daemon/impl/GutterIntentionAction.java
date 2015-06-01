@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   private final AnAction myAction;
   private String myText;
 
-  public GutterIntentionAction(AnAction action) {
+  private GutterIntentionAction(AnAction action) {
     myAction = action;
   }
 
@@ -99,6 +100,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     final IntentionAction actionAdapter = new GutterIntentionAction(action);
     Icon icon = action.getTemplatePresentation().getIcon();
     if (icon == null) icon = renderer.getIcon();
+    if (icon.getIconWidth() < 16) icon = IconUtil.toSize(icon, 16, 16);
     HighlightInfo.IntentionActionDescriptor descriptor =
       new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), null, icon) {
         @Nullable

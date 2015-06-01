@@ -164,5 +164,6 @@ public abstract class BeforeAfterActionMetaData {
     return myDescription;
   }
 
+  @NotNull
   protected abstract URL getDirURL();
 }
