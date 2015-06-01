@@ -158,18 +158,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         }
         assert newBound.isValid() : newBound.getClass() + "; " + bound.isValid();
         if (newBound instanceof PsiWildcardType) {
-          return handleBoundComposition(wildcardType, (PsiWildcardType)newBound);
+          final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
+          return !((PsiWildcardType)newBound).isBounded() ? PsiWildcardType.createUnbounded(wildcardType.getManager())
+                                                          : rebound(wildcardType, newBoundBound);
         }
         if (newBound instanceof PsiCapturedWildcardType) {
           final PsiWildcardType wildcard = ((PsiCapturedWildcardType)newBound).getWildcard();
           if (wildcardType.isExtends() != wildcard.isExtends()) {
-            if (wildcard.isBounded()) {
-              return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBound)
-                                              : PsiWildcardType.createSuper(wildcardType.getManager(), newBound);
-            }
-            else {
-              return newBound;
-            }
+            return !wildcard.isBounded() ? newBound : rebound(wildcardType, newBound);
           }
           if (wildcard.isBounded()) {
             return newBound;
@@ -178,22 +174,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
         return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);
       }
-    }
-
-    private PsiType handleBoundComposition(PsiWildcardType wildcardType, PsiWildcardType bound) {
-      final PsiType newBoundBound = bound.getBound();
-      if (bound.isExtends() == wildcardType.isExtends()) {
-        if (newBoundBound != null) {
-          return rebound(wildcardType, newBoundBound);
-        }
-      }
-
-      if (newBoundBound != null) {
-        return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBoundBound)
-                                        : PsiWildcardType.createSuper(wildcardType.getManager(), newBoundBound);
-      }
-
-      return PsiWildcardType.createUnbounded(wildcardType.getManager());
     }
 
     private PsiWildcardType rebound(PsiWildcardType type, PsiType newBound) {
@@ -257,7 +237,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         } else {
           PsiType substituted = substituteInternal(original);
           if (original instanceof PsiWildcardType && substituted instanceof PsiCapturedWildcardType) {
-            final PsiCapturedWildcardType capturedWildcardType = PsiCapturedWildcardType.create(((PsiCapturedWildcardType)substituted).getWildcard(), 
+            final PsiCapturedWildcardType capturedWildcardType = PsiCapturedWildcardType.create(((PsiCapturedWildcardType)substituted).getWildcard(),
                                                                                                 ((PsiCapturedWildcardType)substituted).getContext(), param);
             capturedWildcardType.setUpperBound(((PsiCapturedWildcardType)substituted).getUpperBound());
             substituted = capturedWildcardType;

@@ -312,7 +312,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                   hostDocument.getLineEndOffset(line), new Processor<RangeHighlighterEx>() {
         @Override
         public boolean process(RangeHighlighterEx highlighter) {
-          GutterIntentionAction.addActions(highlighter, (EditorEx)hostEditor, intentions.guttersToShow);
+          GutterIntentionAction.addActions(highlighter, intentions.guttersToShow);
           return true;
         }
       });

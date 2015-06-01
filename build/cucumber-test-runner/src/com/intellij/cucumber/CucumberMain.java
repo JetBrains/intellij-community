@@ -17,7 +17,6 @@ package com.intellij.cucumber;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
 import cucumber.io.MultiLoader;
 import cucumber.runtime.Runtime;
@@ -36,7 +35,6 @@ public class CucumberMain {
     final Ref<Throwable> errorRef = new Ref<Throwable>();
     final Ref<Runtime> runtimeRef = new Ref<Runtime>();
     try {
-      UsefulTestCase.replaceIdeEventQueueSafely();
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
