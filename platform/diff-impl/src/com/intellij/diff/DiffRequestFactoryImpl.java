@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -272,6 +273,17 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     catch (IOException e) {
       throw new InvalidDiffRequestException("Can't read from file", e);
     }
+  }
+
+  @NotNull
+  @Override
+  public MergeRequest createMergeRequestFromFiles(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<VirtualFile> fileContents,
+                                                  @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException {
+    String title = "Merge " + output.getPresentableUrl();
+    List<String> titles = ContainerUtil.list("Your Version", "Base Version", "Their Version");
+    return createMergeRequestFromFiles(project, output, fileContents, title, titles, applyCallback);
   }
 
   @NotNull

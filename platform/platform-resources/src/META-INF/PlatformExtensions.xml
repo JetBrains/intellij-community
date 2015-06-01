@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
-    <appStarter implementation="com.intellij.openapi.diff.MergeApplication"/>
+    <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
 
