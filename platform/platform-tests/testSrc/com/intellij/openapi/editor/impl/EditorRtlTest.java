@@ -406,6 +406,26 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkSelection(1, 2);
   }
   
+  public void testTextStartEnd() throws Exception {
+    init("rr");
+    myEditor.getCaretModel().moveToOffset(1);
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_START);
+    assertVisualCaretLocation(0, false);
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+    assertVisualCaretLocation(2, false);
+  }
+  
+  public void testTextStartEndWithSelection() throws Exception {
+    init("rr");
+    myEditor.getCaretModel().moveToOffset(1);
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_START_WITH_SELECTION);
+    assertVisualCaretLocation(0, false);
+    checkSelection(0, 1);
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
+    assertVisualCaretLocation(2, false);
+    checkSelection(1, 2);
+  }
+  
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
   }

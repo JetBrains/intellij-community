@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 
@@ -38,7 +39,12 @@ public class TextEndAction extends TextComponentEditorAction {
     public void execute(Editor editor, DataContext dataContext) {
       editor.getCaretModel().removeSecondaryCarets();
       int offset = editor.getDocument().getTextLength();
-      editor.getCaretModel().moveToOffset(offset);
+      if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+        editor.getCaretModel().moveToLogicalPosition(editor.offsetToLogicalPosition(offset).leanForward(true));
+      }
+      else {
+        editor.getCaretModel().moveToOffset(offset);
+      }
       editor.getSelectionModel().removeSelection();
 
       ScrollingModel scrollingModel = editor.getScrollingModel();
