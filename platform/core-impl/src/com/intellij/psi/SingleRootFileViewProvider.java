@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.google.common.util.concurrent.Atomics;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
@@ -69,7 +71,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
-  private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
+  private final AtomicReference<Ref<PsiFile>> myPsiFile = Atomics.newReference();
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
@@ -169,18 +171,19 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (target != getBaseLanguage()) {
       return null;
     }
-    PsiFile psiFile = myPsiFile.get();
-    if (psiFile == null) {
-      psiFile = createFile();
-      boolean set = myPsiFile.compareAndSet(null, psiFile);
+    Ref<PsiFile> ref = myPsiFile.get();
+    if (ref == null) {
+      PsiFile psiFile = createFile();
+      ref = Ref.create(psiFile);
+      boolean set = myPsiFile.compareAndSet(null, ref);
       if (!set) {
         if (psiFile instanceof PsiFileImpl) {
           ((PsiFileImpl)psiFile).markInvalidated();
         }
-        psiFile = myPsiFile.get();
+        ref = myPsiFile.get();
       }
     }
-    return psiFile;
+    return ref.get();
   }
 
   @Override
@@ -229,12 +232,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
 
   public PsiFile getCachedPsi(@NotNull Language target) {
-    return myPsiFile.get();
+    Ref<PsiFile> ref = myPsiFile.get();
+    return ref == null ? null : ref.get();
   }
 
   @NotNull
   public FileElement[] getKnownTreeRoots() {
-    PsiFile psiFile = myPsiFile.get();
+    PsiFile psiFile = getCachedPsi(myBaseLanguage);
     if (psiFile == null || !(psiFile instanceof PsiFileImpl)) return new FileElement[0];
     if (((PsiFileImpl)psiFile).getTreeElement() == null) return new FileElement[0];
     return new FileElement[]{(FileElement)psiFile.getNode()};
@@ -462,9 +466,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void forceCachedPsi(@NotNull PsiFile psiFile) {
-    PsiFile prev = myPsiFile.getAndSet(psiFile);
-    if (prev != psiFile && prev instanceof PsiFileImpl) {
-      ((PsiFileImpl)prev).markInvalidated();
+    Ref<PsiFile> prevRef = myPsiFile.getAndSet(Ref.create(psiFile));
+    if (prevRef != null && prevRef.get() != psiFile && prevRef.get() instanceof PsiFileImpl) {
+      ((PsiFileImpl)prevRef.get()).markInvalidated();
     }
     ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
   }
@@ -496,7 +500,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void markInvalidated() {
-    PsiFile psiFile = myPsiFile.get();
+    PsiFile psiFile = getCachedPsi(myBaseLanguage);
     if (psiFile instanceof PsiFileImpl) {
       ((PsiFileImpl)psiFile).markInvalidated();
     }
