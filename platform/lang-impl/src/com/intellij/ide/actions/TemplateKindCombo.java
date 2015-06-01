@@ -16,9 +16,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -87,7 +87,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   }
 
   public void registerUpDownHint(JComponent component) {
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (e.getInputEvent() instanceof KeyEvent) {
