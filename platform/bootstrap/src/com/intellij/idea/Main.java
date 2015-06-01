@@ -51,6 +51,7 @@ public class Main {
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
+  private static boolean hasGraphics = true;
 
   private Main() { }
 
@@ -65,11 +66,11 @@ public class Main {
     if (isHeadless()) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    else if (GraphicsEnvironment.isHeadless()) {
-      showMessage("Startup Error", "Unable to detect graphics environment", true);
+    else if (!checkGraphics()) {
       System.exit(NO_GRAPHICS);
     }
-    else if (args.length == 0) {
+
+    if (args.length == 0) {
       try {
         installPatch();
       }
@@ -120,6 +121,24 @@ public class Main {
   private static boolean isCommandLine(String[] args) {
     if (isHeadless()) return true;
     return args.length > 0 && Comparing.strEqual(args[0], "diff");
+  }
+
+  private static boolean checkGraphics() {
+    if (GraphicsEnvironment.isHeadless()) {
+      showMessage("Startup Error", "Unable to detect graphics environment", true);
+      return false;
+    }
+
+    try {
+      Toolkit.getDefaultToolkit();
+    }
+    catch (Throwable t) {
+      hasGraphics = false;
+      showMessage("Startup Error", t);
+      return false;
+    }
+
+    return true;
   }
 
   public static boolean isUITraverser(final String[] args) {
@@ -222,7 +241,7 @@ public class Main {
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);
 
-    boolean headless = isCommandLine() || GraphicsEnvironment.isHeadless();
+    boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
     if (!headless) {
       try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
       catch (Throwable ignore) { }
