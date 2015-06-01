@@ -16,6 +16,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -27,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -116,6 +118,14 @@ class TestDirectory extends TestPackage {
       throw new CantRunException("Package not found in directory");
     }
     return aPackage;
+  }
+
+  @Override
+  public String suggestActionName() {
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    final String dirName = data.getDirName();
+    return dirName.isEmpty() ? ExecutionBundle.message("all.tests.scope.presentable.text") 
+                             : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(dirName, '/'));
   }
 
   @Override
