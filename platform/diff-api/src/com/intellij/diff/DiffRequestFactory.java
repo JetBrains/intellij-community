@@ -103,6 +103,12 @@ public abstract class DiffRequestFactory {
   public abstract MergeRequest createMergeRequestFromFiles(@Nullable Project project,
                                                            @NotNull VirtualFile output,
                                                            @NotNull List<VirtualFile> contents,
+                                                           @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
+
+  @NotNull
+  public abstract MergeRequest createMergeRequestFromFiles(@Nullable Project project,
+                                                           @NotNull VirtualFile output,
+                                                           @NotNull List<VirtualFile> contents,
                                                            @Nullable String title,
                                                            @NotNull List<String> contentTitles,
                                                            @Nullable Consumer<MergeResult> applyCallback) throws InvalidDiffRequestException;
