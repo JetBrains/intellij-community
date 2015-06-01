@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,9 +45,7 @@ public final class PooledThreadExecutor  {
         final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+seq.incrementAndGet()) {
           @Override
           public void interrupt() {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Interrupted worker, will remove from pool");
-            }
+            LOG.debug("Interrupted worker, will remove from pool");
             super.interrupt();
           }
 
@@ -56,16 +55,16 @@ public final class PooledThreadExecutor  {
               super.run();
             }
             catch (Throwable t) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Worker exits due to exception", t);
-              }
+              LOG.debug("Worker exits due to exception", t);
             }
-            myAliveThreads.decrementAndGet();
+            finally {
+              myAliveThreads.decrementAndGet();
+            }
           }
         };
         if (ApplicationInfoImpl.getShadowInstance().isEAP() && count > ourReasonableThreadPoolSize) {
-          LOG.info("Not enough pooled threads; dumping threads into a file");
-          PerformanceWatcher.getInstance().dumpThreads("newPooledThread/", true);
+          File file = PerformanceWatcher.getInstance().dumpThreads("newPooledThread/", true);
+          LOG.info("Not enough pooled threads; dumped threads into file '"+file.getPath()+"'");
         }
         thread.setPriority(Thread.NORM_PRIORITY - 1);
         return thread;
