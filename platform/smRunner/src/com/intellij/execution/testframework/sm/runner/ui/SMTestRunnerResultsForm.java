@@ -525,10 +525,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
-    myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
-                                                                      myTotalTestCount, myFinishedTestCount,
-                                                                      myFailedTestCount, myMentionedCategories,
-                                                                      launchedAndFinished));
+    if (!TestsPresentationUtil.hasNonDefaultCategories(myMentionedCategories)) {
+      myStatusLine.formatTestMessage(myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount, myStartTime, myEndTime);
+    }
+    else {
+      myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
+                                                                        myTotalTestCount, myFinishedTestCount,
+                                                                        myFailedTestCount, myMentionedCategories,
+                                                                        launchedAndFinished));
+    }
   }
 
   /**
