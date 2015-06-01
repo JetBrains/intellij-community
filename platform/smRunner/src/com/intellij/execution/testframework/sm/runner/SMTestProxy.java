@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -370,8 +371,10 @@ public class SMTestProxy extends AbstractTestProxy {
       case ERROR_INDEX:
       case IGNORED_INDEX:
       case SKIPPED_INDEX:
-      case TERMINATED_INDEX:  
-        return  TestsPresentationUtil.getDurationPresentation(this);
+      case TERMINATED_INDEX:
+      case RUNNING_INDEX:
+        final Long duration = getDuration();
+        return duration != null ? StringUtil.formatDuration(duration.longValue()) : null;
       default:
         return null;
     }
