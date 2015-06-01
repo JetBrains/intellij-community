@@ -56,13 +56,13 @@ public class TestStatusLine extends JPanel {
     myState.clear();
     if (testsTotal == 0) return;
     if (endTime == 0) {
-      myState.append(finishedTestsCount + " of " + testsTotal + " tests" + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
+      myState.append(finishedTestsCount + " of " + getTestsTotalMessage(testsTotal) + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
       return;
     }
     String result = "";
     if (finishedTestsCount == testsTotal) {
-      if (failuresCount == 0 && ignoredTestsCount == 0 || failuresCount == testsTotal || ignoredTestsCount == testsTotal) {
+      if (testsTotal > 1 && (failuresCount == 0 && ignoredTestsCount == 0 || failuresCount == testsTotal || ignoredTestsCount == testsTotal)) {
         result = "All ";
       }
     }
@@ -70,22 +70,26 @@ public class TestStatusLine extends JPanel {
       result = "Stopped. " + finishedTestsCount + " of ";
     }
 
-    result += testsTotal + " tests ";
+    result += getTestsTotalMessage(testsTotal);
 
     if (failuresCount == 0 && ignoredTestsCount == 0) {
-      myState.append(result + "passed");
+      myState.append(result + " passed");
     }
     else if (failuresCount == finishedTestsCount) {
-      myState.append(result + "failed", ERROR_ATTRIBUTES);
+      myState.append(result + " failed", ERROR_ATTRIBUTES);
     }
     else if (ignoredTestsCount == finishedTestsCount) {
-      myState.append(result + "ignored", IGNORE_ATTRIBUTES);
+      myState.append(result + " ignored", IGNORE_ATTRIBUTES);
     }
     else {
-      myState.append(result + "done: ");
+      myState.append(result + " done: ");
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
     }
     myState.append(" - " + StringUtil.formatDuration(endTime - startTime), SimpleTextAttributes.GRAY_ATTRIBUTES);
+  }
+
+  private static String getTestsTotalMessage(int testsTotal) {
+    return testsTotal + " test" + (testsTotal > 1 ? "s" : "");
   }
 
   private void appendFailuresAndIgnores(int failuresCount, int ignoredTestsCount) {
