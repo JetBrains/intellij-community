@@ -249,6 +249,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       @Override
       public void run() {
         myTestsRunning = false;
+        final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
+        if (sortByDuration) {
+          myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
+        }
       }
     });
 
