@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -69,60 +68,10 @@ public class SynchronizeOnThisInspection extends BaseInspection {
           !(qualifier instanceof PsiThisExpression)) {
         return;
       }
-      if (!isNotify(expression) && !isWait(expression)) {
+      if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression) && !ThreadingUtils.isWaitCall(expression)) {
         return;
       }
       registerMethodCallError(expression);
-    }
-
-    private static boolean isWait(PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-
-      if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
-        return false;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      final int numParams = parameterList.getParametersCount();
-      if (numParams > 2) {
-        return false;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      if (numParams > 0) {
-        final PsiType parameterType = parameters[0].getType();
-        if (!parameterType.equals(PsiType.LONG)) {
-          return false;
-        }
-      }
-
-      if (numParams > 1) {
-        final PsiType parameterType = parameters[1].getType();
-        if (!parameterType.equals(PsiType.INT)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    private static boolean isNotify(PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
-          !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
-        return false;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      return parameterList.getParametersCount() == 0;
     }
   }
 }
