@@ -836,7 +836,7 @@ binding.setVariable("bundledJDKs"){
   }
 }
 
-String getPathToBundledJDK ( File jdkDir, String prefix, String ext){
+binding.setVariable("getPathToBundledJDK", { File jdkDir, String prefix, String ext ->
   def JdkFileName = ""
   getChildren(jdkDir).each {
     if (it.getName().startsWith(prefix) && it.getName().endsWith(ext)) {
@@ -851,7 +851,7 @@ String getPathToBundledJDK ( File jdkDir, String prefix, String ext){
     }
   }
   return JdkFileName.replace('\\', '/')
-}
+})
 
 binding.setVariable("buildWinZip", { String zipPath, List paths ->
   projectBuilder.stage(".win.zip")
