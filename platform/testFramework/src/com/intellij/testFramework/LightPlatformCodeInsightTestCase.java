@@ -534,6 +534,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
   }
 
+  protected static void previousWord() {
+    executeAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+  }
+
+  protected static void nextWord() {
+    executeAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
+  }
+
   protected static void cutLineBackward() {
     executeAction("EditorCutLineBackward");
   }

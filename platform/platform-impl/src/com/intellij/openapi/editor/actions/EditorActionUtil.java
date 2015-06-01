@@ -664,6 +664,12 @@ public class EditorActionUtil {
         newOffset = foldRegion.getStartOffset();
       }
     }
+    if (editor instanceof EditorImpl) {
+      int boundaryOffset = ((EditorImpl)editor).findNearestDirectionBoundary(offset, true);
+      if (boundaryOffset >= 0) {
+        newOffset = Math.min(boundaryOffset, newOffset);
+      }
+    }
     caretModel.moveToOffset(newOffset);
     EditorModificationUtil.scrollToCaret(editor);
 
@@ -746,7 +752,16 @@ public class EditorActionUtil {
       }
     }
 
-    editor.getCaretModel().moveToOffset(newOffset);
+    if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+      int boundaryOffset = ((EditorImpl)editor).findNearestDirectionBoundary(offset, false);
+      if (boundaryOffset >= 0) {
+        newOffset = Math.max(boundaryOffset, newOffset);
+      }
+      caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(newOffset).leanForward(true));
+    }
+    else {
+      editor.getCaretModel().moveToOffset(newOffset);
+    }
     EditorModificationUtil.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);

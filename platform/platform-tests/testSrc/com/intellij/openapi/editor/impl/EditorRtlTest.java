@@ -321,10 +321,79 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertEquals(0, myEditor.getSelectionModel().getSelectionStart());
     assertEquals(2, myEditor.getSelectionModel().getSelectionEnd());
   }
+  
+  public void testNextPrevWord() throws Exception {
+    init("ll rr rr ll");
+    nextWord();
+    assertVisualCaretLocation(3, false);
+    nextWord();
+    assertVisualCaretLocation(3, true);
+    nextWord();
+    assertVisualCaretLocation(5, true);
+    nextWord();
+    assertVisualCaretLocation(8, true);
+    nextWord();
+    assertVisualCaretLocation(8, false);
+    nextWord();
+    assertVisualCaretLocation(9, false);
+    nextWord();
+    assertVisualCaretLocation(11, false);
+    previousWord();
+    assertVisualCaretLocation(9, false);
+    previousWord();
+    assertVisualCaretLocation(8, false);
+    previousWord();
+    assertVisualCaretLocation(8, true);
+    previousWord();
+    assertVisualCaretLocation(5, true);
+    previousWord();
+    assertVisualCaretLocation(3, true);
+    previousWord();
+    assertVisualCaretLocation(3, false);
+    previousWord();
+    assertVisualCaretLocation(0, false);
+  }
 
+  public void testNextPrevWordWithSelection() throws Exception {
+    init("ll rr rr ll");
+    moveCaretToNextWordWithSelection();
+    checkSelection(0, 3);
+    moveCaretToNextWordWithSelection();
+    checkSelection(0, 8);
+    moveCaretToNextWordWithSelection();
+    checkSelection(0, 6);
+    moveCaretToNextWordWithSelection();
+    checkSelection(0, 3);
+    moveCaretToNextWordWithSelection();
+    checkSelection(0, 8);
+    moveCaretToNextWordWithSelection();
+    checkSelection(0, 9);
+    moveCaretToNextWordWithSelection();
+    checkSelection(0, 11);
+    moveCaretToPreviousWordWithSelection();
+    checkSelection(0, 9);
+    moveCaretToPreviousWordWithSelection();
+    checkSelection(0, 8);
+    moveCaretToPreviousWordWithSelection();
+    checkSelection(0, 3);
+    moveCaretToPreviousWordWithSelection();
+    checkSelection(0, 6);
+    moveCaretToPreviousWordWithSelection();
+    checkSelection(0, 8);
+    moveCaretToPreviousWordWithSelection();
+    checkSelection(0, 3);
+    moveCaretToPreviousWordWithSelection();
+    checkSelection(0, 0);
+  }
+  
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
   }
+  
+  private static void checkSelection(int selectionStartOffset, int selectionEndOffset) {
+    assertEquals("Wrong selection start offset", selectionStartOffset, myEditor.getSelectionModel().getSelectionStart());
+    assertEquals("Wrong selection end offset", selectionEndOffset, myEditor.getSelectionModel().getSelectionEnd());
+  } 
 
   private static void checkOffsetConversions(int offset,
                                              LogicalPosition logicalPosition,
