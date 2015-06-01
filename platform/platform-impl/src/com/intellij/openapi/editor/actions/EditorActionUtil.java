@@ -568,7 +568,7 @@ public class EditorActionUtil {
     }
     VisualPosition currentVisualCaret = editor.getCaretModel().getVisualPosition();
     VisualPosition visualEndOfLineWithCaret
-      = new VisualPosition(currentVisualCaret.line, EditorUtil.getLastVisualLineColumnNumber(editor, currentVisualCaret.line));
+      = new VisualPosition(currentVisualCaret.line, EditorUtil.getLastVisualLineColumnNumber(editor, currentVisualCaret.line), true);
 
     // There is a possible case that the caret is already located at the visual end of line and the line is soft wrapped.
     // We want to move the caret to the end of the next visual line then.
@@ -590,7 +590,7 @@ public class EditorActionUtil {
           line++;
           column = EditorUtil.getLastVisualLineColumnNumber(editor, line);
         }
-        visualEndOfLineWithCaret = new VisualPosition(line, column);
+        visualEndOfLineWithCaret = new VisualPosition(line, column, true);
       }
     }
 
@@ -617,7 +617,12 @@ public class EditorActionUtil {
       caretModel.moveToVisualPosition(visualEndOfLineWithCaret);
     }
     else {
-      caretModel.moveToOffset(newOffset);
+      if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+        caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(newOffset).leanForward(true));
+      }
+      else {
+        caretModel.moveToOffset(newOffset);
+      }
     }
 
     EditorModificationUtil.scrollToCaret(editor);
