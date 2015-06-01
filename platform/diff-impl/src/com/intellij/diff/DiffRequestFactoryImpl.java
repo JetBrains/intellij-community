@@ -15,19 +15,34 @@
  */
 package com.intellij.diff;
 
-import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.*;
+import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.requests.BinaryMergeRequestImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.requests.TextMergeRequestImpl;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
-  private DiffContentFactory myContentFactory = DiffContentFactory.getInstance();
+  private static final Logger LOG = Logger.getInstance(DiffRequestFactoryImpl.class);
+  private final DiffContentFactory myContentFactory = DiffContentFactory.getInstance();
 
   @Override
   @NotNull
@@ -145,6 +160,54 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
           return path1 + sep + path2;
         }
       }
+    }
+  }
+
+  @Nullable
+  @Override
+  public MergeRequest createMergeRequest(@Nullable Project project,
+                                         @NotNull VirtualFile output,
+                                         @NotNull List<byte[]> byteContents,
+                                         @Nullable String title,
+                                         @NotNull List<String> contentTitles,
+                                         @Nullable Consumer<MergeResult> applyCallback) {
+    if (byteContents.size() != 3) throw new IllegalArgumentException();
+    if (contentTitles.size() != 3) throw new IllegalArgumentException();
+
+    FileType fileType = output.getFileType();
+    if (fileType.isBinary()) {
+      try {
+        FileContent content = new FileContentImpl(project, output);
+        byte[] originalContent = output.contentsToByteArray();
+
+        List<DiffContent> contents = new ArrayList<DiffContent>(3);
+        for (byte[] bytes : byteContents) {
+          contents.add(myContentFactory.createFromBytes(project, output, bytes));
+        }
+
+        return new BinaryMergeRequestImpl(content, originalContent, contents, byteContents, title, contentTitles, applyCallback);
+      }
+      catch (IOException e) {
+        LOG.error("Can't create binary merge request", e);
+        return null;
+      }
+    }
+    else {
+      final Document outputDocument = FileDocumentManager.getInstance().getDocument(output);
+      if (outputDocument == null || !DiffUtil.canMakeWritable(outputDocument)) {
+        LOG.warn("Can't create text merge request: " + (outputDocument != null ? outputDocument.getText() : "null"));
+        return null;
+      }
+
+      DocumentContent outputContent = myContentFactory.create(project, outputDocument);
+      CharSequence originalContent = outputDocument.getImmutableCharSequence();
+
+      List<DocumentContent> contents = new ArrayList<DocumentContent>(3);
+      for (byte[] bytes : byteContents) {
+        contents.add(FileAwareDocumentContent.create(project, bytes, output));
+      }
+
+      return new TextMergeRequestImpl(outputContent, originalContent, contents, title, contentTitles, applyCallback);
     }
   }
 }
