@@ -228,7 +228,7 @@ public class ContainerUtilTest extends TestCase {
   }
 
   public void testCOWListPerformanceAdd() {
-    PlatformTestUtil.startPerformanceTest("COWList add", 2000, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("COWList add", 3000, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
         List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
