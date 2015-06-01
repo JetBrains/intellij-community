@@ -406,7 +406,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(0, myResultsViewer.getFailedTestCount());
     assertEquals(1, myResultsViewer.getIgnoredTestCount());
 
-    assertEquals(SMTestRunnerResultsForm.DARK_YELLOW, myResultsViewer.getTestsStatusColor());
+    assertEquals(ColorProgressBar.GREEN, myResultsViewer.getTestsStatusColor());
   }
 
   public void testCustomProgress_Terminated() {

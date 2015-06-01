@@ -509,9 +509,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (myFailedTestCount > 0) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
-    else if (myIgnoredTestCount > 0) {
-      myStatusLine.setStatusColor(DARK_YELLOW);
-    }
 
     if (testingFinished) {
       if (myTotalTestCount == 0) {
