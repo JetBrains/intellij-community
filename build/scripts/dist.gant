@@ -168,6 +168,9 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
 
   buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
+  if (p("jdk.bundled.linux") != "false") {
+    buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"])
+  }
   return info
 }
 

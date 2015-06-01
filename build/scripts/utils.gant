@@ -815,21 +815,43 @@ private List<File> getChildren(File file) {
   return file.listFiles().sort { File f -> f.name.toLowerCase() }
 }
 
-binding.setVariable("getBundledJDK", { File jdkDir, String prefix, String ext, String bundledJDKFileName ->
+binding.setVariable("bundledJDKs"){
+  requireProperty("jdk16.mac", "true")
+  requireProperty("jdk.bundled.win", "1.8")
+  requireProperty("jdk.bundled.linux", "false")
+  requireProperty("jdk.bundled.mac", "1.8")
+  requireProperty("jdk.custom.mac", "true")
+
+  setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
+  if (p("jdk.bundled.linux") != "false"){
+    setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
+    extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk/jre")
+  }
+  if (p("jdk.bundled.mac") != "false"){
+    setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
+  }
+  def customJdkDir = new File("${home}/build/jdk/custom")
+  if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())){
+    setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "opnjdk.1.8", ".tar.gz"))
+  }
+}
+
+private String getPathToBundledJDK ( File jdkDir, String prefix, String ext){
+  def JdkFileName = ""
   getChildren(jdkDir).each {
     if (it.getName().startsWith(prefix) && it.getName().endsWith(ext)) {
-      if (new File(bundledJDKFileName).exists()) { ant.delete(file: bundledJDKFileName) }
-      def JdkFileName = it.getAbsolutePath()
+      JdkFileName = it.getAbsolutePath()
       if (ext == ".tar.gz") {
-        JdkFileName = JdkFileName.substring(0, JdkFileName.length() - 3)
+        def OriginalJdkFileName = JdkFileName.substring(0, JdkFileName.length() - 3)
+        JdkFileName = JdkFileName.substring(0, JdkFileName.length() - 7) + "_${buildNumber}.tar"
         if (new File(JdkFileName).exists()) { ant.delete(file: JdkFileName) }
         ant.gunzip(src: it.getAbsolutePath())
+        ant.copy(file: OriginalJdkFileName, tofile: JdkFileName)
       }
-      projectBuilder.info("JdkFileName: " + JdkFileName)
-      ant.copy(file: JdkFileName, tofile: bundledJDKFileName)
     }
   }
-})
+  return JdkFileName.replace('\\', '/')
+}
 
 binding.setVariable("buildWinZip", { String zipPath, List paths ->
   projectBuilder.stage(".win.zip")
@@ -997,6 +1019,17 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, 
   ant.gzip(src: tarPath, zipfile: gzPath)
   ant.delete(file: tarPath)
   notifyArtifactBuilt(gzPath)
+})
+
+binding.setVariable("extractRedistJre", { String jdk_file_name, String destination  ->
+  def jre_redist = "${destination}"
+  ant.mkdir(dir: jre_redist)
+  if (jdk_file_name.endsWith(".tar")) {
+    ant.untar(dest: jre_redist, src: "${jdk_file_name}")
+  }
+  else {
+    ant.unzip(dest: jre_redist, src: "${jdk_file_name}")
+  }
 })
 
 private void fixIdeaPropertiesEol(List paths, String eol) {

@@ -23,10 +23,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
 
   if (!hasBundledJRE) {
     ant.mkdir(dir: "$box/jre")
-    requireProperty("jdk_bundled_win", "1.7")
-    def jdk_bundled_version = p("jdk_bundled_win") == "1.8" ? "${home}/build/jdk/jdk8_redist.zip" : "${home}/build/jdk/jdk_redist.zip"
-    getBundledJDK(new File("${home}/build/jdk/win"), "jdk"+ p("jdk_bundled_win"), "x32.zip", jdk_bundled_version)
-    ant.unzip(dest: "$box/jre", src: "${jdk_bundled_version}")
+    ant.unzip(dest: "$box/jre", src: winJDK)
 
     ant.copy(todir: "$box/bin") {
       fileset(dir: "$box/jre/jre/bin") {
