@@ -162,7 +162,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     outputTab.add(console, BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
-    outputTab.add(toolbar.getComponent(), BorderLayout.WEST);
+    outputTab.add(toolbar.getComponent(), BorderLayout.EAST);
     return outputTab;
   }
 
