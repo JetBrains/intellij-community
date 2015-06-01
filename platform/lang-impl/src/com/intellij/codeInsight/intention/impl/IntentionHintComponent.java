@@ -194,6 +194,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     closePopup();
   }
 
+  public boolean isForEditor(@NotNull Editor editor) {
+    return editor == myEditor;
+  }
+
 
   public enum PopupUpdateResult {
     NOTHING_CHANGED,    // intentions did not change
