@@ -1,13 +1,13 @@
 package com.siyeh.igtest.finalization.finalize;
 
-public class FinalizeInspection
+public class Finalize
 {
-    public FinalizeInspection() throws Throwable
+    public Finalize() throws Throwable
     {
         super();
     }
 
-    protected void finalize() throws Throwable
+    protected void <warning descr="'finalize()' declared">finalize</warning>() throws Throwable
     {
         super.finalize();
     }
