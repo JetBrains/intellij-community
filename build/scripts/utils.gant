@@ -836,7 +836,7 @@ binding.setVariable("bundledJDKs"){
   }
 }
 
-private String getPathToBundledJDK ( File jdkDir, String prefix, String ext){
+String getPathToBundledJDK ( File jdkDir, String prefix, String ext){
   def JdkFileName = ""
   getChildren(jdkDir).each {
     if (it.getName().startsWith(prefix) && it.getName().endsWith(ext)) {
