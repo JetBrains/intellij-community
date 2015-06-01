@@ -20,12 +20,12 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.BackgroundTaskUtil;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffColors;
@@ -44,6 +44,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
@@ -204,9 +206,65 @@ public class LineStatusTrackerDrawing {
   }
 
   public static void showActiveHint(@NotNull Range range,
-                                    @NotNull final Editor editor,
+                                    @NotNull Editor editor,
                                     @Nullable Point mousePosition,
                                     @NotNull LineStatusTracker tracker) {
+    final Disposable disposable = Disposer.newDisposable();
+
+    List<DiffFragment> wordDiff = computeWordDiff(range, tracker);
+
+    installEditorHighlighters(range, editor, tracker, wordDiff, disposable);
+    Pair<JComponent, Integer> editorComponent = createEditorComponent(range, editor, tracker, wordDiff);
+
+    ActionToolbar toolbar = buildToolbar(range, editor, tracker, disposable);
+    PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent.first, editorComponent.second);
+
+    LightweightHint hint = new LightweightHint(popupPanel);
+    HintListener closeListener = new HintListener() {
+      public void hintHidden(final EventObject event) {
+        Disposer.dispose(disposable);
+      }
+    };
+    hint.addHintListener(closeListener);
+
+    int line = editor.getCaretModel().getLogicalPosition().line;
+    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
+    if (mousePosition != null) { // show right after the nearest line
+      int lineHeight = editor.getLineHeight();
+      int delta = (point.y - mousePosition.y) % lineHeight;
+      if (delta < 0) delta += lineHeight;
+      point.y = mousePosition.y + delta;
+    }
+    point.x -= popupPanel.getEditorTextOffset(); // align main editor with the one in popup
+
+    int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
+
+    if (!hint.isVisible()) {
+      closeListener.hintHidden(null);
+    }
+  }
+
+  @Nullable
+  private static List<DiffFragment> computeWordDiff(@NotNull Range range, @NotNull LineStatusTracker tracker) {
+    if (range.getType() != Range.MODIFIED) return null;
+
+    final CharSequence vcsContent = tracker.getVcsContent(range);
+    final CharSequence currentContent = tracker.getCurrentContent(range);
+
+    return BackgroundTaskUtil.tryComputeFast(new Function<ProgressIndicator, List<DiffFragment>>() {
+      @Override
+      public List<DiffFragment> fun(ProgressIndicator indicator) {
+        return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
+      }
+    }, Registry.intValue("diff.status.tracker.byword.delay"));
+  }
+
+  @NotNull
+  private static ActionToolbar buildToolbar(@NotNull Range range,
+                                            @NotNull Editor editor,
+                                            @NotNull LineStatusTracker tracker,
+                                            @NotNull Disposable parentDisposable) {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final ShowPrevChangeMarkerAction localShowPrevAction = new ShowPrevChangeMarkerAction(tracker.getPrevRange(range), tracker, editor);
@@ -221,135 +279,88 @@ public class LineStatusTrackerDrawing {
     group.add(showDiff);
     group.add(copyRange);
 
-
-    final JComponent editorComponent = editor.getComponent();
+    JComponent editorComponent = editor.getComponent();
     EmptyAction.setupAction(localShowPrevAction, "VcsShowPrevChangeMarker", editorComponent);
     EmptyAction.setupAction(localShowNextAction, "VcsShowNextChangeMarker", editorComponent);
     EmptyAction.setupAction(rollback, IdeActions.SELECTED_CHANGES_ROLLBACK, editorComponent);
     EmptyAction.setupAction(showDiff, "ChangesView.Diff", editorComponent);
     EmptyAction.setupAction(copyRange, IdeActions.ACTION_COPY, editorComponent);
 
-
-    int offsetX = 0;
-    final JComponent toolbar =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
-
-    final Color background = ((EditorEx)editor).getBackgroundColor();
-    final Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-    toolbar.setBackground(background);
-
-    toolbar
-      .setBorder(new ColoredSideBorder(foreground, foreground, range.getType() != Range.INSERTED ? null : foreground, foreground, 1));
-
-    final JPanel component = new JPanel(new BorderLayout());
-    component.setOpaque(false);
-
-    final JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.setOpaque(false);
-    toolbarPanel.add(toolbar, BorderLayout.WEST);
-    JPanel emptyPanel = new JPanel();
-    emptyPanel.setOpaque(false);
-    toolbarPanel.add(emptyPanel, BorderLayout.CENTER);
-    MouseAdapter listener = new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
-      }
-
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
-      }
-
-      public void mouseReleased(final MouseEvent e) {
-        editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
-      }
-    };
-    emptyPanel.addMouseListener(listener);
-
-    component.add(toolbarPanel, BorderLayout.NORTH);
-
-    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    if (range.getType() != Range.INSERTED) {
-      final DocumentEx doc = (DocumentEx)tracker.getVcsDocument();
-      final EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, tracker.getProject());
-      uEditor.setColorsScheme(editor.getColorsScheme());
-      final EditorHighlighter highlighter =
-        EditorHighlighterFactory.getInstance().createEditorHighlighter(tracker.getProject(), getFileName(tracker.getDocument()));
-      uEditor.setHighlighter(highlighter);
-
-      try {
-        if (range.getType() == Range.MODIFIED) {
-          final CharSequence vcsContent = tracker.getVcsContent(range);
-          final CharSequence currentContent = tracker.getCurrentContent(range);
-
-          List<DiffFragment> diff = BackgroundTaskUtil.tryComputeFast(new Function<ProgressIndicator, List<DiffFragment>>() {
-            @Override
-            public List<DiffFragment> fun(ProgressIndicator indicator) {
-              return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
-            }
-          }, Registry.intValue("diff.status.tracker.byword.delay"));
-          if (diff == null) throw new DiffTooBigException();
-
-          int vcsStartShift = tracker.getVcsTextRange(range).getStartOffset();
-          int currentStartShift = tracker.getCurrentTextRange(range).getStartOffset();
-          for (DiffFragment fragment : diff) {
-            int vcsStart = vcsStartShift + fragment.getStartOffset1();
-            int vcsEnd = vcsStartShift + fragment.getEndOffset1();
-            int currentStart = currentStartShift + fragment.getStartOffset2();
-            int currentEnd = currentStartShift + fragment.getEndOffset2();
-            TextDiffType type = DiffUtil.getDiffType(fragment);
-
-            DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
-            highlighters.add(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
-          }
-        }
-      }
-      catch (DiffTooBigException ignore) {
-      }
-
-      final EditorFragmentComponent editorFragmentComponent =
-        EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getVcsLine1(), range.getVcsLine2(), false, false);
-
-      component.add(editorFragmentComponent, BorderLayout.CENTER);
-      offsetX -= editorFragmentComponent.getBorder().getBorderInsets(editorFragmentComponent).left;
-
-      EditorFactory.getInstance().releaseEditor(uEditor);
-    }
-
-
     final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
-    final LightweightHint hint = new LightweightHint(component);
-    HintListener closeListener = new HintListener() {
-      public void hintHidden(final EventObject event) {
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        actionList.remove(localShowPrevAction);
+        actionList.remove(localShowNextAction);
         actionList.remove(rollback);
         actionList.remove(showDiff);
         actionList.remove(copyRange);
-        actionList.remove(localShowPrevAction);
-        actionList.remove(localShowNextAction);
+      }
+    });
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true);
+  }
+
+  private static void installEditorHighlighters(@NotNull Range range,
+                                                @NotNull Editor editor,
+                                                @NotNull LineStatusTracker tracker,
+                                                @Nullable List<DiffFragment> wordDiff,
+                                                @NotNull Disposable parentDisposable) {
+    if (wordDiff == null) return;
+    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+
+    int currentStartShift = tracker.getCurrentTextRange(range).getStartOffset();
+    for (DiffFragment fragment : wordDiff) {
+      int currentStart = currentStartShift + fragment.getStartOffset2();
+      int currentEnd = currentStartShift + fragment.getEndOffset2();
+      TextDiffType type = DiffUtil.getDiffType(fragment);
+
+      highlighters.add(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
+    }
+
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
         for (RangeHighlighter highlighter : highlighters) {
           highlighter.dispose();
         }
       }
-    };
-    hint.addHintListener(closeListener);
+    });
+  }
 
-    int line = editor.getCaretModel().getLogicalPosition().line;
-    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
-    if (mousePosition != null) {
-      int lineHeight = editor.getLineHeight();
-      int delta = (point.y - mousePosition.y) % lineHeight;
-      if (delta < 0) delta += lineHeight;
-      point.y = mousePosition.y + delta;
+  @NotNull
+  private static Pair<JComponent, Integer> createEditorComponent(@NotNull Range range,
+                                                                 @NotNull Editor editor,
+                                                                 @NotNull LineStatusTracker tracker,
+                                                                 @Nullable List<DiffFragment> wordDiff) {
+    if (range.getType() == Range.INSERTED) return Pair.create(null, 0);
+
+    DocumentEx doc = (DocumentEx)tracker.getVcsDocument();
+    EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, tracker.getProject());
+    uEditor.setColorsScheme(editor.getColorsScheme());
+
+    EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
+    EditorHighlighter highlighter = highlighterFactory.createEditorHighlighter(tracker.getProject(), getFileName(tracker.getDocument()));
+    uEditor.setHighlighter(highlighter);
+
+    if (wordDiff != null) {
+      int vcsStartShift = tracker.getVcsTextRange(range).getStartOffset();
+      for (DiffFragment fragment : wordDiff) {
+        int vcsStart = vcsStartShift + fragment.getStartOffset1();
+        int vcsEnd = vcsStartShift + fragment.getEndOffset1();
+        TextDiffType type = DiffUtil.getDiffType(fragment);
+
+        DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
+      }
     }
-    point.x += offsetX;
 
-    int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
+    EditorFragmentComponent fragmentComponent =
+      EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getVcsLine1(), range.getVcsLine2(), false, false);
+    int leftBorder = fragmentComponent.getBorder().getBorderInsets(fragmentComponent).left;
 
-    if (!hint.isVisible()) {
-      closeListener.hintHidden(null);
-    }
+    EditorFactory.getInstance().releaseEditor(uEditor);
+
+    return Pair.<JComponent, Integer>create(fragmentComponent, leftBorder);
   }
 
   private static String getFileName(final Document document) {
@@ -431,5 +442,67 @@ public class LineStatusTrackerDrawing {
   private static Color getDiffGutterBorderColor() {
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     return globalScheme.getColor(EditorColors.BORDER_LINES_COLOR);
+  }
+
+  private static class PopupPanel extends JPanel {
+    private final JComponent myEditorComponent;
+    private final int myEditorLeftBorder;
+
+    public PopupPanel(@NotNull final Editor editor,
+                      @NotNull ActionToolbar toolbar,
+                      @Nullable JComponent editorComponent,
+                      int editorLeftBorder) {
+      super(new BorderLayout());
+      setOpaque(false);
+
+      myEditorComponent = editorComponent;
+      myEditorLeftBorder = editorLeftBorder;
+
+      Color background = ((EditorEx)editor).getBackgroundColor();
+      Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
+
+      JComponent toolbarComponent = toolbar.getComponent();
+      toolbarComponent.setBackground(background);
+      boolean isEditorVisible = editorComponent != null;
+      toolbarComponent.setBorder(new ColoredSideBorder(foreground, foreground, isEditorVisible ? null : foreground, foreground, 1));
+
+      // 'empty space' to the right of toolbar
+      JPanel emptyPanel = new JPanel();
+      emptyPanel.setOpaque(false);
+
+      JPanel toolbarPanel = new JPanel(new BorderLayout());
+      toolbarPanel.setOpaque(false);
+      toolbarPanel.add(toolbarComponent, BorderLayout.WEST);
+      toolbarPanel.add(emptyPanel, BorderLayout.CENTER);
+
+      add(toolbarPanel, BorderLayout.NORTH);
+      if (editorComponent != null) add(editorComponent, BorderLayout.CENTER);
+
+      // transfer clicks into editor
+      MouseAdapter listener = new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          transferEvent(e, editor);
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          transferEvent(e, editor);
+        }
+
+        public void mouseReleased(MouseEvent e) {
+          transferEvent(e, editor);
+        }
+      };
+      emptyPanel.addMouseListener(listener);
+    }
+
+    private static void transferEvent(MouseEvent e, Editor editor) {
+      editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
+    }
+
+    public int getEditorTextOffset() {
+      return myEditorLeftBorder;
+    }
   }
 }
