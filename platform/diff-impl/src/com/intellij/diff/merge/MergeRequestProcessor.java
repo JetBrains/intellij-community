@@ -15,7 +15,13 @@
  */
 package com.intellij.diff.merge;
 
+import com.intellij.diff.actions.impl.NextDifferenceAction;
+import com.intellij.diff.actions.impl.PrevDifferenceAction;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
+import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -70,6 +76,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myRequest = request;
 
     myContext = new MyDiffContext();
+    myContext.putUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.MERGE);
 
     myAvailableTools = ContainerUtil.list(TextMergeTool.INSTANCE, BinaryMergeTool.INSTANCE);
 
@@ -120,8 +127,27 @@ public abstract class MergeRequestProcessor implements Disposable {
     myCloseHandler = toolbarComponents.closeHandler;
   }
 
+  @NotNull
+  protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    List<AnAction> navigationActions = ContainerUtil.<AnAction>list(new MyPrevDifferenceAction(),
+                                                                    new MyNextDifferenceAction());
+    DiffUtil.addActionBlock(group, navigationActions);
+
+    DiffUtil.addActionBlock(group, viewerActions);
+
+    List<AnAction> requestContextActions = myRequest.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
+    DiffUtil.addActionBlock(group, requestContextActions);
+
+    List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
+    DiffUtil.addActionBlock(group, contextActions);
+
+    return group;
+  }
+
   protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
-    ActionGroup group = new DefaultActionGroup(ContainerUtil.notNullize(viewerActions));
+    ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
 
     DataManager.registerDataProvider(toolbar.getComponent(), myMainPanel);
@@ -249,6 +275,62 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected void requestFocusInternal() {
     JComponent component = getPreferredFocusedComponent();
     if (component != null) component.requestFocus();
+  }
+
+  //
+  // Navigation
+  //
+
+  private static class MyNextDifferenceAction extends NextDifferenceAction {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabled(true);
+        return;
+      }
+
+      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      if (iterable != null && iterable.canGoNext()) {
+        e.getPresentation().setEnabled(true);
+        return;
+      }
+
+      e.getPresentation().setEnabled(false);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      if (iterable != null && iterable.canGoNext()) {
+        iterable.goNext();
+      }
+    }
+  }
+
+  private static class MyPrevDifferenceAction extends PrevDifferenceAction {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+        e.getPresentation().setEnabled(true);
+        return;
+      }
+
+      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      if (iterable != null && iterable.canGoPrev()) {
+        e.getPresentation().setEnabled(true);
+        return;
+      }
+
+      e.getPresentation().setEnabled(false);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
+      if (iterable != null && iterable.canGoPrev()) {
+        iterable.goPrev();
+      }
+    }
   }
 
   //
