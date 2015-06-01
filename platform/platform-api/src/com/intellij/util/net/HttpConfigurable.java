@@ -426,6 +426,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return uri == null || !mySelector.isProxyException(uri.getHost());
   }
 
+  /**
+   * @deprecated To be removed in IDEA 16. Use corresponding method of IdeHttpClientHelpers.
+   */
+  @Deprecated
   @NotNull
   public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder) {
     if (USE_HTTP_PROXY) {
@@ -434,6 +438,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return builder;
   }
 
+  /**
+   * @deprecated To be removed in IDEA 16. Use corresponding method of IdeHttpClientHelpers.
+   */
+  @Deprecated
   @NotNull
   public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider) {
     if (USE_HTTP_PROXY && PROXY_AUTHENTICATION) {
@@ -444,27 +452,23 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return provider;
   }
 
+  /**
+   * @deprecated To be removed in IDEA 15. This method was not supposed to be here. Use corresponding methods of IdeHttpClientHelpers.
+   */
+  @Deprecated
   @NotNull
   public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder, boolean useProxy) {
     if (useProxy) setProxy(builder);
     return builder;
   }
 
+  /**
+   * @deprecated To be removed in IDEA 15. This method was not supposed to be here. Use corresponding methods of IdeHttpClientHelpers.
+   */
+  @Deprecated
   @NotNull
   public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider, boolean useProxy) {
     if (useProxy) setProxyCredentials(provider);
-    return provider;
-  }
-
-  @NotNull
-  public RequestConfig.Builder setProxyIfEnabled(@NotNull RequestConfig.Builder builder, @Nullable String url) {
-    if (isHttpProxyEnabledForUrl(url)) setProxy(builder);
-    return builder;
-  }
-
-  @NotNull
-  public CredentialsProvider setProxyCredentialsIfEnabled(@NotNull CredentialsProvider provider, @Nullable String url) {
-    if (isHttpProxyEnabledForUrl(url)) setProxyCredentials(provider);
     return provider;
   }
 
