@@ -363,21 +363,30 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Nullable
   @Override
-  public String getDurationString() {
+  public String getDurationString(TestConsoleProperties consoleProperties) {
     switch (getMagnitudeInfo()) {
-      case COMPLETE_INDEX:
       case PASSED_INDEX:
+      case RUNNING_INDEX:
+        return !isSubjectToHide(consoleProperties) ? getDurationString() : null;
+      case COMPLETE_INDEX:
       case FAILED_INDEX:
       case ERROR_INDEX:
       case IGNORED_INDEX:
       case SKIPPED_INDEX:
       case TERMINATED_INDEX:
-      case RUNNING_INDEX:
-        final Long duration = getDuration();
-        return duration != null ? StringUtil.formatDuration(duration.longValue()) : null;
+        return getDurationString();
       default:
         return null;
     }
+  }
+
+  private boolean isSubjectToHide(TestConsoleProperties consoleProperties) {
+    return TestConsoleProperties.HIDE_PASSED_TESTS.value(consoleProperties) && getParent() != null && !isDefect();
+  }
+
+  private String getDurationString() {
+    final Long duration = getDuration();
+    return duration != null ? StringUtil.formatDuration(duration.longValue()) : null;
   }
 
   @Override

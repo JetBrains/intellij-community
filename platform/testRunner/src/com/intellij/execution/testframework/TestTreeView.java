@@ -205,7 +205,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
             Object data = ((DefaultMutableTreeNode)node).getUserObject();
             if (data instanceof BaseTestProxyNodeDescriptor) {
               final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
-              final String durationString = testProxy.getDurationString();
+              final String durationString = testProxy.getDurationString(myModel.getProperties());
               if (durationString != null) {
                 final Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
                 final boolean rowSelected = isRowSelected(row);
