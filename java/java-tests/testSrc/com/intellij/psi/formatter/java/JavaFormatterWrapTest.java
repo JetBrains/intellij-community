@@ -619,4 +619,14 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "        .call());"
     );
   }
+
+  public void test_ChainedCalls_NoWrapOnSingleCall() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+
+    doMethodTest(
+      "obj.call(    )",
+      "obj.call()"
+    );
+  }
 }
