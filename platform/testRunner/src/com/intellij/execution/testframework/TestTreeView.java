@@ -222,8 +222,8 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   private static void paintRowData(Tree tree, String duration, Rectangle bounds, Graphics2D g, boolean isSelected, boolean hasFocus) {
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     g.setFont(tree.getFont().deriveFont(Font.PLAIN, UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
-    final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
-    int totalWidth = metrics.stringWidth(duration);
+    final FontMetrics metrics = tree.getFontMetrics(g.getFont());
+    int totalWidth = metrics.stringWidth(duration) + 2;
     int x = bounds.x + bounds.width - totalWidth;
     g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground());
     final int leftOffset = 5;
