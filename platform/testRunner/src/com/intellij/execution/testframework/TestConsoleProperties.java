@@ -60,6 +60,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty OPEN_FAILURE_LINE = new BooleanProperty("openFailureLine", true);
   public static final BooleanProperty TRACK_CODE_COVERAGE = new BooleanProperty("trackCodeCoverage", false);
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
+  public static final BooleanProperty SHOW_INLINE_STATISTICS = new BooleanProperty("showInlineStatistics", true);
   public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
 
   private final Project myProject;

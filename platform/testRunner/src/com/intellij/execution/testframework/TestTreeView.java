@@ -29,7 +29,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.PopupHandler;
@@ -188,7 +187,8 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-    if (Registry.is("tests_view_inline_statistics")) {
+    final TestConsoleProperties properties = myModel.getProperties();
+    if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(properties)) {
       Rectangle visibleRect = getVisibleRect();
       Rectangle clip = g.getClipBounds();
       for (int row = 0; row < getRowCount(); row++) {
@@ -205,7 +205,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
             Object data = ((DefaultMutableTreeNode)node).getUserObject();
             if (data instanceof BaseTestProxyNodeDescriptor) {
               final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
-              final String durationString = testProxy.getDurationString(myModel.getProperties());
+              final String durationString = testProxy.getDurationString(properties);
               if (durationString != null) {
                 final Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
                 final boolean rowSelected = isRowSelected(row);

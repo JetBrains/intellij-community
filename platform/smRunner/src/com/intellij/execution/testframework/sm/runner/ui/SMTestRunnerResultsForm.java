@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
@@ -126,14 +127,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   public void initUI() {
     super.initUI();
 
-    final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
-    SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
-                                  new Runnable() {
-                                    public void run() {
-                                      showStatisticsForSelectedProxy();
-                                    }
-                                  },
-                                  myTreeView);
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
+      SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
+                                    new Runnable() {
+                                      public void run() {
+                                        showStatisticsForSelectedProxy();
+                                      }
+                                    },
+                                    myTreeView);
+    }
   }
 
   protected ToolbarPanel createToolbarPanel() {
