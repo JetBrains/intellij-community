@@ -141,6 +141,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return side.select(myEndLines);
   }
 
+  public void setStartLine(@NotNull ThreeSide side, int value) {
+    myStartLines[side.getIndex()] = value;
+  }
+
+  public void setEndLine(@NotNull ThreeSide side, int value) {
+    myEndLines[side.getIndex()] = value;
+  }
+
   //
   // Shift
   //

@@ -496,8 +496,18 @@ public class TextMergeTool implements MergeTool {
         ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         ThreeSide outputSide = ThreeSide.BASE;
 
-        DiffUtil.applyModification(getContent(outputSide).getDocument(), change.getStartLine(outputSide), change.getEndLine(outputSide),
-                                   getContent(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+        int outputStartLine = change.getStartLine(outputSide);
+        int outputEndLine = change.getEndLine(outputSide);
+        int sourceStartLine = change.getStartLine(sourceSide);
+        int sourceEndLine = change.getEndLine(sourceSide);
+
+        DiffUtil.applyModification(getContent(outputSide).getDocument(), outputStartLine, outputEndLine,
+                                   getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
+
+        if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
+          int newOutputEndLine = outputStartLine + (sourceEndLine - sourceStartLine);
+          moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+        }
       }
 
       @CalledWithWriteLock
@@ -505,8 +515,53 @@ public class TextMergeTool implements MergeTool {
         ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         ThreeSide outputSide = ThreeSide.BASE;
 
-        DiffUtil.applyModification(getContent(outputSide).getDocument(), change.getEndLine(outputSide), change.getEndLine(outputSide),
-                                   getContent(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+        int outputStartLine = change.getStartLine(outputSide);
+        int outputEndLine = change.getEndLine(outputSide);
+        int sourceStartLine = change.getStartLine(sourceSide);
+        int sourceEndLine = change.getEndLine(sourceSide);
+
+        DiffUtil.applyModification(getContent(outputSide).getDocument(), outputEndLine, outputEndLine,
+                                   getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
+
+        int newOutputEndLine = outputEndLine + (sourceEndLine - sourceStartLine);
+        moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+      }
+
+      /*
+       * We want to include inserted block into change, so we are updating endLine(BASE).
+       *
+       * It could break order of changes if there are other changes that starts/ends at this line.
+       * So we should check all other changes and shift them if necessary.
+       */
+      private void moveChangesAfterInsertion(@NotNull TextMergeChange change,
+                                             int newOutputStartLine,
+                                             int newOutputEndLine) {
+        if (change.getStartLine(ThreeSide.BASE) != newOutputStartLine ||
+            change.getEndLine(ThreeSide.BASE) != newOutputEndLine) {
+          change.setStartLine(ThreeSide.BASE, newOutputStartLine);
+          change.setEndLine(ThreeSide.BASE, newOutputEndLine);
+          change.reinstallHighlighter();
+        }
+
+        boolean beforeChange = true;
+        for (TextMergeChange otherChange : getAllChanges()) {
+          int startLine = otherChange.getStartLine(ThreeSide.BASE);
+          int endLine = otherChange.getEndLine(ThreeSide.BASE);
+          if (endLine < newOutputStartLine) continue;
+          if (startLine > newOutputEndLine) break;
+          if (otherChange == change) {
+            beforeChange = false;
+            continue;
+          }
+
+          int newStartLine = beforeChange ? Math.min(startLine, newOutputStartLine) : Math.max(startLine, newOutputEndLine);
+          int newEndLine = beforeChange ? Math.min(endLine, newOutputStartLine) : Math.max(endLine, newOutputEndLine);
+          if (startLine != newStartLine || endLine != newEndLine) {
+            otherChange.setStartLine(ThreeSide.BASE, newStartLine);
+            otherChange.setEndLine(ThreeSide.BASE, newEndLine);
+            otherChange.reinstallHighlighter();
+          }
+        }
       }
 
       //
