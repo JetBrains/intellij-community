@@ -462,12 +462,12 @@ public class TextMergeTool implements MergeTool {
       //
 
       @NotNull
-      protected List<TextMergeChange> getAllChanges() {
+      public List<TextMergeChange> getAllChanges() {
         return myAllMergeChanges;
       }
 
       @NotNull
-      protected List<TextMergeChange> getChanges() {
+      public List<TextMergeChange> getChanges() {
         return ContainerUtil.filter(myAllMergeChanges, new Condition<TextMergeChange>() {
           @Override
           public boolean value(TextMergeChange mergeChange) {
