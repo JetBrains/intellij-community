@@ -90,7 +90,7 @@ public class CompilerTester {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    } 
+    }
     finally {
       myMainOutput = null;
       myModules = null;
@@ -153,7 +153,6 @@ public class CompilerTester {
     }.execute();
   }
 
-
   public List<CompilerMessage> make() {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override
@@ -203,7 +202,7 @@ public class CompilerTester {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    final ErrorReportingCallback callback = new ErrorReportingCallback();
+    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -224,9 +223,6 @@ public class CompilerTester {
         catch (Exception e) {
           throw new RuntimeException(e);
         }
-        finally {
-          semaphore.up();
-        }
       }
     });
 
@@ -243,8 +239,13 @@ public class CompilerTester {
   }
 
   private static class ErrorReportingCallback implements CompileStatusNotification {
+    private final Semaphore mySemaphore;
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<CompilerMessage>();
+
+    public ErrorReportingCallback(Semaphore semaphore) {
+      mySemaphore = semaphore;
+    }
 
     @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
@@ -265,6 +266,9 @@ public class CompilerTester {
       }
       catch (Throwable t) {
         myError = t;
+      }
+      finally {
+        mySemaphore.up();
       }
     }
 
