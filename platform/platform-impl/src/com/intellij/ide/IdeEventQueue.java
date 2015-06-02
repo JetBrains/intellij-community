@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -410,88 +410,90 @@ public class IdeEventQueue extends EventQueue {
   //private static boolean altGrIsPressed = false;
 
   private static AWTEvent fixNonEnglishKeyboardLayouts(AWTEvent e) {
+    if (!(e instanceof KeyEvent)) return e;
+
     KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
     if (externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
 
-    if (e instanceof KeyEvent) {
-      KeyEvent ke = (KeyEvent)e;
+    KeyEvent ke = (KeyEvent)e;
 
-      // Try to get it from editor
-      Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    // Try to get it from editor
+    Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
-      if (ke.getID() == KeyEvent.KEY_PRESSED) {
-        switch (ke.getKeyCode()) {
-          case (KeyEvent.VK_CONTROL):
+    if (ke.getID() == KeyEvent.KEY_PRESSED) {
+      switch (ke.getKeyCode()) {
+        case (KeyEvent.VK_CONTROL):
+          if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
+            ctrlIsPressedCount++;
+          }
+          break;
+        case (KeyEvent.VK_ALT):
+          if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
             if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
-              ctrlIsPressedCount++;
+              leftAltIsPressed = true;
             }
-            break;
-          case (KeyEvent.VK_ALT):
-            if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
-              if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
-                leftAltIsPressed = true;
-              }
-            }
-            break;
-        }
-      } else if (ke.getID() == KeyEvent.KEY_RELEASED) {
-        switch (ke.getKeyCode()) {
-          case (KeyEvent.VK_CONTROL):
-            ctrlIsPressedCount--;
-            break;
-          case (KeyEvent.VK_ALT):
-            if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
-              leftAltIsPressed = false;
-            }
-            break;
-        }
+          }
+          break;
+      }
+    }
+    else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+      switch (ke.getKeyCode()) {
+        case (KeyEvent.VK_CONTROL):
+          ctrlIsPressedCount--;
+          break;
+        case (KeyEvent.VK_ALT):
+          if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
+            leftAltIsPressed = false;
+          }
+          break;
+      }
+    }
+
+    if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent)) {
+      if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
+        ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
+                          KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
+        ke.setKeyCode(KeyEvent.VK_U);
+        ke.setKeyChar('ґ');
+        return ke;
+      }
+    }
+
+    Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
+    if (keyCodeFromChar != null) {
+      if (keyCodeFromChar != ke.getKeyCode()) {
+        // non-english layout
+        ke.setKeyCode(keyCodeFromChar);
       }
 
-      if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent) ) {
-        if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
-          ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
-                            KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
-          ke.setKeyCode(KeyEvent.VK_U);
-          ke.setKeyChar('ґ');
-          return ke;
-        }
-      }
+      //for (int i = 0; sourceComponent == null && i < WindowManagerEx.getInstanceEx().getAllProjectFrames().length; i++) {
+      //  sourceComponent = WindowManagerEx.getInstanceEx().getAllProjectFrames()[i].getComponent();
+      //}
 
-      Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
-      if (keyCodeFromChar != null) {
-        if (keyCodeFromChar != ke.getKeyCode()) {
-          // non-english layout
-          ke.setKeyCode(keyCodeFromChar);
-        }
+      if (sourceComponent != null) {
+        if (KeyboardSettingsExternalizable.isSupportedKeyboardLayout(sourceComponent)) {
+          if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != 0 /*&& ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT*/) {
+            // On German keyboard layout on Windows  we are getting on key press
+            // ctrl + alt instead of AltGr
 
-        //for (int i = 0; sourceComponent == null && i < WindowManagerEx.getInstanceEx().getAllProjectFrames().length; i++) {
-        //  sourceComponent = WindowManagerEx.getInstanceEx().getAllProjectFrames()[i].getComponent();
-        //}
+            int modifiers = ke.getModifiersEx() ^ InputEvent.ALT_DOWN_MASK ^ InputEvent.CTRL_DOWN_MASK;
 
-        if (sourceComponent != null) {
-          if (KeyboardSettingsExternalizable.isSupportedKeyboardLayout(sourceComponent)) {
-            if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != 0 /*&& ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT*/) {
-              // On German keyboard layout on Windows  we are getting on key press
-              // ctrl + alt instead of AltGr
-
-              int modifiers = ke.getModifiersEx() ^ InputEvent.ALT_DOWN_MASK ^ InputEvent.CTRL_DOWN_MASK;
-
-              if (ctrlIsPressedCount > 1) {
-                modifiers |= InputEvent.CTRL_DOWN_MASK;
-              }
-
-              if (leftAltIsPressed) {
-                modifiers |= InputEvent.ALT_MASK;
-              }
-
-              //noinspection MagicConstant
-              e = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
-                               ke.getKeyCode(), ke.getKeyChar(), ke.getKeyLocation());
+            if (ctrlIsPressedCount > 1) {
+              modifiers |= InputEvent.CTRL_DOWN_MASK;
             }
+
+            if (leftAltIsPressed) {
+              modifiers |= InputEvent.ALT_MASK;
+            }
+
+            //noinspection MagicConstant
+            e = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
+                             ke.getKeyCode(), ke.getKeyChar(), ke.getKeyLocation());
           }
         }
       }
     }
+
     return e;
   }
 
