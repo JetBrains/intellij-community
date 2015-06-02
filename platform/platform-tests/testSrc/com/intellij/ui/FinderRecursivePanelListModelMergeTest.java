@@ -87,6 +87,7 @@ public class FinderRecursivePanelListModelMergeTest extends PlatformTestCase {
                            String... itemsToMerge) {
 
     final StringFinderRecursivePanel panel = createStringPanel(initialItems);
+    disposeOnTearDown(panel);
 
     JBList list = panel.getList();
     CollectionListModel<String> model = panel.getListModel();
