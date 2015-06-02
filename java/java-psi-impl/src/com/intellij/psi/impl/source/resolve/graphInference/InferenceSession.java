@@ -1360,17 +1360,16 @@ public class InferenceSession {
     for (int i = 0; i < paramsLength; i++) {
       PsiType sType = getParameterType(parameters1, i, PsiSubstitutor.EMPTY, false);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, PsiSubstitutor.EMPTY, varargs));
-      if (session.isProperType(sType) && session.isProperType(tType)) {
-        if (!TypeConversionUtil.isAssignable(tType, sType)) {
-          return false;
-        }
-        continue;
-      }
       if (LambdaUtil.isFunctionalType(sType) && LambdaUtil.isFunctionalType(tType) && !relates(sType, tType)) {
         if (!isFunctionalTypeMoreSpecific(sType, tType, session, args[i])) {
           return false;
         }
       } else {
+        if (session.isProperType(tType)) {
+          if (!TypeConversionUtil.isAssignable(tType, sType)) {
+            return false;
+          }
+        }
         session.addConstraint(new StrictSubtypingConstraint(tType, sType));
       }
     }
