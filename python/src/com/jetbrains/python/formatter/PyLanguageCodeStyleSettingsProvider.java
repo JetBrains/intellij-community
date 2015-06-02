@@ -122,6 +122,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     defaultSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
     defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
+    defaultSettings.RIGHT_MARGIN = 99;
     return defaultSettings;
   }
 
