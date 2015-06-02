@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ import javax.swing.event.ListSelectionListener;
 import java.util.Arrays;
 import java.util.List;
 
+@SkipInHeadlessEnvironment
 public class FinderRecursivePanelListModelMergeTest extends PlatformTestCase {
 
   public void testSelectionKeptSingleItem() {
