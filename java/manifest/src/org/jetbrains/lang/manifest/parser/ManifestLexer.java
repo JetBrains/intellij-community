@@ -65,11 +65,11 @@ public class ManifestLexer extends LexerBase {
 
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-    this.myBuffer = buffer;
-    this.myEndOffset = endOffset;
+    myBuffer = buffer;
+    myEndOffset = endOffset;
     myCurrentState = State.values()[initialState];
-
     myTokenStart = startOffset;
+
     parseNextToken();
   }
 
