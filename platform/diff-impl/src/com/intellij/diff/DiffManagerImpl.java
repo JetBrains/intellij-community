@@ -25,6 +25,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.binary.BinaryDiffTool;
 import com.intellij.diff.tools.dir.DirDiffTool;
 import com.intellij.diff.tools.external.ExternalDiffTool;
+import com.intellij.diff.tools.external.ExternalMergeTool;
 import com.intellij.diff.tools.fragmented.OnesideDiffTool;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
 import com.intellij.openapi.Disposable;
@@ -99,6 +100,11 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @CalledInAwt
   public void showMerge(@Nullable Project project, @NotNull MergeRequest request) {
+    if (ExternalMergeTool.isDefault()) {
+      ExternalMergeTool.show(project, request);
+      return;
+    }
+
     showMergeBuiltin(project, request);
   }
 
