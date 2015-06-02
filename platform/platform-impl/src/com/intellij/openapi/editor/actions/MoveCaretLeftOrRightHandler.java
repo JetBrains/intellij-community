@@ -59,7 +59,7 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
           }
           else if (caretModel.supportsMultipleCarets() && editor.isColumnMode()) {
             targetPosition = myDirection == Direction.RIGHT ? 
-                             selectionModel.getSelectionStartPosition() : selectionModel.getSelectionEndPosition();
+                             selectionModel.getSelectionEndPosition() : selectionModel.getSelectionStartPosition();
           }
 
           selectionModel.removeSelection();
