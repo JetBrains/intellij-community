@@ -15,10 +15,9 @@
  */
 package com.intellij.diff.applications;
 
+import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.merge.MergeRequest;
-import com.intellij.diff.merge.MergeWindow;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -77,7 +76,7 @@ public class MergeApplication extends ApplicationStarterBase {
     List<VirtualFile> contents = ContainerUtil.list(file1, file3, file2); // left, base, right
     MergeRequest request = DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, file4, contents, null);
 
-    new MergeWindow(project, request).show();
+    DiffManagerEx.getInstance().showMergeBuiltin(project, request);
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(file4);
     if (document != null) FileDocumentManager.getInstance().saveDocument(document);

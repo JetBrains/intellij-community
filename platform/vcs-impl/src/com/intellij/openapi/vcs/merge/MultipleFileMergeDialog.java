@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
@@ -338,7 +339,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         break;
       }
 
-      new MergeWindow(myProject, request).show();
+      DiffManager.getInstance().showMerge(myProject, request);
     }
     updateModelFromFiles();
   }
