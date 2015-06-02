@@ -120,6 +120,7 @@ public static void searchOptimized(final PsiMethod method, SearchScope scope, fi
   }
 
   public static Query<PsiReference> search(final SearchParameters parameters) {
+    long start = System.currentTimeMillis();
     final Query<PsiReference> result = INSTANCE.createQuery(parameters);
     if (parameters.isSharedOptimizer) {
       return uniqueResults(result);
@@ -128,7 +129,10 @@ public static void searchOptimized(final PsiMethod method, SearchScope scope, fi
     final SearchRequestCollector requests = parameters.getOptimizer();
 
     Project project = PsiUtilCore.getProjectInReadAction(parameters.getMethod());
-    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(project, requests)));
+    Query<PsiReference> result2 = uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(project, requests)));
+    long end = System.currentTimeMillis();
+    System.out.println("!Method search: " + 1.0 * (end - start) / 1000);
+    return result2;
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {

@@ -18,9 +18,13 @@ package com.intellij.cucumber;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.UIUtil;
-import cucumber.io.MultiLoader;
+import cucumber.runtime.Env;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
+import cucumber.runtime.io.MultiLoader;
+import cucumber.runtime.io.ResourceLoaderClassFinder;
+
+import java.util.Arrays;
 
 /**
  * @author Dennis.Ushakov
@@ -40,10 +44,12 @@ public class CucumberMain {
         public void run() {
           try {
             final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            RuntimeOptions runtimeOptions = new RuntimeOptions(System.getProperties(), args);
-            Runtime runtime = new Runtime(new MultiLoader(classLoader), classLoader, runtimeOptions);
+            Env env = new Env(System.getProperties());
+            RuntimeOptions runtimeOptions = new RuntimeOptions(env, Arrays.asList(args));
+            final MultiLoader resourceLoader = new MultiLoader(classLoader);
+            ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
+            Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
             runtimeRef.set(runtime);
-            runtime.writeStepdefsJson();
             runtime.run();
           }
           catch (Throwable throwable) {
