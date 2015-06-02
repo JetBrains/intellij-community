@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
@@ -208,6 +209,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     return name.toString();
   }
 
+  @Nullable
   public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
     if (!shouldWatch()) return null;
 
