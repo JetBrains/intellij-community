@@ -28,6 +28,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -272,7 +273,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           problemRange = new TextRange(offset, lineEndOffset);
         }
         final Annotation annotation;
-        final String message = "PEP 8: " + problem.myDescription;
+        final boolean inInternalMode = ApplicationManager.getApplication().isInternal();
+        final String message = "PEP 8: " + (inInternalMode ? problem.myCode + " " : "") + problem.myDescription;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {
           annotation = holder.createErrorAnnotation(problemRange, message);
         }
