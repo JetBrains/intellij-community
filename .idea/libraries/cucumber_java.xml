@@ -1,13 +1,11 @@
 <component name="libraryTable">
   <library name="cucumber-java">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/cucumber-core-1.0.14.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/cucumber-java-1.0.14.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cucumber-core-1.2.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cucumber-java-1.2.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cucumber-java8-1.2.2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/cucumber-core-1.0.14-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/src/cucumber-java-1.0.14-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
