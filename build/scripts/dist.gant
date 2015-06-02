@@ -57,7 +57,7 @@ setProperty("maySkipAndroidPlugin", true)
 
 target(compile: "Compile project") {
   loadProject()
-
+  bundledJDKs()
   projectBuilder.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
 
