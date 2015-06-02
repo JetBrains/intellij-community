@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
@@ -70,7 +71,7 @@ public class CompilerTester {
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         //noinspection ConstantConditions
         CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
         CompilerTestUtil.enableExternalCompiler();
@@ -113,10 +114,9 @@ public class CompilerTester {
 
   @Nullable
   public VirtualFile findClassFile(String className, Module module) {
-    //noinspection ConstantConditions
     VirtualFile path = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-    path.getChildren();
     assert path != null;
+    path.getChildren();
     path.refresh(false, true);
     return path.findFileByRelativePath(className.replace('.', '/') + ".class");
   }
@@ -126,7 +126,7 @@ public class CompilerTester {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
         file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
-        File ioFile = VfsUtil.virtualToIoFile(file);
+        File ioFile = VfsUtilCore.virtualToIoFile(file);
         assert ioFile.setLastModified(ioFile.lastModified() - 100000);
         file.refresh(false, false);
       }
@@ -147,7 +147,7 @@ public class CompilerTester {
   public void setFileName(final PsiFile file, final String name) {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         file.setName(name);
       }
     }.execute();
@@ -202,7 +202,8 @@ public class CompilerTester {
   private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+
+    final ErrorReportingCallback callback = new ErrorReportingCallback();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -210,8 +211,9 @@ public class CompilerTester {
           getProject().save();
           CompilerTestUtil.saveApplicationSettings();
           for (Module module : myModules) {
-            final VirtualFile moduleFile = module.getModuleFile();
-            File ioFile = VfsUtil.virtualToIoFile(moduleFile);
+            VirtualFile moduleFile = module.getModuleFile();
+            assert moduleFile != null;
+            File ioFile = VfsUtilCore.virtualToIoFile(moduleFile);
             if (!ioFile.exists()) {
               getProject().save();
               assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
@@ -222,27 +224,27 @@ public class CompilerTester {
         catch (Exception e) {
           throw new RuntimeException(e);
         }
+        finally {
+          semaphore.up();
+        }
       }
     });
 
     //tests run in awt
     while (!semaphore.waitFor(100)) {
       if (SwingUtilities.isEventDispatchThread()) {
+        //noinspection TestOnlyProblems
         UIUtil.dispatchAllInvocationEvents();
       }
     }
+
     callback.throwException();
     return callback.getMessages();
   }
 
   private static class ErrorReportingCallback implements CompileStatusNotification {
-    private final Semaphore mySemaphore;
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<CompilerMessage>();
-
-    public ErrorReportingCallback(Semaphore semaphore) {
-      mySemaphore = semaphore;
-    }
 
     @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
@@ -263,9 +265,6 @@ public class CompilerTester {
       }
       catch (Throwable t) {
         myError = t;
-      }
-      finally {
-        mySemaphore.up();
       }
     }
 
