@@ -138,6 +138,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount) {
+    myPrintStream.println("##teamcity[testCount count=\'1\']");
     myParamsMap.put(result, paramString);
     final List<String> fqns = result.getTestHierarchy();
     onSuiteStart(fqns, true);
