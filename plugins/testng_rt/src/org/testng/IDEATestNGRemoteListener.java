@@ -89,7 +89,6 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
     
     final String paramString = getParamsString(parameters, invocationCount);
-    myParamsMap.put(result, paramString);
     onTestStart(result, paramString, invocationCount);
     myInvocationCounts.put(qualifiedName, invocationCount + 1);
   }
@@ -139,6 +138,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount) {
+    myParamsMap.put(result, paramString);
     final List<String> fqns = result.getTestHierarchy();
     onSuiteStart(fqns, true);
     final String methodName = result.getMethodName();

@@ -111,9 +111,7 @@ public class TestNGTreeHierarchyTest {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     listener.onStart((ISuite)null);
-    final Exception exception = new Exception();
-    exception.setStackTrace(new StackTraceElement[0]);
-    listener.onTestFailure(new MockTestNGResult("ATest", "testName", exception, ArrayUtil.EMPTY_OBJECT_ARRAY));
+    listener.onTestFailure(new MockTestNGResult("ATest", "testName", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY));
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
@@ -219,6 +217,25 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
+  public void testConfigurationFailure() throws Exception {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    listener.onSuiteStart(className, true);
+    listener.onConfigurationFailure(new MockTestNGResult(className, "setUp", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY));
+    listener.onSuiteFinish(className);
+
+    Assert.assertEquals("output: " + buf, "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='setUp' locationHint='java:test://a.ATest.setUp']\n" +
+                                          "##teamcity[testFailed name='setUp' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='setUp']\n" +
+                                          "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
   public void testNullParameters() throws Exception {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
@@ -271,6 +288,12 @@ public class TestNGTreeHierarchyTest {
         return StringUtil.convertLineSeparators(super.getTrace(tr));
       }
     };
+  }
+
+  private static Exception createExceptionWithoutTrace() {
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    return exception;
   }
 
   private static class MockTestNGResult implements IDEATestNGRemoteListener.ExposedTestResult {
