@@ -71,7 +71,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     final ToggleModelAction sortByStatistics = new ToggleModelAction(ExecutionBundle.message("junit.runing.info.sort.by.statistics.action.name"),
                                                             ExecutionBundle
                                                               .message("junit.runing.info.sort.by.statistics.action.description"),
-                                                            AllIcons.RunConfigurations.ShowStatistics,
+                                                            AllIcons.RunConfigurations.SortbyDuration,
                                                             properties, TestConsoleProperties.SORT_BY_DURATION) {
 
       private TestFrameworkRunningModel myModel;
