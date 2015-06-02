@@ -16,6 +16,7 @@
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
@@ -47,4 +48,7 @@ public abstract class DiffManager {
 
   @NotNull
   public abstract DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window);
+
+  @CalledInAwt
+  public abstract void showMerge(@Nullable Project project, @NotNull MergeRequest request);
 }
