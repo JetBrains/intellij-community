@@ -621,10 +621,6 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml("<a attr=\"abc&#123;\"/>");
   }
 
-  public void testColonName() throws Exception {
-    doTestXml("<:foo/>");
-  }
-
   public void testNotation1() throws Exception {
     doTestDtd("<!NOTATION data-sources SYSTEM \"x3\">");
   }
