@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   private int[] myStartLines = new int[3];
   private int[] myEndLines = new int[3];
-  private boolean myResolved;
+  private final boolean[] myResolved = new boolean[2];
 
   @CalledInAwt
   public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeTool.TextMergeViewer viewer) {
@@ -58,6 +59,9 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myStartLines[side.getIndex()] = fragment.getStartLine(side);
       myEndLines[side.getIndex()] = fragment.getEndLine(side);
     }
+
+    if (!getType().isChange(Side.LEFT)) myResolved[Side.LEFT.getIndex()] = true;
+    if (!getType().isChange(Side.RIGHT)) myResolved[Side.RIGHT.getIndex()] = true;
 
     installHighlighter();
   }
@@ -97,6 +101,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     Document document = editor.getDocument();
 
     TextDiffType type = getDiffType();
+    boolean resolved = isResolved(side);
     int startLine = getStartLine(side);
     int endLine = getEndLine(side);
 
@@ -111,16 +116,16 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       if (end < document.getTextLength()) end++;
     }
 
-    myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type, false, HighlighterTargetArea.EXACT_RANGE, isResolved()));
+    myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type, false, HighlighterTargetArea.EXACT_RANGE, resolved));
 
     if (startLine == endLine) {
       if (startLine != 0) {
-        myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true, isResolved()));
+        myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved));
       }
     }
     else {
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, isResolved()));
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, isResolved()));
+      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved));
+      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved));
     }
   }
 
@@ -130,13 +135,40 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @CalledInAwt
   public void markResolved() {
-    myResolved = true;
+    if (isResolved()) return;
+    myResolved[0] = true;
+    myResolved[1] = true;
     myViewer.onChangeResolved(this);
     myViewer.reinstallHighlighter(this);
   }
 
+  @CalledInAwt
+  public void markResolved(@NotNull Side side) {
+    if (isResolved(side)) return;
+    myResolved[side.getIndex()] = true;
+    if (isResolved()) myViewer.onChangeResolved(this);
+    myViewer.reinstallHighlighter(this);
+  }
+
   public boolean isResolved() {
-    return myResolved;
+    return myResolved[0] && myResolved[1];
+  }
+
+  public boolean isResolved(@NotNull Side side) {
+    return side.select(myResolved);
+  }
+
+  public boolean isResolved(@NotNull ThreeSide side) {
+    switch (side) {
+      case LEFT:
+        return isResolved(Side.LEFT);
+      case BASE:
+        return isResolved();
+      case RIGHT:
+        return isResolved(Side.RIGHT);
+      default:
+        throw new IllegalArgumentException(side.toString());
+    }
   }
 
   public int getStartLine(@NotNull ThreeSide side) {
@@ -169,6 +201,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myEndLines[baseIndex] = newRange.endLine;
 
     boolean rangeAffected = oldLine2 >= line1 && oldLine1 <= line2; // RangeMarker can be updated in a different way
+
+    if (newRange.startLine == newRange.endLine && getDiffType() == TextDiffType.DELETED) {
+      markResolved();
+    }
+
     return newRange.damaged || rangeAffected;
   }
 
@@ -177,14 +214,16 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   private void doInstallActionHighlighters() {
-    if (isResolved()) return;
-    myOperations.add(createOperation(ThreeSide.LEFT));
-    myOperations.add(createOperation(ThreeSide.BASE));
-    myOperations.add(createOperation(ThreeSide.RIGHT));
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT));
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.BASE));
+    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT));
   }
 
-  @NotNull
+  @Nullable
   private MyGutterOperation createOperation(@NotNull ThreeSide side) {
+    if (side == ThreeSide.BASE) return null;
+    if (isResolved(side)) return null;
+
     EditorEx editor = myViewer.getEditor(side);
     Document document = editor.getDocument();
 
@@ -243,8 +282,13 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
         Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
         assert versionSide != null;
 
+        boolean isAppendable = getStartLine(mySide) != getEndLine(mySide);
+
         if (myShiftPressed) {
           return createRevertRenderer();
+        }
+        if (myCtrlPressed && isAppendable) {
+          return createAppendRenderer(versionSide);
         }
         return createApplyRenderer(versionSide);
       }
@@ -266,6 +310,28 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
           }
         });
         markResolved();
+      }
+    });
+  }
+
+  @Nullable
+  private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
+    return createIconRenderer(DiffBundle.message("merge.dialog.append.change.action.name"), AllIcons.Diff.ArrowLeftDown, new Runnable() {
+      @Override
+      public void run() {
+        final Document document = myViewer.getEditor(ThreeSide.BASE).getDocument();
+        DiffUtil.executeWriteCommand(document, myViewer.getProject(), "Apply change", new Runnable() {
+          @Override
+          public void run() {
+            myViewer.appendChange(TextMergeChange.this, side);
+          }
+        });
+        if (isConflict()) {
+          markResolved(side);
+        }
+        else {
+          markResolved();
+        }
       }
     });
   }

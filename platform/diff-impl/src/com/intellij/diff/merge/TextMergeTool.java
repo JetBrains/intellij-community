@@ -685,7 +685,7 @@ public class TextMergeTool implements MergeTool {
           for (TextMergeChange mergeChange : myAllMergeChanges) {
             if (!mergeChange.getType().isChange(mySide)) continue;
             Color color = mergeChange.getDiffType().getColor(getEditor(ThreeSide.BASE));
-            boolean isResolved = mergeChange.isResolved();
+            boolean isResolved = mergeChange.isResolved(mySide);
             if (!handler.process(mergeChange.getStartLine(left), mergeChange.getEndLine(left),
                                  mergeChange.getStartLine(right), mergeChange.getEndLine(right),
                                  color, isResolved)) {
