@@ -15,12 +15,17 @@
  */
 package com.intellij.ui;
 
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.util.Arrays;
+import java.util.List;
 
-public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
+public class FinderRecursivePanelListModelMergeTest extends PlatformTestCase {
 
   public void testSelectionKeptSingleItem() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 0, 0, "a");
@@ -38,8 +43,16 @@ public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
     assertMerge(new String[]{"a", "b", "c", "d"}, 2, 2, "a", "b", "c", "d");
   }
 
-  public void _testListModelMerge5() {
+  public void testListModelMerge5() {
     assertMerge(new String[]{"a", "b", "c", "d"}, "d", "c", "b", "a");
+  }
+
+  public void testListModelMerge5_1() {
+    assertMerge(new String[]{"a", "b", "c", "d"}, 0, 3, "d", "c", "b", "a");
+  }
+
+  public void testListModelMerge5_2() {
+    assertMerge(new String[]{"a", "b", "c", "d"}, 3, 0, "d", "c", "b", "a");
   }
 
   public void testSelectionItemKeptItemsLessAndMovedUp() {
@@ -50,7 +63,7 @@ public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
     assertMerge(new String[]{"a", "b", "c", "d"}, 1, 0, "b", "c", "d", "e");
   }
 
-  public void _testListModelMerge8() {
+  public void testListModelMerge8() {
     assertMerge(new String[]{"a", "a", "b", "b"}, "b", "a", "b", "a");
   }
 
@@ -62,24 +75,91 @@ public class FinderRecursivePanelListModelMergeTest extends UsefulTestCase {
     assertMerge(new String[]{"a", "b"}, 0, -1, "c", "d");
   }
 
-  private static void assertMerge(String[] initialItems, String... itemsToMerge) {
+  private void assertMerge(String[] initialItems, String... itemsToMerge) {
     assertMerge(initialItems, -1, -1, itemsToMerge);
   }
 
-  private static void assertMerge(String[] initialItems,
-                                  int initialSelectionIdx,
-                                  int selectionIndexAfterMerge,
-                                  String... itemsToMerge) {
-    CollectionListModel<String> model = new CollectionListModel<String>();
-    model.add(Arrays.asList(initialItems));
-    JBList list = new JBList(model);
+  private void assertMerge(String[] initialItems,
+                           int initialSelectionIdx,
+                           int selectionIndexAfterMerge,
+                           String... itemsToMerge) {
+
+    final StringFinderRecursivePanel panel = createStringPanel(initialItems);
+
+    JBList list = panel.getList();
+    CollectionListModel<String> model = panel.getListModel();
+
     list.setSelectedIndex(initialSelectionIdx);
 
-    FinderRecursivePanel.mergeListItems(model, Arrays.asList(itemsToMerge));
+    ListSelectionListener selectionListener = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        if (panel.isMergeListItemsRunning()) return;
+        assertTrue("selection changed", false);
+      }
+    };
+    list.addListSelectionListener(selectionListener);
+
+    panel.merge(model, list, Arrays.asList(itemsToMerge));
     assertEquals(itemsToMerge.length, model.getSize());
     for (int i = 0; i < itemsToMerge.length; i++) {
       assertEquals("idx:" + i + " " + toString(model.getItems(), ","), itemsToMerge[i], model.getElementAt(i));
     }
     assertEquals(toString(model.getItems(), ","), selectionIndexAfterMerge, list.getSelectedIndex());
+
+    list.removeListSelectionListener(selectionListener);
+  }
+
+
+  @NotNull
+  private StringFinderRecursivePanel createStringPanel(String[] initialItems) {
+    StringFinderRecursivePanel panel = new StringFinderRecursivePanel(initialItems);
+    panel.init();
+    return panel;
+  }
+
+  private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
+    private final String[] myInitialItems;
+
+    public StringFinderRecursivePanel(String[] initialItems) {
+      super(FinderRecursivePanelListModelMergeTest.this.getProject(), null);
+      myInitialItems = initialItems;
+    }
+
+    @NotNull
+    @Override
+    protected List<String> getListItems() {
+      return Arrays.asList(myInitialItems);
+    }
+
+    @NotNull
+    @Override
+    protected String getItemText(String s) {
+      return "";
+    }
+
+    @Override
+    protected boolean hasChildren(String s) {
+      return false;
+    }
+
+    public JBList getList() {
+      return myList;
+    }
+
+    public CollectionListModel<String> getListModel() {
+      return myListModel;
+    }
+
+    @Override
+    protected JBList createList() {
+      myList = super.createList();
+      ((CollectionListModel)myList.getModel()).replaceAll(getListItems());
+      return myList;
+    }
+
+    public void merge(@NotNull CollectionListModel<String> listModel, @NotNull JList list, @NotNull List<String> newItems) {
+      mergeListItems(listModel, list, newItems);
+    }
   }
 }
