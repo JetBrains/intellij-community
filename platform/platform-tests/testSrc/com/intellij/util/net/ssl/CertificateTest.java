@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -25,7 +25,7 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
 /**
  * @author Mikhail Golubev
  */
-public class CertificateTest extends PlatformTestCase {
+public class CertificateTest extends LightPlatformTestCase {
   @NonNls private static final String AUTHORITY_CN = "certificates-tests.labs.intellij.net";
 
   @NonNls private static final String TRUSTED_CERT_CN = "trusted.certificates-tests.labs.intellij.net";
