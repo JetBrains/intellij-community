@@ -45,6 +45,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   public final int updatePass;
   @Nullable private final Function<? super T, String> myTooltipProvider;
+  @Nullable private Function<? super T, String> myNavigateActionTextProvider;
   @NotNull private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
@@ -101,15 +102,18 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   @Nullable
   public String getLineMarkerTooltip() {
+    if (myTooltipProvider == null) return null;
     T element = getElement();
-    if (element == null || !element.isValid()) return null;
-    if (myTooltipProvider != null) return myTooltipProvider.fun(element);
-    return null;
+    return element == null || !element.isValid() ? null : myTooltipProvider.fun(element);
   }
 
   @Nullable
   public T getElement() {
     return elementRef.get();
+  }
+
+  public void setNavigateActionTextProvider(@Nullable Function<? super T, String> navigateActionTextProvider) {
+    myNavigateActionTextProvider = navigateActionTextProvider;
   }
 
   private class NavigateAction extends AnAction {
@@ -121,6 +125,16 @@ public class LineMarkerInfo<T extends PsiElement> {
         if (element == null || !element.isValid()) return;
 
         myNavigationHandler.navigate(mouseEvent, element);
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (myNavigateActionTextProvider == null) return;
+      T element = getElement();
+      if (element != null && element.isValid()) {
+        String text = myNavigateActionTextProvider.fun(element);
+        e.getPresentation().setText(text);
       }
     }
   }
