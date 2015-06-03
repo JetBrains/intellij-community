@@ -81,12 +81,11 @@ public abstract class XVariablesViewBase extends XDebugView {
       myTreeRestorer = myTreeState.restoreState(tree);
     }
     if (position != null && Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
-      registerInlineEvaluator(stackFrame, tree, position, project);
+      registerInlineEvaluator(stackFrame, position, project);
     }
   }
 
   private void registerInlineEvaluator(final XStackFrame stackFrame,
-                                       XDebuggerTree tree,
                                        final XSourcePosition position,
                                        final Project project) {
     final VirtualFile file = position.getFile();
