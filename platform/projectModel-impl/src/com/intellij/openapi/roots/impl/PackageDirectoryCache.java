@@ -30,8 +30,7 @@ import java.util.*;
 /**
  * @author peter
  */
-class PackageDirectoryCache {
-  private final RootIndex myRootIndex;
+public class PackageDirectoryCache {
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix;
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
@@ -43,13 +42,12 @@ class PackageDirectoryCache {
     }
   });
 
-  PackageDirectoryCache(RootIndex rootIndex, MultiMap<String, VirtualFile> rootsByPackagePrefix) {
-    myRootIndex = rootIndex;
+  public PackageDirectoryCache(MultiMap<String, VirtualFile> rootsByPackagePrefix) {
     myRootsByPackagePrefix = rootsByPackagePrefix;
   }
 
   @NotNull
-  List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
+  public List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
     PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.<VirtualFile>emptyList() : info.myPackageDirectories;
   }
@@ -102,7 +100,7 @@ class PackageDirectoryCache {
           for (VirtualFile child : directory.getChildren()) {
             String childName = child.getName();
             String packageName = myQname.isEmpty() ? childName : myQname + "." + childName;
-            if (child.isDirectory() && myRootIndex.getInfoForFile(child).isInProject() && packageName.equals(myRootIndex.getPackageName(child))) {
+            if (child.isDirectory() && isPackageDirectory(child, packageName)) {
               result.putValue(childName, child);
             }
           }
@@ -122,4 +120,7 @@ class PackageDirectoryCache {
     }
   }
 
+  protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
+    return true;
+  }
 }

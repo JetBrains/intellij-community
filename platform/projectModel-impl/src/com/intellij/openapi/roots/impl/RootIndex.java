@@ -78,7 +78,12 @@ public class RootIndex {
       rootsByPackagePrefix.putValue(pair.second, root);
       myPackagePrefixByRoot.put(root, pair.second);
     }
-    myPackageDirectoryCache = new PackageDirectoryCache(this, rootsByPackagePrefix);
+    myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
+      @Override
+      protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
+        return getInfoForFile(dir).isInProject() && packageName.equals(getPackageName(dir));
+      }
+    };
   }
 
   @NotNull
