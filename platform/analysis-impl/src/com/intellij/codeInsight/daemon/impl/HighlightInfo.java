@@ -816,7 +816,7 @@ public class HighlightInfo implements Segment {
         if (wrappedTool instanceof DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection) {
           List<IntentionAction> actions = Collections.<IntentionAction>emptyList(); 
           if (myProblemGroup instanceof SuppressableProblemGroup) {
-            actions = Arrays.asList(((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element));
+            actions = Arrays.<IntentionAction>asList(((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element));
           }
           if (fixAllIntention != null) {
             if (actions.isEmpty()) {
