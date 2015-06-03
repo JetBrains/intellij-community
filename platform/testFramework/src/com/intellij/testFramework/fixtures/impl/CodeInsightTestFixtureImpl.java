@@ -462,7 +462,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                            @NotNull final InspectionToolWrapper... toolWrappers) {
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", project, toolWrappers);
     GlobalInspectionContextForTests context = new GlobalInspectionContextForTests(project, inspectionManager.getContentManager()) {
-      @NotNull
       @Override
       protected List<Tools> getUsedTools() {
         return InspectionProfileImpl.initAndDo(new Computable<List<Tools>>() {
@@ -1194,6 +1193,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
+    UsefulTestCase.replaceIdeEventQueueSafely();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -1227,7 +1227,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       public void run() {
         DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
         VirtualFile[] openFiles = editorManager.getOpenFiles();
         for (VirtualFile openFile : openFiles) {
