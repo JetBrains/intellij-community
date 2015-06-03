@@ -2318,4 +2318,20 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String by = "assert $b$ < $a$ : $c$;";
     assertEquals("class A {  void m(int i) {    assert i < 10 ;  }}", replacer.testReplace(in, what, by, options, false));
   }
+
+  public void testReplaceMultipleVariablesInOneDeclaration() {
+    final String in = "class A {" +
+                      "  private int i, j, k;" +
+                      "  void m() {" +
+                      "    int i,j,k;" +
+                      "  }" +
+                      "}";
+    final String what1 = "int '_i+;";
+    final String by1 = "float $i$;";
+    assertEquals("class A {  private float i,j,k;  void m() {    float i,j,k;  }}", replacer.testReplace(in, what1, by1, options));
+
+    final String what2 = "int '_a, '_b, '_c = '_d?;";
+    final String by2 = "float $a$, $b$, $c$ = $d$;";
+    assertEquals("class A {  private float i, j, k ;  void m() {    float i, j, k ;  }}", replacer.testReplace(in, what2, by2, options));
+  }
 }

@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -242,17 +243,20 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
   public void replace(final ReplacementInfo info, ReplaceOptions options) {
     PsiElement elementToReplace = info.getMatch(0);
-    PsiElement elementParent = elementToReplace.getParent();
+    if (elementToReplace == null) {
+      return;
+    }
+    final PsiElement elementParent = elementToReplace.getParent();
     String replacementToMake = info.getReplacement();
     PsiElement el = findRealSubstitutionElement(elementToReplace);
-    boolean listContext = isListContext(el);
+    final boolean listContext = isListContext(el);
 
     if (el instanceof PsiAnnotation && !replacementToMake.isEmpty() && !StringUtil.startsWithChar(replacementToMake, '@')) {
       replacementToMake = "@" + replacementToMake;
     }
 
-    PsiElement[] statements = ReplacerUtil
-      .createTreeForReplacement(replacementToMake, el instanceof PsiMember && !isSymbolReplacement(el) ?
+    final PsiElement[] statements = ReplacerUtil
+      .createTreeForReplacement(replacementToMake, el instanceof PsiMember && !isSymbolReplacement(elementToReplace) ?
                                                    PatternTreeContext.Class :
                                                    PatternTreeContext.Block, myContext);
 
@@ -274,7 +278,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
     if (listContext) {
       if (statements.length > 1) {
-        elementParent.addRangeBefore(statements[0], statements[statements.length - 1], elementToReplace);
+        final PsiElement replacement = elementParent.addRangeBefore(statements[0], statements[statements.length - 1], elementToReplace);
+        handleModifierList(el, replacement);
       }
       else if (statements.length == 1) {
         PsiElement replacement = getMatchExpr(statements[0], elementToReplace);
@@ -417,7 +422,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
         if (prevSibling instanceof PsiWhiteSpace) {
           firstToDelete = prevSibling;
-          prevSibling = prevSibling != null ? prevSibling.getPrevSibling() : null;
+          prevSibling = prevSibling.getPrevSibling();
         }
         else if (prevSibling == null && nextSibling instanceof PsiWhiteSpace) {
           lastToDelete = nextSibling;
@@ -425,20 +430,18 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
         if (element instanceof PsiExpression) {
           final PsiElement parent = element.getParent().getParent();
-          if ((parent instanceof PsiCall ||
-               parent instanceof PsiAnonymousClass
-          ) &&
-              prevSibling instanceof PsiJavaToken &&
-              ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.COMMA
-            ) {
+          if ((parent instanceof PsiCall || parent instanceof PsiAnonymousClass) && PsiUtil.isJavaToken(prevSibling, JavaTokenType.COMMA)) {
             firstToDelete = prevSibling;
           }
         }
-        else if (element instanceof PsiParameter &&
-                 prevSibling instanceof PsiJavaToken &&
-                 ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.COMMA
-          ) {
+        else if (element instanceof PsiParameter && PsiUtil.isJavaToken(prevSibling, JavaTokenType.COMMA)) {
           firstToDelete = prevSibling;
+        }
+        else if (element instanceof PsiField) {
+          while (PsiUtil.isJavaToken(nextSibling, JavaTokenType.COMMA)) {
+            lastToDelete = PsiTreeUtil.skipSiblingsForward(nextSibling, PsiWhiteSpace.class);
+            nextSibling = PsiTreeUtil.skipSiblingsForward(lastToDelete, PsiWhiteSpace.class);
+          }
         }
 
         element.getParent().deleteChildRange(firstToDelete, lastToDelete);

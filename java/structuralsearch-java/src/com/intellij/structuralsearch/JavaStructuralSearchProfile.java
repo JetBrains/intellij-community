@@ -468,7 +468,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
           if (buf.length() > 0) {
             final PsiElement parent = currentElement.getParent();
-            if (info.isStatementContext()) {
+            if (parent instanceof PsiVariable) {
+              final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class);
+              if (prevSibling instanceof PsiJavaToken && JavaTokenType.COMMA.equals(((PsiJavaToken)prevSibling).getTokenType())) {
+                buf.append(',');
+              }
+            }
+            else if (info.isStatementContext()) {
               final PsiElement previousElement = previous.getMatchRef().getElement();
 
               if (!(previousElement instanceof PsiComment) &&
@@ -525,11 +531,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
         replacementString = buf.toString();
       } else {
-        StringBuilder buf = new StringBuilder();
         if (info.isStatementContext()) {
           forceAddingNewLine = match.getMatch() instanceof PsiComment;
         }
-        buf.append(replacementString);
+        StringBuilder buf = new StringBuilder(replacementString);
         removeExtraSemicolonForSingleVarInstanceInMultipleMatch(info, match, buf);
         replacementString = buf.toString();
       }
