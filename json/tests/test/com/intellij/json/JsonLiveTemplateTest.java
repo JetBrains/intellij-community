@@ -59,14 +59,11 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     createJsonTemplate("foo", "foo", templateContent);
     myFixture.configureByText(JsonFileType.INSTANCE, "foo<caret>");
     final Editor editor = myFixture.getEditor();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        new ListTemplatesAction().actionPerformedImpl(getProject(), editor);
-        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-        assertNotNull(lookup);
-        lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      new ListTemplatesAction().actionPerformedImpl(getProject(), editor);
+      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      assertNotNull(lookup);
+      lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     });
     myFixture.checkResult(templateContent.replaceAll("\\$.*?\\$", ""));
   }
