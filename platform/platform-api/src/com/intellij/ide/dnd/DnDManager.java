@@ -15,14 +15,14 @@
  */
 package com.intellij.ide.dnd;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 import javax.swing.*;
 import java.awt.*;
 
 public abstract class DnDManager {
   public static DnDManager getInstance() {
-    return (DnDManager)ApplicationManager.getApplication().getPicoContainer().getComponentInstance(DnDManager.class.getName());
+    return ServiceManager.getService(DnDManager.class);
   }
 
   public abstract void registerSource(DnDSource source, JComponent component);
