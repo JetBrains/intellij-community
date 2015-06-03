@@ -131,6 +131,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @CalledInAwt
   public void markResolved() {
     myResolved = true;
+    myViewer.onChangeResolved(this);
     myViewer.reinstallHighlighter(this);
   }
 
