@@ -1711,7 +1711,7 @@ class Cls {
     final JavaCodeContextType contextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement);
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
-    LiveTemplateTest.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
     
     myFixture.configureByText 'a.java', '''
 class Foo {

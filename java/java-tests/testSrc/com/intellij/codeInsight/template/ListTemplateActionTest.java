@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
     template.setDescription(description);
     TemplateContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
     template.getTemplateContext().setEnabled(contextType, true);
-    LiveTemplateTest.addTemplate(template, getTestRootDisposable());
+    CodeInsightTestUtil.addTemplate(template, getTestRootDisposable());
   }
 
   @Override
