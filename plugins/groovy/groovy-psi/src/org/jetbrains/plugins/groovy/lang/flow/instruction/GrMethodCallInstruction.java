@@ -172,6 +172,8 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
 
   private static boolean isPureCall(PsiMethod myTargetMethod) {
     if (myTargetMethod == null) return false;
-    return ControlFlowAnalyzer.isPure(myTargetMethod) || PropertyUtil.isSimplePropertyGetter(myTargetMethod);
+    return ControlFlowAnalyzer.isPure(myTargetMethod)
+           || PropertyUtil.isSimplePropertyGetter(myTargetMethod)
+           || GrDfaUtil.isEqualsCallOrIsCall(myTargetMethod);
   }
 }

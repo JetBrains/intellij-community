@@ -111,6 +111,24 @@ def test(a) {
 '''
   }
 
+  void "test chained safe call" () {
+    testHighlighting '''\
+class A { B b }
+class B { B b }
+
+def test(A a) {
+    def var = a?.b?.b?.b
+    if (var != null) {
+        if (<warning descr="Condition 'a == null' is always false">a == null</warning>) {}
+        if (<warning descr="Condition 'a.b == null' is always false">a.b == null</warning>) {}
+        if (<warning descr="Condition 'a.b.b == null' is always false">a.b.b == null</warning>) {}
+        if (<warning descr="Condition 'a.b.b.b == null' is always false">a.b.b.b == null</warning>) {}
+        if (a.b.b.b.b == null) {}
+    }
+}
+'''
+  }
+  
   void "test constant value conditions"() { doTest() }
 
   void "test unknown value conditions"() { doTest() }
