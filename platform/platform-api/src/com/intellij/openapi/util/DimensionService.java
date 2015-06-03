@@ -16,7 +16,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -24,10 +23,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 /**
  * This class represents map between strings and rectangles. It's intended to store
@@ -49,20 +45,11 @@ import java.util.Map;
   }
 )
 public class DimensionService implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance(DimensionService.class);
-
-  private final Map<String, Point> myKey2Location;
-  private final Map<String, Dimension> myKey2Size;
-  private final TObjectIntHashMap<String> myKey2ExtendedState;
+  private final Service myService = new Service();
   @NonNls private static final String EXTENDED_STATE = "extendedState";
-  @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
   @NonNls private static final String ELEMENT_LOCATION = "location";
   @NonNls private static final String ELEMENT_SIZE = "size";
-  @NonNls private static final String ATTRIBUTE_X = "x";
-  @NonNls private static final String ATTRIBUTE_Y = "y";
-  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
-  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
 
   public static DimensionService getInstance() {
     return ServiceManager.getService(DimensionService.class);
@@ -72,9 +59,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
    * Invoked by reflection
    */
   private DimensionService() {
-    myKey2Location = new LinkedHashMap<String, Point>();
-    myKey2Size = new LinkedHashMap<String, Dimension>();
-    myKey2ExtendedState = new TObjectIntHashMap<String>();
   }
 
   /**
@@ -92,7 +76,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
         return location;
       }
     }
-    return getSharedLocation(realKey(key, guessProject()));
+    return myService.getLocationImpl(realKey(key, guessProject()));
   }
 
   /**
@@ -109,7 +93,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
         return location;
       }
     }
-    return getSharedLocation(realKey(key, project));
+    return myService.getLocationImpl(realKey(key, project));
   }
 
   /**
@@ -120,26 +104,10 @@ public class DimensionService implements PersistentStateComponent<Element> {
    */
   public synchronized Point getLocationOn(GraphicsDevice screen, String key) {
     if (key != null) {
-      Point location = getSharedLocation(getKey(screen, key));
-      return location != null ? location : getSharedLocation(key);
+      Point location = myService.getLocationImpl(getKey(screen, key));
+      return location != null ? location : myService.getLocationImpl(key);
     }
     return null;
-  }
-
-  /**
-   * @param key a string key to retrieve a location for
-   * @return the location stored for the given {@code key}, or {@code null} if it does not exist or it is wrong
-   */
-  @Nullable
-  private Point getSharedLocation(@NotNull String key) {
-    Point point = myKey2Location.get(key);
-    if (point != null && !ScreenUtil.isVisible(point)) {
-      Dimension size = getSharedSize(key);
-      if (size == null || !ScreenUtil.isVisible(new Rectangle(point, size))) {
-        point = null;
-      }
-    }
-    return point != null ? (Point)point.clone() : null;
   }
 
   /**
@@ -154,7 +122,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
       setLocationOn(null, key, point);
     }
     else {
-      setSharedLocation(realKey(key, guessProject()), point);
+      myService.putLocationImpl(realKey(key, guessProject()), point);
     }
   }
 
@@ -171,7 +139,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
       setLocationOn(getDevice(project), key, point);
     }
     else {
-      setSharedLocation(realKey(key, project), point);
+      myService.putLocationImpl(realKey(key, project), point);
     }
   }
 
@@ -185,24 +153,8 @@ public class DimensionService implements PersistentStateComponent<Element> {
    */
   public synchronized void setLocationOn(GraphicsDevice screen, String key, Point location) {
     if (key != null) {
-      setSharedLocation(getKey(screen, key), location);
-      setSharedLocation(key, location);
-    }
-  }
-
-  /**
-   * Stores the specified {@code location} for the given {@code key}. If {@code location} is {@code null}
-   * then the location stored for the given {@code key} will be removed.
-   *
-   * @param key      a string key to to save a location for
-   * @param location a location to save
-   */
-  private void setSharedLocation(@NotNull String key, Point location) {
-    if (location != null) {
-      myKey2Location.put(key, (Point)location.clone());
-    }
-    else {
-      myKey2Location.remove(key);
+      myService.putLocationImpl(getKey(screen, key), location);
+      myService.putLocationImpl(key, location);
     }
   }
 
@@ -219,7 +171,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
         return size;
       }
     }
-    return getSharedSize(realKey(key, guessProject()));
+    return myService.getSizeImpl(realKey(key, guessProject()));
   }
 
   /**
@@ -236,7 +188,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
         return size;
       }
     }
-    return getSharedSize(realKey(key, project));
+    return myService.getSizeImpl(realKey(key, project));
   }
 
   /**
@@ -247,20 +199,10 @@ public class DimensionService implements PersistentStateComponent<Element> {
    */
   public synchronized Dimension getSizeOn(GraphicsDevice screen, String key) {
     if (key != null) {
-      Dimension size = getSharedSize(getKey(screen, key));
-      return size != null ? size : getSharedSize(key);
+      Dimension size = myService.getSizeImpl(getKey(screen, key));
+      return size != null ? size : myService.getSizeImpl(key);
     }
     return null;
-  }
-
-  /**
-   * @param key a string key to retrieve a size for
-   * @return the size stored for the given {@code key}, or {@code null} if it does not exist
-   */
-  @Nullable
-  private Dimension getSharedSize(@NotNull @NonNls String key) {
-    Dimension size = myKey2Size.get(key);
-    return size != null ? (Dimension)size.clone() : null;
   }
 
   /**
@@ -275,7 +217,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
       setSizeOn(null, key, size);
     }
     else {
-      setSharedSize(realKey(key, guessProject()), size);
+      myService.putSizeImpl(realKey(key, guessProject()), size);
     }
   }
 
@@ -292,7 +234,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
       setSizeOn(getDevice(project), key, size);
     }
     else {
-      setSharedSize(realKey(key, project), size);
+      myService.putSizeImpl(realKey(key, project), size);
     }
   }
 
@@ -306,102 +248,27 @@ public class DimensionService implements PersistentStateComponent<Element> {
    */
   public synchronized void setSizeOn(GraphicsDevice screen, String key, Dimension size) {
     if (key != null) {
-      setSharedSize(getKey(screen, key), size);
-      setSharedSize(key, size);
-    }
-  }
-
-  /**
-   * Stores the specified {@code size} for the given {@code key}. If {@code size} is {@code null}
-   * then the size stored for the given {@code key} will be removed.
-   *
-   * @param key  a string key to to save size for
-   * @param size a size to save
-   */
-  private void setSharedSize(@NotNull @NonNls String key, Dimension size) {
-    if (size != null) {
-      myKey2Size.put(key, (Dimension)size.clone());
-    }
-    else {
-      myKey2Size.remove(key);
+      myService.putSizeImpl(getKey(screen, key), size);
+      myService.putSizeImpl(key, size);
     }
   }
 
   @Override
   public Element getState() {
-    Element element = new Element("state");
-    // Save locations
-    for (String key : myKey2Location.keySet()) {
-      Point point = myKey2Location.get(key);
-      LOG.assertTrue(point != null);
-      Element e = new Element(ELEMENT_LOCATION);
-      e.setAttribute(KEY, key);
-      e.setAttribute(ATTRIBUTE_X, String.valueOf(point.x));
-      e.setAttribute(ATTRIBUTE_Y, String.valueOf(point.y));
-      element.addContent(e);
-    }
-
-    // Save sizes
-    for (String key : myKey2Size.keySet()) {
-      Dimension size = myKey2Size.get(key);
-      LOG.assertTrue(size != null);
-      Element e = new Element(ELEMENT_SIZE);
-      e.setAttribute(KEY, key);
-      e.setAttribute(ATTRIBUTE_WIDTH, String.valueOf(size.width));
-      e.setAttribute(ATTRIBUTE_HEIGHT, String.valueOf(size.height));
-      element.addContent(e);
-    }
-
-    // Save extended states
-    for (Object stateKey : myKey2ExtendedState.keys()) {
-      String key = (String)stateKey;
-      Element e = new Element(EXTENDED_STATE);
-      e.setAttribute(KEY, key);
-      e.setAttribute(STATE, String.valueOf(myKey2ExtendedState.get(key)));
-      element.addContent(e);
-    }
-    return element;
+    return myService.getState();
   }
 
   @Override
   public void loadState(final Element element) {
-    myKey2Location.clear();
-    myKey2Size.clear();
-    myKey2ExtendedState.clear();
-
-    for (Element e : element.getChildren()) {
-      if (ELEMENT_LOCATION.equals(e.getName())) {
-        try {
-          myKey2Location.put(e.getAttributeValue(KEY), new Point(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X)),
-                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y))));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-      else if (ELEMENT_SIZE.equals(e.getName())) {
-        try {
-          myKey2Size.put(e.getAttributeValue(KEY), new Dimension(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_WIDTH)),
-                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_HEIGHT))));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-      else if (EXTENDED_STATE.equals(e.getName())) {
-        try {
-          myKey2ExtendedState.put(e.getAttributeValue(KEY), Integer.parseInt(e.getAttributeValue(STATE)));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    }
+    myService.loadState(element);
   }
 
   public void setExtendedState(String key, int extendedState) {
     if (!Registry.is("ide.dimension.service.old")) {
       String newKey = getKey(null, key);
-      myKey2ExtendedState.put(newKey, extendedState);
+      myService.putExtendedStateImpl(newKey, extendedState);
     }
-    myKey2ExtendedState.put(key, extendedState);
+    myService.putExtendedStateImpl(key, extendedState);
   }
 
   /**
@@ -412,12 +279,13 @@ public class DimensionService implements PersistentStateComponent<Element> {
   public int getExtendedState(String key) {
     if (!Registry.is("ide.dimension.service.old")) {
       String newKey = getKey(null, key);
-      if (myKey2ExtendedState.containsKey(newKey)) {
-        return myKey2ExtendedState.get(newKey);
+      Integer value = myService.getExtendedStateImpl(newKey);
+      if (value != null) {
+        return value;
       }
     }
-    if (!myKey2ExtendedState.containsKey(key)) return -1;
-    return myKey2ExtendedState.get(key);
+    Integer value = myService.getExtendedStateImpl(key);
+    return value != null ? value : -1;
   }
 
   @Nullable
@@ -457,7 +325,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
     }
     String realKey = key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
     if (JBUI.isHiDPI()) {
-      realKey+="@" + JBUI.scale(1) + "x";
+      realKey += "@" + JBUI.scale(1) + "x";
     }
     return realKey;
   }
@@ -473,7 +341,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   @NotNull
-  private static String getKey(GraphicsDevice screen, String key) {
+  static String getKey(GraphicsDevice screen, String key) {
     GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (environment.isHeadlessInstance()) {
       return key + ".headless";
@@ -494,5 +362,46 @@ public class DimensionService implements PersistentStateComponent<Element> {
       sb.append('.').append(bounds.height);
     }
     return sb.toString();
+  }
+
+  private static final class Service extends WindowStateService.Service {
+    @Override
+    void addTo(Element element, String key, Point location, Dimension size, Integer state) {
+      if (location != null) {
+        Element child = new Element(ELEMENT_LOCATION);
+        writeKeyTo(child, key);
+        writeLocationTo(child, location);
+        element.addContent(child);
+      }
+      if (size != null) {
+        Element child = new Element(ELEMENT_SIZE);
+        writeKeyTo(child, key);
+        writeSizeTo(child, size);
+        element.addContent(child);
+      }
+      if (state != null) {
+        Element child = new Element(EXTENDED_STATE);
+        writeKeyTo(child, key);
+        writeTo(child, STATE, state);
+        element.addContent(child);
+      }
+    }
+
+    @Override
+    void put(String key, Element content) {
+      if (ELEMENT_LOCATION.equals(content.getName())) {
+        putLocationImpl(key, loadLocationFrom(content));
+      }
+      else if (ELEMENT_SIZE.equals(content.getName())) {
+        putSizeImpl(key, loadSizeFrom(content));
+      }
+      else if (EXTENDED_STATE.equals(content.getName())) {
+        try {
+          putExtendedStateImpl(key, Integer.parseInt(content.getAttributeValue(STATE)));
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    }
   }
 }
