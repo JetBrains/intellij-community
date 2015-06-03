@@ -389,12 +389,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   public void update() {
-    try {
-      myRootContainer.update();
-    }
-    finally {
-      resetVersionString();
-    }
+    myRootContainer.update();
   }
 
   @Override
