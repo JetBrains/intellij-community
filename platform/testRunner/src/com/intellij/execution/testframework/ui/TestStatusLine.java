@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.plaf.ProgressBarUI;
 import java.awt.*;
 
 /**
@@ -31,7 +34,7 @@ public class TestStatusLine extends JPanel {
   private static final SimpleTextAttributes IGNORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
   private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED);
 
-  protected final JProgressBar myProgressBar = new JProgressBar();
+  protected final JProgressBar myProgressBar = new MyProgressBar();
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
 
   public TestStatusLine() {
@@ -120,5 +123,15 @@ public class TestStatusLine extends JPanel {
   public void setText(String progressStatus_text) {
     myState.clear();
     myState.append(progressStatus_text);
+  }
+
+  private static class MyProgressBar extends JProgressBar {
+    @Override
+    public void setUI(ProgressBarUI ui) {
+      if (UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()) {
+        ui = new DarculaProgressBarUI();
+      }
+      super.setUI(ui);
+    }
   }
 }
