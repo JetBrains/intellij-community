@@ -578,58 +578,62 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     table.setTableHeader(null);
     table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     table.setIntercellSpacing(new Dimension(0, 0));
-    final AtomicReference<Object> selectedUsage = new AtomicReference<Object>();
-    final AtomicBoolean moreUsagesSelected = new AtomicBoolean();
-    final AtomicBoolean outsideScopeUsagesSelected = new AtomicBoolean();
-    final Runnable itemChosenCallback = new Runnable() {
-      @Override
-      public void run() {
-        if (moreUsagesSelected.get()) {
-          appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
-          return;
-        }
-        if (outsideScopeUsagesSelected.get()) {
-          options.searchScope = GlobalSearchScope.projectScope(handler.getProject());
-          showElementUsages(editor, popupPosition, handler, maxUsages, options);
-          return;
-        }
-        Object usage = selectedUsage.get();
-        if (usage instanceof UsageInfo) {
-          UsageViewUtil.navigateTo((UsageInfo)usage, true);
-        }
-        else if (usage instanceof Navigatable) {
-          ((Navigatable)usage).navigate(true);
-        }
-      }
-    };
-    table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        selectedUsage.set(null);
-        int[] selected = table.getSelectedRows();
-        for (int i : selected) {
-          Object value = table.getValueAt(i, 0);
-          if (value instanceof UsageNode) {
-            Usage usage = ((UsageNode)value).getUsage();
-            outsideScopeUsagesSelected.set(false);
-            moreUsagesSelected.set(false);
-            if (usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) {
-              outsideScopeUsagesSelected.set(true);
-              selectedUsage.set(null);
-            }
-            else if (usage == MORE_USAGES_SEPARATOR) {
-              moreUsagesSelected.set(true);
-              selectedUsage.set(null);
-            }
-            else {
-              selectedUsage.set(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
-            }
-            break;
+
+    final Runnable itemChosenCallback;
+
+    if (previewMode) {
+      final AtomicReference<Object> selectedUsage = new AtomicReference<Object>();
+      final AtomicBoolean moreUsagesSelected = new AtomicBoolean();
+      final AtomicBoolean outsideScopeUsagesSelected = new AtomicBoolean();
+      itemChosenCallback = new Runnable() {
+        @Override
+        public void run() {
+          if (moreUsagesSelected.get()) {
+            appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
+            return;
+          }
+          if (outsideScopeUsagesSelected.get()) {
+            options.searchScope = GlobalSearchScope.projectScope(handler.getProject());
+            showElementUsages(editor, popupPosition, handler, maxUsages, options);
+            return;
+          }
+          Object usage = selectedUsage.get();
+          if (usage instanceof UsageInfo) {
+            UsageViewUtil.navigateTo((UsageInfo)usage, true);
+          }
+          else if (usage instanceof Navigatable) {
+            ((Navigatable)usage).navigate(true);
           }
         }
-      }
-    });
-    if (previewMode) {
+      };
+      table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          selectedUsage.set(null);
+          int[] selected = table.getSelectedRows();
+          for (int i : selected) {
+            Object value = table.getValueAt(i, 0);
+            if (value instanceof UsageNode) {
+              Usage usage = ((UsageNode)value).getUsage();
+              outsideScopeUsagesSelected.set(false);
+              moreUsagesSelected.set(false);
+              if (usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+                outsideScopeUsagesSelected.set(true);
+                selectedUsage.set(null);
+              }
+              else if (usage == MORE_USAGES_SEPARATOR) {
+                moreUsagesSelected.set(true);
+                selectedUsage.set(null);
+              }
+              else {
+                selectedUsage.set(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
+              }
+              break;
+            }
+          }
+        }
+      });
+
       table.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -647,6 +651,27 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
       });
     }
+    else {
+      itemChosenCallback = new Runnable() {
+        @Override
+        public void run() {
+          int[] selected = table.getSelectedRows();
+          for (int i : selected) {
+            Object value = table.getValueAt(i, 0);
+            if (value instanceof UsageNode) {
+              Usage usage = ((UsageNode)value).getUsage();
+              if (usage instanceof UsageInfo) {
+                UsageViewUtil.navigateTo((UsageInfo)usage, true);
+              }
+              else {
+                usage.navigate(true);
+              }
+            }
+          }
+        }
+      };
+    }
+
     return itemChosenCallback;
   }
 
