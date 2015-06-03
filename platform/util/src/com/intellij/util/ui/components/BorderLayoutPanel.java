@@ -31,10 +31,6 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
     super(new BorderLayout(JBUI.scale(hgap), JBUI.scale(vgap)));
   }
 
-  public BorderLayoutPanel add(Component comp) {
-    return addToCenter(comp);
-  }
-
   public BorderLayoutPanel addToCenter(Component comp) {
     add(comp, BorderLayout.CENTER);
     return this;

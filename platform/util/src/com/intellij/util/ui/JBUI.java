@@ -188,7 +188,7 @@ public class JBUI {
     }
 
     public static BorderLayoutPanel simplePanel(Component comp) {
-      return simplePanel().add(comp);
+      return simplePanel().addToCenter(comp);
     }
 
     public static BorderLayoutPanel simplePanel(int hgap, int vgap) {
