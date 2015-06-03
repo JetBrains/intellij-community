@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -950,7 +951,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
           text = Presentation.restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
         }
 
-        Icon icon = presentation.getIcon();
+        Icon icon = presentation.isEnabled() ? presentation.getIcon() : IconLoader.getDisabledIcon(presentation.getIcon());
         if (icon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
           if (actionId != null && actionId.startsWith("QuickList.")) {

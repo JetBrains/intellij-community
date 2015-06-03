@@ -103,6 +103,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
+  protected boolean shouldShowDisabledActions() {
+    return true;
+  }
+
+  @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     ComboBoxButton button = createComboBoxButton(presentation);
     button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
