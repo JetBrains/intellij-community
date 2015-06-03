@@ -52,6 +52,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class TextMergeTool implements MergeTool {
   public static final TextMergeTool INSTANCE = new TextMergeTool();
@@ -88,6 +90,7 @@ public class TextMergeTool implements MergeTool {
     @NotNull private final MyThreesideViewer myViewer;
 
     private boolean myConflictResolved;
+    private int myBulkChangeUpdateDepth;
 
     public TextMergeViewer(@NotNull MergeContext context, @NotNull TextMergeRequest request) {
       myMergeContext = context;
@@ -158,6 +161,7 @@ public class TextMergeTool implements MergeTool {
     public void dispose() {
       if (!isConflictResolved()) myMergeRequest.applyResult(MergeResult.CANCEL);
       Disposer.dispose(myViewer);
+      LOG.assertTrue(myBulkChangeUpdateDepth == 0);
     }
 
     //
@@ -188,7 +192,7 @@ public class TextMergeTool implements MergeTool {
       @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
       private boolean myInitialRediffDone;
 
-      private final List<TextMergeChange> myChangesToUpdate = new ArrayList<TextMergeChange>();
+      private final Set<TextMergeChange> myChangesToUpdate = new HashSet<TextMergeChange>();
 
       public MyThreesideViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
         super(context, request);
@@ -420,6 +424,7 @@ public class TextMergeTool implements MergeTool {
       @CalledInAwt
       protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
         super.onBeforeDocumentChange(e);
+        enterBulkChangeUpdateBlock();
         if (myAllMergeChanges.isEmpty()) return;
 
         ThreeSide side = null;
@@ -442,7 +447,7 @@ public class TextMergeTool implements MergeTool {
 
         for (TextMergeChange change : myAllMergeChanges) {
           if (change.processBaseChange(line1, line2, shift)) {
-            myChangesToUpdate.add(change); // document state is not updated yet - can't reinstall range here
+            reinstallHighlighter(change); // document state is not updated yet - can't reinstall range here
           }
         }
       }
@@ -450,14 +455,39 @@ public class TextMergeTool implements MergeTool {
       @Override
       protected void onDocumentChange(@NotNull DocumentEvent e) {
         super.onDocumentChange(e);
-
-        for (TextMergeChange change : myChangesToUpdate) {
-          change.reinstallHighlighter();
-        }
+        exitBulkChangeUpdateBlock();
       }
 
       public void repaintDividers() {
         myContentPanel.repaintDividers();
+      }
+
+      @CalledInAwt
+      public void reinstallHighlighter(@NotNull TextMergeChange change) {
+        if (myBulkChangeUpdateDepth > 0) {
+          myChangesToUpdate.add(change);
+        }
+        else {
+          change.doReinstallHighlighter();
+        }
+      }
+
+      @CalledInAwt
+      public void enterBulkChangeUpdateBlock() {
+        myBulkChangeUpdateDepth++;
+      }
+
+      @CalledInAwt
+      public void exitBulkChangeUpdateBlock() {
+        myBulkChangeUpdateDepth--;
+        LOG.assertTrue(myBulkChangeUpdateDepth >= 0);
+
+        if (myBulkChangeUpdateDepth == 0) {
+          for (TextMergeChange change : myChangesToUpdate) {
+            change.doReinstallHighlighter();
+          }
+          myChangesToUpdate.clear();
+        }
       }
 
       //
@@ -496,12 +526,16 @@ public class TextMergeTool implements MergeTool {
 
       @CalledWithWriteLock
       public void applyNonConflicts() {
+        enterBulkChangeUpdateBlock();
+
         for (TextMergeChange change : getChanges()) {
           if (change.getDiffType() == TextDiffType.CONFLICT) continue;
           Side masterSide = change.getType().isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
           replaceChange(change, masterSide);
           change.markResolved();
         }
+
+        exitBulkChangeUpdateBlock();
       }
 
       @CalledWithWriteLock
@@ -514,6 +548,8 @@ public class TextMergeTool implements MergeTool {
         int sourceStartLine = change.getStartLine(sourceSide);
         int sourceEndLine = change.getEndLine(sourceSide);
 
+        enterBulkChangeUpdateBlock();
+
         DiffUtil.applyModification(getContent(outputSide).getDocument(), outputStartLine, outputEndLine,
                                    getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
 
@@ -521,6 +557,8 @@ public class TextMergeTool implements MergeTool {
           int newOutputEndLine = outputStartLine + (sourceEndLine - sourceStartLine);
           moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
         }
+
+        exitBulkChangeUpdateBlock();
       }
 
       @CalledWithWriteLock
@@ -533,11 +571,15 @@ public class TextMergeTool implements MergeTool {
         int sourceStartLine = change.getStartLine(sourceSide);
         int sourceEndLine = change.getEndLine(sourceSide);
 
+        enterBulkChangeUpdateBlock();
+
         DiffUtil.applyModification(getContent(outputSide).getDocument(), outputEndLine, outputEndLine,
                                    getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
 
         int newOutputEndLine = outputEndLine + (sourceEndLine - sourceStartLine);
         moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+
+        exitBulkChangeUpdateBlock();
       }
 
       /*
@@ -553,7 +595,7 @@ public class TextMergeTool implements MergeTool {
             change.getEndLine(ThreeSide.BASE) != newOutputEndLine) {
           change.setStartLine(ThreeSide.BASE, newOutputStartLine);
           change.setEndLine(ThreeSide.BASE, newOutputEndLine);
-          change.reinstallHighlighter();
+          reinstallHighlighter(change);
         }
 
         boolean beforeChange = true;
@@ -572,7 +614,7 @@ public class TextMergeTool implements MergeTool {
           if (startLine != newStartLine || endLine != newEndLine) {
             otherChange.setStartLine(ThreeSide.BASE, newStartLine);
             otherChange.setEndLine(ThreeSide.BASE, newEndLine);
-            otherChange.reinstallHighlighter();
+            reinstallHighlighter(otherChange);
           }
         }
       }
@@ -589,12 +631,18 @@ public class TextMergeTool implements MergeTool {
         public void actionPerformed(AnActionEvent e) {
           DocumentEx document = getEditor(ThreeSide.BASE).getDocument();
 
-          DiffUtil.executeWriteCommand(document, getProject(), "Apply Non Conflicted Changes", new Runnable() {
-            @Override
-            public void run() {
-              applyNonConflicts();
-            }
-          });
+          getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(true);
+          try {
+            DiffUtil.executeWriteCommand(document, getProject(), "Apply Non Conflicted Changes", new Runnable() {
+              @Override
+              public void run() {
+                applyNonConflicts();
+              }
+            });
+          }
+          finally {
+            getEditor(ThreeSide.BASE).getDocument().setInBulkUpdate(false);
+          }
 
           TextMergeChange firstConflict = getFirstChange(true);
           if (firstConflict != null) doScrollToChange(firstConflict, true);

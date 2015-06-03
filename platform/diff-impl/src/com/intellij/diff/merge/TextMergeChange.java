@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private int[] myEndLines = new int[3];
   private boolean myResolved;
 
+  @CalledInAwt
   public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeTool.TextMergeViewer viewer) {
     super(fragment, viewer.getViewer().getEditors(), ComparisonPolicy.DEFAULT);
     myMergeViewer = viewer;
@@ -70,6 +72,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     doInstallActionHighlighters();
   }
 
+  @CalledInAwt
   public void destroyHighlighter() {
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.dispose();
@@ -82,7 +85,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myOperations.clear();
   }
 
-  public void reinstallHighlighter() {
+  @CalledInAwt
+  public void doReinstallHighlighter() {
     destroyHighlighter();
     installHighlighter();
     myViewer.repaintDividers();
@@ -124,9 +128,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // Getters
   //
 
+  @CalledInAwt
   public void markResolved() {
     myResolved = true;
-    reinstallHighlighter();
+    myViewer.reinstallHighlighter(this);
   }
 
   public boolean isResolved() {
