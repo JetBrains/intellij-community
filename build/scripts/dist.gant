@@ -169,7 +169,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
 
   buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
   if (p("jdk.bundled.linux") != "false") {
-    buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"])
+    buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/bin/*"])
   }
   return info
 }
