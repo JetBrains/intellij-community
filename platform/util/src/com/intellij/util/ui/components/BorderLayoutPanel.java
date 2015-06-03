@@ -15,6 +15,8 @@
  */
 package com.intellij.util.ui.components;
 
+import com.intellij.util.ui.JBUI;
+
 import java.awt.*;
 
 /**
@@ -26,7 +28,7 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   }
 
   public BorderLayoutPanel(int hgap, int vgap) {
-    super(new BorderLayout(hgap, vgap));
+    super(new BorderLayout(JBUI.scale(hgap), JBUI.scale(vgap)));
   }
 
   public BorderLayoutPanel add(Component comp) {
