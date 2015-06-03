@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -87,6 +88,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
   private boolean myTestsRunning = true;
+  private AbstractTestProxy myLastSelected;
 
   public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
@@ -165,6 +167,29 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
+
+    TrackRunningTestUtil.installStopListeners(myTreeView, myConsoleProperties, new Pass<AbstractTestProxy>() {
+      @Override
+      public void pass(AbstractTestProxy testProxy) {
+        if (testProxy == null) return;
+        //drill to the first leaf
+        while (!testProxy.isLeaf()) {
+          final List<? extends AbstractTestProxy> children = testProxy.getChildren();
+          if (!children.isEmpty()) {
+            final AbstractTestProxy firstChild = children.get(0);
+            if (firstChild != null) {
+              testProxy = firstChild;
+              continue;
+            }
+          }
+          break;
+        }
+
+        //pretend the selection on the first leaf
+        //so if test would be run, tracking would be restarted 
+        myLastSelected = testProxy;
+      }
+    });
 
     //TODO always hide root node
     //myTreeView.setRootVisible(false);
@@ -248,7 +273,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     LvcsHelper.addLabel(this);
 
-    selectAndNotify(myTestsRootNode, new Runnable() {
+
+    final Runnable onDone = new Runnable() {
       @Override
       public void run() {
         myTestsRunning = false;
@@ -257,7 +283,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
         }
       }
-    });
+    };
+    if (myLastSelected == null) {
+      selectAndNotify(myTestsRootNode, onDone);
+    }
+    else {
+      onDone.run();
+    }
 
     fireOnTestingFinished();
   }
@@ -479,6 +511,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.repaintWithParents(newTestOrSuite);
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
+
+    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
+      if (myLastSelected == null || myLastSelected == newTestOrSuite) {
+        myLastSelected = null;
+        selectAndNotify(newTestOrSuite);
+      }
+    }
   }
 
   private void fireOnTestNodeAdded(final SMTestProxy test) {

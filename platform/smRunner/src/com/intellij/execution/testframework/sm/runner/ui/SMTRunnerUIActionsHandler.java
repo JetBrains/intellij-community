@@ -16,14 +16,13 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.sm.runner.ProxyFilters;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
-import com.intellij.openapi.util.Pass;
+import com.intellij.execution.testframework.sm.runner.ProxyFilters;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,43 +33,9 @@ import java.util.List;
  */
 public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter {
   private final TestConsoleProperties myConsoleProperties;
-  private AbstractTestProxy myLastSelected;
 
-  public SMTRunnerUIActionsHandler(final TestConsoleProperties consoleProperties, TestTreeView tree) {
+  public SMTRunnerUIActionsHandler(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
-    if (tree != null) {
-      TrackRunningTestUtil.installStopListeners(tree, consoleProperties, new Pass<AbstractTestProxy>() {
-        @Override
-        public void pass(AbstractTestProxy testProxy) {
-          if (testProxy == null) return;
-          //drill to the first leaf
-          while (!testProxy.isLeaf()) {
-            final List<? extends AbstractTestProxy> children = testProxy.getChildren();
-            if (!children.isEmpty()) {
-              final AbstractTestProxy firstChild = children.get(0);
-              if (firstChild != null) {
-                testProxy = firstChild;
-                continue;
-              } 
-            }
-            break;
-          }
-
-          //pretend the selection on the first leaf
-          //so if test would be run, tracking would be restarted 
-          myLastSelected = testProxy;
-        }
-      });
-    }
-  }
-
-  public void onTestNodeAdded(final TestResultsViewer sender, final SMTestProxy test) {
-    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
-      if (myLastSelected == null || myLastSelected == test) {
-        myLastSelected = null;
-        sender.selectAndNotify(test);
-      }
-    }
   }
 
   public void onTestingFinished(final TestResultsViewer sender) {
