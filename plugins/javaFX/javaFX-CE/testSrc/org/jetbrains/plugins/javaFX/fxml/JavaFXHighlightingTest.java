@@ -32,9 +32,9 @@ import org.junit.Assume;
  */
 public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Assume.assumeFalse(SystemInfo.isMac);
+  protected void runTest() throws Throwable {
+    Assume.assumeFalse(SystemInfo.isLinux);
+    super.runTest();
   }
 
   public void testLoginForm() throws Exception {

@@ -31,9 +31,9 @@ import java.util.List;
 
 public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Assume.assumeFalse(SystemInfo.isMac);
+  protected void runTest() throws Throwable {
+    Assume.assumeFalse(SystemInfo.isLinux);
+    super.runTest();
   }
 
   @Override
