@@ -159,9 +159,9 @@ public class TextMergeTool implements MergeTool {
 
     @Override
     public void dispose() {
-      if (!isConflictResolved()) myMergeRequest.applyResult(MergeResult.CANCEL);
       Disposer.dispose(myViewer);
       LOG.assertTrue(myBulkChangeUpdateDepth == 0);
+      if (!isConflictResolved()) myMergeRequest.applyResult(MergeResult.CANCEL);
     }
 
     //
@@ -268,6 +268,7 @@ public class TextMergeTool implements MergeTool {
               }
             }
             markConflictResolved();
+            destroyChangedBlocks();
             myMergeRequest.applyResult(result);
             myMergeContext.closeDialog();
           }
