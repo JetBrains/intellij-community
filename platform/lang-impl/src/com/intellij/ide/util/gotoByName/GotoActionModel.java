@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.gotoByName;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
@@ -153,7 +154,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
 
     @Nullable
-    private String getValueText() {
+    @VisibleForTesting
+    public String getValueText() {
       if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
       if (!(value instanceof ActionWrapper)) return null;
       return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
@@ -447,7 +449,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return objects;
   }
 
-  protected enum MatchMode {
+  @VisibleForTesting
+  public enum MatchMode {
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
 
