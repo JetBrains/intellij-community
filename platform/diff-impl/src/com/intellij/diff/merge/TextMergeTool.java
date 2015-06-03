@@ -493,6 +493,18 @@ public class TextMergeTool implements MergeTool {
 
       public void onChangeResolved(@NotNull TextMergeChange change) {
         onChangeRemoved(change);
+        if (getChangesCount() == 0 && getConflictsCount() == 0) {
+          LOG.assertTrue(getChanges().isEmpty());
+          if (Messages.showOkCancelDialog(myPanel, DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
+                                          DiffBundle.message("all.changes.processed.dialog.title"),
+                                          DiffBundle.message("merge.save.and.finish.button"), DiffBundle.message("merge.continue.button"),
+                                          Messages.getQuestionIcon()) == Messages.OK) {
+            markConflictResolved();
+            destroyChangedBlocks();
+            myMergeRequest.applyResult(MergeResult.RESOLVED);
+            myMergeContext.closeDialog();
+          }
+        }
       }
 
       //
