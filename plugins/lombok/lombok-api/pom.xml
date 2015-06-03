@@ -15,7 +15,8 @@
     <lombok-annotations.includes>lombok/extern/**,lombok/experimental/**,lombok/Builder.java,
       lombok/AccessLevel.java,lombok/*ArgsConstructor.java,lombok/Cleanup.java,lombok/Data.java,lombok/Delegate.java,
       lombok/Getter.java,lombok/Setter.java,lombok/Equals*.java,lombok/NonNull.java,lombok/Synchronized.java,
-      lombok/ToString.java,lombok/SneakyThrows.java,lombok/Value.java,lombok/val.java
+      lombok/ToString.java,lombok/SneakyThrows.java,lombok/Value.java,lombok/val.java,lombok/Singular.java,
+      lombok/core/handlers/Singulars.java,lombok/core/handlers/singulars.txt
     </lombok-annotations.includes>
     <hrisey-annotations.includes>
       hrisey/Parcelable.java,hrisey/Preferences.java

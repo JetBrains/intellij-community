@@ -6,6 +6,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
@@ -37,8 +39,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.Singular;
 import lombok.ToString;
 import lombok.Value;
+import lombok.core.handlers.Singulars;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
@@ -361,9 +365,11 @@ public class BuilderHandler {
   @NotNull
   protected Collection<PsiMethod> createFieldMethods(@NotNull Collection<PsiField> psiFields, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<String> existedMethodNames) {
     final boolean fluentBuilder = isFluentBuilder(psiAnnotation);
+    final PsiType returnType = createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass));
+
     final String codeBlockFormat = fluentBuilder ? "this.%s = %s;\nreturn this;" : "this.%s = %s;";
 
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    final List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiField psiField : psiFields) {
       boolean createMethod = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -379,19 +385,64 @@ public class BuilderHandler {
         createMethod &= !existedMethodNames.contains(psiField.getName());
       }
       if (createMethod) {
-        final PsiCodeBlock psiCodeBlock = PsiMethodUtil.createCodeBlockFromText(
-            String.format(codeBlockFormat, psiFieldName, psiFieldName), innerClass);
 
-        methods.add(new LombokLightMethodBuilder(psiField.getManager(), createSetterName(psiFieldName, fluentBuilder))
-            .withMethodReturnType(createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
-            .withContainingClass(innerClass)
-            .withParameter(psiFieldName, psiField.getType())
-            .withNavigationElement(psiField.getNavigationElement())
-            .withModifier(PsiModifier.PUBLIC)
-            .withBody(psiCodeBlock));
+        final PsiElement originalFieldElement = psiField.getNavigationElement();
+
+        final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation((PsiField) originalFieldElement, Singular.class);
+        final boolean singularField = null != singularAnnotation;
+        if (singularField) {
+          addSingularMethods(methods, psiField, innerClass, fluentBuilder, returnType, singularAnnotation);
+        } else {
+
+          methods.add(new LombokLightMethodBuilder(psiField.getManager(), createSetterName(psiFieldName, fluentBuilder))
+              .withMethodReturnType(returnType)
+              .withContainingClass(innerClass)
+              .withParameter(psiFieldName, psiField.getType())
+              .withNavigationElement(originalFieldElement)
+              .withModifier(PsiModifier.PUBLIC)
+              .withBody(PsiMethodUtil.createCodeBlockFromText(
+                  String.format(codeBlockFormat, psiFieldName, psiFieldName), innerClass)));
+        }
       }
     }
     return methods;
+  }
+
+  private void addSingularMethods(List<PsiMethod> methods, PsiField psiField, PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation) {
+    final String psiFieldName = psiField.getName();
+
+    String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");
+    if (StringUtil.isEmptyOrSpaces(singularName)) {
+      //TODO remove accessors prefix
+      singularName = Singulars.autoSingularize(psiFieldName);
+      if (singularName == null) {
+        //TODO addError("Can't singularize this name; please specify the singular explicitly (i.e. @Singular(\"sheep\"))");
+        singularName = psiFieldName;
+      }
+    }
+    final String oneAdderCodeBlockFormat = fluentBuilder ? "this.%s.add(%s);\nreturn this;" : "this.%s.add(%s);";
+    final String allAdderCodeBlockFormat = fluentBuilder ? "this.%s.addAll(%s);\nreturn this;" : "this.%s.addAll(%s);";
+
+    final PsiClassType.ClassResolveResult classInType = PsiUtil.resolveGenericsClassInType(psiField.getType());
+    final PsiType psiType = PsiUtil.extractIterableTypeParameter(psiField.getNavigationElement().getType(), true);
+
+    methods.add(new LombokLightMethodBuilder(psiField.getManager(), singularName)
+        .withMethodReturnType(returnType)
+        .withContainingClass(innerClass)
+        .withParameter(singularName, psiField.getType())
+        .withNavigationElement(psiField.getNavigationElement())
+        .withModifier(PsiModifier.PUBLIC)
+        .withBody(PsiMethodUtil.createCodeBlockFromText(
+            String.format(oneAdderCodeBlockFormat, singularName, singularName), innerClass)));
+
+    methods.add(new LombokLightMethodBuilder(psiField.getManager(), psiFieldName)
+        .withMethodReturnType(returnType)
+        .withContainingClass(innerClass)
+        .withParameter(psiFieldName, psiField.getType())
+        .withNavigationElement(psiField.getNavigationElement())
+        .withModifier(PsiModifier.PUBLIC)
+        .withBody(PsiMethodUtil.createCodeBlockFromText(
+            String.format(allAdderCodeBlockFormat, psiFieldName, psiFieldName), innerClass)));
   }
 
   @NotNull
