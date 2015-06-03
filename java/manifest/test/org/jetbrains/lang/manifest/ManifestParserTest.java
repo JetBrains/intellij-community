@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
-import junit.framework.Assert;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -47,23 +46,14 @@ public class ManifestParserTest extends LightIdeaTestCase {
 
            "ManifestFile:MANIFEST.MF\n" +
            "  Section\n" +
-           "    Header:some\n" +
-           "      ManifestToken:HEADER_NAME_TOKEN('some')\n" +
+           "    Header:some text\n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('some text')\n" +
            "      PsiErrorElement:':' expected\n" +
-           "        PsiElement(BAD_CHARACTER)(' ')\n" +
-           "        PsiElement(BAD_CHARACTER)('t')\n" +
-           "        PsiElement(BAD_CHARACTER)('e')\n" +
-           "        PsiElement(BAD_CHARACTER)('x')\n" +
-           "        PsiElement(BAD_CHARACTER)('t')\n" +
            "        ManifestToken:NEWLINE_TOKEN('\\n')\n" +
-           "    Header:more\n" +
-           "      ManifestToken:HEADER_NAME_TOKEN('more')\n" +
+           "    Header:more text\n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('more text')\n" +
            "      PsiErrorElement:':' expected\n" +
-           "        PsiElement(BAD_CHARACTER)(' ')\n" +
-           "        PsiElement(BAD_CHARACTER)('t')\n" +
-           "        PsiElement(BAD_CHARACTER)('e')\n" +
-           "        PsiElement(BAD_CHARACTER)('x')\n" +
-           "        PsiElement(BAD_CHARACTER)('t')\n");
+           "        <empty list>\n");
   }
 
   public void testNoHeader() {
@@ -74,6 +64,50 @@ public class ManifestParserTest extends LightIdeaTestCase {
            "    PsiErrorElement:Header expected\n" +
            "      ManifestToken:SIGNIFICANT_SPACE_TOKEN(' ')\n" +
            "      ManifestToken:HEADER_VALUE_PART_TOKEN('some text')\n");
+  }
+
+  public void testHeaderBreak1() {
+    doTest("Header\n value",
+
+           "ManifestFile:MANIFEST.MF\n" +
+           "  Section\n" +
+           "    Header:Header\n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('Header')\n" +
+           "      PsiErrorElement:':' expected\n" +
+           "        ManifestToken:NEWLINE_TOKEN('\\n')\n" +
+           "        ManifestToken:SIGNIFICANT_SPACE_TOKEN(' ')\n" +
+           "        ManifestToken:HEADER_VALUE_PART_TOKEN('value')\n");
+  }
+
+  public void testHeaderBreak2() {
+    doTest("Header:\n value",
+
+           "ManifestFile:MANIFEST.MF\n" +
+           "  Section\n" +
+           "    Header:Header\n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('Header')\n" +
+           "      ManifestToken:COLON_TOKEN(':')\n" +
+           "      PsiErrorElement:Whitespace expected\n" +
+           "        <empty list>\n" +
+           "      HeaderValuePart\n" +
+           "        ManifestToken:NEWLINE_TOKEN('\\n')\n" +
+           "        ManifestToken:SIGNIFICANT_SPACE_TOKEN(' ')\n" +
+           "        ManifestToken:HEADER_VALUE_PART_TOKEN('value')\n");
+  }
+
+  public void testHeaderBreak3() {
+    doTest("Header: \n value",
+
+           "ManifestFile:MANIFEST.MF\n" +
+           "  Section\n" +
+           "    Header:Header\n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('Header')\n" +
+           "      ManifestToken:COLON_TOKEN(':')\n" +
+           "      ManifestToken:SIGNIFICANT_SPACE_TOKEN(' ')\n" +
+           "      HeaderValuePart\n" +
+           "        ManifestToken:NEWLINE_TOKEN('\\n')\n" +
+           "        ManifestToken:SIGNIFICANT_SPACE_TOKEN(' ')\n" +
+           "        ManifestToken:HEADER_VALUE_PART_TOKEN('value')\n");
   }
 
   public void testBadHeaderStart() {
@@ -92,19 +126,15 @@ public class ManifestParserTest extends LightIdeaTestCase {
            "        ManifestToken:HEADER_VALUE_PART_TOKEN('dir')\n" +
            "        ManifestToken:COLON_TOKEN(':')\n" +
            "        ManifestToken:NEWLINE_TOKEN('\\n')\n" +
-           "    PsiErrorElement:Header expected\n" +
-           "      PsiElement(BAD_CHARACTER)('=')\n" +
-           "      PsiElement(BAD_CHARACTER)('v')\n" +
-           "      PsiElement(BAD_CHARACTER)('a')\n" +
-           "      PsiElement(BAD_CHARACTER)('l')\n" +
-           "      PsiElement(BAD_CHARACTER)('u')\n" +
-           "      PsiElement(BAD_CHARACTER)('e')\n" +
-           "      PsiElement(BAD_CHARACTER)(';')\n" +
-           "      PsiElement(BAD_CHARACTER)('a')\n" +
-           "      PsiElement(BAD_CHARACTER)(':')\n" +
-           "      PsiElement(BAD_CHARACTER)('=')\n" +
-           "      PsiElement(BAD_CHARACTER)('b')\n" +
-           "      ManifestToken:NEWLINE_TOKEN('\\n')\n");
+           "    Header:=value;a\n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('=value;a')\n" +
+           "      ManifestToken:COLON_TOKEN(':')\n" +
+           "      PsiErrorElement:Whitespace expected\n" +
+           "        <empty list>\n" +
+           "      HeaderValuePart\n" +
+           "        ManifestToken:EQUALS_TOKEN('=')\n" +
+           "        ManifestToken:HEADER_VALUE_PART_TOKEN('b')\n" +
+           "        ManifestToken:NEWLINE_TOKEN('\\n')\n");
   }
 
   public void testNewLines() {
@@ -136,10 +166,8 @@ public class ManifestParserTest extends LightIdeaTestCase {
 
            "ManifestFile:MANIFEST.MF\n" +
            "  Section\n" +
-           "    Header:Manifest-Version\n" +
-           "      ManifestToken:HEADER_NAME_TOKEN('Manifest-Version')\n" +
-           "      PsiErrorElement:Unexpected token\n" +
-           "        PsiElement(BAD_CHARACTER)(' ')\n" +
+           "    Header:Manifest-Version \n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('Manifest-Version ')\n" +
            "      ManifestToken:COLON_TOKEN(':')\n" +
            "      ManifestToken:SIGNIFICANT_SPACE_TOKEN(' ')\n" +
            "      HeaderValuePart\n" +
@@ -347,8 +375,24 @@ public class ManifestParserTest extends LightIdeaTestCase {
            "    ManifestToken:SECTION_END_TOKEN('\\n')\n");
   }
 
+  public void testEmptyMainSection() {
+    doTest("\nHeader: value\n",
+
+           "ManifestFile:MANIFEST.MF\n" +
+           "  Section\n" +
+           "    ManifestToken:SECTION_END_TOKEN('\\n')\n" +
+           "  Section\n" +
+           "    Header:Header\n" +
+           "      ManifestToken:HEADER_NAME_TOKEN('Header')\n" +
+           "      ManifestToken:COLON_TOKEN(':')\n" +
+           "      ManifestToken:SIGNIFICANT_SPACE_TOKEN(' ')\n" +
+           "      HeaderValuePart\n" +
+           "        ManifestToken:HEADER_VALUE_PART_TOKEN('value')\n" +
+           "        ManifestToken:NEWLINE_TOKEN('\\n')\n");
+  }
+
   private static void doTest(String source, String expected) {
     PsiFile file = LightPlatformTestCase.createLightFile("MANIFEST.MF", source);
-    Assert.assertEquals(expected, DebugUtil.psiToString(file, true));
+    assertEquals(expected, DebugUtil.psiToString(file, true));
   }
 }

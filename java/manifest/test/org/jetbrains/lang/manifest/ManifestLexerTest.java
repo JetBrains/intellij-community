@@ -46,24 +46,9 @@ public class ManifestLexerTest {
   public void testRandomText() {
     doTest("some text\nsome more text",
 
-           "HEADER_NAME_TOKEN ('some')\n" +
-           "BAD_CHARACTER (' ')\n" +
-           "BAD_CHARACTER ('t')\n" +
-           "BAD_CHARACTER ('e')\n" +
-           "BAD_CHARACTER ('x')\n" +
-           "BAD_CHARACTER ('t')\n" +
+           "HEADER_NAME_TOKEN ('some text')\n" +
            "NEWLINE_TOKEN ('\n')\n" +
-           "HEADER_NAME_TOKEN ('some')\n" +
-           "BAD_CHARACTER (' ')\n" +
-           "BAD_CHARACTER ('m')\n" +
-           "BAD_CHARACTER ('o')\n" +
-           "BAD_CHARACTER ('r')\n" +
-           "BAD_CHARACTER ('e')\n" +
-           "BAD_CHARACTER (' ')\n" +
-           "BAD_CHARACTER ('t')\n" +
-           "BAD_CHARACTER ('e')\n" +
-           "BAD_CHARACTER ('x')\n" +
-           "BAD_CHARACTER ('t')");
+           "HEADER_NAME_TOKEN ('some more text')");
   }
 
   @Test
@@ -80,8 +65,7 @@ public class ManifestLexerTest {
   public void testInvalidSpaceBeforeColon() {
     doTest("Name : Value",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "BAD_CHARACTER (' ')\n" +
+           "HEADER_NAME_TOKEN ('Name ')\n" +
            "COLON_TOKEN (':')\n" +
            "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
            "HEADER_VALUE_PART_TOKEN ('Value')");
@@ -171,8 +155,7 @@ public class ManifestLexerTest {
   public void testErrorEndsAtNewline() {
     doTest("Name \n value",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "BAD_CHARACTER (' ')\n" +
+           "HEADER_NAME_TOKEN ('Name ')\n" +
            "NEWLINE_TOKEN ('\n')\n" +
            "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
            "HEADER_VALUE_PART_TOKEN ('value')");
@@ -209,17 +192,29 @@ public class ManifestLexerTest {
            "HEADER_VALUE_PART_TOKEN ('dir')\n" +
            "COLON_TOKEN (':')\n" +
            "NEWLINE_TOKEN ('\n')\n" +
-           "BAD_CHARACTER ('=')\n" +
-           "BAD_CHARACTER ('v')\n" +
-           "BAD_CHARACTER ('a')\n" +
-           "BAD_CHARACTER ('l')\n" +
-           "BAD_CHARACTER ('u')\n" +
-           "BAD_CHARACTER ('e')\n" +
-           "BAD_CHARACTER (';')\n" +
-           "BAD_CHARACTER ('a')\n" +
-           "BAD_CHARACTER (':')\n" +
-           "BAD_CHARACTER ('=')\n" +
-           "BAD_CHARACTER ('b')\n" +
+           "HEADER_NAME_TOKEN ('=value;a')\n" +
+           "COLON_TOKEN (':')\n" +
+           "EQUALS_TOKEN ('=')\n" +
+           "HEADER_VALUE_PART_TOKEN ('b')\n" +
+           "NEWLINE_TOKEN ('\n')");
+  }
+
+  @Test
+  public void testBadValueSplit() {
+    doTest("Export-Package: org.osgi.framework.start\n" +
+           "level;uses:=\"org.osgi.framework\"\n",
+
+           "HEADER_NAME_TOKEN ('Export-Package')\n" +
+           "COLON_TOKEN (':')\n" +
+           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
+           "HEADER_VALUE_PART_TOKEN ('org.osgi.framework.start')\n" +
+           "NEWLINE_TOKEN ('\n')\n" +
+           "HEADER_NAME_TOKEN ('level;uses')\n" +
+           "COLON_TOKEN (':')\n" +
+           "EQUALS_TOKEN ('=')\n" +
+           "QUOTE_TOKEN ('\"')\n" +
+           "HEADER_VALUE_PART_TOKEN ('org.osgi.framework')\n" +
+           "QUOTE_TOKEN ('\"')\n" +
            "NEWLINE_TOKEN ('\n')");
   }
 

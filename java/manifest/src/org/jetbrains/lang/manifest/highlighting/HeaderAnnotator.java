@@ -26,8 +26,10 @@ package org.jetbrains.lang.manifest.highlighting;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.lang.manifest.ManifestBundle;
 import org.jetbrains.lang.manifest.header.HeaderParser;
 import org.jetbrains.lang.manifest.header.HeaderParserRepository;
 import org.jetbrains.lang.manifest.psi.Header;
@@ -46,10 +48,27 @@ public class HeaderAnnotator implements Annotator {
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof Header) {
       Header header = (Header)psiElement;
-      HeaderParser headerParser = myRepository.getHeaderParser(header.getName());
-      if (headerParser != null) {
-        headerParser.annotate(header, holder);
+      String name = header.getName();
+      if (!isValidName(name)) {
+        holder.createAnnotation(HighlightSeverity.ERROR, header.getNameElement().getTextRange(), ManifestBundle.message("header.name.invalid"));
+      }
+      else {
+        HeaderParser headerParser = myRepository.getHeaderParser(name);
+        if (headerParser != null) {
+          headerParser.annotate(header, holder);
+        }
       }
     }
+  }
+
+  private static boolean isValidName(String name) {
+    for (int i = 0; i < name.length(); i++) {
+      char c = name.charAt(i);
+      if (!(c == '-' || c == '_' || Character.isLetterOrDigit(c))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
