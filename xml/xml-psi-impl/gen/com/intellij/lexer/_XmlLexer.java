@@ -22,6 +22,12 @@ package com.intellij.lexer;
 import org.jetbrains.annotations.NotNull;
 
 public class _XmlLexer extends FlexAdapter {
+  private static final int STATE_SHIFT = 5;
+  private static final int STATE_MASK = (1 << STATE_SHIFT) - 1;
+  static {
+    assert (STATE_MASK << 1) <= BaseHtmlLexer.BASE_STATE_MASK;
+  }
+
   private int myState = __XmlLexer.YYINITIAL;
 
   public _XmlLexer(final __XmlLexer flexLexer) {
@@ -35,13 +41,13 @@ public class _XmlLexer extends FlexAdapter {
 
   private void packState() {
     final __XmlLexer flex = (__XmlLexer)getFlex();
-    myState = ((flex.yyprevstate() & 15) << 4) | (flex.yystate() & 15);
+    myState = ((flex.yyprevstate() & STATE_MASK) << STATE_SHIFT) | (flex.yystate() & STATE_MASK);
   }
 
   private void handleState(final int initialState) {
     final __XmlLexer flex = (__XmlLexer)getFlex();
-    flex.yybegin(initialState & 15);
-    flex.pushState((initialState >> 4) & 15);
+    flex.yybegin(initialState & STATE_MASK);
+    flex.pushState((initialState >> STATE_SHIFT) & STATE_MASK);
     packState();
   }
 
