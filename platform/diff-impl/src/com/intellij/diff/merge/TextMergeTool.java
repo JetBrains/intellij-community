@@ -544,15 +544,17 @@ public class TextMergeTool implements MergeTool {
       @CalledWithWriteLock
       public void applyNonConflicts() {
         enterBulkChangeUpdateBlock();
-
-        for (TextMergeChange change : getChanges()) {
-          if (change.isConflict()) continue;
-          Side masterSide = change.getType().isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
-          replaceChange(change, masterSide);
-          change.markResolved();
+        try {
+          for (TextMergeChange change : getChanges()) {
+            if (change.isConflict()) continue;
+            Side masterSide = change.getType().isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
+            replaceChange(change, masterSide);
+            change.markResolved();
+          }
         }
-
-        exitBulkChangeUpdateBlock();
+        finally {
+          exitBulkChangeUpdateBlock();
+        }
       }
 
       @CalledWithWriteLock
@@ -566,16 +568,18 @@ public class TextMergeTool implements MergeTool {
         int sourceEndLine = change.getEndLine(sourceSide);
 
         enterBulkChangeUpdateBlock();
+        try {
+          DiffUtil.applyModification(getContent(outputSide).getDocument(), outputStartLine, outputEndLine,
+                                     getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
 
-        DiffUtil.applyModification(getContent(outputSide).getDocument(), outputStartLine, outputEndLine,
-                                   getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
-
-        if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
-          int newOutputEndLine = outputStartLine + (sourceEndLine - sourceStartLine);
-          moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+          if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
+            int newOutputEndLine = outputStartLine + (sourceEndLine - sourceStartLine);
+            moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+          }
         }
-
-        exitBulkChangeUpdateBlock();
+        finally {
+          exitBulkChangeUpdateBlock();
+        }
       }
 
       @CalledWithWriteLock
@@ -589,14 +593,16 @@ public class TextMergeTool implements MergeTool {
         int sourceEndLine = change.getEndLine(sourceSide);
 
         enterBulkChangeUpdateBlock();
+        try {
+          DiffUtil.applyModification(getContent(outputSide).getDocument(), outputEndLine, outputEndLine,
+                                     getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
 
-        DiffUtil.applyModification(getContent(outputSide).getDocument(), outputEndLine, outputEndLine,
-                                   getContent(sourceSide).getDocument(), sourceStartLine, sourceEndLine);
-
-        int newOutputEndLine = outputEndLine + (sourceEndLine - sourceStartLine);
-        moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
-
-        exitBulkChangeUpdateBlock();
+          int newOutputEndLine = outputEndLine + (sourceEndLine - sourceStartLine);
+          moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
+        }
+        finally {
+          exitBulkChangeUpdateBlock();
+        }
       }
 
       /*
