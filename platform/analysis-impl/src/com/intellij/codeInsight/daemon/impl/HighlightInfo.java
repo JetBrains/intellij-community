@@ -52,8 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 public class HighlightInfo implements Segment {
@@ -815,10 +814,20 @@ public class HighlightInfo implements Segment {
         InspectionProfileEntry wrappedTool = toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
                                                                                                : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
         if (wrappedTool instanceof DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection) {
-          if (fixAllIntention != null) {
-            return Collections.<IntentionAction>singletonList(fixAllIntention);
+          List<IntentionAction> actions = Collections.<IntentionAction>emptyList(); 
+          if (myProblemGroup instanceof SuppressableProblemGroup) {
+            actions = Arrays.asList(((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element));
           }
-          return Collections.<IntentionAction>emptyList();
+          if (fixAllIntention != null) {
+            if (actions.isEmpty()) {
+              return Collections.<IntentionAction>singletonList(fixAllIntention);
+            }
+            else {
+              actions = new ArrayList<IntentionAction>(actions);
+              actions.add(fixAllIntention);
+            }
+          }
+          return actions;
         }
         ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
