@@ -64,6 +64,7 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
         m.addIgnoredResource("http://www.ascc.net/xml/schematron");
         m.addIgnoredResource("http://www.w3.org/2000/svg");
         m.addIgnoredResource("http://www.w3.org/1998/Math/MathML");
+        m.addIgnoredResource("http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         m.addIgnoredResource("http://nwalsh.com/xmlns/schema-control/");
         m.addIgnoredResource("http://xml.apache.org/fop/extensions");
         m.addIgnoredResource("http://www.antennahouse.com/names/XSL/Extensions");
