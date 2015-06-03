@@ -824,6 +824,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         include(name: "ecj*.jar")
         include(name: "jsr166e.jar")
         include(name: "netty-all-*.jar")
+        include(name: "snappy.jar")
       }
       fileset(dir: "$home/jps/lib") {
         include(name: "optimizedFileManager.jar")
