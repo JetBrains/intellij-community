@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -60,7 +61,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
       final PsiClass psiClass = (PsiClass)element;
       final String basePath = getTestDataBasePath(psiClass);
       if (basePath != null) {
-        return new GotoTestDataAction(basePath, psiClass.getProject());
+        return new GotoTestDataAction(basePath, psiClass.getProject(), AllIcons.Nodes.Folder);
       }
     }
     return null;

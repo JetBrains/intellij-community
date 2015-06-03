@@ -655,6 +655,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
 
+    replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {

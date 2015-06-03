@@ -5,7 +5,10 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.SmartCompletionContextType;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,6 +16,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
@@ -648,7 +652,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     final SmartCompletionContextType completionContextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), SmartCompletionContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(completionContextType, true);
-    LiveTemplateTest.addTemplate(template, myTestRootDisposable);
+    CodeInsightTestUtil.addTemplate(template, myTestRootDisposable);
     doTest();
   }
 

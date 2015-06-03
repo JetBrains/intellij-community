@@ -19,16 +19,23 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 
 /**
  * @author anna
  * @since 10.01.2013
  */
 public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Assume.assumeFalse(SystemInfo.isMac);
+  }
 
   public void testLoginForm() throws Exception {
     doTest();

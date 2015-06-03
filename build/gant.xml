@@ -42,6 +42,7 @@
        <include name="jna.jar"/>
        <include name="jna-utils.jar"/>
        <include name="oromatcher.jar"/>
+       <include name="snappy.jar"/>
        <include name="cli-parser-*.jar"/>
        <include name="nanoxml-*.jar"/>
        <include name="jsr166e.jar"/>

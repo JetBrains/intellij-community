@@ -16,13 +16,10 @@ public class JsonEditingTest extends JsonTestCase {
     final String testName = "editing/" + getTestName(false);
     myFixture.configureByFile(testName + ".json");
     final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(characters);
-        return myFixture.getFile();
-      }
+    WriteCommandAction.runWriteCommandAction(null, (Computable<PsiFile>)() -> {
+      myFixture.getEditor().getCaretModel().moveToOffset(offset);
+      myFixture.type(characters);
+      return myFixture.getFile();
     });
     myFixture.checkResultByFile(testName + ".after.json");
   }

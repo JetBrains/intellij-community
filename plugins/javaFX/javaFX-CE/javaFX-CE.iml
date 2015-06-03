@@ -13,8 +13,6 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="xml" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
-    <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="common-javaFX-plugin" scope="TEST" />
   </component>
 </module>
-

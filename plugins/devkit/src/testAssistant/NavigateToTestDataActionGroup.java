@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +42,7 @@ public class NavigateToTestDataActionGroup extends ActionGroup {
     return ContainerUtil.map2Array(names, AnAction.class, new Function<String, AnAction>() {
       @Override
       public AnAction fun(String s) {
-        return new GotoTestDataAction(s, myMethod.getProject());
+        return new GotoTestDataAction(s, myMethod.getProject(), FileTypeManager.getInstance().getFileTypeByFileName(s).getIcon());
       }
     });
   }

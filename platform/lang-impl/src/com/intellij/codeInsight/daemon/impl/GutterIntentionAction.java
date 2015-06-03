@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -57,6 +58,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!ApplicationManager.getApplication().isDispatchThread()) return true;
     if (myText == null) {
       AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
       myAction.update(event);

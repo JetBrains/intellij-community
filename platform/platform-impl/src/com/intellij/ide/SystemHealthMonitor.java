@@ -28,7 +28,9 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
@@ -117,8 +119,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     });
   }
 
-  private static final int ourMaxNumberOfTimesToObserveZeroSpace = 2;
-
   private static void startDiskSpaceMonitoring() {
     if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {
       return;
@@ -143,8 +143,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                 // file.getUsableSpace() can fail and return 0 e.g. after MacOSX restart or awakening from sleep
                 // so several times try to recalculate usable space on receiving 0 to be sure
                 long fileUsableSpace = file.getUsableSpace();
-                for(int i = 0; fileUsableSpace == 0 && i < ourMaxNumberOfTimesToObserveZeroSpace; ++i) {
-                  Thread.sleep(5000);
+                while(fileUsableSpace == 0) {
+                  Thread.sleep(5000); // hopefully we will not hummer disk too much
                   fileUsableSpace = file.getUsableSpace();
                 }
 
