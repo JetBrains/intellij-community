@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,16 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.java.DfaValueFactoryJava;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -46,8 +48,8 @@ class ContractChecker extends DataFlowRunner {
   }
 
   static Map<PsiElement, String> checkContractClause(PsiMethod method,
-                                                     MethodContract contract,
-                                                     boolean ignoreAssertions, final boolean onTheFly) {
+                                                     MethodContract contract, 
+                                                     final boolean onTheFly) {
 
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
@@ -56,18 +58,18 @@ class ContractChecker extends DataFlowRunner {
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = checker.createMemoryState();
-    final DfaValueFactory factory = checker.getFactory();
+    final DfaValueFactoryJava factory = checker.getFactory();
     for (int i = 0; i < contract.arguments.length; i++) {
       MethodContract.ValueConstraint constraint = contract.arguments[i];
       DfaConstValue comparisonValue = constraint.getComparisonValue(factory);
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
         DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i], false);
-        initialState.applyCondition(factory.getRelationFactory().createRelation(dfaParam, comparisonValue, JavaTokenType.EQEQ, negated));
+        initialState.applyCondition(factory.getRelationFactory().createRelation(dfaParam, comparisonValue, DfaRelation.EQ, negated));
       }
     }
 
-    checker.analyzeMethod(body, new StandardInstructionVisitor(), ignoreAssertions, Arrays.asList(initialState));
+    checker.analyzeMethod(body, new StandardInstructionVisitor(checker), Arrays.asList(initialState));
     return checker.getErrors();
   }
 
@@ -77,6 +79,7 @@ class ContractChecker extends DataFlowRunner {
     return super.shouldCheckTimeLimit();
   }
 
+  @NotNull
   @Override
   protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
     DfaMemoryState memState = instructionState.getMemoryState();

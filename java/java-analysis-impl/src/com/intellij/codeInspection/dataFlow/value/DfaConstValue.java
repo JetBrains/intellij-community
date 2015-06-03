@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,26 +24,29 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public class DfaConstValue extends DfaValue {
-  private static final Throwable ourThrowable = new Throwable();
-  public static class Factory {
-    private final DfaConstValue dfaNull;
-    private final DfaConstValue dfaFalse;
-    private final DfaConstValue dfaTrue;
-    private final DfaConstValue dfaFail;
-    private final DfaValueFactory myFactory;
-    private final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
 
-    Factory(DfaValueFactory factory) {
+  private static final Throwable ourThrowable = new Throwable();
+
+  public static abstract class Factory {
+
+    private final DfaValueFactory myFactory;
+    protected final DfaConstValue dfaNull;
+    protected final DfaConstValue dfaFalse;
+    protected final DfaConstValue dfaTrue;
+    protected final DfaConstValue dfaFail;
+    protected final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
+
+    protected Factory(DfaValueFactory factory) {
       myFactory = factory;
       dfaNull = new DfaConstValue(null, factory, null);
       dfaFalse = new DfaConstValue(Boolean.FALSE, factory, null);
@@ -52,42 +55,15 @@ public class DfaConstValue extends DfaValue {
     }
 
     @Nullable
-    public DfaValue create(PsiLiteralExpression expr) {
-      PsiType type = expr.getType();
+    public DfaValue create(PsiType type, Object value) {
       if (PsiType.NULL.equals(type)) return dfaNull;
-      Object value = expr.getValue();
       if (value == null) return null;
       return createFromValue(value, type, null);
     }
 
     @Nullable
-    public DfaValue create(PsiVariable variable) {
-      Object value = variable.computeConstantValue();
-      PsiType type = variable.getType();
-      if (value == null) {
-        Boolean boo = computeJavaLangBooleanFieldReference(variable);
-        if (boo != null) {
-          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
-          return myFactory.getBoxedFactory().createBoxed(unboxed);
-        }
-        PsiExpression initializer = variable.getInitializer();
-        if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
-          return dfaNull;
-        }
-        return null;
-      }
-      return createFromValue(value, type, variable);
-    }
-
-    @Nullable
-    private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
-      if (!(variable instanceof PsiField)) return null;
-      PsiClass psiClass = ((PsiField)variable).getContainingClass();
-      if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
-      @NonNls String name = variable.getName();
-      return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
-    }
-
+    public abstract DfaValue create(PsiVariable variable);
+    
     @NotNull
     public DfaConstValue createFromValue(Object value, final PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
@@ -127,16 +103,18 @@ public class DfaConstValue extends DfaValue {
     }
   }
 
+  private final DfaValueFactory myFactory;
   private final Object myValue;
-  @Nullable private final PsiVariable myConstant;
+  private final @Nullable PsiVariable myConstant;
 
-  private DfaConstValue(Object value, DfaValueFactory factory, @Nullable PsiVariable constant) {
+  public DfaConstValue(Object value, DfaValueFactory factory, @Nullable PsiVariable constant) {
     super(factory);
+    myFactory = factory;
     myValue = value;
     myConstant = constant;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     if (myValue == null) return "null";
     return myValue.toString();

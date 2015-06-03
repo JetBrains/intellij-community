@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,15 +32,20 @@ public class InstanceofInstruction extends BinopInstruction {
   @NotNull private final PsiExpression myLeft;
   @NotNull private final PsiType myCastType;
 
-  public InstanceofInstruction(PsiElement psiAnchor, @NotNull Project project, PsiExpression left, PsiType castType) {
-    super(JavaTokenType.INSTANCEOF_KEYWORD, psiAnchor, project);
+  public InstanceofInstruction(PsiElement psiAnchor, @NotNull Project project, @NotNull PsiExpression left, @NotNull PsiType castType) {
+    super(DfaRelation.INSTANCEOF, psiAnchor, project);
     myLeft = left;
     myCastType = castType;
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitInstanceof(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
+    if (visitor instanceof JavaInstructionVisitor) {
+      return ((JavaInstructionVisitor)visitor).visitInstanceof(this, stateBefore);
+    }
+    else {
+      return visitor.visitBinop(this, stateBefore);
+    }
   }
 
   @NotNull

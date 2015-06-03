@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.dataFlow.value;
+package com.intellij.codeInspection.dataFlow.value.java;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -55,10 +57,10 @@ public class DfaExpressionFactory {
     }
   }
 
-  private final DfaValueFactory myFactory;
-  private final Map<Integer, PsiVariable> myMockIndices = ContainerUtil.newHashMap();
+  private final DfaValueFactoryJava myFactory;
+  private Map<Integer, PsiVariable> myMockIndices = ContainerUtil.newHashMap();
 
-  public DfaExpressionFactory(DfaValueFactory factory) {
+  public DfaExpressionFactory(DfaValueFactoryJava factory) {
     myFactory = factory;
   }
 
@@ -132,7 +134,7 @@ public class DfaExpressionFactory {
         if (constValue != null) return constValue;
       }
 
-      if (DfaValueFactory.isEffectivelyUnqualified(refExpr)) {
+      if (DfaValueFactoryJava.isEffectivelyUnqualified(refExpr)) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       }
 

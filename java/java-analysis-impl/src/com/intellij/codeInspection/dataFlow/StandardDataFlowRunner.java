@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -42,14 +42,15 @@ public class StandardDataFlowRunner extends DataFlowRunner {
   private boolean myIsInMethod = false;
 
   public StandardDataFlowRunner() {
-    this(false, true);
+    this(false, true, false);
   }
-  public StandardDataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
-    super(unknownMembersAreNullable, honorFieldInitializers);
+  public StandardDataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean ignoreAssertions) {
+    super(unknownMembersAreNullable, honorFieldInitializers, ignoreAssertions);
   }
 
   @Override
   protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
+    super.prepareAnalysis(psiBlock, initialStates);
     PsiElement parent = psiBlock.getParent();
     myIsInMethod = parent instanceof PsiMethod;
     if (myIsInMethod) {

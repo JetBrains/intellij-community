@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.value.java.DfaValueFactoryJava;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -125,7 +125,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false) {
+        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false, false) {
           boolean shouldCheck;
 
           @Override
@@ -144,7 +144,7 @@ public class DfaPsiUtil {
             if (call == null) return false;
 
             if (call instanceof PsiMethodCallExpression &&
-                DfaValueFactory.isEffectivelyUnqualified(((PsiMethodCallExpression)call).getMethodExpression())) {
+                DfaValueFactoryJava.isEffectivelyUnqualified(((PsiMethodCallExpression)call).getMethodExpression())) {
               return true;
             }
 
@@ -158,6 +158,7 @@ public class DfaPsiUtil {
             return false;
           }
 
+          @NotNull
           @Override
           protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
             if (shouldCheck) {
@@ -177,7 +178,7 @@ public class DfaPsiUtil {
             return super.acceptInstruction(visitor, instructionState);
           }
         };
-        final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
+        final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor(dfaRunner));
         Set<PsiField> notNullFields = ContainerUtil.newHashSet();
         if (rc == RunnerResult.OK) {
           for (PsiField field : map.keySet()) {
@@ -204,8 +205,7 @@ public class DfaPsiUtil {
 
   private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
     if (psiClass instanceof PsiCompiledElement) {
-      //noinspection unchecked
-      return MultiMap.EMPTY;
+      return MultiMap.emptyInstance();
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {

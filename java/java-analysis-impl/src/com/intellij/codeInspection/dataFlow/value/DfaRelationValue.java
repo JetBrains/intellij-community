@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,33 +25,34 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.codeInspection.dataFlow.value.DfaRelation.*;
 
 public class DfaRelationValue extends DfaValue {
+
+  private final DfaValueFactory myFactory;
   private DfaValue myLeftOperand;
   private DfaValue myRightOperand;
-  private IElementType myRelation;
-  private boolean myIsNegated;
+  protected DfaRelation myRelation;
+  protected boolean myIsNegated;
 
   public static class Factory {
-    private final DfaRelationValue mySharedInstance;
-    private final HashMap<String,ArrayList<DfaRelationValue>> myStringToObject;
+    protected final DfaRelationValue mySharedInstance;
+    protected final HashMap<String, ArrayList<DfaRelationValue>> myStringToObject;
     private final DfaValueFactory myFactory;
 
-    Factory(DfaValueFactory factory) {
+    public Factory(DfaValueFactory factory) {
       myFactory = factory;
       mySharedInstance = new DfaRelationValue(factory);
       myStringToObject = new HashMap<String, ArrayList<DfaRelationValue>>();
     }
 
-    public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
+    public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, DfaRelation relation, boolean negated) {
       if (PLUS == relation) return null;
 
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
@@ -73,13 +74,13 @@ public class DfaRelationValue extends DfaValue {
       }
     }
 
-    private DfaRelationValue createCanonicalRelation(IElementType relation,
+    private DfaRelationValue createCanonicalRelation(DfaRelation relation,
                                                      boolean negated,
                                                      @NotNull final DfaValue dfaLeft,
                                                      @NotNull final DfaValue dfaRight) {
       // To canonical form.
       if (NE == relation) {
-        relation = EQEQ;
+        relation = EQ;
         negated = !negated;
       }
       else if (LT == relation) {
@@ -115,7 +116,8 @@ public class DfaRelationValue extends DfaValue {
 
   }
 
-  public static IElementType getSymmetricOperation(IElementType sign) {
+  @Nullable
+  public static DfaRelation getSymmetricOperation(DfaRelation sign) {
     if (LT == sign) return GT;
     if (GE == sign) return LE;
     if (GT == sign) return LT;
@@ -123,16 +125,20 @@ public class DfaRelationValue extends DfaValue {
     return sign;
   }
 
-  private DfaRelationValue(DfaValueFactory factory) {
+  protected DfaRelationValue(DfaValueFactory factory) {
     super(factory);
+    myFactory = factory;
   }
 
-  private DfaRelationValue(DfaValue myLeftOperand, DfaValue myRightOperand, IElementType myRelation, boolean myIsNegated,
-                           DfaValueFactory factory) {
-    super(factory);
-    this.myLeftOperand = myLeftOperand;
-    this.myRightOperand = myRightOperand;
-    this.myRelation = myRelation;
+  protected DfaRelationValue(DfaValue leftOperand,
+                             DfaValue rightOperand,
+                             DfaRelation relation,
+                             boolean myIsNegated,
+                             DfaValueFactory factory) {
+    this(factory);
+    this.myLeftOperand = leftOperand;
+    this.myRightOperand = rightOperand;
+    this.myRelation = relation;
     this.myIsNegated = myIsNegated;
   }
 
@@ -154,25 +160,26 @@ public class DfaRelationValue extends DfaValue {
   }
 
   private boolean hardEquals(DfaRelationValue rel) {
-    return Comparing.equal(rel.myLeftOperand,myLeftOperand)
-      && Comparing.equal(rel.myRightOperand,myRightOperand) &&
-      rel.myRelation == myRelation &&
-      rel.myIsNegated == myIsNegated;
+    return Comparing.equal(rel.myLeftOperand, myLeftOperand)
+           && Comparing.equal(rel.myRightOperand, myRightOperand) &&
+           rel.myRelation == myRelation &&
+           rel.myIsNegated == myIsNegated;
   }
 
   public boolean isEquality() {
-    return myRelation == EQEQ && !myIsNegated;
+    return myRelation == EQ && !myIsNegated;
   }
 
   public boolean isNonEquality() {
-    return myRelation == EQEQ && myIsNegated || myRelation == GT && !myIsNegated || myRelation == GE && myIsNegated;
+    return myRelation == EQ && myIsNegated || myRelation == GT && !myIsNegated || myRelation == GE && myIsNegated;
   }
 
   public boolean isInstanceOf() {
-    return myRelation == INSTANCEOF_KEYWORD;
+    return myRelation == INSTANCEOF;
   }
 
-  @NonNls public String toString() {
-    return (isNegated() ? "not " : "") + myLeftOperand + " " + myRelation + " " + myRightOperand;
+  @Override
+  public String toString() {
+    return myLeftOperand + " " + (isNegated() ? "not " : "") + myRelation + " " + myRightOperand;
   }
 }

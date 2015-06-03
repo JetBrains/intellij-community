@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -408,7 +408,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     block.add(statementFromText);
 
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
+    final StandardInstructionVisitor visitor = new StandardInstructionVisitor(dfaRunner);
     final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
     if (rc == RunnerResult.OK) {
       final Pair<Set<Instruction>, Set<Instruction>> expressions = dfaRunner.getConstConditionalExpressions();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.diagnostic.Logger;
@@ -142,14 +144,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !isInsideConstructorOrInitializer(
-      scope)) {
+      scope), IGNORE_ASSERT_STATEMENTS) {
       @Override
       protected boolean shouldCheckTimeLimit() {
         if (!onTheFly) return false;
         return super.shouldCheckTimeLimit();
       }
     };
-    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()), onTheFly);
+    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()), onTheFly);
   }
 
   private static boolean isInsideConstructorOrInitializer(PsiElement element) {
@@ -166,7 +168,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                             StandardDataFlowRunner dfaRunner,
                                             Collection<DfaMemoryState> initialStates, final boolean onTheFly) {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
-    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
+    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, initialStates);
     if (rc == RunnerResult.OK) {
       createDescription(dfaRunner, holder, visitor, onTheFly);
 
@@ -734,6 +736,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
 
     private DataFlowInstructionVisitor(StandardDataFlowRunner runner) {
+      super(runner);
       myRunner = runner;
     }
 

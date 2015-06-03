@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class DfaValueFactory {
+public abstract class DfaValueFactory {
   private final List<DfaValue> myValues = ContainerUtil.newArrayList();
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
@@ -48,12 +47,9 @@ public class DfaValueFactory {
     myHonorFieldInitializers = honorFieldInitializers;
     myUnknownMembersAreNullable = unknownMembersAreNullable;
     myValues.add(null);
-    myVarFactory = new DfaVariableValue.Factory(this);
-    myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
-    myExpressionFactory = new DfaExpressionFactory(this);
   }
 
   public boolean isHonorFieldInitializers() {
@@ -87,63 +83,16 @@ public class DfaValueFactory {
     return myValues.get(id);
   }
 
-  @Nullable
-  public DfaValue createValue(PsiExpression psiExpression) {
-    return myExpressionFactory.getExpressionDfaValue(psiExpression);
-  }
-
-  @Nullable
-  public DfaValue createLiteralValue(PsiLiteralExpression literal) {
-    if (literal.getValue() instanceof String) {
-      return createTypeValue(literal.getType(), Nullness.NOT_NULL); // Non-null string literal.
-    }
-    return getConstFactory().create(literal);
-  }
-
-  @Nullable
-  public static PsiVariable resolveUnqualifiedVariable(PsiReferenceExpression refExpression) {
-    if (isEffectivelyUnqualified(refExpression)) {
-      PsiElement resolved = refExpression.resolve();
-      if (resolved instanceof PsiVariable) {
-        return (PsiVariable)resolved;
-      }
-    }
-
-    return null;
-  }
-
-  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    PsiExpression qualifier = refExpression.getQualifierExpression();
-    if (qualifier == null) {
-      return true;
-    }
-    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
-      if (thisQualifier == null) return true;
-      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      if (innerMostClass == thisQualifier.resolve()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private final DfaVariableValue.Factory myVarFactory;
-  private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
-  private final DfaExpressionFactory myExpressionFactory;
 
   @NotNull
-  public DfaVariableValue.Factory getVarFactory() {
-    return myVarFactory;
-  }
+  public abstract DfaVariableValue.Factory getVarFactory();
 
   @NotNull
-  public DfaConstValue.Factory getConstFactory() {
-    return myConstFactory;
-  }
+  public abstract DfaConstValue.Factory getConstFactory();
+
   @NotNull
   public DfaBoxedValue.Factory getBoxedFactory() {
     return myBoxedFactory;

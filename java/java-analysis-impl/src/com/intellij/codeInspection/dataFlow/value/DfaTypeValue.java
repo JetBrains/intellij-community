@@ -25,6 +25,12 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +64,13 @@ public class DfaTypeValue extends DfaValue {
       return result;
     }
 
+    public DfaValue getNonNullStringValue(PsiElement element, Project project) {
+      PsiClassType string = PsiType.getJavaLangString(
+        PsiManager.getInstance(project),
+        element == null ? GlobalSearchScope.allScope(project) : element.getResolveScope()
+      );
+      return myFactory.createTypeValue(string, Nullness.NOT_NULL);
+    }
   }
 
   private final DfaPsiType myType;

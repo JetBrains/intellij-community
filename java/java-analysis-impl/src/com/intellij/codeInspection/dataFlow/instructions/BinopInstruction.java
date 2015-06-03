@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,47 +24,46 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.JavaTokenType.*;
-
 public class BinopInstruction extends BranchingInstruction {
-  private static final TokenSet ourSignificantOperations = TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS);
-  private final IElementType myOperationSign;
-  private final Project myProject;
 
-  public BinopInstruction(IElementType opSign, @Nullable PsiElement psiAnchor, @NotNull Project project) {
+  private final @NotNull DfaRelation myOperationSign;
+  private final @NotNull Project myProject;
+
+  public BinopInstruction(@Nullable DfaRelation opSign, @Nullable PsiElement psiAnchor, @NotNull Project project) {
     super(psiAnchor);
     myProject = project;
-    myOperationSign = ourSignificantOperations.contains(opSign) ? opSign : null;
+    myOperationSign = opSign == null ? DfaRelation.UNDEFINED : opSign;
+  }
+
+  public BinopInstruction(@Nullable DfaRelation opSign, @NotNull PsiElement psiAnchor) {
+    this(opSign, psiAnchor, psiAnchor.getProject());
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitBinop(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
+    return visitor.visitBinop(this, stateBefore);
   }
 
-  public DfaValue getNonNullStringValue(final DfaValueFactory factory) {
-    PsiElement anchor = getPsiAnchor();
-    Project project = myProject;
-    PsiClassType string = PsiType.getJavaLangString(PsiManager.getInstance(project), anchor == null ? GlobalSearchScope.allScope(project) : anchor.getResolveScope());
-    return factory.createTypeValue(string, Nullness.NOT_NULL);
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   public String toString() {
     return "BINOP " + myOperationSign;
   }
 
-  public IElementType getOperationSign() {
+  @NotNull
+  public DfaRelation getOperationSign() {
     return myOperationSign;
   }
 }

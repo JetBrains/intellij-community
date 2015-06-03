@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,14 @@ public interface DfaMemoryState {
   DfaMemoryState createCopy();
 
   DfaValue pop();
+
   DfaValue peek();
+
   void push(@NotNull DfaValue value);
 
   void emptyStack();
+
+  boolean isEmptyStack();
 
   void setVarValue(DfaVariableValue var, DfaValue value);
 

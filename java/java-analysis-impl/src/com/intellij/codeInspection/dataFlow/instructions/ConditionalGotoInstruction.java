@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,20 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.ControlFlow;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ConditionalGotoInstruction extends BranchingInstruction {
+  @Nullable
   private ControlFlow.ControlFlowOffset myOffset;
   private final boolean myIsNegated;
 
-  public ConditionalGotoInstruction(ControlFlow.ControlFlowOffset myOffset, boolean isNegated, PsiElement psiAnchor) {
+  public ConditionalGotoInstruction(@Nullable ControlFlow.ControlFlowOffset myOffset, boolean isNegated, @Nullable PsiElement psiAnchor) {
     super(psiAnchor);
     this.myOffset = myOffset;
     myIsNegated = isNegated;
@@ -43,8 +48,8 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitConditionalGoto(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
+    return visitor.visitConditionalGoto(this, stateBefore);
   }
 
   public String toString() {
@@ -52,15 +57,21 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
   }
 
   public int getOffset() {
-    return myOffset.getInstructionOffset();
+    return myOffset == null ? -1 : myOffset.getInstructionOffset();
   }
 
   public void setOffset(final int offset) {
+    assert myOffset == null : "Offset was already set";
     myOffset = new ControlFlow.ControlFlowOffset() {
       @Override
       public int getInstructionOffset() {
         return offset;
       }
     };
+  }
+
+  public void setOffset(ControlFlow.ControlFlowOffset offset) {
+    assert myOffset == null : "Offset was already set";
+    myOffset = offset;
   }
 }

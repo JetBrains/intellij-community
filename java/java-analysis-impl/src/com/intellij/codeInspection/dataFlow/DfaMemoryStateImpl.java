@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -49,8 +48,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final List<EqClass> myEqClasses;
   private final Stack<DfaValue> myStack;
   private final TLongHashSet myDistinctClasses;
-  private final LinkedHashMap<DfaVariableValue,DfaVariableState> myVariableStates;
-  private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
+  private final LinkedHashMap<DfaVariableValue, DfaVariableState> myVariableStates;
+  private final Map<DfaVariableValue, DfaVariableState> myDefaultVariableStates;
   private final LinkedHashSet<DfaVariableValue> myUnknownVariables;
   private boolean myEphemeral;
 
@@ -68,14 +67,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myFactory = toCopy.myFactory;
     myEphemeral = toCopy.myEphemeral;
     myDefaultVariableStates = toCopy.myDefaultVariableStates; // shared between all states
-    
+
     myStack = new Stack<DfaValue>(toCopy.myStack);
     myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
     myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
     myVariableStates = ContainerUtil.newLinkedHashMap(toCopy.myVariableStates);
-    
+
     myCachedDistinctClassPairs = toCopy.myCachedDistinctClassPairs;
     myCachedNonTrivialEqClasses = toCopy.myCachedNonTrivialEqClasses;
     myCachedHash = toCopy.myCachedHash;
@@ -119,6 +118,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private LinkedHashSet<UnorderedPair<EqClass>> myCachedDistinctClassPairs;
+
   LinkedHashSet<UnorderedPair<EqClass>> getDistinctClassPairs() {
     if (myCachedDistinctClassPairs != null) return myCachedDistinctClassPairs;
 
@@ -130,6 +130,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private LinkedHashSet<EqClass> myCachedNonTrivialEqClasses;
+
   LinkedHashSet<EqClass> getNonTrivialEqClasses() {
     if (myCachedNonTrivialEqClasses != null) return myCachedNonTrivialEqClasses;
 
@@ -143,6 +144,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private Integer myCachedHash;
+
   public int hashCode() {
     if (myCachedHash != null) return myCachedHash;
 
@@ -153,8 +155,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   int getPartialHashCode(boolean unknowns, boolean varStates) {
     int hash = (getNonTrivialEqClasses().hashCode() * 31 +
-              getDistinctClassPairs().hashCode()) * 31 +
-             myStack.hashCode();
+                getDistinctClassPairs().hashCode()) * 31 +
+               myStack.hashCode();
     if (varStates) {
       hash = hash * 31 + myVariableStates.hashCode();
     }
@@ -226,6 +228,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  public boolean isEmptyStack() {
+    return myStack.empty();
+  }
+  
+  @Override
   public void setVarValue(DfaVariableValue var, DfaValue value) {
     if (var == value) return;
 
@@ -238,15 +245,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     setVariableState(var, getVariableState(var).withValue(value));
     if (value instanceof DfaTypeValue) {
       setVariableState(var, getVariableState(var).withNullable(((DfaTypeValue)value).isNullable()));
-      DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
+      DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, DfaRelation.INSTANCEOF, false);
       if (((DfaTypeValue)value).isNotNull()) {
         applyCondition(dfaInstanceof);
-      } else {
+      }
+      else {
         applyInstanceofOrNull(dfaInstanceof);
       }
     }
     else {
-      DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.EQEQ, false);
+      DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, value, DfaRelation.EQ, false);
       if (dfaEqual == null) return;
       applyCondition(dfaEqual);
 
@@ -560,14 +568,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       boolean isNegated = dfaVar.isNegated();
       DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(myFactory.getConstFactory().getTrue());
-      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated));
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, DfaRelation.EQ, isNegated));
     }
     if (dfaCond instanceof DfaVariableValue) {
       DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
       boolean isNegated = dfaVar.isNegated();
       DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
-      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated));
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, DfaRelation.EQ, isNegated));
     }
 
     if (dfaCond instanceof DfaConstValue) {
@@ -637,7 +645,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!isUnknownState(dfaVar)) {
       if (value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == null) {
         setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.NULLABLE));
-      } else if (isNotNull(value) && !isNotNull(dfaVar)) {
+      }
+      else if (isNotNull(value) && !isNotNull(dfaVar)) {
         setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.UNKNOWN));
         applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true);
       }
@@ -730,13 +739,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  static boolean isNaN(final DfaValue dfa) {
+  public static boolean isNaN(final DfaValue dfa) {
     if (dfa instanceof DfaConstValue) {
       Object value = ((DfaConstValue)dfa).getValue();
       if (value instanceof Double && ((Double)value).isNaN()) return true;
       if (value instanceof Float && ((Float)value).isNaN()) return true;
     }
-    else if (dfa instanceof DfaBoxedValue){
+    else if (dfa instanceof DfaBoxedValue) {
       return isNaN(((DfaBoxedValue)dfa).getWrappedValue());
     }
     return false;
@@ -806,19 +815,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Nullable
   private DfaRelationValue compareToNull(DfaValue dfaVar, boolean negated) {
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-    return myFactory.getRelationFactory().createRelation(dfaVar, dfaNull, JavaTokenType.EQEQ, negated);
+    return myFactory.getRelationFactory().createRelation(dfaVar, dfaNull, DfaRelation.EQ, negated);
   }
 
-  void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
+  public void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
     assert !myUnknownVariables.contains(dfaVar);
     if (state.equals(myDefaultVariableStates.get(dfaVar))) {
       myVariableStates.remove(dfaVar);
-    } else {
+    }
+    else {
       myVariableStates.put(dfaVar, state);
     }
     myCachedHash = null;
   }
-  
+
   public DfaVariableState getVariableState(DfaVariableValue dfaVar) {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
@@ -833,7 +843,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
         myDefaultVariableStates.put(dfaVar, state);
       }
-      
+
       if (isUnknownState(dfaVar)) {
         return state.withNullable(false);
       }

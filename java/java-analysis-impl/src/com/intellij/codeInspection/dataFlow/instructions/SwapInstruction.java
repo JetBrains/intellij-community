@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -27,13 +26,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 public class SwapInstruction extends Instruction {
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    final DfaValue a = stateBefore.pop();
-    final DfaValue b = stateBefore.pop();
-    stateBefore.push(a);
-    stateBefore.push(b);
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
+  public DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
+    return visitor.visitSwap(this, stateBefore);
   }
 
   public String toString() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,13 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.EmptyInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.LambdaInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -69,8 +75,9 @@ public class DfaUtil {
     return CachedValuesManager.getCachedValue(codeBlock, new CachedValueProvider<Map<PsiElement, ValuableInstructionVisitor.PlaceResult>>() {
       @Override
       public Result<Map<PsiElement, ValuableInstructionVisitor.PlaceResult>> compute() {
-        final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
-        RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock).analyzeMethod(codeBlock, visitor);
+        final ValuableDataFlowRunner runner = new ValuableDataFlowRunner();
+        final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(runner);
+        final RunnerResult runnerResult = runner.analyzeMethod(codeBlock, visitor);
         return Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
       }
     });
@@ -145,10 +152,9 @@ public class DfaUtil {
     final AtomicBoolean hasUnknowns = new AtomicBoolean();
 
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor() {
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor(dfaRunner) {
       @Override
       public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
-                                                         DataFlowRunner runner,
                                                          DfaMemoryState memState) {
         DfaValue returned = memState.peek();
         if (memState.isNull(returned)) {
@@ -160,7 +166,7 @@ public class DfaUtil {
         else {
           hasUnknowns.set(true);
         }
-        return super.visitCheckReturnValue(instruction, runner, memState);
+        return super.visitCheckReturnValue(instruction, memState);
       }
     });
 
@@ -179,6 +185,10 @@ public class DfaUtil {
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 
+    public ValuableInstructionVisitor(DataFlowRunner runner) {
+      super(runner);
+    }
+
     static class PlaceResult {
       final MultiValuesMap<PsiVariable, FList<PsiExpression>> myValues = new MultiValuesMap<PsiVariable, FList<PsiExpression>>(true);
       final Set<PsiVariable> myNulls = new THashSet<PsiVariable>();
@@ -186,8 +196,8 @@ public class DfaUtil {
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      PsiExpression place = instruction.getPlace();
+    public DfaInstructionState[] visitPush(PushInstruction instruction, DfaMemoryState memState) {
+      PsiElement place = instruction.getPlace();
       if (place != null) {
         PlaceResult result = myResults.get(place);
         if (result == null) {
@@ -218,12 +228,12 @@ public class DfaUtil {
           }
         }
       }
-      return super.visitPush(instruction, runner, memState);
+      return super.visitPush(instruction, memState);
     }
 
     @Override
-    public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState _memState) {
-      final Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
+    public DfaInstructionState[] visitAssign(AssignInstruction instruction, DfaMemoryState _memState) {
+      final Instruction nextInstruction = myRunner.getInstruction(instruction.getIndex() + 1);
 
       ValuableDataFlowRunner.MyDfaMemoryState memState = (ValuableDataFlowRunner.MyDfaMemoryState)_memState;
       final DfaValue dfaSource = memState.pop();

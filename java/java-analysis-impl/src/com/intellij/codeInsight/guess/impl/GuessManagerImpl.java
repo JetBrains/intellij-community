@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package com.intellij.codeInsight.guess.impl;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.JavaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -157,7 +158,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace);
+    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(runner, forPlace);
     if (runner.analyzeMethod(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
     }
@@ -390,11 +391,12 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
-  private static class ExpressionTypeInstructionVisitor extends InstructionVisitor {
+  private static class ExpressionTypeInstructionVisitor extends JavaInstructionVisitor {
     private Map<PsiExpression, PsiType> myResult;
     private final PsiElement myForPlace;
 
-    private ExpressionTypeInstructionVisitor(PsiElement forPlace) {
+    private ExpressionTypeInstructionVisitor(DataFlowRunner runner, PsiElement forPlace) {
+      super(runner);
       myForPlace = forPlace;
     }
 
@@ -403,33 +405,33 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DfaMemoryState memState) {
       memState.pop();
       memState.pop();
-      memState.push(new DfaInstanceofValue(runner.getFactory(), instruction.getLeft(), instruction.getCastType()));
-      return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
+      memState.push(new DfaInstanceofValue(myRunner.getFactory(), instruction.getLeft(), instruction.getCastType()));
+      return new DfaInstructionState[]{new DfaInstructionState(myRunner.getInstruction(instruction.getIndex() + 1), memState)};
     }
 
     @Override
-    public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DfaMemoryState memState) {
       ((ExpressionTypeMemoryState) memState).setExpressionType(instruction.getCasted(), instruction.getCastTo());
-      return super.visitTypeCast(instruction, runner, memState);
+      return super.visitTypeCast(instruction, memState);
     }
 
     @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DfaMemoryState memState) {
       if (myForPlace == instruction.getCallExpression()) {
         addToResult(((ExpressionTypeMemoryState)memState).getStates());
       }
-      return super.visitMethodCall(instruction, runner, memState);
+      return super.visitMethodCall(instruction, memState);
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitPush(PushInstruction instruction, DfaMemoryState memState) {
       if (myForPlace == instruction.getPlace()) {
         addToResult(((ExpressionTypeMemoryState)memState).getStates());
       }
-      return super.visitPush(instruction, runner, memState);
+      return super.visitPush(instruction, memState);
     }
 
     private void addToResult(Map<PsiExpression, PsiType> map) {

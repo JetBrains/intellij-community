@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +32,11 @@ import java.util.Set;
  */
 public class ValuableDataFlowRunner extends DataFlowRunner {
 
-  protected ValuableDataFlowRunner(PsiElement block) {
+  protected ValuableDataFlowRunner() {
     super();
   }
 
+  @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {
     return new MyDfaMemoryState(getFactory());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,26 +24,25 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
-  private final PsiExpression myPlace;
+  private final PsiElement myPlace;
   private final boolean myReferenceWrite;
 
-  public PushInstruction(@Nullable DfaValue value, PsiExpression place) {
+  public PushInstruction(@Nullable DfaValue value, PsiElement place) {
     this(value, place, false);
   }
 
-  public PushInstruction(@Nullable DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
+  public PushInstruction(@Nullable DfaValue value, PsiElement place, final boolean isReferenceWrite) {
     myValue = value != null ? value : DfaUnknownValue.getInstance();
     myPlace = place;
     myReferenceWrite = isReferenceWrite;
@@ -58,15 +57,16 @@ public class PushInstruction extends Instruction {
     return myValue;
   }
 
-  public PsiExpression getPlace() {
+  public PsiElement getPlace() {
     return myPlace;
   }
 
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitPush(this, runner, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
+    return visitor.visitPush(this, stateBefore);
   }
 
+  @Override
   public String toString() {
     return "PUSH " + myValue;
   }

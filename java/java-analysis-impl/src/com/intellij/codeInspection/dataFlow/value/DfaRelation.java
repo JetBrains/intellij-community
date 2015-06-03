@@ -15,26 +15,26 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-public class DfaValue {
-  private final int myID;
+public enum DfaRelation {
+  
+  EQ("=="),
+  NE("!="),
+  INSTANCEOF("is instance of"),
+  GT(">"),
+  GE(">="),
+  LT("<"),
+  LE("<="),
+  UNDEFINED("..."),
+  PLUS("+");
 
-  protected DfaValue(final DfaValueFactory factory) {
-    myID = factory == null ? 0 : factory.registerValue(this);
+  private final String debugString;
+
+  DfaRelation(String string) {
+    debugString = string;
   }
 
-  public int getID() {
-    return myID;
-  }
-
-  public DfaValue createNegated() {
-    return DfaUnknownValue.getInstance();
-  }
-
-  public boolean equals(Object obj) {
-    return obj instanceof DfaValue && getID() == ((DfaValue)obj).getID();
-  }
-
-  public int hashCode() {
-    return getID();
+  @Override
+  public String toString() {
+    return debugString;
   }
 }

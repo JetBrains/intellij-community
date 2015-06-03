@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.java.DfaValueFactoryJava;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -36,7 +37,7 @@ import java.util.*;
  * @author peter
  */
 public class LiveVariablesAnalyzer {
-  private final DfaValueFactory myFactory;
+  private final DfaValueFactoryJava myFactory;
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
@@ -61,7 +62,7 @@ public class LiveVariablesAnalyzer {
     }
   };
 
-  public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
+  public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactoryJava factory) {
     myFactory = factory;
     myInstructions = flow.getInstructions();
     myForwardMap = calcForwardMap();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,23 @@ import org.jetbrains.annotations.NonNls;
 
 public class DfaUnboxedValue extends DfaValue {
   private final DfaVariableValue myVariable;
+  private final DfaBoxedValue.Factory myFactory;
 
   DfaUnboxedValue(DfaVariableValue valueToWrap, DfaValueFactory factory) {
     super(factory);
+    myFactory = factory.getBoxedFactory();
     myVariable = valueToWrap;
   }
 
   @NonNls
+  @Override
   public String toString() {
-    return "Unboxed "+myVariable.toString();
+    return "Unboxed " + myVariable.toString();
   }
 
   public DfaVariableValue getVariable() {
     return myVariable;
   }
-
 
   public boolean isNegated() {
     return myVariable.isNegated();
@@ -41,6 +43,6 @@ public class DfaUnboxedValue extends DfaValue {
 
   @Override
   public DfaValue createNegated() {
-    return myFactory.getBoxedFactory().createUnboxed(myVariable.createNegated());
+    return myFactory.createUnboxed(myVariable.createNegated());
   }
 }

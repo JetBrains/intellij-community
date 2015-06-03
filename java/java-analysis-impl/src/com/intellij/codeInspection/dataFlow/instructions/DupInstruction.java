@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -40,23 +36,17 @@ public class DupInstruction extends Instruction {
     myDuplicationCount = duplicationCount;
   }
 
+  public int getValueCount() {
+    return myValueCount;
+  }
+
+  public int getDuplicationCount() {
+    return myDuplicationCount;
+  }
+
   @Override
-  public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState memState, InstructionVisitor visitor) {
-    if (myDuplicationCount == 1 && myValueCount == 1) {
-      memState.push(memState.peek());
-    } else {
-      List<DfaValue> values = new ArrayList<DfaValue>(myValueCount);
-      for (int i = 0; i < myValueCount; i++) {
-        values.add(memState.pop());
-      }
-      for (int j = 0; j < myDuplicationCount + 1; j++) {
-        for (int i = values.size() - 1; i >= 0; i--) {
-          memState.push(values.get(i));
-        }
-      }
-    }
-    Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
-    return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
+  public DfaInstructionState[] accept(@NotNull DfaMemoryState memState, @NotNull InstructionVisitor visitor) {
+    return visitor.visitDuplicate(this, memState);
   }
 
   public String toString() {

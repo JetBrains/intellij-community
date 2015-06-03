@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public abstract class BranchingInstruction extends Instruction {
   private boolean myIsTrueReachable;
   private boolean myIsFalseReachable;
   private final boolean isConstTrue;
+  @Nullable
   private final PsiElement myExpression;
 
   protected BranchingInstruction(@Nullable PsiElement psiAnchor) {
@@ -50,6 +51,7 @@ public abstract class BranchingInstruction extends Instruction {
     return myIsFalseReachable;
   }
 
+  @Nullable
   public PsiElement getPsiAnchor() {
     return myExpression;
   }
