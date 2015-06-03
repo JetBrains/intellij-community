@@ -201,7 +201,6 @@ class ProgressDialog implements Disposable {
 
   void setShouldShowBackground(final boolean shouldShowBackground) {
     myShouldShowBackground = shouldShowBackground;
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -223,7 +222,6 @@ class ProgressDialog implements Disposable {
 
   void cancel() {
     if (myProgressWindow.myShouldShowCancel) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -260,13 +258,11 @@ class ProgressDialog implements Disposable {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false;
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(myRepaintRunnable);
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -289,7 +285,6 @@ class ProgressDialog implements Disposable {
   }
 
   void hide() {
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -323,7 +318,6 @@ class ProgressDialog implements Disposable {
     }
     myPopup.pack();
 
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
