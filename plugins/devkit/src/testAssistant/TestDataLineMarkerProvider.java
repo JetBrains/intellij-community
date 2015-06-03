@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author yole
@@ -56,9 +55,7 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
     }
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      if (isTestMethod(method)) {
-        return new NavigateToTestDataActionGroup(method);
-      }                                                                                         
+      return new NavigateToTestDataActionGroup(method);
     } else {
       final PsiClass psiClass = (PsiClass)element;
       final String basePath = getTestDataBasePath(psiClass);
@@ -67,28 +64,6 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
       }
     }
     return null;
-  }
-
-  private static boolean isTestMethod(@NotNull PsiMethod method) {
-    if (isTestMethodWithAnnotation(method)) {
-      return true;
-    }
-
-    final List<String> files = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
-    return files != null && !files.isEmpty();
-  }
-
-  private static boolean isTestMethodWithAnnotation(@NotNull PsiMethod method) {
-    String name = method.getName();
-    if (!name.startsWith("test")) {
-      return false;
-    }
-    String testDataPath = getTestDataBasePath(method.getContainingClass());
-    if (testDataPath == null) {
-      return false;
-    }
-    List<String> fileNames = new TestDataReferenceCollector(testDataPath, TestDataGuessByExistingFilesUtil.getTestName(name)).collectTestDataReferences(method);
-    return fileNames != null && !fileNames.isEmpty();
   }
 
   @Nullable
