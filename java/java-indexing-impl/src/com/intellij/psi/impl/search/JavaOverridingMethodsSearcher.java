@@ -73,10 +73,9 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @NotNull
   private static MethodSignature getSuperSignature(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
-    PsiSubstitutor substitutor = inheritor.isInheritor(parentClass, true) ?
-                                 TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY) :
-                                 PsiSubstitutor.EMPTY;
-    return method.getSignature(substitutor);
+    PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY, null);
+    // if null, we have EJB custom inheritance here and still check overriding
+    return method.getSignature(substitutor != null ? substitutor : PsiSubstitutor.EMPTY);
   }
 
 
