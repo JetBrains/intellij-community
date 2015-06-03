@@ -177,8 +177,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   protected void onChangeAdded(@NotNull ThreesideDiffChangeBase change) {
-    TextDiffType type = change.getDiffType();
-    if (type == TextDiffType.CONFLICT) {
+    if (change.isConflict()) {
       myConflictsCount++;
     }
     else {
@@ -187,8 +186,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   protected void onChangeRemoved(@NotNull ThreesideDiffChangeBase change) {
-    TextDiffType type = change.getDiffType();
-    if (type == TextDiffType.CONFLICT) {
+    if (change.isConflict()) {
       myConflictsCount--;
     }
     else {

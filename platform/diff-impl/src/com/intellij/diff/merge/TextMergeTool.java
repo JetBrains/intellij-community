@@ -534,7 +534,7 @@ public class TextMergeTool implements MergeTool {
         enterBulkChangeUpdateBlock();
 
         for (TextMergeChange change : getChanges()) {
-          if (change.getDiffType() == TextDiffType.CONFLICT) continue;
+          if (change.isConflict()) continue;
           Side masterSide = change.getType().isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
           replaceChange(change, masterSide);
           change.markResolved();
@@ -661,7 +661,7 @@ public class TextMergeTool implements MergeTool {
         private TextMergeChange getFirstChange(boolean acceptConflicts) {
           for (TextMergeChange change : getAllChanges()) {
             if (change.isResolved()) continue;
-            if (acceptConflicts || change.getDiffType() != TextDiffType.CONFLICT) return change;
+            if (acceptConflicts || !change.isConflict()) return change;
           }
           return null;
         }
