@@ -30,21 +30,22 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
-import com.intellij.diff.util.DiffDividerDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
@@ -214,6 +215,8 @@ public class TextMergeTool implements MergeTool {
         group.add(new ShowLeftBasePartialDiffAction());
         group.add(new ShowBaseRightPartialDiffAction());
         group.add(new ShowLeftRightPartialDiffAction());
+        group.add(Separator.getInstance());
+        group.add(new ApplyNonConflictsAction());
 
         return group;
       }
@@ -492,6 +495,16 @@ public class TextMergeTool implements MergeTool {
       //
 
       @CalledWithWriteLock
+      public void applyNonConflicts() {
+        for (TextMergeChange change : getChanges()) {
+          if (change.getDiffType() == TextDiffType.CONFLICT) continue;
+          Side masterSide = change.getType().isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
+          replaceChange(change, masterSide);
+          change.markResolved();
+        }
+      }
+
+      @CalledWithWriteLock
       public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side) {
         ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         ThreeSide outputSide = ThreeSide.BASE;
@@ -561,6 +574,43 @@ public class TextMergeTool implements MergeTool {
             otherChange.setEndLine(ThreeSide.BASE, newEndLine);
             otherChange.reinstallHighlighter();
           }
+        }
+      }
+
+      //
+      // Actions
+      //
+
+      public class ApplyNonConflictsAction extends DumbAwareAction {
+        public ApplyNonConflictsAction() {
+          super(DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name"), null, AllIcons.Diff.ApplyNotConflicts);
+        }
+
+        public void actionPerformed(AnActionEvent e) {
+          DocumentEx document = getEditor(ThreeSide.BASE).getDocument();
+
+          DiffUtil.executeWriteCommand(document, getProject(), "Apply Non Conflicted Changes", new Runnable() {
+            @Override
+            public void run() {
+              applyNonConflicts();
+            }
+          });
+
+          TextMergeChange firstConflict = getFirstChange(true);
+          if (firstConflict != null) doScrollToChange(firstConflict, true);
+        }
+
+        public void update(AnActionEvent e) {
+          e.getPresentation().setEnabled(getFirstChange(false) != null);
+        }
+
+        @Nullable
+        private TextMergeChange getFirstChange(boolean acceptConflicts) {
+          for (TextMergeChange change : getAllChanges()) {
+            if (change.isResolved()) continue;
+            if (acceptConflicts || change.getDiffType() != TextDiffType.CONFLICT) return change;
+          }
+          return null;
         }
       }
 
