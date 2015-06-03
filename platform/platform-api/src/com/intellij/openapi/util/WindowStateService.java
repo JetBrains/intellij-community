@@ -38,60 +38,183 @@ public abstract class WindowStateService {
   @NonNls private static final String HEIGHT = "height";
   @NonNls private static final String EXTENDED = "extended-state";
 
+  /**
+   * @return an instance of the service for the application
+   */
   public static WindowStateService getInstance() {
     return ServiceManager.getService(WindowStateService.class);
   }
 
+  /**
+   * @param project the project to use by the service
+   * @return an instance of the service for the specified project
+   */
   public static WindowStateService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, WindowStateService.class);
   }
 
+  /**
+   * Returns a location that corresponds to the specified key or {@code null}
+   * if a location does not exist or it is outside of visible area.
+   *
+   * @param key an unique string key
+   * @return a corresponding location
+   */
   public final Point getLocation(@NotNull String key) {
     return getLocationOn(null, key);
   }
 
+  /**
+   * Returns a location that corresponds to the given screen and the specified key or {@code null}
+   * if a location does not exist or it is outside of visible area.
+   *
+   * @param screen a screen to which a location belongs
+   * @param key    an unique string key
+   * @return a corresponding location
+   */
   abstract Point getLocationOn(GraphicsDevice screen, @NotNull String key);
 
+  /**
+   * Stores the specified location that corresponds to the specified key.
+   * If it is {@code null} the stored location will be removed.
+   *
+   * @param key an unique string key
+   */
   public final void putLocation(@NotNull String key, Point location) {
     putLocationOn(null, key, location);
   }
 
+  /**
+   * Stores the specified location that corresponds to the given screen and the specified key.
+   * If it is {@code null} the stored location will be removed.
+   * Do not use a screen which is calculated from the values to store.
+   *
+   * @param screen a screen to which a location belongs
+   * @param key    an unique string key
+   */
   abstract void putLocationOn(GraphicsDevice screen, @NotNull String key, Point location);
 
+  /**
+   * Returns a size that corresponds to the specified key or {@code null}
+   * if a size does not exist.
+   *
+   * @param key an unique string key
+   * @return a corresponding size
+   */
   public final Dimension getSize(@NotNull String key) {
     return getSizeOn(null, key);
   }
 
+  /**
+   * Returns a size that corresponds to the given screen and the specified key or {@code null}
+   * if a size does not exist.
+   *
+   * @param screen a screen to which a size belongs
+   * @param key    an unique string key
+   * @return a corresponding size
+   */
   abstract Dimension getSizeOn(GraphicsDevice screen, @NotNull String key);
 
+  /**
+   * Stores the specified size that corresponds to the specified key.
+   * If it is {@code null} the stored size will be removed.
+   *
+   * @param key an unique string key
+   */
   public final void putSize(@NotNull String key, Dimension size) {
     putSizeOn(null, key, size);
   }
 
+  /**
+   * Stores the specified size that corresponds to the given screen and the specified key.
+   * If it is {@code null} the stored size will be removed.
+   * Do not use a screen which is calculated from the values to store.
+   *
+   * @param screen a screen to which a size belongs
+   * @param key    an unique string key
+   */
   abstract void putSizeOn(GraphicsDevice screen, @NotNull String key, Dimension size);
 
+  /**
+   * Returns a bounds that corresponds to the specified key or {@code null}
+   * if a bounds does not exist or it is outside of visible area.
+   *
+   * @param key an unique string key
+   * @return a corresponding bounds
+   */
   public final Rectangle getBounds(@NotNull String key) {
     return getBoundsOn(null, key);
   }
 
+  /**
+   * Returns a bounds that corresponds to the given screen and the specified key or {@code null}
+   * if a bounds does not exist or it is outside of visible area.
+   *
+   * @param screen a screen to which a bounds belongs
+   * @param key    an unique string key
+   * @return a corresponding bounds
+   */
   abstract Rectangle getBoundsOn(GraphicsDevice screen, @NotNull String key);
 
+  /**
+   * Stores the specified bounds that corresponds to the specified key.
+   * If it is {@code null} the stored bounds will be removed.
+   *
+   * @param key an unique string key
+   */
   public final void putBounds(@NotNull String key, Rectangle bounds) {
     putBoundsOn(null, key, bounds);
   }
 
+  /**
+   * Stores the specified bounds that corresponds to the given screen and the specified key.
+   * If it is {@code null} the stored bounds will be removed.
+   * Do not use a screen which is calculated from the specified bounds.
+   *
+   * @param screen a screen to which a bounds belongs
+   * @param key    an unique string key
+   */
   abstract void putBoundsOn(GraphicsDevice screen, @NotNull String key, Rectangle bounds);
 
+  /**
+   * Returns a frame state that corresponds to the specified key or {@code null}
+   * if a frame state does not exist.
+   *
+   * @param key an unique string key
+   * @return a corresponding frame state
+   */
   public final Integer getExtendedState(@NotNull String key) {
     return getExtendedStateOn(null, key);
   }
 
+  /**
+   * Returns a frame state that corresponds to the given screen and the specified key or {@code null}
+   * if a frame state does not exist.
+   *
+   * @param screen a screen to which a frame state belongs
+   * @param key    an unique string key
+   * @return a corresponding frame state
+   */
   abstract Integer getExtendedStateOn(GraphicsDevice screen, @NotNull String key);
 
+  /**
+   * Stores the specified frame state that corresponds to the specified key.
+   * If it is {@code null} the stored frame state will be removed.
+   *
+   * @param key an unique string key
+   */
   public final void putExtendedState(@NotNull String key, Integer extendedState) {
     putExtendedStateOn(null, key, extendedState);
   }
 
+  /**
+   * Stores the specified frame state that corresponds to the given screen and the specified key.
+   * If it is {@code null} the stored frame state will be removed.
+   * Do not use a screen which is calculated from the values to store.
+   *
+   * @param screen a screen to which a frame state belongs
+   * @param key    an unique string key
+   */
   abstract void putExtendedStateOn(GraphicsDevice screen, @NotNull String key, Integer extendedState);
 
   private static final class WindowState {
