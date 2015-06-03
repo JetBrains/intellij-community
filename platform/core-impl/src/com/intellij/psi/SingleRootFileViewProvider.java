@@ -174,6 +174,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     PsiFile psiFile = myPsiFile.get();
     if (psiFile == null) {
       psiFile = createFile();
+      if (psiFile == null) {
+        psiFile = PsiUtilCore.NULL_PSI_FILE;
+      }
       boolean set = myPsiFile.compareAndSet(null, psiFile);
       if (!set) {
         if (psiFile instanceof PsiFileImpl) {
