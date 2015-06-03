@@ -176,8 +176,8 @@ target(name: "compile", description: "Compile module python") {
   ant.loadfile(property: "appInfo", srcFile: "${pluginHome}/resources/idea/PyCharmCoreApplicationInfo.xml") {
   }
 
-  major = ("${appInfo}" =~ /major\s*=\s*\"([^"])\"/)[0][1]
-  minor = ("${appInfo}" =~ /minor\s*=\s*\"([^"])\"/)[0][1]
+  major = ("${appInfo}" =~ /major\s*=\s*\"([^"]*)\"/)[0][1]
+  minor = ("${appInfo}" =~ /minor\s*=\s*\"([^"]*)\"/)[0][1]
 
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
