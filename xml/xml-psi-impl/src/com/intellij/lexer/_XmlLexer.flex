@@ -49,8 +49,6 @@ import com.intellij.psi.xml.*;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 %state TAG
 %state PROCESSING_INSTRUCTION
