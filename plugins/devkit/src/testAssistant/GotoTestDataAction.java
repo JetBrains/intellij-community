@@ -18,21 +18,20 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 
+import javax.swing.*;
 import java.io.File;
 
 class GotoTestDataAction extends AnAction implements Comparable {
   private final String myBasePath;
   private final Project myProject;
 
-  public GotoTestDataAction(String basePath, Project project) {
-    super("Go to " + FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getPresentableName(new File(basePath), 50), null,
-          FileTypeManager.getInstance().getFileTypeByFileName(basePath).getIcon());
+  public GotoTestDataAction(String basePath, Project project, Icon icon) {
+    super("Go to " + FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getPresentableName(new File(basePath), 50), null, icon);
     myBasePath = basePath;
     myProject = project;
   }
