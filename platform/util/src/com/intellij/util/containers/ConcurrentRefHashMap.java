@@ -24,6 +24,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
@@ -67,6 +68,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       throw new UnsupportedOperationException();
     }
   };
+
+  private KeyReference<K, V> createKeyReference(@Nullable K key, @NotNull V value) {
+    if (key == null) {
+      //noinspection unchecked
+      return NULL_KEY;
+    }
+    return createKeyReference(key, value, myHashingStrategy);
+  }
 
   // returns true if some keys were processed
   boolean processQueue() {
@@ -204,7 +213,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public V put(K key, @NotNull V value) {
     processQueue();
-    KeyReference<K, V> weakKey = key == null ? NULL_KEY : createKeyReference(key, value, myHashingStrategy);
+    KeyReference<K, V> weakKey = createKeyReference(key, value);
     return myMap.put(weakKey, value);
   }
 
@@ -368,27 +377,27 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public V putIfAbsent(@NotNull final K key, @NotNull V value) {
+  public V putIfAbsent(@Nullable final K key, @NotNull V value) {
     processQueue();
-    return myMap.putIfAbsent(createKeyReference(key, value, myHashingStrategy), value);
+    return myMap.putIfAbsent(createKeyReference(key, value), value);
   }
 
   @Override
-  public boolean remove(@NotNull final Object key, @NotNull Object value) {
+  public boolean remove(@Nullable final Object key, @NotNull Object value) {
     processQueue();
-    return myMap.remove(createKeyReference((K)key, (V)value, myHashingStrategy), value);
+    return myMap.remove(createKeyReference((K)key, (V)value), value);
   }
 
   @Override
-  public boolean replace(@NotNull final K key, @NotNull final V oldValue, @NotNull final V newValue) {
+  public boolean replace(@Nullable final K key, @NotNull final V oldValue, @NotNull final V newValue) {
     processQueue();
-    return myMap.replace(createKeyReference(key, oldValue, myHashingStrategy), oldValue, newValue);
+    return myMap.replace(createKeyReference(key, oldValue), oldValue, newValue);
   }
 
   @Override
-  public V replace(@NotNull final K key, @NotNull final V value) {
+  public V replace(@Nullable final K key, @NotNull final V value) {
     processQueue();
-    return myMap.replace(createKeyReference(key, value, myHashingStrategy), value);
+    return myMap.replace(createKeyReference(key, value), value);
   }
 
   // MAKE SURE IT CONSISTENT WITH com.intellij.util.containers.ConcurrentHashMap
