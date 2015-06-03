@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ComboboxSpeedSearch;
@@ -831,6 +832,7 @@ public class SearchDialog extends DialogWrapper {
       variableNames.add(variable.getName());
     }
     variableNames.add(Configuration.CONTEXT_VAR_NAME);
+    variableNames.add(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 

@@ -368,7 +368,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       String name = CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
       psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, name);
       MatchOptions options = myCompilingVisitor.getContext().getOptions();
-      if (options.getVariableConstraint(name) == null) {
+      if (pattern.getHandler(name) == null) {
         pattern.createSubstitutionHandler(name, name, false, 0, Integer.MAX_VALUE, true);
         MatchVariableConstraint constraint = new MatchVariableConstraint(true);
         constraint.setName(name);
