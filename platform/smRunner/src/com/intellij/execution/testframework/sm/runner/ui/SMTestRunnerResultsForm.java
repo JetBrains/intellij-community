@@ -393,7 +393,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     // Is used by Statistic tab to differ use selection in tree
     // from manual selection from API (e.g. test runner events)
-    showStatisticsForSelectedProxy(testProxy, false);
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      showStatisticsForSelectedProxy(testProxy, false);
+    }
   }
 
   public void addEventsListener(final EventsListener listener) {
