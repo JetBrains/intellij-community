@@ -46,13 +46,13 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   public FormattingModel createModel(@NotNull PsiElement element,
                                      @NotNull CodeStyleSettings settings,
                                      @NotNull FormattingMode mode) {
-    final ASTNode fileNode = element.getContainingFile().getNode();
     if (DUMP_FORMATTING_AST) {
+      ASTNode fileNode = element.getContainingFile().getNode();
       System.out.println("AST tree for " + element.getContainingFile().getName() + ":");
       printAST(fileNode, 0);
     }
     final PyBlockContext context = new PyBlockContext(settings, createSpacingBuilder(settings), mode);
-    final PyBlock block = new PyBlock(null, fileNode, null, Indent.getNoneIndent(), null, context);
+    final PyBlock block = new PyBlock(null, element.getNode(), null, Indent.getNoneIndent(), null, context);
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }

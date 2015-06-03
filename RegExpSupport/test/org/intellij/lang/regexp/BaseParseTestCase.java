@@ -53,9 +53,13 @@ public abstract class BaseParseTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      super.tearDown();
+    }
   }
 
   public static String getTestDataRoot() {

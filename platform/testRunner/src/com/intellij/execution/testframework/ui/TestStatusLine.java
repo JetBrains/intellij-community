@@ -51,11 +51,11 @@ public class TestStatusLine extends JPanel {
                                 final int finishedTestsCount,
                                 final int failuresCount,
                                 final int ignoredTestsCount,
-                                final long startTime,
+                                final Long duration,
                                 final long endTime) {
     myState.clear();
     if (testsTotal == 0) return;
-    if (endTime == 0) {
+    if (duration == null || endTime == 0) {
       myState.append(finishedTestsCount + " of " + getTestsTotalMessage(testsTotal) + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
       return;
@@ -85,7 +85,7 @@ public class TestStatusLine extends JPanel {
       myState.append(result + " done: ");
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
     }
-    myState.append(" - " + StringUtil.formatDuration(endTime - startTime), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    myState.append(" - " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   private static String getTestsTotalMessage(int testsTotal) {

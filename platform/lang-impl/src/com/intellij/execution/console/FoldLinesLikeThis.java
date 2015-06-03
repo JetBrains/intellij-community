@@ -5,14 +5,13 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,12 +66,12 @@ public class FoldLinesLikeThis extends DumbAwareAction {
       @Override
       public void reset() {
         super.reset();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             addRule(selection);
           }
-        }, ModalityState.stateForComponent(createComponent()));
+        });
       }
     });
     final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);

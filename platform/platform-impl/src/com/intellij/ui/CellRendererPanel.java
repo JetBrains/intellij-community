@@ -72,14 +72,12 @@ public class CellRendererPanel extends JPanel {
       Component child = getComponent(0);
       child.setBounds(bounds);
       if (child instanceof CellRendererPanel) {
+        ((CellRendererPanel)child).invalidateLayout();
         child.doLayout();
       }
     }
     else {
-      LayoutManager layout = getLayout();
-      if (layout instanceof LayoutManager2) {
-        ((LayoutManager2)layout).invalidateLayout(this);
-      }
+      invalidateLayout();
       super.doLayout();
       for (int i = 0; i < count; i++) {
         Component c = getComponent(i);
@@ -92,11 +90,20 @@ public class CellRendererPanel extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    if (getComponentCount() != 1) return super.getPreferredSize();
+    if (getComponentCount() != 1) {
+      return super.getPreferredSize();
+    }
     return getComponent(0).getPreferredSize();
   }
 
   public void invalidate() {
+  }
+
+  private void invalidateLayout() {
+    LayoutManager layout = getLayout();
+    if (layout instanceof LayoutManager2) {
+      ((LayoutManager2)layout).invalidateLayout(this);
+    }
   }
 
   public void validate() {

@@ -223,7 +223,7 @@ public class GitConfig {
 
   @Nullable
   private static BranchConfig parseBranchSection(String sectionName, Profile.Section section, @Nullable ClassLoader classLoader) {
-    BranchBean branchBean = section.as(BranchBean.class, classLoader);
+    BranchBean branchBean = section.as(BranchBean.class, BranchBean.class.getClassLoader());
     Matcher matcher = BRANCH_INFO_SECTION.matcher(sectionName);
     if (matcher.matches()) {
       return new BranchConfig(matcher.group(1), branchBean);
@@ -368,7 +368,7 @@ public class GitConfig {
 
   @Nullable
   private static Remote parseRemoteSection(@NotNull String sectionName, @NotNull Profile.Section section, @Nullable ClassLoader classLoader) {
-    RemoteBean remoteBean = section.as(RemoteBean.class, classLoader);
+    RemoteBean remoteBean = section.as(RemoteBean.class, RemoteBean.class.getClassLoader());
     Matcher matcher = REMOTE_SECTION.matcher(sectionName);
     if (matcher.matches()) {
       return new Remote(matcher.group(1), remoteBean);

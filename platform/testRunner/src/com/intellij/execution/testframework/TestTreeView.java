@@ -30,6 +30,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
@@ -229,7 +230,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     final int leftOffset = 5;
     g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
     g.translate(0, bounds.y - 1);
-    g.setColor(isSelected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
+    g.setColor(isSelected ? UIUtil.getTreeSelectionForeground() : ColorUtil.dimmer(UIUtil.getTreeForeground()));
     g.drawString(duration, x, (int)metrics.getMaxCharBounds(g).getHeight());
     g.translate(0, -bounds.y + 1);
     config.restore();

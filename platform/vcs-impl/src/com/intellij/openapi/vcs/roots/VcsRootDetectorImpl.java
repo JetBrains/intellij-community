@@ -74,6 +74,8 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull
   private Set<VcsRoot> scanForRootsInContentRoots() {
     Set<VcsRoot> vcsRoots = new HashSet<VcsRoot>();
+    if (myProject.isDisposed()) return vcsRoots;
+
     VirtualFile[] roots = myProjectManager.getContentRoots();
     for (VirtualFile contentRoot : roots) {
 
