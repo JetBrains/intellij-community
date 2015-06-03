@@ -491,6 +491,10 @@ public class TextMergeTool implements MergeTool {
         }
       }
 
+      public void onChangeResolved(@NotNull TextMergeChange change) {
+        onChangeRemoved(change);
+      }
+
       //
       // Getters
       //
