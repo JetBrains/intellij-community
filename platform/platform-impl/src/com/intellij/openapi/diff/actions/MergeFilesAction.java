@@ -15,20 +15,23 @@
  */
 package com.intellij.openapi.diff.actions;
 
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.InvalidDiffRequestException;
+import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.io.IOException;
+import java.util.List;
 
 public class MergeFilesAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
@@ -53,37 +56,24 @@ public class MergeFilesAction extends AnAction implements DumbAware {
 
     DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
 
-    VirtualFile file = files[1];
     try {
-      String originalText = createValidContent(VfsUtil.loadText(file));
-      String leftText = VfsUtil.loadText(files[0]);
-      String rightText = VfsUtil.loadText(files[2]);
-
       Project project = CommonDataKeys.PROJECT.getData(context);
-      final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project,
-                                                                          ActionButtonPresentation.APPLY,
-                                                                          ActionButtonPresentation.CANCEL_WITH_PROMPT);
-      diffData.setVersionTitles(new String[]{files[0].getPresentableUrl(),
-                                             files[1].getPresentableUrl(),
-                                             files[2].getPresentableUrl()});
-      diffData.setWindowTitle(DiffBundle.message("merge.files.dialog.title"));
-      diffData.setHelpId("cvs.merge");
-      DiffManager.getInstance().getDiffTool().show(diffData);
-    }
-    catch (IOException e1) {
-      Messages.showErrorDialog(DiffBundle.message("merge.dialog.cannot.load.file.error.message", e1.getLocalizedMessage()),
-                               DiffBundle.message("merge.files.dialog.title"));
-    }
-  }
-  private static String createValidContent(String str) {
-    String[] strings = LineTokenizer.tokenize(str.toCharArray(), false, false);
-    StringBuffer result = new StringBuffer();
-    for (int i = 0; i < strings.length; i++) {
-      String string = strings[i];
-      if (i != 0) result.append('\n');
-      result.append(string);
-    }
-    return result.toString();
-  }
 
+      String title = DiffBundle.message("merge.files.dialog.title");
+      List<String> titles = ContainerUtil.list(files[0].getPresentableUrl(),
+                                               files[1].getPresentableUrl(),
+                                               files[2].getPresentableUrl());
+
+      VirtualFile outputFile = files[1];
+      List<VirtualFile> contents = ContainerUtil.list(files[0], files[1], files[2]);
+
+      MergeRequest request = diffRequestFactory.createMergeRequestFromFiles(project, outputFile, contents, title, titles, null);
+      request.putUserData(DiffUserDataKeys.HELP_ID, "cvs.merge");
+
+      DiffManager.getInstance().showMerge(project, request);
+    }
+    catch (InvalidDiffRequestException err) {
+      Messages.showErrorDialog(err.getLocalizedMessage(), DiffBundle.message("merge.files.dialog.title"));
+    }
+  }
 }
