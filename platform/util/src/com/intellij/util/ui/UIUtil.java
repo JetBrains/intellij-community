@@ -101,6 +101,11 @@ public class UIUtil {
 
   private static volatile InvocationManager ourInvocationManager = new DefaultInvocationManager();
 
+  @NotNull
+  public static InvocationManager getInvocationManager() {
+    return ourInvocationManager;
+  }
+
   @SuppressWarnings("unused") // Used in upsource
   public static void setInvocationManager(@NotNull InvocationManager invocationManager) {
     ourInvocationManager = invocationManager;
