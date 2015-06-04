@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,38 +40,36 @@ import java.util.List;
 
 public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
-  public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession highlightingSession,
+  public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                      @NotNull final List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
-                                                     @NotNull TextRange restrictRange, final int groupId) {
-    final PsiFile psiFile = highlightingSession.getPsiFile();
+                                                     @NotNull TextRange restrictRange,
+                                                     final int groupId) {
+    final PsiFile psiFile = session.getPsiFile();
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
     final long modificationStamp = document.getModificationStamp();
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
-    final Editor editor = highlightingSession.getEditor();
-    if (priorityIntersection == null) {
-      showAutoImportPopups(editor, project, psiFile);
-    }
-    else {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
+    final Editor editor = session.getEditor();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
+        if (priorityIntersection != null) {
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
 
-          EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
+          EditorColorsScheme scheme = session.getColorsScheme();
           UpdateHighlightersUtil.setHighlightersInRange(project, document, priorityIntersection, scheme, infos,
                                                         (MarkupModelEx)markupModel, groupId);
-          showAutoImportPopups(editor, project, psiFile);
-          if (editor != null) {
-            DaemonListeners.repaintErrorStripeRenderer(editor, project);
-          }
         }
-      });
-    }
+        showAutoImportPopups(editor, project, psiFile);
+        if (editor != null) {
+          DaemonListeners.repaintErrorStripeRenderer(editor, project);
+        }
+      }
+    });
   }
 
   private static void showAutoImportPopups(Editor editor, Project project, PsiFile psiFile) {
@@ -82,11 +80,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   }
 
   @Override
-  public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession highlightingSession,
+  public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                       @NotNull final List<HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
                                                       @NotNull final TextRange restrictedRange, final int groupId) {
-    final PsiFile psiFile = highlightingSession.getPsiFile();
+    final PsiFile psiFile = session.getPsiFile();
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
@@ -96,14 +94,13 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       public void run() {
         if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
 
-        Editor editor = highlightingSession.getEditor();
-        EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
+        EditorColorsScheme scheme = session.getColorsScheme();
 
         UpdateHighlightersUtil.setHighlightersOutsideRange(project, document, psiFile, infos, scheme,
                                                            restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
                                                            ProperTextRange.create(priorityRange),
                                                            groupId);
-
+        Editor editor = session.getEditor();
         if (editor != null) {
           DaemonListeners.repaintErrorStripeRenderer(editor, project);
         }
@@ -113,10 +110,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   }
 
   @Override
-  public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession highlightingSession, @NotNull TextRange elementRange,
+  public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
+                                               @NotNull TextRange elementRange,
                                                @Nullable List<HighlightInfo> infos) {
-    PsiFile psiFile = highlightingSession.getPsiFile();
-    killAbandonedHighlightsUnder(psiFile, elementRange, infos, highlightingSession);
+    PsiFile psiFile = session.getPsiFile();
+    killAbandonedHighlightsUnder(psiFile, elementRange, infos, session);
   }
 
   private static void killAbandonedHighlightsUnder(@NotNull PsiFile psiFile,
@@ -148,9 +146,13 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   }
 
   @Override
-  public void infoIsAvailable(@NotNull HighlightingSession highlightingSession, @NotNull HighlightInfo info) {
-    HighlightingSessionImpl impl = (HighlightingSessionImpl)highlightingSession;
-    impl.queueHighlightInfo(info);
+  public void infoIsAvailable(@NotNull HighlightingSession session,
+                              @NotNull HighlightInfo info,
+                              @NotNull TextRange priorityRange,
+                              @NotNull TextRange restrictedRange,
+                              int groupId) {
+    HighlightingSessionImpl impl = (HighlightingSessionImpl)session;
+    impl.queueHighlightInfo(info, priorityRange, restrictedRange, groupId);
   }
 
   @Override

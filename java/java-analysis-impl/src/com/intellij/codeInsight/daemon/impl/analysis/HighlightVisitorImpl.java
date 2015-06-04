@@ -94,7 +94,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
   }
 
-  public HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
+  private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
   }
 
@@ -181,7 +181,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           public void run() {
             highlight.run();
             progress.checkCanceled();
-            HighlightingSession highlightingSession = ProgressableTextEditorHighlightingPass.getHighlightingSession(progress);
+            HighlightingSession highlightingSession = HighlightingSessionImpl.getHighlightingSession(file, progress);
             PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder, highlightingSession);
             highlightingVisitor.collectHighlights(file, holder, progress);
           }

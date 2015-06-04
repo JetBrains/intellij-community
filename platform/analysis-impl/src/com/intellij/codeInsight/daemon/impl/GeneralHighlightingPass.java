@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.CustomHighlightInfoHolder;
@@ -104,14 +105,27 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     PsiUtilCore.ensureValid(file);
     boolean wholeFileHighlighting = isWholeFileHighlighting();
-    myHasErrorElement = !wholeFileHighlighting && Boolean.TRUE.equals(myFile.getUserData(HAS_ERROR_ELEMENT));
+    myHasErrorElement = !wholeFileHighlighting && Boolean.TRUE.equals(getFile().getUserData(HAS_ERROR_ELEMENT));
     final DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-    myErrorFound = !wholeFileHighlighting && fileStatusMap.wasErrorFound(myDocument);
+    myErrorFound = !wholeFileHighlighting && fileStatusMap.wasErrorFound(getDocument());
 
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
     myGlobalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+  }
+
+  @NotNull
+  private PsiFile getFile() {
+    //noinspection ConstantConditions
+    return myFile;
+  }
+
+  @NotNull
+  @Override
+  public Document getDocument() {
+    //noinspection ConstantConditions
+    return super.getDocument();
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
@@ -156,7 +170,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   @NotNull
-  protected HighlightVisitor[] getHighlightVisitors(@NotNull PsiFile psiFile) {
+  HighlightVisitor[] getHighlightVisitors(@NotNull PsiFile psiFile) {
     return filterVisitors(myHighlightVisitorProducer.produce(), psiFile);
   }
 
@@ -177,13 +191,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final List<HighlightInfo> insideResult = new ArrayList<HighlightInfo>(100);
 
     final DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    final HighlightVisitor[] filteredVisitors = getHighlightVisitors(myFile);
+    final HighlightVisitor[] filteredVisitors = getHighlightVisitors(getFile());
     final List<PsiElement> insideElements = new ArrayList<PsiElement>();
     final List<PsiElement> outsideElements = new ArrayList<PsiElement>();
     try {
       List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
       List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
-      Divider.divideInsideAndOutside(myFile, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
+      Divider.divideInsideAndOutside(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
                                      outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
       // put file element always in outsideElements
       if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile) {
@@ -198,7 +212,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       final boolean forceHighlightParents = forceHighlightParents();
 
       if (!isDumbMode()) {
-        highlightTodos(myFile, myDocument.getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), progress, myPriorityRange, insideResult,
+        highlightTodos(getFile(), getDocument().getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), progress, myPriorityRange, insideResult,
                        outsideResult);
       }
 
@@ -210,7 +224,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                                                          getId());
 
         if (myUpdateAll) {
-          daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myProject, myDocument, myErrorFound);
+          daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myProject, getDocument(), myErrorFound);
         }
       }
       else {
@@ -224,17 +238,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  protected boolean isFailFastOnAcquireReadAction() {
+  boolean isFailFastOnAcquireReadAction() {
     return true;
   }
 
   private boolean isWholeFileHighlighting() {
-    return myUpdateAll && myRestrictRange.equalsToRange(0, myDocument.getTextLength());
+    return myUpdateAll && myRestrictRange.equalsToRange(0, getDocument().getTextLength());
   }
 
   @Override
   protected void applyInformationWithProgress() {
-    myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
+    getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
 
     if (myUpdateAll) {
       reportErrorsToWolf();
@@ -259,7 +273,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
 
     // TODO - add color scheme to holder
-    final HighlightInfoHolder holder = createInfoHolder(myFile);
+    final HighlightInfoHolder holder = createInfoHolder(getFile());
 
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 
@@ -281,7 +295,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       assert info != null;
       postInfos.add(info);
     }
-    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, postInfos, myFile.getTextRange(), myFile.getTextRange(), POST_UPDATE_ALL);
+    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
     return success;
   }
 
@@ -294,7 +308,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       action.run();
     }
     else {
-      if (!visitors[i].analyze(myFile, myUpdateAll, holder, new Runnable() {
+      if (!visitors[i].analyze(getFile(), myUpdateAll, holder, new Runnable() {
         @Override
         public void run() {
           success[0] = analyzeByVisitors(visitors, holder, i + 1, action);
@@ -325,7 +339,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       progress.checkCanceled();
 
       PsiElement parent = element.getParent();
-      if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
+      if (element != getFile() && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
         skipParentsSet.add(parent);
         continue;
       }
@@ -379,7 +393,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         // We also know that we can remove syntax error element.
         info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset) || isErrorElement);
 
-        myHighlightInfoProcessor.infoIsAvailable(myHighlightingSession, info);
+        myHighlightInfoProcessor.infoIsAvailable(myHighlightingSession, info, myPriorityRange, myRestrictRange, Pass.UPDATE_ALL);
         infosForThisRange.add(info);
       }
       holder.clear();
@@ -438,7 +452,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private boolean forceHighlightParents() {
     boolean forceHighlightParents = false;
     for(HighlightRangeExtension extension: Extensions.getExtensions(HighlightRangeExtension.EP_NAME)) {
-      if (extension.isForceHighlightParents(myFile)) {
+      if (extension.isForceHighlightParents(getFile())) {
         forceHighlightParents = true;
         break;
       }
@@ -478,10 +492,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void reportErrorsToWolf() {
-    if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
-    Project project = myFile.getProject();
-    if (!PsiManager.getInstance(project).isInProject(myFile)) return; // do not report problems in libraries
-    VirtualFile file = myFile.getVirtualFile();
+    if (!getFile().getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    Project project = getFile().getProject();
+    if (!PsiManager.getInstance(project).isInProject(getFile())) return; // do not report problems in libraries
+    VirtualFile file = getFile().getVirtualFile();
     if (file == null) return;
 
     List<Problem> problems = convertToProblems(getInfos(), file, myHasErrorElement);
