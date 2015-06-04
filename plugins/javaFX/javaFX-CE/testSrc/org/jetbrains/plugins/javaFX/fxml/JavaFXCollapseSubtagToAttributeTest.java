@@ -15,27 +15,18 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
 
 import java.util.List;
 
-public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase {
-  @Override
-  protected void runTest() throws Throwable {
-    Assume.assumeFalse(SystemInfo.isMac);
-    super.runTest();
-  }
-
+public class JavaFXCollapseSubtagToAttributeTest extends JavaFXDaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();

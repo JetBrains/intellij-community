@@ -19,11 +19,13 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 
 /**
  * User: anna
@@ -52,5 +54,9 @@ public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTest
     enableInspections();
   }
 
-  
+  @Override
+  protected void runTest() throws Throwable {
+    Assume.assumeFalse(SystemInfo.isMac);
+    super.runTest();
+  }
 }
