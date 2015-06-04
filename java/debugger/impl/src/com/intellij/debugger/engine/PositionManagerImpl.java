@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.ui.DebuggerColors;
@@ -149,16 +150,18 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
+    Method method = location.method();
+
     if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
-      final String methodSignature = location.method().signature();
+      final String methodSignature = method.signature();
       if (methodSignature == null) {
         return SourcePosition.createFromLine(psiFile, -1);
       }
-      final String methodName = location.method().name();
-      if(methodName == null) {
+      final String methodName = method.name();
+      if (methodName == null) {
         return SourcePosition.createFromLine(psiFile, -1);
       }
-      if(location.declaringType() == null) {
+      if (location.declaringType() == null) {
         return SourcePosition.createFromLine(psiFile, -1);
       }
 
@@ -176,17 +179,38 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return sourcePosition;
     }
 
-    return new JavaSourcePosition(SourcePosition.createFromLine(psiFile, lineNumber), location.declaringType(), location.method());
+    SourcePosition sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
+    int lambdaOrdinal = -1;
+    if (LambdaMethodFilter.isLambdaName(method.name())) {
+      List<Location> lambdas = ContainerUtil.filter(locationsOfLine(location.declaringType(), sourcePosition), new Condition<Location>() {
+        @Override
+        public boolean value(Location location) {
+          return LambdaMethodFilter.isLambdaName(location.method().name());
+        }
+      });
+      if (lambdas.size() > 1) {
+        Collections.sort(lambdas, new Comparator<Location>() {
+          @Override
+          public int compare(Location o1, Location o2) {
+            return LambdaMethodFilter.getLambdaOrdinal(o1.method().name()) - LambdaMethodFilter.getLambdaOrdinal(o2.method().name());
+          }
+        });
+        lambdaOrdinal = lambdas.indexOf(location);
+      }
+    }
+    return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
   }
 
   private static class JavaSourcePosition extends RemappedSourcePosition implements ExecutionPointHighlighter.HighlighterProvider {
     private final String myExpectedClassName;
     private final String myExpectedMethodName;
+    private final int myLambdaOrdinal;
 
-    public JavaSourcePosition(SourcePosition delegate, ReferenceType declaringType, Method method) {
+    public JavaSourcePosition(SourcePosition delegate, ReferenceType declaringType, Method method, int lambdaOrdinal) {
       super(delegate);
       myExpectedClassName = declaringType != null ? declaringType.name() : null;
       myExpectedMethodName = method != null ? method.name() : null;
+      myLambdaOrdinal = lambdaOrdinal;
     }
 
     private PsiElement remapElement(PsiElement element) {
@@ -202,9 +226,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         else if ((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName()))) {
           if (insideBody(element, ((PsiMethod)method).getBody())) return element;
         }
-        else if (method instanceof PsiLambdaExpression && myExpectedMethodName.startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
-          if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
-        }
+        //else if (method instanceof PsiLambdaExpression && (myLambdaOrdinal < 0 || myLambdaOrdinal == lambdaOrdinal)
+        //         && LambdaMethodFilter.isLambdaName(myExpectedMethodName)) {
+        //  if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
+        //}
       }
       return null;
     }
@@ -222,17 +247,77 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
         @Override
         public SourcePosition compute() {
-          // There may be more than one class/method code on the line, so we need to find out the correct place
-          for (PsiElement elem : getLineElements(original.getFile(), original.getLine())) {
-            PsiElement remappedElement = remapElement(elem);
-            if (remappedElement != null) {
-              if (remappedElement.getTextOffset() <= original.getOffset()) break;
-              return SourcePosition.createFromElement(remappedElement);
+          PsiFile file = original.getFile();
+          int line = original.getLine();
+          if (LambdaMethodFilter.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
+            Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+            if (document == null || line >= document.getLineCount()) {
+              return original;
+            }
+            PsiElement element = original.getElementAt();
+            TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+            do {
+              PsiElement parent = element.getParent();
+              if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
+                break;
+              }
+              element = parent;
+            }
+            while(true);
+            final List<PsiLambdaExpression> lambdas = new ArrayList<PsiLambdaExpression>(3);
+            // add initial lambda if we're inside already
+            NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+            if (method instanceof PsiLambdaExpression) {
+              lambdas.add((PsiLambdaExpression)method);
+            }
+            final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
+              @Override
+              public void visitLambdaExpression(PsiLambdaExpression expression) {
+                super.visitLambdaExpression(expression);
+                lambdas.add(expression);
+              }
+            };
+            element.accept(lambdaCollector);
+            for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
+              if (!lineRange.intersects(sibling.getTextRange())) {
+                break;
+              }
+              sibling.accept(lambdaCollector);
+            }
+            if (myLambdaOrdinal < lambdas.size()) {
+              PsiElement body = lambdas.get(myLambdaOrdinal).getBody();
+              if (body instanceof PsiCodeBlock) {
+                for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
+                  if (lineRange.intersects(statement.getTextRange())) {
+                    body = statement;
+                    break;
+                  }
+                }
+              }
+              return SourcePosition.createFromElement(body);
+            }
+          }
+          else {
+            // There may be more than one class/method code on the line, so we need to find out the correct place
+            for (PsiElement elem : getLineElements(file, line)) {
+              PsiElement remappedElement = remapElement(elem);
+              if (remappedElement != null) {
+                if (remappedElement.getTextOffset() <= original.getOffset()) break;
+                return SourcePosition.createFromElement(remappedElement);
+              }
             }
           }
           return original;
         }
       });
+    }
+
+    private static PsiElement getNextElement(PsiElement element) {
+      PsiElement sibling = element.getNextSibling();
+      if (sibling != null) return sibling;
+      element = element.getParent();
+      if (element != null) return getNextElement(element);
+      return null;
     }
 
     @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
               final Method[] candidates = methods.toArray(new Method[methodsFound]);
               Arrays.sort(candidates, new Comparator<Method>() {
                 public int compare(Method m1, Method m2) {
-                  return getMethodOrdinal(m1) - getMethodOrdinal(m2);
+                  return LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
                 }
               });
               location = candidates[lambdaFilter.getLambdaOrdinal()].location();
@@ -115,20 +115,6 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     }
     catch(Exception ex) {
       LOG.info(ex);
-    }
-  }
-
-  private static int getMethodOrdinal(Method m) {
-    final String name = m.name();
-    final int dollarIndex = name.lastIndexOf("$");
-    if (dollarIndex < 0) {
-      return 0;
-    }
-    try {
-      return Integer.parseInt(name.substring(dollarIndex + 1));
-    }
-    catch (NumberFormatException e) {
-      return 0;
     }
   }
 
