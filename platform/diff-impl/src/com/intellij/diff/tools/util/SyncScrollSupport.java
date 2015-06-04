@@ -96,48 +96,7 @@ public class SyncScrollSupport {
     public void makeVisible(@NotNull Side masterSide,
                             int startLine1, int endLine1, int startLine2, int endLine2,
                             final boolean animate) {
-      Side slaveSide = masterSide.other();
-
-      final int[] offsets = getTargetOffsets(myEditors.get(0), myEditors.get(1), startLine1, endLine1, startLine2, endLine2);
-
-      final Editor masterEditor = masterSide.select(myEditors);
-      final Editor slaveEditor = slaveSide.select(myEditors);
-
-      final int masterOffset = masterSide.select(offsets);
-      final int slaveOffset = slaveSide.select(offsets);
-
-      int startOffset1 = myEditors.get(0).getScrollingModel().getVisibleArea().y;
-      int startOffset2 = myEditors.get(1).getScrollingModel().getVisibleArea().y;
-      final int masterStartOffset = masterSide.select(startOffset1, startOffset2);
-
-      myHelper1.setAnchor(startOffset1, offsets[0], startOffset2, offsets[1]);
-      myHelper2.setAnchor(startOffset2, offsets[1], startOffset1, offsets[0]);
-
-      doScrollHorizontally(masterEditor, 0, false); // animation will be canceled by "scroll vertically" anyway
-      doScrollVertically(masterEditor, masterOffset, animate);
-
-      masterEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-        @Override
-        public void run() {
-          myHelper1.removeAnchor();
-          myHelper2.removeAnchor();
-
-          int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
-          int slaveFinalOffset = slaveEditor.getScrollingModel().getVisibleArea().y;
-          if (slaveFinalOffset != slaveOffset) {
-            enterDisableScrollSection();
-
-            doScrollVertically(slaveEditor, slaveOffset, animate && masterFinalOffset == masterStartOffset);
-
-            slaveEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-              @Override
-              public void run() {
-                exitDisableScrollSection();
-              }
-            });
-          }
-        }
-      });
+      doMakeVisible(masterSide.getIndex(), new int[]{startLine1, startLine2}, new int[]{endLine1, endLine2}, animate);
     }
 
     @NotNull
@@ -211,6 +170,10 @@ public class SyncScrollSupport {
       }
     }
 
+    public void makeVisible(@NotNull ThreeSide masterSide, int[] startLines, int[] endLines, boolean animate) {
+      doMakeVisible(masterSide.getIndex(), startLines, endLines, animate);
+    }
+
     @NotNull
     private ScrollHelper create(@NotNull ThreeSide master, @NotNull ThreeSide slave) {
       assert master != slave;
@@ -260,6 +223,64 @@ public class SyncScrollSupport {
 
     @NotNull
     protected abstract List<? extends ScrollHelper> getScrollHelpers();
+
+    protected void doMakeVisible(final int masterIndex, int[] startLines, int[] endLines, final boolean animate) {
+      final List<? extends Editor> editors = getEditors();
+      final List<? extends ScrollHelper> helpers = getScrollHelpers();
+
+      final int count = editors.size();
+      assert startLines.length == count;
+      assert endLines.length == count;
+
+      final int[] offsets = getTargetOffsets(editors.toArray(new Editor[count]), startLines, endLines);
+
+      final int[] startOffsets = new int[count];
+      for (int i = 0; i < count; i++) {
+        startOffsets[i] = editors.get(i).getScrollingModel().getVisibleArea().y;
+      }
+
+      final Editor masterEditor = editors.get(masterIndex);
+      final int masterOffset = offsets[masterIndex];
+      final int masterStartOffset = startOffsets[masterIndex];
+
+      for (ScrollHelper helper : helpers) {
+        helper.setAnchor(startOffsets[helper.getMasterIndex()], offsets[helper.getMasterIndex()],
+                         startOffsets[helper.getSlaveIndex()], offsets[helper.getSlaveIndex()]);
+      }
+
+      doScrollHorizontally(masterEditor, 0, false); // animation will be canceled by "scroll vertically" anyway
+      doScrollVertically(masterEditor, masterOffset, animate);
+
+      masterEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+        @Override
+        public void run() {
+          for (ScrollHelper helper : helpers) {
+            helper.removeAnchor();
+          }
+
+          int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
+          boolean animateSlaves = animate && masterFinalOffset == masterStartOffset;
+          for (int i = 0; i < count; i++) {
+            if (i == masterIndex) continue;
+            Editor editor = editors.get(i);
+
+            int finalOffset = editor.getScrollingModel().getVisibleArea().y;
+            if (finalOffset != offsets[i]) {
+              enterDisableScrollSection();
+
+              doScrollVertically(editor, offsets[i], animateSlaves);
+
+              editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+                @Override
+                public void run() {
+                  exitDisableScrollSection();
+                }
+              });
+            }
+          }
+        }
+      });
+    }
   }
 
   private static abstract class ScrollHelper implements VisibleAreaListener {

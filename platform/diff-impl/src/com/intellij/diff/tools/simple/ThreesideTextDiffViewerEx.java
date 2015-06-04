@@ -153,10 +153,17 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   protected void doScrollToChange(@NotNull ThreesideDiffChangeBase change, boolean animated) {
-    // TODO: use anchors to fix scrolling issue at the start/end of file
-    EditorEx editor = getCurrentEditor();
-    int line = change.getStartLine(getCurrentSide());
-    DiffUtil.scrollEditor(editor, line, animated);
+    int[] startLines = new int[3];
+    int[] endLines = new int[3];
+
+    for (int i = 0; i < 3; i++) {
+      ThreeSide side = ThreeSide.fromIndex(i);
+      startLines[i] = change.getStartLine(side);
+      endLines[i] = change.getEndLine(side);
+      DiffUtil.moveCaret(getEditor(side), startLines[i]);
+    }
+
+    getSyncScrollSupport().makeVisible(getCurrentSide(), startLines, endLines, animated);
   }
 
   //
@@ -222,6 +229,12 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   @Override
   protected JComponent getStatusPanel() {
     return myStatusPanel;
+  }
+
+  @NotNull
+  public SyncScrollSupport.ThreesideSyncScrollSupport getSyncScrollSupport() {
+    //noinspection ConstantConditions
+    return mySyncScrollSupport;
   }
 
   //
