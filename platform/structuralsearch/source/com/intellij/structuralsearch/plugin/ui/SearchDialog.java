@@ -618,7 +618,7 @@ public class SearchDialog extends DialogWrapper {
 
           if (name != null) {
             final Project project = searchContext.getProject();
-            final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
+            final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
             final Collection<Configuration> configurations = configurationManager.getConfigurations();
 
             if (configurations != null) {

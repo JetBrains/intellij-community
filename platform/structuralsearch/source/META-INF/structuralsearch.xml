@@ -16,14 +16,10 @@
         implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspectionCompiledPatternsCache"/>
     <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
+    <projectService serviceImplementation="com.intellij.structuralsearch.plugin.StructuralSearchPlugin"/>
+    <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent"/>
+    <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </project-components>
 
   <actions>
     <group id="StructuralSearchActions">
