@@ -155,7 +155,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   public RunnerAndConfigurationSettings createConfiguration(@NotNull final RunConfiguration runConfiguration,
                                                             @NotNull final ConfigurationFactory factory) {
     RunnerAndConfigurationSettings template = getConfigurationTemplate(factory);
-    myConfigurationToBeforeTasksMap.put(runConfiguration, getBeforeRunTasks(template.getConfiguration()));
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, runConfiguration, false);
     settings.importRunnerAndConfigurationSettings((RunnerAndConfigurationSettingsImpl)template);
     if (!mySharedConfigurations.containsKey(settings.getUniqueID())) {
