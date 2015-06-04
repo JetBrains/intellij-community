@@ -32,7 +32,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
@@ -269,9 +271,17 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (component != null) {
         Point point = ((MouseEvent)inputEvent).getPoint();
         Component componentAt = SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
+        Editor editor = getBaseEditor(event.getDataContext(), event.getProject());
         if (componentAt instanceof EditorGutterComponentEx) {
           event.getPresentation().setEnabled(false);
           return;
+        }
+        else if (editor != null && componentAt == editor.getContentComponent()) {
+          LogicalPosition pos = editor.xyToLogicalPosition(SwingUtilities.convertPoint(component, point, componentAt));
+          if (EditorUtil.inVirtualSpace(editor, pos)) {
+            event.getPresentation().setEnabled(false);
+            return;
+          }
         }
       }
     }

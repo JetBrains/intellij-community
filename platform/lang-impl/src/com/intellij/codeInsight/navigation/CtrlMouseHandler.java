@@ -778,6 +778,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
       if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
+        disposeHighlighter();
         return;
       }
 
