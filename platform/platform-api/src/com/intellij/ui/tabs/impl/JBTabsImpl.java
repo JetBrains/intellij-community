@@ -66,7 +66,7 @@ public class JBTabsImpl extends JComponent
              QuickActionProvider {
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
-
+  @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = new Comparator<TabInfo>() {
     @Override
@@ -113,6 +113,7 @@ public class JBTabsImpl extends JComponent
 
   private SingleRowLayout mySingleRowLayout;
   private final TableLayout myTableLayout = new TableLayout(this);
+  private final TabsSideSplitter mySplitter = new TabsSideSplitter(this);
 
 
   private TabLayout myLayout;
@@ -1492,7 +1493,6 @@ public class JBTabsImpl extends JComponent
   public void doLayout() {
     try {
       myHeaderFitSize = computeHeaderFitSize();
-
       final Collection<TabLabel> labels = myInfo2Label.values();
       for (TabLabel each : labels) {
         each.setTabActionsAutoHide(myTabLabelActionsAutoHide);
@@ -1516,6 +1516,13 @@ public class JBTabsImpl extends JComponent
         mySingleRowLayout.scroll(0);
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
+        OnePixelDivider divider = mySplitter.getDivider();
+        if (divider.getParent() == this) {
+          int location = getTabsPosition() == JBTabsPosition.left
+                         ? mySingleRowLayout.myLastSingRowLayout.tabRectangle.width
+                         : getWidth() - mySingleRowLayout.myLastSingRowLayout.tabRectangle.width;
+          divider.setBounds(location, 0, 1, getHeight());
+        }
       }
       else {
         myLastLayoutPass = myTableLayout.layoutTable(visible);
@@ -2357,6 +2364,11 @@ public class JBTabsImpl extends JComponent
       if (myLayout.isSideComponentOnTabs() && toolbar != null && !toolbar.isEmpty()) {
         max.myToolbar.height = Math.max(max.myToolbar.height, toolbar.getPreferredSize().height);
         max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.getPreferredSize().width);
+      }
+    }
+    if (getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right) {
+      if (mySplitter.getSideTabsLimit() > 0) {
+        max.myLabel.width = Math.min(max.myLabel.width, mySplitter.getSideTabsLimit());
       }
     }
 
@@ -3270,6 +3282,12 @@ public class JBTabsImpl extends JComponent
   @NotNull
   public JBTabsPresentation setTabsPosition(final JBTabsPosition position) {
     myPosition = position;
+    OnePixelDivider divider = mySplitter.getDivider();
+    if ((position == JBTabsPosition.left || position == JBTabsPosition.right) && divider.getParent() == null) {
+      add(divider);
+    } else if (divider.getParent() == this){
+      remove(divider);
+    }
     relayout(true, false);
     return this;
   }
@@ -3290,7 +3308,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isTabDraggingEnabled() {
-    return myTabDraggingEnabled;
+    return myTabDraggingEnabled && !mySplitter.isDragging();
   }
 
   @Override

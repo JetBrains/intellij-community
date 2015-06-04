@@ -48,6 +48,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -196,6 +197,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     else if (comp instanceof JBTabs) {
       final Element res = new Element("leaf");
+      Integer limit = UIUtil.getClientProperty(((JBTabs)comp).getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
+      if (limit != null) {
+        res.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), String.valueOf(limit));
+      }
+
       final EditorWindow window = findWindowWith(comp);
       writeWindow(res, window);
       return res;
@@ -843,6 +849,19 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
       for (int i = 0; i < fileElements.size(); i++) {
         final Element file = fileElements.get(i);
+        if (i == 0) {
+          EditorTabbedContainer tabbedPane = window.getTabbedPane();
+          if (tabbedPane != null) {
+            try {
+              int limit =
+                Integer.parseInt(file.getParentElement().getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), "0"));
+              UIUtil.putClientProperty(tabbedPane.getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit);
+            }
+            catch (NumberFormatException e) {
+              //ignore
+            }
+          }
+        }
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
           Element historyElement = file.getChild(HistoryEntry.TAG);

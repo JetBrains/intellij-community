@@ -37,7 +37,7 @@ public class OnePixelDivider extends Divider {
   public static final Color BACKGROUND = new JBColor(Gray.xC5, Gray.x51);
 
   private boolean myVertical;
-  private Splitter mySplitter;
+  private Splittable mySplitter;
   private boolean myResizeEnabled;
   private boolean mySwitchOrientationEnabled;
   protected Point myPoint;
@@ -45,7 +45,7 @@ public class OnePixelDivider extends Divider {
   private final MouseAdapter myListener = new MyMouseAdapter();
   private Disposable myDisposable;
 
-  public OnePixelDivider(boolean vertical, Splitter splitter) {
+  public OnePixelDivider(boolean vertical, Splittable splitter) {
     super(new GridBagLayout());
     mySplitter = splitter;
     myResizeEnabled = true;
@@ -71,11 +71,18 @@ public class OnePixelDivider extends Divider {
     }
   }
 
-  private boolean dragging = false;
+  private boolean myDragging = false;
+
+  private void setDragging(boolean dragging) {
+    if (myDragging != dragging) {
+      myDragging = dragging;
+      mySplitter.setDragging(dragging);
+    }
+  }
   private class MyMouseAdapter extends MouseAdapter implements Weighted {
     @Override
     public void mousePressed(MouseEvent e) {
-      dragging = isInDragZone(e);
+      setDragging(isInDragZone(e));
       _processMouseEvent(e);
     }
 
@@ -92,7 +99,7 @@ public class OnePixelDivider extends Divider {
     @Override
     public void mouseReleased(MouseEvent e) {
       _processMouseEvent(e);
-      dragging = false;
+      setDragging(false);
     }
 
     @Override
@@ -163,42 +170,26 @@ public class OnePixelDivider extends Divider {
   protected void processMouseMotionEvent(MouseEvent e) {
     super.processMouseMotionEvent(e);
     if (!myResizeEnabled) return;
-    if (MouseEvent.MOUSE_DRAGGED == e.getID() && dragging) {
-      myPoint = SwingUtilities.convertPoint(this, e.getPoint(), mySplitter);
+    if (MouseEvent.MOUSE_DRAGGED == e.getID() && myDragging) {
+      myPoint = SwingUtilities.convertPoint(this, e.getPoint(), mySplitter.asComponent());
       float proportion;
-      final float firstMinProportion = getMinProportion(mySplitter.getFirstComponent());
-      final float secondMinProportion = getMinProportion(mySplitter.getSecondComponent());
+      final float firstMinProportion = mySplitter.getMinProportion(true);
+      final float secondMinProportion = mySplitter.getMinProportion(false);
       if (isVertical()) {
         if (getHeight() > 0) {
           proportion = Math.min(1.0f, Math
-            .max(.0f, Math.min(Math.max(firstMinProportion, (float)myPoint.y / (float)mySplitter.getHeight()), 1 - secondMinProportion)));
+            .max(.0f, Math.min(Math.max(firstMinProportion, (float)myPoint.y / (float)mySplitter.asComponent().getHeight()), 1 - secondMinProportion)));
           mySplitter.setProportion(proportion);
         }
       }
       else {
         if (getWidth() > 0) {
           proportion = Math.min(1.0f, Math.max(.0f, Math.min(
-            Math.max(firstMinProportion, (float)myPoint.x / (float)mySplitter.getWidth()), 1 - secondMinProportion)));
+            Math.max(firstMinProportion, (float)myPoint.x / (float)mySplitter.asComponent().getWidth()), 1 - secondMinProportion)));
           mySplitter.setProportion(proportion);
         }
       }
     }
-  }
-
-  private float getMinProportion(JComponent component) {
-    if (component != null &&
-        mySplitter.getFirstComponent() != null &&
-        mySplitter.getFirstComponent().isVisible() &&
-        mySplitter.getSecondComponent() != null &&
-        mySplitter.getSecondComponent().isVisible()) {
-      if (isVertical()) {
-        return (float)component.getMinimumSize().height / (float)(mySplitter.getHeight() - 1);
-      } else {
-        return (float)component.getMinimumSize().width / (float)(mySplitter.getWidth() - 1);
-      }
-    }
-
-    return 0.0f;
   }
 
   @Override
