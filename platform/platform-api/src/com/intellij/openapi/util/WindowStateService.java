@@ -318,7 +318,7 @@ public abstract class WindowStateService {
     final Map<String, WindowState> myStateMap = new TreeMap<String, WindowState>();
 
     WindowState getOn(GraphicsDevice screen, @NotNull String key) {
-      WindowState state = getImpl(DimensionService.getKey(screen, key));
+      WindowState state = getImpl(getKey(screen, key));
       if (state == null) {
         state = getImpl(key);
         if (state == null) {
@@ -346,7 +346,7 @@ public abstract class WindowStateService {
                Dimension size, boolean sizeSet,
                Integer extendedState, boolean extendedStateSet) {
       synchronized (myStateMap) {
-        putImpl(DimensionService.getKey(screen, key), location, locationSet, size, sizeSet, extendedState, extendedStateSet);
+        putImpl(getKey(screen, key), location, locationSet, size, sizeSet, extendedState, extendedStateSet);
         putImpl(key, location, locationSet, size, sizeSet, extendedState, extendedStateSet);
       }
     }
@@ -373,7 +373,7 @@ public abstract class WindowStateService {
 
     @Override
     Point getLocationOn(GraphicsDevice screen, @NotNull String key) {
-      Point location = getLocationImpl(DimensionService.getKey(screen, key));
+      Point location = getLocationImpl(getKey(screen, key));
       if (location != null) {
         return location;
       }
@@ -408,7 +408,7 @@ public abstract class WindowStateService {
 
     @Override
     Dimension getSizeOn(GraphicsDevice screen, @NotNull String key) {
-      Dimension size = getSizeImpl(DimensionService.getKey(screen, key));
+      Dimension size = getSizeImpl(getKey(screen, key));
       if (size != null) {
         return size;
       }
@@ -443,7 +443,7 @@ public abstract class WindowStateService {
 
     @Override
     Rectangle getBoundsOn(GraphicsDevice screen, @NotNull String key) {
-      Rectangle bounds = getBoundsImpl(DimensionService.getKey(screen, key));
+      Rectangle bounds = getBoundsImpl(getKey(screen, key));
       if (bounds != null) {
         return bounds;
       }
@@ -474,7 +474,7 @@ public abstract class WindowStateService {
 
     @Override
     Integer getExtendedStateOn(GraphicsDevice screen, @NotNull String key) {
-      Integer extendedState = getExtendedStateImpl(DimensionService.getKey(screen, key));
+      Integer extendedState = getExtendedStateImpl(getKey(screen, key));
       if (extendedState != null) {
         return extendedState;
       }
@@ -618,5 +618,29 @@ public abstract class WindowStateService {
   static void writeSizeTo(@NotNull Element element, @NotNull Dimension size) {
     writeTo(element, WIDTH, size.width);
     writeTo(element, HEIGHT, size.height);
+  }
+
+  @NotNull
+  static String getKey(GraphicsDevice screen, String key) {
+    GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    if (environment.isHeadlessInstance()) {
+      return key + ".headless";
+    }
+    StringBuilder sb = new StringBuilder(key);
+    for (GraphicsDevice device : environment.getScreenDevices()) {
+      Rectangle bounds = device.getDefaultConfiguration().getBounds();
+      sb.append('/').append(bounds.x);
+      sb.append('.').append(bounds.y);
+      sb.append('.').append(bounds.width);
+      sb.append('.').append(bounds.height);
+    }
+    if (screen != null) {
+      Rectangle bounds = screen.getDefaultConfiguration().getBounds();
+      sb.append('@').append(bounds.x);
+      sb.append('.').append(bounds.y);
+      sb.append('.').append(bounds.width);
+      sb.append('.').append(bounds.height);
+    }
+    return sb.toString();
   }
 }
