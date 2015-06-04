@@ -80,7 +80,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         performWriteCommandAction(result);
       }
       else {
-        UIUtil.getInvocationManager().invokeAndWait(new Runnable() {
+        UIUtil.getEdtInvocationManager().invokeAndWait(new Runnable() {
           @Override
           public void run() {
             performWriteCommandAction(result);

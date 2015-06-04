@@ -99,16 +99,16 @@ public class UIUtil {
     kit.setStyleSheet(null);
   }
 
-  private static volatile InvocationManager ourInvocationManager = new DefaultInvocationManager();
+  private static volatile EdtInvocationManager ourEdtInvocationManager = new DefaultEdtInvocationManager();
 
   @NotNull
-  public static InvocationManager getInvocationManager() {
-    return ourInvocationManager;
+  public static EdtInvocationManager getEdtInvocationManager() {
+    return ourEdtInvocationManager;
   }
 
   @SuppressWarnings("unused") // Used in upsource
-  public static void setInvocationManager(@NotNull InvocationManager invocationManager) {
-    ourInvocationManager = invocationManager;
+  public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
+    ourEdtInvocationManager = edtInvocationManager;
   }
 
   public static int getMultiClickInterval() {
@@ -1886,7 +1886,7 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert ourInvocationManager.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
+    assert ourEdtInvocationManager.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -2357,11 +2357,11 @@ public class UIUtil {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    if (ourInvocationManager.isEventDispatchThread()) {
+    if (ourEdtInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      ourInvocationManager.invokeLater(runnable);
+      ourEdtInvocationManager.invokeLater(runnable);
     }
   }
 
@@ -2375,12 +2375,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    if (ourInvocationManager.isEventDispatchThread()) {
+    if (ourEdtInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
       try {
-        ourInvocationManager.invokeAndWait(runnable);
+        ourEdtInvocationManager.invokeAndWait(runnable);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -2418,12 +2418,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
-    if (ourInvocationManager.isEventDispatchThread()) {
+    if (ourEdtInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
       final Ref<Throwable> ref = Ref.create();
-      ourInvocationManager.invokeAndWait(new Runnable() {
+      ourEdtInvocationManager.invokeAndWait(new Runnable() {
         @Override
         public void run() {
           try {
@@ -3386,7 +3386,16 @@ public class UIUtil {
     return false;
   }
 
-  public interface InvocationManager {
+  /**
+   * Encapsulates EDT-related checks and processing. The general idea is that intellij threading model is tightly bound with EDT
+   * (e.g. write access is allowed from EDT only and any task executed from EDT is implicitly granted read access). That makes
+   * a huge bottleneck in non-intellij environments like upsource - every vcs revision there is represented as a separate ide project
+   * object, hence, global shared write lock and single EDT become a problem.
+   * <p/>
+   * That's why it should be possible to change that model in non-intellij environment - that involves either custom read/write locks
+   * processing or custom EDT processing as well. This interface covers EDT part.
+   */
+  public interface EdtInvocationManager {
 
     boolean isEventDispatchThread();
 
@@ -3395,7 +3404,7 @@ public class UIUtil {
     void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException;
   }
 
-  private static class DefaultInvocationManager implements InvocationManager {
+  private static class DefaultEdtInvocationManager implements EdtInvocationManager {
     @Override
     public boolean isEventDispatchThread() {
       return SwingUtilities.isEventDispatchThread();
