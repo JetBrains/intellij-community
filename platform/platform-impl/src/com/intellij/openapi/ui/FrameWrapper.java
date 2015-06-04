@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.Patches;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -75,9 +76,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   private boolean myShown;
   private boolean myIsDialog;
   private boolean myImageWasChanged;
-
-  //Skip restoration of MAXIMIZED_BOTH_PROPERTY
-  private static final boolean WORKAROUND_FOR_JDK_8007219 = SystemInfo.isMac && SystemInfo.isOracleJvm;
 
   public FrameWrapper(Project project) {
     this(project, null);
@@ -330,7 +328,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     }
 
-    if (!WORKAROUND_FOR_JDK_8007219 && extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
+    if (!Patches.JDK_BUG_ID_8007219 && extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
       ((JFrame)frame).setExtendedState(extendedState);
     }
   }
