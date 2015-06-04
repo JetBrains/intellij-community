@@ -126,12 +126,18 @@ public class TestStatusLine extends JPanel {
   }
 
   private static class MyProgressBar extends JProgressBar {
+    private static final int NATIVE_LAF_HEIGHT = 12;
+
     @Override
     public void setUI(ProgressBarUI ui) {
-      if (UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()) {
+      boolean nativeLaf = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderGTKLookAndFeel();
+      if (nativeLaf) {
         ui = new DarculaProgressBarUI();
       }
       super.setUI(ui);
+      if (nativeLaf) {
+        setPreferredSize(new Dimension(getPreferredSize().width, NATIVE_LAF_HEIGHT));
+      }
     }
   }
 }
