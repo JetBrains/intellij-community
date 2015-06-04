@@ -55,4 +55,9 @@ final class WindowStateProjectService extends WindowStateServiceImpl {
     //  backward compatibility when this service is used instead of ProjectFrameBounds
     return !key.equals("ProjectFrameBounds") ? null : ProjectFrameBounds.getInstance(myProject).getBounds();
   }
+
+  @Override
+  Integer getDefaultExtendedStateOn(GraphicsDevice screen, @NotNull String key) {
+    return null;
+  }
 }
