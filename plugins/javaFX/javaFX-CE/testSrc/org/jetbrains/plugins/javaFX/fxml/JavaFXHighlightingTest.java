@@ -33,7 +33,7 @@ import org.junit.Assume;
 public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   @Override
   protected void runTest() throws Throwable {
-    Assume.assumeFalse(SystemInfo.isLinux);
+    Assume.assumeFalse(SystemInfo.isMac);
     super.runTest();
   }
 
