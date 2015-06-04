@@ -54,6 +54,52 @@ public abstract class WindowStateService {
   }
 
   /**
+   * Loads a state of the specified component by the specified key.
+   *
+   * @param key       an unique string key
+   * @param component a component which state should be changed
+   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
+   */
+  public final boolean loadState(@NotNull String key, @NotNull Component component) {
+    return loadStateOn(null, key, component);
+  }
+
+  /**
+   * Loads a state of the specified component by the given screen and the specified key.
+   *
+   * @param screen    a screen to which a location belongs
+   * @param key       an unique string key
+   * @param component a component which state should be changed
+   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
+   */
+  public boolean loadStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component) {
+    return false;
+  }
+
+  /**
+   * Stores the specified location that corresponds to the specified key.
+   * If it is {@code null} the stored location will be removed.
+   *
+   * @param key       an unique string key
+   * @param component a component which state should be saved
+   */
+  public final void saveState(@NotNull String key, @NotNull Component component) {
+    saveStateOn(null, key, component);
+  }
+
+  /**
+   * Stores the specified location that corresponds to the given screen and the specified key.
+   * If it is {@code null} the stored location will be removed.
+   * Do not use a screen which is calculated from the values to store.
+   *
+   * @param screen    a screen to which a location belongs
+   * @param key       an unique string key
+   * @param component a component which state should be saved
+   */
+  public void saveStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component) {
+  }
+
+  /**
    * Returns a location that corresponds to the specified key or {@code null}
    * if a location does not exist or it is outside of visible area.
    *
@@ -217,7 +263,7 @@ public abstract class WindowStateService {
    */
   abstract void putExtendedStateOn(GraphicsDevice screen, @NotNull String key, Integer extendedState);
 
-  private static final class WindowState {
+  static final class WindowState {
     private Point myLocation;
     private Dimension mySize;
     private Integer myState;
@@ -256,7 +302,7 @@ public abstract class WindowStateService {
 
     private boolean isVisible() {
       if (myLocation == null) {
-        return false;
+        return mySize != null;
       }
       if (ScreenUtil.isVisible(myLocation)) {
         return true;
@@ -271,10 +317,34 @@ public abstract class WindowStateService {
   static class Service extends WindowStateService implements PersistentStateComponent<Element> {
     final Map<String, WindowState> myStateMap = new TreeMap<String, WindowState>();
 
-    private void putOn(GraphicsDevice screen, @NotNull String key,
-                       Point location, boolean locationSet,
-                       Dimension size, boolean sizeSet,
-                       Integer extendedState, boolean extendedStateSet) {
+    WindowState getOn(GraphicsDevice screen, @NotNull String key) {
+      WindowState state = getImpl(DimensionService.getKey(screen, key));
+      if (state == null) {
+        state = getImpl(key);
+        if (state == null) {
+          state = new WindowState();
+          state.myLocation = getDefaultLocationOn(screen, key);
+          state.mySize = getDefaultSizeOn(screen, key);
+          state.myState = getDefaultExtendedStateOn(screen, key);
+          if (!state.isVisible()) {
+            return null;
+          }
+        }
+      }
+      return state;
+    }
+
+    WindowState getImpl(@NotNull String key) {
+      synchronized (myStateMap) {
+        WindowState state = myStateMap.get(key);
+        return state != null && state.isVisible() ? state : null;
+      }
+    }
+
+    void putOn(GraphicsDevice screen, @NotNull String key,
+               Point location, boolean locationSet,
+               Dimension size, boolean sizeSet,
+               Integer extendedState, boolean extendedStateSet) {
       synchronized (myStateMap) {
         putImpl(DimensionService.getKey(screen, key), location, locationSet, size, sizeSet, extendedState, extendedStateSet);
         putImpl(key, location, locationSet, size, sizeSet, extendedState, extendedStateSet);

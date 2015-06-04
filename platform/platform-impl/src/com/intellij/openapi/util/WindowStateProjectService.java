@@ -31,7 +31,7 @@ import java.awt.*;
   name = "WindowStateProjectService",
   storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)}
 )
-final class WindowStateProjectService extends WindowStateService.Service {
+final class WindowStateProjectService extends WindowStateServiceImpl {
   private final Project myProject;
 
   WindowStateProjectService(Project project) {

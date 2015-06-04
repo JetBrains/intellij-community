@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.Patches;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -28,9 +27,9 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -41,6 +40,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.FrameState;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -301,49 +301,23 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected void loadFrameState() {
     final Window frame = getFrame();
-    final Point location;
-    final Dimension size;
-    final int extendedState;
-    DimensionService dimensionService = DimensionService.getInstance();
-    if (myDimensionKey == null || dimensionService == null) {
-      location = null;
-      size = null;
-      extendedState = -1;
-    }
-    else {
-      location = dimensionService.getLocationOn(null, myDimensionKey);
-      size = dimensionService.getSizeOn(null, myDimensionKey);
-      extendedState = dimensionService.getExtendedState(myDimensionKey);
-    }
-
-    if (size != null && location != null) {
-      frame.setLocation(location);
-      frame.setSize(size);
-      ((RootPaneContainer)frame).getRootPane().revalidate();
-    }
-    else {
+    if (!WindowStateService.getInstance().loadStateOn(getDevice(myProject), myDimensionKey, frame)) {
       final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
       if (ideFrame != null) {
-        frame.pack();
         frame.setBounds(ideFrame.suggestChildFrameBounds());
       }
     }
-
-    if (!Patches.JDK_BUG_ID_8007219 && extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
-      ((JFrame)frame).setExtendedState(extendedState);
-    }
+    ((RootPaneContainer)frame).getRootPane().revalidate();
   }
 
-  private static void saveFrameState(String dimensionKey, Component frame) {
-    DimensionService dimensionService = DimensionService.getInstance();
-    if (dimensionKey == null || dimensionService == null) return;
-    FrameState state = FrameState.getFrameState(frame);
-    dimensionService.setLocationOn(null, dimensionKey, state.getBounds().getLocation());
-    dimensionService.setSizeOn(null, dimensionKey, state.getBounds().getSize());
-    Integer extendedState = state.getExtendedState();
-    if (extendedState != null && frame instanceof JFrame) {
-      dimensionService.setExtendedState(dimensionKey, extendedState);
+  private static GraphicsDevice getDevice(Project project) {
+    if (project != null) {
+      JFrame frame = WindowManager.getInstance().getFrame(project);
+      if (frame != null) {
+        return ScreenUtil.getScreenDevice(frame.getBounds());
+      }
     }
+    return null;
   }
 
   public void setTitle(String title) {
@@ -442,8 +416,8 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().remove(this);
 
-      if (myShown) {
-        saveFrameState(myDimensionKey, this);
+      if (myShown && myDimensionKey != null) {
+        WindowStateService.getInstance().saveStateOn(getDevice(myProject), myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);
@@ -547,8 +521,8 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().remove(this);
 
-      if (myShown) {
-        saveFrameState(myDimensionKey, this);
+      if (myShown && myDimensionKey != null) {
+        WindowStateService.getInstance().saveStateOn(getDevice(myProject), myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);

@@ -34,6 +34,14 @@ public class FrameState {
   private Integer myExtendedState;
   private boolean myFullScreen;
 
+  public Point getLocation() {
+    return myBounds == null ? null : myBounds.getLocation();
+  }
+
+  public Dimension getSize() {
+    return myBounds == null ? null : myBounds.getSize();
+  }
+
   public Rectangle getBounds() {
     return myBounds == null ? null : new Rectangle(myBounds);
   }
@@ -66,6 +74,10 @@ public class FrameState {
     return component instanceof IdeFrameEx
            && WindowManager.getInstance().isFullScreenSupportedInCurrentOS()
            && ((IdeFrameEx)component).isInFullScreen();
+  }
+
+  public static boolean isMaximized(Integer state) {
+    return state != null && (state & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
   }
 
   private static FrameState findFrameState(@NotNull Component component) {
@@ -123,7 +135,7 @@ public class FrameState {
     myFullScreen = isFullScreen(component);
     myExtendedState = getExtendedState(component);
     if (myBounds != null) {
-      if (myFullScreen || myExtendedState != null && (myExtendedState & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) {
+      if (myFullScreen || isMaximized(myExtendedState)) {
         if (bounds.contains(myBounds.x + myBounds.width / 2, myBounds.y + myBounds.height / 2)) {
           return; // preserve old bounds for the maximized frame if its state can be restored
         }

@@ -30,7 +30,7 @@ import java.awt.*;
   name = "WindowStateApplicationService",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/window.state.xml", roamingType = RoamingType.DISABLED)
 )
-final class WindowStateApplicationService extends WindowStateService.Service {
+final class WindowStateApplicationService extends WindowStateServiceImpl {
   @Override
   Point getDefaultLocationOn(GraphicsDevice screen, @NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
