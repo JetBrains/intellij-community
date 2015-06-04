@@ -29,9 +29,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AlarmFactory {
 
+  @NotNull private static volatile AlarmFactory ourInstance = new AlarmFactory();
+
   @NotNull
   public static AlarmFactory getInstance() {
-    return ServiceManager.getService(AlarmFactory.class);
+    return ourInstance;
+  }
+
+  @SuppressWarnings("unused") // Used in upsource
+  public static void setAlarmFactory(@NotNull AlarmFactory factory) {
+    ourInstance = factory;
   }
 
   @NotNull
