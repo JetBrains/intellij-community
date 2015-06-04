@@ -111,6 +111,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private TIntFunction myLineNumberAreaWidthFunction;
   private boolean myShowDefaultGutterPopup = true;
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
+  private boolean myPaintBackground = true;
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
@@ -435,7 +436,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public Color getBackground() {
-    if (myEditor.isInDistractionFreeMode()) {
+    if (myEditor.isInDistractionFreeMode() || !myPaintBackground) {
       return myEditor.getBackgroundColor();
     }
     Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
@@ -912,9 +913,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void paintFoldingLines(final Graphics2D g, final Rectangle clip) {
     if (!isFoldingOutlineShown()) return;
 
-    g.setColor(getOutlineColor(false));
-    int x = getWhitespaceSeparatorOffset();
-    UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
+    if (myPaintBackground) {
+      g.setColor(getOutlineColor(false));
+      int x = getWhitespaceSeparatorOffset();
+      UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
+    }
 
     final int anchorX = getFoldingAreaOffset();
     final int width = getFoldingAnchorWidth();
@@ -1497,6 +1500,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void setShowDefaultGutterPopup(boolean show) {
     myShowDefaultGutterPopup = show;
+  }
+
+  @Override
+  public void setPaintBackground(boolean value) {
+    myPaintBackground = value;
   }
 
   private void invokePopup(MouseEvent e) {
