@@ -24,12 +24,14 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,7 +108,10 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
     @NotNull
     @Override
     public JComponent createComponent() {
-      return myPanel;
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myPanel, BorderLayout.CENTER);
+      panel.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
+      return panel;
     }
 
     @Override
