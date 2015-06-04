@@ -109,6 +109,9 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   }
 
   public boolean canCreate(final PsiDirectory[] dirs) {
+    for (PsiDirectory dir : dirs) {
+      if (canCreate(dir)) return true;
+    }
     return false;
   }
 

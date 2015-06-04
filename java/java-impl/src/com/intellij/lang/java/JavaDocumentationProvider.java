@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,14 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -552,14 +555,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
 
   @Nullable
-  private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, JavaDocExternalFilter filter) {
+  private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, @NotNull JavaDocExternalFilter filter) {
     try {
       String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
-      if (externalDoc != null && externalDoc.length() > 0) {
+      if (!StringUtil.isEmpty(externalDoc)) {
         return externalDoc;
       }
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       //try to generate some javadoc
     }
     return null;
@@ -689,7 +692,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  public static List<String> findUrlForClass(PsiClass aClass) {
+  public static List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName == null) return null;
 
@@ -701,18 +704,18 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     String packageName = ((PsiJavaFile)file).getPackageName();
     String relPath;
-    if (packageName.length() > 0) {
-      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
+    if (packageName.isEmpty()) {
+      relPath = qName + HTML_EXTENSION;
     }
     else {
-      relPath = qName + HTML_EXTENSION;
+      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
     }
 
     return findUrlForVirtualFile(file.getProject(), virtualFile, relPath);
   }
 
   @Nullable
-  public static List<String> findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
+  public static List<String> findUrlForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull String relPath) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(virtualFile);
     if (module == null) {
@@ -733,11 +736,25 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
 
-    final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
-    for (OrderEntry orderEntry : orderEntries) {
-      final String[] files = JavadocOrderRootType.getUrls(orderEntry);
-      final List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(files, relPath);
-      if (httpRoot != null) return httpRoot;
+    for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
+      for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
+        if (root.getFileSystem() == JarFileSystem.getInstance()) {
+          VirtualFile file = root.findFileByRelativePath(relPath);
+          List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProvider.getUrls(file, project, null);
+          if (!ContainerUtil.isEmpty(urls)) {
+            List<String> result = new SmartList<String>();
+            for (Url url : urls) {
+              result.add(url.toExternalForm());
+            }
+            return result;
+          }
+        }
+      }
+
+      List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
+      if (httpRoot != null) {
+        return httpRoot;
+      }
     }
     return null;
   }
@@ -761,7 +778,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
     return fetchExternalJavadoc(element, project, docUrls);
   }
 
@@ -780,9 +797,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
-    final JavaDocExternalFilter docFilter = new JavaDocExternalFilter(project);
-
-    return fetchExternalJavadoc(element, docURLs, docFilter);
+    return fetchExternalJavadoc(element, docURLs, new JavaDocExternalFilter(project));
   }
 
   public static String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {

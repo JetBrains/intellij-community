@@ -234,6 +234,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
           dialectMap.put(key, dialect);
         }
       }
+      myMappings.clear();
       final List<Element> files = state.getChildren("file");
       for (Element fileElement : files) {
         final String url = fileElement.getAttributeValue("url");

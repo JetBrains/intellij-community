@@ -117,6 +117,7 @@ public class RunContentExecutor implements Disposable {
       activateToolWindow();
     }
 
+    Disposer.register(this, console);
     return console;
   }
 

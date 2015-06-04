@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,15 +75,15 @@ public abstract class AbstractExternalFilter {
 
     protected abstract String convertReference(String root, String href);
 
-    public String refFilter(final String root, String read) {
-      String toMatch = StringUtil.toUpperCase(read);
+    public CharSequence refFilter(final String root, @NotNull CharSequence read) {
+      CharSequence toMatch = StringUtilRt.toUpperCase(read);
       StringBuilder ready = new StringBuilder();
       int prev = 0;
       Matcher matcher = mySelector.matcher(toMatch);
 
       while (matcher.find()) {
-        String before = read.substring(prev, matcher.start(1) - 1);     // Before reference
-        final String href = read.substring(matcher.start(1), matcher.end(1)); // The URL
+        CharSequence before = read.subSequence(prev, matcher.start(1) - 1);     // Before reference
+        final CharSequence href = read.subSequence(matcher.start(1), matcher.end(1)); // The URL
         prev = matcher.end(1) + 1;
         ready.append(before);
         ready.append("\"");
@@ -90,16 +91,16 @@ public abstract class AbstractExternalFilter {
           new Computable<String>() {
             @Override
             public String compute() {
-              return convertReference(root, href);
+              return convertReference(root, href.toString());
             }
           }
         ));
         ready.append("\"");
       }
 
-      ready.append(read.substring(prev, read.length()));
+      ready.append(read, prev, read.length());
 
-      return ready.toString();
+      return ready;
     }
   }
 
@@ -114,13 +115,11 @@ public abstract class AbstractExternalFilter {
     return path;
   }
 
-  public String correctRefs(String root, String read) {
-    String result = read;
-
+  public CharSequence correctRefs(String root, CharSequence read) {
+    CharSequence result = read;
     for (RefConvertor myReferenceConvertor : getRefConverters()) {
       result = myReferenceConvertor.refFilter(root, result);
     }
-
     return result;
   }
 
@@ -158,7 +157,12 @@ public abstract class AbstractExternalFilter {
       throw exception;
     }
 
-    final String docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), fetcher.data.toString());
+    return correctDocText(url, fetcher.data);
+  }
+
+  @NotNull
+  protected String correctDocText(@NotNull String url, @NotNull CharSequence data) {
+    CharSequence docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), data);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Filtered JavaDoc: " + docText + "\n");
     }

@@ -1,13 +1,17 @@
 package com.jetbrains.env.python.testing;
 
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.ut.PyTestTestTask;
 import com.jetbrains.env.ut.PyUnitTestTask;
-import junit.framework.Assert;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
+
+import java.util.List;
 
 /**
  * @author traff
  */
-public class PythonUnitTestingTest extends PyEnvTestCase{
+public class PythonUnitTestingTest extends PyEnvTestCase {
   public void testUTRunner() {
     runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test1.py") {
 
@@ -79,6 +83,44 @@ public class PythonUnitTestingTest extends PyEnvTestCase{
       }
     });
   }
+
+  /**
+   * Ensures file references are highlighted for python traceback
+   */
+  public void testUnitTestFileReferences() {
+    final String fileName = "reference_tests.py";
+    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", fileName) {
+
+      @Override
+      public void after() {
+        final List<String> fileNames = getHighlightedStrings().second;
+        Assert.assertThat("Wrong number of highlighted entries", fileNames, Matchers.hasSize(3));
+        // UnitTest highlights file name
+        Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.endsWith(fileName)));
+      }
+    });
+  }
+
+  /**
+   * Ensures file references are highlighted for pytest traceback
+   */
+  public void testPyTestFileReferences() {
+    final String fileName = "reference_tests.py";
+    runPythonTest(new PyTestTestTask("/testRunner/env/unit", fileName) {
+
+      @Override
+      public void after() {
+        final List<String> fileNames = getHighlightedStrings().second;
+        Assert.assertThat("No lines highlighted", fileNames, Matchers.not(Matchers.empty()));
+        // PyTest highlights file:line_number
+        Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.anyOf(Matchers.endsWith("reference_tests.py:13"),
+                                                                                               Matchers.endsWith("reference_tests.py:7"),
+                                                                                               Matchers.endsWith("reference_tests.py"),
+                                                                                               Matchers.endsWith("reference_tests.py:12"))));
+      }
+    });
+  }
+
 
   public void testDependent() {
     runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "dependentTests/test_my_class.py") {

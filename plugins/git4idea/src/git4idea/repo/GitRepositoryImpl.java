@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -206,12 +207,19 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   // previous info can be null before the first update
-  private static void notifyListeners(@NotNull GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
+  private static void notifyListeners(@NotNull final GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
     if (Disposer.isDisposed(repository.getProject())) {
       return;
     }
     if (!info.equals(previousInfo)) {
-      repository.getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          Project project = repository.getProject();
+          if (!project.isDisposed()) {
+            project.getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
+          }
+        }
+      });
     }
   }
 

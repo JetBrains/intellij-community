@@ -72,10 +72,13 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
 
     if (isDebug()) {
       final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
-                                                                                      consoleProperties,
-                                                                                      getEnvironment());
-      final ConsoleView consoleView = new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()), testsOutputConsoleView);
+                                                                                          consoleProperties,
+                                                                                          getEnvironment());
+      final ConsoleView consoleView =
+        new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()),
+                                           testsOutputConsoleView);
       consoleView.attachToProcess(processHandler);
+      addTracebackFilter(project, consoleView, processHandler);
       return consoleView;
     }
     final ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
@@ -121,6 +124,9 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
         if (script == null) return;
         cmd.setWorkDirectory(script.getParent().getPath());
       }
+    }
+    if (cmd.getWorkDirectory() == null) { // If current dir still not set, lets use project dir
+      cmd.setWorkDirectory(myConfiguration.getWorkingDirectorySafe());
     }
   }
 

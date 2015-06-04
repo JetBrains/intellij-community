@@ -33,6 +33,8 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.PlatformUtils;
@@ -207,7 +209,8 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
       DirectoryInfo info = directoryIndex.getInfoForFile(file);
       // we serve excluded files
       if (!info.isExcluded() && !info.isInProject()) {
-        return null;
+        // javadoc jars is "not under project", but actually is, so, let's check project library table
+        return file.getFileSystem() == JarFileSystem.getInstance() ? getInfoForDocJar(file, project) : null;
       }
 
       VirtualFile root = info.getSourceRoot();
@@ -243,6 +246,59 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     finally {
       token.finish();
     }
+  }
+
+  @Nullable
+  private static PathInfo getInfoForDocJar(@NotNull final VirtualFile file, @NotNull final Project project) {
+    final OrderRootType javaDocRootType = JavadocOrderRootType.getInstance();
+    if (javaDocRootType == null) {
+      return null;
+    }
+
+    class LibraryProcessor implements Processor<Library> {
+      PathInfo result;
+      Module module;
+
+      @Override
+      public boolean process(Library library) {
+        for (VirtualFile root : library.getFiles(javaDocRootType)) {
+          if (VfsUtilCore.isAncestor(root, file, false)) {
+            result = new PathInfo(file, root, getModuleNameQualifier(project, module), true);
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+
+    LibraryProcessor processor = new LibraryProcessor();
+    AccessToken token = ReadAction.start();
+    try {
+      ModuleManager moduleManager = ModuleManager.getInstance(project);
+      for (Module module : moduleManager.getModules()) {
+        if (module.isDisposed()) {
+          continue;
+        }
+
+        processor.module = module;
+        ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(processor);
+        if (processor.result != null) {
+          return processor.result;
+        }
+      }
+
+      processor.module = null;
+      for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
+        if (!processor.process(library)) {
+          return processor.result;
+        }
+      }
+    }
+    finally {
+      token.finish();
+    }
+
+    return null;
   }
 
   @Nullable

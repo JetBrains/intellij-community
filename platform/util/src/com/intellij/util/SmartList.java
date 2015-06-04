@@ -27,7 +27,7 @@ import java.util.*;
  * in which cases it would not allocate array at all.
  */
 @SuppressWarnings({"unchecked"})
-public class SmartList<E> extends AbstractList<E> {
+public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   private int mySize = 0;
   private Object myElem = null; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
 

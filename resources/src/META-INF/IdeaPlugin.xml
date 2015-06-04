@@ -1257,7 +1257,9 @@
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"/>
 
+    <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaInternalTemplatesHandler"/>
     <createFromTemplateHandler implementation="com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler"/>
+
     <defaultTemplatePropertiesProvider implementation="com.intellij.ide.fileTemplates.TemplatePackagePropertyProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiClassFavoriteNodeProvider"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiFieldFavoriteNodeProvider"/>

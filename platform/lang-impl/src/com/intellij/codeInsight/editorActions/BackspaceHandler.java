@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -35,6 +36,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -45,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
+  private static final Logger LOGGER = Logger.getInstance(BackspaceHandler.class);
+  
   protected final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
@@ -188,11 +192,20 @@ public class BackspaceHandler extends EditorWriteActionHandler {
   }
   
   public static void deleteToTargetPosition(@NotNull Editor editor, @NotNull LogicalPosition pos) {
-    final int offset = editor.getCaretModel().getOffset();
-    final int targetOffset = editor.logicalPositionToOffset(pos);
-    editor.getSelectionModel().setSelection(targetOffset, offset);
-    EditorModificationUtil.deleteSelectedText(editor);
-    editor.getCaretModel().moveToLogicalPosition(pos);
+    LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
+    if (logicalPosition.line != pos.line) {
+      LOGGER.error("Unexpected caret position: " + logicalPosition + ", target indent position: " + pos);
+      return;
+    }
+    if (pos.column < logicalPosition.column) {
+      int targetOffset = editor.logicalPositionToOffset(pos);
+      int offset = editor.getCaretModel().getOffset();
+      editor.getSelectionModel().setSelection(targetOffset, offset);
+      EditorModificationUtil.deleteSelectedText(editor);
+    }
+    else if (pos.column > logicalPosition.column) {
+      EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', pos.column - logicalPosition.column));
+    }
   }
 
   public static boolean isWhitespaceBeforeCaret(Editor editor) {

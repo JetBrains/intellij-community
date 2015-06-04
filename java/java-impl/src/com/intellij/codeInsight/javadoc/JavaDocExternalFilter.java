@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -34,7 +36,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInServerOptions;
+import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
+import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -116,28 +121,50 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
 
   @Override
   @Nullable
-   public String getExternalDocInfoForElement(final String docURL, final PsiElement element) throws Exception {
-     String externalDoc = super.getExternalDocInfoForElement(docURL, element);
-     if (externalDoc != null) {
-       if (element instanceof PsiMethod) {
-         final String className = ApplicationManager.getApplication().runReadAction(
-             new NullableComputable<String>() {
-               @Override
-               @Nullable
-               public String compute() {
-                 PsiClass aClass = ((PsiMethod)element).getContainingClass();
-                 return aClass == null ? null : aClass.getQualifiedName();
-               }
-             }
-         );
-         Matcher matcher = ourMethodHeading.matcher(externalDoc);
-         final StringBuilder buffer = new StringBuilder();
-         DocumentationManager.createHyperlink(buffer, className, className, false);
-         //noinspection HardCodedStringLiteral
-         return matcher.replaceFirst("<H3>" + buffer.toString() + "</H3>");
+   public String getExternalDocInfoForElement(@NotNull String docURL, final PsiElement element) throws Exception {
+    CharSequence externalDoc = null;
+    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
+    if (docURL.startsWith(builtInServer)) {
+      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).get(docURL.substring(builtInServer.length()));
+      if (file != null) {
+        InputStreamReader reader = new InputStreamReader(file.getInputStream(), CharsetToolkit.UTF8_CHARSET);
+        StringBuilder result = new StringBuilder();
+        try {
+          doBuildFromStream(docURL, reader, result);
+        }
+        finally {
+          reader.close();
+        }
+
+        externalDoc = result;
       }
     }
-    return externalDoc;
+
+    if (externalDoc == null) {
+      externalDoc = super.getExternalDocInfoForElement(docURL, element);
+    }
+
+    if (externalDoc == null) {
+      return null;
+    }
+
+    if (element instanceof PsiMethod) {
+      final String className = ApplicationManager.getApplication().runReadAction(
+        new NullableComputable<String>() {
+          @Override
+          @Nullable
+          public String compute() {
+            PsiClass aClass = ((PsiMethod)element).getContainingClass();
+            return aClass == null ? null : aClass.getQualifiedName();
+          }
+        }
+      );
+      Matcher matcher = ourMethodHeading.matcher(externalDoc);
+      StringBuilder buffer = new StringBuilder("<h3>");
+      DocumentationManager.createHyperlink(buffer, className, className, false);
+      return matcher.replaceFirst(buffer.append("</h3>").toString());
+    }
+    return externalDoc.toString();
   }
 
   @NotNull

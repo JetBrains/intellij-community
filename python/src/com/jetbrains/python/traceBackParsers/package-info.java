@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.util.diff;
-
-import com.intellij.openapi.util.Ref;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 /**
- * @author max
+ * <h1>A pack of test output parsers.</h1>
+ * <p>
+ * Each parser knows how to parse test output to fetch file links from stack traces.
+ * All parsers should extend {@link com.jetbrains.python.traceBackParsers.TraceBackParser} and be installed to
+ * {@link com.jetbrains.python.traceBackParsers.TraceBackParser#PARSERS} while this functionality has no EP.
+ * </p>
  */
-public interface FlyweightCapableTreeStructure<T> {
-  @NotNull
-  T getRoot();
-
-  @Nullable
-  T getParent(@NotNull T node);
-
-  @NotNull
-  T prepareForGetChildren(@NotNull T node);
-
-  int getChildren(@NotNull T parent, @NotNull Ref<T[]> into);
-
-  void disposeChildren(T[] nodes, int count);
-}
+package com.jetbrains.python.traceBackParsers;
