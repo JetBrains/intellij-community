@@ -1265,7 +1265,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderWindowsLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Windows");
+    return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1305,7 +1305,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderGTKLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("GTK");
+    return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
