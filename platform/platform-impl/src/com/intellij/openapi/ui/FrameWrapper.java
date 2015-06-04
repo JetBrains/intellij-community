@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.FrameState;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -336,10 +337,12 @@ public class FrameWrapper implements Disposable, DataProvider {
   private static void saveFrameState(String dimensionKey, Component frame) {
     DimensionService dimensionService = DimensionService.getInstance();
     if (dimensionKey == null || dimensionService == null) return;
-    dimensionService.setLocationOn(null, dimensionKey, frame.getLocation());
-    dimensionService.setSizeOn(null, dimensionKey, frame.getSize());
-    if (frame instanceof JFrame) {
-      dimensionService.setExtendedState(dimensionKey, ((JFrame)frame).getExtendedState());
+    FrameState state = FrameState.getFrameState(frame);
+    dimensionService.setLocationOn(null, dimensionKey, state.getBounds().getLocation());
+    dimensionService.setSizeOn(null, dimensionKey, state.getBounds().getSize());
+    Integer extendedState = state.getExtendedState();
+    if (extendedState != null && frame instanceof JFrame) {
+      dimensionService.setExtendedState(dimensionKey, extendedState);
     }
   }
 
@@ -368,6 +371,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     private File myFile;
 
     private MyJFrame(IdeFrame parent) throws HeadlessException {
+      FrameState.setFrameStateListener(this);
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
 
