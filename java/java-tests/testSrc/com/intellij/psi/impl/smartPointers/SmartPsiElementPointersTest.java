@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -515,12 +514,26 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testInXml2() {
-    final PsiFile file = configureByText(XmlFileType.INSTANCE,
+    final PsiFile file = configureByText(HtmlFileType.INSTANCE,
+                                         "<!DOCTYPE html>\n" +
                                          "<html>\n" +
+                                         "<head>\n" +
+                                         "    <title></title>\n" +
+                                         "</head>\n" +
+                                         "<body>\n" +
+                                         "<div class=\"cls\">\n" +
                                          "    <ul class=\"dropdown-menu\">\n" +
+                                         "        <li><a href=\"#\">Action</a></li>\n" +
+                                         "        <li><a href=\"#\">Another action</a></li>\n" +
+                                         "        <li><a href=\"#\">Something else here</a></li>\n" +
+                                         "        <li class=\"divider\"></li>\n" +
+                                         "        <li class=\"dropdown-header\">Nav header</li>\n" +
+                                         "        <li><a href=\"#\">Separated link</a></li>\n" +
                                          "        <li><a href=\"#\">One more separated link</a></li>\n" +
                                          "    </ul>\n" +
                                          "<caret>\n" +
+                                         "</div>\n" +
+                                         "</body>\n" +
                                          "</html>"
     );
 
@@ -529,14 +542,17 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals("ul", ul.getName());
     assertEquals("dropdown-menu", ul.getAttributeValue("class"));
 
-    SmartPsiElementPointer<XmlTag> ulPointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(ul);
+    final SmartPsiElementPointer<XmlTag> ulPointer = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(
+      ul);
 
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
       public void run() {
-        int offset = getEditor().getCaretModel().getOffset();
-        getEditor().getDocument().insertString(offset, "    <ul class=\"nav navbar-nav navbar-right\">\n" +
-                                                       "    </ul>\n");
+        getEditor().getDocument().insertString(getEditor().getCaretModel().getOffset(), "    <ul class=\"nav navbar-nav navbar-right\">\n" +
+                                                                                        "        <li><a href=\"../navbar/\">Default</a></li>\n" +
+                                                                                        "        <li class=\"active\"><a href=\"./\">Static top</a></li>\n" +
+                                                                                        "        <li><a href=\"../navbar-fixed-top/\">Fixed top</a></li>\n" +
+                                                                                        "    </ul>\n");
       }
     });
 

@@ -92,12 +92,6 @@ public class DiffTreeTest extends TestCase {
     @Override
     public void disposeChildren(final Node[] nodes, final int count) {
     }
-
-    @NotNull
-    @Override
-    public CharSequence toString(@NotNull Node node) {
-      return node.toString();
-    }
   }
 
   private static class NodeComparator implements ShallowNodeComparator<Node, Node> {
