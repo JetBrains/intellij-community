@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.util;
 
-import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -104,20 +103,20 @@ public class SyncScrollSupport {
                             final boolean animate) {
       Side slaveSide = masterSide.other();
 
-      final IntPair offsets = getTargetOffsets(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2);
+      final int[] offsets = getTargetOffsets(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2);
 
       final Editor masterEditor = masterSide.select(myEditor1, myEditor2);
       final Editor slaveEditor = slaveSide.select(myEditor1, myEditor2);
 
-      final int masterOffset = masterSide.select(offsets.val1, offsets.val2);
-      final int slaveOffset = slaveSide.select(offsets.val1, offsets.val2);
+      final int masterOffset = masterSide.select(offsets);
+      final int slaveOffset = slaveSide.select(offsets);
 
       int startOffset1 = myEditor1.getScrollingModel().getVisibleArea().y;
       int startOffset2 = myEditor2.getScrollingModel().getVisibleArea().y;
       final int masterStartOffset = masterSide.select(startOffset1, startOffset2);
 
-      myHelper1.setAnchor(startOffset1, offsets.val1, startOffset2, offsets.val2);
-      myHelper2.setAnchor(startOffset2, offsets.val2, startOffset1, offsets.val1);
+      myHelper1.setAnchor(startOffset1, offsets[0], startOffset2, offsets[1]);
+      myHelper2.setAnchor(startOffset2, offsets[1], startOffset1, offsets[0]);
 
       doScrollHorizontally(masterEditor, 0, false); // animation will be canceled by "scroll vertically" anyway
       doScrollVertically(masterEditor, masterOffset, animate);
@@ -307,56 +306,83 @@ public class SyncScrollSupport {
   }
 
   @NotNull
-  private static IntPair getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
-                                          int startLine1, int endLine1, int startLine2, int endLine2) {
-    int topOffset1 = editor1.logicalPositionToXY(new LogicalPosition(startLine1, 0)).y;
-    int bottomOffset1 = editor1.logicalPositionToXY(new LogicalPosition(endLine1 + 1, 0)).y;
-    int topOffset2 = editor2.logicalPositionToXY(new LogicalPosition(startLine2, 0)).y;
-    int bottomOffset2 = editor2.logicalPositionToXY(new LogicalPosition(endLine2 + 1, 0)).y;
+  private static int[] getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
+                                        int startLine1, int endLine1, int startLine2, int endLine2) {
+    return getTargetOffsets(new Editor[]{editor1, editor2},
+                            new int[]{startLine1, startLine2},
+                            new int[]{endLine1, endLine2});
+  }
 
-    int rangeHeight1 = bottomOffset1 - topOffset1;
-    int rangeHeight2 = bottomOffset2 - topOffset2;
+  @NotNull
+  private static int[] getTargetOffsets(@NotNull Editor[] editors, int[] startLines, int[] endLines) {
+    int count = editors.length;
+    assert startLines.length == count;
+    assert endLines.length == count;
 
-    int gapLines1 = 2 * editor1.getLineHeight();
-    int gapLines2 = 2 * editor2.getLineHeight();
+    int[] topOffsets = new int[count];
+    int[] bottomOffsets = new int[count];
+    int[] rangeHeights = new int[count];
+    int[] gapLines = new int[count];
+    int[] editorHeights = new int[count];
+    int[] maximumOffsets = new int[count];
+    int[] topShifts = new int[count];
 
-    int editorHeight1 = editor1.getScrollingModel().getVisibleArea().height;
-    int editorHeight2 = editor2.getScrollingModel().getVisibleArea().height;
+    for (int i = 0; i < count; i++) {
+      topOffsets[i] = editors[i].logicalPositionToXY(new LogicalPosition(startLines[i], 0)).y;
+      bottomOffsets[i] = editors[i].logicalPositionToXY(new LogicalPosition(endLines[i] + 1, 0)).y;
+      rangeHeights[i] = bottomOffsets[i] - topOffsets[i];
 
-    int maximumOffset1 = ((EditorEx)editor1).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight1;
-    int maximumOffset2 = ((EditorEx)editor2).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight2;
+      gapLines[i] = 2 * editors[i].getLineHeight();
+      editorHeights[i] = editors[i].getScrollingModel().getVisibleArea().height;
 
-    // 'shift' here - distance between editor's top and first line of range
+      maximumOffsets[i] = ((EditorEx)editors[i]).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeights[i];
 
-    // make whole range visible. If possible, locate it at 'center' (1/3 of height)
-    // If can't show whole range - show as much as we can
-    boolean canShow1 = 2 * gapLines1 + rangeHeight1 <= editorHeight1;
-    boolean canShow2 = 2 * gapLines2 + rangeHeight2 <= editorHeight2;
-    
-    int topShift1 = canShow1 ? Math.min(editorHeight1 - gapLines1 - rangeHeight1, editorHeight1 / 3) : gapLines1;
-    int topShift2 = canShow2 ? Math.min(editorHeight2 - gapLines2 - rangeHeight2, editorHeight2 / 3) : gapLines2;
+      // 'shift' here - distance between editor's top and first line of range
 
-    int topShift = Math.min(topShift1, topShift2);
+      // make whole range visible. If possible, locate it at 'center' (1/3 of height)
+      // If can't show whole range - show as much as we can
+      boolean canShow = 2 * gapLines[i] + rangeHeights[i] <= editorHeights[i];
+
+      topShifts[i] = canShow ? Math.min(editorHeights[i] - gapLines[i] - rangeHeights[i], editorHeights[i] / 3) : gapLines[i];
+    }
+
+    int topShift = min(topShifts);
 
     // check if we're at the top of file
-    topShift = Math.min(topShift, Math.min(topOffset1, topOffset2));
+    topShift = Math.min(topShift, min(topOffsets));
 
-    int offset1 = topOffset1 - topShift;
-    int offset2 = topOffset2 - topShift;
-    if (maximumOffset1 > offset1 && maximumOffset2 > offset2) return new IntPair(offset1, offset2);
+    int[] offsets = new int[count];
+    boolean haveEnoughSpace = true;
+    for (int i = 0; i < count; i++) {
+      offsets[i] = topOffsets[i] - topShift;
+      haveEnoughSpace &= maximumOffsets[i] > offsets[i];
+    }
+
+    if (haveEnoughSpace) return offsets;
 
     // One of the ranges is at end of file - we can't scroll where we want to.
-    topShift = Math.max(topOffset1 - maximumOffset1, topOffset2 - maximumOffset2);
+    topShift = 0;
+    for (int i = 0; i < count; i++) {
+      topShift = Math.max(topOffsets[i] - maximumOffsets[i], topShift);
+    }
 
-    // Try to show as much of range as we can (even if it breaks alignment)
-    offset1 = topOffset1 - topShift + Math.max(topShift + rangeHeight1 + gapLines1 - editorHeight1, 0);
-    offset2 = topOffset2 - topShift + Math.max(topShift + rangeHeight2 + gapLines2 - editorHeight2, 0);
+    for (int i = 0; i < count; i++) {
+      // Try to show as much of range as we can (even if it breaks alignment)
+      offsets[i] = topOffsets[i] - topShift + Math.max(topShift + rangeHeights[i] + gapLines[i] - editorHeights[i], 0);
 
-    // always show top of the range
-    offset1 = Math.min(offset1, topOffset1 - gapLines1);
-    offset2 = Math.min(offset2, topOffset2 - gapLines2);
+      // always show top of the range
+      offsets[i] = Math.min(offsets[i], topOffsets[i] - gapLines[i]);
+    }
 
-    return new IntPair(offset1, offset2);
+    return offsets;
+  }
+
+  private static int min(int[] values) {
+    int min = Integer.MAX_VALUE;
+    for (int value : values) {
+      if (value < min) min = value;
+    }
+    return min;
   }
 
   private static class Anchor {
