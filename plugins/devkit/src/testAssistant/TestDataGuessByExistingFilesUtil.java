@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.CachedValueProvider;
@@ -33,16 +32,13 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.LinkedMultiMap;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -62,45 +58,30 @@ public class TestDataGuessByExistingFilesUtil {
    * Tries to guess what test data files match to the given method if it's test method and there are existing test data
    * files for the target test class.
    *
-   * @param method      test method candidate
+   * @param psiMethod      test method candidate
    * @return            collection of paths to the test data files for the given test if it's possible to guess them;
    *                    <code>null</code> otherwise
    */
   @Nullable
-  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod method) {
-    if (getTestName(method) == null) {
+  static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
+    if (getTestName(psiMethod) == null) {
       return null;
     }
-    PsiFile psiFile = getParent(method, PsiFile.class);
+    PsiFile psiFile = PsiTreeUtil.getParentOfType(psiMethod, PsiFile.class);
     if (psiFile == null) {
       return null;
     }
-    return collectTestDataByExistingFiles(psiFile, getTestName(method.getName()));
-  }
-
-  @Nullable
-  private static <T extends PsiElement> T getParent(@NotNull PsiElement element, Class<T> clazz) {
-    for (PsiElement e = element; e != null; e = e.getParent()) {
-      if (clazz.isAssignableFrom(e.getClass())) {
-        return clazz.cast(e);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  static List<String> collectTestDataByExistingFiles(@NotNull PsiFile psiFile, @NotNull String testName) {
-    TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiFile);
+    TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiMethod);
     if (descriptor == null || !descriptor.isComplete()) {
       return null;
     }
 
-    return descriptor.generate(testName);
+    return descriptor.generate(getTestName(psiMethod.getName()));
   }
 
   @Nullable
   private static String getTestName(@NotNull PsiMethod method) {
-    final PsiClass psiClass = getParent(method, PsiClass.class);
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
     if (psiClass == null) {
       return null;
     }
@@ -144,160 +125,41 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   @Nullable
-  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiFile file) {
-    final PsiClass psiClass = PsiTreeUtil.getChildOfType(file, PsiClass.class);
-    if (psiClass == null) {
-      return null;
-    }
-
-    final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<TestDataDescriptor>() {
+  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull final PsiMethod method) {
+    final TestDataDescriptor cachedValue = CachedValuesManager.getCachedValue(method, new CachedValueProvider<TestDataDescriptor>() {
       @Nullable
       @Override
       public Result<TestDataDescriptor> compute() {
-        return new Result<TestDataDescriptor>(buildDescriptor(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return new Result<TestDataDescriptor>(buildDescriptor(method), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     });
-    if (cachedValue == TestDataDescriptor.NOTHING_FOUND) {
-      return null;
-    }
-    return cachedValue;
+    return cachedValue == TestDataDescriptor.NOTHING_FOUND ? null : cachedValue;
   }
 
-  private static TestDataDescriptor buildDescriptor(PsiClass psiClass) {
-    TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
-    TestFramework framework = null;
-    for (TestFramework each : frameworks) {
-      if (each.isTestClass(psiClass)) {
-        framework = each;
-        break;
-      }
-    }
-    if (framework == null) {
-      return TestDataDescriptor.NOTHING_FOUND;
-    }
-
-    final PsiElement setUpMethod = framework.findSetUpMethod(psiClass);
-    final PsiElement tearDownMethod = framework.findTearDownMethod(psiClass);
-    List<String> testNames = new ArrayList<String>();
-    for (PsiMethod method : psiClass.getMethods()) {
-      final String name = getTestName(method.getName());
-      if (StringUtil.isEmpty(name) || method == setUpMethod || method == tearDownMethod || name.equals(psiClass.getName())
-          || isUtilityMethod(method, psiClass, framework))
-      {
-        continue;
-      }
-      testNames.add(name);
-    }
-
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
-    final TestDataDescriptor descriptor = buildDescriptor(fileIndex, testNames, psiClass);
-    if (isClassWithoutTestData(descriptor, testNames, psiClass)) {
-      return TestDataDescriptor.NOTHING_FOUND;
-    }
-    return descriptor;
+  private static TestDataDescriptor buildDescriptor(PsiMethod psiMethod) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
+    String testName = getTestName(psiMethod);
+    if (testName == null || psiClass == null) return TestDataDescriptor.NOTHING_FOUND;
+    return buildDescriptor(testName, psiClass);
   }
 
-  private static boolean isClassWithoutTestData(@NotNull TestDataDescriptor descriptor, @NotNull List<String> testNames,
-                                                @NotNull PsiClass psiClass) {
-    if (testNames.size() <= 1) {
-      // There is a possible case that the test class is just created.
-      return false;
-    }
-
-    if (!descriptor.isComplete()) {
-      return true;
-    }
-    
-    boolean tooGenericNames = true;
-    genericNamesLoop:
-    for (String testName : testNames) {
-      for (int i = 0; i < testName.length(); i++) {
-        if (!Character.isDigit(testName.charAt(i))) {
-          tooGenericNames = false;
-          break genericNamesLoop;
-        }
-      }
-    }
-
-    final String simpleClassName = getSimpleClassName(psiClass);
-    if (tooGenericNames 
-        && (simpleClassName == null || !descriptor.myDescriptors.get(0).dir.toLowerCase().contains(simpleClassName.toLowerCase())))
-    {
-      return true;
-    }
-    
-    // We assume that test has test data if max(2; half of tests) tests already have test data.
-    int toMatch = Math.max(2, testNames.size() / 2);
-    for (String testName : testNames) {
-      if (toMatch <= 0) {
-        return false;
-      }
-      final List<String> testDataFiles = descriptor.generate(testName);
-      for (String path : testDataFiles) {
-        if (new File(path).isFile()) {
-          // There is a possible case that particular test has only one test data file though the others have
-          // two (e.g. during testing caret position at virtual space).
-          toMatch--;
-          break;
-        }
-      }
-    }
-    
-    return toMatch > 0;
-  }
-  
-  //@NotNull
-  //private static Collection<VirtualFile> getMatchedFiles(@NotNull final Project project, @NotNull final String testName) {
-  //  final List<VirtualFile> result = new ArrayList<VirtualFile>();
-  //  final char c = testName.charAt(0);
-  //  final String testNameWithDifferentRegister =
-  //    (Character.isLowerCase(c) ? Character.toUpperCase(c) : Character.toLowerCase(c)) + testName.substring(1);
-  //  final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
-  //  FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, new Processor<String>() {
-  //    @Override
-  //    public boolean process(String s) {
-  //      if (!s.contains(testName) && !s.contains(testNameWithDifferentRegister)) {
-  //        return true;
-  //      }
-  //
-  //      final NavigationItem[] items = FilenameIndex.getFilesByName(project, s, scope);
-  //      if (items != null) {
-  //        for (NavigationItem item : items) {
-  //          if (item instanceof PsiFile) {
-  //            result.add(((PsiFile)item).getVirtualFile());
-  //          }
-  //        }
-  //      }
-  //      return true;
-  //    }
-  //  }, project);
-  //  return result;
-  //}
-
-  public static List<String> suggestTestDataFiles(@NotNull ProjectFileIndex fileIndex,
-                                                  @NotNull String testName,
-                                                  String testDataPath, 
+  public static List<String> suggestTestDataFiles(@NotNull String testName,
+                                                  String testDataPath,
                                                   @NotNull PsiClass psiClass){
-    return buildDescriptor(fileIndex, Collections.singletonList(testName), psiClass).generate(testName, testDataPath);
+    return buildDescriptor(testName, psiClass).generate(testName, testDataPath);
   }
 
-    
   @NotNull
-  private static TestDataDescriptor buildDescriptor(@NotNull ProjectFileIndex fileIndex,
-                                                    @NotNull Collection<String> testNames,
+  private static TestDataDescriptor buildDescriptor(@NotNull String test,
                                                     @NotNull PsiClass psiClass)
   {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     GotoFileModel gotoModel = new GotoFileModel(psiClass.getProject());
-    Set<String> testNamesLowerCase = new HashSet<String>();
-    for (String testName : testNames) {
-      testNamesLowerCase.add(testName.toLowerCase());
-    }
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
-    MultiMap<String, String> map = getAllFileNames(testNames, gotoModel);
-    for (String name : map.keySet()) {
+    Collection<String> fileNames = getAllFileNames(test, gotoModel);
+    for (String name : fileNames) {
       ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
-      for (String test : map.get(name)) {
         final Object[] elements = gotoModel.getElementsByName(name, false, name);
         for (Object element : elements) {
           if (!(element instanceof PsiFile)) {
@@ -307,7 +169,6 @@ public class TestDataGuessByExistingFilesUtil {
           if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
             continue;
           }
-
 
           final String filePath = PathUtil.getFileName(file.getPath()).toLowerCase();
           int i = filePath.indexOf(test.toLowerCase());
@@ -326,36 +187,6 @@ public class TestDataGuessByExistingFilesUtil {
             continue;
           }
 
-          // Handle situations like the one below:
-          //     *) test class has tests with names 'testAlignedParameters' and 'testNonAlignedParameters';
-          //     *) test data files with the following names present: 'AlignedParameters.java' and 'NonAlignedParameters.java';
-          //     *) we're processing the following (test; test data file) pair - ('testAlignedParameters'; 'NonAlignedParameters.java');
-          // We don't want to store descriptor with file prefix 'Non' here.
-          // The same is true for suffixes, e.g. tests like 'testLeaveValidCodeBlock()' and 'testLeaveValidCodeBlockWithEmptyLineAfterIt()'
-          String prefixPattern = current.filePrefix.toLowerCase();
-          boolean checkPrefix = !StringUtil.isEmpty(prefixPattern);
-          String suffixPattern = current.fileSuffix;
-          for (TestLocationDescriptor descriptor : descriptors) {
-            if (suffixPattern.endsWith(descriptor.fileSuffix)) {
-              suffixPattern = suffixPattern.substring(0, suffixPattern.length() - descriptor.fileSuffix.length());
-            }
-          }
-          suffixPattern = suffixPattern.toLowerCase();
-          boolean checkSuffix = !StringUtil.isEmpty(suffixPattern);
-          boolean skip = false;
-          for (String testName : testNamesLowerCase) {
-            if (testName.equals(test)) {
-              continue;
-            }
-            if ((checkPrefix && testName.startsWith(prefixPattern)) || (checkSuffix && testName.endsWith(suffixPattern))) {
-              skip = true;
-              break;
-            }
-          }
-          if (skip) {
-            continue;
-          }
-
           currentNameProcessed = true;
           if (descriptors.isEmpty() || (descriptors.iterator().next().dir.equals(current.dir) && !descriptors.contains(current))) {
             descriptors.add(current);
@@ -369,26 +200,20 @@ public class TestDataGuessByExistingFilesUtil {
         if (currentNameProcessed) {
           break;
         }
-      }
     }
     return new TestDataDescriptor(descriptors);
   }
 
-  private static MultiMap<String, String> getAllFileNames(final Collection<String> testNames, final GotoFileModel model) {
-    final LinkedMultiMap<String, String> map = new LinkedMultiMap<String, String>();
-    model.processNames(new Processor<String>() {
+  private static Collection<String> getAllFileNames(final String testName, final GotoFileModel model) {
+    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>() {
       @Override
-      public boolean process(String name) {
+      public boolean accept(String name) {
         ProgressManager.checkCanceled();
-        for (String testName : testNames) {
-          if (StringUtil.containsIgnoreCase(name, testName)) {
-            map.putValue(name, testName);
-          }
-        }
-        return true;
+        return StringUtil.containsIgnoreCase(name, testName);
       }
-    }, false);
-    return map;
+    };
+    model.processNames(processor, false);
+    return processor.getResults();
   }
 
   @Nullable
