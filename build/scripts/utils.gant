@@ -889,6 +889,12 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
     }
   }
   ant.copy(file: "$distMac/bin/idea.vmoptions", tofile: "$zipDir/bin/mac/idea64.vmoptions")
+  ant.copy(todir: "$zipDir/bin") {
+    fileset(dir: "$distMac/bin") {
+      include(name: "*.jnilib")
+    }
+    mapper(type: "glob", from: "*.jnilib", to: "*.dylib")
+  }
 
   ant.zip(zipfile: zipPath, duplicate: "fail") {
     commonPaths.each {
@@ -926,6 +932,7 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
       exclude(name: "bin/restarter*")
       exclude(name: "bin/*.sh")
       exclude(name: "bin/*.py")
+      exclude(name: "bin/*.jnilib")
       exclude(name: "bin/idea.properties")
       exclude(name: "bin/idea*.vmoptions")
     }
