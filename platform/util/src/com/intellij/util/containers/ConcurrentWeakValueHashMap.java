@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Comparing;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +35,6 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
   }
 
   public ConcurrentWeakValueHashMap() {
-    super();
   }
 
   public ConcurrentWeakValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
@@ -47,9 +45,9 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
-  private static class MyWeakReference<K,T> extends WeakReference<T> implements ValueReference<K,T> {
+  private static class MyWeakReference<K, V> extends WeakReference<V> implements ValueReference<K, V> {
     private final K key;
-    private MyWeakReference(@NotNull K key, @NotNull T referent, @NotNull ReferenceQueue<T> q) {
+    private MyWeakReference(@NotNull K key, @NotNull V referent, @NotNull ReferenceQueue<V> q) {
       super(referent, q);
       this.key = key;
     }
@@ -60,21 +58,22 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
       return key;
     }
 
-    // MUST work with gced references too for the code in processQueue to work
+    // When referent is collected, equality should be identity-based (for the processQueues() remove this very same SoftValue)
+    // otherwise it's just canonical equals on referents for replace(K,V,V) to work
     public final boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final ValueReference that = (ValueReference)o;
+      @SuppressWarnings("unchecked")
+      ValueReference<K,V> that = (ValueReference)o;
 
-      return key.equals(that.getKey()) && Comparing.equal(get(), that.get());
-    }
-
-    public final int hashCode() {
-      return key.hashCode();
+      V v = get();
+      V thatV = that.get();
+      return key.equals(that.getKey()) && v != null && thatV != null && v.equals(thatV);
     }
   }
 
+  @NotNull
   @Override
   protected ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
     return new MyWeakReference<K,V>(key, value, myQueue);

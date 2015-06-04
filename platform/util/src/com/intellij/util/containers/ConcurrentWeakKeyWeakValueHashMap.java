@@ -22,7 +22,6 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Comparing;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,36 +43,31 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
   }
 
   private static class WeakValue<K, V> extends WeakReference<V> implements ValueReference<K,V> {
-   @NotNull private volatile KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
-   private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
-   private WeakValue(@NotNull V value, @NotNull ReferenceQueue<V> queue) {
-     super(value, queue);
-     myHash = value.hashCode();
-   }
+    @NotNull private volatile KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
+    private WeakValue(@NotNull V value, @NotNull ReferenceQueue<V> queue) {
+      super(value, queue);
+    }
 
-   // MUST work with gced references too for the code in processQueue to work
-   @Override
-   public final boolean equals(final Object o) {
-     if (this == o) return true;
-     if (o == null) return false;
+    // When referent is collected, equality should be identity-based (for the processQueues() remove this very same SoftValue)
+    // otherwise it's just canonical equals on referents for replace(K,V,V) to work
+    @Override
+    public final boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null) return false;
 
-     ValueReference that = (ValueReference)o;
+      V v = get();
+      Object thatV = ((ValueReference)o).get();
+      return v != null && thatV != null && v.equals(thatV);
+    }
 
-     return myHash == that.hashCode() && Comparing.equal(get(), that.get());
-   }
-
-   @Override
-   public final int hashCode() {
-     return myHash;
-   }
-
-   @NotNull
-   @Override
-   public KeyReference<K, V> getKeyReference() {
-     return myKeyReference;
-   }
+    @NotNull
+    @Override
+    public KeyReference<K, V> getKeyReference() {
+      return myKeyReference;
+    }
  }
 
+  @Override
   @NotNull
   protected KeyReference<K,V> createKeyReference(@NotNull K k, @NotNull final V v) {
     final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
@@ -84,6 +78,7 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
     return keyReference;
   }
 
+  @Override
   @NotNull
   protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<V> queue) {
     return new WeakValue<K, V>(value, queue);

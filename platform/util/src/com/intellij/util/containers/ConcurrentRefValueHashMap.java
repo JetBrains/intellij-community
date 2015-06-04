@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,16 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -66,6 +69,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
     boolean processed = false;
 
     while (true) {
+      @SuppressWarnings("unchecked")
       ValueReference<K, V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       myMap.remove(ref.getKey(), ref);
@@ -88,6 +92,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
     return oldRef != null ? oldRef.get() : null;
   }
 
+  @NotNull
   protected abstract ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value);
 
   @Override
@@ -110,6 +115,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   @Override
   public boolean remove(@NotNull final Object key, @NotNull Object value) {
     processQueue();
+    //noinspection unchecked
     return myMap.remove(key, createValueReference((K)key, (V)value));
   }
 
@@ -127,7 +133,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   @Override
-  public V remove(Object key) {
+  public V remove(@NotNull Object key) {
     processQueue();
     ValueReference<K, V> ref = myMap.remove(key);
     return ref == null ? null : ref.get();
@@ -136,10 +142,11 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     processQueue();
-    for (K k : t.keySet()) {
-      V v = t.get(k);
+    for (Entry<? extends K, ? extends V> entry : t.entrySet()) {
+      V v = entry.getValue();
       if (v != null) {
-        put(k, v);
+        K key = entry.getKey();
+        put(key, v);
       }
     }
   }
@@ -161,12 +168,12 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   @Override
-  public boolean containsKey(Object key) {
+  public boolean containsKey(@NotNull Object key) {
     return get(key) != null;
   }
 
   @Override
-  public boolean containsValue(Object value) {
+  public boolean containsValue(@NotNull Object value) {
     throw new UnsupportedOperationException();
   }
 
@@ -179,7 +186,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   @NotNull
   @Override
   public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
+    Collection<V> result = new ArrayList<V>();
     final Collection<ValueReference<K, V>> refs = myMap.values();
     for (ValueReference<K, V> ref : refs) {
       final V value = ref.get();
@@ -211,8 +218,13 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
           }
 
           @Override
-          public V setValue(V value) {
+          public V setValue(@NotNull V value) {
             throw new UnsupportedOperationException("setValue is not implemented");
+          }
+
+          @Override
+          public String toString() {
+            return "(" + getKey() + " : " + getValue() + ")";
           }
         });
       }
@@ -223,13 +235,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   @Override
   public String toString() {
-    @NonNls String s = "map size:" + size() + " [";
-    for (K k : myMap.keySet()) {
-      Object v = get(k);
-      s += "'" + k + "': '" + v + "', ";
-    }
-    s += "] ";
-    return s;
+    return "map size:" + size() + " [" + StringUtil.join(entrySet(), ",") + "]";
   }
 
   @TestOnly
