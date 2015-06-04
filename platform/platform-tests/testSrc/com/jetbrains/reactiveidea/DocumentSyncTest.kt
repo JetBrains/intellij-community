@@ -37,14 +37,13 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.AsyncResult
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import com.intellij.util.WaitFor
-import com.jetbrains.reactiveidea.serverModel
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
 import com.jetbrains.reactivemodel.signals.reaction
+import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
-import java.util.concurrent.Future
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -65,10 +64,10 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
     modelRef = model
 
     val first = DocumentImpl("my test document")
-    val firstDocumentHost = DocumentHost(Lifetime.Eternal, model, Path("document"), first, getProject(), true)
+    val firstDocumentHost = DocumentHost(Lifetime.Eternal, model, Path("document"), first, getProject(), true, Guard())
 
     val second = DocumentImpl("")
-    val secondDocumentHost = DocumentHost(Lifetime.Eternal, mirror, Path("document"), second, getProject(), false)
+    val secondDocumentHost = DocumentHost(Lifetime.Eternal, mirror, Path("document"), second, getProject(), false, Guard())
 
     first.insertString(0, "hello world!\n")
     first.insertString(0, "abcd\n")
@@ -82,11 +81,11 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
   public fun testNetworking() {
     val port = 12345
 
-    val server = serverModel(Lifetime.Eternal, port, { model ->
-      model.transaction { m ->
-        Path("a").putIn(m, PrimitiveModel("abcd"))
-      }
-    })
+    val server = serverModel(Lifetime.Eternal, port)
+    server.transaction { m ->
+      com.jetbrains.reactivemodel.Path("a").putIn(m, com.jetbrains.reactivemodel.models.PrimitiveModel("abcd"))
+    }
+
 
     val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
     var clientModelChanged = false
@@ -94,12 +93,12 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
       clientModelChanged = true
     }
 
-    object: WaitFor(5000) {
+    object : WaitFor(5000) {
       override fun condition(): Boolean {
         return clientModelChanged
       }
     }
-    server.stop()
+
     assertTrue(clientModelChanged)
   }
 
@@ -109,16 +108,14 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
     val first = DocumentImpl("my test document")
     val second = DocumentImpl("")
     val modelFuture = AsyncResult<ReactiveModel>()
-    val server = serverModel(Lifetime.Eternal, port, { model ->
-      modelFuture.setDone(model)
-    })
+    val serverModel = serverModel(Lifetime.Eternal, port)
 
     val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
 
-    val serverModel = modelFuture.getResultSync()
 
-    val firstHost = DocumentHost(Lifetime.Eternal, serverModel, Path("document"), first,getProject(), true)
-    val secondHost = DocumentHost(Lifetime.Eternal, clientModel, Path("document"), second,getProject(), false)
+
+    val firstHost = DocumentHost(Lifetime.Eternal, serverModel, Path("document"), first, getProject(), true, Guard())
+    val secondHost = DocumentHost(Lifetime.Eternal, clientModel, Path("document"), second, getProject(), false, Guard())
 
 
     ApplicationManager.getApplication().runWriteAction {
@@ -136,7 +133,7 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
         return clientModelChanged
       }
     }
-    server.stop()
+
     assertTrue(clientModelChanged)
     assertEquals(first.getText(), second.getText())
   }

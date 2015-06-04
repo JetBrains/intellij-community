@@ -42,7 +42,7 @@ import com.jetbrains.reactivemodel.util.Lifetime
 import java.awt.Color
 import java.util.HashMap
 
-public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document, project: Project?, providesMarkup: Boolean) {
+public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document, project: Project?, providesMarkup: Boolean, caretGuard: Guard) {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
   private val recursionGuard = Guard()
 
@@ -112,11 +112,13 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
 
         ApplicationManager.getApplication().runWriteAction {
           CommandProcessor.getInstance().executeCommand(null, {
-            if (!recursionGuard.locked) {
-              recursionGuard.lock {
-                for (i in (timestamp..evts.size() - 1)) {
-                  val eventModel = evts[i]
-                  play(eventModel, doc)
+            caretGuard.lock {
+              if (!recursionGuard.locked) {
+                recursionGuard.lock {
+                  for (i in (timestamp..evts.size() - 1)) {
+                    val eventModel = evts[i]
+                    play(eventModel, doc)
+                  }
                 }
               }
             }

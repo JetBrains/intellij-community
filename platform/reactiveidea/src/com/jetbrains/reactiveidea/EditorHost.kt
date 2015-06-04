@@ -35,9 +35,9 @@ import com.jetbrains.reactivemodel.util.Lifetime
 public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val editor: Editor, val providesMarkup: Boolean) {
   val tags = "@@@--^tags"
 
-  val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup)
-
   val caretGuard = Guard()
+
+  val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
 
   init {
     reactiveModel.transaction { m -> (path / tags).putIn(m, ListModel(arrayListOf(PrimitiveModel("editor")))) }
@@ -68,9 +68,7 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
       selection
     }
 
-    reactiveModel.transaction { m ->
-      (path / "caret" / "offset").putIn(m, PrimitiveModel(editor.getCaretModel().getOffset()))
-    }
+    sendSelectionAndCaret()
 
     val caretListener = object : CaretAdapter() {
       override fun caretPositionChanged(e: CaretEvent) {

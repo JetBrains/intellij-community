@@ -17,7 +17,7 @@ package com.jetbrains.reactiveidea
 
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.impl.event.MarkupModelListenerEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -96,12 +96,29 @@ public class ServerMarkupHost(val markupModel: MarkupModelEx,
       Disposer.dispose(markupListenerDisposable)
     }
 
-    markupModel.addMarkupModelListener(markupListenerDisposable, object : MarkupModelListener {
-      override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean) {
-        val markupId = highlighter.getUserData(markupIdKey)
-        if (markupId != null) {
+    val markupBuffer = HashMap<String, Model>()
+
+    markupModel.addMarkupModelListener(markupListenerDisposable, object : MarkupModelListenerEx {
+
+
+      override fun flush() {
+        if (!markupBuffer.isEmpty()) {
           reactiveModel.transaction { m ->
-            (path / markupId).putIn(m, marshalHighlighter(highlighter))
+            var result = m;
+            for ((k, v) in markupBuffer)  {
+              result = (path / k).putIn(result, v)
+            }
+            markupBuffer.clear()
+            result
+          }
+        }
+      }
+
+      override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean) {
+        if (renderersChanged) {
+          val markupId = highlighter.getUserData(markupIdKey)
+          if (markupId != null) {
+            markupBuffer[markupId] = marshalHighlighter(highlighter)
           }
         }
       }
@@ -109,18 +126,14 @@ public class ServerMarkupHost(val markupModel: MarkupModelEx,
       override fun beforeRemoved(highlighter: RangeHighlighterEx) {
         val markupId = highlighter.getUserData(markupIdKey)
         if (markupId != null) {
-          reactiveModel.transaction { m ->
-            (path / markupId).putIn(m, AbsentModel())
-          }
+          markupBuffer[markupId] = AbsentModel()
         }
       }
 
       override fun afterAdded(highlighter: RangeHighlighterEx) {
         val markupId = markupIdFactory++.toString()
         highlighter.putUserData(markupIdKey, markupId)
-        reactiveModel.transaction { m ->
-          (path / markupId).putIn(m, marshalHighlighter(highlighter))
-        }
+        markupBuffer[markupId] = marshalHighlighter(highlighter)
       }
     })
   }
