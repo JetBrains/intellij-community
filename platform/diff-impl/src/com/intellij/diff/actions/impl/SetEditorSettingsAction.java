@@ -17,11 +17,7 @@ package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
@@ -147,7 +143,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware {
     private EditorSettingToggleAction(@NotNull String actionId) {
-      super(ActionsBundle.actionText(actionId), ActionsBundle.actionDescription(actionId), null);
+      EmptyAction.setupAction(this, actionId, null);
     }
 
     @Override
