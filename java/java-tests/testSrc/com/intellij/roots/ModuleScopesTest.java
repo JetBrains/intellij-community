@@ -113,17 +113,14 @@ public class ModuleScopesTest extends ModuleTestCase {
                                     final boolean exported) {
     final Module moduleB = createModule(name + ".iml", StdModuleTypes.JAVA);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile rootB = myFixture.findOrCreateDir(name);
-        VirtualFile outB = myFixture.findOrCreateDir("out");
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      VirtualFile rootB = myFixture.findOrCreateDir(name);
+      VirtualFile outB = myFixture.findOrCreateDir("out");
 
-        ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported);
+      ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported);
 
-        PsiTestUtil.addSourceRoot(moduleB, rootB);
-        PsiTestUtil.setCompilerOutputPath(moduleB, outB.getUrl(), false);
-      }
+      PsiTestUtil.addSourceRoot(moduleB, rootB);
+      PsiTestUtil.setCompilerOutputPath(moduleB, outB.getUrl(), false);
     });
 
     return moduleB;
