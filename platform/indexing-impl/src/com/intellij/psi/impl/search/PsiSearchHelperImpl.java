@@ -31,10 +31,7 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -285,9 +282,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
       final AtomicBoolean canceled = new AtomicBoolean(false);
 
-      final List<VirtualFile> failedFiles = Collections.synchronizedList(new SmartList<VirtualFile>());
-      boolean completed =
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, false, new Processor<VirtualFile>() {
+      boolean completed = true;
+      while (true) {
+        List<VirtualFile> failedList = new SmartList<VirtualFile>();
+        final List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
+        final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
           @Override
           public boolean process(final VirtualFile vfile) {
             try {
@@ -299,27 +298,28 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             }
             return !canceled.get();
           }
-        });
-      if (!failedFiles.isEmpty()) {
-        for (final VirtualFile vfile : failedFiles) {
-          progress.checkCanceled();
-          TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
-          // we failed to run read action in job launcher thread
-          // run read action in our thread instead
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              processVirtualFile(vfile, progress, localProcessor, canceled, counter, totalSize);
-            }
-          });
+        };
+        if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+          // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
+          completed &= ContainerUtil.process(files, processor);
         }
+        else {
+          completed &= JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, false, processor);
+        }
+
+        if (failedFiles.isEmpty()) {
+          break;
+        }
+        // we failed to run read action in job launcher thread
+        // run read action in our thread instead to wait for a write action to complete and resume parallel processing
+        ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
+        files = failedList;
       }
       return completed;
     }
     finally {
       myManager.finishBatchFilesProcessingMode();
     }
-
   }
 
   private void processVirtualFile(@NotNull final VirtualFile vfile,
