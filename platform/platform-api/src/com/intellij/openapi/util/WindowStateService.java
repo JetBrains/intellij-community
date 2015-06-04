@@ -90,7 +90,7 @@ public abstract class WindowStateService {
   /**
    * Stores the specified location that corresponds to the given screen and the specified key.
    * If it is {@code null} the stored location will be removed.
-   * Do not use a screen which is calculated from the values to store.
+   * Do not use a screen which is calculated from the specified component.
    *
    * @param screen    a screen to which a location belongs
    * @param key       an unique string key
@@ -133,7 +133,7 @@ public abstract class WindowStateService {
   /**
    * Stores the specified location that corresponds to the given screen and the specified key.
    * If it is {@code null} the stored location will be removed.
-   * Do not use a screen which is calculated from the values to store.
+   * Do not use a screen which is calculated from the specified location.
    *
    * @param screen a screen to which a location belongs
    * @param key    an unique string key
@@ -174,7 +174,7 @@ public abstract class WindowStateService {
   /**
    * Stores the specified size that corresponds to the given screen and the specified key.
    * If it is {@code null} the stored size will be removed.
-   * Do not use a screen which is calculated from the values to store.
+   * Do not use a screen which is calculated from the specified size.
    *
    * @param screen a screen to which a size belongs
    * @param key    an unique string key
@@ -221,47 +221,6 @@ public abstract class WindowStateService {
    * @param key    an unique string key
    */
   abstract void putBoundsOn(GraphicsDevice screen, @NotNull String key, Rectangle bounds);
-
-  /**
-   * Returns a frame state that corresponds to the specified key or {@code null}
-   * if a frame state does not exist.
-   *
-   * @param key an unique string key
-   * @return a corresponding frame state
-   */
-  public final Integer getExtendedState(@NotNull String key) {
-    return getExtendedStateOn(null, key);
-  }
-
-  /**
-   * Returns a frame state that corresponds to the given screen and the specified key or {@code null}
-   * if a frame state does not exist.
-   *
-   * @param screen a screen to which a frame state belongs
-   * @param key    an unique string key
-   * @return a corresponding frame state
-   */
-  abstract Integer getExtendedStateOn(GraphicsDevice screen, @NotNull String key);
-
-  /**
-   * Stores the specified frame state that corresponds to the specified key.
-   * If it is {@code null} the stored frame state will be removed.
-   *
-   * @param key an unique string key
-   */
-  public final void putExtendedState(@NotNull String key, Integer extendedState) {
-    putExtendedStateOn(null, key, extendedState);
-  }
-
-  /**
-   * Stores the specified frame state that corresponds to the given screen and the specified key.
-   * If it is {@code null} the stored frame state will be removed.
-   * Do not use a screen which is calculated from the values to store.
-   *
-   * @param screen a screen to which a frame state belongs
-   * @param key    an unique string key
-   */
-  abstract void putExtendedStateOn(GraphicsDevice screen, @NotNull String key, Integer extendedState);
 
   static final class WindowState {
     private Point myLocation;
@@ -400,12 +359,6 @@ public abstract class WindowStateService {
       putOn(screen, key, location, true, null, false, null, false);
     }
 
-    void putLocationImpl(@NotNull String key, Point location) {
-      synchronized (myStateMap) {
-        putImpl(key, location, true, null, false, null, false);
-      }
-    }
-
     @Override
     Dimension getSizeOn(GraphicsDevice screen, @NotNull String key) {
       Dimension size = getSizeImpl(getKey(screen, key));
@@ -433,12 +386,6 @@ public abstract class WindowStateService {
     @Override
     void putSizeOn(GraphicsDevice screen, @NotNull String key, Dimension size) {
       putOn(screen, key, null, false, size, true, null, false);
-    }
-
-    void putSizeImpl(@NotNull String key, Dimension size) {
-      synchronized (myStateMap) {
-        putImpl(key, null, false, size, true, null, false);
-      }
     }
 
     @Override
@@ -472,39 +419,8 @@ public abstract class WindowStateService {
       putOn(screen, key, location, true, size, true, null, false);
     }
 
-    @Override
-    Integer getExtendedStateOn(GraphicsDevice screen, @NotNull String key) {
-      Integer extendedState = getExtendedStateImpl(getKey(screen, key));
-      if (extendedState != null) {
-        return extendedState;
-      }
-      extendedState = getExtendedStateImpl(key);
-      if (extendedState != null) {
-        return extendedState;
-      }
-      return getDefaultExtendedStateOn(screen, key);
-    }
-
     Integer getDefaultExtendedStateOn(GraphicsDevice screen, @NotNull String key) {
       return null;
-    }
-
-    Integer getExtendedStateImpl(@NotNull String key) {
-      synchronized (myStateMap) {
-        WindowState state = myStateMap.get(key);
-        return state == null ? null : state.getExtendedState();
-      }
-    }
-
-    @Override
-    void putExtendedStateOn(GraphicsDevice screen, @NotNull String key, Integer extendedState) {
-      putOn(screen, key, null, false, null, false, extendedState, true);
-    }
-
-    void putExtendedStateImpl(@NotNull String key, Integer extendedState) {
-      synchronized (myStateMap) {
-        putImpl(key, null, false, null, false, extendedState, true);
-      }
     }
 
     @Override
@@ -515,26 +431,24 @@ public abstract class WindowStateService {
           String key = entry.getKey();
           if (key != null) {
             WindowState state = entry.getValue();
-            addTo(element, key, state.myLocation, state.mySize, state.myState);
+            Element child = new Element(STATE);
+            if (state.myLocation != null) {
+              writeTo(child, X, state.myLocation.x);
+              writeTo(child, Y, state.myLocation.y);
+            }
+            if (state.mySize != null) {
+              writeTo(child, WIDTH, state.mySize.width);
+              writeTo(child, HEIGHT, state.mySize.height);
+            }
+            if (state.myState != null) {
+              writeTo(child, EXTENDED, state.myState);
+            }
+            writeTo(element, KEY, key);
+            element.addContent(child);
           }
         }
       }
       return element;
-    }
-
-    void addTo(Element element, String key, Point location, Dimension size, Integer state) {
-      Element child = new Element(STATE);
-      if (location != null) {
-        writeLocationTo(child, location);
-      }
-      if (size != null) {
-        writeSizeTo(child, size);
-      }
-      if (state != null) {
-        writeTo(child, EXTENDED, state);
-      }
-      writeKeyTo(child, key);
-      element.addContent(child);
     }
 
     @Override
@@ -542,18 +456,19 @@ public abstract class WindowStateService {
       synchronized (myStateMap) {
         myStateMap.clear();
         for (Element child : element.getChildren()) {
-          String key = child.getAttributeValue(KEY);
-          if (key != null) {
-            put(key, child);
+          if (STATE.equals(child.getName())) {
+            String key = child.getAttributeValue(KEY);
+            if (key != null) {
+              WindowState state = new WindowState();
+              state.myLocation = loadLocationFrom(child);
+              state.mySize = loadSizeFrom(child);
+              state.myState = loadExtendedStateFrom(child);
+              if (!state.isEmpty()) {
+                myStateMap.put(key, state);
+              }
+            }
           }
         }
-      }
-    }
-
-    void put(String key, Element content) {
-      WindowState state = loadStateFrom(content);
-      if (state != null) {
-        myStateMap.put(key, state);
       }
     }
   }
@@ -589,35 +504,8 @@ public abstract class WindowStateService {
     }
   }
 
-  private static WindowState loadStateFrom(@NotNull Element element) {
-    if (STATE.equals(element.getName())) {
-      WindowState state = new WindowState();
-      state.myLocation = loadLocationFrom(element);
-      state.mySize = loadSizeFrom(element);
-      state.myState = loadExtendedStateFrom(element);
-      if (!state.isEmpty()) {
-        return state;
-      }
-    }
-    return null;
-  }
-
   static void writeTo(@NotNull Element element, @NotNull String name, @NotNull Object value) {
     element.setAttribute(name, value.toString());
-  }
-
-  static void writeKeyTo(@NotNull Element element, @NotNull String key) {
-    writeTo(element, KEY, key);
-  }
-
-  static void writeLocationTo(@NotNull Element element, @NotNull Point location) {
-    writeTo(element, X, location.x);
-    writeTo(element, Y, location.y);
-  }
-
-  static void writeSizeTo(@NotNull Element element, @NotNull Dimension size) {
-    writeTo(element, WIDTH, size.width);
-    writeTo(element, HEIGHT, size.height);
   }
 
   @NotNull
