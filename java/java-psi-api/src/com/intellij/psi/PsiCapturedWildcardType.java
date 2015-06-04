@@ -146,9 +146,6 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     if (myExistential.isExtends() && myParameter == null) {
       return bound;
     }
-    else if (bound instanceof PsiCapturedWildcardType) {
-      return PsiWildcardType.createSuper(myContext.getManager(), ((PsiCapturedWildcardType)bound).getUpperBound());
-    }
     else {
       return myUpperBound;
     }
