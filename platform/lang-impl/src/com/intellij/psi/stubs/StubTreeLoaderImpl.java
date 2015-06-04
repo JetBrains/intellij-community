@@ -181,7 +181,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   public String getStubAstMismatchDiagnostics(@NotNull VirtualFile file,
                                               @NotNull PsiFile psiFile,
-                                              StubTree stubTree,
+                                              @NotNull ObjectStubTree stubTree,
                                               Document prevCachedDocument) {
     String msg = super.getStubAstMismatchDiagnostics(file, psiFile, stubTree, prevCachedDocument);
     msg += "\nin many projects: " + hasPsiInManyProjects(file);

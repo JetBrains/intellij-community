@@ -47,7 +47,7 @@ public abstract class StubTreeLoader {
 
   public String getStubAstMismatchDiagnostics(@NotNull VirtualFile file,
                                               @NotNull PsiFile psiFile,
-                                              @NotNull StubTree stubTree,
+                                              @NotNull ObjectStubTree stubTree,
                                               @Nullable Document prevCachedDocument) {
     String msg = "";
     msg += "\n file=" + psiFile;
