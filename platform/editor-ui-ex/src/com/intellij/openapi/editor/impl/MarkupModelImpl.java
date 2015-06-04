@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.event.MarkupModelListenerEx;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -243,6 +244,16 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(segmentHighlighter);
     }
+  }
+
+  @Override
+  public void fireFlush() {
+    for (MarkupModelListener listener : myListeners) {
+      if (listener instanceof MarkupModelListenerEx) {
+        ((MarkupModelListenerEx)listener).flush();
+      }
+    }
+
   }
 
   @Override

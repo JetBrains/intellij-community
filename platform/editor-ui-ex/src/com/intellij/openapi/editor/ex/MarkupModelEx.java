@@ -41,6 +41,8 @@ public interface MarkupModelEx extends MarkupModel {
 
   void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter);
 
+  void fireFlush();
+
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 
   void addRangeHighlighter(@NotNull RangeHighlighterEx marker,

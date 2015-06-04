@@ -166,6 +166,11 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   }
 
   @Override
+  public void fireFlush() {
+
+  }
+
+  @Override
   public void addRangeHighlighter(@NotNull RangeHighlighterEx marker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
 
   }

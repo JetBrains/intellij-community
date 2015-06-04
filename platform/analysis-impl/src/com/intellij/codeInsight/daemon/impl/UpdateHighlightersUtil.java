@@ -311,6 +311,7 @@ public class UpdateHighlightersUtil {
       clearWhiteSpaceOptimizationFlag(document);
     }
     assertMarkupConsistent(markup, project);
+    markup.fireFlush();
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
