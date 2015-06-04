@@ -179,6 +179,7 @@
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
+    <group id="Diff.EditorPopupMenu"/>
 
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
