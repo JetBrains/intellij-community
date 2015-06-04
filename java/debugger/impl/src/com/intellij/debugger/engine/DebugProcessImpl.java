@@ -365,7 +365,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public ProcessHandler getProcessHandler() {
-    return myExecutionResult.getProcessHandler();
+    return myExecutionResult != null ? myExecutionResult.getProcessHandler() : null;
   }
 
   /**
