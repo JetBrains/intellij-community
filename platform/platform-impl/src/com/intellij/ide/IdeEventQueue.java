@@ -197,6 +197,15 @@ public class IdeEventQueue extends EventQueue {
     }, 20000, ModalityState.NON_MODAL);
   }
 
+  /**
+   * This class performs special processing in order to have {@link #getIdleTime()} return more or less up-to-date data.
+   * <p/>
+   * This method allows to stop that processing (convenient in non-intellij environment like upsource).
+   */
+  @SuppressWarnings("unused") // Used in upsource.
+  public void stopIdleTimeCalculation() {
+    myIdleTimeCounterAlarm.cancelAllRequests();
+  }
 
   public boolean shouldNotTypeInEditor() {
     return myKeyEventDispatcher.isWaitingForSecondKeyStroke() || mySuspendMode;
