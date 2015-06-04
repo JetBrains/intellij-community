@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.flow.visitor;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
@@ -31,11 +32,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class GrContractChecker extends GrGenericContractChecker<GrStandardInstructionVisitor> {
+public class GrContractChecker extends GrDataFlowRunner {
+
+  private final GrMethod myMethod;
+  private final MethodContract myContract;
   private final boolean myOnTheFly;
+  private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
+  private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
+  private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
   public GrContractChecker(@NotNull GrMethod method, @NotNull MethodContract contract, boolean onTheFly) {
-    super(method, contract);
+    super(false, false);
+    myMethod = method;
+    myContract = contract;
     myOnTheFly = onTheFly;
   }
 
@@ -44,30 +53,14 @@ public class GrContractChecker extends GrGenericContractChecker<GrStandardInstru
     if (!myOnTheFly) return false;
     return super.shouldCheckTimeLimit();
   }
-}
-
-class GrGenericContractChecker<V extends GrGenericStandardInstructionVisitor<V>> extends GrDataFlowRunner<V> {
-
-  private final GrMethod myMethod;
-  private final MethodContract myContract;
-
-  private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
-  private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
-  private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
-
-  public GrGenericContractChecker(@NotNull GrMethod method, @NotNull MethodContract contract) {
-    super(false, false);
-    myMethod = method;
-    myContract = contract;
-  }
 
   @NotNull
   @Override
-  protected DfaInstructionState<V>[] acceptInstruction(V visitor, DfaInstructionState<V> instructionState) {
+  protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
     final DfaMemoryState memState = instructionState.getMemoryState();
-    if (memState.isEphemeral()) return DfaInstructionState.empty();
+    if (memState.isEphemeral()) return DfaInstructionState.EMPTY_ARRAY;
 
-    final Instruction<V> instruction = instructionState.getInstruction();
+    final Instruction instruction = instructionState.getInstruction();
 
     if (instruction instanceof CheckReturnValueInstruction) {
       final PsiElement anchor = ((CheckReturnValueInstruction)instruction).getReturn();
@@ -87,7 +80,7 @@ class GrGenericContractChecker<V extends GrGenericStandardInstructionVisitor<V>>
     }
     else if (instruction instanceof GrMethodCallInstruction && myContract.returnValue == ValueConstraint.THROW_EXCEPTION) {
       ContainerUtil.addIfNotNull(myFailures, ((GrMethodCallInstruction)instruction).getCall());
-      return DfaInstructionState.empty();
+      return DfaInstructionState.EMPTY_ARRAY;
     }
 
     return super.acceptInstruction(visitor, instructionState);

@@ -152,6 +152,7 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     DataFlowRunner runner = new DataFlowRunner() {
+      @NotNull
       @Override
       protected DfaMemoryState createMemoryState() {
         return new ExpressionTypeMemoryState(getFactory());

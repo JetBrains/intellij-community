@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.flow;
 
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.FieldNullabilityCalculator;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.RunnerResult;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -112,7 +109,7 @@ public class GrFieldNullabilityCalculator extends FieldNullabilityCalculator {
   }
 
 
-  private static class FieldNullabilityRunner extends GrDataFlowRunner<GrStandardInstructionVisitor> {
+  private static class FieldNullabilityRunner extends GrDataFlowRunner {
 
     private final Map<GrField, Nullness> myResult = new NullabilityMap();
     private final @NotNull GrTypeDefinition myContainingClass;
@@ -129,8 +126,8 @@ public class GrFieldNullabilityCalculator extends FieldNullabilityCalculator {
 
     @NotNull
     @Override
-    protected DfaInstructionState<GrStandardInstructionVisitor>[] acceptInstruction(GrStandardInstructionVisitor visitor,
-                                                                                    DfaInstructionState<GrStandardInstructionVisitor> instructionState) {
+    protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor,
+                                                      DfaInstructionState instructionState) {
       final Instruction instruction = instructionState.getInstruction();
       if (instruction instanceof GrMethodCallInstruction) {
         // if we run into this(args) constructor invocation, we assume that final field initialized there,
@@ -142,7 +139,7 @@ public class GrFieldNullabilityCalculator extends FieldNullabilityCalculator {
           if (method instanceof GrMethod && method.isConstructor()) {
             myResult.clear();
             myResult.putAll(calculateForConstructor(myContainingClass, (GrMethod)method));
-            return DfaInstructionState.empty();
+            return DfaInstructionState.EMPTY_ARRAY;
           }
         }
       }
@@ -160,7 +157,7 @@ public class GrFieldNullabilityCalculator extends FieldNullabilityCalculator {
             myResult.put(field, UNKNOWN);
           }
         }
-        return DfaInstructionState.empty();
+        return DfaInstructionState.EMPTY_ARRAY;
       }
       return super.acceptInstruction(visitor, instructionState);
     }

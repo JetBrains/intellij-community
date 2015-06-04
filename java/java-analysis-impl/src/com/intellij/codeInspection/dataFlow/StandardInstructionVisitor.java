@@ -45,18 +45,7 @@ public class StandardInstructionVisitor extends JavaInstructionVisitor {
   private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<InstanceofInstruction>();
   private final JavaMethodCallHelper myHelper;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<MethodCallInstruction, Nullness> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Nullness>() {
-    @Override
-    protected Nullness create(MethodCallInstruction key) {
-      final PsiCallExpression callExpression = key.getCallExpression();
-      if (callExpression instanceof PsiNewExpression) {
-        return Nullness.NOT_NULL;
-      }
 
-      return callExpression != null ? DfaPsiUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
-    }
-  };
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<MethodCallInstruction, Boolean> myOptionOfNullable = new FactoryMap<MethodCallInstruction, Boolean>() {
     @Nullable
@@ -381,8 +370,8 @@ public class StandardInstructionVisitor extends JavaInstructionVisitor {
   }
 
   @Nullable
-  private static DfaInstructionState[] handleConstantComparison(BinopInstruction instruction,
-                                                                DataFlowRunner runner,
+  public static DfaInstructionState[] handleConstantComparison(BinopInstruction instruction,
+                                                               AbstractDataFlowRunner runner,
                                                                 DfaMemoryState memState,
                                                                 DfaValue dfaRight,
                                                                 DfaValue dfaLeft, DfaRelation opSign) {
@@ -419,7 +408,7 @@ public class StandardInstructionVisitor extends JavaInstructionVisitor {
 
   @Nullable
   public static DfaInstructionState[] checkComparingWithConstant(BinopInstruction instruction,
-                                                                 DataFlowRunner runner,
+                                                                 AbstractDataFlowRunner runner,
                                                                  DfaMemoryState memState,
                                                                  DfaVariableValue var,
                                                                  DfaRelation opSign, double comparedWith) {

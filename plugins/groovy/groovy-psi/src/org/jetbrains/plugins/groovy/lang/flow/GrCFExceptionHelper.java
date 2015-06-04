@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.flow;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowImpl;
+import com.intellij.codeInspection.dataFlow.ControlFlow;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -27,7 +27,6 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrAssignInstruction;
-import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
@@ -39,9 +38,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import static com.intellij.psi.CommonClassNames.*;
 
-public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
+public class GrCFExceptionHelper {
 
-  private final GrControlFlowAnalyzerImpl<V> myAnalyzer;
+  private final GrControlFlowAnalyzerImpl myAnalyzer;
   private final DfaValue myString;
   private final DfaValue myRuntimeException;
   private final DfaValue myError;
@@ -49,7 +48,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
   final PsiType assertionError;
   final PsiType npe;
 
-  public GrCFExceptionHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
+  public GrCFExceptionHelper(GrControlFlowAnalyzerImpl analyzer) {
     myAnalyzer = analyzer;
     final GrDfaValueFactory factory = analyzer.factory;
     final PsiElement element = analyzer.codeFragment;
@@ -101,7 +100,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
       return myIsFinally;
     }
 
-    public ControlFlowImpl.ControlFlowOffset getJumpOffset(ControlFlowImpl flow) {
+    public ControlFlow.ControlFlowOffset getJumpOffset(ControlFlow flow) {
       return flow.getStartOffset(isFinally() ? myBlock : myBlock.getParent());
     }
 
@@ -115,7 +114,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
     if (nextCatch != null) {
       myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(nextCatch), null, false));
       myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(currentDescriptor), null, true));
-      myAnalyzer.addInstruction(new GrAssignInstruction<V>());
+      myAnalyzer.addInstruction(new GrAssignInstruction());
       myAnalyzer.addInstruction(new PopInstruction());
     }
     addThrowCode(nextCatch, null);
@@ -197,7 +196,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
     if (cd == null) return;
     myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(cd), null));
     myAnalyzer.addInstruction(new PushInstruction(myAnalyzer.factory.createTypeValue(ref, Nullness.NOT_NULL), null));
-    myAnalyzer.addInstruction(new GrAssignInstruction<V>());
+    myAnalyzer.addInstruction(new GrAssignInstruction());
     myAnalyzer.addInstruction(new PopInstruction());
   }
 
@@ -222,14 +221,14 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
     if (finallyDescriptor != null) {
       myAnalyzer.addInstruction(new PushInstruction(myString, null));
       myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(finallyDescriptor), null));
-      myAnalyzer.addInstruction(new GrAssignInstruction<V>());
+      myAnalyzer.addInstruction(new GrAssignInstruction());
       myAnalyzer.addInstruction(new PopInstruction());
       myAnalyzer.addInstruction(new GotoInstruction(finallyDescriptor.getJumpOffset(myAnalyzer.flow)));
     }
     else {
       final GrTopStatement containingBlock = PsiTreeUtil.getParentOfType(anchor, GrMethod.class, GrClosableBlock.class);
       if (containingBlock != null) {
-        myAnalyzer.addInstruction(new GotoInstruction<V>(myAnalyzer.flow.getEndOffset(containingBlock)));
+        myAnalyzer.addInstruction(new GotoInstruction(myAnalyzer.flow.getEndOffset(containingBlock)));
       }
       else {
         myAnalyzer.addInstruction(new ReturnInstruction(viaException, anchor));
@@ -250,14 +249,14 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(cd), null));
 
       myAnalyzer.pushUnknown();
-      final ConditionalGotoInstruction<V> ifError = myAnalyzer.addInstruction(new ConditionalGotoInstruction<V>(null, false, null));
+      final ConditionalGotoInstruction ifError = myAnalyzer.addInstruction(new ConditionalGotoInstruction(null, false, null));
       myAnalyzer.push(myRuntimeException);
       final GotoInstruction ifRuntime = myAnalyzer.addInstruction(new GotoInstruction(null));
       ifError.setOffset(myAnalyzer.flow.getNextOffset());
       myAnalyzer.push(myError);
       ifRuntime.setOffset(myAnalyzer.flow.getNextOffset());
 
-      myAnalyzer.addInstruction(new GrAssignInstruction<V>());
+      myAnalyzer.addInstruction(new GrAssignInstruction());
       myAnalyzer.pop();
 
       addThrowCode(cd, null);

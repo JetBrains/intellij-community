@@ -17,29 +17,21 @@ package org.jetbrains.plugins.groovy.lang.flow.instruction;
 
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 
-public class GrRangeInstruction extends GrInstruction {
-
-  private final @NotNull GrRangeExpression myExpression;
-
-  public GrRangeInstruction(@NotNull GrRangeExpression expression) {
-    myExpression = expression;
-  }
-
-  @NotNull
-  public GrRangeExpression getExpression() {
-    return myExpression;
-  }
+public abstract class GrInstruction extends Instruction {
 
   @Override
-  public String toString() {
-    return myExpression.getText();
+  public final DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
+    if (visitor instanceof GrInstructionVisitor) {
+      return acceptGroovy(stateBefore, (GrInstructionVisitor)visitor);
+    }
+    else {
+      return super.accept(stateBefore, visitor);
+    }
   }
 
-  @Override
-  public DfaInstructionState[] acceptGroovy(@NotNull DfaMemoryState state, @NotNull GrInstructionVisitor visitor) {
-    return visitor.visitRange(this, state);
-  }
+  public abstract DfaInstructionState[] acceptGroovy(@NotNull DfaMemoryState state, @NotNull GrInstructionVisitor visitor);
 }

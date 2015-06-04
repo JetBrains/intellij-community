@@ -28,7 +28,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrDereferenceInstruction;
-import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -47,7 +46,7 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNOT_EQUAL;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
 
-public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
+public class GrCFCallHelper {
 
   public abstract class Arguments {
 
@@ -135,9 +134,9 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     }
   };
 
-  private final GrControlFlowAnalyzerImpl<V> myAnalyzer;
+  private final GrControlFlowAnalyzerImpl myAnalyzer;
 
-  public GrCFCallHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
+  public GrCFCallHelper(GrControlFlowAnalyzerImpl analyzer) {
     myAnalyzer = analyzer;
   }
 
@@ -187,8 +186,8 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
   private boolean processCallableCallInner(@NotNull GrMethodCall call) {
     final GrExpression invoked = call.getInvokedExpression();
     final PsiType type = invoked.getType();
+    if (type == null) return false;
     final GrArgumentList argumentList = call.getArgumentList();
-    if (type == null || argumentList == null) return false;
 
     final GroovyResolveResult[] resolveResults = ResolveUtil.getMethodCandidates(type, "call", call, argumentList.getExpressionTypes());
     if (resolveResults.length != 1 || !resolveResults[0].isValidResult()) return false;
@@ -223,7 +222,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       // not null branch
       processRegularCall(highlight, qualifier, result, arguments, myAnalyzer.factory.createValue(invokedReference));
 
-      final GotoInstruction<V> gotoEnd = myAnalyzer.addInstruction(new GotoInstruction<V>(null));
+      final GotoInstruction gotoEnd = myAnalyzer.addInstruction(new GotoInstruction(null));
       gotoToNotNull.setOffset(myAnalyzer.flow.getNextOffset());
 
       // null branch
@@ -310,11 +309,11 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
                                         && GrDfaUtil.isEqualsCallOrIsCall((PsiMethod)element);
     if (shouldApplyEquality) {
       // qualifier, argument
-      myAnalyzer.addInstruction(new DupInstruction<V>(2, 1));
+      myAnalyzer.addInstruction(new DupInstruction(2, 1));
       // qualifier, argument, qualifier, argument
     }
     myAnalyzer.exceptionHelper.addConditionalRuntimeThrow();
-    myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(
+    myAnalyzer.addInstruction(new GrMethodCallInstruction(
       highlight,
       arguments.getNamedArguments(),
       arguments.getExpressionArguments(),
@@ -342,7 +341,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       // qualifier, argument, returnValue
       myAnalyzer.pop();
       // qualifier, argument
-      myAnalyzer.addInstruction(new BinopInstruction<V>(
+      myAnalyzer.addInstruction(new BinopInstruction(
         highlight instanceof GrBinaryExpression && ((GrBinaryExpression)highlight).getOperationTokenType() == mNOT_EQUAL
         ? DfaRelation.NE
         : DfaRelation.EQ, highlight
@@ -403,7 +402,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
   private void fallback(@Nullable GrExpression invoked, @NotNull Arguments arguments) {
     if (invoked != null) {
       invoked.accept(myAnalyzer); // qualifier
-      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(invoked)); // dereference qualifier
+      myAnalyzer.addInstruction(new GrDereferenceInstruction(invoked)); // dereference qualifier
     }
 
     final int argumentsCount = arguments.runArguments();

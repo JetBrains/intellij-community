@@ -17,23 +17,24 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelation;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.java.DfaValueFactoryJava;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author peter
 */
-class ContractChecker extends DataFlowRunner {
+public class ContractChecker extends DataFlowRunner {
   private final PsiMethod myMethod;
   private final MethodContract myContract;
   private final boolean myOnTheFly;
@@ -49,10 +50,10 @@ class ContractChecker extends DataFlowRunner {
   }
 
   @NotNull
-  static DfaMemoryState createInitialState(PsiMethod method, MethodContract contract, ContractChecker checker) {
+  public static DfaMemoryState createInitialState(PsiMethod method, MethodContract contract, AbstractDataFlowRunner checker) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = checker.createMemoryState();
-    final DfaValueFactoryJava factory = checker.getFactory();
+    final DfaValueFactory factory = checker.getFactory();
     for (int i = 0; i < contract.arguments.length; i++) {
       MethodContract.ValueConstraint constraint = contract.arguments[i];
       DfaConstValue comparisonValue = constraint.getComparisonValue(factory);
@@ -82,7 +83,7 @@ class ContractChecker extends DataFlowRunner {
     if (instruction instanceof CheckReturnValueInstruction) {
       PsiElement anchor = ((CheckReturnValueInstruction)instruction).getReturn();
       DfaValue retValue = memState.pop();
-      if (breaksContract(retValue, myContract.returnValue, memState)) {
+      if (breaksContract(getFactory(), retValue, myContract.returnValue, memState)) {
         myViolations.add(anchor);
       } else {
         myNonViolations.add(anchor);
@@ -129,12 +130,12 @@ class ContractChecker extends DataFlowRunner {
     return errors;
   }
 
-  private boolean breaksContract(DfaValue retValue, MethodContract.ValueConstraint constraint, DfaMemoryState state) {
+  public static boolean breaksContract(DfaValueFactory factory, DfaValue retValue, MethodContract.ValueConstraint constraint, DfaMemoryState state) {
     switch (constraint) {
       case NULL_VALUE: return state.isNotNull(retValue);
       case NOT_NULL_VALUE: return state.isNull(retValue);
-      case TRUE_VALUE: return isEquivalentTo(retValue, getFactory().getConstFactory().getFalse(), state);
-      case FALSE_VALUE: return isEquivalentTo(retValue, getFactory().getConstFactory().getTrue(), state);
+      case TRUE_VALUE: return isEquivalentTo(retValue, factory.getConstFactory().getFalse(), state);
+      case FALSE_VALUE: return isEquivalentTo(retValue, factory.getConstFactory().getTrue(), state);
       case THROW_EXCEPTION: return true;
       default: return false;
     }

@@ -1513,12 +1513,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor implements IControlF
     finishElement(expression);
   }
 
-  private static List<MethodContract> getMethodCallContracts(@NotNull final PsiMethod method, @NotNull PsiMethodCallExpression call) {
+  public static List<MethodContract> getMethodCallContracts(@NotNull final PsiMethod method, @Nullable PsiMethodCallExpression call) {
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, call);
     return !contracts.isEmpty() ? contracts : getMethodContracts(method);
   }
 
-  static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
+  public static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
     final PsiAnnotation contractAnno = findContractAnnotation(method);
     final int paramCount = method.getParameterList().getParametersCount();
     if (contractAnno != null) {

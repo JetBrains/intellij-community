@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityInstructionVisitor;
-import org.jetbrains.plugins.groovy.lang.flow.visitor.GrStandardInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -99,14 +98,13 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
   }
 
   private static void check(@NotNull PsiElement owner, @NotNull ProblemsHolder holder, final boolean onTheFly, boolean unknownAreNullable) {
-    final GrDataFlowRunner<GrStandardInstructionVisitor> dfaRunner =
-      new GrDataFlowRunner<GrStandardInstructionVisitor>(!isWithinConstructorOrInitializer(owner), unknownAreNullable) {
-        @Override
-        protected boolean shouldCheckTimeLimit() {
-          if (!onTheFly) return false;
-          return super.shouldCheckTimeLimit();
-        }
-      };
+    final GrDataFlowRunner dfaRunner = new GrDataFlowRunner(!isWithinConstructorOrInitializer(owner), unknownAreNullable) {
+      @Override
+      protected boolean shouldCheckTimeLimit() {
+        if (!onTheFly) return false;
+        return super.shouldCheckTimeLimit();
+      }
+    };
     final GrNullabilityInstructionVisitor visitor = new GrNullabilityInstructionVisitor(dfaRunner);
     final RunnerResult rc = dfaRunner.analyzeMethod(owner, visitor);
     if (rc == RunnerResult.OK) {

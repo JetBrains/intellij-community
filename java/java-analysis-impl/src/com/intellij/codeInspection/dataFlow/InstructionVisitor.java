@@ -46,6 +46,15 @@ public abstract class InstructionVisitor {
     return new DfaInstructionState[]{new DfaInstructionState(flow[instruction.getIndex() + 1], stateBefore)};
   }
 
+  public DfaInstructionState[] nextInstructions(@NotNull Instruction instruction, @NotNull List<DfaMemoryState> states) {
+    final DfaInstructionState[] result = new DfaInstructionState[states.size()];
+    int i = 0;
+    for (DfaMemoryState state : states) {
+      result[i++] = new DfaInstructionState(myRunner.getInstructions()[instruction.getIndex() + 1], state);
+    }
+    return result;
+  }
+
   public DfaInstructionState[] nextInstruction(@NotNull Instruction instruction, DfaMemoryState state) {
     return nextInstruction(instruction, myRunner, state);
   }

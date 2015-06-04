@@ -44,10 +44,10 @@ import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.fo
 import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.passingNullableArgumentToNonAnnotatedParameter;
 import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.passingNullableToNotNullParameter;
 
-public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>> extends MethodCallHelper<GrMethodCallInstruction<V>> {
+public class GrMethodCallHelper extends MethodCallHelper<GrMethodCallInstruction> {
 
   private final DfaValueFactory myFactory;
-  private final GrGenericStandardInstructionVisitor<V> myVisitor;
+  private final GrStandardInstructionVisitor myVisitor;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<GrMethodCallInstruction, Nullness> myReturnTypeNullability =
@@ -67,14 +67,14 @@ public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>
       }
     };
 
-  public GrMethodCallHelper(GrGenericStandardInstructionVisitor<V> visitor) {
+  public GrMethodCallHelper(GrStandardInstructionVisitor visitor) {
     myVisitor = visitor;
     myFactory = visitor.getFactory();
   }
 
 
   @NotNull
-  public DfaValue getMethodResultValue(@NotNull GrMethodCallInstruction<V> instruction) {
+  public DfaValue getMethodResultValue(@NotNull GrMethodCallInstruction instruction) {
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     if (precalculated != null) {
       return precalculated;
@@ -94,13 +94,13 @@ public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>
 
   @NotNull
   @Override
-  protected DfaValue getMethodResultValue(@NotNull GrMethodCallInstruction<V> instruction, @Nullable DfaValue qualifierValue) {
+  protected DfaValue getMethodResultValue(@NotNull GrMethodCallInstruction instruction, @Nullable DfaValue qualifierValue) {
     return getMethodResultValue(instruction);
   }
 
   @NotNull
   @Override
-  protected Producer<PsiType> getReturnTypeProducer(final @NotNull GrMethodCallInstruction<V> instruction) {
+  protected Producer<PsiType> getReturnTypeProducer(final @NotNull GrMethodCallInstruction instruction) {
     return new Producer<PsiType>() {
       @Nullable
       @Override
@@ -136,7 +136,7 @@ public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>
       final Nullness nullability = instruction.getParameterNullability(expression);
       if (nullability == Nullness.NOT_NULL) {
         if (!myVisitor.checkNotNullable(state, arg, passingNullableToNotNullParameter, expression)) {
-          forceNotNull(getFactory(), state, arg);
+          forceNotNull(myVisitor.getRunner(), state, arg);
         }
       }
       else if (nullability == Nullness.UNKNOWN) {

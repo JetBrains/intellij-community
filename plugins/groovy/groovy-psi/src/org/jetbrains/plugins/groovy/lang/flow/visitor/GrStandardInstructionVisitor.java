@@ -47,22 +47,15 @@ import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
 import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_RANGE;
 
-public class GrStandardInstructionVisitor extends GrGenericStandardInstructionVisitor<GrStandardInstructionVisitor> {
-
-  public GrStandardInstructionVisitor(GrDataFlowRunner<GrStandardInstructionVisitor> runner) {
-    super(runner);
-  }
-}
-
-class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
+public class GrStandardInstructionVisitor extends GrInstructionVisitor {
 
   private final GrDfaValueFactory myFactory;
-  private final GrMethodCallHelper<V> myHelper;
+  private final GrMethodCallHelper myHelper;
 
-  public GrGenericStandardInstructionVisitor(GrDataFlowRunner<V> runner) {
+  public GrStandardInstructionVisitor(GrDataFlowRunner runner) {
     super(runner);
     myFactory = runner.getFactory();
-    myHelper = new GrMethodCallHelper<V>(this);
+    myHelper = new GrMethodCallHelper(this);
   }
 
   public GrDfaValueFactory getFactory() {
@@ -70,7 +63,7 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Override
-  public DfaInstructionState<V>[] visitBoxInstruction(GrBoxInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitBoxInstruction(GrBoxInstruction instruction, DfaMemoryState state) {
     final DfaValue value = state.pop();
     final DfaValue boxed = myFactory.getBoxedFactory().createBoxed(value);
     state.push(boxed == null ? value : boxed);
@@ -78,17 +71,17 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Override
-  public DfaInstructionState<V>[] visitUnboxInstruction(GrUnboxInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitUnboxInstruction(GrUnboxInstruction instruction, DfaMemoryState state) {
     final DfaValue value = state.pop();
     if (!checkNotNullable(state, value, unboxingNullable, instruction.getAnchor())) {
-      forceNotNull(myRunner.getFactory(), state, value);
+      forceNotNull(myRunner, state, value);
     }
     state.push(myFactory.getBoxedFactory().createUnboxed(value));
     return nextInstruction(instruction, state);
   }
 
   @Override
-  public DfaInstructionState<V>[] visitAssignGroovy(GrAssignInstruction<V> instruction, DfaMemoryState memState) {
+  public DfaInstructionState[] visitAssign(GrAssignInstruction instruction, DfaMemoryState memState) {
     DfaValue dfaSource = memState.pop();
     DfaValue dfaDest = memState.pop();
 
@@ -124,7 +117,7 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Override
-  public DfaInstructionState<V>[] visitCheckReturnValue(CheckReturnValueInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction, DfaMemoryState state) {
     final DfaValue retValue = state.pop();
     final PsiElement instructionReturn = instruction.getReturn();
     final PsiElement containingMethod = PsiTreeUtil.getParentOfType(instructionReturn, GrMethod.class, GrClosableBlock.class);
@@ -137,20 +130,20 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Override
-  public DfaInstructionState<V>[] visitDereference(GrDereferenceInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitDereference(GrDereferenceInstruction instruction, DfaMemoryState state) {
     final DfaValue qualifier = state.pop();
     if (!checkNotNullable(state, qualifier, fieldAccessNPE, instruction.getExpression())) {
-      forceNotNull(myRunner.getFactory(), state, qualifier);
+      forceNotNull(myRunner, state, qualifier);
     }
     return nextInstruction(instruction, state);
   }
 
   @Override
-  public DfaInstructionState<V>[] visitMethodCallGroovy(final GrMethodCallInstruction<V> instruction, final DfaMemoryState state) {
+  public DfaInstructionState[] visitMethodCall(GrMethodCallInstruction instruction, DfaMemoryState state) {
     final DfaValue[] argValues = myHelper.popAndCheckCallArguments(instruction, state);
     final DfaValue qualifier = state.pop();
     if (instruction.requiresNotNullQualifier() && !checkNotNullable(state, qualifier, callNPE, instruction.getCall())) {
-      forceNotNull(myRunner.getFactory(), state, qualifier);
+      forceNotNull(myRunner, state, qualifier);
     }
 
     final Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
@@ -167,13 +160,13 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
     }
 
     @SuppressWarnings("unchecked")
-    DfaInstructionState<V>[] result = new DfaInstructionState[finalStates.size()];
+    DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
     for (DfaMemoryState finalState : finalStates) {
       if (instruction.shouldFlushFields()) {
         finalState.flushFields();
       }
-      result[i++] = new DfaInstructionState<V>(myRunner.getInstruction(instruction.getIndex() + 1), finalState);
+      result[i++] = new DfaInstructionState(myRunner.getInstruction(instruction.getIndex() + 1), finalState);
     }
     return result;
   }
@@ -196,7 +189,7 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Override
-  public DfaInstructionState<V>[] visitBinop(BinopInstruction<V> instruction, DfaMemoryState memState) {
+  public DfaInstructionState[] visitBinop(BinopInstruction instruction, DfaMemoryState memState) {
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
 
@@ -229,25 +222,24 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Nullable
-  private static <V extends GrInstructionVisitor<V>>
-  DfaInstructionState<V>[] handleRelationBinop(BinopInstruction<V> instruction,
-                                               AbstractDataFlowRunner<V> runner,
-                                               DfaMemoryState memState,
-                                               DfaValue dfaRight, DfaValue dfaLeft) {
+  private static DfaInstructionState[] handleRelationBinop(BinopInstruction instruction,
+                                                           AbstractDataFlowRunner runner,
+                                                           DfaMemoryState memState,
+                                                           DfaValue dfaRight, DfaValue dfaLeft) {
     DfaValueFactory factory = runner.getFactory();
-    final Instruction<V> next = runner.getInstruction(instruction.getIndex() + 1);
+    final Instruction next = runner.getInstruction(instruction.getIndex() + 1);
     DfaRelationValue dfaRelation = factory.getRelationFactory().createRelation(dfaLeft, dfaRight, instruction.getOperationSign(), false);
     if (dfaRelation == null) {
       return null;
     }
 
-    ArrayList<DfaInstructionState<V>> states = new ArrayList<DfaInstructionState<V>>();
+    ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
 
     final DfaMemoryState trueCopy = memState.createCopy();
     if (trueCopy.applyCondition(dfaRelation)) {
       trueCopy.push(factory.getConstFactory().getTrue());
       instruction.setTrueReachable();
-      states.add(new DfaInstructionState<V>(next, trueCopy));
+      states.add(new DfaInstructionState(next, trueCopy));
     }
 
     //noinspection UnnecessaryLocalVariable
@@ -255,16 +247,16 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
     if (falseCopy.applyCondition(dfaRelation.createNegated())) {
       falseCopy.push(factory.getConstFactory().getFalse());
       instruction.setFalseReachable();
-      states.add(new DfaInstructionState<V>(next, falseCopy));
+      states.add(new DfaInstructionState(next, falseCopy));
     }
 
     //noinspection unchecked
-    DfaInstructionState<V>[] result = new DfaInstructionState[states.size()];
+    DfaInstructionState[] result = new DfaInstructionState[states.size()];
     return states.toArray(result);
   }
 
   @Override
-  public DfaInstructionState<V>[] visitTypeCastGroovy(GrTypeCastInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitTypeCast(GrTypeCastInstruction instruction, DfaMemoryState state) {
     final DfaValue value = state.pop();
     final PsiType type = instruction.getCastTo();
     if (type == PsiType.BOOLEAN) {
@@ -272,7 +264,7 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
     }
     else if (type instanceof PsiPrimitiveType) {
       if (!checkNotNullable(state, value, unboxingNullable, instruction.getCastExpression())) {
-        forceNotNull(getFactory(), state, value);
+        forceNotNull(myRunner, state, value);
       }
       state.push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
     }
@@ -291,7 +283,7 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Override
-  public DfaInstructionState<V>[] visitRange(GrRangeInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitRange(GrRangeInstruction instruction, DfaMemoryState state) {
     final DfaValue to = state.pop();
     final DfaValue from = state.pop();
     final GrRangeExpression expression = instruction.getExpression();
@@ -302,11 +294,11 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
 
     if (!fromOk && (toOk || inclusive)) {
       report(false, state.isEphemeral(), passingNullableAsRangeBound, expression.getLeftOperand());
-      if (inclusive) forceNotNull(getFactory(), state, from);
+      if (inclusive) forceNotNull(myRunner, state, from);
     }
     if (!toOk && (fromOk || inclusive)) {
       report(false, state.isEphemeral(), passingNullableAsRangeBound, expression.getRightOperand());
-      if (inclusive) forceNotNull(getFactory(), state, to);
+      if (inclusive) forceNotNull(myRunner, state, to);
     }
 
     state.push(myRunner.getFactory().createTypeValue(TypesUtil.createType(GROOVY_LANG_RANGE, expression), Nullness.NOT_NULL));
@@ -314,7 +306,7 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
   }
 
   @Override
-  public DfaInstructionState<V>[] visitCoerceToBoolean(GrCoerceToBooleanInstruction<V> instruction, DfaMemoryState memoryState) {
+  public DfaInstructionState[] visitCoerceToBoolean(GrCoerceToBooleanInstruction instruction, DfaMemoryState memoryState) {
     final GrDfaMemoryState state = (GrDfaMemoryState)memoryState;
     final DfaValue value = state.pop();
     final GrDfaConstValueFactory constFactory = myFactory.getConstFactory();
@@ -338,6 +330,6 @@ class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstruction
       falseState.push(boxed);
       states.add(falseState);
     }
-    return nextInstructionStates(instruction, states);
+    return nextInstructions(instruction, states);
   }
 }

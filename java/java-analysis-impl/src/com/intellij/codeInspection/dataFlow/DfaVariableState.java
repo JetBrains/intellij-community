@@ -180,7 +180,7 @@ public class DfaVariableState {
     return myNullability == Nullness.NOT_NULL;
   }
 
-  DfaVariableState withNullability(@NotNull Nullness nullness) {
+  public DfaVariableState withNullability(@NotNull Nullness nullness) {
     return myNullability == nullness ? this : createCopy(myInstanceofValues, myNotInstanceofValues, nullness);
   }
 

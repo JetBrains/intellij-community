@@ -17,14 +17,15 @@ package org.jetbrains.plugins.groovy.lang.flow.instruction;
 
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GrInstanceofInstruction<V extends GrInstructionVisitor<V>> extends InstanceofInstruction<V> {
+public class GrInstanceofInstruction extends BinopInstruction {
 
   private @NotNull final GrExpression operand;
   private @NotNull final PsiType type;
@@ -36,19 +37,22 @@ public class GrInstanceofInstruction<V extends GrInstructionVisitor<V>> extends 
   }
 
   @NotNull
-  @Override
   public PsiElement getLeft() {
     return operand;
   }
 
   @NotNull
-  @Override
   public PsiType getCastType() {
     return type;
   }
 
   @Override
-  public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
-    return visitor.visitInstanceOfGroovy(this, stateBefore);
+  public DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
+    if (visitor instanceof GrInstructionVisitor) {
+      return ((GrInstructionVisitor)visitor).visitInstanceOf(this, stateBefore);
+    }
+    else {
+      return visitor.visitBinop(this, stateBefore);
+    }
   }
 }

@@ -17,35 +17,33 @@ package org.jetbrains.plugins.groovy.lang.flow.instruction;
 
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GrAssignInstruction extends Instruction {
+public class GrAssignInstruction extends GrInstruction {
 
-  private final DfaValue myValue;
-  private final GrExpression rightExpression;
+  private final @Nullable DfaValue myValue;
+  private final @Nullable GrExpression rightExpression;
   private final boolean myIsInitializer;
 
-  public GrAssignInstruction(@Nullable DfaValue value, GrExpression expression, boolean initializer) {
+  public GrAssignInstruction() {
+    this(null, null, false);
+  }
+
+  public GrAssignInstruction(@Nullable DfaValue value, @Nullable GrExpression expression, boolean initializer) {
     myValue = value;
     rightExpression = expression;
     myIsInitializer = initializer;
   }
 
   @Override
-  public DfaInstructionState[] accept(@NotNull DfaMemoryState stateBefore, @NotNull InstructionVisitor visitor) {
-    if (visitor instanceof GrInstructionVisitor) {
-      return ((GrInstructionVisitor)visitor).visitAssignGroovy(this, stateBefore);
-    } else {
-      return super.accept(stateBefore, visitor);
-    }
+  public DfaInstructionState[] acceptGroovy(@NotNull DfaMemoryState state, @NotNull GrInstructionVisitor visitor) {
+    return visitor.visitAssign(this, state);
   }
 
+  @Nullable
   public DfaValue getValue() {
     return myValue;
   }

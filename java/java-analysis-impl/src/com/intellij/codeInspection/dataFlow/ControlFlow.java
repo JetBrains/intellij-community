@@ -115,7 +115,7 @@ public class ControlFlow {
     int getInstructionOffset();
   }
 
-  static ControlFlowOffset deltaOffset(final ControlFlowOffset delegate, final int delta) {
+  public static ControlFlowOffset deltaOffset(final ControlFlowOffset delegate, final int delta) {
     return new ControlFlowOffset() {
       @Override
       public int getInstructionOffset() {

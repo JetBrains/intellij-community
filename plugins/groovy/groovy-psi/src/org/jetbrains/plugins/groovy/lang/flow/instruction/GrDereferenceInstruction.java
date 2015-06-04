@@ -17,11 +17,10 @@ package org.jetbrains.plugins.groovy.lang.flow.instruction;
 
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GrDereferenceInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
+public class GrDereferenceInstruction extends GrInstruction {
 
   private final @NotNull GrExpression myExpression;
 
@@ -35,8 +34,8 @@ public class GrDereferenceInstruction<V extends GrInstructionVisitor<V>> extends
   }
 
   @Override
-  public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
-    return visitor.visitDereference(this, stateBefore);
+  public DfaInstructionState[] acceptGroovy(@NotNull DfaMemoryState state, @NotNull GrInstructionVisitor visitor) {
+    return visitor.visitDereference(this, state);
   }
 
   @Override

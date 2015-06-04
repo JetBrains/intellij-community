@@ -17,14 +17,13 @@ package org.jetbrains.plugins.groovy.lang.flow.instruction;
 
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import org.jetbrains.annotations.NotNull;
 
-public class GrCoerceToBooleanInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
+public class GrCoerceToBooleanInstruction extends GrInstruction {
 
   @Override
-  public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
-    return visitor.visitCoerceToBoolean(this, stateBefore);
+  public DfaInstructionState[] acceptGroovy(@NotNull DfaMemoryState state, @NotNull GrInstructionVisitor visitor) {
+    return visitor.visitCoerceToBoolean(this, state);
   }
 
   @Override

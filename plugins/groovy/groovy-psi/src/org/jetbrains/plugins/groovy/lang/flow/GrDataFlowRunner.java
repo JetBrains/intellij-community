@@ -17,16 +17,16 @@ package org.jetbrains.plugins.groovy.lang.flow;
 
 import com.intellij.codeInspection.dataFlow.AbstractDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 
 import java.util.Collection;
 import java.util.Collections;
 
-public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends AbstractDataFlowRunner<V> {
+public class GrDataFlowRunner extends AbstractDataFlowRunner {
 
   private final GrDfaValueFactory myValueFactory;
 
@@ -36,7 +36,7 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
 
   @Nullable
   @Override
-  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull V visitor) {
+  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     return Collections.singletonList(createMemoryState());
   }
 
@@ -54,7 +54,7 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
 
   @NotNull
   @Override
-  protected GrControlFlowAnalyzerImpl<V> createControlFlowAnalyzer(@NotNull PsiElement block) {
-    return new GrControlFlowAnalyzerImpl<V>(myValueFactory, block);
+  protected GrControlFlowAnalyzerImpl createControlFlowAnalyzer(@NotNull PsiElement block) {
+    return new GrControlFlowAnalyzerImpl(myValueFactory, block);
   }
 }

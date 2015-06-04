@@ -67,7 +67,7 @@ public class DataFlowRunner extends AbstractDataFlowRunner {
 
   @Nullable
   @Override
-  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
+  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
       final PsiElement parent = containingClass.getParent();
@@ -127,7 +127,7 @@ public class DataFlowRunner extends AbstractDataFlowRunner {
 
   @NotNull
   @Override
-  protected IControlFlowAnalyzer createControlFlowAnalyzer(PsiElement block) {
+  protected IControlFlowAnalyzer createControlFlowAnalyzer(@NotNull PsiElement block) {
     return new ControlFlowAnalyzer(myValueFactory, myIgnoreAssertions, block);
   }
 

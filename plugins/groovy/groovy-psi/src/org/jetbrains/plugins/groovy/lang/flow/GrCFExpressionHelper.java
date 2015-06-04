@@ -48,7 +48,8 @@ import java.util.Map;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil.isCertainlyReturnStatement;
 
-public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
+public class GrCFExpressionHelper {
+
   private static final Map<IElementType, DfaRelation> MAP = new HashMap<IElementType, DfaRelation>();
 
   static {
@@ -62,10 +63,10 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     MAP.put(mPLUS, DfaRelation.PLUS);
   }
 
-  private final GrControlFlowAnalyzerImpl<V> myAnalyzer;
+  private final GrControlFlowAnalyzerImpl myAnalyzer;
   private final Stack<GrUnaryExpression> myDelayed = ContainerUtil.newStack();
 
-  public GrCFExpressionHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
+  public GrCFExpressionHelper(GrControlFlowAnalyzerImpl analyzer) {
     myAnalyzer = analyzer;
   }
 
@@ -102,7 +103,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     });
   }
 
-  void assign(@NotNull GrExpression left, @Nullable GrExpression anchor, GrCFCallHelper<V>.Arguments argumentsProvider) {
+  void assign(@NotNull GrExpression left, @Nullable GrExpression anchor, GrCFCallHelper.Arguments argumentsProvider) {
     if (left instanceof GrReferenceExpression) {
       final GroovyResolveResult result = ((GrReferenceExpression)left).advancedResolve();
       final PsiElement element = result.getElement();
@@ -124,7 +125,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
   void assign(@NotNull GrExpression left, @NotNull DfaValue right) {
     left.accept(myAnalyzer);
     myAnalyzer.push(right);
-    myAnalyzer.addInstruction(new GrAssignInstruction<V>(getFactory().createValue(left), null, false));
+    myAnalyzer.addInstruction(new GrAssignInstruction(getFactory().createValue(left), null, false));
     processDelayed();
   }
 
@@ -164,12 +165,12 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     final PsiElement resolved = resolveResult.getElement();
     if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved) && !writing) {
       // groovy property getter
-      myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(
+      myAnalyzer.addInstruction(new GrMethodCallInstruction(
         referenceExpression, (PsiMethod)resolved, getFactory().createValue(referenceExpression)
       ));
     }
     else {
-      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(qualifier));
+      myAnalyzer.addInstruction(new GrDereferenceInstruction(qualifier));
       // push value
       myAnalyzer.push(getFactory().createValue(referenceExpression), referenceExpression, writing);
     }
@@ -193,7 +194,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       else {
         right.accept(myAnalyzer);
       }
-      myAnalyzer.addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), anchor));
+      myAnalyzer.addInstruction(new BinopInstruction(MAP.get(operatorToken), anchor));
       processDelayed();
     }
   }
@@ -201,12 +202,12 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
   void boxUnbox(@NotNull GrExpression anchor, @Nullable PsiType expectedType, @Nullable PsiType actualType) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && !TypeConversionUtil.isPrimitiveAndNotNull(actualType)) {
       if (expectedType == PsiType.BOOLEAN) {
-        myAnalyzer.addInstruction(new GrCoerceToBooleanInstruction<V>());
+        myAnalyzer.addInstruction(new GrCoerceToBooleanInstruction());
       }
-      myAnalyzer.addInstruction(new GrUnboxInstruction<V>(anchor));
+      myAnalyzer.addInstruction(new GrUnboxInstruction(anchor));
     }
     else if (TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(actualType)) {
-      myAnalyzer.addInstruction(new GrBoxInstruction<V>());
+      myAnalyzer.addInstruction(new GrBoxInstruction());
     }
   }
 
@@ -218,7 +219,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     myAnalyzer.callHelper.processRegularCall(
       expression, operand, results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT
     );
-    myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, expression, false));
+    myAnalyzer.addInstruction(new GrAssignInstruction(null, expression, false));
   }
 
   void processDelayed() {

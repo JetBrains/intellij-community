@@ -72,7 +72,7 @@ public class GrDfaVariableState extends DfaVariableState {
                             : myTruth == Truth.UNKNOWN ? createCopy(truth)
                                                        : null;
   }
-  
+
   @Override
   public int hashCode() {
     return super.hashCode() * 31 + myTruth.hashCode();

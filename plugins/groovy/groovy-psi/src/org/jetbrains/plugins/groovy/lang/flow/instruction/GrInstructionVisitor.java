@@ -15,47 +15,59 @@
  */
 package org.jetbrains.plugins.groovy.lang.flow.instruction;
 
-import com.intellij.codeInspection.dataFlow.AbstractDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public abstract class GrInstructionVisitor<V extends GrInstructionVisitor<V>> extends InstructionVisitor<V> {
+public abstract class GrInstructionVisitor extends InstructionVisitor {
 
-  public GrInstructionVisitor(AbstractDataFlowRunner<V> runner) {
+  protected final GrDataFlowRunner myRunner;
+
+  public GrInstructionVisitor(GrDataFlowRunner runner) {
     super(runner);
+    myRunner = runner;
+  }
+
+  public GrDataFlowRunner getRunner() {
+    return myRunner;
   }
 
   @Override
-  public DfaInstructionState<V>[] visitConditionalGoto(ConditionalGotoInstruction<V> instruction, DfaMemoryState memState) {
+  public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DfaMemoryState memState) {
     memState.push(myRunner.getFactory().getBoxedFactory().createUnboxed(memState.pop()));
     return super.visitConditionalGoto(instruction, memState);
   }
 
-  public DfaInstructionState<V>[] visitUnboxInstruction(GrUnboxInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitUnboxInstruction(GrUnboxInstruction instruction, DfaMemoryState state) {
     return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitBoxInstruction(GrBoxInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitBoxInstruction(GrBoxInstruction instruction, DfaMemoryState state) {
     return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitInstanceOfGroovy(GrInstanceofInstruction<V> instruction, DfaMemoryState state) {
-    return visitInstanceOf(instruction, state);
+  public DfaInstructionState[] visitInstanceOf(GrInstanceofInstruction instruction, DfaMemoryState state) {
+    return visitBinop(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitAssignGroovy(GrAssignInstruction<V> instruction, DfaMemoryState state) {
-    return visitAssign(instruction, state);
+  public DfaInstructionState[] visitAssign(GrAssignInstruction instruction, DfaMemoryState state) {
+    state.pop();
+    state.push(state.pop());
+    return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitMethodCallGroovy(GrMethodCallInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitMethodCall(GrMethodCallInstruction instruction, DfaMemoryState state) {
     for (final GrNamedArgument ignored : instruction.getNamedArguments()) {
       state.pop();
+    }
+    if (instruction.getNamedArguments().length > 0) {
+      state.push(DfaUnknownValue.getInstance());
     }
     for (final GrExpression ignored : instruction.getExpressionArguments()) {
       state.pop();
@@ -68,23 +80,23 @@ public abstract class GrInstructionVisitor<V extends GrInstructionVisitor<V>> ex
     return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitDereference(GrDereferenceInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitDereference(GrDereferenceInstruction instruction, DfaMemoryState state) {
     state.pop();
     return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitTypeCastGroovy(GrTypeCastInstruction<V> instruction, DfaMemoryState state) {
-    return visitTypeCast(instruction, state);
+  public DfaInstructionState[] visitTypeCast(GrTypeCastInstruction instruction, DfaMemoryState state) {
+    return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitRange(GrRangeInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitRange(GrRangeInstruction instruction, DfaMemoryState state) {
     state.pop();
     state.pop();
     state.push(DfaUnknownValue.getInstance());
     return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState<V>[] visitCoerceToBoolean(GrCoerceToBooleanInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState[] visitCoerceToBoolean(GrCoerceToBooleanInstruction instruction, DfaMemoryState state) {
     return nextInstruction(instruction, state);
   }
 }

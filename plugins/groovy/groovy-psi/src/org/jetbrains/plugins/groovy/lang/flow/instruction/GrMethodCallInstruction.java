@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.flow.instruction;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -24,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import java.util.Arrays;
 import java.util.Map;
 
-public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
+public class GrMethodCallInstruction extends GrInstruction {
 
   private final @NotNull PsiElement myCall;
 
@@ -152,8 +151,8 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
   }
 
   @Override
-  public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
-    return visitor.visitMethodCallGroovy(this, stateBefore);
+  public DfaInstructionState[] acceptGroovy(@NotNull DfaMemoryState state, @NotNull GrInstructionVisitor visitor) {
+    return visitor.visitMethodCall(this, state);
   }
 
   public String toString() {

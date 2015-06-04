@@ -29,7 +29,7 @@ import java.util.Map;
 
 public class GrNullabilityInstructionVisitor extends GrStandardInstructionVisitor {
 
-  public GrNullabilityInstructionVisitor(GrDataFlowRunner<GrStandardInstructionVisitor> runner) {
+  public GrNullabilityInstructionVisitor(GrDataFlowRunner runner) {
     super(runner);
   }
 
