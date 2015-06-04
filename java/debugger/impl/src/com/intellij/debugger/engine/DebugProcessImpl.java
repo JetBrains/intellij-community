@@ -262,6 +262,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return classRenderer;
   }
 
+  private static final String ourTrace = System.getProperty("idea.debugger.trace");
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void commitVM(VirtualMachine vm) {
@@ -277,10 +278,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
 
-    String trace = System.getProperty("idea.debugger.trace");
-    if (trace != null) {
+    if (!StringUtil.isEmpty(ourTrace)) {
       int mask = 0;
-      StringTokenizer tokenizer = new StringTokenizer(trace);
+      StringTokenizer tokenizer = new StringTokenizer(ourTrace);
       while (tokenizer.hasMoreTokens()) {
         String token = tokenizer.nextToken();
         if ("SENDS".compareToIgnoreCase(token) == 0) {
@@ -1081,6 +1081,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   }
                 }
               }
+
+              // workaround for jdi hang in trace mode
+              if (!StringUtil.isEmpty(ourTrace)) {
+                for (Object arg : myArgs) {
+                  //noinspection ResultOfMethodCallIgnored
+                  arg.toString();
+                }
+              }
+
               result[0] = invokeMethod(invokePolicy, myMethod, myArgs);
             }
             finally {
