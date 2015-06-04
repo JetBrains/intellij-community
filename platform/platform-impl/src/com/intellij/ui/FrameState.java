@@ -31,7 +31,7 @@ import java.awt.peer.FramePeer;
  */
 public class FrameState {
   private Rectangle myBounds;
-  private Integer myExtendedState;
+  private boolean myMaximized;
   private boolean myFullScreen;
 
   public Point getLocation() {
@@ -46,16 +46,16 @@ public class FrameState {
     return myBounds == null ? null : new Rectangle(myBounds);
   }
 
-  public Integer getExtendedState() {
-    return myExtendedState;
+  public boolean isMaximized() {
+    return myMaximized;
   }
 
   public boolean isFullScreen() {
     return myFullScreen;
   }
 
-  public static Integer getExtendedState(Component component) {
-    Integer state = null;
+  public static int getExtendedState(Component component) {
+    int state = Frame.NORMAL;
     if (component instanceof Frame) {
       state = ((Frame)component).getExtendedState();
       if (SystemInfo.isMacOSLion) {
@@ -76,8 +76,8 @@ public class FrameState {
            && ((IdeFrameEx)component).isInFullScreen();
   }
 
-  public static boolean isMaximized(Integer state) {
-    return state != null && (state & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
+  public static boolean isMaximized(int state) {
+    return (state & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
   }
 
   private static FrameState findFrameState(@NotNull Component component) {
@@ -133,9 +133,9 @@ public class FrameState {
   final void update(Component component) {
     Rectangle bounds = component.getBounds();
     myFullScreen = isFullScreen(component);
-    myExtendedState = getExtendedState(component);
+    myMaximized = isMaximized(getExtendedState(component));
     if (myBounds != null) {
-      if (myFullScreen || isMaximized(myExtendedState)) {
+      if (myFullScreen || myMaximized) {
         if (bounds.contains(myBounds.x + myBounds.width / 2, myBounds.y + myBounds.height / 2)) {
           return; // preserve old bounds for the maximized frame if its state can be restored
         }

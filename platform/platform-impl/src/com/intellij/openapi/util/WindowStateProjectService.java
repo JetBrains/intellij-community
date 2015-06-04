@@ -57,7 +57,7 @@ final class WindowStateProjectService extends WindowStateServiceImpl {
   }
 
   @Override
-  Integer getDefaultExtendedStateOn(GraphicsDevice screen, @NotNull String key) {
-    return null;
+  boolean getDefaultMaximizedOn(GraphicsDevice screen, @NotNull String key) {
+    return false;
   }
 }

@@ -57,9 +57,8 @@ final class WindowStateApplicationService extends WindowStateServiceImpl {
   }
 
   @Override
-  Integer getDefaultExtendedStateOn(GraphicsDevice screen, @NotNull String key) {
+  boolean getDefaultMaximizedOn(GraphicsDevice screen, @NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
-    int value = DimensionService.getInstance().getExtendedState(key);
-    return value != -1 ? value : null;
+    return Frame.MAXIMIZED_BOTH == DimensionService.getInstance().getExtendedState(key);
   }
 }

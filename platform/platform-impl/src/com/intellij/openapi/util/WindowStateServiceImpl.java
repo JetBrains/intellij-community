@@ -37,7 +37,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String Y = "y";
   @NonNls private static final String WIDTH = "width";
   @NonNls private static final String HEIGHT = "height";
-  @NonNls private static final String EXTENDED = "extended-state";
+  @NonNls private static final String MAXIMIZED = "maximized";
+  @NonNls private static final String FULL_SCREEN = "full-screen";
 
   private final Map<String, WindowState> myStateMap = new TreeMap<String, WindowState>();
 
@@ -47,7 +48,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   abstract Rectangle getDefaultBoundsOn(GraphicsDevice screen, @NotNull String key);
 
-  abstract Integer getDefaultExtendedStateOn(GraphicsDevice screen, @NotNull String key);
+  abstract boolean getDefaultMaximizedOn(GraphicsDevice screen, @NotNull String key);
 
   @Override
   public final Element getState() {
@@ -66,8 +67,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
             child.setAttribute(WIDTH, Integer.toString(state.mySize.width));
             child.setAttribute(HEIGHT, Integer.toString(state.mySize.height));
           }
-          if (state.myState != null) {
-            child.setAttribute(EXTENDED, state.myState.toString());
+          if (state.myMaximized) {
+            child.setAttribute(MAXIMIZED, Boolean.toString(true));
+          }
+          if (state.myFullScreen) {
+            child.setAttribute(FULL_SCREEN, Boolean.toString(true));
           }
           child.setAttribute(KEY, key);
           element.addContent(child);
@@ -85,27 +89,28 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         if (STATE.equals(child.getName())) {
           String key = child.getAttributeValue(KEY);
           if (key != null) {
-            WindowState state = new WindowState();
+            Point location = null;
             try {
-              state.myLocation = new Point(
+              location = new Point(
                 Integer.parseInt(child.getAttributeValue(X)),
                 Integer.parseInt(child.getAttributeValue(Y)));
             }
             catch (NumberFormatException ignored) {
             }
+            Dimension size = null;
             try {
-              state.mySize = new Dimension(
+              size = new Dimension(
                 Integer.parseInt(child.getAttributeValue(WIDTH)),
                 Integer.parseInt(child.getAttributeValue(HEIGHT)));
             }
             catch (NumberFormatException ignored) {
             }
-            try {
-              state.myState = Integer.valueOf(child.getAttributeValue(EXTENDED));
-            }
-            catch (NumberFormatException ignored) {
-            }
-            if (!state.isEmpty()) {
+            if (location != null || size != null) {
+              WindowState state = new WindowState();
+              state.myLocation = location;
+              state.mySize = size;
+              state.myMaximized = Boolean.parseBoolean(child.getAttributeValue(MAXIMIZED));
+              state.myFullScreen = Boolean.parseBoolean(child.getAttributeValue(FULL_SCREEN));
               myStateMap.put(key, state);
             }
           }
@@ -118,7 +123,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   public boolean loadStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component) {
     Point location = null;
     Dimension size = null;
-    Integer extendedState = null;
+    boolean maximized = false;
     synchronized (myStateMap) {
       WindowState state = myStateMap.get(getKey(screen, key));
       boolean visible = isVisible(state);
@@ -129,7 +134,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       if (visible) {
         location = state.myLocation;
         size = state.mySize;
-        extendedState = state.myState;
+        maximized = state.myMaximized;
       }
     }
     if (location == null && size == null) {
@@ -138,10 +143,10 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       if (!isVisible(location, size)) {
         return false;
       }
-      extendedState = getDefaultExtendedStateOn(screen, key);
+      maximized = getDefaultMaximizedOn(screen, key);
     }
     Frame frame = component instanceof Frame ? (Frame)component : null;
-    if (frame != null) {
+    if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
       frame.setExtendedState(Frame.NORMAL);
     }
     Rectangle bounds = component.getBounds();
@@ -152,7 +157,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       bounds.setSize(size);
     }
     component.setBounds(bounds);
-    if (!Patches.JDK_BUG_ID_8007219 && frame != null && FrameState.isMaximized(extendedState)) {
+    if (!Patches.JDK_BUG_ID_8007219 && maximized && frame != null) {
       frame.setExtendedState(Frame.MAXIMIZED_BOTH);
     }
     return true;
@@ -161,7 +166,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @Override
   public void saveStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component) {
     FrameState state = FrameState.getFrameState(component);
-    putOn(screen, key, state.getLocation(), true, state.getSize(), true, state.getExtendedState(), true);
+    putOn(screen, key, state.getLocation(), true, state.getSize(), true, state.isMaximized(), true, state.isFullScreen(), true);
   }
 
   private Point getVisibleLocation(@NotNull String key) {
@@ -185,7 +190,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public void putLocationOn(GraphicsDevice screen, @NotNull String key, Point location) {
-    putOn(screen, key, location, true, null, false, null, false);
+    putOn(screen, key, location, true, null, false, false, false, false, false);
   }
 
   private Dimension getVisibleSize(@NotNull String key) {
@@ -209,7 +214,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public void putSizeOn(GraphicsDevice screen, @NotNull String key, Dimension size) {
-    putOn(screen, key, null, false, size, true, null, false);
+    putOn(screen, key, null, false, size, true, false, false, false, false);
   }
 
   private Rectangle getVisibleBounds(@NotNull String key) {
@@ -235,34 +240,34 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   public void putBoundsOn(GraphicsDevice screen, @NotNull String key, Rectangle bounds) {
     Point location = bounds == null ? null : bounds.getLocation();
     Dimension size = bounds == null ? null : bounds.getSize();
-    putOn(screen, key, location, true, size, true, null, false);
+    putOn(screen, key, location, true, size, true, false, false, false, false);
   }
 
   private void putOn(GraphicsDevice screen, @NotNull String key,
                      Point location, boolean locationSet,
                      Dimension size, boolean sizeSet,
-                     Integer extendedState, boolean extendedStateSet) {
+                     boolean maximized, boolean maximizedSet,
+                     boolean fullScreen, boolean fullScreenSet) {
     synchronized (myStateMap) {
-      putImpl(getKey(screen, key), location, locationSet, size, sizeSet, extendedState, extendedStateSet);
-      putImpl(key, location, locationSet, size, sizeSet, extendedState, extendedStateSet);
+      putImpl(getKey(screen, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      putImpl(key, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
     }
   }
 
   private void putImpl(@NotNull String key,
                        Point location, boolean locationSet,
                        Dimension size, boolean sizeSet,
-                       Integer extendedState, boolean extendedStateSet) {
+                       boolean maximized, boolean maximizedSet,
+                       boolean fullScreen, boolean fullScreenSet) {
     WindowState state = myStateMap.get(key);
     if (state != null) {
-      state.set(location, locationSet, size, sizeSet, extendedState, extendedStateSet);
-      if (state.isEmpty()) {
+      if (!state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
         myStateMap.remove(key);
       }
     }
     else {
       state = new WindowState();
-      state.set(location, locationSet, size, sizeSet, extendedState, extendedStateSet);
-      if (!state.isEmpty()) {
+      if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
         myStateMap.put(key, state);
       }
     }
@@ -295,7 +300,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   private static final class WindowState {
     private Point myLocation;
     private Dimension mySize;
-    private Integer myState;
+    private boolean myMaximized;
+    private boolean myFullScreen;
 
     private Point getLocation() {
       return myLocation == null ? null : new Point(myLocation);
@@ -309,20 +315,23 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       return myLocation == null || mySize == null ? null : new Rectangle(myLocation, mySize);
     }
 
-    private void set(Point location, boolean locationSet, Dimension size, boolean sizeSet, Integer state, boolean stateSet) {
+    private boolean set(Point location, boolean locationSet,
+                        Dimension size, boolean sizeSet,
+                        boolean maximized, boolean maximizedSet,
+                        boolean fullScreen, boolean fullScreenSet) {
       if (locationSet) {
         myLocation = location == null ? null : new Point(location);
       }
       if (sizeSet) {
         mySize = size == null ? null : new Dimension(size);
       }
-      if (stateSet) {
-        myState = state;
+      if (maximizedSet) {
+        myMaximized = maximized;
       }
-    }
-
-    private boolean isEmpty() {
-      return myLocation == null && mySize == null && myState == null;
+      if (fullScreenSet) {
+        myFullScreen = fullScreen;
+      }
+      return myLocation != null || mySize != null;
     }
   }
 
