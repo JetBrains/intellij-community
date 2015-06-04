@@ -49,17 +49,17 @@ public class EditorConfigNotifierProvider extends EditorNotifications.Provider<E
         }
       }.text("EditorConfig is overriding Code Style settings for this file").
         icon(EditorconfigIcons.Editorconfig);
+      panel.createActionLabel("OK", new Runnable() {
+        @Override
+        public void run() {
+          PropertiesComponent.getInstance(project).setValue(EDITOR_CONFIG_ACCEPTED, "true");
+          EditorNotifications.getInstance(project).updateAllNotifications();
+        }
+      });
       panel.createActionLabel("Disable EditorConfig support", new Runnable() {
         @Override
         public void run() {
           settings.getCustomSettings(EditorConfigSettings.class).ENABLED = false;
-          EditorNotifications.getInstance(project).updateAllNotifications();
-        }
-      });
-      panel.createActionLabel("Dismiss", new Runnable() {
-        @Override
-        public void run() {
-          PropertiesComponent.getInstance(project).setValue(EDITOR_CONFIG_ACCEPTED, "true");
           EditorNotifications.getInstance(project).updateAllNotifications();
         }
       });
