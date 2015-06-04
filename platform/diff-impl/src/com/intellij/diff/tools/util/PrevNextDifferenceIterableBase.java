@@ -35,13 +35,14 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public boolean canGoNext() {
-    if (getChanges().isEmpty()) return false;
+    List<? extends T> changes = getChanges();
+    if (changes.isEmpty()) return false;
 
     EditorEx editor = getEditor();
     int line = editor.getCaretModel().getLogicalPosition().line;
     if (line == editor.getDocument().getLineCount() - 1) return false;
 
-    T lastChange = getChanges().get(getChanges().size() - 1);
+    T lastChange = changes.get(changes.size() - 1);
     if (getStartLine(lastChange) <= line) return false;
 
     return true;
@@ -49,11 +50,12 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public void goNext() {
+    List<? extends T> changes = getChanges();
     int line = getEditor().getCaretModel().getLogicalPosition().line;
 
     T next = null;
-    for (int i = 0; i < getChanges().size(); i++) {
-      T change = getChanges().get(i);
+    for (int i = 0; i < changes.size(); i++) {
+      T change = changes.get(i);
       if (getStartLine(change) <= line) continue;
 
       next = change;
@@ -66,12 +68,13 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public boolean canGoPrev() {
-    if (getChanges().isEmpty()) return false;
+    List<? extends T> changes = getChanges();
+    if (changes.isEmpty()) return false;
 
     int line = getEditor().getCaretModel().getLogicalPosition().line;
     if (line == 0) return false;
 
-    T firstChange = getChanges().get(0);
+    T firstChange = changes.get(0);
     if (getEndLine(firstChange) > line) return false;
     if (getStartLine(firstChange) >= line) return false;
 
@@ -80,13 +83,14 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
   @Override
   public void goPrev() {
+    List<? extends T> changes = getChanges();
     int line = getEditor().getCaretModel().getLogicalPosition().line;
 
     T prev = null;
-    for (int i = 0; i < getChanges().size(); i++) {
-      T change = getChanges().get(i);
+    for (int i = 0; i < changes.size(); i++) {
+      T change = changes.get(i);
 
-      T next = i < getChanges().size() - 1 ? getChanges().get(i + 1) : null;
+      T next = i < changes.size() - 1 ? changes.get(i + 1) : null;
       if (next == null || getEndLine(next) > line || getStartLine(next) >= line) {
         prev = change;
         break;
