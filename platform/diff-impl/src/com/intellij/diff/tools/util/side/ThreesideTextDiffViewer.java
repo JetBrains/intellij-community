@@ -158,7 +158,12 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   protected void disableSyncScrollSupport(boolean disable) {
     if (mySyncScrollSupport != null) {
-      mySyncScrollSupport.setDisabled(disable);
+      if (disable) {
+        mySyncScrollSupport.enterDisableScrollSection();
+      }
+      else {
+        mySyncScrollSupport.exitDisableScrollSection();
+      }
     }
   }
 
