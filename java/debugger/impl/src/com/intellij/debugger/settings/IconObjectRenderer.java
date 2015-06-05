@@ -25,6 +25,7 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvalu
   public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
     throws EvaluateException {
     String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";
-    if (DebuggerUtilsImpl.isRemote(evaluationContext.getDebugProcess())) {
+    if (!Registry.is("debugger.auto.fetch.icons") || DebuggerUtilsImpl.isRemote(evaluationContext.getDebugProcess())) {
       return null; // do not auto load icon for remote
     }
     else {
