@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
 
   public void testConstructorDoc() {
-    myFixture.configureByText 'a.java', '''
+    configure '''
 class Foo { Foo() {} Foo(int param) {} }
 
 class Foo2 {{
@@ -43,7 +43,7 @@ class Foo2 {{
   }
 
   public void testConstructorDoc2() {
-    myFixture.configureByText 'a.java', '''
+    configure '''
 class Foo { Foo() {} Foo(int param) {} }
 
 class Foo2 {{
@@ -62,7 +62,7 @@ class Foo2 {{
   }
 
   public void testMethodDocWhenInArgList() {
-    myFixture.configureByText 'a.java', '''
+    configure '''
 class Foo { void doFoo() {} }
 
 class Foo2 {{
@@ -79,7 +79,7 @@ class Foo2 {{
   }
 
   public void testGenericMethod() {
-    myFixture.configureByText 'a.java', '''
+    configure '''
 class Bar<T> { java.util.List<T> foo(T param); }
 
 class Foo {{
@@ -92,7 +92,7 @@ class Foo {{
   }
 
   public void testGenericField() {
-    myFixture.configureByText 'a.java', '''
+    configure '''
 class Bar<T> { T field; }
 
 class Foo {{
@@ -103,5 +103,24 @@ class Foo {{
     assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) == """Bar
  java.lang.Integer field"""
   }
+  
+  public void testMethodInAnonymousClass() {
+    configure '''
+class Foo {{
+  new Runnable() {
+    @Override
+    public void run() {
+      <caret>m();
+    }
+    
+    private void m() {}
+  }.run();
+}}
+'''
+    assert CtrlMouseHandler.getInfo(editor, CtrlMouseHandler.BrowseMode.Declaration) == "private void m ()"
+  }
 
+  private void configure(String text) {
+    myFixture.configureByText 'a.java', text
+  }
 }
