@@ -22,6 +22,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -57,7 +58,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
       @NotNull
       public Map<String, Void> map(@NotNull final FileContent inputData) {
         CharSequence text = inputData.getContentAsText();
-        if (StringUtil.indexOf(text, XsdTagNameBuilder.XML_SCHEMA_NS) == -1) return Collections.emptyMap();
+        if (StringUtil.indexOf(text, XmlUtil.XML_SCHEMA_URI) == -1) return Collections.emptyMap();
         Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(text));
         Map<String, Void> map = new HashMap<String, Void>(tags.size());
         for (String tag : tags) {
