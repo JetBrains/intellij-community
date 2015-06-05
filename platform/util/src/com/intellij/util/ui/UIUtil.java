@@ -3219,7 +3219,7 @@ public class UIUtil {
           LOG.info(ignore);
         }
       }
-    }).start();
+    },"play sound").start();
   }
 
   // Experimental!!!

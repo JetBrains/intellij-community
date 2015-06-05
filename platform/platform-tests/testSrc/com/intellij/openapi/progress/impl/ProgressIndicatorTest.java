@@ -20,13 +20,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.*;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
@@ -173,7 +176,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
                 }
               }, indicator);
             }
-          }){{start();}};
+          },"indicator test"){{start();}};
         }
       });
       ContainerUtil.process(threads, new Processor<Thread>() {

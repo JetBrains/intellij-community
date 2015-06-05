@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -89,7 +90,7 @@ class MacEventReader {
 
   private static synchronized ExecutorService getService() {
     if (ourService == null) {
-      ourService = Executors.newSingleThreadExecutor();
+      ourService = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Mac event reader"));
     }
     return ourService;
   }

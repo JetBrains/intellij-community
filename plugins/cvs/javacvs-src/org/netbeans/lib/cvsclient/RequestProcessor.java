@@ -12,6 +12,7 @@
  */
 package org.netbeans.lib.cvsclient;
 
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
@@ -232,7 +233,7 @@ public final class RequestProcessor implements IRequestProcessor {
 
     @Override
     protected void callRunnable(Runnable runnable) {
-      myFuture = Executors.newSingleThreadExecutor().submit(runnable);
+      myFuture = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("CVS request")).submit(runnable);
 
       final long tOut = (myTimeout < 20000) ? 20000 : myTimeout;
       while (true) {

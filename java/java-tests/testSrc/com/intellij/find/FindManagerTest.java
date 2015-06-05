@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
                                   final int offset,
                                   final FindResult[] op_result){
     op_result[0] = null;
-    Thread findThread = new Thread(){
+    Thread findThread = new Thread("find man test"){
       @Override
       public void run(){
         op_result[0] = findManager.findString(text, offset, model);

@@ -89,8 +89,8 @@ public class Restarter {
     try {
       Process process = Runtime.getRuntime().exec(beforeRestart);
 
-      Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
-      Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
+      Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out),"restarter redirector out");
+      Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err),"restarter redirector err");
       outThread.start();
       errThread.start();
 

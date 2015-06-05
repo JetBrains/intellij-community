@@ -61,7 +61,7 @@ public class JUnitDebuggerRunner extends GenericDebuggerRunner {
     final RunContentDescriptor res = super.createContentDescriptor(state, environment);
     final ServerSocket socket = ((JavaTestFrameworkRunnableState)state).getForkSocket();
     if (socket != null) {
-      Thread thread = new Thread() {
+      Thread thread = new Thread("junit debugger runner") {
         @Override
         public void run() {
           try {

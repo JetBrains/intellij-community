@@ -23,7 +23,7 @@ public class IpnbConnectionV3 extends IpnbConnection{
     final Draft draft = new Draft17WithOrigin();
 
     myChannelsClient = new IpnbWebSocketClient(getChannelsURI(), draft);
-    myChannelsThread = new Thread(myChannelsClient);
+    myChannelsThread = new Thread(myChannelsClient, "IPNB channel client");
     myChannelsThread.start();
   }
 

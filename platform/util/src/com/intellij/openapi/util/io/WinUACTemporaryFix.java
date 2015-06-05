@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.application.PathManager;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
 * @author gregsh
@@ -43,8 +46,8 @@ class WinUACTemporaryFix {
   private static boolean execExternalProcess(String[] args) throws IOException, InterruptedException {
     Process process = Runtime.getRuntime().exec(args);
 
-    Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
-    Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
+    Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out),"winua redirector out");
+    Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err),"winua redirector err");
     outThread.start();
     errThread.start();
 
