@@ -57,19 +57,16 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     final VirtualFile libClasses = getJarFile("library.jar");
     final VirtualFile libJavadocJar = getJarFile("library-javadoc.jar");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("myLib");
-        final Library.ModifiableModel model = library.getModifiableModel();
-        model.addRoot(libClasses, OrderRootType.CLASSES);
-        model.addRoot(libJavadocJar, JavadocOrderRootType.getInstance());
-        model.commit();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("myLib");
+      final Library.ModifiableModel model = library.getModifiableModel();
+      model.addRoot(libClasses, OrderRootType.CLASSES);
+      model.addRoot(libJavadocJar, JavadocOrderRootType.getInstance());
+      model.commit();
 
-        Module[] modules = ModuleManager.getInstance(myProject).getModules();
-        assertSize(1, modules);
-        ModuleRootModificationUtil.addDependency(modules[0], library);
-      }
+      Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      assertSize(1, modules);
+      ModuleRootModificationUtil.addDependency(modules[0], library);
     });
 
     PsiFile psiFile =
@@ -121,28 +118,21 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   private static byte[] getImageDataFromDocumentationComponent(DocumentationComponent documentationComponent) throws Exception {
     JEditorPane editorPane = (JEditorPane)documentationComponent.getComponent();
     final HTMLDocument document = (HTMLDocument)editorPane.getDocument();
-    final Ref<byte[]> result = new Ref<byte[]>();
-    document.render(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          HTMLDocument.Iterator it = document.getIterator(HTML.Tag.IMG);
-          assertTrue(it.isValid());
-          String relativeUrl = (String)it.getAttributes().getAttribute(HTML.Attribute.SRC);
-          it.next();
-          assertFalse(it.isValid());
-          URL imageUrl = new URL(document.getBase(), relativeUrl);
-          InputStream stream = imageUrl.openStream();
-          try {
-            result.set(FileUtil.loadBytes(stream));
-          }
-          finally {
-            stream.close();
-          }
+    final Ref<byte[]> result = new Ref<>();
+    document.render(() -> {
+      try {
+        HTMLDocument.Iterator it = document.getIterator(HTML.Tag.IMG);
+        assertTrue(it.isValid());
+        String relativeUrl = (String)it.getAttributes().getAttribute(HTML.Attribute.SRC);
+        it.next();
+        assertFalse(it.isValid());
+        URL imageUrl = new URL(document.getBase(), relativeUrl);
+        try (InputStream stream = imageUrl.openStream()) {
+          result.set(FileUtil.loadBytes(stream));
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
     return result.get();
