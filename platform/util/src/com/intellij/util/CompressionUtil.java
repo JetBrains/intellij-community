@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Maxim.Mossienko
@@ -48,6 +50,60 @@ public class CompressionUtil {
       out.write(bytes, 0, length);
       return length;
     }
+  }
+
+  private static final AtomicInteger myCompressionRequests = new AtomicInteger();
+  private static final AtomicLong myCompressionTime = new AtomicLong();
+  private static final AtomicInteger myDecompressionRequests = new AtomicInteger();
+  private static final AtomicLong myDecompressionTime = new AtomicLong();
+  private static final AtomicLong myDecompressedSize = new AtomicLong();
+  private static final AtomicLong mySizeBeforeCompression = new AtomicLong();
+  private static final AtomicLong mySizeAfterCompression = new AtomicLong();
+
+  public static final boolean DUMP_COMPRESSION_STATS = SystemProperties.getBooleanProperty("idea.dump.compression.stats", false);
+
+  public static int writeCompressedWithoutOriginalBufferLength(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
+    long started = System.nanoTime();
+
+    final byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(Snappy.maxCompressedLength(length));
+    int compressedSize = Snappy.compress(bytes, 0, length, compressedOutputBuffer, 0);
+
+    final long time = System.nanoTime() - started;
+    mySizeAfterCompression.addAndGet(compressedSize);
+    mySizeBeforeCompression.addAndGet(length);
+    int requests = myCompressionRequests.incrementAndGet();
+    long l = myCompressionTime.addAndGet(time);
+
+    if (DUMP_COMPRESSION_STATS && requests % 1000  == 0) {
+      System.out.println("Compressed " + requests + " times, size:" + mySizeBeforeCompression + "->" + mySizeAfterCompression + " for " + (l  / 1000000) + "ms");
+    }
+
+    DataInputOutputUtil.writeINT(out, compressedSize);
+    out.write(compressedOutputBuffer, 0, compressedSize);
+
+    return compressedSize;
+  }
+
+  @NotNull
+  public static byte[] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in) throws IOException {
+    int size = DataInputOutputUtil.readINT(in);
+
+    byte[] bytes = spareBufferLocal.getBuffer(size);
+    in.readFully(bytes, 0, size);
+
+    int decompressedRequests = myDecompressionRequests.incrementAndGet();
+    long started = System.nanoTime();
+
+    byte[] decompressedResult = Snappy.uncompress(bytes, 0, size);
+
+    long doneTime = System.nanoTime() - started;
+    long decompressedSize = myDecompressedSize.addAndGet(size);
+    long decompressedTime = myDecompressionTime.addAndGet(doneTime);
+    if (DUMP_COMPRESSION_STATS && decompressedRequests % 1000 == 0) {
+      System.out.println("Decompressed " + decompressedRequests + " times, size: " + decompressedSize  + " for " + (decompressedTime / 1000000) + "ms");
+    }
+
+    return decompressedResult;
   }
 
   @NotNull

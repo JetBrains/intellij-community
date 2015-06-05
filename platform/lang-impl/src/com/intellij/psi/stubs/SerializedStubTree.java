@@ -20,6 +20,8 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.CompressionUtil;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,16 +46,33 @@ public class SerializedStubTree {
   }
 
   public SerializedStubTree(DataInput in) throws IOException {
-    myBytes = CompressionUtil.readCompressed(in);
-    myLength = myBytes.length;
-    myByteContentLength = in.readLong();
-    myCharContentLength = in.readInt();
+    if (PersistentHashMapValueStorage.COMPRESSION_ENABLED) {
+      int serializedStubsLength = DataInputOutputUtil.readINT(in);
+      byte[] bytes = new byte[serializedStubsLength];
+      in.readFully(bytes);
+      myBytes = bytes;
+      myLength = myBytes.length;
+      myByteContentLength = DataInputOutputUtil.readLONG(in);
+      myCharContentLength = DataInputOutputUtil.readINT(in);
+    } else {
+      myBytes = CompressionUtil.readCompressed(in);
+      myLength = myBytes.length;
+      myByteContentLength = in.readLong();
+      myCharContentLength = in.readInt();
+    }
   }
 
   public void write(DataOutput out) throws IOException {
-    CompressionUtil.writeCompressed(out, myBytes, myLength);
-    out.writeLong(myByteContentLength);
-    out.writeInt(myCharContentLength);
+    if (PersistentHashMapValueStorage.COMPRESSION_ENABLED) {
+      DataInputOutputUtil.writeINT(out, myLength);
+      out.write(myBytes, 0, myLength);
+      DataInputOutputUtil.writeLONG(out, myByteContentLength);
+      DataInputOutputUtil.writeINT(out, myCharContentLength);
+    } else {
+      CompressionUtil.writeCompressed(out, myBytes, myLength);
+      out.writeLong(myByteContentLength);
+      out.writeInt(myCharContentLength);
+    }
   }
 
   // willIndexStub is one time optimization hint, once can safely pass false
