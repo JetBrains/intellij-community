@@ -64,7 +64,11 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     }
 
     final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
-    if (!myContext.equals(captured.myContext) || myExistential.isSuper() && !myExistential.equals(captured.myExistential)) {
+    if (!myContext.equals(captured.myContext)) {
+      return false;
+    }
+
+    if ((myExistential.isSuper() || captured.myExistential.isSuper()) && !myExistential.equals(captured.myExistential)) {
       return false;
     }
 
