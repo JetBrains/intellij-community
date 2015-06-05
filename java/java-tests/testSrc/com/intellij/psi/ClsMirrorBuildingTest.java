@@ -44,6 +44,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testNested() { doTest(); }
   public void testDeprecated() { doTest(); }
   public void testAnnotations() { doTest(); }
+  public void testMoreAnnotations() { doTest(); }
   public void testParameterNames() { doTest(); }
   public void testEmptyEnum() { doTest(); }
   public void test$BuckClass() { doTest(); }
