@@ -113,7 +113,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   @Nullable private Point myPrevMouseLocation;
   private LightweightHint myHint;
 
-  private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
+  public enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     @Override
@@ -307,6 +307,17 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return generateInfo(element, atPointer).text;
   }
 
+  @Nullable
+  @TestOnly
+  public static String getInfo(@NotNull Editor editor, BrowseMode browseMode) {
+    Project project = editor.getProject();
+    if (project == null) return null; 
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return null;
+    Info info = getInfoAt(project, editor, file, editor.getCaretModel().getOffset(), browseMode);
+    return info == null ? null : info.getInfo().text;
+  }
+
   @NotNull
   private static DocInfo generateInfo(PsiElement element, PsiElement atPointer) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
@@ -479,6 +490,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   @Nullable
   private Info getInfoAt(@NotNull final Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
+    return getInfoAt(myProject, editor, file, offset, browseMode);
+  }
+  
+  @Nullable
+  private static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset, 
+                                @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -486,7 +503,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
       }
       catch (IndexNotReadyException e) {
-        showDumbModeNotification(myProject);
+        showDumbModeNotification(project);
       }
     }
     else if (browseMode == BrowseMode.Declaration) {
@@ -494,7 +511,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       final List<PsiElement> resolvedElements = ref == null ? Collections.<PsiElement>emptyList() : resolve(ref);
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
-      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset, false);
+      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(project, editor, offset, false);
       final PsiElement elementAtPointer = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
 
       if (targetElements != null) {

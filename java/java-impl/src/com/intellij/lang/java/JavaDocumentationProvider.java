@@ -271,8 +271,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     PsiClass parentClass = method.getContainingClass();
 
-    if (parentClass != null) {
-      if (method.isConstructor() && !(parentClass instanceof PsiAnonymousClass)) {
+    if (parentClass != null && !(parentClass instanceof PsiAnonymousClass)) {
+      if (method.isConstructor()) {
         generatePackageInfo(buffer, parentClass);
       }
 
