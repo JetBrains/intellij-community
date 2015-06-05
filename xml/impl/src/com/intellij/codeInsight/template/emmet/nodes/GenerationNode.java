@@ -285,7 +285,12 @@ public class GenerationNode extends UserDataHolderBase {
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, xmlFile.getText(), false, true);
+    String text = xmlFile.getText();
+    final PsiElement context = callback.getFile().getContext();
+    if (context != null && context.getText().startsWith("\"")) {
+      text = text.replace('"', '\'');
+    }
+    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, text, false, true);
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
 
