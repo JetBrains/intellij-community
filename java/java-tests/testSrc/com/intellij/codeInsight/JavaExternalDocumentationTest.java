@@ -30,30 +30,34 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JavaExternalDocumentationTest extends PlatformTestCase {
-  public void testImagesInsideJavadocJar() throws Exception {
+
+  public static final Pattern BASE_URL_PATTERN = Pattern.compile("(<base href=\")([^\"]*)");
+  public static final Pattern IMG_URL_PATTERN = Pattern.compile("<img src=\"([^\"]*)");
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
     final VirtualFile libClasses = getJarFile("library.jar");
     final VirtualFile libJavadocJar = getJarFile("library-javadoc.jar");
 
@@ -68,31 +72,32 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
       assertSize(1, modules);
       ModuleRootModificationUtil.addDependency(modules[0], library);
     });
+  }
 
-    PsiFile psiFile =
-      PsiFileFactory.getInstance(myProject).createFileFromText(JavaLanguage.INSTANCE, "class Foo { com.jetbrains.Test field; }");
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-    assertNotNull(document);
-    Editor editor = EditorFactory.getInstance().createEditor(document, myProject);
-    try {
-      editor.getCaretModel().moveToOffset(document.getText().indexOf("Test"));
-      DocumentationManager documentationManager = DocumentationManager.getInstance(myProject);
-      documentationManager.showJavaDocInfo(editor, psiFile, false);
-      waitTillDone(documentationManager.getLastAction());
-      JBPopup popup = documentationManager.getDocInfoHint();
-      assertNotNull(popup);
-      DocumentationComponent documentationComponent = (DocumentationComponent)popup.getContent().getComponent(0);
-      try {
-        byte[] imageData = getImageDataFromDocumentationComponent(documentationComponent);
-        assertEquals(228, imageData.length);
-      }
-      finally {
-        Disposer.dispose(documentationComponent);
-      }
+  public void testImagesInsideJavadocJar() throws Exception {
+    String text = getDocumentationText("class Foo { com.jetbrains.<caret>Test field; }");
+    Matcher baseUrlmatcher = BASE_URL_PATTERN.matcher(text);
+    assertTrue(baseUrlmatcher.find());
+    String baseUrl = baseUrlmatcher.group(2);
+    Matcher imgMatcher = IMG_URL_PATTERN.matcher(text);
+    assertTrue(imgMatcher.find());
+    String relativeUrl = imgMatcher.group(1);
+    URL imageUrl = new URL(new URL(baseUrl), relativeUrl);
+    try (InputStream stream = imageUrl.openStream()) {
+      assertEquals(228, FileUtil.loadBytes(stream).length);
     }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
+  }
+  
+  // We're guessing style of references in javadoc by bytecode version of library class file
+  // but displaying quick doc should work even if javadoc was generated using a JDK not corresponding to bytecode version
+  public void testReferenceStyleDoesntMatchBytecodeVersion() throws Exception {
+    String actualText = getDocumentationText("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
+    String expectedText = FileUtil.loadFile(getDataFile(getTestName(false) + ".html"));
+    assertEquals(expectedText, replaceBaseUrlWithPlaceholder(actualText));
+  }
+
+  private static String replaceBaseUrlWithPlaceholder(String actualText) {
+    return BASE_URL_PATTERN.matcher(actualText).replaceAll("$1placeholder");
   }
 
   private static void waitTillDone(ActionCallback actionCallback) throws InterruptedException {
@@ -106,40 +111,74 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
     fail("Timed out waiting for documentation to show");
   }
 
+  private static File getDataFile(String name) {
+    return new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/documentation/" + name);
+  }
+  
   @NotNull
   private static VirtualFile getJarFile(String name) {
-    VirtualFile file = getVirtualFile(new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/documentation/" + name));
+    VirtualFile file = getVirtualFile(getDataFile(name));
     assertNotNull(file);
     VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(file);
     assertNotNull(jarFile);
     return jarFile;
   }
-  
-  private static byte[] getImageDataFromDocumentationComponent(DocumentationComponent documentationComponent) throws Exception {
-    JEditorPane editorPane = (JEditorPane)documentationComponent.getComponent();
-    final HTMLDocument document = (HTMLDocument)editorPane.getDocument();
-    final Ref<byte[]> result = new Ref<>();
-    document.render(() -> {
+
+  private String getDocumentationText(String sourceEditorText) throws Exception {
+    int caretPosition = sourceEditorText.indexOf(EditorTestUtil.CARET_TAG);
+    if (caretPosition >= 0) {
+      sourceEditorText = sourceEditorText.substring(0, caretPosition) + 
+                         sourceEditorText.substring(caretPosition + EditorTestUtil.CARET_TAG.length());
+    }
+    PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText(JavaLanguage.INSTANCE, sourceEditorText);
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    assertNotNull(document);
+    Editor editor = EditorFactory.getInstance().createEditor(document, myProject);
+    try {
+      if (caretPosition >= 0) {
+        editor.getCaretModel().moveToOffset(caretPosition);
+      }
+      DocumentationManager documentationManager = DocumentationManager.getInstance(myProject);
+      MockDocumentationComponent documentationComponent = new MockDocumentationComponent(documentationManager);
       try {
-        HTMLDocument.Iterator it = document.getIterator(HTML.Tag.IMG);
-        assertTrue(it.isValid());
-        String relativeUrl = (String)it.getAttributes().getAttribute(HTML.Attribute.SRC);
-        it.next();
-        assertFalse(it.isValid());
-        URL imageUrl = new URL(document.getBase(), relativeUrl);
-        try (InputStream stream = imageUrl.openStream()) {
-          result.set(FileUtil.loadBytes(stream));
-        }
+        documentationManager.setDocumentationComponent(documentationComponent);
+        documentationManager.showJavaDocInfo(editor, psiFile, false);
+        waitTillDone(documentationManager.getLastAction());
+        return documentationComponent.getText();
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+      finally {
+        Disposer.dispose(documentationComponent);
       }
-    });
-    return result.get();
+    }
+    finally {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
   }
 
   @Override
   protected boolean isRunInWriteAction() {
     return false;
+  }
+  
+  private static class MockDocumentationComponent extends DocumentationComponent {
+    private String myText;
+    
+    public MockDocumentationComponent(DocumentationManager manager) {
+      super(manager);
+    }
+
+    @Override
+    public void setText(String text, PsiElement element, boolean clean, boolean clearHistory) {
+      myText = text;
+    }
+
+    @Override
+    public void setData(PsiElement _element, String text, boolean clearHistory, String effectiveExternalUrl, String ref) {
+      myText = text;
+    }
+
+    public String getText() {
+      return myText;
+    }
   }
 }
