@@ -29,6 +29,8 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +75,8 @@ class InitialInfoBuilder {
   private final List<TextRange> myExtendedAffectedRanges;
   private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   private boolean myCollectAlignmentsInsideFormattingRange = false;
+
+  private MultiMap<Object, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<Object, AbstractBlockWrapper>();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -285,6 +289,10 @@ class InitialInfoBuilder {
     return wrappedRootBlock;
   }
 
+  public MultiMap<Object, AbstractBlockWrapper> getBlocksWithSmartIndents() {
+    return myBlocksToForceChildrenIndent;
+  }
+
   private void doIteration(@NotNull State state) {
     List<Block> subBlocks = state.parentBlock.getSubBlocks();
     final int subBlocksCount = subBlocks.size();
@@ -303,6 +311,11 @@ class InitialInfoBuilder {
     final AbstractBlockWrapper wrapper = buildFrom(
       block, childBlockIndex, state.wrappedBlock, state.parentBlockWrap, state.parentBlock, childBlockIsRightBlock
     );
+
+    if (block.getIndent() instanceof ExpandableIndent) {
+      ExpandableIndent expandableIndent = (ExpandableIndent)block.getIndent();
+      myBlocksToForceChildrenIndent.putValue(expandableIndent.getGroup(), wrapper);
+    }
 
     if (wrapper.getIndent() == null) {
       wrapper.setIndent((IndentImpl)block.getIndent());

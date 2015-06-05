@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -158,6 +159,7 @@ public class FormatProcessor {
 
   @NotNull
   private State myCurrentState;
+  private MultiMap<Object, AbstractBlockWrapper> myExpandableIndents;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -248,7 +250,11 @@ public class FormatProcessor {
   public void format(FormattingModel model, boolean sequentially) {
     if (sequentially) {
       AdjustWhiteSpacesState adjustState = new AdjustWhiteSpacesState();
-      adjustState.setNext(new ApplyChangesState(model));
+      ExpandChildrenIndent expandChildrenIndent = new ExpandChildrenIndent();
+      ApplyChangesState applyChangesState = new ApplyChangesState(model);
+
+      expandChildrenIndent.setNext(applyChangesState);
+      adjustState.setNext(expandChildrenIndent);
       myCurrentState.setNext(adjustState);
     }
     else {
@@ -284,7 +290,9 @@ public class FormatProcessor {
 
   @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications(boolean sequentially) {
-    myCurrentState.setNext(new AdjustWhiteSpacesState());
+    AdjustWhiteSpacesState adjustSpace = new AdjustWhiteSpacesState();
+    adjustSpace.setNext(new ExpandChildrenIndent());
+    myCurrentState.setNext(adjustSpace);
 
     if (sequentially) {
       return;
@@ -1357,6 +1365,7 @@ public class FormatProcessor {
         root, model, affectedRanges, mySettings, myDefaultIndentOption, interestingOffset, myProgressCallback
       );
       myWrapper.setCollectAlignmentsInsideFormattingRange(myReformatContext);
+      myExpandableIndents = myWrapper.getBlocksWithSmartIndents();
     }
 
     @Override
@@ -1526,24 +1535,24 @@ public class FormatProcessor {
       }
     }
   }
-  
+
   private static class CaretOffsetUpdater {
     private final Map<Editor, Integer> myCaretOffsets = new HashMap<Editor, Integer>();
-    
+
     private CaretOffsetUpdater(@NotNull Document document) {
       Editor[] editors = EditorFactory.getInstance().getEditors(document);
       for (Editor editor : editors) {
         myCaretOffsets.put(editor, editor.getCaretModel().getOffset());
       }
     }
-    
+
     private void update(@NotNull List<? extends TextChange> changes) {
       BulkChangesMerger merger = BulkChangesMerger.INSTANCE;
       for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
         entry.setValue(merger.updateOffset(entry.getValue(), changes));
       }
     }
-    
+
     private void restoreCaretLocations() {
       for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
         entry.getKey().getCaretModel().moveToOffset(entry.getValue());
@@ -1578,6 +1587,105 @@ public class FormatProcessor {
       myAffectedRanges = ranges;
       myReformatContext = reformatContext;
       myInterestingOffset = interestingOffset;
+    }
+  }
+
+
+  private class ExpandChildrenIndent extends State {
+    private Iterator<Object> myIterator;
+
+    public ExpandChildrenIndent() {
+      super(FormattingStateId.EXPANDING_CHILDREN_INDENTS);
+    }
+
+    @Override
+    protected void doIteration() {
+      if (myIterator == null) {
+        myIterator = myExpandableIndents.keySet().iterator();
+      }
+      if (!myIterator.hasNext()) {
+        setDone(true);
+        return;
+      }
+
+      Collection<AbstractBlockWrapper> blocksToExpandIndent = myExpandableIndents.get(myIterator.next());
+
+      if (shouldExpand(blocksToExpandIndent)) {
+        for (AbstractBlockWrapper block : blocksToExpandIndent) {
+          ExpandableIndent indent = (ExpandableIndent)block.getIndent();
+          indent.setEnforceIndent(true);
+          reindentNewLineChildren(block);
+          indent.setEnforceIndent(false);
+        }
+      }
+    }
+
+    private boolean shouldExpand(Collection<AbstractBlockWrapper> blocksToExpandIndent) {
+      int minGroupOffset = Integer.MAX_VALUE;
+      for (AbstractBlockWrapper block : blocksToExpandIndent) {
+        if (!block.getWhiteSpace().containsLineFeeds()) continue;
+
+        ExpandableIndent indent = (ExpandableIndent)block.getIndent();
+        if (indent.isMinGroupOffsetMarker()) {
+          minGroupOffset = block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+        }
+        else {
+          return true;
+        }
+      }
+
+      if (minGroupOffset == Integer.MAX_VALUE) return false;
+
+      for (AbstractBlockWrapper block : blocksToExpandIndent) {
+        ExpandableIndent indent = (ExpandableIndent)block.getIndent();
+        if (indent.isMinGroupOffsetMarker()) continue;
+
+        int minNewLineChildrenOffset = findMinNewLineIndent(block);
+        if (minNewLineChildrenOffset <= minGroupOffset) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    private int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
+      if (block instanceof LeafBlockWrapper && block.getWhiteSpace().containsLineFeeds()) {
+        return block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+      }
+      else if (block instanceof CompositeBlockWrapper) {
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)block).getChildren();
+        int currentMin = Integer.MAX_VALUE;
+        for (AbstractBlockWrapper child : children) {
+          int childIndent = findMinNewLineIndent(child);
+          if (childIndent < currentMin) {
+            currentMin = childIndent;
+          }
+        }
+        return currentMin;
+      }
+      return Integer.MAX_VALUE;
+    }
+
+    private void reindentNewLineChildren(final @NotNull AbstractBlockWrapper block) {
+      if (block instanceof LeafBlockWrapper) {
+        WhiteSpace space = block.getWhiteSpace();
+
+        if (space.containsLineFeeds()) {
+          myCurrentBlock = (LeafBlockWrapper)block;
+          adjustIndent();
+        }
+      }
+      else if (block instanceof CompositeBlockWrapper) {
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)block).getChildren();
+        for (AbstractBlockWrapper childBlock : children) {
+          reindentNewLineChildren(childBlock);
+        }
+      }
+    }
+
+    @Override
+    protected void prepare() {
     }
   }
 }

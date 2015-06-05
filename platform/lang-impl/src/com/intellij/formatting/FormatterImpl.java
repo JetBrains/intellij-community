@@ -819,6 +819,18 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
+  public Indent getSmartIndent(@NotNull Indent.Type type, @NotNull Object group) {
+    return new ExpandableIndent(type, group);
+  }
+
+  @Override
+  public Indent getSmartIndentMinOffsetMarker(@NotNull Indent.Type type, @NotNull Object group) {
+    ExpandableIndent indent = new ExpandableIndent(type, group);
+    indent.setMinGroupOffsetMarker(true);
+    return indent;
+  }
+
+  @Override
   public Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
     return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
