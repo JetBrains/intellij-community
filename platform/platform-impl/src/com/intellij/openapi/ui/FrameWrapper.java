@@ -301,23 +301,13 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected void loadFrameState() {
     final Window frame = getFrame();
-    if (!WindowStateService.getInstance().loadStateOn(getDevice(myProject), myDimensionKey, frame)) {
+    if (!WindowStateService.getInstance().loadStateOn(myProject, myDimensionKey, frame)) {
       final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
       if (ideFrame != null) {
         frame.setBounds(ideFrame.suggestChildFrameBounds());
       }
     }
     ((RootPaneContainer)frame).getRootPane().revalidate();
-  }
-
-  private static GraphicsDevice getDevice(Project project) {
-    if (project != null) {
-      JFrame frame = WindowManager.getInstance().getFrame(project);
-      if (frame != null) {
-        return ScreenUtil.getScreenDevice(frame.getBounds());
-      }
-    }
-    return null;
   }
 
   public void setTitle(String title) {
@@ -417,7 +407,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       MouseGestureManager.getInstance().remove(this);
 
       if (myShown && myDimensionKey != null) {
-        WindowStateService.getInstance().saveStateOn(getDevice(myProject), myDimensionKey, this);
+        WindowStateService.getInstance().saveStateOn(myProject, myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);
@@ -522,7 +512,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       MouseGestureManager.getInstance().remove(this);
 
       if (myShown && myDimensionKey != null) {
-        WindowStateService.getInstance().saveStateOn(getDevice(myProject), myDimensionKey, this);
+        WindowStateService.getInstance().saveStateOn(myProject, myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);

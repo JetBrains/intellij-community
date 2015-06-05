@@ -17,6 +17,9 @@ package com.intellij.openapi.util;
 
 import com.intellij.Patches;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.FrameState;
 import com.intellij.ui.ScreenUtil;
 import org.jdom.Element;
@@ -40,6 +43,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String MAXIMIZED = "maximized";
   @NonNls private static final String FULL_SCREEN = "full-screen";
 
+  private static final Logger LOG = Logger.getInstance(WindowStateService.class);
   private final Map<String, WindowState> myStateMap = new TreeMap<String, WindowState>();
 
   abstract Point getDefaultLocationOn(Object object, @NotNull String key);
@@ -302,9 +306,29 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   private static GraphicsDevice getScreen(Object object) {
+    if (object == null) {
+      return null;
+    }
+    if (object instanceof Project) {
+      Project project = (Project)object;
+      object = WindowManager.getInstance().getFrame(project);
+      if (object == null) {
+        LOG.warn("cannot find a project frame for " + project);
+        return null;
+      }
+    }
+    if (object instanceof Window) {
+      Window window = (Window)object;
+      object = ScreenUtil.getScreenDevice(window.getBounds());
+      if (object == null) {
+        LOG.warn("cannot find a screen for " + window);
+        return null;
+      }
+    }
     if (object instanceof GraphicsDevice) {
       return (GraphicsDevice)object;
     }
+    LOG.warn("cannot find a screen for " + object);
     return null;
   }
 

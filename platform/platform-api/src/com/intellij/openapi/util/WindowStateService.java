@@ -53,6 +53,7 @@ public abstract class WindowStateService {
 
   /**
    * Loads a state of the specified component by the given screen and the specified key.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    *
    * @param object    an object that specifies a screen to which a component state belongs
    * @param key       an unique string key
@@ -75,6 +76,7 @@ public abstract class WindowStateService {
   /**
    * Stores the specified location that corresponds to the given screen and the specified key.
    * If it is {@code null} the stored location will be removed.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    * Do not use a screen which is calculated from the specified component.
    *
    * @param object    an object that specifies a screen to which a component state belongs
@@ -97,6 +99,7 @@ public abstract class WindowStateService {
   /**
    * Returns a location that corresponds to the given screen and the specified key or {@code null}
    * if a location does not exist or it is outside of visible area.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    *
    * @param object an object that specifies a screen to which a location belongs
    * @param key    an unique string key
@@ -117,6 +120,7 @@ public abstract class WindowStateService {
   /**
    * Stores the specified location that corresponds to the given screen and the specified key.
    * If it is {@code null} the stored location will be removed.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    * Do not use a screen which is calculated from the specified location.
    *
    * @param object an object that specifies a screen to which a location belongs
@@ -138,6 +142,7 @@ public abstract class WindowStateService {
   /**
    * Returns a size that corresponds to the given screen and the specified key or {@code null}
    * if a size does not exist.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    *
    * @param object an object that specifies a screen to which a size belongs
    * @param key    an unique string key
@@ -158,6 +163,7 @@ public abstract class WindowStateService {
   /**
    * Stores the specified size that corresponds to the given screen and the specified key.
    * If it is {@code null} the stored size will be removed.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    * Do not use a screen which is calculated from the specified size.
    *
    * @param object an object that specifies a screen to which a size belongs
@@ -179,6 +185,7 @@ public abstract class WindowStateService {
   /**
    * Returns a bounds that corresponds to the given screen and the specified key or {@code null}
    * if a bounds does not exist or it is outside of visible area.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    *
    * @param object an object that specifies a screen to which a bounds belongs
    * @param key    an unique string key
@@ -199,6 +206,7 @@ public abstract class WindowStateService {
   /**
    * Stores the specified bounds that corresponds to the given screen and the specified key.
    * If it is {@code null} the stored bounds will be removed.
+   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
    * Do not use a screen which is calculated from the specified bounds.
    *
    * @param object an object that specifies a screen to which a bounds belongs
