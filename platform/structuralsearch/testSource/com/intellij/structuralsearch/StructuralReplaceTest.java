@@ -1296,7 +1296,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
   }
-  
+
   public void testClassReplacement5() {
     final String actualResult;
     String s1 = "public class X {\n" +
@@ -2078,7 +2078,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expected_2 = "if (args == null) return ;\n" +
                   "    while(true) return ;\n" +
                   "    System.out.println(\"blah2\");";
-    
+
     actualResult = replacer.testReplace(s1_2,s2,replacement,options);
 
     assertEquals(
@@ -2176,7 +2176,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s3_2 = "$st$;\n" +
                   "int $c$ = $i$;";
     String expected_2 = "a = 2;\nint b = 1;\nb2 = 3;";
-    
+
     actualResult = replacer.testReplace(s1,s2_2,s3_2,options);
 
     assertEquals(
@@ -2333,5 +2333,32 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String what2 = "int '_a, '_b, '_c = '_d?;";
     final String by2 = "float $a$, $b$, $c$ = $d$;";
     assertEquals("class A {  private float i, j, k ;  void m() {    float i, j, k ;  }}", replacer.testReplace(in, what2, by2, options));
+  }
+
+  public void testReplaceWithScriptedVariable() {
+    final String in = "class A {\n" +
+                      "  void method(Object... os) {}\n" +
+                      "  void f(Object a, Object b, Object c) {\n" +
+                      "    method(a, b, c, \"one\" + \"two\");\n" +
+                      "    method(a);\n" +
+                      "  }\n" +
+                      "}";
+    final String what = "method('_arg+)";
+    final String by = "method($newarg$)";
+    final ReplacementVariableDefinition variable = new ReplacementVariableDefinition();
+    variable.setName("newarg");
+    variable.setScriptCodeConstraint("arg.collect { \"(String)\" + it.getText() }.join(',')");
+    options.addVariableDefinition(variable);
+
+    final String expected = "class A {\n" +
+                            "  void method(Object... os) {}\n" +
+                            "  void f(Object a, Object b, Object c) {\n" +
+                            "    method((String)a,(String)b,(String)c,(String)\"one\" + \"two\");\n" +
+                            "    method((String)a);\n" +
+                            "  }\n" +
+                            "}";
+    assertEquals(expected, replacer.testReplace(in, what, by, options));
+
+    options.clearVariableDefinitions();
   }
 }
