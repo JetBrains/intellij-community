@@ -125,13 +125,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     Dimension size = null;
     boolean maximized = false;
     synchronized (myStateMap) {
-      WindowState state = myStateMap.get(getKey(screen, key));
-      boolean visible = isVisible(state);
-      if (!visible) {
-        state = myStateMap.get(key);
-        visible = isVisible(state);
-      }
-      if (visible) {
+      WindowState state = getOn(screen, key, WindowState.class);
+      if (state != null) {
         location = state.myLocation;
         size = state.mySize;
         maximized = state.myMaximized;
@@ -169,23 +164,13 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     putOn(screen, key, state.getLocation(), true, state.getSize(), true, state.isMaximized(), true, state.isFullScreen(), true);
   }
 
-  private Point getVisibleLocation(@NotNull String key) {
-    synchronized (myStateMap) {
-      WindowState state = myStateMap.get(key);
-      return !isVisible(state) ? null : state.getLocation();
-    }
-  }
-
   @Override
   public Point getLocationOn(GraphicsDevice screen, @NotNull String key) {
-    Point location = getVisibleLocation(getKey(screen, key));
-    if (location == null) {
-      location = getVisibleLocation(key);
-      if (location == null) {
-        location = getDefaultLocationOn(screen, key);
-      }
+    Point location;
+    synchronized (myStateMap) {
+      location = getOn(screen, key, Point.class);
     }
-    return location;
+    return location != null ? location : getDefaultLocationOn(screen, key);
   }
 
   @Override
@@ -193,23 +178,13 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     putOn(screen, key, location, true, null, false, false, false, false, false);
   }
 
-  private Dimension getVisibleSize(@NotNull String key) {
-    synchronized (myStateMap) {
-      WindowState state = myStateMap.get(key);
-      return !isVisible(state) ? null : state.getSize();
-    }
-  }
-
   @Override
   public Dimension getSizeOn(GraphicsDevice screen, @NotNull String key) {
-    Dimension size = getVisibleSize(getKey(screen, key));
-    if (size == null) {
-      size = getVisibleSize(key);
-      if (size == null) {
-        size = getDefaultSizeOn(screen, key);
-      }
+    Dimension size;
+    synchronized (myStateMap) {
+      size = getOn(screen, key, Dimension.class);
     }
-    return size;
+    return size != null ? size : getDefaultSizeOn(screen, key);
   }
 
   @Override
@@ -217,23 +192,13 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     putOn(screen, key, null, false, size, true, false, false, false, false);
   }
 
-  private Rectangle getVisibleBounds(@NotNull String key) {
-    synchronized (myStateMap) {
-      WindowState state = myStateMap.get(key);
-      return !isVisible(state) ? null : state.getBounds();
-    }
-  }
-
   @Override
   public Rectangle getBoundsOn(GraphicsDevice screen, @NotNull String key) {
-    Rectangle bounds = getVisibleBounds(getKey(screen, key));
-    if (bounds == null) {
-      bounds = getVisibleBounds(key);
-      if (bounds == null) {
-        bounds = getDefaultBoundsOn(screen, key);
-      }
+    Rectangle bounds;
+    synchronized (myStateMap) {
+      bounds = getOn(screen, key, Rectangle.class);
     }
-    return bounds;
+    return bounds != null ? bounds : getDefaultBoundsOn(screen, key);
   }
 
   @Override
@@ -243,6 +208,40 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     putOn(screen, key, location, true, size, true, false, false, false, false);
   }
 
+  private <T> T getOn(GraphicsDevice screen, @NotNull String key, @NotNull Class<T> type) {
+    T state = get(getKey(screen, key), type);
+    if (state != null) {
+      return state;
+    }
+    if (screen != null) {
+      state = get(getKey(null, key), type);
+      if (state != null) {
+        return state;
+      }
+    }
+    return get(key, type);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T get(@NotNull String key, @NotNull Class<T> type) {
+    WindowState state = myStateMap.get(key);
+    if (isVisible(state)) {
+      if (type == WindowState.class) {
+        return (T)state;
+      }
+      if (type == Point.class) {
+        return (T)state.getLocation();
+      }
+      if (type == Dimension.class) {
+        return (T)state.getSize();
+      }
+      if (type == Rectangle.class) {
+        return (T)state.getBounds();
+      }
+    }
+    return null;
+  }
+
   private void putOn(GraphicsDevice screen, @NotNull String key,
                      Point location, boolean locationSet,
                      Dimension size, boolean sizeSet,
@@ -250,6 +249,9 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                      boolean fullScreen, boolean fullScreenSet) {
     synchronized (myStateMap) {
       putImpl(getKey(screen, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      if (screen != null) {
+        putImpl(getKey(null, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      }
       putImpl(key, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
     }
   }
