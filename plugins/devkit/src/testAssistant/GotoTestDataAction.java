@@ -17,31 +17,29 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
 
 class GotoTestDataAction extends AnAction implements Comparable {
-  private final String myBasePath;
+  private final String myFilePath;
   private final Project myProject;
 
-  public GotoTestDataAction(String basePath, Project project, Icon icon) {
-    super("Go to " + FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getPresentableName(new File(basePath), 50), null, icon);
-    myBasePath = basePath;
+  public GotoTestDataAction(String filePath, Project project, Icon icon) {
+    super("Go to " + FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getPresentableName(new File(filePath), 50), null, icon);
+    myFilePath = filePath;
     myProject = project;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final VirtualFile baseDir = VfsUtil.findFileByIoFile(new File(myBasePath), true);
-    if (baseDir != null) {
-      new OpenFileDescriptor(myProject, baseDir).navigate(true);
-    }
+    RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
+    TestDataNavigationHandler.navigate(point, Collections.singletonList(myFilePath), myProject);
   }
 
   @Override
