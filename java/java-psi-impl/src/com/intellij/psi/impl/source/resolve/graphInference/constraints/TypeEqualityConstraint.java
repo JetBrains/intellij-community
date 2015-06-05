@@ -109,11 +109,6 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
-    if (myT instanceof PsiCapturedWildcardType && myS instanceof PsiCapturedWildcardType) {
-      return new TypeEqualityConstraint(((PsiCapturedWildcardType)myT).getWildcard(), 
-                                        ((PsiCapturedWildcardType)myS).getWildcard()).reduce(session, constraints);
-    }
-
     return false;
   }
 
@@ -129,9 +124,6 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     TypeEqualityConstraint that = (TypeEqualityConstraint)o;
-
-    if (myS instanceof PsiCapturedWildcardType && myS != that.myS) return false;
-    if (myT instanceof PsiCapturedWildcardType && myT != that.myT) return false;
 
     if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
     if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
