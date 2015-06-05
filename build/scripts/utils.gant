@@ -832,7 +832,7 @@ binding.setVariable("bundledJDKs"){
   }
   def customJdkDir = new File("${home}/build/jdk/custom")
   if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())){
-    setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "opnjdk.1.8", ".tar.gz"))
+    setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
   }
 }
 
