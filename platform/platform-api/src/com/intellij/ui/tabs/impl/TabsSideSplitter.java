@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splittable;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,10 +29,9 @@ import java.beans.PropertyChangeListener;
 
 
 class TabsSideSplitter implements Splittable, PropertyChangeListener {
-  private static final int MIN_TAB_WIDTH = JBUI.scale(75);
 
   @NotNull private final JBTabsImpl myTabs;
-  private int mySideTabsLimit = 0;
+  private int mySideTabsLimit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
   private boolean myDragging;
   private final OnePixelDivider myDivider;
 
@@ -50,17 +48,17 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
 
   @Override
   public float getMinProportion(boolean first) {
-    return Math.min(.5F, (float)MIN_TAB_WIDTH / Math.max(1, myTabs.getWidth()));
+    return Math.min(.5F, (float)JBTabsImpl.MIN_TAB_WIDTH / Math.max(1, myTabs.getWidth()));
   }
 
   @Override
   public void setProportion(float proportion) {
     int width = myTabs.getWidth();
     if (myTabs.getTabsPosition() == JBTabsPosition.left) {
-      setSideTabsLimit((int)Math.max(MIN_TAB_WIDTH, proportion * width));
+      setSideTabsLimit((int)Math.max(JBTabsImpl.MIN_TAB_WIDTH, proportion * width));
     }
     else if (myTabs.getTabsPosition() == JBTabsPosition.right) {
-      setSideTabsLimit(width - (int)Math.max(MIN_TAB_WIDTH, proportion * width));
+      setSideTabsLimit(width - (int)Math.max(JBTabsImpl.MIN_TAB_WIDTH, proportion * width));
     }
   }
 
@@ -113,7 +111,7 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getSource() != myTabs) return;
     Integer limit = UIUtil.getClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
-    if (limit == null) limit = 0;
+    if (limit == null) limit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
     setSideTabsLimit(limit);
   }
 }
