@@ -19,8 +19,13 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,5 +65,21 @@ public class GradleClassFinder extends NonClasspathClassFinder {
       return myBuildClasspathManager.getModuleClasspathEntries(externalModuleBuildGlobalSearchScope.getExternalModulePath());
     }
     return myBuildClasspathManager.getAllClasspathEntries();
+  }
+
+  @Nullable
+  @Override
+  public Condition<PsiClass> getClassesFilter(@NotNull final GlobalSearchScope scope) {
+    return new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass aClass) {
+        if (scope instanceof ExternalModuleBuildGlobalSearchScope || scope instanceof EverythingGlobalScope) {
+          return true;
+        }
+        PsiFile containingFile = aClass.getContainingFile();
+        VirtualFile file = containingFile != null ? containingFile.getVirtualFile() : null;
+        return file == null || !(ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file));
+      }
+    };
   }
 }
