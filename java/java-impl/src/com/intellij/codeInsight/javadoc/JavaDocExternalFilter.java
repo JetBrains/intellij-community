@@ -123,7 +123,10 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     CharSequence externalDoc = null;
     String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
     if (docURL.startsWith(builtInServer)) {
-      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).get(docURL.substring(builtInServer.length()));
+      int refPosition = docURL.lastIndexOf('#');
+      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).get(
+        docURL.substring(builtInServer.length(), refPosition < builtInServer.length() ? docURL.length() : refPosition)
+      );
       if (file != null) {
         InputStreamReader reader = new InputStreamReader(file.getInputStream(), CharsetToolkit.UTF8_CHARSET);
         StringBuilder result = new StringBuilder();
