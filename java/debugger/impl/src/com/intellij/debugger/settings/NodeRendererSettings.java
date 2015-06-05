@@ -268,16 +268,22 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   public List<NodeRenderer> getAllRenderers() {
     // the order is important as the renderers are applied according to it
     final List<NodeRenderer> allRenderers = new ArrayList<NodeRenderer>();
-    allRenderers.add(myHexRenderer);
-    allRenderers.add(myPrimitiveRenderer);
-    allRenderers.addAll(myPluginRenderers);
-    Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
+
+    // user defined renderers must come first
     myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
       public boolean visit(final NodeRenderer renderer) {
         allRenderers.add(renderer);
         return true;
       }
     });
+
+    // plugins registered renderers come after that
+    allRenderers.addAll(myPluginRenderers);
+    Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
+
+    // now all predefined stuff
+    allRenderers.add(myHexRenderer);
+    allRenderers.add(myPrimitiveRenderer);
     Collections.addAll(allRenderers, myAlternateCollectionRenderers);
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
