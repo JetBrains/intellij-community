@@ -32,24 +32,24 @@ import java.awt.*;
 )
 final class WindowStateApplicationService extends WindowStateServiceImpl {
   @Override
-  Point getDefaultLocationOn(Object object, @NotNull String key) {
+  Point getDefaultLocationFor(Object object, @NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
     return DimensionService.getInstance().getLocation(key);
   }
 
   @Override
-  Dimension getDefaultSizeOn(Object object, @NotNull String key) {
+  Dimension getDefaultSizeFor(Object object, @NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
     return DimensionService.getInstance().getSize(key);
   }
 
   @Override
-  Rectangle getDefaultBoundsOn(Object object, @NotNull String key) {
-    Point location = getDefaultLocationOn(object, key);
+  Rectangle getDefaultBoundsFor(Object object, @NotNull String key) {
+    Point location = getDefaultLocationFor(object, key);
     if (location == null) {
       return null;
     }
-    Dimension size = getDefaultSizeOn(object, key);
+    Dimension size = getDefaultSizeFor(object, key);
     if (size == null) {
       return null;
     }
@@ -57,7 +57,7 @@ final class WindowStateApplicationService extends WindowStateServiceImpl {
   }
 
   @Override
-  boolean getDefaultMaximizedOn(Object object, @NotNull String key) {
+  boolean getDefaultMaximizedFor(Object object, @NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
     return Frame.MAXIMIZED_BOTH == DimensionService.getInstance().getExtendedState(key);
   }

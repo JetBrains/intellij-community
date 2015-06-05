@@ -301,7 +301,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected void loadFrameState() {
     final Window frame = getFrame();
-    if (!WindowStateService.getInstance().loadStateOn(myProject, myDimensionKey, frame)) {
+    if (!WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
       final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
       if (ideFrame != null) {
         frame.setBounds(ideFrame.suggestChildFrameBounds());
@@ -407,7 +407,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       MouseGestureManager.getInstance().remove(this);
 
       if (myShown && myDimensionKey != null) {
-        WindowStateService.getInstance().saveStateOn(myProject, myDimensionKey, this);
+        WindowStateService.getInstance().saveStateFor(myProject, myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);
@@ -512,7 +512,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       MouseGestureManager.getInstance().remove(this);
 
       if (myShown && myDimensionKey != null) {
-        WindowStateService.getInstance().saveStateOn(myProject, myDimensionKey, this);
+        WindowStateService.getInstance().saveStateFor(myProject, myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);
