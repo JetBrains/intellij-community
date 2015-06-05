@@ -54,12 +54,12 @@ public abstract class WindowStateService {
   /**
    * Loads a state of the specified component by the given screen and the specified key.
    *
-   * @param screen    a screen to which a location belongs
+   * @param object    an object that specifies a screen to which a component state belongs
    * @param key       an unique string key
    * @param component a component which state should be changed
    * @return {@code true} if a state is loaded successfully, {@code false} otherwise
    */
-  public abstract boolean loadStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component);
+  public abstract boolean loadStateOn(Object object, @NotNull String key, @NotNull Component component);
 
   /**
    * Stores the specified location that corresponds to the specified key.
@@ -77,11 +77,11 @@ public abstract class WindowStateService {
    * If it is {@code null} the stored location will be removed.
    * Do not use a screen which is calculated from the specified component.
    *
-   * @param screen    a screen to which a location belongs
+   * @param object    an object that specifies a screen to which a component state belongs
    * @param key       an unique string key
    * @param component a component which state should be saved
    */
-  public abstract void saveStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component);
+  public abstract void saveStateOn(Object object, @NotNull String key, @NotNull Component component);
 
   /**
    * Returns a location that corresponds to the specified key or {@code null}
@@ -98,11 +98,11 @@ public abstract class WindowStateService {
    * Returns a location that corresponds to the given screen and the specified key or {@code null}
    * if a location does not exist or it is outside of visible area.
    *
-   * @param screen a screen to which a location belongs
+   * @param object an object that specifies a screen to which a location belongs
    * @param key    an unique string key
    * @return a corresponding location
    */
-  public abstract Point getLocationOn(GraphicsDevice screen, @NotNull String key);
+  public abstract Point getLocationOn(Object object, @NotNull String key);
 
   /**
    * Stores the specified location that corresponds to the specified key.
@@ -119,10 +119,10 @@ public abstract class WindowStateService {
    * If it is {@code null} the stored location will be removed.
    * Do not use a screen which is calculated from the specified location.
    *
-   * @param screen a screen to which a location belongs
+   * @param object an object that specifies a screen to which a location belongs
    * @param key    an unique string key
    */
-  public abstract void putLocationOn(GraphicsDevice screen, @NotNull String key, Point location);
+  public abstract void putLocationOn(Object object, @NotNull String key, Point location);
 
   /**
    * Returns a size that corresponds to the specified key or {@code null}
@@ -139,11 +139,11 @@ public abstract class WindowStateService {
    * Returns a size that corresponds to the given screen and the specified key or {@code null}
    * if a size does not exist.
    *
-   * @param screen a screen to which a size belongs
+   * @param object an object that specifies a screen to which a size belongs
    * @param key    an unique string key
    * @return a corresponding size
    */
-  public abstract Dimension getSizeOn(GraphicsDevice screen, @NotNull String key);
+  public abstract Dimension getSizeOn(Object object, @NotNull String key);
 
   /**
    * Stores the specified size that corresponds to the specified key.
@@ -160,10 +160,10 @@ public abstract class WindowStateService {
    * If it is {@code null} the stored size will be removed.
    * Do not use a screen which is calculated from the specified size.
    *
-   * @param screen a screen to which a size belongs
+   * @param object an object that specifies a screen to which a size belongs
    * @param key    an unique string key
    */
-  public abstract void putSizeOn(GraphicsDevice screen, @NotNull String key, Dimension size);
+  public abstract void putSizeOn(Object object, @NotNull String key, Dimension size);
 
   /**
    * Returns a bounds that corresponds to the specified key or {@code null}
@@ -180,11 +180,11 @@ public abstract class WindowStateService {
    * Returns a bounds that corresponds to the given screen and the specified key or {@code null}
    * if a bounds does not exist or it is outside of visible area.
    *
-   * @param screen a screen to which a bounds belongs
+   * @param object an object that specifies a screen to which a bounds belongs
    * @param key    an unique string key
    * @return a corresponding bounds
    */
-  public abstract Rectangle getBoundsOn(GraphicsDevice screen, @NotNull String key);
+  public abstract Rectangle getBoundsOn(Object object, @NotNull String key);
 
   /**
    * Stores the specified bounds that corresponds to the specified key.
@@ -201,8 +201,8 @@ public abstract class WindowStateService {
    * If it is {@code null} the stored bounds will be removed.
    * Do not use a screen which is calculated from the specified bounds.
    *
-   * @param screen a screen to which a bounds belongs
+   * @param object an object that specifies a screen to which a bounds belongs
    * @param key    an unique string key
    */
-  public abstract void putBoundsOn(GraphicsDevice screen, @NotNull String key, Rectangle bounds);
+  public abstract void putBoundsOn(Object object, @NotNull String key, Rectangle bounds);
 }

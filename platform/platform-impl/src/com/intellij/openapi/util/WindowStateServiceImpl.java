@@ -42,13 +42,13 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   private final Map<String, WindowState> myStateMap = new TreeMap<String, WindowState>();
 
-  abstract Point getDefaultLocationOn(GraphicsDevice screen, @NotNull String key);
+  abstract Point getDefaultLocationOn(Object object, @NotNull String key);
 
-  abstract Dimension getDefaultSizeOn(GraphicsDevice screen, @NotNull String key);
+  abstract Dimension getDefaultSizeOn(Object object, @NotNull String key);
 
-  abstract Rectangle getDefaultBoundsOn(GraphicsDevice screen, @NotNull String key);
+  abstract Rectangle getDefaultBoundsOn(Object object, @NotNull String key);
 
-  abstract boolean getDefaultMaximizedOn(GraphicsDevice screen, @NotNull String key);
+  abstract boolean getDefaultMaximizedOn(Object object, @NotNull String key);
 
   @Override
   public final Element getState() {
@@ -120,12 +120,12 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   @Override
-  public boolean loadStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component) {
+  public boolean loadStateOn(Object object, @NotNull String key, @NotNull Component component) {
     Point location = null;
     Dimension size = null;
     boolean maximized = false;
     synchronized (myStateMap) {
-      WindowState state = getOn(screen, key, WindowState.class);
+      WindowState state = getOn(object, key, WindowState.class);
       if (state != null) {
         location = state.myLocation;
         size = state.mySize;
@@ -133,12 +133,12 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       }
     }
     if (location == null && size == null) {
-      location = getDefaultLocationOn(screen, key);
-      size = getDefaultSizeOn(screen, key);
+      location = getDefaultLocationOn(object, key);
+      size = getDefaultSizeOn(object, key);
       if (!isVisible(location, size)) {
         return false;
       }
-      maximized = getDefaultMaximizedOn(screen, key);
+      maximized = getDefaultMaximizedOn(object, key);
     }
     Frame frame = component instanceof Frame ? (Frame)component : null;
     if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
@@ -159,61 +159,62 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   @Override
-  public void saveStateOn(GraphicsDevice screen, @NotNull String key, @NotNull Component component) {
+  public void saveStateOn(Object object, @NotNull String key, @NotNull Component component) {
     FrameState state = FrameState.getFrameState(component);
-    putOn(screen, key, state.getLocation(), true, state.getSize(), true, state.isMaximized(), true, state.isFullScreen(), true);
+    putOn(object, key, state.getLocation(), true, state.getSize(), true, state.isMaximized(), true, state.isFullScreen(), true);
   }
 
   @Override
-  public Point getLocationOn(GraphicsDevice screen, @NotNull String key) {
+  public Point getLocationOn(Object object, @NotNull String key) {
     Point location;
     synchronized (myStateMap) {
-      location = getOn(screen, key, Point.class);
+      location = getOn(object, key, Point.class);
     }
-    return location != null ? location : getDefaultLocationOn(screen, key);
+    return location != null ? location : getDefaultLocationOn(object, key);
   }
 
   @Override
-  public void putLocationOn(GraphicsDevice screen, @NotNull String key, Point location) {
-    putOn(screen, key, location, true, null, false, false, false, false, false);
+  public void putLocationOn(Object object, @NotNull String key, Point location) {
+    putOn(object, key, location, true, null, false, false, false, false, false);
   }
 
   @Override
-  public Dimension getSizeOn(GraphicsDevice screen, @NotNull String key) {
+  public Dimension getSizeOn(Object object, @NotNull String key) {
     Dimension size;
     synchronized (myStateMap) {
-      size = getOn(screen, key, Dimension.class);
+      size = getOn(object, key, Dimension.class);
     }
-    return size != null ? size : getDefaultSizeOn(screen, key);
+    return size != null ? size : getDefaultSizeOn(object, key);
   }
 
   @Override
-  public void putSizeOn(GraphicsDevice screen, @NotNull String key, Dimension size) {
-    putOn(screen, key, null, false, size, true, false, false, false, false);
+  public void putSizeOn(Object object, @NotNull String key, Dimension size) {
+    putOn(object, key, null, false, size, true, false, false, false, false);
   }
 
   @Override
-  public Rectangle getBoundsOn(GraphicsDevice screen, @NotNull String key) {
+  public Rectangle getBoundsOn(Object object, @NotNull String key) {
     Rectangle bounds;
     synchronized (myStateMap) {
-      bounds = getOn(screen, key, Rectangle.class);
+      bounds = getOn(object, key, Rectangle.class);
     }
-    return bounds != null ? bounds : getDefaultBoundsOn(screen, key);
+    return bounds != null ? bounds : getDefaultBoundsOn(object, key);
   }
 
   @Override
-  public void putBoundsOn(GraphicsDevice screen, @NotNull String key, Rectangle bounds) {
+  public void putBoundsOn(Object object, @NotNull String key, Rectangle bounds) {
     Point location = bounds == null ? null : bounds.getLocation();
     Dimension size = bounds == null ? null : bounds.getSize();
-    putOn(screen, key, location, true, size, true, false, false, false, false);
+    putOn(object, key, location, true, size, true, false, false, false, false);
   }
 
-  private <T> T getOn(GraphicsDevice screen, @NotNull String key, @NotNull Class<T> type) {
+  private <T> T getOn(Object object, @NotNull String key, @NotNull Class<T> type) {
+    GraphicsDevice screen = getScreen(object);
     T state = get(getKey(screen, key), type);
     if (state != null) {
       return state;
     }
-    if (screen != null) {
+    if (object != null) {
       state = get(getKey(null, key), type);
       if (state != null) {
         return state;
@@ -242,12 +243,13 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     return null;
   }
 
-  private void putOn(GraphicsDevice screen, @NotNull String key,
+  private void putOn(Object object, @NotNull String key,
                      Point location, boolean locationSet,
                      Dimension size, boolean sizeSet,
                      boolean maximized, boolean maximizedSet,
                      boolean fullScreen, boolean fullScreenSet) {
     synchronized (myStateMap) {
+      GraphicsDevice screen = getScreen(object);
       putImpl(getKey(screen, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       if (screen != null) {
         putImpl(getKey(null, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
@@ -297,6 +299,13 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       sb.append('.').append(bounds.height);
     }
     return sb.toString();
+  }
+
+  private static GraphicsDevice getScreen(Object object) {
+    if (object instanceof GraphicsDevice) {
+      return (GraphicsDevice)object;
+    }
+    return null;
   }
 
   private static final class WindowState {
