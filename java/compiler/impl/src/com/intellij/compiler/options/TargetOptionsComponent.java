@@ -71,6 +71,8 @@ public class TargetOptionsComponent extends JPanel {
     targetLevelColumn.setMinWidth(width);
     targetLevelColumn.setMaxWidth(width);
 
+    new TableSpeedSearch(myTable);
+
     add(new JLabel("Project bytecode version (leave blank for JDK default): "),
         constraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NONE));
     add(myCbProjectTargetLevel, constraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NONE));
@@ -126,6 +128,11 @@ public class TargetOptionsComponent extends JPanel {
     final List<Module> elements = chooser.getChosenElements();
     if (!elements.isEmpty()) {
       model.addItems(elements);
+      int i = model.getModuleRow(elements.get(0));
+      if (i != -1) {
+        TableUtil.selectRows(myTable, new int[]{i});
+        TableUtil.scrollSelectionToVisible(myTable);
+      }
     }
   }
 
@@ -232,6 +239,15 @@ public class TargetOptionsComponent extends JPanel {
       }
       sorItems();
       fireTableDataChanged();
+    }
+
+    public int getModuleRow(Module module) {
+      for (int i = 0; i < myItems.size(); i++) {
+        if (myItems.get(i).module.equals(module)) {
+          return i;
+        }
+      }
+      return -1;
     }
 
     private static final class Item {
