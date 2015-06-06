@@ -94,7 +94,7 @@ public class PersistentHashMapValueStorage {
 
   private final CompressedAppendableFile myCompressedAppendableFile;
 
-  public static final boolean COMPRESSION_ENABLED = SystemProperties.getBooleanProperty("idea.compression.enabled", false);
+  public static final boolean COMPRESSION_ENABLED = SystemProperties.getBooleanProperty("idea.compression.enabled", true);
 
   public PersistentHashMapValueStorage(String path) throws IOException {
     myExceptionalIOCancellationCallback = CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.get();
