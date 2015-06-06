@@ -57,6 +57,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -446,24 +447,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(options);
       SchemesPanel schemesPanel = new SchemesPanel(options);
-      PreviewPanel previewPanel;
-      try {
-        final DiffPreviewPanel diffPreviewPanel = new DiffPreviewPanel(myDisposable);
-        diffPreviewPanel.setMergeRequest(null);
-        schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
-          @Override
-          public void schemeChanged(final Object source) {
-            diffPreviewPanel.setColorScheme(getSelectedScheme());
-            optionsPanel.updateOptionsList();
-            diffPreviewPanel.updateView();
-          }
-        } );
-        previewPanel = diffPreviewPanel;
-      }
-      catch (FilesTooBigForDiffException e) {
-        LOG.info(e);
-        previewPanel = new PreviewPanel.Empty();
-      }
+      final DiffPreviewPanel previewPanel = new DiffPreviewPanel(myDisposable);
+
+      schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
+        @Override
+        public void schemeChanged(final Object source) {
+          previewPanel.setColorScheme(getSelectedScheme());
+          optionsPanel.updateOptionsList();
+        }
+      });
 
       return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, DIFF_GROUP, null, null);
     }

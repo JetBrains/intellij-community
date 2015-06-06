@@ -237,7 +237,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   //
 
   @NotNull
-  protected List<SimpleThreesideDiffChange> getChanges() {
+  public List<SimpleThreesideDiffChange> getChanges() {
     return myDiffChanges;
   }
 
