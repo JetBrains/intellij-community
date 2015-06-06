@@ -23,6 +23,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -105,13 +106,29 @@ public class BinaryMergeTool implements MergeTool {
     @NotNull
     @Override
     public ToolbarComponents init() {
-      ToolbarComponents toolbarComponents = new ToolbarComponents();
+      ToolbarComponents components = new ToolbarComponents();
 
       FrameDiffTool.ToolbarComponents init = myViewer.init();
-      toolbarComponents.statusPanel = init.statusPanel;
-      toolbarComponents.toolbarActions = init.toolbarActions;
+      components.statusPanel = init.statusPanel;
+      components.toolbarActions = init.toolbarActions;
 
-      return toolbarComponents;
+      Couple<List<Action>> bottomActions = MergeUtil.createBottomActions(new MergeUtil.AcceptActionProcessor() {
+        @Override
+        public boolean isVisible(@NotNull MergeResult result) {
+          return result != MergeResult.RESOLVED;
+        }
+
+        @Override
+        public void perform(@NotNull MergeResult result) {
+          markConflictResolved();
+          myMergeRequest.applyResult(result);
+          myMergeContext.closeDialog();
+        }
+      });
+      components.leftActions = bottomActions.first;
+      components.rightActions = bottomActions.second;
+
+      return components;
     }
 
     @Override
@@ -144,34 +161,6 @@ public class BinaryMergeTool implements MergeTool {
     private class MyThreesideViewer extends ThreesideBinaryDiffViewer {
       public MyThreesideViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
         super(context, request);
-      }
-
-      @Override
-      protected void onInit() {
-        super.onInit();
-        myPanel.setBottomPanel(createBottomButtons());
-      }
-
-      @NotNull
-      private JComponent createBottomButtons() {
-        return MergeUtil.createAcceptActionsPanel(new MergeUtil.AcceptActionProcessor() {
-          @Override
-          public boolean isEnabled(@NotNull MergeResult result) {
-            return true;
-          }
-
-          @Override
-          public boolean isVisible(@NotNull MergeResult result) {
-            return result != MergeResult.RESOLVED;
-          }
-
-          @Override
-          public void perform(@NotNull MergeResult result) {
-            markConflictResolved();
-            myMergeRequest.applyResult(result);
-            myMergeContext.closeDialog();
-          }
-        }, myPanel);
       }
 
       @Override

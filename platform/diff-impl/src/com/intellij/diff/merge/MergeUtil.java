@@ -19,36 +19,48 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MergeUtil {
   @NotNull
-  public static JComponent createAcceptActionsPanel(@NotNull AcceptActionProcessor processor, @Nullable JComponent component) {
+  public static Couple<List<Action>> createBottomActions(@NotNull AcceptActionProcessor processor) {
     Action left = SimpleAcceptAction.create(MergeResult.LEFT, processor);
     Action right = SimpleAcceptAction.create(MergeResult.RIGHT, processor);
     Action apply = SimpleAcceptAction.create(MergeResult.RESOLVED, processor);
     Action cancel = SimpleAcceptAction.create(MergeResult.CANCEL, processor);
+
     if (apply != null) apply.putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
-    return createAcceptActionsPanel(left, right, apply, cancel, component);
+
+    if (SystemInfo.isMac) {
+      return Couple.of(listNotNull(left, right), listNotNull(cancel, apply));
+    }
+    else {
+      return Couple.of(listNotNull(left, right), listNotNull(apply, cancel));
+    }
   }
 
-  public static abstract class AcceptActionProcessor {
-    public abstract boolean isEnabled(@NotNull MergeResult result);
-
-    public abstract boolean isVisible(@NotNull MergeResult result);
-
-    public abstract void perform(@NotNull MergeResult result);
+  @NotNull
+  private static <T> List<T> listNotNull(T... items) {
+    int count = 0;
+    for (T item : items) {
+      if (item != null) count++;
+    }
+    List<T> result = new ArrayList<T>(count);
+    for (T item : items) {
+      if (item != null) result.add(item);
+    }
+    return result;
   }
 
   private static class SimpleAcceptAction extends AbstractAction {
@@ -74,48 +86,6 @@ public class MergeUtil {
     public static SimpleAcceptAction create(@NotNull MergeResult result, @NotNull AcceptActionProcessor acceptActionProcessor) {
       return acceptActionProcessor.isVisible(result) ? new SimpleAcceptAction(result, acceptActionProcessor) : null;
     }
-  }
-
-  @NotNull
-  public static JComponent createAcceptActionsPanel(@Nullable Action acceptLeft,
-                                                    @Nullable Action acceptRight,
-                                                    @Nullable Action apply,
-                                                    @Nullable Action cancel,
-                                                    @Nullable JComponent component) {
-    JPanel panel = new JPanel();
-    BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.X_AXIS);
-    panel.setLayout(boxLayout);
-
-    List<Action> leftActions = ContainerUtil.list(acceptLeft, acceptRight);
-    List<Action> rightActions = SystemInfo.isMac ?
-                                ContainerUtil.list(cancel, apply) :
-                                ContainerUtil.list(apply, cancel);
-
-
-    for (Action action : leftActions) {
-      if (action != null) panel.add(createActionButton(action, component));
-    }
-
-    panel.add(Box.createGlue());
-
-    for (Action action : rightActions) {
-      if (action != null) panel.add(createActionButton(action, component));
-    }
-
-    return panel;
-  }
-
-  @NotNull
-  public static JButton createActionButton(@NotNull Action action, @Nullable JComponent component) {
-    JButton button = new JButton(action);
-    if (SystemInfo.isMac) {
-      button.putClientProperty("JButton.buttonType", "text");
-    }
-    if (action.getValue(DialogWrapper.DEFAULT_ACTION) == Boolean.TRUE) {
-      Window window = component != null ? UIUtil.getWindow(component) : null;
-      if (window instanceof RootPaneContainer) ((RootPaneContainer)window).getRootPane().setDefaultButton(button);
-    }
-    return button;
   }
 
   @NotNull
@@ -180,5 +150,15 @@ public class MergeUtil {
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       myMergeContext.putUserData(key, value);
     }
+  }
+
+  public static abstract class AcceptActionProcessor {
+    public boolean isEnabled(@NotNull MergeResult result) {
+      return true;
+    }
+
+    public abstract boolean isVisible(@NotNull MergeResult result);
+
+    public abstract void perform(@NotNull MergeResult result);
   }
 }

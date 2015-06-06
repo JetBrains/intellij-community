@@ -16,11 +16,13 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class ErrorMergeTool implements MergeTool {
   public static final ErrorMergeTool INSTANCE = new ErrorMergeTool();
@@ -56,13 +58,23 @@ public class ErrorMergeTool implements MergeTool {
     }
 
     @NotNull
-    private JComponent createBottomButtons() {
-      return MergeUtil.createAcceptActionsPanel(new MergeUtil.AcceptActionProcessor() {
-        @Override
-        public boolean isEnabled(@NotNull MergeResult result) {
-          return true;
-        }
+    @Override
+    public JComponent getComponent() {
+      return myPanel;
+    }
 
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public ToolbarComponents init() {
+      ToolbarComponents components = new ToolbarComponents();
+
+      Couple<List<Action>> bottomActions = MergeUtil.createBottomActions(new MergeUtil.AcceptActionProcessor() {
         @Override
         public boolean isVisible(@NotNull MergeResult result) {
           if (myMergeRequest instanceof ThreesideMergeRequest) {
@@ -78,26 +90,11 @@ public class ErrorMergeTool implements MergeTool {
           if (myMergeRequest instanceof ThreesideMergeRequest) ((ThreesideMergeRequest)myMergeRequest).applyResult(result);
           myMergeContext.closeDialog();
         }
-      }, myPanel);
-    }
+      });
+      components.leftActions = bottomActions.first;
+      components.rightActions = bottomActions.second;
 
-    @NotNull
-    @Override
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public ToolbarComponents init() {
-      myPanel.add(createBottomButtons(), BorderLayout.SOUTH);
-      return new ToolbarComponents();
+      return components;
     }
 
     @Override

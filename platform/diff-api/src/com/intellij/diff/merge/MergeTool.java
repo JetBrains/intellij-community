@@ -51,5 +51,7 @@ public interface MergeTool {
     @Nullable public List<AnAction> toolbarActions;
     @Nullable public JComponent statusPanel;
     @Nullable public BooleanGetter closeHandler; // return false if there are unsaved changes
+    @Nullable public List<Action> leftActions;
+    @Nullable public List<Action> rightActions;
   }
 }

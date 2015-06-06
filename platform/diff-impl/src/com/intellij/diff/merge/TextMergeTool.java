@@ -49,6 +49,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -154,6 +155,10 @@ public class TextMergeTool implements MergeTool {
         }
       };
 
+      Couple<List<Action>> bottomActions = myViewer.createBottomActions();
+      components.leftActions = bottomActions.first;
+      components.rightActions = bottomActions.second;
+
       return components;
     }
 
@@ -203,7 +208,6 @@ public class TextMergeTool implements MergeTool {
       @Override
       protected void onInit() {
         super.onInit();
-        myPanel.setBottomPanel(createBottomPanel());
         myModifierProvider.init();
       }
 
@@ -237,13 +241,8 @@ public class TextMergeTool implements MergeTool {
       }
 
       @NotNull
-      protected JComponent createBottomPanel() {
-        return MergeUtil.createAcceptActionsPanel(new MergeUtil.AcceptActionProcessor() {
-          @Override
-          public boolean isEnabled(@NotNull MergeResult result) {
-            return true;
-          }
-
+      private Couple<List<Action>> createBottomActions() {
+        return MergeUtil.createBottomActions(new MergeUtil.AcceptActionProcessor() {
           @Override
           public boolean isVisible(@NotNull MergeResult result) {
             return true;
@@ -272,7 +271,7 @@ public class TextMergeTool implements MergeTool {
             myMergeRequest.applyResult(result);
             myMergeContext.closeDialog();
           }
-        }, myPanel);
+        });
       }
 
       //

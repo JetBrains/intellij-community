@@ -30,10 +30,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,6 +64,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   @NotNull private final Wrapper myContentPanel;
   @NotNull private final Wrapper myToolbarPanel;
   @NotNull private final Wrapper myToolbarStatusPanel;
+  @NotNull private final Wrapper myBottomPanel;
 
   @NotNull private final MergeRequest myRequest;
   @NotNull private final MergeTool.MergeViewer myViewer;
@@ -86,6 +86,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myToolbarPanel = new Wrapper();
     myToolbarPanel.setFocusable(true);
     myToolbarStatusPanel = new Wrapper();
+    myBottomPanel = new Wrapper();
 
     myPanel.add(myMainPanel, BorderLayout.CENTER);
 
@@ -96,6 +97,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
+    myMainPanel.add(myBottomPanel, BorderLayout.SOUTH);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
@@ -125,6 +127,44 @@ public abstract class MergeRequestProcessor implements Disposable {
     buildToolbar(toolbarComponents.toolbarActions);
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
     myCloseHandler = toolbarComponents.closeHandler;
+
+    createBottomPanel(toolbarComponents.leftActions, toolbarComponents.rightActions);
+  }
+
+  protected void createBottomPanel(@Nullable List<Action> leftActions, @Nullable List<Action> rightActions) {
+    if (leftActions == null && rightActions == null) return;
+
+    leftActions = ContainerUtil.notNullize(leftActions);
+    rightActions = ContainerUtil.notNullize(rightActions);
+
+    JPanel panel = new JPanel();
+    BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.X_AXIS);
+    panel.setLayout(boxLayout);
+
+    for (Action action : leftActions) {
+      if (action != null) panel.add(createActionButton(action));
+    }
+
+    panel.add(Box.createGlue());
+
+    for (Action action : rightActions) {
+      if (action != null) panel.add(createActionButton(action));
+    }
+
+    myBottomPanel.setContent(panel);
+  }
+
+  @NotNull
+  private JButton createActionButton(@NotNull Action action) {
+    JButton button = new JButton(action);
+    if (SystemInfo.isMac) {
+      button.putClientProperty("JButton.buttonType", "text");
+    }
+    if (action.getValue(DialogWrapper.DEFAULT_ACTION) == Boolean.TRUE) {
+      Window window = UIUtil.getWindow(myPanel);
+      if (window instanceof RootPaneContainer) ((RootPaneContainer)window).getRootPane().setDefaultButton(button);
+    }
+    return button;
   }
 
   @NotNull
@@ -194,6 +234,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         myToolbarStatusPanel.setContent(null);
         myToolbarPanel.setContent(null);
         myContentPanel.setContent(null);
+        myBottomPanel.setContent(null);
       }
     });
   }
