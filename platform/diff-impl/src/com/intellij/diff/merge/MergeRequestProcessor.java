@@ -143,6 +143,8 @@ public abstract class MergeRequestProcessor implements Disposable {
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, contextActions);
 
+    DiffUtil.addActionBlock(group, ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+
     return group;
   }
 
@@ -247,17 +249,13 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   public boolean checkCloseAction() {
     if (myCloseHandler != null && !myCloseHandler.get()) {
-      return Messages.showYesNoDialog(myPanel.getRootPane(),
-                                      DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                      DiffBundle.message("cancel.visual.merge.dialog.title"),
-                                      Messages.getQuestionIcon()) == Messages.YES;
+      boolean proceed = Messages.showYesNoDialog(myPanel.getRootPane(),
+                                                 DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
+                                                 DiffBundle.message("cancel.visual.merge.dialog.title"), Messages.getQuestionIcon()) == Messages.YES;
+      if (proceed) myCloseHandler = null;
+      return proceed;
     }
     return true;
-  }
-
-  @Nullable
-  public String getHelpId() {
-    return PlatformDataKeys.HELP_ID.getData(myMainPanel);
   }
 
   //

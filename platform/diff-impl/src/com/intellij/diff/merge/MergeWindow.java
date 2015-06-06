@@ -16,22 +16,29 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.ui.WindowWrapper.Mode;
+import com.intellij.openapi.ui.WindowWrapperBuilder;
+import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.*;
 
 public class MergeWindow {
   @Nullable private final Project myProject;
   @NotNull private final MergeRequest myMergeRequest;
 
-  private MyDialog myWrapper;
+  private MergeRequestProcessor myProcessor;
+  private WindowWrapper myWrapper;
 
   public MergeWindow(@Nullable Project project, @NotNull MergeRequest mergeRequest) {
     myProject = project;
@@ -39,20 +46,39 @@ public class MergeWindow {
   }
 
   protected void init() {
-    MergeRequestProcessor processor = new MergeRequestProcessor(myProject, myMergeRequest) {
-      @Override
-      public void closeDialog() {
-        myWrapper.doCancelAction();
-      }
+    if (myWrapper != null) return;
 
-      @Override
-      protected void setWindowTitle(@NotNull String title) {
-        myWrapper.setTitle(title);
-      }
-    };
+    myProcessor = createProcessor();
 
-    myWrapper = new MyDialog(processor);
-    myWrapper.init();
+    String dialogGroupKey = myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY);
+    if (dialogGroupKey == null) dialogGroupKey = "MergeDialog";
+
+    myWrapper = new WindowWrapperBuilder(Mode.MODAL, new MyPanel(myProcessor.getComponent()))
+      .setProject(myProject)
+      .setPreferredFocusedComponent(myProcessor.getPreferredFocusedComponent())
+      .setDimensionServiceKey(dialogGroupKey)
+      .setOnShowCallback(new Runnable() {
+        @Override
+        public void run() {
+          myProcessor.init();
+          myProcessor.requestFocus(); // TODO: not needed for modal dialogs. Make a flag in WindowWrapperBuilder ?
+        }
+      })
+      .setOnCloseHandler(new BooleanGetter() {
+        @Override
+        public boolean get() {
+          return myProcessor.checkCloseAction();
+        }
+      })
+      .build();
+    myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
+    Disposer.register(myWrapper, myProcessor);
+
+    new DumbAwareAction() {
+      public void actionPerformed(final AnActionEvent e) {
+        myWrapper.close();
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getCloseActiveWindow(), myProcessor.getComponent());
   }
 
   public void show() {
@@ -60,67 +86,32 @@ public class MergeWindow {
     myWrapper.show();
   }
 
-  // TODO: use WindowWrapper
-  private static class MyDialog extends DialogWrapper {
-    @NotNull private final MergeRequestProcessor myProcessor;
+  @NotNull
+  private MergeRequestProcessor createProcessor() {
+    return new MergeRequestProcessor(myProject, myMergeRequest) {
+      @Override
+      public void closeDialog() {
+        myWrapper.close();
+      }
 
-    public MyDialog(@NotNull MergeRequestProcessor processor) {
-      super(processor.getProject(), true);
-      myProcessor = processor;
+      @Override
+      protected void setWindowTitle(@NotNull String title) {
+        myWrapper.setTitle(title);
+      }
+    };
+  }
+
+  private static class MyPanel extends JPanel {
+    public MyPanel(@NotNull JComponent content) {
+      super(new BorderLayout());
+      add(content, BorderLayout.CENTER);
     }
 
     @Override
-    public void init() {
-      super.init();
-      Disposer.register(getDisposable(), myProcessor);
-      getWindow().addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowOpened(WindowEvent e) {
-          myProcessor.init();
-        }
-      });
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      return myProcessor.getComponent();
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createSouthPanel() {
-      return null;
-    }
-    
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myProcessor.getPreferredFocusedComponent();
-    }
-
-    @Nullable
-    @Override
-    protected String getDimensionServiceKey() {
-      return StringUtil.notNullize(myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY), "MergeDialog");
-    }
-
-    @NotNull
-    @Override
-    protected Action[] createActions() {
-      return new Action[0];
-    }
-
-    @Nullable
-    @Override
-    protected String getHelpId() {
-      return myProcessor.getHelpId();
-    }
-
-    @Override
-    public void doCancelAction() {
-      if (!myProcessor.checkCloseAction()) return;
-      super.doCancelAction();
+    public Dimension getPreferredSize() {
+      Dimension windowSize = DiffUtil.getDefaultDiffWindowSize();
+      Dimension size = super.getPreferredSize();
+      return new Dimension(Math.max(windowSize.width, size.width), Math.max(windowSize.height, size.height));
     }
   }
 }

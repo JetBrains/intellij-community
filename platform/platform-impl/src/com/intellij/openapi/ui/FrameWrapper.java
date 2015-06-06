@@ -26,10 +26,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -68,6 +65,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private FocusTrackback myFocusTrackback;
   private FocusWatcher myFocusWatcher;
 
+  private BooleanGetter myOnCloseHandler;
   private ActionCallback myFocusedCallback;
   private boolean myDisposed;
 
@@ -115,6 +113,10 @@ public class FrameWrapper implements Disposable, DataProvider {
     });
   }
 
+  public void setOnCloseHandler(BooleanGetter onCloseHandler) {
+    myOnCloseHandler = onCloseHandler;
+  }
+
   public void show() {
     show(true);
   }
@@ -134,11 +136,14 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     myFocusTrackback = new FocusTrackback(this, IdeFocusManager.findInstance().getFocusOwner(), true);
 
-    if (frame instanceof JFrame) {
-      ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    } else {
-      ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    }
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        if (myOnCloseHandler != null && !myOnCloseHandler.get()) return;
+        frame.dispose();
+      }
+    });
+
     final WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
         IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
@@ -195,6 +200,12 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void close() {
+    if (myOnCloseHandler != null && !myOnCloseHandler.get()) return;
+    // if you remove this line problems will start happen on Mac OS X
+    // 2 projects opened, call Cmd+D on the second opened project and then Esc.
+    // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
+    // App is unusable until Cmd+Tab, Cmd+tab
+    myFrame.setVisible(false);
     Disposer.dispose(this);
   }
 
@@ -237,11 +248,6 @@ public class FrameWrapper implements Disposable, DataProvider {
         if (selectedPath.length > 0) { // hide popup menu if any
           menuSelectionManager.clearSelectedPath();
         } else {
-          // if you remove this line problems will start happen on Mac OS X
-          // 2 projects opened, call Cmd+D on the second opened project and then Esc.
-          // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
-          // App is unusable until Cmd+Tab, Cmd+tab
-          FrameWrapper.this.myFrame.setVisible(false);
           close();
         }
       }
@@ -379,7 +385,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
-      setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+      setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     }
 
     @Override
@@ -490,7 +496,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       setBackground(UIUtil.getPanelBackground());
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
-      setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+      setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     }
 
     @Override

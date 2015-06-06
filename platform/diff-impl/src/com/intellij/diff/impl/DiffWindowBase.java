@@ -55,6 +55,7 @@ public abstract class DiffWindowBase {
     myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(myHints), new MyPanel(myProcessor.getComponent()))
       .setProject(myProject)
       .setParent(myHints.getParent())
+      .setPreferredFocusedComponent(myProcessor.getPreferredFocusedComponent())
       .setDimensionServiceKey(dialogGroupKey)
       .setOnShowCallback(new Runnable() {
         @Override
