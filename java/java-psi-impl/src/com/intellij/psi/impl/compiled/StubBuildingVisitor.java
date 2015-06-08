@@ -760,7 +760,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       buffer.append('{');
       for (int i = 0, length = Array.getLength(value); i < length; i++) {
         if (i > 0) buffer.append(", ");
-        buffer.append(Array.get(value, i));
+        buffer.append(constToString(Array.get(value, i), type, anno));
       }
       buffer.append('}');
       return buffer.toString();
