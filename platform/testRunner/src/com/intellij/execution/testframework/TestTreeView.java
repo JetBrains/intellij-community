@@ -185,7 +185,9 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-    final TestConsoleProperties properties = myModel.getProperties();
+    final TestFrameworkRunningModel model = myModel;
+    if (model == null) return;
+    final TestConsoleProperties properties = model.getProperties();
     if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(properties)) {
       Rectangle visibleRect = getVisibleRect();
       Rectangle clip = g.getClipBounds();
