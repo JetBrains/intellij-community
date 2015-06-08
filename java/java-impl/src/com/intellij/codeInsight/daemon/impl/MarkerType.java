@@ -181,7 +181,7 @@ public class MarkerType {
     Arrays.sort(overridings, comparator);
 
     String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
-    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{1}\">{1}</a>";
     return GutterIconTooltipHelper.composeText(overridings, start, pattern);
   }
 
@@ -273,7 +273,7 @@ public class MarkerType {
     String start = aClass.isInterface()
                    ? DaemonBundle.message("interface.is.implemented.by.header")
                    : DaemonBundle.message("class.is.subclassed.by.header");
-    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{0}\">{0}</a>";
     return GutterIconTooltipHelper.composeText(subclasses, start, pattern);
   }
 
