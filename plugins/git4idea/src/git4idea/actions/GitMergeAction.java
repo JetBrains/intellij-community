@@ -86,6 +86,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           new GitLocalChangesWouldBeOverwrittenDetector(selectedRoot, MERGE);
         final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =
           new GitUntrackedFilesOverwrittenByOperationDetector(selectedRoot);
+        final GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
 
         AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
         try {
@@ -95,6 +96,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
               GitLineHandler handler = handlerProvider.compute();
               handler.addLineListener(localChangesDetector);
               handler.addLineListener(untrackedFilesDetector);
+              handler.addLineListener(mergeConflict);
               return handler;
             }
           });
@@ -107,7 +109,8 @@ abstract class GitMergeAction extends GitRepositoryAction {
             return;
           }
           final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
-          handleResult(result, project, localChangesDetector, untrackedFilesDetector, repository, currentRev, affectedRoots, beforeLabel);
+          handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector,
+                       repository, currentRev, affectedRoots, beforeLabel);
         }
         finally {
           DvcsUtil.workingTreeChangeFinished(project, token);
@@ -117,12 +120,18 @@ abstract class GitMergeAction extends GitRepositoryAction {
     }.queue();
   }
 
-  private void handleResult(GitCommandResult result, Project project, GitLocalChangesWouldBeOverwrittenDetector localChangesDetector, 
-                            GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector, GitRepository repository, 
-                            GitRevisionNumber currentRev, Set<VirtualFile> affectedRoots, Label beforeLabel) {
+  private void handleResult(GitCommandResult result,
+                            Project project,
+                            GitSimpleEventDetector mergeConflictDetector,
+                            GitLocalChangesWouldBeOverwrittenDetector localChangesDetector,
+                            GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector,
+                            GitRepository repository,
+                            GitRevisionNumber currentRev,
+                            Set<VirtualFile> affectedRoots,
+                            Label beforeLabel) {
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
     VirtualFile root = repository.getRoot();
-    if (result.success()) {
+    if (result.success() || mergeConflictDetector.hasHappened()) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
       List<VcsException> exceptions = new ArrayList<VcsException>();
       GitMergeUtil.showUpdates(this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
