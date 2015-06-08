@@ -50,8 +50,8 @@
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
-    <localInspection language="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
-                     groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
+    <localInspection language="JSON" shortName="JsonStandardCompliance" key="inspection.compliance.name"
+                     groupKey="json.inspection.group" enabledByDefault="true" level="ERROR"
                      bundle="com.intellij.json.JsonBundle"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
 

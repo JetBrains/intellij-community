@@ -36,7 +36,7 @@ public class JsonQuickFixTest extends JsonTestCase {
   private void checkWrapInDoubleQuotes(@NotNull String before, @NotNull String after) {
     myFixture.configureByText(JsonFileType.INSTANCE, before);
     myFixture.enableInspections(JsonStandardComplianceInspection.class);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(JsonBundle.message("name.add.double.quotes.quickfix"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(JsonBundle.message("quickfix.add.double.quotes.desc"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResult(after);
@@ -45,10 +45,10 @@ public class JsonQuickFixTest extends JsonTestCase {
   // Moved from JavaScript
 
   public void testJSON2() {
-    doTest(JsonStandardComplianceInspection.class, JsonBundle.message("name.add.double.quotes.quickfix"));
+    doTest(JsonStandardComplianceInspection.class, JsonBundle.message("quickfix.add.double.quotes.desc"));
   }
 
   public void testJSON3() {
-    doTest(JsonStandardComplianceInspection.class, JsonBundle.message("name.add.double.quotes.quickfix"));
+    doTest(JsonStandardComplianceInspection.class, JsonBundle.message("quickfix.add.double.quotes.desc"));
   }
 }

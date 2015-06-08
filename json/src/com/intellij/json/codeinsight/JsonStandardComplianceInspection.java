@@ -40,7 +40,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
   @NotNull
   public String getDisplayName() {
-    return JsonBundle.message("name.standard.compliance.inspection");
+    return JsonBundle.message("inspection.compliance.name");
   }
 
   @NotNull
@@ -57,7 +57,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       public void visitComment(PsiComment comment) {
         if (myWarnAboutComments) {
           if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment)) {
-            holder.registerProblem(comment, JsonBundle.message("msg.compliance.problem.comments"), ProblemHighlightType.WEAK_WARNING);
+            holder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"), ProblemHighlightType.WEAK_WARNING);
           }
         }
       }
@@ -65,7 +65,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       @Override
       public void visitStringLiteral(@NotNull JsonStringLiteral stringLiteral) {
         if (JsonPsiUtil.getElementTextWithoutHostEscaping(stringLiteral).startsWith("'")) {
-          holder.registerProblem(stringLiteral, JsonBundle.message("msg.compliance.problem.single.quoted.strings"),
+          holder.registerProblem(stringLiteral, JsonBundle.message("inspection.compliance.msg.single.quoted.strings"),
                                  new AddDoubleQuotesFix());
         }
         // May be illegal property key as well
@@ -75,14 +75,14 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       @Override
       public void visitLiteral(@NotNull JsonLiteral literal) {
         if (JsonPsiUtil.isPropertyKey(literal) && !JsonPsiUtil.getElementTextWithoutHostEscaping(literal).startsWith("\"")) {
-          holder.registerProblem(literal, JsonBundle.message("msg.compliance.problem.illegal.property.key"), new AddDoubleQuotesFix());
+          holder.registerProblem(literal, JsonBundle.message("inspection.compliance.msg.illegal.property.key"), new AddDoubleQuotesFix());
         }
         super.visitLiteral(literal);
       }
 
       @Override
       public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
-        holder.registerProblem(reference, JsonBundle.message("msg.compliance.problem.identifier"), new AddDoubleQuotesFix());
+        holder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.identifier"), new AddDoubleQuotesFix());
         // May be illegal property key as well
         super.visitReferenceExpression(reference);
       }
@@ -91,7 +91,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       public void visitArray(@NotNull JsonArray array) {
         final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
         if (trailingComma != null) {
-          holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
+          holder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
         }
         super.visitArray(array);
       }
@@ -100,7 +100,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       public void visitObject(@NotNull JsonObject object) {
         final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
         if (trailingComma != null) {
-          holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
+          holder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
         }
         super.visitObject(object);
       }
@@ -110,7 +110,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         if (value.getContainingFile() instanceof JsonFile) {
           final JsonFile jsonFile = (JsonFile)value.getContainingFile();
           if (myWarnAboutMultipleTopLevelValues && value.getParent() == jsonFile && value != jsonFile.getTopLevelValue()) {
-            holder.registerProblem(value, JsonBundle.message("msg.compliance.problem.multiple.top.level.values"));
+            holder.registerProblem(value, JsonBundle.message("inspection.compliance.msg.multiple.top.level.values"));
           }
         }
       }
@@ -134,8 +134,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JsonBundle.message("option.warn.about.comments.name"), "myWarnAboutComments");
-    optionsPanel.addCheckbox(JsonBundle.message("option.warn.about.multiple.top.level.values.name"), "myWarnAboutMultipleTopLevelValues");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.comments"), "myWarnAboutComments");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.multiple.top.level.values"), "myWarnAboutMultipleTopLevelValues");
     return optionsPanel;
   }
 
@@ -143,7 +143,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return JsonBundle.message("name.add.double.quotes.quickfix");
+      return JsonBundle.message("quickfix.add.double.quotes.desc");
     }
 
     @NotNull
