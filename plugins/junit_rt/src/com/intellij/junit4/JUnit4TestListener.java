@@ -93,7 +93,7 @@ public class JUnit4TestListener extends RunListener {
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
     final List parents = (List)myParents.get(description);
-    List parentsHierarchy = parents != null ? (List)parents.remove(0) : Collections.singletonList(classFQN);
+    List parentsHierarchy = parents != null && !parents.isEmpty() ? (List)parents.remove(0) : Collections.singletonList(classFQN);
 
     int idx = 0;
     String currentClass;
