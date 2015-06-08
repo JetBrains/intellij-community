@@ -24,10 +24,10 @@ import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Set;
 
@@ -46,16 +46,12 @@ public class UnmarkRootAction extends MarkRootActionBase {
 
     super.doUpdate(e, module, selection);
 
-    Set<JpsModuleSourceRootType<?>> selectedRootTypes = new HashSet<JpsModuleSourceRootType<?>>();
-    for (SourceFolder root : selection.mySelectedRoots) {
-      selectedRootTypes.add(root.getRootType());
-    }
+    Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = getHandlersForSelectedRoots(selection);
 
-    if (!selectedRootTypes.isEmpty()) {
+    if (!selectedRootHandlers.isEmpty()) {
       String text;
-      if (selectedRootTypes.size() == 1) {
-        JpsModuleSourceRootType<?> type = selectedRootTypes.iterator().next();
-        ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(type);
+      if (selectedRootHandlers.size() == 1) {
+        ModuleSourceRootEditHandler<?> handler = selectedRootHandlers.iterator().next();
         text = "Unmark as " + handler.getRootTypeName() + " " + StringUtil.pluralize("Root", selection.mySelectedRoots.size());
       }
       else {
@@ -65,9 +61,18 @@ public class UnmarkRootAction extends MarkRootActionBase {
     }
   }
 
+  @NotNull
+  private static Set<ModuleSourceRootEditHandler<?>> getHandlersForSelectedRoots(@NotNull RootsSelection selection) {
+    Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = new HashSet<ModuleSourceRootEditHandler<?>>();
+    for (SourceFolder root : selection.mySelectedRoots) {
+      ContainerUtil.addIfNotNull(selectedRootHandlers, ModuleSourceRootEditHandler.getEditHandler(root.getRootType()));
+    }
+    return selectedRootHandlers;
+  }
+
   @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
-    return selection.mySelectedDirectories.isEmpty() && !selection.mySelectedRoots.isEmpty();
+    return selection.mySelectedDirectories.isEmpty() && !getHandlersForSelectedRoots(selection).isEmpty();
   }
 
   protected void modifyRoots(VirtualFile file, ContentEntry entry) {

@@ -44,6 +44,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myModuleName = moduleName;
     myModulesProvider = state.getModulesProvider();
     for (JpsModuleSourceRootType<?> type : rootTypes) {
-      myEditHandlers.add(ModuleSourceRootEditHandler.getEditHandler(type));
+      ContainerUtil.addIfNotNull(myEditHandlers, ModuleSourceRootEditHandler.getEditHandler(type));
     }
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       @Override
