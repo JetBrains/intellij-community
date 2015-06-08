@@ -243,16 +243,14 @@ public class JarHandler extends ZipHandler {
       int currentVersion = -1;
       File versionFile = new File(file.getParentFile(), file.getName() + ".version");
       if (versionFile.exists()) {
-        DataInputStream versionStream = null;
         try {
-          versionStream = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
-          currentVersion = DataInputOutputUtil.readINT(versionStream);
-        } catch (IOException ignore) {
-        } finally {
+          DataInputStream versionStream = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
           try {
-            if (versionStream != null) versionStream.close();
-          } catch (IOException ignore) {}
-        }
+            currentVersion = DataInputOutputUtil.readINT(versionStream);
+          } finally {
+            versionStream.close();
+          }
+        } catch (IOException ignore) {}
       }
 
       if (currentVersion != VERSION) {
@@ -303,16 +301,15 @@ public class JarHandler extends ZipHandler {
     }
 
     private static void saveVersion(File versionFile) {
-      DataOutputStream versionOutputStream = null;
       try {
-        versionOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(versionFile)));
-        DataInputOutputUtil.writeINT(versionOutputStream, VERSION);
-      } catch (IOException ignore) {}
-      finally {
+        DataOutputStream versionOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(versionFile)));
         try {
-          if (versionOutputStream != null) versionOutputStream.close();
-        } catch (IOException ignore) {}
-      }
+          DataInputOutputUtil.writeINT(versionOutputStream, VERSION);
+        }
+        finally {
+          versionOutputStream.close();
+        }
+      } catch (IOException ignore) {}
     }
 
     private static void flushCachedLibraryInfos() {
