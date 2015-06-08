@@ -23,11 +23,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +67,15 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
       myText = event.getPresentation().getText();
       if (myText == null) myText = myAction.getTemplatePresentation().getText();
       if (myText == null) myText = "";
+      else {
+        ShortcutSet shortcutSet = myAction.getShortcutSet();
+        Shortcut[] shortcuts = shortcutSet.getShortcuts();
+        Shortcut element = ArrayUtil.getFirstElement(shortcuts);
+        if (element != null) {
+          String text = KeymapUtil.getShortcutText(element);
+          myText += " (" + text + ")";
+        }
+      }
     }
     return StringUtil.isNotEmpty(myText);
   }
