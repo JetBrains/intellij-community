@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.PlatformUtils;
 
 /**
  * @author Sergey.Malenkov
@@ -32,7 +31,7 @@ public final class FileEncodingConfigurableProvider extends ConfigurableProvider
 
   @Override
   public boolean canCreateConfigurable() {
-    return !PlatformUtils.isRubyMine();
+    return true;
   }
 
   @Override
