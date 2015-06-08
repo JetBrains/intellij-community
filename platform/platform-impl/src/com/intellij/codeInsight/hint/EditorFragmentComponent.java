@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,9 +146,8 @@ public class EditorFragmentComponent extends JPanel {
 
     final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
 
-    Border outsideBorder = BorderFactory.createLineBorder(borderColor, LINE_BORDER_THICKNESS);
-    Border insideBorder = BorderFactory.createEmptyBorder(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS, 
-                                                          EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
+    Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
+    Border insideBorder = JBUI.Borders.emptyBottom(EMPTY_BORDER_THICKNESS);
     setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
   }
 
@@ -244,7 +244,7 @@ public class EditorFragmentComponent extends JPanel {
     int overhang = editor.getScrollingModel().getVisibleArea().y -
             editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset())).y;
     int yRelative = overhang > 0 && overhang < lineHeight ? 
-                    lineHeight - overhang + LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS : 0;
+                    lineHeight - overhang + JBUI.scale(LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS) : 0;
     Point point = SwingUtilities.convertPoint(((EditorEx)editor).getScrollPane().getViewport(), -2, yRelative, layeredPane);
     return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, true, false);
   }
