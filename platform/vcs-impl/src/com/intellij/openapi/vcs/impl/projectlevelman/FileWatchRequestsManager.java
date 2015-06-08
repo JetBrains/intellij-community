@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.RequestsMerger;
+import com.intellij.openapi.util.RequestsMerger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.Consumer;
 

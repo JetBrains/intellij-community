@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vcs.RequestsMerger;
+import com.intellij.openapi.util.RequestsMerger;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 

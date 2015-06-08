@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs;
+package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -60,6 +59,12 @@ public class RequestsMerger {
   public void request() {
     LOG.debug("ext: request");
     doAction(MyAction.request);
+  }
+
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      return MyState.empty.equals(myState);
+    }
   }
 
   public void waitRefresh(final Runnable runnable) {
