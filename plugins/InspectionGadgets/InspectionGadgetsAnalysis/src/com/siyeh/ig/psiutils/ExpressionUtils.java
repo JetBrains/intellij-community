@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -646,5 +647,29 @@ public class ExpressionUtils {
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     final PsiType type = expression.getType();
     return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+  }
+
+  public static boolean isAnnotatedNotNull(PsiExpression expression) {
+    return isAnnotated(expression, false);
+  }
+
+  public static boolean isAnnotatedNullable(PsiExpression expression) {
+    return isAnnotated(expression, true);
+  }
+
+  private static boolean isAnnotated(PsiExpression expression, boolean nullable) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    final PsiElement target = referenceExpression.resolve();
+    if (!(target instanceof PsiModifierListOwner)) {
+      return false;
+    }
+    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
+    return nullable ?
+           NullableNotNullManager.isNullable(modifierListOwner):
+           NullableNotNullManager.isNotNull(modifierListOwner);
   }
 }

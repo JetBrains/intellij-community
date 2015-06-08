@@ -79,4 +79,9 @@ class IntIntegerTest {
     new IntIntegerTest(new Integer(1)); // <-- incorrectly triggered
     f(new Integer(1)); // <-- not triggered
   }
+
+  void m(@org.jetbrains.annotations.NotNull Boolean p) {
+    Boolean o = null;
+    boolean b = o != Boolean.valueOf(false) || p != <warning descr="Unnecessary boxing 'Boolean.valueOf(false)'">Boolean.valueOf(false)</warning>;
+  }
 }

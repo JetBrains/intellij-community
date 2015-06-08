@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
@@ -276,25 +277,28 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         if (rhs == null) {
           return false;
         }
-        final PsiType rhsType = rhs.getType();
-        if (rhsType == null) {
-          return false;
-        }
-        final PsiType lhsType = lhs.getType();
-        if (lhsType == null) {
-          return false;
-        }
-        if (PsiTreeUtil.isAncestor(rhs, expression, false)) {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
-          return unboxedType != null && unboxedType.isAssignableFrom(lhsType);
-        }
-        else {
-          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(lhsType);
-          return unboxedType != null && unboxedType.isAssignableFrom(rhsType);
-        }
+        return PsiTreeUtil.isAncestor(rhs, expression, false)
+               ? canBinaryExpressionBeUnboxed(lhs, rhs)
+               : canBinaryExpressionBeUnboxed(rhs, lhs);
       }
       final PsiCallExpression containingMethodCallExpression = getParentMethodCallExpression(expression);
       return containingMethodCallExpression == null || isSameMethodCalledWithoutBoxing(containingMethodCallExpression, expression);
+    }
+
+    private boolean canBinaryExpressionBeUnboxed(PsiExpression lhs, PsiExpression rhs) {
+      final PsiType rhsType = rhs.getType();
+      if (rhsType == null) {
+        return false;
+      }
+      final PsiType lhsType = lhs.getType();
+      if (lhsType == null) {
+        return false;
+      }
+      if (!(lhsType instanceof PsiPrimitiveType) && !ExpressionUtils.isAnnotatedNotNull(lhs)) {
+        return false;
+      }
+      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
+      return unboxedType != null && unboxedType.isAssignableFrom(lhsType);
     }
 
     @Nullable
