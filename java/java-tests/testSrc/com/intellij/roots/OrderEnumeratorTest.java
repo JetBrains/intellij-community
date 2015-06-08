@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
@@ -169,9 +169,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     final VirtualFile output = setModuleOutput(myModule, false);
     final VirtualFile testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries(Arrays.asList(myModule)).withoutSdk(),
+    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries(Collections.singletonList(myModule)).withoutSdk(),
                      testOutput, output, getJDomJar());
-    assertSourceRoots(ProjectRootManager.getInstance(myProject).orderEntries(Arrays.asList(myModule)).withoutSdk(),
+    assertSourceRoots(ProjectRootManager.getInstance(myProject).orderEntries(Collections.singletonList(myModule)).withoutSdk(),
                       srcRoot, testRoot, getJDomSources());
   }
 
@@ -194,7 +194,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   private static void assertEnumeratorRoots(OrderRootsEnumerator rootsEnumerator, VirtualFile... files) {
     assertOrderedEquals(rootsEnumerator.getRoots(), files);
-    List<String> expectedUrls = new ArrayList<String>();
+    List<String> expectedUrls = new ArrayList<>();
     for (VirtualFile file : files) {
       expectedUrls.add(file.getUrl());
     }

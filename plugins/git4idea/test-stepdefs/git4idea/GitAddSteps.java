@@ -20,9 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import cucumber.annotation.en.Given;
-import cucumber.annotation.en.Then;
-import cucumber.annotation.en.When;
+import cucumber.api.java.en.Given;
+import cucumber.api.java.en.Then;
+import cucumber.api.java.en.When;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nullable;
 

@@ -25,7 +25,6 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings("deprecation")
 public class ConcurrentMapsTest {
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
@@ -163,6 +162,42 @@ public class ConcurrentMapsTest {
     assertEquals(1, map.size());
     assertTrue(map.containsKey("AB"));
     String removed = map.remove("aB");
+    assertEquals("ab", removed);
+    assertTrue(map.isEmpty());
+  }
+
+  @Test
+  public void testNullKeyForConcurrentSoft() {
+    Map<String, String> map = new ConcurrentSoftHashMap<String, String>();
+
+    checkNullKeys(map);
+  }
+  @Test
+  public void testNullKeyForConcurrentWeak() {
+    Map<String, String> map = new ConcurrentWeakHashMap<String, String>();
+
+    checkNullKeys(map);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNullKeyForConcurrentWeakSoft() {
+    Map<String, String> map = new ConcurrentWeakKeySoftValueHashMap<String, String>(1, 1, 1, CUSTOM_STRATEGY);
+
+    checkNullKeys(map);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNullKeyForConcurrentWeakWeak() {
+    Map<String, String> map = new ConcurrentWeakKeyWeakValueHashMap<String, String>(1, 1, 1, CUSTOM_STRATEGY);
+
+    checkNullKeys(map);
+  }
+
+  private static void checkNullKeys(Map<String, String> map) {
+    map.put(null, "ab");
+    assertEquals(1, map.size());
+    assertEquals("ab", map.get(null));
+    String removed = map.remove(null);
     assertEquals("ab", removed);
     assertTrue(map.isEmpty());
   }

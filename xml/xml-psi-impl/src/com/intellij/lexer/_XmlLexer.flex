@@ -49,8 +49,6 @@ import com.intellij.psi.xml.*;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 %state TAG
 %state PROCESSING_INSTRUCTION
@@ -74,7 +72,7 @@ WS=[\ \n\r\t\f]
 S={WS}+
 
 EL_EMBEDMENT_START="${" | "#{"
-NAME=({ALPHA}|"_")({ALPHA}|{DIGIT}|"_"|"."|"-")*(":"({ALPHA}|"_")?({ALPHA}|{DIGIT}|"_"|"."|"-")*)?
+NAME=({ALPHA}|"_"|":")({ALPHA}|{DIGIT}|"_"|"."|"-")*(":"({ALPHA}|"_")?({ALPHA}|{DIGIT}|"_"|"."|"-")*)?
 
 END_COMMENT="-->"
 CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{S}|{DIGIT}|"."|"("|")"|"|"|"!"|"&")*

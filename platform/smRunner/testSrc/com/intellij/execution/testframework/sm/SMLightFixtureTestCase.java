@@ -52,10 +52,14 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
 
-    super.tearDown();
+      super.tearDown();
+    }
   }
 
   @Nullable

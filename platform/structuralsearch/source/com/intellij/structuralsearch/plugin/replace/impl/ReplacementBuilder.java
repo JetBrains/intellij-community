@@ -5,12 +5,12 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
@@ -19,7 +19,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author maxim
@@ -99,6 +102,19 @@ public final class ReplacementBuilder {
         );
         if (elements.length > 0) {
           final PsiElement patternNode = elements[0].getParent();
+          patternNode.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitElement(PsiElement element) {
+              super.visitElement(element);
+              final String text = element.getText();
+              if (StructuralSearchUtil.isTypedVariable(text)) {
+                final ParameterInfo parameterInfo = findParameterization(Replacer.stripTypedVariableDecoration(text));
+                if (parameterInfo != null && parameterInfo.getElement() == null) {
+                  parameterInfo.setElement(element);
+                }
+              }
+            }
+          });
           profile.provideAdditionalReplaceOptions(patternNode, options, this);
         }
       } catch (IncorrectOperationException e) {
@@ -164,7 +180,7 @@ public final class ReplacementBuilder {
       scriptSupport = new ScriptSupport(StringUtil.stripQuotesAroundValue(constraint), info.getName());
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
-    return scriptSupport.evaluate((MatchResultImpl)match, null);
+    return scriptSupport.evaluate(match, null);
   }
 
   @Nullable

@@ -5,5 +5,7 @@ public class <warning descr="class 'ExtendsThrowable' directly extends 'java.lan
       void b() {}
     };
   }
+
+<T extends Throwable> void foo() throws T {}
 }
 class E1 extends Exception {}

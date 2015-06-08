@@ -69,7 +69,8 @@ public class FSRecords implements Forceable {
 
   private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      (persistentAttributesList ? 31 : 0) + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
-                                     (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0);
+                                     (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
+                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 21:0);
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -410,7 +411,7 @@ public class FSRecords implements Forceable {
     public static void flushSome() {
       if (!isDirty() || HeavyProcessLatch.INSTANCE.isRunning()) return;
 
-      w.lock();
+      r.lock();
       try {
         if (myFlushingFuture == null) {
           return; // avoid NPE when close has already taken place
@@ -426,7 +427,7 @@ public class FSRecords implements Forceable {
         }
       }
       finally {
-        w.unlock();
+        r.unlock();
       }
     }
 

@@ -290,9 +290,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void updateAndSelect(PackagingElementNode<?> node, final List<? extends PackagingElement<?>> toSelect) {
     myArtifactsEditor.queueValidation();
-    final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject(myTree.getRootNode(), node);
     myTreeStructure.clearCaches();
-    myBuilder.addSubtreeToUpdate(treeNode, new Runnable() {
+    myBuilder.queueUpdateFrom(node, true).doWhenDone(new Runnable() {
       @Override
       public void run() {
         List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);

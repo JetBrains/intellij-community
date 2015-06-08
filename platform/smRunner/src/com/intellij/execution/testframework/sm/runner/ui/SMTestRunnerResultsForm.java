@@ -28,6 +28,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
@@ -86,6 +88,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
   private boolean myTestsRunning = true;
+  private AbstractTestProxy myLastSelected;
 
   public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
@@ -126,14 +129,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   public void initUI() {
     super.initUI();
 
-    final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
-    SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
-                                  new Runnable() {
-                                    public void run() {
-                                      showStatisticsForSelectedProxy();
-                                    }
-                                  },
-                                  myTreeView);
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
+      SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
+                                    new Runnable() {
+                                      public void run() {
+                                        showStatisticsForSelectedProxy();
+                                      }
+                                    },
+                                    myTreeView);
+    }
   }
 
   protected ToolbarPanel createToolbarPanel() {
@@ -162,6 +167,29 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
+
+    TrackRunningTestUtil.installStopListeners(myTreeView, myConsoleProperties, new Pass<AbstractTestProxy>() {
+      @Override
+      public void pass(AbstractTestProxy testProxy) {
+        if (testProxy == null) return;
+        //drill to the first leaf
+        while (!testProxy.isLeaf()) {
+          final List<? extends AbstractTestProxy> children = testProxy.getChildren();
+          if (!children.isEmpty()) {
+            final AbstractTestProxy firstChild = children.get(0);
+            if (firstChild != null) {
+              testProxy = firstChild;
+              continue;
+            }
+          }
+          break;
+        }
+
+        //pretend the selection on the first leaf
+        //so if test would be run, tracking would be restarted 
+        myLastSelected = testProxy;
+      }
+    });
 
     //TODO always hide root node
     //myTreeView.setRootVisible(false);
@@ -245,12 +273,23 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     LvcsHelper.addLabel(this);
 
-    selectAndNotify(myTestsRootNode, new Runnable() {
+
+    final Runnable onDone = new Runnable() {
       @Override
       public void run() {
         myTestsRunning = false;
+        final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
+        if (sortByDuration) {
+          myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
+        }
       }
-    });
+    };
+    if (myLastSelected == null) {
+      selectAndNotify(myTestsRootNode, onDone);
+    }
+    else {
+      onDone.run();
+    }
 
     fireOnTestingFinished();
   }
@@ -386,7 +425,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     // Is used by Statistic tab to differ use selection in tree
     // from manual selection from API (e.g. test runner events)
-    showStatisticsForSelectedProxy(testProxy, false);
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      showStatisticsForSelectedProxy(testProxy, false);
+    }
   }
 
   public void addEventsListener(final EventsListener listener) {
@@ -470,6 +511,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.repaintWithParents(newTestOrSuite);
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
+
+    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
+      if (myLastSelected == null || myLastSelected == newTestOrSuite) {
+        myLastSelected = null;
+        selectAndNotify(newTestOrSuite);
+      }
+    }
   }
 
   private void fireOnTestNodeAdded(final SMTestProxy test) {
@@ -509,9 +557,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (myFailedTestCount > 0) {
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
-    else if (myIgnoredTestCount > 0) {
-      myStatusLine.setStatusColor(DARK_YELLOW);
-    }
 
     if (testingFinished) {
       if (myTotalTestCount == 0) {
@@ -525,10 +570,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
-    myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
-                                                                      myTotalTestCount, myFinishedTestCount,
-                                                                      myFailedTestCount, myMentionedCategories,
-                                                                      launchedAndFinished));
+    if (!TestsPresentationUtil.hasNonDefaultCategories(myMentionedCategories)) {
+      myStatusLine.formatTestMessage(myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount, myTestsRootNode.getDuration(), myEndTime);
+    }
+    else {
+      myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
+                                                                        myTotalTestCount, myFinishedTestCount,
+                                                                        myFailedTestCount, myMentionedCategories,
+                                                                        launchedAndFinished));
+    }
   }
 
   /**

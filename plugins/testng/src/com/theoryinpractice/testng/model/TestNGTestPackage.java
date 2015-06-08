@@ -16,7 +16,6 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +55,7 @@ public class TestNGTestPackage extends TestNGTestObject {
       TestClassFilter projectFilter =
         new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myConfig.getProject(), true, true);
       TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-      calculateDependencies(null, classes, TestNGUtil.getAllTestClasses(filter, false));
+      calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(filter, false));
       if (classes.size() == 0) {
         throw new CantRunException("No tests found in the package \"" + packageName + '\"');
       }

@@ -98,6 +98,10 @@ public abstract class StubProcessingHelperBase {
         return true;
       }
       if (customStubs && !(objectStubTree instanceof StubTree)) {
+        if (!skipOnErrors && !requiredClass.isInstance(psiFile)) {
+          inconsistencyDetected(objectStubTree, psiFile);
+          return true;
+        }
         return processor.process((Psi)psiFile); // e.g. dom indices
       }
       stubTree = (StubTree)objectStubTree;
@@ -170,7 +174,7 @@ public abstract class StubProcessingHelperBase {
     return true;
   }
 
-  private void inconsistencyDetected(StubTree stubTree, PsiFileWithStubSupport psiFile) {
+  private void inconsistencyDetected(@NotNull ObjectStubTree stubTree, PsiFileWithStubSupport psiFile) {
     LOG.error(stubTreeAndIndexDoNotMatch(stubTree, psiFile));
     onInternalError(psiFile.getVirtualFile());
   }
@@ -178,7 +182,7 @@ public abstract class StubProcessingHelperBase {
   /***
    * Returns a message to log when stub tree and index do not match
    */
-  protected abstract Object stubTreeAndIndexDoNotMatch(StubTree stubTree, PsiFileWithStubSupport psiFile);
+  protected abstract Object stubTreeAndIndexDoNotMatch(@NotNull ObjectStubTree stubTree, PsiFileWithStubSupport psiFile);
 
   protected abstract void onInternalError(VirtualFile file);
 

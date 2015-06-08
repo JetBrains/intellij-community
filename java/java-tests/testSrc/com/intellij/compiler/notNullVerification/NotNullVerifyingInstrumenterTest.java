@@ -62,8 +62,12 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    super.tearDown();
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testSimpleReturn() throws Exception {

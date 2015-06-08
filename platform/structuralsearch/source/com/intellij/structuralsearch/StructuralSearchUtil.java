@@ -37,6 +37,10 @@ public class StructuralSearchUtil {
     return profile != null && profile.isIdentifier(element);
   }
 
+  public static PsiElement getParentIfIdentifier(PsiElement element) {
+    return !isIdentifier(element) ? element : element.getParent();
+  }
+
   private static StructuralSearchProfile[] getNewStyleProfiles() {
     if (ourNewStyleProfiles == null) {
       final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();
@@ -88,7 +92,7 @@ public class StructuralSearchUtil {
   }
 
   public static boolean isTypedVariable(@NotNull final String name) {
-    return name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
+    return name.length() > 1 && name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
   }
 
   @Nullable

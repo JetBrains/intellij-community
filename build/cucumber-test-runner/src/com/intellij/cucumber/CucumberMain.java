@@ -19,9 +19,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
-import cucumber.io.MultiLoader;
+import cucumber.runtime.Env;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
+import cucumber.runtime.io.MultiLoader;
+import cucumber.runtime.io.ResourceLoaderClassFinder;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Dennis.Ushakov
@@ -32,33 +38,39 @@ public class CucumberMain {
     System.setProperty("apple.awt.UIElement", "true");
   }
 
-  public static void main(final String[] args) {
+  public static void main(String[] args) throws IOException {
+    int exitstatus = run(args, Thread.currentThread().getContextClassLoader());
+    System.exit(exitstatus);
+
+  }
+
+  public static int run(final String[] argv, final ClassLoader classLoader) throws IOException {
     final Ref<Throwable> errorRef = new Ref<Throwable>();
     final Ref<Runtime> runtimeRef = new Ref<Runtime>();
+
     try {
       UsefulTestCase.replaceIdeEventQueueSafely();
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
           try {
-            final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            RuntimeOptions runtimeOptions = new RuntimeOptions(System.getProperties(), args);
-            Runtime runtime = new Runtime(new MultiLoader(classLoader), classLoader, runtimeOptions);
+            RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList(Arrays.asList(argv)));
+            MultiLoader resourceLoader = new MultiLoader(classLoader);
+            ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
+            Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
             runtimeRef.set(runtime);
-            runtime.writeStepdefsJson();
             runtime.run();
+          } catch (Throwable throwable) {
+              errorRef.set(throwable);
+              Logger.getInstance(CucumberMain.class).error(throwable);
+            }
           }
-          catch (Throwable throwable) {
-            errorRef.set(throwable);
-            Logger.getInstance(CucumberMain.class).error(throwable);
-          }
-        }
-      });
-    }
-    catch (Throwable t) {
-      errorRef.set(t);
-      Logger.getInstance(CucumberMain.class).error(t);
-    }
+        });
+      }
+      catch (Throwable t) {
+        errorRef.set(t);
+        Logger.getInstance(CucumberMain.class).error(t);
+      }
 
     final Throwable throwable = errorRef.get();
     if (throwable != null) {
@@ -69,6 +81,6 @@ public class CucumberMain {
       error.printStackTrace();
       System.err.println("=============================");
     }
-    System.exit(throwable != null ? 1 : 0);
+    return throwable != null ? 1 : 0;
   }
 }

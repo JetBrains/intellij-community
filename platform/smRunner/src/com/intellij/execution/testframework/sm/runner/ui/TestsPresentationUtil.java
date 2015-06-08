@@ -89,8 +89,7 @@ public class TestsPresentationUtil {
     if (allCategories != null) {
       // if all categories is just one default tests category - let's do not add prefixes
 
-      if (allCategories.size() > 1
-          || (allCategories.size() == 1 && !DEFAULT_TESTS_CATEGORY.equals(allCategories.iterator().next()))) {
+      if (hasNonDefaultCategories(allCategories)) {
 
         sb.append(' ');
         boolean first = true;
@@ -133,6 +132,13 @@ public class TestsPresentationUtil {
     sb.append(DOUBLE_SPACE);
 
     return sb.toString();
+  }
+
+  public static boolean hasNonDefaultCategories(@Nullable Set<String> allCategories) {
+    if (allCategories == null) {
+      return false;
+    }
+    return allCategories.size() > 1 || (allCategories.size() == 1 && !DEFAULT_TESTS_CATEGORY.equals(allCategories.iterator().next()));
   }
 
   public static void formatRootNodeWithChildren(final SMTestProxy.SMRootTestProxy testProxy,

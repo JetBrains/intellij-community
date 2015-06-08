@@ -300,9 +300,11 @@ public class CreateFromUsageUtils {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "You must not run createClass() from under write action";
     final String name = referenceElement.getReferenceName();
 
+    String qualifierName;
     final PsiElement qualifierElement;
     PsiElement qualifier = referenceElement.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
+      qualifierName = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();
       qualifierElement = ((PsiJavaCodeReferenceElement)qualifier).resolve();
       if (qualifierElement instanceof PsiClass) {
         return ApplicationManager.getApplication().runWriteAction(
@@ -315,20 +317,24 @@ public class CreateFromUsageUtils {
       }
     }
     else {
+      qualifierName = null;
       qualifierElement = null;
     }
 
     final PsiManager manager = referenceElement.getManager();
     final PsiFile sourceFile = referenceElement.getContainingFile();
     final Module module = ModuleUtilCore.findModuleForPsiElement(sourceFile);
-    PsiPackage aPackage = findTargetPackage(qualifierElement, manager, sourceFile);
-    if (aPackage == null) return null;
+    if (qualifierName == null) {
+      PsiPackage aPackage = findTargetPackage(qualifierElement, manager, sourceFile);
+      if (aPackage == null) return null;
+      qualifierName = aPackage.getQualifiedName();
+    }
     final PsiDirectory targetDirectory;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
       String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(classKind.getDescription()));
 
-      CreateClassDialog dialog = new CreateClassDialog(project, title, name, aPackage.getQualifiedName(), classKind, false, module){
+      CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifierName, classKind, false, module){
         @Override
         protected boolean reportBaseInSourceSelectionInTest() {
           return true;

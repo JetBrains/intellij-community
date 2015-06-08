@@ -46,7 +46,7 @@ public class EnvironmentUtil {
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
     if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
-      ExecutorService executor = Executors.newSingleThreadExecutor();
+      ExecutorService executor = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("get shell env"));
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
@@ -207,7 +207,7 @@ public class EnvironmentUtil {
 
     public void killAfter(long timeout) {
       final long stop = System.currentTimeMillis() + timeout;
-      new Thread() {
+      new Thread("kill after") {
         @Override
         public void run() {
           synchronized (myWaiter) {

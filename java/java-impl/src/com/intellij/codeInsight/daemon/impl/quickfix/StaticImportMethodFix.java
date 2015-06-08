@@ -161,7 +161,8 @@ public class StaticImportMethodFix implements IntentionAction {
     final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
 
-    final Map<PsiClass, PsiMethod> deprecated = new HashMap<PsiClass, PsiMethod>();
+    final Map<PsiClass, PsiMethod> deprecated = new LinkedHashMap<PsiClass, PsiMethod>();
+    final Map<PsiClass, PsiMethod> suggestions = new LinkedHashMap<PsiClass, PsiMethod>();
     class RegisterMethodsProcessor {
       private void registerMethod(PsiClass containingClass, PsiMethod method) {
         final Boolean alreadyMentioned = possibleClasses.get(containingClass);
@@ -201,7 +202,7 @@ public class StaticImportMethodFix implements IntentionAction {
             deprecated.put(containingClass, method);
             return processCondition();
           }
-          registrar.registerMethod(containingClass, method);
+          suggestions.put(containingClass, method);
         }
         return processCondition();
       }
@@ -221,10 +222,14 @@ public class StaticImportMethodFix implements IntentionAction {
       }
 
       private boolean processCondition() {
-        return (applicableList.isEmpty() ? list : applicableList).size() + deprecated.size() < 50;
+        return suggestions.size() + deprecated.size() < 50;
       }
     });
 
+    for (Map.Entry<PsiClass, PsiMethod> methodEntry : suggestions.entrySet()) {
+      registrar.registerMethod(methodEntry.getKey(), methodEntry.getValue());
+    }
+    
     for (Map.Entry<PsiClass, PsiMethod> deprecatedMethod : deprecated.entrySet()) {
       registrar.registerMethod(deprecatedMethod.getKey(), deprecatedMethod.getValue());
     }

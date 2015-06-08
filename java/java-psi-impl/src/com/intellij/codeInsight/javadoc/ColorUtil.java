@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class ColorUtil {
               PsiField psiField = (PsiField)psiElement;
               final PsiClass psiClass = psiField.getContainingClass();
               if (psiClass != null && "java.awt.Color".equals(psiClass.getQualifiedName())) {
-                Color c = ReflectionUtil.getField(Color.class, null, Color.class, psiField.getName());
+                Color c = ReflectionUtil.getStaticFieldValue(Color.class, Color.class, psiField.getName());
                 if (c != null) {
                   buffer.append(generatePreviewHtml(c));
                 }

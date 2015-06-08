@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -31,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +41,8 @@ import java.awt.image.BufferedImage;
 
 public class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
+  private static final int LINE_BORDER_THICKNESS = 1;
+  private static final int EMPTY_BORDER_THICKNESS = 2;
 
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     editor.setPurePaintingMode(true);
@@ -144,8 +146,8 @@ public class EditorFragmentComponent extends JPanel {
 
     final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
 
-    Border outsideBorder = BorderFactory.createLineBorder(borderColor, 1);
-    Border insideBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+    Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
+    Border insideBorder = JBUI.Borders.emptyBottom(EMPTY_BORDER_THICKNESS);
     setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
   }
 
@@ -234,12 +236,16 @@ public class EditorFragmentComponent extends JPanel {
 
   @Nullable
   public static LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
-
-    JComponent editorComponent = editor.getComponent();
-    final JRootPane rootPane = editorComponent.getRootPane();
+    if (!(editor instanceof EditorEx)) return null;
+    JRootPane rootPane = editor.getComponent().getRootPane();
     if (rootPane == null) return null;
     JLayeredPane layeredPane = rootPane.getLayeredPane();
-    Point point = SwingUtilities.convertPoint(editorComponent, -2, 0, layeredPane);
+    int lineHeight = editor.getLineHeight();
+    int overhang = editor.getScrollingModel().getVisibleArea().y -
+            editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset())).y;
+    int yRelative = overhang > 0 && overhang < lineHeight ? 
+                    lineHeight - overhang + JBUI.scale(LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS) : 0;
+    Point point = SwingUtilities.convertPoint(((EditorEx)editor).getScrollPane().getViewport(), -2, yRelative, layeredPane);
     return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, true, false);
   }
 

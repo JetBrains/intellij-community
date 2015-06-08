@@ -49,8 +49,7 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
   @NotNull
   @Override
   public FileType getFileType() {
-
-    return getViewProvider().getVirtualFile().getFileType();
+    return getViewProvider().getFileType();
   }
 
   @Nullable

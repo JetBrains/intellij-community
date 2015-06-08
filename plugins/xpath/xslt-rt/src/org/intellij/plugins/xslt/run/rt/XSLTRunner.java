@@ -123,7 +123,7 @@ public class XSLTRunner implements XSLTMain {
                       }
                 }
 
-                Runtime.getRuntime().addShutdownHook(new Thread() {
+                Runtime.getRuntime().addShutdownHook(new Thread("XSLT runner") {
                   public void run() {
                     try {
                       final Writer out = result.getWriter();

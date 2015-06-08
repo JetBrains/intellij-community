@@ -99,13 +99,6 @@ public class UIUtil {
     kit.setStyleSheet(null);
   }
 
-  private static volatile InvocationManager ourInvocationManager = new DefaultInvocationManager();
-
-  @SuppressWarnings("unused") // Used in upsource
-  public static void setInvocationManager(@NotNull InvocationManager invocationManager) {
-    ourInvocationManager = invocationManager;
-  }
-
   public static int getMultiClickInterval() {
     Object property = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
     if (property instanceof Integer) {
@@ -1260,7 +1253,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderWindowsLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Windows");
+    return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1300,7 +1293,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderGTKLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("GTK");
+    return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
@@ -1881,7 +1874,7 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
+    assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -2237,11 +2230,18 @@ public class UIUtil {
   }
 
   public static HTMLEditorKit getHTMLEditorKit() {
+    return getHTMLEditorKit(true);
+  }
+  
+  public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
-    final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
+    String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
+    if (noGapsBetweenParagraphs) {
+      customCss += " p { margin-top: 0; }";
+    }
 
     final StyleSheet style = new StyleSheet();
     style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
@@ -2352,11 +2352,11 @@ public class UIUtil {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    if (ourInvocationManager.isEventDispatchThread()) {
+    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      ourInvocationManager.invokeLater(runnable);
+      EdtInvocationManager.getInstance().invokeLater(runnable);
     }
   }
 
@@ -2370,12 +2370,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    if (ourInvocationManager.isEventDispatchThread()) {
+    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
     else {
       try {
-        ourInvocationManager.invokeAndWait(runnable);
+        EdtInvocationManager.getInstance().invokeAndWait(runnable);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -2413,12 +2413,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
-    if (ourInvocationManager.isEventDispatchThread()) {
+    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
     else {
       final Ref<Throwable> ref = Ref.create();
-      ourInvocationManager.invokeAndWait(new Runnable() {
+      EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
         @Override
         public void run() {
           try {
@@ -3226,7 +3226,7 @@ public class UIUtil {
           LOG.info(ignore);
         }
       }
-    }).start();
+    },"play sound").start();
   }
 
   // Experimental!!!
@@ -3379,33 +3379,5 @@ public class UIUtil {
       }
     }
     return false;
-  }
-
-  public interface InvocationManager {
-
-    boolean isEventDispatchThread();
-
-    void invokeLater(@NotNull Runnable task);
-
-    void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException;
-  }
-
-  private static class DefaultInvocationManager implements InvocationManager {
-    @Override
-    public boolean isEventDispatchThread() {
-      return SwingUtilities.isEventDispatchThread();
-    }
-
-    @Override
-    public void invokeLater(@NotNull Runnable task) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(task);
-    }
-
-    @Override
-    public void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeAndWait(task);
-    }
   }
 }

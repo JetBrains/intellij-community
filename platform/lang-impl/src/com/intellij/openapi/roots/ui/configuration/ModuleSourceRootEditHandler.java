@@ -37,14 +37,15 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
     myRootType = rootType;
   }
 
-  @NotNull
+  @Nullable
   public static <P extends JpsElement> ModuleSourceRootEditHandler<P> getEditHandler(@NotNull JpsModuleSourceRootType<P> type) {
     for (ModuleSourceRootEditHandler editor : EP_NAME.getExtensions()) {
       if (editor.getRootType().equals(type)) {
+        //noinspection unchecked
         return editor;
       }
     }
-    throw new IllegalArgumentException("Cannot find edit handler for " + type);
+    return null;
   }
 
   public final JpsModuleSourceRootType<P> getRootType() {

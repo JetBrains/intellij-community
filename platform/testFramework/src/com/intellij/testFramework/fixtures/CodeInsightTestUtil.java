@@ -23,19 +23,23 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -238,5 +242,16 @@ public class CodeInsightTestUtil {
     fixture.configureByFile(file);
     fixture.testAction(action);
     fixture.checkResultByFile(name + "_after." + extension);
+  }
+
+  public static void addTemplate(final Template template, Disposable parentDisposable) {
+    final TemplateSettings settings = TemplateSettings.getInstance();
+    settings.addTemplate(template);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        settings.removeTemplate(template);
+      }
+    });
   }
 }

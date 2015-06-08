@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class SimpleIndentingBackspaceHandlerTest extends LightPlatformCodeInsightTestCase {
@@ -28,6 +31,22 @@ public class SimpleIndentingBackspaceHandlerTest extends LightPlatformCodeInsigh
   public void testAtLineStart() {
     doTest("line1\n<caret>line2",
            "line1<caret>line2");
+  }
+  
+  public void testDeletingTabWhenIndentSizeIsSmaller() {
+    CodeStyleSettings settings = new CodeStyleSettings();
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();
+    assertNotNull(indentOptions);
+    indentOptions.INDENT_SIZE = 2;
+    indentOptions.TAB_SIZE = 4;
+    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+    try {
+      doTest("\t<caret>text",
+             "  <caret>text");
+    }
+    finally {
+      CodeStyleSettingsManager.getInstance().dropTemporarySettings();
+    }
   }
 
   private void doTest(String before, String after) {

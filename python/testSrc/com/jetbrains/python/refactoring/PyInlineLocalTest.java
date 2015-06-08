@@ -21,7 +21,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -111,7 +110,7 @@ public class PyInlineLocalTest extends PyTestCase {
 
   // PY-12409
   public void testResultExceedsRightMargin() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myFixture.getProject());
+    final CodeStyleSettings settings = getCodeStyleSettings();
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
 
     final int oldRightMargin = settings.getRightMargin(PythonLanguage.getInstance());

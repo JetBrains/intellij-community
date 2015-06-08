@@ -15,8 +15,8 @@
  */
 package git4idea;
 
-import cucumber.annotation.en.Then;
-import cucumber.annotation.en.When;
+import cucumber.api.java.en.Then;
+import cucumber.api.java.en.When;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.GitHttpAuthenticator;
 import org.jetbrains.annotations.NotNull;

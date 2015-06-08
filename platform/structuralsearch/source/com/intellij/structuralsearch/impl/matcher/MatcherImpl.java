@@ -93,6 +93,7 @@ public class MatcherImpl {
     }
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
+    assert profile != null;
     profile.checkSearchPattern(project, options);
   }
 

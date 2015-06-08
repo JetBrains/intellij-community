@@ -62,6 +62,8 @@ public class StartBrowserPanel {
     myRoot.addAncestorListener(new AncestorListenerAdapter() {
       @Override
       public void ancestorAdded(AncestorEvent event) {
+        myRoot.removeAncestorListener(this);
+
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myRoot));
         if (project == null) {
           DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {

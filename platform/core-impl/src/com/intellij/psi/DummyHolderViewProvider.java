@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -166,6 +167,12 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   @Override
   public PsiFile getStubBindingRoot() {
     return getPsi(getBaseLanguage());
+  }
+
+  @NotNull
+  @Override
+  public FileType getFileType() {
+    return myLightVirtualFile.getFileType();
   }
 
   @Override

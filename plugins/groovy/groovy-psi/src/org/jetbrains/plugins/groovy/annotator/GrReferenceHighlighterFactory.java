@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
@@ -37,7 +39,20 @@ public class GrReferenceHighlighterFactory extends AbstractProjectComponent impl
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!GrFileIndexUtil.isGroovySourceFile(file)) return null;
+    if (!isSpecificScriptFile(file) && !GrFileIndexUtil.isGroovySourceFile(file)) return null;
     return new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)file);
   }
+
+  private static boolean isSpecificScriptFile(@NotNull PsiFile file) {
+    if (!(file instanceof GroovyFile)) return false;
+    if (!((GroovyFile)file).isScript()) return false;
+
+    for (GroovyScriptTypeDetector detector : GroovyScriptTypeDetector.EP_NAME.getExtensions()) {
+      if (detector.isSpecificScriptFile((GroovyFile)file)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 }

@@ -187,6 +187,33 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     });
   }
 
+  protected void printContextWithText(final StackFrameContext context) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (context.getFrameProxy() != null) {
+          SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
+          int offset = sourcePosition.getOffset();
+          Document document = PsiDocumentManager.getInstance(myProject).getDocument(sourcePosition.getFile());
+          CharSequence text = document.getImmutableCharSequence();
+          String positionText = "";
+          if (offset > -1) {
+            positionText = StringUtil.escapeLineBreak(" [" + text.subSequence(Math.max(0, offset - 20), offset) + "<*>"
+            + text.subSequence(offset, Math.min(offset + 20, text.length())) + "]");
+          }
+
+          println(sourcePosition.getFile().getVirtualFile().getName()
+                  + ":" + sourcePosition.getLine()
+                  + positionText,
+                  ProcessOutputTypes.SYSTEM);
+        }
+        else {
+          println("Context thread is null", ProcessOutputTypes.SYSTEM);
+        }
+      }
+    });
+  }
+
   protected void invokeRatherLater(SuspendContextImpl context, final Runnable runnable) {
     invokeRatherLater(new SuspendContextCommandImpl(context) {
       @Override

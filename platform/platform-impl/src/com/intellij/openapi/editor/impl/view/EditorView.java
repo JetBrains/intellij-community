@@ -279,6 +279,21 @@ public class EditorView implements Disposable {
     return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line));
   }
 
+  /**
+   * Offset of nearest boundary (not equal to <code>offset</code>) on the same line is returned. <code>-1</code> is returned if 
+   * corresponding boundary is not found.
+   */
+  public int findNearestDirectionBoundary(int offset, boolean lookForward) {
+    assertIsDispatchThread();
+    int textLength = myDocument.getTextLength();
+    if (textLength == 0 || offset < 0 || offset > textLength) return -1;
+    int line = myDocument.getLineNumber(offset);
+    LineLayout layout = getLineLayout(line);
+    int lineStartOffset = myDocument.getLineStartOffset(line);
+    int relativeOffset = layout.findNearestDirectionBoundary(offset - lineStartOffset, lookForward);
+    return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
+  }
+
   @NotNull
   LineLayout getLineLayout(int line) {
     return myTextLayoutCache.getLineLayout(line);

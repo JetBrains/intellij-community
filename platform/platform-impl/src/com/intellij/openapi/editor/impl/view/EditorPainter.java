@@ -30,12 +30,14 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
 import org.jetbrains.annotations.Nullable;
@@ -319,8 +321,8 @@ class EditorPainter {
       UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
     }
     else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-      UIUtil.drawLine(g, xStart, y, xEnd, y);
-      UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
+      int height = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
+      g.fillRect(xStart, y, xEnd - xStart, height);
     }
     else if (effectType == EffectType.STRIKEOUT) {
       int y1 = y - myView.getCharHeight() / 2;

@@ -6,7 +6,9 @@
       <xy x="20" y="20" width="500" height="400"/>
     </constraints>
     <properties/>
-    <border type="none"/>
+    <border type="empty">
+      <size top="5" left="10" bottom="10" right="10"/>
+    </border>
     <children>
       <component id="5b600" class="com.jetbrains.python.facet.PythonSdkComboBox" binding="mySdkComboBox">
         <constraints>

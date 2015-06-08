@@ -16,6 +16,8 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -34,19 +36,25 @@ public class EOFAction extends DumbAwareAction implements AnAction.TransparentUp
 
   @Override
   public void update(AnActionEvent e) {
+    ProcessHandler handler = StopAction.getHandler(e.getDataContext());
     e.getPresentation().setEnabledAndVisible(e.getData(LangDataKeys.CONSOLE_VIEW) != null
                                              && e.getData(CommonDataKeys.EDITOR) != null
-                                             && StopAction.getHandler(e.getDataContext()) != null);
+                                             && handler != null
+                                             && !handler.isProcessTerminated());
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     ProcessHandler activeProcessHandler = StopAction.getHandler(e.getDataContext());
-    if (activeProcessHandler == null) return;
+    if (activeProcessHandler == null || activeProcessHandler.isProcessTerminated()) return;
 
     try {
       OutputStream input = activeProcessHandler.getProcessInput();
       if (input != null) {
+        ConsoleView console = e.getData(LangDataKeys.CONSOLE_VIEW);
+        if (console != null) {
+          console.print("^D\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+        }
         input.close();
       }
     }

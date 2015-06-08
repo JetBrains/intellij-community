@@ -30,6 +30,15 @@
   <item name="java.util.concurrent.CompletionService java.util.concurrent.Future&lt;V&gt; submit(java.util.concurrent.Callable&lt;V&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.concurrent.ConcurrentHashMap V put(K, V) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentHashMap V put(K, V) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.ConcurrentHashMap V remove(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.concurrent.ConcurrentMap V putIfAbsent(K, V) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

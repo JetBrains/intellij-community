@@ -8,6 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="cucumber-jvm" level="project" />
+    <orderEntry type="library" name="cucumber-java" level="project" />
   </component>
 </module>
-

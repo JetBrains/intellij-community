@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class AtomicFieldUpdater<T,V> {
 
   @NotNull
   public static Unsafe getUnsafe() {
-    Unsafe unsafe = ReflectionUtil.getField(Unsafe.class, null, Unsafe.class, "theUnsafe");
+    Unsafe unsafe = ReflectionUtil.getStaticFieldValue(Unsafe.class, Unsafe.class, "theUnsafe");
     if (unsafe == null) {
       throw new RuntimeException("Could not find 'theUnsafe' field in the " + Unsafe.class);
     }

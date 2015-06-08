@@ -102,6 +102,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         public void visitLambdaExpression(PsiLambdaExpression expression) {
+          super.visitLambdaExpression(expression);
           targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, null));
         }
 
@@ -118,7 +119,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitStatement(PsiStatement statement) {
-          if (lineRange.intersects(statement.getTextRange())) {
+          TextRange range = statement.getTextRange();
+          if (lineRange.intersects(range)) {
+            textRange.set(textRange.get().union(range));
             super.visitStatement(statement);
           }
         }

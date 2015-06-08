@@ -44,29 +44,29 @@ public abstract class TestNGTestObject {
   }
 
   public static TestNGTestObject fromConfig(TestNGConfiguration config) {
-    final TestData data = config.getPersistantData();
-    if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
+    final String testObject = config.getPersistantData().TEST_OBJECT;
+    if (testObject.equals(TestType.PACKAGE.getType())) {
       return new TestNGTestPackage(config);
     }
-    if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
+    if (testObject.equals(TestType.CLASS.getType())) {
       return new TestNGTestClass(config);
     }
-    if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
+    if (testObject.equals(TestType.METHOD.getType())) {
       return new TestNGTestMethod(config);
     }
 
-    if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
+    if (testObject.equals(TestType.GROUP.getType())) {
       return new TestNGTestGroup(config);
     }
 
-    if (data.TEST_OBJECT.equals(TestType.PATTERN.getType())) {
+    if (testObject.equals(TestType.PATTERN.getType())) {
       return new TestNGTestPattern(config);
     }
 
-    if (data.TEST_OBJECT.equals(TestType.SUITE.getType())){
+    if (testObject.equals(TestType.SUITE.getType())){
       return new TestNGTestSuite(config);
     }
-    assert false : data.TEST_OBJECT;
+    assert false : testObject;
     return null;
   }
 
@@ -79,16 +79,18 @@ public abstract class TestNGTestObject {
     return false;
   }
 
-  protected void calculateDependencies(PsiMethod[] methods,
-                                       final Map<PsiClass, Map<PsiMethod, List<String>>> results,
-                                       @Nullable final PsiClass... classes) {
-    calculateDependencies(methods, results, new LinkedHashSet<PsiMember>(), classes);
+  protected static void calculateDependencies(PsiMethod[] methods,
+                                              final Map<PsiClass, Map<PsiMethod, List<String>>> results,
+                                              GlobalSearchScope searchScope,
+                                              @Nullable final PsiClass... classes) {
+    calculateDependencies(methods, results, new LinkedHashSet<PsiMember>(), searchScope, classes);
   }
 
-  private void calculateDependencies(final PsiMethod[] methods,
-                                     final Map<PsiClass, Map<PsiMethod, List<String>>> results,
-                                     final Set<PsiMember> alreadyMarkedToBeChecked,
-                                     @Nullable final PsiClass... classes) {
+  private static void calculateDependencies(final PsiMethod[] methods,
+                                            final Map<PsiClass, Map<PsiMethod, List<String>>> results,
+                                            final Set<PsiMember> alreadyMarkedToBeChecked,
+                                            final GlobalSearchScope searchScope,
+                                            @Nullable final PsiClass... classes) {
     if (classes != null && classes.length > 0) {
       final Set<String> groupDependencies = new LinkedHashSet<String>();
       TestNGUtil.collectAnnotationValues(groupDependencies, "dependsOnGroups", methods, classes);
@@ -100,7 +102,7 @@ public abstract class TestNGTestObject {
             final PsiClass testAnnotation =
               JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
             LOG.assertTrue(testAnnotation != null);
-            for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
+            for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
               final PsiClass containingClass = psiMember.getContainingClass();
               if (containingClass == null) continue;
               if (ArrayUtil.find(classes, containingClass) < 0) continue;
@@ -131,7 +133,7 @@ public abstract class TestNGTestObject {
           } else {
             psiClass = (PsiClass)psiMember;
           }
-          calculateDependencies(meths, results, alreadyMarkedToBeChecked, psiClass);
+          calculateDependencies(meths, results, alreadyMarkedToBeChecked, searchScope, psiClass);
         }
       }
     }
@@ -230,7 +232,10 @@ public abstract class TestNGTestObject {
            : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(myConfig.getProject());
   }
 
-  protected void collectTestMethods(Map<PsiClass, Map<PsiMethod, List<String>>> classes, final PsiClass psiClass, final String methodName) {
+  public static void collectTestMethods(Map<PsiClass, Map<PsiMethod, List<String>>> classes,
+                                        final PsiClass psiClass,
+                                        final String methodName,
+                                        final GlobalSearchScope searchScope) {
     final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
       new Computable<PsiMethod[]>() {
         public PsiMethod[] compute() {
@@ -238,7 +243,7 @@ public abstract class TestNGTestObject {
         }
       }
     );
-    calculateDependencies(methods, classes, psiClass);
+    calculateDependencies(methods, classes, searchScope, psiClass);
     Map<PsiMethod, List<String>> psiMethods = classes.get(psiClass);
     if (psiMethods == null) {
       psiMethods = new LinkedHashMap<PsiMethod, List<String>>();

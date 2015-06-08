@@ -16,7 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
 
 public class SynchronizationUtil {
 
@@ -62,7 +62,7 @@ public class SynchronizationUtil {
     return com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, "java.lang.Thread");
   }
 
-  private static class HoldsLockAssertionVisitor extends JavaRecursiveElementVisitor {
+  private static class HoldsLockAssertionVisitor extends JavaRecursiveElementWalkingVisitor {
     private PsiAssertStatement myAssertStatement = null;
 
     @Override
@@ -72,13 +72,8 @@ public class SynchronizationUtil {
       final PsiExpression condition = statement.getAssertCondition();
       if (isCallToHoldsLock(condition)) {
         myAssertStatement = statement;
+        stopWalking();
       }
-    }
-
-    @Override
-    public void visitElement(PsiElement element) {
-      if (myAssertStatement != null) return;
-      super.visitElement(element);
     }
 
     public PsiAssertStatement getAssertStatement() {

@@ -23,9 +23,10 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 
 public class CumulativeStubVersion {
-  private static final int VERSION = 29;
+  private static final int VERSION = 29  + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
 
   public static int getCumulativeVersion() {
     int version = VERSION;

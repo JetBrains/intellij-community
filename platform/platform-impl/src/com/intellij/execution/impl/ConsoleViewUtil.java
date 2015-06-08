@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ public class ConsoleViewUtil {
         editorSettings.setAdditionalLinesCount(0);
         editorSettings.setRightMarginShown(false);
         editorSettings.setCaretRowShown(false);
+        editor.getGutterComponentEx().setPaintBackground(false);
 
         editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 

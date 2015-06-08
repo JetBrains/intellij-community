@@ -24,6 +24,7 @@ import com.theoryinpractice.testng.configuration.SearchingForTestsTask;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
+import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,46 +78,49 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
                 }
               }
 
-              private void includeFailedTestWithDependencies(Map<PsiClass, Map<PsiMethod, List<String>>> classes,
-                                                             GlobalSearchScope scope,
-                                                             Project project,
-                                                             AbstractTestProxy proxy) {
-                final Location location = proxy.getLocation(project, scope);
-                if (location != null) {
-                  final PsiElement element = location.getPsiElement();
-                  if (element instanceof PsiMethod && element.isValid()) {
-                    final PsiMethod psiMethod = (PsiMethod)element;
-                    PsiClass psiClass = psiMethod.getContainingClass();
-                    if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                      final AbstractTestProxy parent = proxy.getParent();
-                      final PsiElement elt = parent != null ? parent.getLocation(project, scope).getPsiElement() : null;
-                      if (elt instanceof PsiClass) {
-                        psiClass = (PsiClass)elt;
-                      }
-                    }
-                    Map<PsiMethod, List<String>> psiMethods = classes.get(psiClass);
-                    if (psiMethods == null) {
-                      psiMethods = new LinkedHashMap<PsiMethod, List<String>>();
-                      classes.put(psiClass, psiMethods);
-                    }
-                    List<String> strings = psiMethods.get(psiMethod);
-                    if (strings == null) {
-                      strings = new ArrayList<String>();
-                    }
-                    if (location instanceof PsiMemberParameterizedLocation) {
-                      final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-                      if (paramSetName != null) {
-                        strings.add(TestNGConfigurationProducer.getInvocationNumber(paramSetName));
-                      }
-                    }
-                    psiMethods.put(psiMethod, strings);
-                  }
-                }
-              }
+
             };
           }
         };
       }
     };
+  }
+
+  public static void includeFailedTestWithDependencies(Map<PsiClass, Map<PsiMethod, List<String>>> classes,
+                                                       GlobalSearchScope scope,
+                                                       Project project,
+                                                       AbstractTestProxy proxy) {
+    final Location location = proxy.getLocation(project, scope);
+    if (location != null) {
+      final PsiElement element = location.getPsiElement();
+      if (element instanceof PsiMethod && element.isValid()) {
+        final PsiMethod psiMethod = (PsiMethod)element;
+        PsiClass psiClass = psiMethod.getContainingClass();
+        if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          final AbstractTestProxy parent = proxy.getParent();
+          final PsiElement elt = parent != null ? parent.getLocation(project, scope).getPsiElement() : null;
+          if (elt instanceof PsiClass) {
+            psiClass = (PsiClass)elt;
+          }
+        }
+        TestNGTestObject.collectTestMethods(classes, psiClass, psiMethod.getName(), scope);
+        Map<PsiMethod, List<String>> psiMethods = classes.get(psiClass);
+        if (psiMethods == null) {
+          psiMethods = new LinkedHashMap<PsiMethod, List<String>>();
+          classes.put(psiClass, psiMethods);
+        }
+        List<String> strings = psiMethods.get(psiMethod);
+        if (strings == null || strings.isEmpty()) {
+          strings = new ArrayList<String>();
+        }
+        if (location instanceof PsiMemberParameterizedLocation) {
+          final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+          if (paramSetName != null) {
+            strings.add(TestNGConfigurationProducer.getInvocationNumber(paramSetName));
+          }
+        }
+        psiMethods.put(psiMethod, strings);
+      }
+    }
   }
 }

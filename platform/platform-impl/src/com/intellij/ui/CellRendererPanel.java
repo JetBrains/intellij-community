@@ -27,8 +27,19 @@ import java.awt.*;
  * @author gregsh
  */
 public class CellRendererPanel extends JPanel {
+
+  private boolean mySelected;
+
   public CellRendererPanel() {
     super(null); // we do the layout ourselves
+  }
+
+  public final boolean isSelected() {
+    return mySelected;
+  }
+
+  public final void setSelected(boolean isSelected) {
+    mySelected = isSelected;
   }
 
   // property change support ----------------
@@ -45,24 +56,54 @@ public class CellRendererPanel extends JPanel {
 
   @Override
   protected void paintComponent(Graphics g) {
+    if (mySelected) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+    }
   }
 
   // BEGIN no validation methods --------------
   @Override
   public void doLayout() {
-    if (getComponentCount() != 1) return;
-    Rectangle bounds = new Rectangle(getWidth(), getHeight());
-    JBInsets.removeFrom(bounds, getInsets());
-    getComponent(0).setBounds(bounds);
+    int count = getComponentCount();
+    if (count == 1) {
+      Rectangle bounds = new Rectangle(getWidth(), getHeight());
+      JBInsets.removeFrom(bounds, getInsets());
+      Component child = getComponent(0);
+      child.setBounds(bounds);
+      if (child instanceof CellRendererPanel) {
+        ((CellRendererPanel)child).invalidateLayout();
+        child.doLayout();
+      }
+    }
+    else {
+      invalidateLayout();
+      super.doLayout();
+      for (int i = 0; i < count; i++) {
+        Component c = getComponent(i);
+        if (c instanceof CellRendererPanel) {
+          c.doLayout();
+        }
+      }
+    }
   }
 
   @Override
   public Dimension getPreferredSize() {
-    if (getComponentCount() != 1) return super.getPreferredSize();
+    if (getComponentCount() != 1) {
+      return super.getPreferredSize();
+    }
     return getComponent(0).getPreferredSize();
   }
 
   public void invalidate() {
+  }
+
+  private void invalidateLayout() {
+    LayoutManager layout = getLayout();
+    if (layout instanceof LayoutManager2) {
+      ((LayoutManager2)layout).invalidateLayout(this);
+    }
   }
 
   public void validate() {

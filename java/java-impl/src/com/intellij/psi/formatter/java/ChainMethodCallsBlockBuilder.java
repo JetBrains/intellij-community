@@ -67,32 +67,38 @@ class ChainMethodCallsBlockBuilder {
   private List<Block> buildBlocksFrom(List<ASTNode> nodes) {
     List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
 
-    myWrap = getNewWrap(mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN);
-    myChainedCallsAlignment = getNewAlignment();
-
-    Wrap wrapToUse = null;
-    Alignment alignmentToUse = null;
+    myWrap = null;
+    myChainedCallsAlignment = null;
 
     List<Block> blocks = new ArrayList<Block>();
 
-    for (ChainedCallChunk currentCallChunk : methodCall) {
+    for (int i = 0; i < methodCall.size(); i++) {
+      ChainedCallChunk currentCallChunk = methodCall.get(i);
       if (isMethodCall(currentCallChunk)) {
-        wrapToUse = myWrap;
-        alignmentToUse = shouldAlignMethod(currentCallChunk, methodCall) ? myChainedCallsAlignment : null;
+        if (myWrap == null) myWrap = createCallChunkWrap(i, methodCall);
+        if (myChainedCallsAlignment == null) myChainedCallsAlignment = createCallChunkAlignment(i, methodCall);
       }
-      else if (wrapToUse != null) {
-        wrapToUse = null;
-        alignmentToUse = null;
-
-        myChainedCallsAlignment = getNewAlignment();
-        myWrap = getNewWrap(mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN);
+      else {
+        myWrap = null;
+        myChainedCallsAlignment = null;
       }
 
       SyntheticBlockBuilder builder = new SyntheticBlockBuilder(mySettings, myJavaSettings);
-      blocks.add(builder.create(currentCallChunk.nodes, wrapToUse, alignmentToUse));
+      blocks.add(builder.create(currentCallChunk.nodes, myWrap, myChainedCallsAlignment));
     }
 
     return blocks;
+  }
+
+  private Wrap createCallChunkWrap(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {
+    if (mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN) {
+      ChainedCallChunk next = chunkIndex + 1 < methodCall.size() ? methodCall.get(chunkIndex + 1) : null;
+      if (next != null && isMethodCall(next)) {
+        return Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), true);
+      }
+    }
+
+    return Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false);
   }
 
   private boolean shouldAlignMethod(ChainedCallChunk currentMethodChunk, List<ChainedCallChunk> methodCall) {
@@ -122,12 +128,11 @@ class ChainMethodCallsBlockBuilder {
     return result;
   }
 
-  private Alignment getNewAlignment() {
-    return AbstractJavaBlock.createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null);
-  }
-
-  private Wrap getNewWrap(boolean wrapFirst) {
-    return Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), wrapFirst);
+  private Alignment createCallChunkAlignment(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {
+    ChainedCallChunk current = methodCall.get(chunkIndex);
+    return shouldAlignMethod(current, methodCall)
+           ? AbstractJavaBlock.createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null)
+           : null;
   }
 
   private boolean isMethodCall(@NotNull ChainedCallChunk callChunk) {

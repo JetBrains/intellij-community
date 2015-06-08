@@ -64,7 +64,11 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     }
 
     final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
-    if (!myContext.equals(captured.myContext) || myExistential.isSuper() && !myExistential.equals(captured.myExistential)) {
+    if (!myContext.equals(captured.myContext)) {
+      return false;
+    }
+
+    if ((myExistential.isSuper() || captured.myExistential.isSuper()) && !myExistential.equals(captured.myExistential)) {
       return false;
     }
 
@@ -145,9 +149,6 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     final PsiType bound = myExistential.getBound();
     if (myExistential.isExtends() && myParameter == null) {
       return bound;
-    }
-    else if (bound instanceof PsiCapturedWildcardType) {
-      return PsiWildcardType.createSuper(myContext.getManager(), ((PsiCapturedWildcardType)bound).getUpperBound());
     }
     else {
       return myUpperBound;

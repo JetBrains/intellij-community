@@ -29,8 +29,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -96,8 +94,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
               final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(containingClass);
               final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
               final String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
-              final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(containingClass.getProject()).getFileIndex();
-              return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(fileIndex, baseFileName, testDataPath, containingClass);
+              return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, containingClass);
             }
           }
         }

@@ -23,11 +23,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -80,7 +80,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         performWriteCommandAction(result);
       }
       else {
-        SwingUtilities.invokeAndWait(new Runnable() {
+        EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
           @Override
           public void run() {
             performWriteCommandAction(result);

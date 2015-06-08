@@ -313,7 +313,7 @@ public class ConfigurableExtensionPointUtil {
         }
       }
     }
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       if (loadComponents) {
         addValid(list, project.getComponents(Configurable.class), project);
       }

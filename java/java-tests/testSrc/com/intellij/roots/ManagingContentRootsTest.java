@@ -31,16 +31,13 @@ public class ManagingContentRootsTest extends IdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          LocalFileSystem fs = LocalFileSystem.getInstance();
-          dir = fs.refreshAndFindFileByIoFile(createTempDirectory());
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        LocalFileSystem fs = LocalFileSystem.getInstance();
+        dir = fs.refreshAndFindFileByIoFile(createTempDirectory());
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -82,17 +79,14 @@ public class ManagingContentRootsTest extends IdeaTestCase {
   }
 
   public void testGettingModifiableModelCorrectlySetsRootModelForContentEntries() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        PsiTestUtil.addContentRoot(myModule, dir);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiTestUtil.addContentRoot(myModule, dir);
 
-        ModifiableRootModel m = getRootManager().getModifiableModel();
-        ContentEntry e = findContentEntry(dir.getUrl(), m);
+      ModifiableRootModel m = getRootManager().getModifiableModel();
+      ContentEntry e = findContentEntry(dir.getUrl(), m);
 
-        assertSame(m, ((ContentEntryImpl)e).getRootModel());
-        m.dispose();
-      }
+      assertSame(m, ((ContentEntryImpl)e).getRootModel());
+      m.dispose();
     });
   }
 
@@ -108,11 +102,8 @@ public class ManagingContentRootsTest extends IdeaTestCase {
   }
 
   private void addContentRoot(final String path) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ModuleRootModificationUtil.addContentRoot(getModule(), path);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ModuleRootModificationUtil.addContentRoot(getModule(), path);
     });
   }
 

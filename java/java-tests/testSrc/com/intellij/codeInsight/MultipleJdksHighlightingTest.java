@@ -43,12 +43,17 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    myFixture.tearDown();
-    myFixture = null;
-    myJava3Module = null;
-    myJava7Module = null;
-    myJava8Module = null;
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myJava3Module = null;
+      myJava7Module = null;
+      myJava8Module = null;
+
+      super.tearDown();
+    }
   }
   
   @Override

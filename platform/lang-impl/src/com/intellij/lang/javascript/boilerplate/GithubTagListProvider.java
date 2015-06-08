@@ -17,10 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
-/**
- * @author Sergey Simonchik
- */
 public class GithubTagListProvider {
 
   private static final Logger LOG = Logger.getInstance(GithubTagListProvider.class);
@@ -63,6 +61,10 @@ public class GithubTagListProvider {
     return new Runnable() {
       @Override
       public void run() {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          peer.onTagsUpdated(Collections.<GithubTagInfo>emptySet());
+          return;
+        }
         final String[] urls = formatTagListDownloadUrls();
         String firstErrorMessage = null;
         for (String url : urls) {

@@ -1615,6 +1615,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return result + columnsToProcess;
   }
 
+  public int findNearestDirectionBoundary(int offset, boolean lookForward) {
+    return myUseNewRendering ? myView.findNearestDirectionBoundary(offset, lookForward) : -1;
+  }
+
   // TODO: tabbed text width is additive, it should be possible to have buckets, containing arguments / values to start with
   private final int[] myLastStartOffsets = new int[2];
   private final int[] myLastTargetColumns = new int[myLastStartOffsets.length];
@@ -4344,11 +4348,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMultiSelectionInProgress = true;
         myRectangularSelectionInProgress = columnSelectionDrag || addRectangularSelectionEvent;
         myTargetMultiSelectionPosition = xyToVisualPosition(new Point(Math.max(x, 0), Math.max(y, 0)));
-        getScrollingModel().scrollTo(newLogicalCaret, ScrollType.RELATIVE);
       }
       else {
         getCaretModel().moveToLogicalPosition(newLogicalCaret);
-        getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
 
       int newCaretOffset = getCaretModel().getOffset();

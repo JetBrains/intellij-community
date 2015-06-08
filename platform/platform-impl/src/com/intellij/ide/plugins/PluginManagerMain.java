@@ -348,7 +348,7 @@ public abstract class PluginManagerMain implements Disposable {
           catch (IOException e) {
             LOG.info(host, e);
             if (host != ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) {
-              errors.add(e.getMessage());
+              errors.add(String.format("'%s' for '%s'", e.getMessage(), host));
             }
           }
         }

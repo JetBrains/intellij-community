@@ -87,9 +87,10 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   @Override
   protected void tearDownFixtures() throws Exception {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion;
+    myConfigTimestamps.clear();
+
     myFixture.tearDown();
     myFixture = null;
-    myConfigTimestamps.clear();
   }
 
   protected PsiFile findPsiFile(VirtualFile f) {

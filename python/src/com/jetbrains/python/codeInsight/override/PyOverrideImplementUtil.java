@@ -307,13 +307,11 @@ public class PyOverrideImplementUtil {
   }
 
   @NotNull
-  public static Collection<PyFunction> getAllSuperFunctions(@NotNull final PyClass pyClass) {
+  public static Collection<PyFunction> getAllSuperFunctions(@NotNull PyClass pyClass) {
     final Map<String, PyFunction> superFunctions = new HashMap<String, PyFunction>();
-    for (PyClass aClass : pyClass.getAncestorClasses()) {
-      for (PyFunction function : aClass.getMethods(false)) {
-        if (!superFunctions.containsKey(function.getName())) {
-          superFunctions.put(function.getName(), function);
-        }
+    for (PyFunction function : pyClass.getMethods(true)) {
+      if (!superFunctions.containsKey(function.getName())) {
+        superFunctions.put(function.getName(), function);
       }
     }
     return superFunctions.values();

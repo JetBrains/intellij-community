@@ -28,7 +28,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
 
   public PsiPlainTextFileImpl(FileViewProvider viewProvider) {
     super(PlainTextTokenTypes.PLAIN_TEXT_FILE, PlainTextTokenTypes.PLAIN_TEXT_FILE, viewProvider);
-    myFileType = viewProvider.getBaseLanguage() != PlainTextLanguage.INSTANCE ? PlainTextFileType.INSTANCE : viewProvider.getVirtualFile().getFileType();
+    myFileType = viewProvider.getBaseLanguage() != PlainTextLanguage.INSTANCE ? PlainTextFileType.INSTANCE : viewProvider.getFileType();
   }
 
   @Override

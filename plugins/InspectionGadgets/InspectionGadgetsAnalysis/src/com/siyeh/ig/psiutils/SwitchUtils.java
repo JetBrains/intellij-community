@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -121,7 +120,7 @@ public class SwitchUtils {
       return true;
     }
     else if (type instanceof PsiClassType) {
-      if (isAnnotatedNullable(expression)) {
+      if (ExpressionUtils.isAnnotatedNullable(expression)) {
         return false;
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) || type.equalsToText(CommonClassNames.JAVA_LANG_BYTE) ||
@@ -204,7 +203,7 @@ public class SwitchUtils {
       return null;
     }
     if (PsiUtil.isConstantExpression(qualifierExpression)) {
-      if (nullSafe && !isAnnotatedNotNull(argument)) {
+      if (nullSafe && !ExpressionUtils.isAnnotatedNotNull(argument)) {
         return null;
       }
       return argument;
@@ -213,34 +212,6 @@ public class SwitchUtils {
       return qualifierExpression;
     }
     return null;
-  }
-
-  private static boolean isAnnotatedNotNull(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiModifierListOwner)) {
-      return false;
-    }
-    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-    return NullableNotNullManager.isNotNull(modifierListOwner);
-  }
-
-  private static boolean isAnnotatedNullable(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiModifierListOwner)) {
-      return false;
-    }
-    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-    return NullableNotNullManager.isNullable(modifierListOwner);
   }
 
   private static boolean canBeCaseLabel(PsiExpression expression, LanguageLevel languageLevel) {

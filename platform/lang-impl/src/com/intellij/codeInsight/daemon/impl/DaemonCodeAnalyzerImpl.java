@@ -363,6 +363,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           throw new RuntimeException(e);
         }
       }
+      HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getHighlightingSession(file, progress);
+      try {
+        myPassExecutorService.waitFor(50000);
+        if (session != null) {
+          session.waitForHighlightInfosApplied();
+        }
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();

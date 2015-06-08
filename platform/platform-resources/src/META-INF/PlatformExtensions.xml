@@ -178,6 +178,11 @@
                         serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
+    <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
+                        serviceImplementation="com.intellij.openapi.util.WindowStateApplicationService"/>
+    <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
+                    serviceImplementation="com.intellij.openapi.util.WindowStateProjectService"/>
+
     <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
                         serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoImpl"/>
 

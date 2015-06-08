@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class HighlightInfoProcessor {
-  public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession highlightingSession,
+  public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                      @NotNull List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange, int groupId) {}
-  public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession highlightingSession,
+  public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                       @NotNull List<HighlightInfo> infos,
                                                       @NotNull TextRange priorityRange,
                                                       @NotNull TextRange restrictedRange, int groupId) {}
 
-  public void infoIsAvailable(@NotNull HighlightingSession highlightingSession, @NotNull HighlightInfo info) {}
-  public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession highlightingSession,
+  public void infoIsAvailable(@NotNull HighlightingSession session,
+                              @NotNull HighlightInfo info,
+                              @NotNull TextRange priorityRange,
+                              @NotNull TextRange restrictedRange,
+                              int groupId) {}
+  public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
                                                @NotNull TextRange elementRange,
                                                @Nullable List<HighlightInfo> infos){}
 

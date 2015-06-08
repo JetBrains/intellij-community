@@ -3262,4 +3262,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find polyadic expression of 3 operands", 1, findMatchesCount(source, "'_a + '_b{2,2}"));
     assertEquals("find polyadic expression of >3 operands", 2, findMatchesCount(source, "'_a + '_b{2,100}"));
   }
+
+  public void testMultipleFieldsInOneDeclaration() {
+    String source = "class A {" +
+                    "  int i;" +
+                    "  int j, k;" +
+                    "  int l, m, n;" +
+                    "  int o, p, q;" +
+                    "}";
+    assertEquals("find multiple fields in one declaration 1", 3, findMatchesCount(source, "'_a '_b{2,100};"));
+    assertEquals("find multiple fields in one declaration 2", 3, findMatchesCount(source, "int '_b{2,100};"));
+    assertEquals("find multiple fields in one declaration 2", 2, findMatchesCount(source, "int '_b{3,3};"));
+    assertEquals("find declarations with only one field", 1, findMatchesCount(source, "int '_a;"));
+    assertEquals("find all declarations", 4, findMatchesCount(source, "int '_a+;"));
+    assertEquals("find all fields", 9, findMatchesCount(source, "int 'a+;"));
+  }
 }

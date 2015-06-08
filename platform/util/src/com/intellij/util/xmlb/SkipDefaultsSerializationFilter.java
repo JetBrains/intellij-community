@@ -17,6 +17,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -49,16 +50,7 @@ public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSeri
           BeanBinding classBinding = (BeanBinding)referencedBinding;
           ThreeState compareByFields = classBinding.hasEqualMethod;
           if (compareByFields == ThreeState.UNSURE) {
-            try {
-              classBinding.myBeanClass.getDeclaredMethod("equals", Object.class);
-              compareByFields = ThreeState.NO;
-            }
-            catch (NoSuchMethodException ignored) {
-              compareByFields = ThreeState.YES;
-            }
-            catch (Exception e) {
-              Binding.LOG.warn(e);
-            }
+            compareByFields = ReflectionUtil.getDeclaredMethod(classBinding.myBeanClass, "equals", Object.class) == null ? ThreeState.YES : ThreeState.NO;
 
             classBinding.hasEqualMethod = compareByFields;
           }

@@ -267,7 +267,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
-      Collections.swap(myEntries, oldIndex, newIndex);
+      GitRebaseEntry movingElement = myEntries.remove(oldIndex);
+      myEntries.add(newIndex, movingElement);
       fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
     }
 

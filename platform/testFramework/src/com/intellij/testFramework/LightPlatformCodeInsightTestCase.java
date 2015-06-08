@@ -518,6 +518,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
   }
 
+  protected static void homeWithSelection() {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION);
+  }
+
+  protected static void endWithSelection() {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION);
+  }
+
   protected static void copy() {
     executeAction(IdeActions.ACTION_EDITOR_COPY);
   }
@@ -532,6 +540,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   protected static void moveCaretToNextWordWithSelection() {
     executeAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
+  }
+
+  protected static void previousWord() {
+    executeAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD);
+  }
+
+  protected static void nextWord() {
+    executeAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
   }
 
   protected static void cutLineBackward() {

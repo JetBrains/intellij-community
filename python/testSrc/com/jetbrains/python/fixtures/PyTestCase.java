@@ -43,6 +43,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -57,7 +60,9 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -404,6 +409,21 @@ public abstract class PyTestCase extends UsefulTestCase {
         myFixture.performEditorAction(action);
       }
     }, "", null);
+  }
+
+  @NotNull
+  protected CommonCodeStyleSettings getCommonCodeStyleSettings() {
+    return getCodeStyleSettings().getCommonSettings(PythonLanguage.getInstance());
+  }
+
+  @NotNull
+  protected PyCodeStyleSettings getPythonCodeStyle() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
+  }
+
+  @NotNull
+  protected CodeStyleSettings getCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(myFixture.getProject());
   }
 }
 

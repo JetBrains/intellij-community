@@ -276,8 +276,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(new File(path + File.separatorChar + "dir1" + File.separatorChar + "dir2").mkdirs());
     assertTrue(new File(path + File.separatorChar + "CVS").mkdirs());
     VirtualFileManager.getInstance().syncRefresh();
-
-    myIndex.checkConsistency();
   }
 
   public void testDeleteDir() throws Exception {
@@ -285,45 +283,29 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VirtualFile subdir2 = createChildDirectory(subdir1, "subdir2");
     createChildDirectory(subdir2, "subdir3");
 
-    myIndex.checkConsistency();
-
     delete(subdir1);
-
-    myIndex.checkConsistency();
   }
 
   public void testMoveDir() throws Exception {
     VirtualFile subdir = createChildDirectory(mySrcDir2, "subdir1");
     createChildDirectory(subdir, "subdir2");
 
-    myIndex.checkConsistency();
-
     move(subdir, mySrcDir1);
-
-    myIndex.checkConsistency();
   }
 
   public void testRenameDir() throws Exception {
     VirtualFile subdir = createChildDirectory(mySrcDir2, "subdir1");
     createChildDirectory(subdir, "subdir2");
 
-    myIndex.checkConsistency();
-
     rename(subdir, "abc.d");
-
-    myIndex.checkConsistency();
   }
 
   public void testRenameRoot() throws Exception {
     rename(myModule1Dir, "newName");
-
-    myIndex.checkConsistency();
   }
 
   public void testMoveRoot() throws Exception {
     move(myModule1Dir, myModule3Dir);
-
-    myIndex.checkConsistency();
   }
 
   public void testAddProjectDir() throws Exception {
@@ -333,19 +315,14 @@ public class DirectoryIndexTest extends IdeaTestCase {
         VirtualFile newDir = createChildDirectory(myModule1Dir.getParent(), "newDir");
         createChildDirectory(newDir, "subdir");
 
-        myIndex.checkConsistency();
         PsiTestUtil.addContentRoot(myModule, newDir);
       }
     }.execute().throwException();
-
-
-    myIndex.checkConsistency();
   }
 
   public void testChangeIgnoreList() throws Exception {
     VirtualFile newDir = createChildDirectory(myModule1Dir, "newDir");
-    
-    myIndex.checkConsistency();
+
     assertInProject(newDir);
 
     final FileTypeManagerEx fileTypeManager = (FileTypeManagerEx)FileTypeManager.getInstance();
@@ -358,7 +335,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
           fileTypeManager.setIgnoredFilesList(list1);
         }
       });
-      myIndex.checkConsistency();
       assertNotInProject(newDir);
     }
     finally {
@@ -383,7 +359,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testAddModule() throws Exception {
-    myIndex.checkConsistency();
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -395,9 +370,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
         PsiTestUtil.addContentRoot(module, newModuleContent);
       }
     }.execute().throwException();
-
-
-    myIndex.checkConsistency();
   }
 
   public void testModuleUnderIgnoredDir() throws IOException {
@@ -454,8 +426,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
   public void testExplicitExcludeOfInner() throws Exception {
     PsiTestUtil.addExcludedRoot(myModule, myModule2Dir);
-
-    myIndex.checkConsistency();
 
     checkInfo(myModule2Dir, myModule2, false, false, null, null);
     checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
@@ -645,8 +615,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
   public void testLibraryDirInContent() throws Exception {
     ModuleRootModificationUtil.addModuleLibrary(myModule, myModule1Dir.getUrl());
-
-    myIndex.checkConsistency();
 
     checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);

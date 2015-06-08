@@ -49,7 +49,31 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class MarkerType {
-  public static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+
+  private final GutterIconNavigationHandler<PsiElement> handler;
+  private final Function<PsiElement, String> myTooltip;
+
+  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+    myTooltip = tooltip;
+    handler = new GutterIconNavigationHandler<PsiElement>() {
+      @Override
+      public void navigate(MouseEvent e, PsiElement elt) {
+        navigator.browse(e, elt);
+      }
+    };
+  }
+
+  @NotNull
+  public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
+    return handler;
+  }
+
+  @NotNull
+  public Function<PsiElement, String> getTooltip() {
+    return myTooltip;
+  }
+
+  static final MarkerType OVERRIDING_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = getParentMethod(element);
@@ -58,14 +82,13 @@ public class MarkerType {
 
       return calculateOverridingMethodTooltip(method, method != element.getParent());
     }
-  }, new LineMarkerNavigator(){
+  }, new LineMarkerNavigator() {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = getParentMethod(element);
       if (!(parent instanceof PsiMethod)) return;
       PsiMethod method = (PsiMethod)parent;
       navigateToOverridingMethod(e, method, method != element.getParent());
-
     }
   });
 
@@ -116,7 +139,7 @@ public class MarkerType {
   }
 
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
-  public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
+  static final MarkerType OVERRIDDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
@@ -158,7 +181,7 @@ public class MarkerType {
     Arrays.sort(overridings, comparator);
 
     String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
-    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{1}\">{1}</a>";
     return GutterIconTooltipHelper.composeText(overridings, start, pattern);
   }
 
@@ -203,8 +226,8 @@ public class MarkerType {
     PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
   }
 
-  public static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for overridden methods";
-  public static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
+  private static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for Overridden Methods";
+  static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
       PsiElement parent = element.getParent();
@@ -212,7 +235,7 @@ public class MarkerType {
       PsiClass aClass = (PsiClass)parent;
       return getSubclassedClassTooltip(aClass);
     }
-  }, new LineMarkerNavigator(){
+  }, new LineMarkerNavigator() {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       final PsiElement parent = element.getParent();
@@ -250,7 +273,7 @@ public class MarkerType {
     String start = aClass.isInterface()
                    ? DaemonBundle.message("interface.is.implemented.by.header")
                    : DaemonBundle.message("class.is.subclassed.by.header");
-    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{0}\">{0}</a>";
     return GutterIconTooltipHelper.composeText(subclasses, start, pattern);
   }
 
@@ -281,29 +304,6 @@ public class MarkerType {
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
     Arrays.sort(inheritors, renderer.getComparator());
     PsiElementListNavigator.openTargets(e, inheritors, subclassUpdater.getCaption(inheritors.length), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
-  }
-
-  private final GutterIconNavigationHandler<PsiElement> handler;
-  private final Function<PsiElement, String> myTooltip;
-
-  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
-    myTooltip = tooltip;
-    handler = new GutterIconNavigationHandler<PsiElement>() {
-      @Override
-      public void navigate(MouseEvent e, PsiElement elt) {
-        navigator.browse(e, elt);
-      }
-    };
-  }
-
-  @NotNull
-  public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
-    return handler;
-  }
-
-  @NotNull
-  public Function<PsiElement, String> getTooltip() {
-    return myTooltip;
   }
 
   private static class SubclassUpdater extends ListBackgroundUpdaterTask {

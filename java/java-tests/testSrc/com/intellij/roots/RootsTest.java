@@ -17,12 +17,9 @@ public class RootsTest extends PsiTestCase {
   public void testTest1() {
     final String rootPath = PathManagerEx.getTestDataPath() + "/moduleRootManager/roots/" + "test1";
     final VirtualFile[] rootFileBox = new VirtualFile[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootFileBox[0] =
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'));
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      rootFileBox[0] =
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'));
     });
     final VirtualFile rootFile = rootFileBox[0];
     final VirtualFile classesFile = rootFile.findChild("classes");

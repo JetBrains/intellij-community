@@ -266,6 +266,12 @@ class CollectionsUser {
     return () -> bas;
   }
 
+  Supplier<List<String>> j() {
+    final List<String> bas = new ArrayList<>();
+    bas.add("asdf");
+    return () -> {return bas;};
+  }
+
   interface Supplier<T> {
     T get();
   }

@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
@@ -37,6 +38,6 @@ public class SourceRootPresentation {
   @NotNull
   private static <P extends JpsElement> Icon getSourceRootIcon(@NotNull JpsTypedModuleSourceRoot<P> root) {
     ModuleSourceRootEditHandler<P> handler = ModuleSourceRootEditHandler.getEditHandler(root.getRootType());
-    return handler.getRootIcon(root.getProperties());
+    return handler != null ? handler.getRootIcon(root.getProperties()) : PlatformIcons.DIRECTORY_CLOSED_ICON;
   }
 }

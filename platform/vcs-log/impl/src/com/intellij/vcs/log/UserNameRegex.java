@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Function;
 
 public class UserNameRegex implements Function<String, String> {
@@ -25,9 +24,6 @@ public class UserNameRegex implements Function<String, String> {
 
   @Override
   public String fun(String s) {
-    if (SystemInfo.isMac) {
-      return "^" + s + ".*";// tmp fix for mac
-    }
     return "^" +
            s +
            "( <.*>)?$|^<" +

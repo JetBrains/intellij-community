@@ -171,8 +171,9 @@ public abstract class PsiNameHelper {
 
   /**
    * Obtains text of all type parameter values in a reference.
-   * They go in left-to-right order: <code>A&lt;List&lt;String&gt&gt;.B&lt;Integer&gt;</code> yields
-   * <code>["List&lt;String&gt","Integer"]</code>
+   * They go in left-to-right order: <code>A&lt;List&lt;String&gt, B&lt;Integer&gt;&gt;</code> yields
+   * <code>["List&lt;String&gt", "B&lt;Integer&gt;"]</code>. Parameters of the outer reference are ignored:
+   * <code>A&lt;List&lt;String&gt&gt;.B&lt;Integer&gt;</code> yields <code>["Integer"]</code>
    *
    * @param referenceText the text of the reference to calculate type parameters for.
    * @return the calculated array of type parameters.
@@ -244,6 +245,10 @@ public abstract class PsiNameHelper {
     }
 
     return result;
+  }
+
+  public static void main(String[] args) {
+    System.out.println(Arrays.asList(PsiNameHelper.getClassParametersText("A<List<String>, B<Integer>>")));
   }
 
   public static boolean isSubpackageOf(@NotNull String subpackageName, @NotNull String packageName) {

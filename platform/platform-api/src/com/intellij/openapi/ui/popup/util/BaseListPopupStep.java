@@ -18,10 +18,11 @@ package com.intellij.openapi.ui.popup.util;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,6 +88,16 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     else {
       return null;
     }
+  }
+
+  @Nullable
+  public Color getBackgroundFor(T value) {
+    return null;
+  }
+
+  @Nullable
+  public Color getForegroundFor(T value) {
+    return null;
   }
 
   @NotNull
