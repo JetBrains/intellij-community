@@ -180,6 +180,10 @@ public class JBUI {
     public static Border customLine(Color color, int top, int left, int bottom, int right) {
       return new CustomLineBorder(color, insets(top, left, bottom, right));
     }
+
+    public static Border customLine(Color color, int thickness) {
+      return customLine(color, thickness, thickness, thickness, thickness);
+    }
   }
 
   public static class Panels {
