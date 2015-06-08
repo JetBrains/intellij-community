@@ -78,10 +78,10 @@ public class TestNGTestPattern extends TestNGTestObject {
         });
         if (hasTest) {
           if (StringUtil.isEmpty(methodName)) {
-            calculateDependencies(null, classes, psiClass);
+            calculateDependencies(null, classes, getSearchScope(), psiClass);
           }
           else {
-            collectTestMethods(classes, psiClass, methodName);
+            collectTestMethods(classes, psiClass, methodName, getSearchScope());
           }
         } else {
           throw new CantRunException("No tests found in class " + className);
@@ -116,7 +116,7 @@ public class TestNGTestPattern extends TestNGTestObject {
             return false;
           }
         };
-      calculateDependencies(null, classes, TestNGUtil.getAllTestClasses(projectFilter, false));
+      calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(projectFilter, false));
       if (classes.size() == 0) {
         throw new CantRunException("No tests found in for patterns \"" + StringUtil.join(data.getPatterns(), " || ") + '\"');
       }

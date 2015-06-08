@@ -16,17 +16,22 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
+import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +115,30 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
                        "  public void testForth(){}\n " +
                        "}");
     doTestClassConfiguration(aClass);
+  }
+
+  public void testRerunFailedTestWithDependency() throws Exception {
+    final PsiClass aClass =
+      myFixture.addClass("package a; public class ATest {" +
+                         "  @org.testng.annotations.Test()\n" +
+                         "  public void testTwo(){}\n " +
+                         "  @org.testng.annotations.Test(dependsOnMethods = \"testTwo\")\n" +
+                         "  public void testOne(String s){}\n" + //parameterized
+                         "}");
+
+    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
+    classes.put(aClass, new HashMap<PsiMethod, List<String>>());
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
+    final SMTestProxy testProxy = new SMTestProxy("testOne", false, "java:test://a.ATest.testOne[a]");
+    testProxy.setLocator(new JavaTestLocator());
+    RerunFailedTestsAction.includeFailedTestWithDependencies(classes, projectScope, getProject(), testProxy);
+
+    assertEquals(1, classes.size());
+    final Map<PsiMethod, List<String>> params = classes.get(aClass);
+    assertContainsElements(params.keySet(), aClass.getMethods());
+    final List<String> paramsToRerun = params.get(aClass.findMethodsByName("testOne", false)[0]);
+    assertEquals(1, paramsToRerun.size());
+    assertContainsElements(paramsToRerun, "a");
   }
 
   private void doTestMethodConfiguration(PsiClass aClass, PsiMethod... expectedMethods) throws CantRunException {

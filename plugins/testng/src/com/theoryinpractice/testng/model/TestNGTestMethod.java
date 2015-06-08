@@ -61,7 +61,7 @@ public class TestNGTestMethod extends TestNGTestObject {
     )) {
       throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
     }
-    collectTestMethods(classes, psiClass, data.getMethodName());
+    collectTestMethods(classes, psiClass, data.getMethodName(), getSearchScope());
   }
 
   @Override

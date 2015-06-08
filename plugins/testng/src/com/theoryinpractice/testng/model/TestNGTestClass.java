@@ -60,7 +60,7 @@ public class TestNGTestClass extends TestNGTestObject {
     })) {
       throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
     }
-    calculateDependencies(null, classes, psiClass);
+    calculateDependencies(null, classes, getSearchScope(), psiClass);
   }
 
   @Override
