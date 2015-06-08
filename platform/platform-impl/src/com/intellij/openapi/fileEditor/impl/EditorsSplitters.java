@@ -566,6 +566,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Override
   public void uiSettingsChanged(UISettings source) {
+    if (!myManager.getProject().isOpen()) return;
     for (VirtualFile file : getOpenFiles()) {
       updateFileBackgroundColor(file);
       updateFileIcon(file);
