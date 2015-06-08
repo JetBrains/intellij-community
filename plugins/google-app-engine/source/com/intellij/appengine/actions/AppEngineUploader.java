@@ -208,8 +208,8 @@ public class AppEngineUploader {
       else {
         programParameters.add("--email=" + myAuthData.getEmail());
         programParameters.add("--passin");
+        programParameters.add("--no_cookies");
       }
-      programParameters.add("--no_cookies");
       programParameters.add("update");
       programParameters.add(FileUtil.toSystemDependentName(myArtifact.getOutputPath()));
 
