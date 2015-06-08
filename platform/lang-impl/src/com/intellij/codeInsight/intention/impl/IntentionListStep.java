@@ -61,8 +61,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   private final Set<IntentionActionWithTextCaching> myCachedErrorFixes =
     ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myCachedGutters = Collections.synchronizedSet(
-    new LinkedHashSet<IntentionActionWithTextCaching>());
+  private final Set<IntentionActionWithTextCaching> myCachedGutters = ContainerUtil.newConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final IntentionManagerSettings mySettings;
   @Nullable
   private final IntentionHintComponent myIntentionHintComponent;

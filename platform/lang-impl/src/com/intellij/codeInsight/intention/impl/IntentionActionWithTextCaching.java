@@ -125,19 +125,4 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
   public boolean isDumbAware() {
     return DumbService.isDumbAware(myAction);
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    IntentionActionWithTextCaching caching = (IntentionActionWithTextCaching)o;
-
-    return getAction().getClass().equals(caching.getAction().getClass()) && getText().equals(caching.getText());
-  }
-
-  @Override
-  public int hashCode() {
-    return getText().hashCode();
-  }
 }
