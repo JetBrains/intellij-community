@@ -281,6 +281,18 @@ public class StringUtil extends StringUtilRt {
     return getPackageName(fqName, '.');
   }
 
+  /**
+   * Given a fqName returns the package name for the type or the containing type.
+   *
+   * <ul>
+   *   <li><code>java.lang.String</code> -> <code>java.lang</code></li>
+   *   <li><code>java.util.Map.Entry</code> -> <code>java.util.Map</code></li>
+   * </ul>
+   *
+   * @param fqName a fully qualified type name. Not supposed to contain any type arguments
+   * @param separator the separator to use. Typically '.'
+   * @return the package name of the type or the declarator of the type. The empty string if the given fqName is unqualified
+   */
   @NotNull
   @Contract(pure = true)
   public static String getPackageName(@NotNull String fqName, char separator) {
