@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.IllegalStateProxy;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -159,7 +158,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected CheckinEnvironment createCheckinEnvironment() {
-    return IllegalStateProxy.create(CheckinEnvironment.class);
+    return null;
   }
 
   /**
@@ -180,7 +179,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected RollbackEnvironment createRollbackEnvironment() {
-    return IllegalStateProxy.create(RollbackEnvironment.class);
+    return null;
   }
 
   /**
@@ -213,7 +212,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected UpdateEnvironment createUpdateEnvironment() {
-    return IllegalStateProxy.create(UpdateEnvironment.class);
+    return null;
   }
 
   /**
@@ -582,6 +581,12 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public void setRollbackEnvironment(RollbackEnvironment rollbackEnvironment) {
     if (myRollbackEnvironment != null) throw new IllegalStateException("Attempt to redefine rollback environment");
     myRollbackEnvironment = rollbackEnvironment;
+  }
+
+  public void setupEnvironments() {
+    setCheckinEnvironment(createCheckinEnvironment());
+    setUpdateEnvironment(createUpdateEnvironment());
+    setRollbackEnvironment(createRollbackEnvironment());
   }
 
   public boolean reportsIgnoredDirectories() {

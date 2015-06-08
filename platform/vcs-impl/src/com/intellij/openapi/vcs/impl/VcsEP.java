@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsActiveEnvironmentsProxy;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,8 +60,9 @@ public class VcsEP extends AbstractExtensionPointBean {
     }
     AbstractVcs vcs = getInstance(project, vcsClass);
     synchronized (LOCK) {
-      if (myVcs == null) {
-        myVcs = VcsActiveEnvironmentsProxy.proxyVcs(vcs);
+      if (myVcs == null && vcs != null) {
+        vcs.setupEnvironments();
+        myVcs = vcs;
       }
       return myVcs;
     }
