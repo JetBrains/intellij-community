@@ -62,17 +62,53 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @NonNls public static final String FORK_NONE = "none";
   @NonNls public static final String FORK_METHOD = "method";
   @NonNls public static final String FORK_KLASS = "class";
-
-  @NonNls private static final String PATTERN_EL_NAME = "pattern";
-  @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
-
-  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
-  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
-
-  private final Data myData;
   // See #26522
   @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
+  @NonNls private static final String PATTERN_EL_NAME = "pattern";
+  @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
+  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
+  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
+  private final Data myData;
+  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+    @Override
+    public void setName(final String qualifiedName) {
+      final boolean generatedName = isGeneratedName();
+      myData.PACKAGE_NAME = qualifiedName;
+      if (generatedName) setGeneratedName();
+    }
 
+    @Override
+    public PsiPackage getPsiElement() {
+      final String qualifiedName = myData.getPackageName();
+      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName)
+                                   : null;
+    }
+
+    @Override
+    public void setPsiElement(final PsiPackage psiPackage) {
+      setName(psiPackage.getQualifiedName());
+    }
+  };
+  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+    @Override
+    public void setName(@NotNull final String qualifiedName) {
+      final boolean generatedName = isGeneratedName();
+      myData.MAIN_CLASS_NAME = qualifiedName;
+      if (generatedName) setGeneratedName();
+    }
+
+    @Override
+    public PsiClass getPsiElement() {
+      return getConfigurationModule().findClass(myData.getMainClassName());
+    }
+
+    @Override
+    public void setPsiElement(final PsiClass psiClass) {
+      final Module originalModule = getConfigurationModule().getModule();
+      setMainClass(psiClass);
+      restoreOriginalModule(originalModule);
+    }
+  };
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
 
@@ -80,7 +116,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     this(name, project, new Data(), configurationFactory);
   }
 
-  private JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
+  protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
     super(name, new JavaRunConfigurationModule(project, false), configurationFactory);
     myData = data;
   }
@@ -150,18 +186,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   @Override
-  public void setVMParameters(String value) {
-    myData.setVMParameters(value);
-  }
-
-  @Override
   public String getVMParameters() {
     return myData.getVMParameters();
   }
 
   @Override
-  public void setProgramParameters(String value) {
-    myData.setProgramParameters(value);
+  public void setVMParameters(String value) {
+    myData.setVMParameters(value);
   }
 
   @Override
@@ -170,8 +201,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   @Override
-  public void setWorkingDirectory(String value) {
-    myData.setWorkingDirectory(value);
+  public void setProgramParameters(String value) {
+    myData.setProgramParameters(value);
   }
 
   @Override
@@ -180,8 +211,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   @Override
-  public void setEnvs(@NotNull Map<String, String> envs) {
-    myData.setEnvs(envs);
+  public void setWorkingDirectory(String value) {
+    myData.setWorkingDirectory(value);
   }
 
   @Override
@@ -191,13 +222,18 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   @Override
-  public void setPassParentEnvs(boolean passParentEnvs) {
-    myData.PASS_PARENT_ENVS = passParentEnvs;
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    myData.setEnvs(envs);
   }
 
   @Override
   public boolean isPassParentEnvs() {
     return myData.PASS_PARENT_ENVS;
+  }
+
+  @Override
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    myData.PASS_PARENT_ENVS = passParentEnvs;
   }
 
   @Override
@@ -232,7 +268,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return !Comparing.strEqual(data.TEST_OBJECT, TEST_PACKAGE) ? null : data.getPackageName();
   }
 
-
   public void beClassConfiguration(final PsiClass testClass) {
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
@@ -259,48 +294,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
     return super.getModules();
   }
-
-  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
-    @Override
-    public void setName(final String qualifiedName) {
-      final boolean generatedName = isGeneratedName();
-      myData.PACKAGE_NAME = qualifiedName;
-      if (generatedName) setGeneratedName();
-    }
-
-    @Override
-    public PsiPackage getPsiElement() {
-      final String qualifiedName = myData.getPackageName();
-      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName)
-             : null;
-    }
-
-    @Override
-    public void setPsiElement(final PsiPackage psiPackage) {
-      setName(psiPackage.getQualifiedName());
-    }
-  };
-
-  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
-    @Override
-    public void setName(@NotNull final String qualifiedName) {
-      final boolean generatedName = isGeneratedName();
-      myData.MAIN_CLASS_NAME = qualifiedName;
-      if (generatedName) setGeneratedName();
-    }
-
-    @Override
-    public PsiClass getPsiElement() {
-      return getConfigurationModule().findClass(myData.getMainClassName());
-    }
-
-    @Override
-    public void setPsiElement(final PsiClass psiClass) {
-      final Module originalModule = getConfigurationModule().getModule();
-      setMainClass(psiClass);
-      restoreOriginalModule(originalModule);
-    }
-  };
 
   public TestObject getTestObject() {
     return myData.getTestObject(this);
@@ -402,12 +395,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     element.addContent(patternsElement);
   }
 
-  public void setForkMode(@NotNull String forkMode) {
-    myData.FORK_MODE = forkMode;
-  }
-
   public String getForkMode() {
     return myData.FORK_MODE;
+  }
+
+  public void setForkMode(@NotNull String forkMode) {
+    myData.FORK_MODE = forkMode;
   }
 
   @Override
@@ -440,43 +433,41 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     setGeneratedName();
   }
 
-  public void setRepeatCount(int repeatCount) {
-    myData.REPEAT_COUNT = repeatCount;
-  }
-
   public int getRepeatCount() {
     return myData.REPEAT_COUNT;
   }
 
-  public void setRepeatMode(String repeatMode) {
-    myData.REPEAT_MODE = repeatMode;
+  public void setRepeatCount(int repeatCount) {
+    myData.REPEAT_COUNT = repeatCount;
   }
 
   public String getRepeatMode() {
     return myData.REPEAT_MODE;
   }
 
+  public void setRepeatMode(String repeatMode) {
+    myData.REPEAT_MODE = repeatMode;
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
-    private String DIR_NAME;
-    private String CATEGORY_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
+    //iws/ipr compatibility
+    public String ENV_VARIABLES;
+    public boolean PASS_PARENT_ENVS = true;
+    public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
+    private String DIR_NAME;
+    private String CATEGORY_NAME;
     private String FORK_MODE = "none";
     private int REPEAT_COUNT = 1;
     private String REPEAT_MODE = RepeatCount.ONCE;
-
     private LinkedHashSet<String> myPattern = new LinkedHashSet<String>();
-    //iws/ipr compatibility
-    public String ENV_VARIABLES;
     private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
-
-    public boolean PASS_PARENT_ENVS = true;
-    public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
 
     public boolean equals(final Object object) {
       if (!(object instanceof Data)) return false;
@@ -516,6 +507,10 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return TEST_SEARCH_SCOPE.getScope();
     }
 
+    public void setScope(final TestSearchScope scope) {
+      TEST_SEARCH_SCOPE.setScope(scope);
+    }
+
     @Override
     public Data clone() {
       try {
@@ -530,28 +525,28 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       }
     }
 
-    public void setVMParameters(String value) {
-      VM_PARAMETERS = value;
-    }
-
     public String getVMParameters() {
       return VM_PARAMETERS;
     }
 
-    public void setProgramParameters(String value) {
-      PARAMETERS = value;
+    public void setVMParameters(String value) {
+      VM_PARAMETERS = value;
     }
 
     public String getProgramParameters() {
       return PARAMETERS;
     }
 
-    public void setWorkingDirectory(String value) {
-      WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+    public void setProgramParameters(String value) {
+      PARAMETERS = value;
     }
 
     public String getWorkingDirectory() {
       return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
+    }
+
+    public void setWorkingDirectory(String value) {
+      WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
     }
 
     public Module setTestMethod(final Location<PsiMethod> methodLocation) {
@@ -606,8 +601,16 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return DIR_NAME != null ? DIR_NAME : "";
     }
 
+    public void setDirName(String dirName) {
+      DIR_NAME = dirName;
+    }
+
     public Set<String> getPatterns() {
       return myPattern;
+    }
+
+    public void setPatterns(LinkedHashSet<String> pattern) {
+      myPattern = pattern;
     }
 
     public String getPatternPresentation() {
@@ -616,10 +619,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         enabledTests.add(pattern);
       }
       return StringUtil.join(enabledTests, "||");
-    }
-
-    public void setPatterns(LinkedHashSet<String> pattern) {
-      myPattern = pattern;
     }
 
     public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {
@@ -634,20 +633,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return JavaExecutionUtil.findModule(testClass);
     }
 
-    public void setScope(final TestSearchScope scope) {
-      TEST_SEARCH_SCOPE.setScope(scope);
-    }
-
     public Map<String, String> getEnvs() {
       return myEnvs;
     }
 
     public void setEnvs(final Map<String, String> envs) {
       myEnvs = envs;
-    }
-
-    public void setDirName(String dirName) {
-      DIR_NAME = dirName;
     }
 
     public String getCategory() {
