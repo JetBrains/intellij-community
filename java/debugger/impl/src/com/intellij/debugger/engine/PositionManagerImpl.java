@@ -269,11 +269,6 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             }
             while(true);
             final List<PsiLambdaExpression> lambdas = new ArrayList<PsiLambdaExpression>(3);
-            // add initial lambda if we're inside already
-            NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
-            if (method instanceof PsiLambdaExpression) {
-              lambdas.add((PsiLambdaExpression)method);
-            }
             final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
               @Override
               public void visitLambdaExpression(PsiLambdaExpression expression) {
@@ -282,6 +277,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
               }
             };
             element.accept(lambdaCollector);
+            // add initial lambda if we're inside already
+            NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+            if (method instanceof PsiLambdaExpression) {
+              lambdas.add((PsiLambdaExpression)method);
+            }
             for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
               if (!lineRange.intersects(sibling.getTextRange())) {
                 break;
