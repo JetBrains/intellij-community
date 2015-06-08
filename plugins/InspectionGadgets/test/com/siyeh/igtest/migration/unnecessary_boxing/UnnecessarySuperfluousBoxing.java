@@ -3,7 +3,7 @@ package com.siyeh.igtest.migration.unnecessary_superfluous_boxing;
 
 
 
-public class UnnecessaryBoxing {
+public class UnnecessarySuperfluousBoxing {
 
     Integer foo(String foo, Integer bar) {
         return foo == null ? Integer.valueOf(0) : bar;
@@ -23,7 +23,7 @@ public class UnnecessaryBoxing {
     }
 
     Integer foo2(String foo, int bar) {
-        return foo == null ? Integer.valueOf(0) : bar;
+        return foo == null ? <warning descr="Unnecessary boxing 'Integer.valueOf(0)'">Integer.valueOf(0)</warning> : bar;
     }
 
     void noUnboxing(Object val) {
@@ -38,7 +38,7 @@ public class UnnecessaryBoxing {
         return null;
     }
 
-    void doItNow(UnnecessaryBoxing foo) {
+    void doItNow(UnnecessarySuperfluousBoxing foo) {
         Integer bla = foo == null ? Integer.valueOf(0) : foo.getBar();
     }
 
@@ -56,6 +56,6 @@ public class UnnecessaryBoxing {
     }
 
     int bababoxing(int i) {
-      return Integer.valueOf(i);
+      return <warning descr="Unnecessary boxing 'Integer.valueOf(i)'">Integer.valueOf(i)</warning>;
     }
 }
