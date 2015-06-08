@@ -135,8 +135,22 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testFailure(Failure failure) throws Exception {
+    final Description description = failure.getDescription();
+    final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+    //class setUp failed
+    if (methodName == null) {
+      for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
+        testFailure(failure, ServiceMessageTypes.TEST_FAILED, JUnit4ReflectionUtil.getMethodName((Description)iterator.next()));
+      }
+    }
+    else {
+      testFailure(failure, ServiceMessageTypes.TEST_FAILED, methodName);
+    }
+  }
+
+  private void testFailure(Failure failure, String messageName, String methodName) {
     final Map attrs = new HashMap();
-    attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
+    attrs.put("name", methodName);
     final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {
       attrs.put("duration", Long.toString(duration));
@@ -154,38 +168,52 @@ public class JUnit4TestListener extends RunListener {
       ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
     }
     finally {
-      myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+      myPrintStream.println(ServiceMessage.asString(messageName, attrs));
     }
   }
 
   public void testAssumptionFailure(Failure failure) {
-    prepareIgnoreMessage(failure.getDescription(), false);
+    final Description description = failure.getDescription();
+    try {
+      final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+      //class setUp failed
+      if (methodName == null) {
+        for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
+          final Description testDescription = (Description)iterator.next();
+          testAssumptionFailure(failure, testDescription, JUnit4ReflectionUtil.getMethodName(testDescription));
+        }
+      }
+      else {
+        testAssumptionFailure(failure, description, methodName);
+      }
+    }
+    catch (Exception ignore) {}
+  }
+
+  private void testAssumptionFailure(Failure failure, Description testDescription, String name) throws Exception {
+    testStarted(testDescription);
+    testFailure(failure, ServiceMessageTypes.TEST_IGNORED, name);
+    testFinished(testDescription);
   }
 
   public synchronized void testIgnored(Description description) throws Exception {
     testStarted(description);
-    prepareIgnoreMessage(description, true);
-    testFinished(description);
-  }
-
-  private void prepareIgnoreMessage(Description description, boolean commentMessage) {
     Map attrs = new HashMap();
-    if (commentMessage) {
-      try {
-        final Ignore ignoredAnnotation = (Ignore)description.getAnnotation(Ignore.class);
-        if (ignoredAnnotation != null) {
-          final String val = ignoredAnnotation.value();
-          if (val != null) {
-            attrs.put("message", val);
-          }
+    try {
+      final Ignore ignoredAnnotation = (Ignore)description.getAnnotation(Ignore.class);
+      if (ignoredAnnotation != null) {
+        final String val = ignoredAnnotation.value();
+        if (val != null) {
+          attrs.put("message", val);
         }
       }
-      catch (NoSuchMethodError ignored) {
-        //junit < 4.4
-      }
+    }
+    catch (NoSuchMethodError ignored) {
+      //junit < 4.4
     }
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(description));
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_IGNORED, attrs));
+    testFinished(description);
   }
 
   private static boolean isComparisonFailure(Throwable throwable) {
