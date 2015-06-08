@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -99,7 +100,7 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   // but displaying quick doc should work even if javadoc was generated using a JDK not corresponding to bytecode version
   public void testReferenceStyleDoesntMatchBytecodeVersion() throws Exception {
     String actualText = getDocumentationText("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
-    String expectedText = FileUtil.loadFile(getDataFile(getTestName(false) + ".html"));
+    String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(getDataFile(getTestName(false) + ".html")));
     assertEquals(expectedText, replaceBaseUrlWithPlaceholder(actualText));
   }
 
