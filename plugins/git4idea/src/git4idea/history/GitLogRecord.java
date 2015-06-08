@@ -17,6 +17,7 @@ package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -171,13 +172,24 @@ class GitLogRecord {
     if ((startParentheses == -1) || (endParentheses == -1)) return Collections.emptyList();
     String refs = decoration.substring(startParentheses + 1, endParentheses);
     String[] names = refs.split(", ");
-    return ContainerUtil.map(names, new Function<String, String>() {
-      @Override
-      public String fun(String item) {
-        int colon = item.indexOf(':');
-        return shortBuffer(colon > 0 ? item.substring(colon + 1).trim() : item);
+    List<String> result = ContainerUtil.newArrayList();
+    for (String item : names) {
+      final String POINTER = " -> ";   // HEAD -> refs/heads/master in Git 2.4.3+
+      if (item.contains(POINTER)) {
+        List<String> parts = StringUtil.split(item, POINTER);
+        result.addAll(ContainerUtil.map(parts, new Function<String, String>() {
+          @Override
+          public String fun(String s) {
+            return shortBuffer(s.trim());
+          }
+        }));
       }
-    });
+      else {
+        int colon = item.indexOf(':'); // tags have the "tag:" prefix.
+        result.add(shortBuffer(colon > 0 ? item.substring(colon + 1).trim() : item));
+      }
+    }
+    return result;
   }
 
   private static String shortBuffer(String raw) {
