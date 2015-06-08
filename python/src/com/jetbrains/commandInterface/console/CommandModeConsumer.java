@@ -42,7 +42,7 @@ final class CommandModeConsumer implements Consumer<String> {
   @NotNull
   private static final Pattern EMPTY_SPACE = Pattern.compile("\\s+");
   @NotNull
-  private final Collection<Command> myCommands = new ArrayList<Command>();
+  private final Collection<Command> myCommands;
   @NotNull
   private final Module myModule;
   @NotNull
@@ -54,18 +54,18 @@ final class CommandModeConsumer implements Consumer<String> {
   private final CommandExecutor myDefaultExecutor;
 
   /**
-   * @param commands known commands
-   * @param module module
-   * @param console console where to execute them (if any)
+   * @param commands        known commands (may be null, default executor should always be used then)
+   * @param module          module
+   * @param console         console where to execute them (if any)
    * @param defaultExecutor default executor to execute unknown commands.
    *                        User will get "unknown command" if command is unknown and
    *                        no executor provided.
    */
-  CommandModeConsumer(@NotNull final Collection<Command> commands,
+  CommandModeConsumer(@Nullable final Collection<Command> commands,
                       @NotNull final Module module,
                       @NotNull final LanguageConsoleImpl console,
                       @Nullable final CommandExecutor defaultExecutor) {
-    myCommands.addAll(commands);
+    myCommands = commands != null ? new ArrayList<Command>(commands) : Collections.<Command>emptyList();
     myModule = module;
     myConsole = console;
     myDefaultExecutor = defaultExecutor;

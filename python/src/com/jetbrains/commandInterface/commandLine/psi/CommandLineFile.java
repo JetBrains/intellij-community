@@ -18,11 +18,9 @@ package com.jetbrains.commandInterface.commandLine.psi;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.command.CommandExecutor;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.CommandLinePart;
 import com.jetbrains.commandInterface.commandLine.ValidationResult;
@@ -40,10 +38,9 @@ import java.util.List;
  */
 public final class CommandLineFile extends PsiFileBase implements CommandLinePart {
   /**
-   * [list of commands, default_executor (may be null)]. Default executor should be used when user tries to execute unknown command
+   * List of commands, available on this file.
    */
-  private static final Key<Pair<List<Command>, CommandExecutor>> COMMANDS_AND_DEFAULT_EXECUTOR =
-    Key.create("COMMANDS_AND_DEFAULT_EXECUTOR");
+  private static final Key<List<Command>> COMMANDS = Key.create("COMMANDS");
 
   public CommandLineFile(final FileViewProvider provider) {
     super(provider, CommandLineLanguage.INSTANCE);
@@ -62,36 +59,26 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
     return this;
   }
 
+
   /**
-   * @return list of commands, available for this file
-   * @see #setCommandsAndDefaultExecutor(List, CommandExecutor)
+   * @param commands list of commands, available for this file. Better to provide one, if you know
+   */
+  public void setCommands(@Nullable final List<Command> commands) {
+    putCopyableUserData(COMMANDS, commands);
+  }
+
+  /**
+   * @return List of commands, available on this file. May be null if no info available
    */
   @Nullable
-  public Pair<List<Command>, CommandExecutor> getCommandsAndDefaultExecutor() {
-    return getCopyableUserData(COMMANDS_AND_DEFAULT_EXECUTOR);
-  }
-
-
-  /**
-   * @param defaultExecutor executor to be used when user executes unknown command
-   * @param commands        list of commands, available for this file. Better to provide one, if you know
-   */
-  public void setCommandsAndDefaultExecutor(@NotNull final List<Command> commands, @Nullable final CommandExecutor defaultExecutor) {
-    putCopyableUserData(COMMANDS_AND_DEFAULT_EXECUTOR, Pair.create(commands, defaultExecutor));
-  }
-
-  /**
-   * @param commandsAndDefaultExecutor: list of commands, available for this file. Better to provide one, if you know.
-   *                                    And executor to be used when user executes unknown command
-   */
-  public void setCommandsAndDefaultExecutor(@NotNull final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
-    setCommandsAndDefaultExecutor(commandsAndDefaultExecutor.first, commandsAndDefaultExecutor.second);
+  public List<Command> getCommands() {
+    return getCopyableUserData(COMMANDS);
   }
 
 
   /**
    * Tries to find real command used in this file.
-   * You need to first inject list of commands {@link #setCommandsAndDefaultExecutor(List)}.
+   * You need to first inject list of {@link #setCommands(List)}.
    *
    * @return Command if found and available, or null if command can't be parsed or bad command.
    */
@@ -99,12 +86,12 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
   @Nullable
   public Command findRealCommand() {
     final String command = getCommand();
-    final Pair<List<Command>, CommandExecutor> realCommandsAndExecutor = getCommandsAndDefaultExecutor();
-    if (realCommandsAndExecutor == null) {
+    final List<Command> commands = getCommands();
+
+    if (commands == null || command == null) {
       return null;
     }
-
-    for (final Command realCommand : realCommandsAndExecutor.first) {
+    for (final Command realCommand : commands) {
       if (realCommand.getName().equals(command)) {
         return realCommand;
       }
@@ -116,7 +103,7 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
   /**
    * Tries to validate file.
    *
-   * @return file validation info or null if file is junk or list of commands is unknown (see {@link #setCommandsAndDefaultExecutor(List)})
+   * @return file validation info or null if file is junk or list of commands is unknown (see {@link #setCommands(List)})
    */
   @Nullable
   public ValidationResult getValidationResult() {

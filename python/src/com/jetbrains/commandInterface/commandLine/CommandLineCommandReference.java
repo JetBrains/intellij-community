@@ -53,14 +53,14 @@ public final class CommandLineCommandReference extends CommandLineElementReferen
     if (file == null) {
       return EMPTY_ARRAY;
     }
-    final Pair<List<Command>, CommandExecutor> commandsAndExecutor = file.getCommandsAndDefaultExecutor();
-    if (commandsAndExecutor == null) {
+    final List<Command> commands = file.getCommands();
+    if (commands == null) {
       return EMPTY_ARRAY;
     }
 
     final LookupWithIndentsBuilder result = new LookupWithIndentsBuilder();
 
-    for (final Command command : commandsAndExecutor.first) {
+    for (final Command command : commands) {
       final LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(command.getName());
       final Help help = command.getHelp(true);
       result.addElement(lookupElementBuilder, (help != null ? help.getHelpString() : null));

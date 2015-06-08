@@ -68,7 +68,7 @@ public final class CommandLineInspectionTest extends PyTestCase {
     final PsiFile file = myFixture.configureByFile(getTestName(true) + '.' + CommandLineFileType.EXTENSION);
     Assert.assertSame("Bad file type!", CommandLineFile.class, file.getClass());
     final CommandLineFile commandLineFile = (CommandLineFile)file;
-    commandLineFile.setCommandsAndDefaultExecutor(CommandTestTools.createCommands(), null);
+    commandLineFile.setCommands(CommandTestTools.createCommands());
     myFixture.enableInspections(CommandLineInspection.class);
     myFixture.checkHighlighting();
   }

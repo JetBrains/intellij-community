@@ -114,7 +114,10 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param module                     module console runs on
    * @param title                      console title
    * @param commandsAndDefaultExecutor List of commands (to be injected into {@link CommandLineFile}) if any
-   *                                   and executor to be used when user executes unknown command
+   *                                   and executor to be used when user executes unknown command.
+   *                                   Both may be null. Execution is passed to command if command exist, passed to default executor
+   *                                   otherwise. With out of commands default executor will always be used.
+   *                                   With out of executor, no execution would be possible at all.
    */
   private CommandConsole(@NotNull final Module module,
                          @NotNull final String title,
@@ -127,15 +130,18 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   /**
    * @param module      module console runs on
    * @param title       console title
-   * @param commandList List of commands (to be injected into {@link CommandLineFile}) if any
-   *                    and executor to be used when user executes unknown command
+   * @param commandsAndDefaultExecutor List of commands (to be injected into {@link CommandLineFile}) if any
+   *                                   and executor to be used when user executes unknown command.
+   *                                   Both may be null. Execution is passed to command if command exist, passed to default executor
+   *                                   otherwise. With out of commands default executor will always be used.
+   *                                   With out of executor, no execution would be possible at all.
    * @return console
    */
   @NotNull
   static CommandConsole createConsole(@NotNull final Module module,
                                       @NotNull final String title,
-                                      @Nullable final Pair<List<Command>, CommandExecutor> commandList) {
-    final CommandConsole console = new CommandConsole(module, title, commandList);
+                                      @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
+    final CommandConsole console = new CommandConsole(module, title, commandsAndDefaultExecutor);
     console.setEditable(true);
     LanguageConsoleBuilder.registerExecuteAction(console, console, title, title, console);
 
@@ -186,7 +192,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         if (file == null || myCommandsAndDefaultExecutor == null) {
           return;
         }
-        file.setCommandsAndDefaultExecutor(myCommandsAndDefaultExecutor);
+        file.setCommands(myCommandsAndDefaultExecutor.first);
         final CommandConsole console = CommandConsole.this;
         resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
       }
