@@ -31,14 +31,12 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.io.DataOutputStream;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -127,12 +125,15 @@ public class JarHandler extends ZipHandler {
             sha1.update(String.valueOf(originalAttributes.length).getBytes(Charset.defaultCharset()));
             sha1.update((byte)0);
 
-            byte[] buffer = new byte[20 * 1024];
+            byte[] buffer = new byte[Math.min(1024 * 1024, (int)originalAttributes.length)];
+            long totalBytes = 0;
             while (true) {
               int read = is.read(buffer);
               if (read < 0) break;
+              totalBytes += read;
               sha1.update(buffer, 0, read);
               os.write(buffer, 0, read);
+              if (totalBytes == originalAttributes.length) break;
             }
           }
           finally {
@@ -234,9 +235,40 @@ public class JarHandler extends ZipHandler {
     private final long myFileLength;
 
     private static final PersistentHashMap<String, CacheLibraryInfo> ourCachedLibraryInfo;
+    private static final int VERSION = 1 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 15 : 0);
 
     static {
       File file = new File(new File(getJarsDir()), "snapshots_info");
+
+      int currentVersion = -1;
+      File versionFile = new File(file.getParentFile(), file.getName() + ".version");
+      if (versionFile.exists()) {
+        DataInputStream versionStream = null;
+        try {
+          versionStream = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
+          currentVersion = DataInputOutputUtil.readINT(versionStream);
+        } catch (IOException ignore) {
+        } finally {
+          try {
+            if (versionStream != null) versionStream.close();
+          } catch (IOException ignore) {}
+        }
+      }
+
+      if (currentVersion != VERSION) {
+        PersistentHashMap.deleteFilesStartingWith(file);
+        DataOutputStream versionOutputStream = null;
+        try {
+          versionOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(versionFile)));
+          DataInputOutputUtil.writeINT(versionOutputStream, VERSION);
+        } catch (IOException ignore) {}
+        finally {
+          try {
+            if (versionOutputStream != null) versionOutputStream.close();
+          } catch (IOException ignore) {}
+        }
+      }
+
       PersistentHashMap<String, CacheLibraryInfo> info = null;
       for (int i = 0; i < 2; ++i) {
         try {
