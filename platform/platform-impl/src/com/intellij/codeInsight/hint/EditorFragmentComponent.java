@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -234,12 +233,17 @@ public class EditorFragmentComponent extends JPanel {
 
   @Nullable
   public static LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
-
-    JComponent editorComponent = editor.getComponent();
-    final JRootPane rootPane = editorComponent.getRootPane();
+    if (!(editor instanceof EditorEx)) return null;
+    JRootPane rootPane = editor.getComponent().getRootPane();
     if (rootPane == null) return null;
     JLayeredPane layeredPane = rootPane.getLayeredPane();
-    Point point = SwingUtilities.convertPoint(editorComponent, -2, 0, layeredPane);
+    int lineHeight = editor.getLineHeight();
+    int overhang = editor.getScrollingModel().getVisibleArea().y -
+            editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset())).y;
+    int yRelative = overhang > 0 && overhang < lineHeight ? 
+                    lineHeight - overhang + 3 : 0; // 3 pixels is EditorFragmentComponent border's height
+    // editor's scroll pane can have border in some circumstances (see EditorImpl.TablessBorder), so we take viewport as a reference
+    Point point = SwingUtilities.convertPoint(((EditorEx)editor).getScrollPane().getViewport(), -2, yRelative, layeredPane);
     return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, true, false);
   }
 
