@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static org.jetbrains.rpc.CommandProcessor.LOG;
 
-public final class NameMapper {
+public class NameMapper {
   public static final String S1 = ",()[]{}=";
   private static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"));
   // don't trim trailing .&: - could be part of expression
@@ -60,7 +60,7 @@ public final class NameMapper {
     }
 
     String sourceEntryName = sourceEntry.getName();
-    String generatedName = trimName(getGeneratedName(generatedDocument, sourceMap, sourceEntry), true);
+    String generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry), true);
     if (!generatedName.isEmpty()) {
       String sourceName = sourceEntryName;
       if (sourceName == null) {
@@ -87,11 +87,12 @@ public final class NameMapper {
 
   @NotNull
   public static String trimName(@NotNull CharSequence rawGeneratedName, boolean isLastToken) {
-    String generatedName = (isLastToken ? NAME_TRIMMER : OPERATOR_TRIMMER).trimFrom(rawGeneratedName);
-    // GWT - button_0_g$ = new Button_5_g$('Click me');
-    // so, we should remove all after "="
-    int i = generatedName.indexOf('=');
-    return i > 0 ? NAME_TRIMMER.trimFrom(generatedName.substring(0, i)) : generatedName;
+    return (isLastToken ? NAME_TRIMMER : OPERATOR_TRIMMER).trimFrom(rawGeneratedName);
+  }
+
+  @NotNull
+  protected String extractName(@NotNull CharSequence rawGeneratedName, boolean isLastToken) {
+    return trimName(rawGeneratedName, isLastToken);
   }
 
   @NotNull
