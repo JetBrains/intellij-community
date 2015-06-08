@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.javascript.boilerplate;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.BundleBase;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -144,7 +143,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myReloadableComboBoxPanel.reloadValuesInBackground();
   }
 
-  void onTagsUpdated(@NotNull ImmutableSet<GithubTagInfo> tags) {
+  void onTagsUpdated(@NotNull Set<GithubTagInfo> tags) {
     myReloadableComboBoxPanel.onUpdateValues(tags);
   }
 

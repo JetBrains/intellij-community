@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,7 +234,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     final PsiDeclarationStatement declarationStatement =
       elementFactory.createVariableDeclarationStatement(variableName,
                                                         iteratedValueType, iteratedValue);
-    context.getParent().addBefore(declarationStatement, context);
+    final PsiElement newElement = context.getParent().addBefore(declarationStatement, context);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
     return variableName;
   }
 

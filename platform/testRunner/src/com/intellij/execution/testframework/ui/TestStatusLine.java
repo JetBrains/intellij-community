@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -43,8 +44,9 @@ public class TestStatusLine extends JPanel {
     add(progressPanel);
     myProgressBar.setMaximum(100);
     myProgressBar.setBorder(null);
+    myProgressBar.setMaximumSize(new JBDimension(450, -1));
     progressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                            new Insets(0, 0, 0, 0), 0, 0));
+                                                            new Insets(2, 0, 0, 8), 0, 0));
     setStatusColor(ColorProgressBar.GREEN);
     add(myState);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
@@ -88,7 +90,7 @@ public class TestStatusLine extends JPanel {
       myState.append(result + " done: ");
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
     }
-    myState.append(" - " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    myState.append(" – " + StringUtil.formatDuration(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   private static String getTestsTotalMessage(int testsTotal) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
 import com.intellij.psi.impl.source.PsiModifierListImpl;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -32,6 +31,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 /**
  * @author max
@@ -80,8 +81,8 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
     return shouldCreateStub(parentType);
   }
 
-  private static boolean shouldCreateStub(final IElementType parentType) {
-    return parentType != null && parentType != JavaElementType.LOCAL_VARIABLE && parentType != JavaElementType.RESOURCE_VARIABLE;
+  private static boolean shouldCreateStub(IElementType parentType) {
+    return parentType != null && parentType != LOCAL_VARIABLE && parentType != RESOURCE_VARIABLE && parentType != RESOURCE_LIST;
   }
 
   @NotNull
@@ -91,6 +92,5 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
   }
 
   @Override
-  public void indexStub(@NotNull final PsiModifierListStub stub, @NotNull final IndexSink sink) {
-  }
+  public void indexStub(@NotNull final PsiModifierListStub stub, @NotNull final IndexSink sink) { }
 }
