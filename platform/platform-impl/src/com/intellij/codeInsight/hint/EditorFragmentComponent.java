@@ -40,6 +40,8 @@ import java.awt.image.BufferedImage;
 
 public class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
+  private static final int LINE_BORDER_THICKNESS = 1;
+  private static final int EMPTY_BORDER_THICKNESS = 2;
 
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     editor.setPurePaintingMode(true);
@@ -143,8 +145,9 @@ public class EditorFragmentComponent extends JPanel {
 
     final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
 
-    Border outsideBorder = BorderFactory.createLineBorder(borderColor, 1);
-    Border insideBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+    Border outsideBorder = BorderFactory.createLineBorder(borderColor, LINE_BORDER_THICKNESS);
+    Border insideBorder = BorderFactory.createEmptyBorder(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS, 
+                                                          EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
     setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
   }
 
@@ -241,8 +244,7 @@ public class EditorFragmentComponent extends JPanel {
     int overhang = editor.getScrollingModel().getVisibleArea().y -
             editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset())).y;
     int yRelative = overhang > 0 && overhang < lineHeight ? 
-                    lineHeight - overhang + 3 : 0; // 3 pixels is EditorFragmentComponent border's height
-    // editor's scroll pane can have border in some circumstances (see EditorImpl.TablessBorder), so we take viewport as a reference
+                    lineHeight - overhang + LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS : 0;
     Point point = SwingUtilities.convertPoint(((EditorEx)editor).getScrollPane().getViewport(), -2, yRelative, layeredPane);
     return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, true, false);
   }
