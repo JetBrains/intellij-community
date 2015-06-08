@@ -32,7 +32,7 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testDocumentBogusBehavior() {
+  public void testExplicitlyNotAwareOfGenerics() {
     assertEquals("java.util.List<java.lang", StringUtil.getPackageName("java.util.List<java.lang.String>"));
   }
 }
