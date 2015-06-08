@@ -105,7 +105,7 @@ final class CommandTestTools {
   static CommandLineFile createFileByText(@NotNull final CodeInsightTestFixture testFixture, @NotNull final String text) {
     final CommandLineFile file =
       (CommandLineFile)testFixture.configureByText(CommandLineFileType.INSTANCE, text);
-    file.setCommandsAndDefaultExecutor(createCommands(), null);
+    file.setCommands(createCommands());
     return file;
   }
 }

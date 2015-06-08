@@ -45,10 +45,9 @@ public final class CommandLineConsoleApi {
    *
    * @param module                     module to display console for.
    * @param consoleName                Console name (would be used in prompt, history etc)
-   *
-   * @param commandsAndDefaultExecutor list of commands available for this console. You may pass null here, but in this case no validation nor suggestion.
-   *                                   and default executor (may be null) to be used when user executes unknwon command
-   *                                   would work. Additionaly, no executor would be registered, so you will need to use
+   * @param commandsAndDefaultExecutor list of commands available for this console. You may pass null here, but in this case no validation nor suggestion will be available.
+   *                                   Default executor (may be null) to be used when user executes unknwon command
+   *                                   Whole pair be null, but no executor would be registered, so you will need to use
    *                                   {@link LanguageConsoleBuilder#registerExecuteAction(LanguageConsoleView, Consumer, String, String, Condition)}
    *                                   by yourself passing this method result as arg to enable execution, history etc.
    * @return newly created console. You do not need to do anything with this value to display console: it will be displayed automatically

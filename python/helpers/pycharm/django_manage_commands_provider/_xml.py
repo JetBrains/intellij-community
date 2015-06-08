@@ -2,6 +2,12 @@
 """
 This module exports information about manage commands and options from django to PyCharm.
 Information is provided in XML (to prevent encoding troubles and simplify deserialization on java side).
+
+Right after xml declaration, before root tag it contains following comment:
+<!--jb pycharm data start-->
+
+Use it to make sure you found correct XML
+
 It does not have schema (yet!) but here is XML format it uses.
 
 <commandInfo-array> -- root
@@ -45,6 +51,7 @@ class XmlDumper(object):
     def __init__(self):
         self.__document = minidom.Document()
         self.__root = self.__document.createElement("{0}-array".format(XmlDumper.__command_info_tag))
+        self.__document.appendChild(self.__document.createComment("jb pycharm data start"))
         self.__document.appendChild(self.__root)
         self.__command_element = None
 

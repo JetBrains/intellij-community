@@ -95,11 +95,11 @@ public final class CommandLineInspection extends LocalInspectionTool {
       if (file == null) {
         return;
       }
-      final Pair<List<Command>, CommandExecutor> commandsAndExecutor = file.getCommandsAndDefaultExecutor();
-      if (commandsAndExecutor == null) {
+      final List<Command> commands = file.getCommands();
+      if (commands == null) {
         return;
       }
-      for (final Command command : commandsAndExecutor.first) {
+      for (final Command command : commands) {
         if (o.getText().equals(command.getName())) {
           return;
         }
