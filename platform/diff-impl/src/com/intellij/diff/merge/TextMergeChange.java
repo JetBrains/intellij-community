@@ -221,7 +221,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   private MyGutterOperation createOperation(@NotNull ThreeSide side) {
-    if (side == ThreeSide.BASE) return null;
     if (isResolved(side)) return null;
 
     EditorEx editor = myViewer.getEditor(side);
@@ -278,7 +277,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
       myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
-      if (mySide != ThreeSide.BASE) {
+      if (mySide == ThreeSide.BASE) {
+        return createRevertRenderer();
+      }
+      else {
         Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
         assert versionSide != null;
 
@@ -292,8 +294,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
         }
         return createApplyRenderer(versionSide);
       }
-
-      return null;
     }
   }
 
