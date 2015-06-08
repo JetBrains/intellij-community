@@ -32,7 +32,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="line" title-resource-bundle="com/intellij/json/JsonBundle" title-key="msg.formatting.options.panel.coding.style">
+        <border type="line" title-resource-bundle="com/intellij/json/JsonBundle" title-key="formatter.other.tab.group.title">
           <font/>
           <title-color color="-16777216"/>
         </border>
@@ -43,7 +43,7 @@
             </constraints>
             <properties>
               <labelFor value="9b7e4"/>
-              <text resource-bundle="com/intellij/json/JsonBundle" key="msg.formatting.options.panel.align.properties"/>
+              <text resource-bundle="com/intellij/json/JsonBundle" key="formatter.other.tab.label.align.properties"/>
             </properties>
           </component>
           <component id="9b7e4" class="javax.swing.JComboBox" binding="myPropertiesAlignmentCombo">
