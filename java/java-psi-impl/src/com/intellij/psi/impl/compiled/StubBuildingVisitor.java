@@ -760,7 +760,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       buffer.append('{');
       for (int i = 0, length = Array.getLength(value); i < length; i++) {
         if (i > 0) buffer.append(", ");
-        buffer.append(Array.get(value, i));
+        // type appears to be always (?) null thus it is passed into the recursive invocation without modification
+        buffer.append(constToString(Array.get(value, i), type, anno));
       }
       buffer.append('}');
       return buffer.toString();
