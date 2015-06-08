@@ -9,6 +9,7 @@ import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -176,6 +177,9 @@ public class JsonBlock implements ASTBlock {
       // indents to consist solely of spaces when both USE_TABS and SMART_TAB
       // options are enabled.
       return new ChildAttributes(Indent.getNormalIndent(), null);
+    }
+    else if (myNode.getPsi() instanceof PsiFile) {
+      return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     // Will use continuation indent for cases like { "foo"<caret>  }
     return new ChildAttributes(null, null);

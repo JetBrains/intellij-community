@@ -12,3 +12,5 @@
   "key7": [42<error descr="JSON standard does not allow trailing comma">,</error>],
   "key8": false<error descr="JSON standard does not allow trailing comma">,</error>
 }
+<error descr="JSON standard allows only one top-level value">["another", "top-level", "value"]</error>
+<error descr="JSON standard allows only one top-level value">null</error>
