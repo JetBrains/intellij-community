@@ -109,7 +109,7 @@ public class OpenFileDescriptor implements Navigatable {
   @Override
   public void navigate(boolean requestFocus) {
     if (!canNavigate()) {
-      throw new IllegalStateException("Navigation is not possible with null project");
+      throw new IllegalStateException("target not valid");
     }
 
     if (!myFile.isDirectory() && navigateInEditorOrNativeApp(myProject, requestFocus)) return;
