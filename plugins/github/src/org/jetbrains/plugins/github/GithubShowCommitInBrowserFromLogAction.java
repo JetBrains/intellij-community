@@ -18,9 +18,11 @@ package org.jetbrains.plugins.github;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.data.LoadingDetails;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -38,19 +40,25 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    List<VcsFullCommitDetails> commits = log.getSelectedDetails();
-    if (commits.size() != 1) {
+    List<VcsFullCommitDetails> selectedDetails = log.getSelectedDetails();
+    if (selectedDetails.size() != 1) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commits.get(0).getRoot());
+    VcsFullCommitDetails details = ContainerUtil.getFirstItem(selectedDetails);
+    if (details == null || details instanceof LoadingDetails) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(details.getRoot());
     e.getPresentation().setEnabledAndVisible(repository != null && GithubUtil.isRepositoryOnGitHub(repository));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsFullCommitDetails commit = e.getRequiredData(VcsLogDataKeys.VCS_LOG).getSelectedDetails().get(0);
+    VcsFullCommitDetails commit = ContainerUtil.getFirstItem(e.getRequiredData(VcsLogDataKeys.VCS_LOG).getSelectedDetails());
+    assert commit != null && !(commit instanceof LoadingDetails);
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
     openInBrowser(project, repository, commit.getId().asString());
   }

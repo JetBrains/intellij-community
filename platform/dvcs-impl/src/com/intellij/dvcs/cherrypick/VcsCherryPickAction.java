@@ -18,7 +18,6 @@ package com.intellij.dvcs.cherrypick;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,12 +29,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,10 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsCherryPickAction extends DumbAwareAction {
-
   private static final String NAME = "Cherry-Pick";
-  private static final Logger LOG = Logger.getInstance(VcsCherryPickAction.class);
-
   @NotNull private final Set<Hash> myIdsInProgress;
 
   public VcsCherryPickAction() {
@@ -58,7 +59,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
-    final List<VcsFullCommitDetails> commits = log.getSelectedDetails();
+    final List<VcsFullCommitDetails> commits = VcsLogUtil.collectLoadedSelectedDetails(log, false);
 
     for (VcsFullCommitDetails commit : commits) {
       myIdsInProgress.add(commit.getId());
@@ -108,7 +109,8 @@ public class VcsCherryPickAction extends DumbAwareAction {
     for (VcsFullCommitDetails commit : commits) {
       VcsCherryPicker cherryPicker = getCherryPickerForCommit(project, projectLevelVcsManager, commit);
       if (cherryPicker == null) {
-        LOG.warn("Cherry pick is not supported for " + commit.getRoot().getName());
+        VcsNotifier.getInstance(project).notifyWeakError(
+          "Cherry pick is not supported for commit " + commit.getId().toShortString() + " from root " + commit.getRoot().getName());
         return Collections.emptyMap();
       }
       List<VcsFullCommitDetails> list = resultMap.get(cherryPicker);
@@ -142,7 +144,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
       return;
     }
 
-    final List<VcsFullCommitDetails> details = log.getSelectedDetails();
+    final List<VcsFullCommitDetails> details = VcsLogUtil.collectLoadedSelectedDetails(log, true);
     VcsCherryPicker enabledCherryPicker = ContainerUtil.find(cherryPickers, new Condition<VcsCherryPicker>() {
       @Override
       public boolean value(VcsCherryPicker picker) {

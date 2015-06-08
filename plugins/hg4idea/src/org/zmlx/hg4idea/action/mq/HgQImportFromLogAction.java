@@ -15,7 +15,6 @@
  */
 package org.zmlx.hg4idea.action.mq;
 
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.action.HgLogSingleCommitAction;
@@ -30,8 +29,7 @@ public class HgQImportFromLogAction extends HgLogSingleCommitAction {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull MultiMap<HgRepository, VcsFullCommitDetails> grouped) {
-    return super.isEnabled(grouped) &&
-           !HgMqAppliedPatchAction.isAppliedPatch(grouped.keySet().iterator().next(), grouped.values().iterator().next());
+  protected boolean isEnabled(@NotNull HgRepository repository, @NotNull VcsFullCommitDetails commit) {
+    return super.isEnabled(repository, commit) && !HgMqAppliedPatchAction.isAppliedPatch(repository, commit);
   }
 }

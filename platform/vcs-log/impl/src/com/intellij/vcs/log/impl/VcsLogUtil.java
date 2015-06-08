@@ -23,6 +23,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogUtil {
+  private static final int DETAILS_LIMIT = 100;
 
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -166,6 +168,24 @@ public class VcsLogUtil {
       collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
 
     return new HashSet<VirtualFile>(rootsAndFiles.second.get(root));
+  }
+
+  // If this method stumbles on LoadingDetails instance it returns empty list
+  // Also, can be slow when many details are selected
+  public static List<VcsFullCommitDetails> collectLoadedSelectedDetails(@NotNull VcsLog log, boolean limitDetails) {
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+
+    for (VcsFullCommitDetails next : log.getSelectedDetails()) {
+      if (next instanceof LoadingDetails) {
+        return Collections.emptyList();
+      }
+      else {
+        result.add(next);
+        if (result.size() >= DETAILS_LIMIT && limitDetails) break;
+      }
+    }
+
+    return result;
   }
 
   @NotNull

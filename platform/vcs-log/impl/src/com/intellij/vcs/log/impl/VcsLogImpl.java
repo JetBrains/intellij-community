@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -26,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -34,7 +35,6 @@ import java.util.concurrent.Future;
  *
  */
 public class VcsLogImpl implements VcsLog {
-
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUiImpl myUi;
 
@@ -46,31 +46,37 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public List<CommitId> getSelectedCommits() {
-    List<CommitId> commitIds = ContainerUtil.newArrayList();
-    JBTable table = myUi.getTable();
-    for (int row : table.getSelectedRows()) {
-      CommitId commitId = ((GraphTableModel)table.getModel()).getCommitIdAtRow(row);
-      if (commitId != null) {
-        commitIds.add(commitId);
+    final int[] rows = myUi.getTable().getSelectedRows();
+    return new AbstractList<CommitId>() {
+      @NotNull
+      @Override
+      public CommitId get(int index) {
+        return ((GraphTableModel)myUi.getTable().getModel()).getCommitIdAtRow(rows[index]);
       }
-    }
-    return commitIds;
+
+      @Override
+      public int size() {
+        return rows.length;
+      }
+    };
   }
 
   @NotNull
   @Override
   public List<VcsFullCommitDetails> getSelectedDetails() {
-    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
-    JBTable table = myUi.getTable();
-    for (int row : table.getSelectedRows()) {
-      GraphTableModel model = (GraphTableModel)table.getModel();
-      VcsFullCommitDetails commitDetails = model.getFullCommitDetails(row);
-      if (commitDetails == null) {
-        return ContainerUtil.emptyList();
+    final int[] rows = myUi.getTable().getSelectedRows();
+    return new AbstractList<VcsFullCommitDetails>() {
+      @NotNull
+      @Override
+      public VcsFullCommitDetails get(int index) {
+        return myDataHolder.getCommitDetailsGetter().getCommitData(rows[index], (GraphTableModel)myUi.getTable().getModel());
       }
-      details.add(commitDetails);
-    }
-    return details;
+
+      @Override
+      public int size() {
+        return rows.length;
+      }
+    };
   }
 
   @Nullable

@@ -35,8 +35,8 @@ public interface VcsLog {
   List<CommitId> getSelectedCommits();
 
   /**
-   * Returns details of the selected commits if all of them have been loaded.
-   * To avoid data inconsistency, if at least one of the selected commits have no details loaded, empty list is returned.
+   * Returns details of the selected commits.
+   * For commits that are not loaded an instance of LoadingDetails is returned.
    */
   @NotNull
   List<VcsFullCommitDetails> getSelectedDetails();
