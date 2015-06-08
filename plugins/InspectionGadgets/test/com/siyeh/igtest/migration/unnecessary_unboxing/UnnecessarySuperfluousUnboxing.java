@@ -3,7 +3,7 @@ package com.siyeh.igtest.migration.unnecessary_superfluous_unboxing;
 
 
 
-public class UnnecessaryUnboxing {
+public class UnnecessarySuperfluousUnboxing {
 
 
     private void test1(Integer intValue, Long longValue,
@@ -28,15 +28,15 @@ public class UnnecessaryUnboxing {
         return foo == null ? 0 : bar.intValue();
     }
 
-    UnnecessaryUnboxing(Object object) {}
-    UnnecessaryUnboxing(long l) {}
+    UnnecessarySuperfluousUnboxing(Object object) {}
+    UnnecessarySuperfluousUnboxing(long l) {}
 
     void user(Long l) {
-        new UnnecessaryUnboxing(l.longValue());
+        new UnnecessarySuperfluousUnboxing(l.longValue());
     }
 
     Integer boxcutter(Integer i) {
-      return i.intValue();
+      return <warning descr="Unnecessary unboxing 'i.intValue()'">i.intValue()</warning>;
     }
 }
 
