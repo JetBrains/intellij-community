@@ -145,7 +145,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         mySyncMarkerIsValid = false;
       }
     }
-    myRangeMarker = null;  // clear hard ref to avoid leak, hold soft ref for not recreating marker later
+    myRangeMarker = null;  // clear hard ref to avoid leak, but hold soft ref (in myMarkerRef) for not recreating marker too often
   }
 
   @Override
@@ -169,11 +169,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
   }
 
-  protected static PsiElement findElementInside(@NotNull PsiFile file,
-                                                int syncStartOffset,
-                                                int syncEndOffset,
-                                                @NotNull Class type,
-                                                @NotNull Language language) {
+  static PsiElement findElementInside(@NotNull PsiFile file,
+                                      int syncStartOffset,
+                                      int syncEndOffset,
+                                      @NotNull Class type,
+                                      @NotNull Language language) {
     PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
     if (anchor == null) return null;
 
@@ -266,11 +266,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     });
   }
 
-  protected int getSyncEndOffset() {
+  int getSyncEndOffset() {
     return mySyncEndOffset;
   }
 
-  protected int getSyncStartOffset() {
+  int getSyncStartOffset() {
     return mySyncStartOffset;
   }
 
