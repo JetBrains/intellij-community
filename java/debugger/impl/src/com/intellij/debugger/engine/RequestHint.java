@@ -161,7 +161,7 @@ public class RequestHint {
     }
     else {
       Range<Integer> exprLines = myMethodFilter.getCallingExpressionLines();
-      return exprLines != null && locationPosition.getLine() >= exprLines.getFrom() && locationPosition.getLine() <= exprLines.getTo();
+      return exprLines != null && exprLines.isWithin(locationPosition.getLine());
     }
   }
 

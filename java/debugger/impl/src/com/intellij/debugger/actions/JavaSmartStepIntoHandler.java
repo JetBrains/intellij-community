@@ -119,7 +119,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Override
         public void visitStatement(PsiStatement statement) {
-          if (lineRange.intersects(statement.getTextRange())) {
+          TextRange range = statement.getTextRange();
+          if (lineRange.intersects(range)) {
+            textRange.set(textRange.get().union(range));
             super.visitStatement(statement);
           }
         }
