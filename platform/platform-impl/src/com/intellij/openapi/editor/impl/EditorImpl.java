@@ -4348,11 +4348,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMultiSelectionInProgress = true;
         myRectangularSelectionInProgress = columnSelectionDrag || addRectangularSelectionEvent;
         myTargetMultiSelectionPosition = xyToVisualPosition(new Point(Math.max(x, 0), Math.max(y, 0)));
-        getScrollingModel().scrollTo(newLogicalCaret, ScrollType.RELATIVE);
       }
       else {
         getCaretModel().moveToLogicalPosition(newLogicalCaret);
-        getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
 
       int newCaretOffset = getCaretModel().getOffset();
