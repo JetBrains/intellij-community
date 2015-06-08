@@ -27,6 +27,7 @@ import javax.swing.*;
  * <li>Usage of single quoted strings</li>
  * <li>Usage of identifiers (unqouted words)</li>
  * <li>Not double quoted string literal is used as property key</li>
+ * <li>Multiple top-level values</li>
  * </ul>
  *
  * @author Mikhail Golubev
@@ -35,6 +36,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(JsonStandardComplianceInspection.class);
 
   public boolean myWarnAboutComments = true;
+  public boolean myWarnAboutMultipleTopLevelValues = true;
 
   @NotNull
   public String getDisplayName() {
@@ -75,6 +77,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         if (JsonPsiUtil.isPropertyKey(literal) && !JsonPsiUtil.getElementTextWithoutHostEscaping(literal).startsWith("\"")) {
           holder.registerProblem(literal, JsonBundle.message("msg.compliance.problem.illegal.property.key"), new AddDoubleQuotesFix());
         }
+        super.visitLiteral(literal);
       }
 
       @Override
@@ -90,6 +93,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         if (trailingComma != null) {
           holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
         }
+        super.visitArray(array);
       }
 
       @Override
@@ -97,6 +101,17 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
         if (trailingComma != null) {
           holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
+        }
+        super.visitObject(object);
+      }
+
+      @Override
+      public void visitValue(@NotNull JsonValue value) {
+        if (value.getContainingFile() instanceof JsonFile) {
+          final JsonFile jsonFile = (JsonFile)value.getContainingFile();
+          if (myWarnAboutMultipleTopLevelValues && value.getParent() == jsonFile && value != jsonFile.getTopLevelValue()) {
+            holder.registerProblem(value, JsonBundle.message("msg.compliance.problem.multiple.top.level.values"));
+          }
         }
       }
     };
@@ -120,6 +135,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(JsonBundle.message("option.warn.about.comments.name"), "myWarnAboutComments");
+    optionsPanel.addCheckbox(JsonBundle.message("option.warn.about.multiple.top.level.values.name"), "myWarnAboutMultipleTopLevelValues");
     return optionsPanel;
   }
 
@@ -153,7 +169,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
           }
         });
       }
-      else if (element != null) {
+      else {
         LOG.error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
       }
     }

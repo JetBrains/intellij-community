@@ -1,7 +1,10 @@
 package com.intellij.json.psi;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -14,4 +17,7 @@ public interface JsonFile extends JsonElement, PsiFile {
    */
   @Nullable
   JsonValue getTopLevelValue();
+
+  @NotNull
+  List<JsonValue> getAllTopLevelValues();
 }
