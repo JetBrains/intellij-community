@@ -2230,11 +2230,18 @@ public class UIUtil {
   }
 
   public static HTMLEditorKit getHTMLEditorKit() {
+    return getHTMLEditorKit(true);
+  }
+  
+  public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
-    final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
+    String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
+    if (noGapsBetweenParagraphs) {
+      customCss += " p { margin-top: 0; }";
+    }
 
     final StyleSheet style = new StyleSheet();
     style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
