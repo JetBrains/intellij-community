@@ -26,6 +26,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -198,7 +199,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
-    return !(loc.method().isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
+    Method method = loc.method();
+    if (DebuggerUtils.isSynthetic(method)) {
+      return false;
+    }
+    return !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {

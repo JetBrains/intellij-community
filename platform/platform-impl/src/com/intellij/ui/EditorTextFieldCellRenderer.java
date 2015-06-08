@@ -87,7 +87,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
     editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());
     editor.setBackgroundColor(selected ? table.getSelectionBackground() : table.getBackground());
-    panel.setOpaque(!Comparing.equal(editor.getBackgroundColor(), table.getBackground()));
+    panel.setSelected(!Comparing.equal(editor.getBackgroundColor(), table.getBackground()));
 
     panel.setBorder(null); // prevents double border painting when ExtendedItemRendererComponentWrapper is used
 
@@ -139,13 +139,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     public EditorEx getEditor() {
       return myEditor;
-    }
-
-    @Override
-    public void setOpaque(boolean isOpaque) {
-      if (myEditor != null) {
-        myEditor.getContentComponent().setOpaque(isOpaque);
-      }
     }
 
     public void setText(String text, @Nullable TextAttributes textAttributes, boolean selected) {

@@ -31,7 +31,7 @@ public class CheckMessagesButtonsOrderAction  extends AnAction implements DumbAw
   @Override
   public void actionPerformed(AnActionEvent e) {
 
-    new Thread() {
+    new Thread("check messages") {
       @Override
       public void run() {
         super.run();

@@ -1674,13 +1674,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<T> comparator) {
+  public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<? super T> comparator) {
     return sorted((Iterable<T>)list, comparator);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> sorted(@NotNull Iterable<T> list, @NotNull Comparator<T> comparator) {
+  public static <T> List<T> sorted(@NotNull Iterable<T> list, @NotNull Comparator<? super T> comparator) {
     List<T> sorted = newArrayList(list);
     sort(sorted, comparator);
     return sorted;
@@ -1688,7 +1688,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T extends Comparable<T>> List<T> sorted(@NotNull Collection<T> list) {
+  public static <T extends Comparable<? super T>> List<T> sorted(@NotNull Collection<T> list) {
     return sorted(list, new Comparator<T>() {
       @Override
       public int compare(T o1, T o2) {

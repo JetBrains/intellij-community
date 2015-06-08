@@ -409,10 +409,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
                   treeEvent.setChild(oldPsiFile);
                   myManager.childRemoved(treeEvent);
                 }
-                else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
-                         newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
-                         languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
-                         !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages())) {
+                else if (!FileManagerImpl.areViewProvidersEquivalent(fileViewProvider, oldFileViewProvider)) {
                   myFileManager.setViewProvider(vFile, fileViewProvider);
 
                   treeEvent.setOldChild(oldPsiFile);
@@ -563,7 +560,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
               myManager.childRemoved(treeEvent);
             }
             else {
-              if (oldElement.getClass().equals(newElement.getClass())) {
+              if (newElement instanceof PsiDirectory || FileManagerImpl.areViewProvidersEquivalent(newViewProvider, ((PsiFile) oldElement).getViewProvider())) {
                 treeEvent.setOldParent(oldParentDir);
                 treeEvent.setNewParent(newParentDir);
                 treeEvent.setChild(oldElement);

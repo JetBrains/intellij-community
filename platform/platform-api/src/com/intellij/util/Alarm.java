@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -338,7 +339,7 @@ public class Alarm implements Disposable {
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
+              EdtInvocationManager.getInstance().invokeLater(new Runnable() {
                 @Override
                 public void run() {
                   if (!myDisposed) {

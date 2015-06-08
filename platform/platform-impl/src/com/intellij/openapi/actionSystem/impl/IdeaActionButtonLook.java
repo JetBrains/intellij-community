@@ -104,14 +104,14 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     }
   }
   private static Shape getShape(Dimension size) {
-    return new RoundRectangle2D.Double(2, 0, size.width - 3, size.height - 3, 4, 4);
+    return new RoundRectangle2D.Double(1, 1, size.width - 3, size.height - 3, 4, 4);
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
     final int width = icon.getIconWidth();
     final int height = icon.getIconHeight();
-    final int x = (int)Math.ceil((actionButton.getWidth() - width) / 2) + 1;
-    final int y = (int)Math.ceil((actionButton.getHeight() - height) / 2) ;
+    final int x = (int)Math.ceil((actionButton.getWidth() - width) / 2);
+    final int y = (int)Math.ceil((actionButton.getHeight() - height) / 2);
     paintIconAt(g, actionButton, icon, x, y);
   }
 

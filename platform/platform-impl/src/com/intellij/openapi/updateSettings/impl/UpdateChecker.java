@@ -545,9 +545,9 @@ public final class UpdateChecker {
     String toBuildNumber = toBuild.asStringWithoutProductCode();
 
     String bundledJdk = "";
-    String jdkMacRedist = System.getProperty("idea.java.redist");
-    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0) {
-      bundledJdk = "jdk-bundled".equals(jdkMacRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
+    String jdkRedist = System.getProperty("idea.java.redist");
+    if (jdkRedist != null && jdkRedist.lastIndexOf("jdk-bundled") >= 0) {
+      bundledJdk = "jdk-bundled".equals(jdkRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
     }
 
     String osSuffix = "-" + patch.getOSSuffix();

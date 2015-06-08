@@ -88,9 +88,14 @@ public class SuppressExternalTest extends UsefulTestCase {
   @Override
   public void tearDown() throws Exception {
     LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
+
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      super.tearDown();
+    }
   }
 
 

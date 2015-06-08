@@ -373,7 +373,7 @@ public class Replacer {
       }
 
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-
+      assert profile != null;
       profile.checkReplacementPattern(project, options);
 
     } catch(IncorrectOperationException ex) {

@@ -101,6 +101,10 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("p.A.E", "E", false, null, false, false, null));
   }
 
+  public void testInnerInnerClassUsedInTypeParams() throws Exception {
+    doTest(createAction("p.Main.A", "A", false, null, false, false, null));
+  }
+
   public void testEnumConstructorVisibility() throws Exception { // IDEADEV-28619
     doTest(createAction("p.A.E", "E", false, null, false, false, "p2"));
   }

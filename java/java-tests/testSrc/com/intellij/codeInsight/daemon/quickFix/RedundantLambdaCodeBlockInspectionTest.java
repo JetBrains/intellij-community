@@ -17,6 +17,8 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -36,4 +38,8 @@ public class RedundantLambdaCodeBlockInspectionTest extends LightQuickFixParamet
     return "/codeInsight/daemonCodeAnalyzer/quickFix/lambdaCodeBlock2Expr";
   }
 
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
+  }
 }

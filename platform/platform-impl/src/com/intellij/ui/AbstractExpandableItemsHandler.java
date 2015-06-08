@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
@@ -346,12 +347,16 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private boolean noIntersections(Rectangle bounds) {
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
+    Window focus = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
     for (Window other : owner.getOwnedWindows()) {
       if (popup != other && other.isVisible() && bounds.x + 10 >= other.getX() && bounds.intersects(other.getBounds())) {
         return false;
       }
+      if (focus == other) {
+        focus = null; // already checked
+      }
     }
-    return true;
+    return focus == owner || focus == null || !owner.getBounds().intersects(focus.getBounds());
   }
 
   private void hideHint() {

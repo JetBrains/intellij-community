@@ -3,9 +3,14 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,65 +22,71 @@ import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIter
 public class DeclarationStatementHandler extends MatchingHandler {
   private MatchingHandler myCommentHandler;
 
-  public boolean match(PsiElement patternNode,PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (patternNode instanceof PsiComment) {
-      //if (matchedNode instanceof  PsiComment || matchedNode instanceof PsiClass || matchedNode instanceof PsiField)
         return myCommentHandler.match(patternNode, matchedNode, context);
-      //return false;
     }
 
     if (!super.match(patternNode,matchedNode,context)) return false;
-    boolean result;
-    PsiDeclarationStatement dcl = (PsiDeclarationStatement)patternNode;
-
+    final PsiDeclarationStatement dcl = (PsiDeclarationStatement)patternNode;
     if (matchedNode instanceof PsiDeclarationStatement) {
-      result = GlobalMatchingVisitor.continueMatchingSequentially(
+      return GlobalMatchingVisitor.continueMatchingSequentially(
         new SsrFilteringNodeIterator(patternNode.getFirstChild()),
         new SsrFilteringNodeIterator(matchedNode.getFirstChild()),
         context
       );
-    } else {
-      final PsiElement[] declared = dcl.getDeclaredElements();
+    }
+    final PsiElement[] declared = dcl.getDeclaredElements();
 
-      // declaration statement could wrap class or dcl
-      if (declared.length >0 &&
-          ( ( declared[0] instanceof PsiVariable && matchedNode instanceof PsiVariable) ||
-            ( declared[0] instanceof PsiClass && matchedNode instanceof PsiClass)
-          ) &&
-          !(matchedNode.getParent() instanceof PsiDeclarationStatement) // skip twice matching for child
-         ) {
-        result = GlobalMatchingVisitor.continueMatchingSequentially(
+    // declaration statement could wrap class or dcl
+    if (declared.length > 0 && !(matchedNode.getParent() instanceof PsiDeclarationStatement) /* skip twice matching for child*/) {
+      if (!(matchedNode instanceof PsiField)) {
+        return GlobalMatchingVisitor.continueMatchingSequentially(
           new ArrayBackedNodeIterator(declared),
-          new CountingNodeIterator(
-            declared.length,
-            new SsrFilteringNodeIterator(matchedNode)
-          ),
+          new CountingNodeIterator(declared.length, new SsrFilteringNodeIterator(matchedNode)),
           context
         );
-
-        if (result &&
-            declared[0] instanceof PsiVariable && matchedNode instanceof PsiField
-            ) {
-          // we may have comments behind to match!
-          final PsiElement[] children = dcl.getChildren();
-
-          final PsiElement lastChild = children[children.length - 1];
-          if (lastChild instanceof PsiComment) {
-            final PsiElement[] fieldChildren = matchedNode.getChildren();
-
-            result = context.getPattern().getHandler(lastChild).match(
-              lastChild,
-              fieldChildren[fieldChildren.length-1],
-              context
-            );
-          }
-        }
-      } else {
-        result = false;
       }
-    }
 
-    return result;
+      // special handling for multiple fields in single declaration
+      final PsiElement sibling = PsiTreeUtil.skipSiblingsBackward(matchedNode, PsiWhiteSpace.class);
+      if (PsiUtil.isJavaToken(sibling, JavaTokenType.COMMA)) {
+        return false;
+      }
+      final List<PsiElement> matchNodes = new ArrayList<PsiElement>();
+      matchNodes.add(matchedNode);
+      PsiElement node = matchedNode;
+      node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);
+      while (PsiUtil.isJavaToken(node, JavaTokenType.COMMA)) {
+        node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);
+        if (node != null) {
+          matchNodes.add(node);
+        }
+        node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);
+      }
+      boolean result = GlobalMatchingVisitor.continueMatchingSequentially(
+        new ArrayBackedNodeIterator(declared),
+        new ArrayBackedNodeIterator(matchNodes.toArray(new PsiElement[matchNodes.size()])),
+        context
+      );
+
+      if (result && declared[0] instanceof PsiVariable) {
+        // we may have comments behind to match!
+
+        final PsiElement lastChild = dcl.getLastChild();
+        if (lastChild instanceof PsiComment) {
+          final PsiElement[] fieldChildren = matchedNode.getChildren();
+
+          result = context.getPattern().getHandler(lastChild).match(
+            lastChild,
+            fieldChildren[fieldChildren.length-1],
+            context
+          );
+        }
+      }
+      return result;
+    }
+    return false;
   }
 
   public boolean shouldAdvanceTheMatchFor(PsiElement patternElement, PsiElement matchedElement) {

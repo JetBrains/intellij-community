@@ -203,6 +203,9 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
   @Nullable
   public static String getCannotInlineMessage(final PsiClass psiClass) {
+    if (psiClass instanceof PsiTypeParameter) {
+      return "Type parameters cannot be inlined";
+    }
     if (psiClass.isAnnotationType()) {
       return "Annotation types cannot be inlined";
     }

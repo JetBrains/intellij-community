@@ -429,8 +429,8 @@ public class GitLogProvider implements VcsLogProvider {
     if (filterCollection.getUserFilter() != null) {
       String authorFilter =
         StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.INSTANCE), "|");
-      filterParameters
-        .add(prepareParameter("author", StringUtil.escapeChars(StringUtil.escapeBackSlashes(authorFilter), '|', '(', ')', '?')));
+      filterParameters.add(prepareParameter("author", StringUtil.escapeBackSlashes(authorFilter)));
+      filterParameters.add("--extended-regexp"); // extended regexp required for correctly filtering user names
     }
 
     if (filterCollection.getDateFilter() != null) {

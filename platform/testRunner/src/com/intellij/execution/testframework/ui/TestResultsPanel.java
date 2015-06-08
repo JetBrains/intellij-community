@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.AwtVisitor;
@@ -105,20 +106,22 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
       }
     };
     myStatisticsSplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
-    if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
-      showStatistics();
-    }
-    myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
-      @Override
-      public void onChanged(Boolean value) {
-        if (value.booleanValue()) {
-          showStatistics();
-        }
-        else {
-          myStatisticsSplitter.setSecondComponent(null);
-        }
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
+        showStatistics();
       }
-    });
+      myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
+        @Override
+        public void onChanged(Boolean value) {
+          if (value.booleanValue()) {
+            showStatistics();
+          }
+          else {
+            myStatisticsSplitter.setSecondComponent(null);
+          }
+        }
+      });
+    }
     rightPanel.add(myStatisticsSplitter, BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
     testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -162,7 +165,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     outputTab.add(console, BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
-    outputTab.add(toolbar.getComponent(), BorderLayout.WEST);
+    outputTab.add(toolbar.getComponent(), BorderLayout.EAST);
     return outputTab;
   }
 

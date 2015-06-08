@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -47,7 +48,7 @@ public class ShowStatisticsAction extends AnAction {
     // visible only in SMTRunnerTestTreeView 
     presentation.setVisible(e.getData(SMTRunnerTestTreeView.SM_TEST_RUNNER_VIEW) != null);
     // enabled if some proxy is selected
-    presentation.setEnabled(getSelectedTestProxy(e) != null);
+    presentation.setEnabled(getSelectedTestProxy(e) != null && Registry.is("tests.view.old.statistics.panel"));
   }
 
   @Nullable

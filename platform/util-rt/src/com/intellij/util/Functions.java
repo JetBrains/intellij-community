@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * @author gregsh
+ * @noinspection unchecked
  */
 public class Functions {
 
@@ -41,6 +42,17 @@ public class Functions {
     };
   }
 
+  private static final Function<Object, Class> TO_CLASS = new Function<Object, Class>() {
+    @Override
+    public Class fun(Object o) {
+      return o.getClass();
+    }
+  };
+
+  public static <T> Function<T, Class> toClass() {
+    return (Function<T, Class>)TO_CLASS;
+  }
+
   private static final Function PAIR_FIRST = new Function<Pair<?, ?>, Object>() {
     @Override
     public Object fun(Pair<?, ?> pair) {
@@ -56,12 +68,10 @@ public class Functions {
   };
 
   public static <A> Function<Pair<A, ?>, A> pairFirst() {
-    //noinspection unchecked
     return (Function<Pair<A, ?>, A>)PAIR_FIRST;
   }
 
   public static <B> Function<Pair<?, B>, B> pairSecond() {
-    //noinspection unchecked
     return (Function<Pair<?, B>, B>)PAIR_SECOND;
   }
 }

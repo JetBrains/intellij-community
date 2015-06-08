@@ -134,11 +134,21 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   }
 
   @Override
+  public void startOfScenarioLifeCycle(Scenario scenario) {
+
+  }
+
+  @Override
   public void step(Step step) {
     if (beforeExampleSection) {
       return;
     }
     currentSteps.add(step);
+  }
+
+  @Override
+  public void endOfScenarioLifeCycle(Scenario scenario) {
+
   }
 
   @Override

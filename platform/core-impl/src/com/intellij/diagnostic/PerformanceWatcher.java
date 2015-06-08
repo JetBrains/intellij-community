@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
@@ -31,7 +32,9 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +49,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private ThreadMXBean myThreadMXBean;
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
   private File mySessionLogDir;
-  private int myUnresponsiveDuration = 0;
+  private int myUnresponsiveDuration;
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
 
@@ -70,7 +73,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   public void initComponent() {
     myThreadMXBean = ManagementFactory.getThreadMXBean();
 
-    if (shallNotWatch()) return;
+    if (!shouldWatch()) return;
 
     final String threshold = System.getProperty("performance.watcher.threshold");
     if (threshold != null) {
@@ -126,7 +129,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     if (allLogsDir.isDirectory()) {
       final String[] dirs = allLogsDir.list(new FilenameFilter() {
         @Override
-        public boolean accept(final File dir, final String name) {
+        public boolean accept(@NotNull final File dir, @NotNull final String name) {
           return name.startsWith("threadDumps-");
         }
       });
@@ -141,7 +144,7 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   @Override
   public void disposeComponent() {
-    if (shallNotWatch()) return;
+    if (!shouldWatch()) return;
     myShutdownSemaphore.release();
     try {
       myThread.join();
@@ -151,11 +154,11 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
   }
 
-  private boolean shallNotWatch() {
-    return ApplicationManager.getApplication().isUnitTestMode() ||
-           ApplicationManager.getApplication().isHeadlessEnvironment() ||
-           UNRESPONSIVE_INTERVAL == 0 ||
-           UNRESPONSIVE_THRESHOLD == 0;
+  private boolean shouldWatch() {
+    return !ApplicationManager.getApplication().isUnitTestMode() &&
+           !ApplicationManager.getApplication().isHeadlessEnvironment() &&
+           UNRESPONSIVE_INTERVAL != 0 &&
+           UNRESPONSIVE_THRESHOLD != 0;
   }
 
   private void checkEDTResponsiveness() {
@@ -206,15 +209,16 @@ public class PerformanceWatcher implements ApplicationComponent {
     return name.toString();
   }
 
-  public void dumpThreads(String pathPrefix, boolean millis) {
-    if (shallNotWatch()) return;
+  @Nullable
+  public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
+    if (!shouldWatch()) return null;
 
-    String suffix = millis ? "-" + String.valueOf(System.currentTimeMillis()) : "";
+    String suffix = millis ? "-" + System.currentTimeMillis() : "";
     File file = new File(myCurHangLogDir, pathPrefix + "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
 
     File dir = file.getParentFile();
     if (!(dir.isDirectory() || dir.mkdirs())) {
-      return;
+      return null;
     }
 
     try {
@@ -235,6 +239,7 @@ public class PerformanceWatcher implements ApplicationComponent {
       }
     }
     catch (IOException ignored) { }
+    return file;
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

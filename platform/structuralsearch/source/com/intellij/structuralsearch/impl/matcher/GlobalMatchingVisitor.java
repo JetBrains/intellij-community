@@ -5,6 +5,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.MatchResult;
@@ -29,6 +30,7 @@ import java.util.Map;
 @SuppressWarnings({"RefusedBequest"})
 public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor");
+  public static final Key<List<PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
 
   // the pattern element for visitor check
   private PsiElement myElement;
@@ -159,7 +161,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
     if (!nodes.hasNext()) {
-      return nodes.hasNext() == nodes2.hasNext();
+      return !nodes2.hasNext();
     }
 
     return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(
@@ -171,7 +173,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   public static boolean continueMatchingSequentially(final NodeIterator nodes, final NodeIterator nodes2, MatchContext matchContext) {
     if (!nodes.hasNext()) {
-      return nodes.hasNext() == nodes2.hasNext();
+      return !nodes2.hasNext();
     }
 
     return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(

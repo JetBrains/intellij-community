@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
       public void run() {
         ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(target, indicator);
       }
-    });
+    }, "svn cache repo");
     thread.start();
 
     TimeoutUtil.sleep(10);
@@ -184,7 +184,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
           }
         }
       };
-      Thread thread = new Thread(target);
+      Thread thread = new Thread(target, "svn cache");
       thread.start();
     }
 

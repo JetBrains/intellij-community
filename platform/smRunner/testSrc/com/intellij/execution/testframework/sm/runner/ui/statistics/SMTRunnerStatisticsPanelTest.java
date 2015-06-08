@@ -52,6 +52,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
                                                 new JLabel(),
                                                 consoleProperties,
                                                 environment);
+    Disposer.register(myResultsForm, consoleProperties);
     myResultsForm.initUI();
     myStatisticsPanel = myResultsForm.getStatisticsPane();
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();

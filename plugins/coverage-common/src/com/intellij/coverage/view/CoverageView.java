@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
@@ -28,7 +43,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +58,7 @@ import java.awt.event.*;
  * User: anna
  * Date: 1/2/12
  */
-public class CoverageView extends JPanel implements DataProvider, Disposable {
+public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls private static final String ACTION_GO_UP = "GoUp";
   @NonNls private static final String HELP_ID = "reference.toolWindows.Coverage";
@@ -54,11 +71,10 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
  
 
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
-    super(new BorderLayout());
     myProject = project;
     myStateBean = stateBean;
     final JLabel titleLabel = new JLabel();
-    titleLabel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
+    titleLabel.setBorder(JBUI.Borders.empty(2, 0));
     final CoverageSuitesBundle suitesBundle = dataManager.getCurrentSuitesBundle();
     myModel = new CoverageTableModel(suitesBundle, stateBean, project);
 
@@ -83,10 +99,10 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
     }
     myTable.getColumnModel().getColumn(0).setCellRenderer(new NodeDescriptorTableCellRenderer());
     myTable.getTableHeader().setReorderingAllowed(false);
-    JPanel centerPanel = new JPanel(new BorderLayout());
-    centerPanel.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
-    centerPanel.add(titleLabel, BorderLayout.NORTH);
-    add(centerPanel, BorderLayout.CENTER);
+    JPanel centerPanel = JBUI.Panels.simplePanel()
+      .addToCenter(ScrollPaneFactory.createScrollPane(myTable))
+      .addToTop(titleLabel);
+    addToCenter(centerPanel);
     final CoverageViewTreeStructure structure = new CoverageViewTreeStructure(project, suitesBundle, stateBean);
     myBuilder = new CoverageViewBuilder(project, new JBList(), myModel, structure, myTable);
     myBuilder.setParentTitle(titleLabel);
@@ -128,7 +144,7 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
 
     final JComponent component =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActions(structure), false).getComponent();
-    add(component, BorderLayout.WEST);
+    addToLeft(component);
   }
 
   @Override

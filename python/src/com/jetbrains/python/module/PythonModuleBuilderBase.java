@@ -57,8 +57,9 @@ public class PythonModuleBuilderBase extends ModuleBuilder {
   }
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
-    if (mySdk != null) {
-      rootModel.setSdk(mySdk);
+    // false for the module automatically created in a new project
+    if (myJdk != null) {
+      rootModel.setSdk(myJdk);
     }
     else {
       rootModel.inheritSdk();

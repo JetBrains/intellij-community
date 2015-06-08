@@ -18,7 +18,6 @@ package hg4idea.test.validator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import hg4idea.test.HgPlatformTest;
-import hg4idea.test.HgTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -45,12 +44,10 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
   @NotNull private final String myBranchName;
   private final boolean myExpected;
 
-
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    HgTestUtil.updateDirectoryMappings(myProject, myRepository);
     HgRepository hgRepository = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     assertNotNull(hgRepository);
     myValidator = new HgBranchReferenceValidator(hgRepository);

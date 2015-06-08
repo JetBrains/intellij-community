@@ -75,8 +75,12 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      super.tearDown();
+    }
   }
 }

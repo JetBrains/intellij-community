@@ -6,7 +6,6 @@ import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
@@ -20,6 +19,7 @@ import org.codehaus.groovy.syntax.SyntaxException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,20 +41,29 @@ public class ScriptSupport {
     }
   }
 
-  public String evaluate(MatchResultImpl result, PsiElement context) {
+  public String evaluate(MatchResult result, PsiElement context) {
     try {
-      Binding binding = new Binding();
+      final Binding binding = new Binding();
 
       if (result != null) {
-        for(MatchResult r:result.getMatches()) {
-          binding.setVariable(r.getName(),r.getMatchRef().getElement());
+        for(MatchResult r:result.getAllSons()) {
+          if (r.isMultipleMatch()) {
+            final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+            for (MatchResult r2 : r.getAllSons()) {
+              elements.add(StructuralSearchUtil.getParentIfIdentifier(r2.getMatch()));
+            }
+            binding.setVariable(r.getName(), elements);
+          }
+          else {
+            binding.setVariable(r.getName(), StructuralSearchUtil.getParentIfIdentifier(r.getMatch()));
+          }
         }
       }
 
       if (context == null) {
-        context = result.getMatchRef().getElement();
+        context = result.getMatch();
       }
-      if (StructuralSearchUtil.isIdentifier(context)) context = context.getParent();
+      context = StructuralSearchUtil.getParentIfIdentifier(context);
       binding.setVariable("__context__", context);
       script.setBinding(binding);
 

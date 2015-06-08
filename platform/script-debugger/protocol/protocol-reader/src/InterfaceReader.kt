@@ -59,7 +59,7 @@ val VOID_PARSER: ValueReader = object : ValueReader() {
 fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>, aClass: Class<*>): TypeWriter<*> {
   val reader = InterfaceReader(typeToTypeHandler)
   reader.processed.addAll(typeToTypeHandler.keySet())
-  reader.go(array(aClass))
+  reader.go(arrayOf(aClass))
   return typeToTypeHandler.get(aClass)
 }
 
@@ -69,7 +69,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
   val subtypeCasters = ArrayList<SubtypeCaster>()
 
   fun go(): LinkedHashMap<Class<*>, TypeWriter<*>> {
-    return go(typeToTypeHandler.keySet().copyToArray())
+    return go(typeToTypeHandler.keySet().toTypedArray())
   }
 
   fun go(classes: Array<Class<*>>): LinkedHashMap<Class<*>, TypeWriter<*>> {
@@ -163,10 +163,10 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
       else if (type == javaClass<String>()) {
         if (method != null) {
           val jsonField = method.getAnnotation<JsonField>(javaClass<JsonField>())
-          if (jsonField != null && jsonField.allowAnyPrimitiveValue()) {
+          if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
             return RAW_STRING_PARSER
           }
-          else if ((jsonField != null && jsonField.optional()) || method.getAnnotation<JsonOptionalField>(javaClass<JsonOptionalField>()) != null) {
+          else if ((jsonField != null && jsonField.optional) || method.getAnnotation<JsonOptionalField>(javaClass<JsonOptionalField>()) != null) {
             return NULLABLE_STRING_PARSER
           }
         }
@@ -189,7 +189,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
       }
       val ref = getTypeRef(type)
       if (ref != null) {
-        return ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(javaClass<JsonField>())?.primitiveValue())
+        return ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(javaClass<JsonField>())?.primitiveValue)
       }
       throw UnsupportedOperationException("Method return type " + type + " (simple class) not supported")
     }
@@ -198,7 +198,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
       if (isList || type.getRawType() == javaClass<Map<Any, Any>>()) {
         var argumentType = type.getActualTypeArguments()[if (isList) 0 else 1]
         if (argumentType is WildcardType) {
-          val wildcard = argumentType as WildcardType
+          val wildcard = argumentType
           if (wildcard.getLowerBounds().size() == 0 && wildcard.getUpperBounds().size() == 1) {
             argumentType = wildcard.getUpperBounds()[0]
           }
@@ -235,7 +235,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
         throw JsonProtocolModelParseException("Unexpected type of superclass " + param)
       }
       if (result != null) {
-        throw JsonProtocolModelParseException("Already has superclass " + result!!.typeClass.getName())
+        throw JsonProtocolModelParseException("Already has superclass " + result.typeClass.getName())
       }
       result = getTypeRef(param)
       if (result == null) {

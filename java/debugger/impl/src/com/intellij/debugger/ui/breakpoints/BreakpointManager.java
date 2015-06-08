@@ -51,6 +51,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -186,8 +187,8 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public RunToCursorBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex, final boolean ignoreBreakpoints) {
-    return RunToCursorBreakpoint.create(myProject, document, lineIndex, ignoreBreakpoints);
+  public RunToCursorBreakpoint addRunToCursorBreakpoint(@NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
+    return RunToCursorBreakpoint.create(myProject, position, ignoreBreakpoints);
   }
 
   @Nullable

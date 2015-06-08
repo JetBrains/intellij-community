@@ -349,7 +349,7 @@ public class ExternalDocumentValidator {
       return;
     }
 
-    final FileType fileType = containingFile.getViewProvider().getVirtualFile().getFileType();
+    final FileType fileType = containingFile.getViewProvider().getFileType();
     if (fileType != XmlFileType.INSTANCE && fileType != XHtmlFileType.INSTANCE) {
       return;
     }

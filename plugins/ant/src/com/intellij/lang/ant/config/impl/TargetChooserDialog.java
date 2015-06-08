@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.AntIcons;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +43,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -62,9 +62,7 @@ public class TargetChooserDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
     myTree = initTree();
-    panel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
@@ -84,7 +82,7 @@ public class TargetChooserDialog extends DialogWrapper {
       }
     }.installOn(myTree);
 
-    return panel;
+    return JBUI.Panels.simplePanel(ScrollPaneFactory.createScrollPane(myTree));
   }
 
   private Tree initTree() {

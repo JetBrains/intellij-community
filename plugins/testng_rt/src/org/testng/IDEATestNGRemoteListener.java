@@ -20,9 +20,8 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   private final PrintStream myPrintStream;
   private final List<String> myCurrentSuites = new ArrayList<String>();
-  private String myMethodName;
-  private int myInvocationCount = 0;
-  private final Map<ExposedTestResult, String> myParamsMap = Collections.synchronizedMap(new HashMap<ExposedTestResult, String>());
+  private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
+  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
 
   public IDEATestNGRemoteListener() {
     myPrintStream = System.out;
@@ -82,16 +81,16 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public synchronized void onFinish(ITestContext context) {}
 
   public void onTestStart(ExposedTestResult result) {
-    final String testMethodName = result.getMethodName();
     final Object[] parameters = result.getParameters();
-    if (!testMethodName.equals(myMethodName)) {
-      myInvocationCount = 0;
-      myMethodName = testMethodName;
+    final String qualifiedName = result.getClassName() + result.getMethodName();
+    Integer invocationCount = myInvocationCounts.get(qualifiedName);
+    if (invocationCount == null) {
+      invocationCount = 0;
     }
-    final String paramString = getParamsString(parameters, myInvocationCount);
-    myParamsMap.put(result, paramString);
-    onTestStart(result, paramString, myInvocationCount);
-    myInvocationCount++;
+    
+    final String paramString = getParamsString(parameters, invocationCount);
+    onTestStart(result, paramString, invocationCount);
+    myInvocationCounts.put(qualifiedName, invocationCount + 1);
   }
 
   public void onConfigurationSuccess(ExposedTestResult result) {
@@ -139,6 +138,8 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount) {
+    myPrintStream.println("##teamcity[testCount count=\'1\']");
+    myParamsMap.put(result, paramString);
     final List<String> fqns = result.getTestHierarchy();
     onSuiteStart(fqns, true);
     final String methodName = result.getMethodName();
@@ -149,6 +150,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestFailure(ExposedTestResult result) {
+    if (!myParamsMap.containsKey(result)) {
+      onTestStart(result);
+    }
     Throwable ex = result.getThrowable();
     String methodName = getTestMethodNameWithParams(result);
     final Map<String, String> attrs = new HashMap<String, String>();
@@ -209,7 +213,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     return paramString.length() > 0 ? paramString : null;
   }
 
-  private static String getTrace(Throwable tr) {
+  protected String getTrace(Throwable tr) {
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);
     tr.printStackTrace(writer);

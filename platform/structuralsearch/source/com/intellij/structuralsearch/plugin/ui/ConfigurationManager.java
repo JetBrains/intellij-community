@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
@@ -20,13 +21,34 @@ import java.util.*;
  * Time: 14:29:45
  * To change this template use File | Settings | File Templates.
  */
-public class ConfigurationManager {
+@State(
+  name="StructuralSearchPlugin",
+  storages = @Storage(file= StoragePathMacros.WORKSPACE_FILE)
+)
+public class ConfigurationManager implements PersistentStateComponent<Element> {
   @NonNls static final String SEARCH_TAG_NAME = "searchConfiguration";
   @NonNls static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
   private List<Configuration> configurations;
   private List<Configuration> historyConfigurations;
+
+  public static ConfigurationManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ConfigurationManager.class);
+  }
+
+  @Nullable
+  @Override
+  public Element getState() {
+    final Element state = new Element("state");
+    saveConfigurations(state);
+    return state;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    loadConfigurations(state);
+  }
 
   public void addHistoryConfigurationToFront(Configuration configuration) {
     if (historyConfigurations == null) historyConfigurations = new ArrayList<Configuration>();

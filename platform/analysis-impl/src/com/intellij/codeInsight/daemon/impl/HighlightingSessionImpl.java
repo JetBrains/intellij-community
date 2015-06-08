@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -24,43 +24,69 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 public class HighlightingSessionImpl implements HighlightingSession {
   @NotNull private final PsiFile myPsiFile;
   @Nullable private final Editor myEditor;
   @NotNull private final ProgressIndicator myProgressIndicator;
   private final EditorColorsScheme myEditorColorsScheme;
-  private final int myPassId;
-  @NotNull private final TextRange myRestrictRange;
   @NotNull private final Project myProject;
   private final Document myDocument;
   private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
   private volatile boolean myDisposed;
 
-  public HighlightingSessionImpl(@NotNull PsiFile psiFile,
-                                 @Nullable Editor editor,
-                                 @NotNull ProgressIndicator progressIndicator,
-                                 EditorColorsScheme editorColorsScheme,
-                                 int passId,
-                                 @NotNull TextRange restrictRange) {
+  private HighlightingSessionImpl(@NotNull PsiFile psiFile,
+                                  @Nullable Editor editor,
+                                  @NotNull DaemonProgressIndicator progressIndicator,
+                                  EditorColorsScheme editorColorsScheme) {
     myPsiFile = psiFile;
     myEditor = editor;
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
-    myPassId = passId;
-    myRestrictRange = restrictRange;
     myProject = psiFile.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    Disposer.register(progressIndicator, this);
+    if (progressIndicator.isDisposed()) {
+      Disposer.dispose(progressIndicator); //dispose both progress indicator and this session in case we managed to register after indicator dispose to avoid mem leaks
+    }
+  }
+
+  private static final Key<ConcurrentMap<PsiFile, HighlightingSession>> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
+
+  public static HighlightingSession getHighlightingSession(@NotNull PsiFile psiFile, @NotNull ProgressIndicator progressIndicator) {
+    Map<PsiFile, HighlightingSession> map = ((DaemonProgressIndicator)progressIndicator).getUserData(HIGHLIGHTING_SESSION);
+    return map == null ? null : map.get(psiFile);
+  }
+
+  static HighlightingSession getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
+                                                            @Nullable Editor editor,
+                                                            @NotNull DaemonProgressIndicator progressIndicator,
+                                                            EditorColorsScheme editorColorsScheme) {
+    HighlightingSession session = getHighlightingSession(psiFile, progressIndicator);
+    if (session == null) {
+      session = new HighlightingSessionImpl(psiFile, editor, progressIndicator, editorColorsScheme);
+      ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+      if (map == null) {
+        map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, ContainerUtil.<PsiFile, HighlightingSession>newConcurrentMap());
+      }
+      session = ConcurrencyUtil.cacheOrGet(map, psiFile, session);
+    }
+    return session;
   }
 
   @NotNull
@@ -98,18 +124,13 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return myEditorColorsScheme;
   }
 
-  @Override
-  public int getPassId() {
-    return myPassId;
-  }
-
-  private final TransferToEDTQueue<HighlightInfo> myAddHighlighterInEDTQueue = new TransferToEDTQueue<HighlightInfo>("Apply highlighting results", new Processor<HighlightInfo>() {
+  private final TransferToEDTQueue<Info> myAddHighlighterInEDTQueue = new TransferToEDTQueue<Info>("Apply highlighting results", new Processor<Info>() {
     @Override
-    public boolean process(HighlightInfo info) {
+    public boolean process(Info info) {
       final EditorColorsScheme colorsScheme = getColorsScheme();
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getPsiFile(), myRestrictRange.getStartOffset(),
-                                                                 myRestrictRange.getEndOffset(),
-                                                                 info, colorsScheme, Pass.UPDATE_ALL, myRanges2markersCache);
+      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getPsiFile(), info.myRestrictRange.getStartOffset(),
+                                                                 info.myRestrictRange.getEndOffset(),
+                                                                 info.myInfo, colorsScheme, info.myGroupId, myRanges2markersCache);
 
       return true;
     }
@@ -132,11 +153,15 @@ public class HighlightingSessionImpl implements HighlightingSession {
     }
   }, 200);
 
-  void queueHighlightInfo(@NotNull HighlightInfo info) {
-    myAddHighlighterInEDTQueue.offer(info);
+
+  void queueHighlightInfo(@NotNull HighlightInfo info,
+                          @NotNull TextRange priorityRange,
+                          @NotNull TextRange restrictedRange,
+                          int groupId) {
+    myAddHighlighterInEDTQueue.offer(new Info(info, priorityRange, restrictedRange, groupId));
   }
 
-  void queueDisposeHighlighter(RangeHighlighterEx highlighter) {
+  void queueDisposeHighlighter(@Nullable RangeHighlighterEx highlighter) {
     if (highlighter == null) return;
     myDisposeHighlighterInEDTQueue.offer(highlighter);
   }
@@ -144,5 +169,24 @@ public class HighlightingSessionImpl implements HighlightingSession {
   @Override
   public void dispose() {
     myDisposed = true;
+  }
+
+  private static class Info {
+    @NotNull private final HighlightInfo myInfo;
+    @NotNull private final TextRange myPriorityRange;
+    @NotNull private final TextRange myRestrictRange;
+    private final int myGroupId;
+
+    public Info(@NotNull HighlightInfo info, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange, int groupId) {
+      myInfo = info;
+      myPriorityRange = priorityRange;
+      myRestrictRange = restrictRange;
+      myGroupId = groupId;
+    }
+  }
+
+  void waitForHighlightInfosApplied() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myAddHighlighterInEDTQueue.drain();
   }
 }

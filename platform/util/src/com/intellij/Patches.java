@@ -98,6 +98,15 @@ public class Patches {
   public static final boolean SUN_BUG_ID_7179799 = SystemInfo.isWindows && !SystemInfo.isJavaVersionAtLeast("1.8");
 
   /**
+   * Frame size reverts meaning of maximized attribute if frame size close to display.
+   * See http://bugs.openjdk.java.net/browse/JDK-8007219
+   * Fixed in JDK 8.
+   */
+  public static final boolean JDK_BUG_ID_8007219 = SystemInfo.isMac
+                                                   && SystemInfo.isJavaVersionAtLeast("1.7")
+                                                   && !SystemInfo.isJavaVersionAtLeast("1.8");
+
+  /**
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
    * which need to be changed when migrated to JDK 7
    */

@@ -112,8 +112,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
             final String homePath = sdk.getHomePath();
             if (!StringUtil.isEmpty(homePath) && FileUtil.isAncestor(homePath, eventPath, true)) {
               affected.add(sdk);
-              // no need to iterate further assuming the file cannot be under the home of several SDKs
-              break;
             }
           }
         }

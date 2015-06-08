@@ -36,10 +36,10 @@ import java.awt.geom.Rectangle2D;
 public class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
-  public static final Color GREEN = new JBColor(new Color(0x2fd432), new Color(0x287528));
-  public static final Color RED = new Color(0xd2451e);
+  public static final Color GREEN = new JBColor(new Color(0x6cad74), new Color(0x4a8c53));
+  public static final Color RED = new JBColor(new Color(0xdb675c), new Color(0xa44f48));
   public static final Color BLUE = new JBColor(new Color(1, 68, 208), JBColor.blue);
-  public static final Color YELLOW = new Color(0xd4b721);
+  public static final Color YELLOW = new JBColor(new Color(0xc39555), new Color(0x9a7642));
 
   private static final Color SHADOW1 = new JBColor(Gray._190, UIUtil.getBorderColor()) ;
   private static final Color SHADOW2 = Gray._105;

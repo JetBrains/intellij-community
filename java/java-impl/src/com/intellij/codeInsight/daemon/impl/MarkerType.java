@@ -58,16 +58,15 @@ public class MarkerType {
 
       return calculateOverridingMethodTooltip(method, method != element.getParent());
     }
-  }, new LineMarkerNavigator(){
+  }, new LineMarkerNavigator() {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = getParentMethod(element);
       if (!(parent instanceof PsiMethod)) return;
       PsiMethod method = (PsiMethod)parent;
       navigateToOverridingMethod(e, method, method != element.getParent());
-
     }
-  });
+  }, new ConstantFunction<PsiElement, String>("Go to overriding method(s)"));
 
   @Nullable
   public static String calculateOverridingMethodTooltip(PsiMethod method, boolean acceptSelf) {
@@ -133,7 +132,7 @@ public class MarkerType {
       navigateToOverriddenMethod(e, (PsiMethod)parent);
 
     }
-  });
+  }, new ConstantFunction<PsiElement, String>("Go to overriding methods"));
 
   public static String getOverriddenMethodTooltip(final PsiMethod method) {
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
@@ -203,7 +202,7 @@ public class MarkerType {
     PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
   }
 
-  public static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for overridden methods";
+  public static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for Overridden Methods";
   public static final MarkerType SUBCLASSED_CLASS = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {
@@ -212,7 +211,7 @@ public class MarkerType {
       PsiClass aClass = (PsiClass)parent;
       return getSubclassedClassTooltip(aClass);
     }
-  }, new LineMarkerNavigator(){
+  }, new LineMarkerNavigator() {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       final PsiElement parent = element.getParent();
@@ -220,6 +219,14 @@ public class MarkerType {
       final PsiClass aClass = (PsiClass)parent;
 
       navigateToSubclassedClass(e, aClass);
+    }
+  }, new Function<PsiElement, String>() {
+    @Override
+    public String fun(PsiElement element) {
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiClass)) return null;
+      final PsiClass aClass = (PsiClass)parent;
+      return aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)";
     }
   });
 
@@ -285,8 +292,10 @@ public class MarkerType {
 
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
+  private final Function<PsiElement, String> myNavigateActionText;
 
-  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator,
+                    @Nullable Function<PsiElement, String> actionText) {
     myTooltip = tooltip;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
@@ -294,6 +303,11 @@ public class MarkerType {
         navigator.browse(e, elt);
       }
     };
+    myNavigateActionText = actionText;
+  }
+
+  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+    this(tooltip, navigator, null);
   }
 
   @NotNull
@@ -304,6 +318,10 @@ public class MarkerType {
   @NotNull
   public Function<PsiElement, String> getTooltip() {
     return myTooltip;
+  }
+
+  public Function<PsiElement, String> getNavigateActionText() {
+    return myNavigateActionText;
   }
 
   private static class SubclassUpdater extends ListBackgroundUpdaterTask {

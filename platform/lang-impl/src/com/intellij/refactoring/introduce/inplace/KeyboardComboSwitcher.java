@@ -28,13 +28,15 @@ public class KeyboardComboSwitcher {
         if (toggleStrategy) {
           final int size = comboBox.getModel().getSize();
           int next = comboBox.getSelectedIndex() + 1;
-          if (size > 0 && (next < 0 || next >= size)) {
-            if (!UISettings.getInstance().CYCLE_SCROLLING) {
-              return;
+          if (size > 0) {
+            if (next < 0 || next >= size) {
+              if (!UISettings.getInstance().CYCLE_SCROLLING) {
+                return;
+              }
+              next = (next + size) % size;
             }
-            next = (next + size) % size;
+            comboBox.setSelectedIndex(next);
           }
-          comboBox.setSelectedIndex(next);
           ToolWindowManager.getInstance(project).activateEditorComponent();
         }
         else {

@@ -332,6 +332,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTestNoInline("Library classes cannot be inlined");
   }
 
+  public void testNoInlineTypeParameter() throws Exception {
+    doTestNoInline("Type parameters cannot be inlined");
+  }
+
   public void testNoInlineNoUsages() throws Exception {
     doTestPreprocessUsages("Class is never used");
   }

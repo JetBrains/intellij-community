@@ -37,11 +37,11 @@ public class GitRefManager implements VcsLogRefManager {
   private static final Color REMOTE_BRANCH_COLOR = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
   private static final Color TAG_COLOR = JBColor.WHITE;
 
-  public static final VcsRefType HEAD = new SimpleRefType(true, HEAD_COLOR);
-  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, LOCAL_BRANCH_COLOR);
-  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, REMOTE_BRANCH_COLOR);
-  public static final VcsRefType TAG = new SimpleRefType(false, TAG_COLOR);
-  public static final VcsRefType OTHER = new SimpleRefType(false, TAG_COLOR);
+  public static final VcsRefType HEAD = new SimpleRefType(true, HEAD_COLOR, "HEAD");
+  public static final VcsRefType LOCAL_BRANCH = new SimpleRefType(true, LOCAL_BRANCH_COLOR, "LOCAL_BRANCH");
+  public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, REMOTE_BRANCH_COLOR, "REMOTE_BRANCH");
+  public static final VcsRefType TAG = new SimpleRefType(false, TAG_COLOR, "TAG");
+  public static final VcsRefType OTHER = new SimpleRefType(false, TAG_COLOR, "OTHER");
 
   private static final String MASTER = "master";
   private static final String ORIGIN_MASTER = "origin/master";
@@ -208,10 +208,12 @@ public class GitRefManager implements VcsLogRefManager {
   private static class SimpleRefType implements VcsRefType {
     private final boolean myIsBranch;
     @NotNull private final Color myColor;
+    @NotNull private final String myName;
 
-    public SimpleRefType(boolean isBranch, @NotNull Color color) {
+    public SimpleRefType(boolean isBranch, @NotNull Color color, @NotNull String typeName) {
       myIsBranch = isBranch;
       myColor = color;
+      myName = typeName;
     }
 
     @Override
@@ -223,6 +225,11 @@ public class GitRefManager implements VcsLogRefManager {
     @Override
     public Color getBackgroundColor() {
       return myColor;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
     }
   }
 

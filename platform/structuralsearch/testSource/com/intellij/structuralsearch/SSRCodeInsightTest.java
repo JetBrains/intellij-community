@@ -36,10 +36,14 @@ public class SSRCodeInsightTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    myInspection = null;
-    super.tearDown();
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myInspection = null;
+      super.tearDown();
+    }
   }
 
   public void testExpressionStatement() {

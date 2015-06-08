@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class VariableReturnedVisitor extends JavaRecursiveElementVisitor {
+class VariableReturnedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @NotNull private final PsiVariable variable;
   private final boolean myBuilderPattern;
@@ -31,34 +31,25 @@ class VariableReturnedVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
-    if (returned) {
-      return;
-    }
-    super.visitElement(element);
-  }
-
-  @Override
   public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
-    if (returned) {
-      return;
-    }
-    super.visitReturnStatement(returnStatement);
     final PsiExpression returnValue = returnStatement.getReturnValue();
     if (VariableAccessUtils.mayEvaluateToVariable(returnValue, variable, myBuilderPattern)) {
       returned = true;
+      stopWalking();
+      return;
     }
+    super.visitReturnStatement(returnStatement);
   }
 
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
-    if (returned) {
-      return;
-    }
     final PsiElement body = expression.getBody();
     if (body instanceof PsiExpression && VariableAccessUtils.mayEvaluateToVariable((PsiExpression)body, variable, myBuilderPattern)) {
       returned = true;
+      stopWalking();
+      return;
     }
+    super.visitLambdaExpression(expression);
   }
 
   public boolean isReturned() {

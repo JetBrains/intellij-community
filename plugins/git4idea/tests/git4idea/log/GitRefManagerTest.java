@@ -64,7 +64,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
             return ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName));
           }
         });
-        assertNotNull("Ref " + refName + " not found", item);
+        assertNotNull("Ref " + refName + " not found among " + refs, item);
         return item;
       }
     });

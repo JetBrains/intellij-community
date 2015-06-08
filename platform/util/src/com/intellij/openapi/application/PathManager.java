@@ -24,6 +24,7 @@ import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
+import org.iq80.snappy.Snappy;
 import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -438,7 +439,8 @@ public class PathManager {
       PicoContainer.class,          // PicoContainer
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-utils)
-      PatternMatcher.class          // OROMatcher
+      PatternMatcher.class,          // OROMatcher
+      Snappy.class                   // Snappy
     };
 
     final Set<String> classPath = new HashSet<String>();

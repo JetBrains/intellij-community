@@ -20,7 +20,7 @@ public class JsonFileImpl extends PsiFileBase implements JsonFile {
   @NotNull
   @Override
   public FileType getFileType() {
-    return getViewProvider().getVirtualFile().getFileType();
+    return getViewProvider().getFileType();
   }
 
   @Nullable

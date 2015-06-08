@@ -239,4 +239,10 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
    */
   @NotNull
   PsiFile getStubBindingRoot();
+
+  /**
+   * @return the same as {@code getVirtualFile().getFileType()}, but cached.
+   */
+  @NotNull
+  FileType getFileType();
 }

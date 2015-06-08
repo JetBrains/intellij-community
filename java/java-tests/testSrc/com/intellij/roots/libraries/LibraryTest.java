@@ -28,13 +28,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     final Library library = libraryTable.createLibrary("NewLibrary");
     final boolean[] listenerNotifiedOnChange = new boolean[1];
-    library.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
-      @Override
-      public void rootSetChanged(RootProvider wrapper) {
-        listenerNotifiedOnChange[0] = true;
-      }
-
-    });
+    library.getRootProvider().addRootSetChangedListener(wrapper -> listenerNotifiedOnChange[0] = true);
     final Library.ModifiableModel model1 = library.getModifiableModel();
     model1.addRoot("file://x.jar", OrderRootType.CLASSES);
     model1.addRoot("file://x-src.jar", OrderRootType.SOURCES);
@@ -48,11 +42,8 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model2);
     assertFalse(listenerNotifiedOnChange[0]);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        libraryTable.removeLibrary(library);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      libraryTable.removeLibrary(library);
     });
   }
 
@@ -93,7 +84,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   private Collection<Library> getLibraries() {
-    CommonProcessors.CollectProcessor<Library> processor = new CommonProcessors.CollectProcessor<Library>();
+    CommonProcessors.CollectProcessor<Library> processor = new CommonProcessors.CollectProcessor<>();
     ModuleRootManager.getInstance(myModule).orderEntries().forEachLibrary(processor);
     return processor.getResults();
   }
@@ -190,12 +181,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertEmpty(library.getExcludedRoots());
   }
 
-  private static void commit(final Library.ModifiableModel modifyableModel1) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        modifyableModel1.commit();
-      }
-    });
+  private static void commit(final Library.ModifiableModel modifiableModel) {
+    ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
   }
 }

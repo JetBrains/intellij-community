@@ -241,17 +241,17 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   private void createDialog(@Nullable Window owner, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     if (isHeadless()) {
-      myDialog = new HeadlessDialog();
-      return;
+      myDialog = new HeadlessDialog(myWrapper);
     }
+    else {
+      myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
 
-    myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
+      UIUtil.suppressFocusStealing(getWindow());
 
-    UIUtil.suppressFocusStealing(getWindow());
+      myDialog.setModalityType(ideModalityType.toAwtModality());
 
-    myDialog.setModalityType(ideModalityType.toAwtModality());
-
-    myCanBeParent = canBeParent;
+      myCanBeParent = canBeParent;
+    }
   }
 
   private void createDialog(@Nullable Window owner, boolean canBeParent) {
@@ -281,7 +281,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     Runnable disposer = new Runnable() {
       @Override
       public void run() {
-        myDialog.dispose();
+        Disposer.dispose(myDialog);
         myProject = null;
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -614,7 +614,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       if (wrapper instanceof DataProvider) {
         return ((DataProvider)wrapper).getData(dataId);
       }
-      else if (wrapper instanceof TypeSafeDataProvider) {
+      if (wrapper instanceof TypeSafeDataProvider) {
         TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter((TypeSafeDataProvider)wrapper);
         return adapter.getData(dataId);
       }
@@ -650,6 +650,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.setBounds(r);
     }
 
+    @NotNull
     @Override
     protected JRootPane createRootPane() {
       return new DialogRootPane();
@@ -1035,6 +1036,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         putClientProperty("DIALOG_ROOT_PANE", true);
       }
 
+      @NotNull
       @Override
       protected JLayeredPane createLayeredPane() {
         JLayeredPane p = new JBLayeredPane();

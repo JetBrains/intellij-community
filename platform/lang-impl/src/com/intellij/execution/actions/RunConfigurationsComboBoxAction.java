@@ -26,12 +26,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SizedIcon;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -100,10 +103,18 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
+  protected boolean shouldShowDisabledActions() {
+    return true;
+  }
+
+  @Override
   public JComponent createCustomComponent(final Presentation presentation) {
-    ComboBoxButton button = new ComboBoxButton(presentation);
+    ComboBoxButton button = createComboBoxButton(presentation);
     button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
-    return button;
+    NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    panel.add(button);
+    return panel;
   }
 
 

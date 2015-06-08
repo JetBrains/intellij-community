@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>FinalizeDoesntCallSuperFinalizeInspection.java</file>
-    <line>16</line>
-    <problem_class>'finalize()' does not call 'super.finalize()'</problem_class>
-    <description>&lt;code&gt;finalize()&lt;/code&gt;#loc does not call 'super.finalize()'</description>
-  </problem>
-</problems>

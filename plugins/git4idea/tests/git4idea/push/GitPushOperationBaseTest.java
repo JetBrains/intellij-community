@@ -76,7 +76,9 @@ abstract class GitPushOperationBaseTest extends GitPlatformTest {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myOutside.tearDown();
+      if (myOutside != null) {
+        myOutside.tearDown();
+      }
     }
     finally {
       super.tearDown();

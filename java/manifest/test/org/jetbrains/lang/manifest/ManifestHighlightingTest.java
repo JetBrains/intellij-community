@@ -18,12 +18,19 @@ package org.jetbrains.lang.manifest;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class ManifestHighlightingTest extends LightCodeInsightFixtureTestCase {
+  public void testHeaders() {
+    doTest(
+      "Normal-Header: value\n" +
+      "Empty_Header: \n" +
+      "<error descr=\"Invalid header name\">Extra-Space </error>: value\n" +
+      "<error descr=\"Invalid header name\">Other*Header</error>: value\n");
+  }
+
   public void testMainClass() {
     doTest(
       "Main-Class: <error descr=\"Invalid reference\"></error>\n" +
       "Main-Class: <error descr=\"Cannot resolve class 'org.acme.Main'\">org.acme.Main</error>\n" +
-      "Main-Class: <error descr=\"Invalid main class\">java.lang.String</error>\n"
-    );
+      "Main-Class: <error descr=\"Invalid main class\">java.lang.String</error>\n");
   }
 
   private void doTest(String text) {

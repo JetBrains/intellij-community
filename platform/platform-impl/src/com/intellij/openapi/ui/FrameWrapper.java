@@ -27,9 +27,9 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -39,6 +39,8 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.FrameState;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -75,9 +77,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   private boolean myShown;
   private boolean myIsDialog;
   private boolean myImageWasChanged;
-
-  //Skip restoration of MAXIMIZED_BOTH_PROPERTY
-  private static final boolean WORKAROUND_FOR_JDK_8007219 = SystemInfo.isMac && SystemInfo.isOracleJvm;
 
   public FrameWrapper(Project project) {
     this(project, null);
@@ -302,47 +301,13 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected void loadFrameState() {
     final Window frame = getFrame();
-    final Point location;
-    final Dimension size;
-    final int extendedState;
-    DimensionService dimensionService = DimensionService.getInstance();
-    if (myDimensionKey == null || dimensionService == null) {
-      location = null;
-      size = null;
-      extendedState = -1;
-    }
-    else {
-      location = dimensionService.getLocationOn(null, myDimensionKey);
-      size = dimensionService.getSizeOn(null, myDimensionKey);
-      extendedState = dimensionService.getExtendedState(myDimensionKey);
-    }
-
-    if (size != null && location != null) {
-      frame.setLocation(location);
-      frame.setSize(size);
-      ((RootPaneContainer)frame).getRootPane().revalidate();
-    }
-    else {
+    if (!WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
       final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
       if (ideFrame != null) {
-        frame.pack();
         frame.setBounds(ideFrame.suggestChildFrameBounds());
       }
     }
-
-    if (!WORKAROUND_FOR_JDK_8007219 && extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
-      ((JFrame)frame).setExtendedState(extendedState);
-    }
-  }
-
-  private static void saveFrameState(String dimensionKey, Component frame) {
-    DimensionService dimensionService = DimensionService.getInstance();
-    if (dimensionKey == null || dimensionService == null) return;
-    dimensionService.setLocationOn(null, dimensionKey, frame.getLocation());
-    dimensionService.setSizeOn(null, dimensionKey, frame.getSize());
-    if (frame instanceof JFrame) {
-      dimensionService.setExtendedState(dimensionKey, ((JFrame)frame).getExtendedState());
-    }
+    ((RootPaneContainer)frame).getRootPane().revalidate();
   }
 
   public void setTitle(String title) {
@@ -370,6 +335,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     private File myFile;
 
     private MyJFrame(IdeFrame parent) throws HeadlessException {
+      FrameState.setFrameStateListener(this);
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
 
@@ -440,8 +406,8 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().remove(this);
 
-      if (myShown) {
-        saveFrameState(myDimensionKey, this);
+      if (myShown && myDimensionKey != null) {
+        WindowStateService.getInstance().saveStateFor(myProject, myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);
@@ -545,8 +511,8 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       MouseGestureManager.getInstance().remove(this);
 
-      if (myShown) {
-        saveFrameState(myDimensionKey, this);
+      if (myShown && myDimensionKey != null) {
+        WindowStateService.getInstance().saveStateFor(myProject, myDimensionKey, this);
       }
 
       Disposer.dispose(FrameWrapper.this);

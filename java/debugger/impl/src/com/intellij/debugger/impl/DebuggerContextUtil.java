@@ -90,17 +90,19 @@ public class DebuggerContextUtil {
             ranges.addAll(usages.second);
             final int breakPointLine = position.getLine();
             int bestLine = -1;
-            boolean hasSameLine = false;
+            int bestOffset = -1;
             for (TextRange range : ranges) {
               final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
               if (line > bestLine && line < breakPointLine) {
                 bestLine = line;
+                bestOffset = range.getStartOffset();
               } else if (line == breakPointLine) {
-                hasSameLine = true;
+                bestOffset = range.getStartOffset();
+                break;
               }
             }
-            if (bestLine > -1) {
-              return SourcePosition.createFromLine(file, hasSameLine ? breakPointLine : bestLine);
+            if (bestOffset > -1) {
+              return SourcePosition.createFromOffset(file, bestOffset);
             }
           }
         }

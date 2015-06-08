@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -151,12 +152,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     myPlainTextView = new PlainTextView(project);
     myTreeView = new TreeView(project, buildFile);
 
-    myMessagePanel = new JPanel(new BorderLayout());
     myCardLayout = new CardLayout();
     myContentPanel = new JPanel(myCardLayout);
     myContentPanel.add(myTreeView.getComponent(), myTreeView.getId());
     myContentPanel.add(myPlainTextView.getComponent(), myPlainTextView.getId());
-    myMessagePanel.add(myContentPanel, BorderLayout.CENTER);
+    myMessagePanel = JBUI.Panels.simplePanel(myContentPanel);
 
     setVerboseMode(AntBuildFileImpl.VERBOSE.value(buildFile.getAllOptions()));
 

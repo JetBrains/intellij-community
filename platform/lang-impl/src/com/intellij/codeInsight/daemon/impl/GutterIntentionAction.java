@@ -18,16 +18,20 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -38,70 +42,79 @@ import java.util.List;
  */
 class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction> {
   private final AnAction myAction;
-  private final EditorEx myEditor;
-  private final String myText;
+  private String myText;
 
-  public GutterIntentionAction(AnAction action, String text, EditorEx editor) {
+  private GutterIntentionAction(AnAction action) {
     myAction = action;
-    myEditor = editor;
-    myText = text;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     myAction.actionPerformed(
-      new AnActionEvent(relativePoint.toMouseEvent(), myEditor.getDataContext(), myText, new Presentation(),
+      new AnActionEvent(relativePoint.toMouseEvent(), ((EditorEx)editor).getDataContext(), myText, new Presentation(),
                         ActionManager.getInstance(), 0));
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!ApplicationManager.getApplication().isDispatchThread()) return true;
+    if (myText == null) {
+      AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
+      myAction.update(event);
+      myText = event.getPresentation().getText();
+      if (myText == null) myText = myAction.getTemplatePresentation().getText();
+      if (myText == null) myText = "";
+    }
+    return StringUtil.isNotEmpty(myText);
   }
 
   @Override
   @NotNull
   public String getText() {
-    return myText;
+    return StringUtil.notNullize(myText);
   }
 
   static void addActions(RangeHighlighterEx info,
-                         EditorEx editor,
                          List<HighlightInfo.IntentionActionDescriptor> descriptors) {
     final GutterIconRenderer renderer = info.getGutterIconRenderer();
     if (renderer == null) {
       return;
     }
-    addActions(renderer.getClickAction(), editor, descriptors, renderer);
-    addActions(renderer.getMiddleButtonClickAction(), editor, descriptors, renderer);
-    addActions(renderer.getRightButtonClickAction(), editor, descriptors, renderer);
-    addActions(renderer.getPopupMenuActions(), editor, descriptors, renderer);
+    addActions(renderer.getClickAction(), descriptors, renderer);
+    addActions(renderer.getMiddleButtonClickAction(), descriptors, renderer);
+    addActions(renderer.getRightButtonClickAction(), descriptors, renderer);
+    addActions(renderer.getPopupMenuActions(), descriptors, renderer);
   }
 
   private static void addActions(AnAction action,
-                         EditorEx editor,
-                         List<HighlightInfo.IntentionActionDescriptor> descriptors,
-                         GutterIconRenderer renderer) {
+                                 List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                                 GutterIconRenderer renderer) {
     if (action == null) {
       return;
     }
     if (action instanceof ActionGroup) {
       AnAction[] children = ((ActionGroup)action).getChildren(null);
       for (AnAction child : children) {
-        addActions(child, editor, descriptors, renderer);
+        addActions(child, descriptors, renderer);
       }
     }
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, editor.getDataContext());
-    action.update(event);
-    String text = event.getPresentation().getText();
-    if (text == null) text = action.getTemplatePresentation().getText();
-    if (text == null) {
-      return;
-    }
-    final IntentionAction actionAdapter = new GutterIntentionAction(action, text, editor);
+    final IntentionAction actionAdapter = new GutterIntentionAction(action);
     Icon icon = action.getTemplatePresentation().getIcon();
     if (icon == null) icon = renderer.getIcon();
+    if (icon.getIconWidth() < 16) icon = IconUtil.toSize(icon, 16, 16);
     HighlightInfo.IntentionActionDescriptor descriptor =
-      new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, icon);
+      new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), null, icon) {
+        @Nullable
+        @Override
+        public String getDisplayName() {
+          return actionAdapter.getText();
+        }
+      };
     descriptors.add(descriptor);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public int compareTo(IntentionAction o) {
     if (o instanceof GutterIntentionAction) {

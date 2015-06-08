@@ -45,7 +45,8 @@ public class TestNGTreeHierarchyTest {
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
     
-    doTest(suite, "\n" +
+    doTest(suite, "##teamcity[testCount count='1']\n" +
+                  "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
                   "##teamcity[testStarted name='test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
@@ -63,12 +64,68 @@ public class TestNGTreeHierarchyTest {
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
                                           "\n" +
                                           "##teamcity[testIgnored name='testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
+  public void testParallelTestExecutionPreserveInvocationCount() throws Exception {
+
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ISuite)null);
+    final MockTestNGResult[] results = new MockTestNGResult[] {new MockTestNGResult("ATest", "testName"), new MockTestNGResult("ATest", "testName1"), new MockTestNGResult("ATest", "testName")};
+    for (MockTestNGResult result : results) {
+      listener.onTestStart(result);
+      listener.onTestFinished(result);
+    }
+    listener.onFinish((ISuite)null);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[testCount count='1']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testCount count='1']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName1' locationHint='java:test://ATest.testName1|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName1']\n" +
+                                          "##teamcity[testCount count='1']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName (1)' locationHint='java:test://ATest.testName|[1|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName (1)']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+  
+  @Test
+  public void testFailureWithoutStart() throws Exception {
+
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ISuite)null);
+    listener.onTestFailure(new MockTestNGResult("ATest", "testName", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY));
+    listener.onFinish((ISuite)null);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[testCount count='1']\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "##teamcity[testFailed name='testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='testName']\n" +
                                           "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
@@ -85,6 +142,7 @@ public class TestNGTreeHierarchyTest {
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
@@ -105,16 +163,19 @@ public class TestNGTreeHierarchyTest {
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
 
-    doTest(suite, "\n" +
+    doTest(suite, "##teamcity[testCount count='1']\n" +
+                  "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
                   "##teamcity[testStarted name='test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                   "\n" +
                   "##teamcity[testFinished name='test1|[0|]']\n" +
+                  "##teamcity[testCount count='1']\n" +
                   "\n" +
                   "##teamcity[testStarted name='test1|[1|] (1)' locationHint='java:test://a.ATest.test1|[1|]']\n" +
                   "\n" +
                   "##teamcity[testFinished name='test1|[1|] (1)']\n" +
+                  "##teamcity[testCount count='1']\n" +
                   "\n" +
                   "##teamcity[testStarted name='test1|[2|] (2)' locationHint='java:test://a.ATest.test1|[2|]']\n" +
                   "\n" +
@@ -138,30 +199,56 @@ public class TestNGTreeHierarchyTest {
 
     Assert.assertEquals("output: " + buf, "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='setUp' locationHint='java:test://a.ATest.setUp']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='setUp']\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='test1']\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='tearDown' locationHint='java:test://a.ATest.tearDown']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='tearDown']\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='setUp' locationHint='java:test://a.ATest.setUp']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='setUp']\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='test2' locationHint='java:test://a.ATest.test2|[0|]']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='test2']\n" +
+                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='tearDown' locationHint='java:test://a.ATest.tearDown']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='tearDown']\n" +
+                                          "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
+  public void testConfigurationFailure() throws Exception {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    listener.onSuiteStart(className, true);
+    listener.onConfigurationFailure(new MockTestNGResult(className, "setUp", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY));
+    listener.onSuiteFinish(className);
+
+    Assert.assertEquals("output: " + buf, "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+                                          "##teamcity[testCount count='1']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='setUp' locationHint='java:test://a.ATest.setUp']\n" +
+                                          "##teamcity[testFailed name='setUp' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='setUp']\n" +
                                           "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
@@ -172,7 +259,8 @@ public class TestNGTreeHierarchyTest {
     final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null});
     listener.onTestStart(result);
     listener.onTestFinished(result);
-    Assert.assertEquals("output: " + buf, "\n" +
+    Assert.assertEquals("output: " + buf, "##teamcity[testCount count='1']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='testMe|[null, null|]' locationHint='java:test://ATest.testMe|[0|]']\n" +
@@ -212,7 +300,18 @@ public class TestNGTreeHierarchyTest {
         public void write(int b) throws IOException {
           buf.append(new String(new byte[]{(byte)b}));
         }
-      }));
+      })) {
+      @Override
+      protected String getTrace(Throwable tr) {
+        return StringUtil.convertLineSeparators(super.getTrace(tr));
+      }
+    };
+  }
+
+  private static Exception createExceptionWithoutTrace() {
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    return exception;
   }
 
   private static class MockTestNGResult implements IDEATestNGRemoteListener.ExposedTestResult {

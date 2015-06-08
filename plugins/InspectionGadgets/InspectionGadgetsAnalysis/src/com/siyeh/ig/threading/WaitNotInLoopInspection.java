@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.*;
-import com.siyeh.HardcodedMethodConstants;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInLoopInspection extends BaseInspection {
@@ -47,37 +45,10 @@ public class WaitNotInLoopInspection extends BaseInspection {
   private static class WaitNotInLoopVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
+      if (!ThreadingUtils.isWaitCall(expression)) {
         return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      final int numParams = parameterList.getParametersCount();
-      if (numParams > 2) {
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      if (numParams > 0) {
-        final PsiType parameterType = parameters[0].getType();
-        if (!parameterType.equals(PsiType.LONG)) {
-          return;
-        }
-      }
-      if (numParams > 1) {
-        final PsiType parameterType = parameters[1].getType();
-        if (!parameterType.equals(PsiType.INT)) {
-          return;
-        }
       }
       if (ControlFlowUtils.isInLoop(expression)) {
         return;

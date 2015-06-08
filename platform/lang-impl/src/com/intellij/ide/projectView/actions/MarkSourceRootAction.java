@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ProjectBundle;
@@ -30,12 +31,14 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  * @author nik
  */
 public class MarkSourceRootAction extends MarkRootActionBase {
+  private static final Logger LOG = Logger.getInstance(MarkSourceRootAction.class);
   private final JpsModuleSourceRootType<?> myRootType;
 
   public MarkSourceRootAction(@NotNull JpsModuleSourceRootType<?> type) {
     myRootType = type;
     Presentation presentation = getTemplatePresentation();
     ModuleSourceRootEditHandler<?> editHandler = ModuleSourceRootEditHandler.getEditHandler(type);
+    LOG.assertTrue(editHandler != null);
     presentation.setIcon(editHandler.getRootIcon());
     presentation.setText(editHandler.getRootTypeName() + " Root");
     presentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
@@ -47,7 +50,8 @@ public class MarkSourceRootAction extends MarkRootActionBase {
 
   @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
-    if (!ModuleType.get(module).isSupportedRootType(myRootType) || selection.myHaveSelectedFilesUnderSourceRoots) {
+    if (!ModuleType.get(module).isSupportedRootType(myRootType) || selection.myHaveSelectedFilesUnderSourceRoots
+        || ModuleSourceRootEditHandler.getEditHandler(myRootType) == null) {
       return false;
     }
 

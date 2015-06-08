@@ -592,10 +592,31 @@ public final class PsiUtil extends PsiUtilCore {
     return substitutor.substitute(parmType);
   }
 
+  /**
+   * Compares types with respect to type parameter bounds: e.g. for
+   * <code>class Foo&lt;T extends Number&gt;{}</code> types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
+   * would be equivalent
+   */
+  public static boolean equalOnEquivalentClasses(PsiClassType thisClassType, @NotNull PsiClass aClass, PsiClassType otherClassType, @NotNull PsiClass bClass) {
+    final PsiClassType capture1 = (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
+    final PsiClassType capture2 = (PsiClassType)captureToplevelWildcards(otherClassType, bClass);
+
+    final PsiClassType.ClassResolveResult result1 = capture1.resolveGenerics();
+    final PsiClassType.ClassResolveResult result2 = capture2.resolveGenerics();
+
+    return equalOnEquivalentClasses(result1.getSubstitutor(), aClass, result2.getSubstitutor(), bClass);
+  }
+
+  @Deprecated
   public static boolean equalOnClass(@NotNull PsiSubstitutor s1, @NotNull PsiSubstitutor s2, @NotNull PsiClass aClass) {
     return equalOnEquivalentClasses(s1, aClass, s2, aClass);
   }
 
+  /**
+   * @deprecated to remove in v.16
+   * Checks if substitutors maps are identical. If substitutor map values contain wildcard type, type parameter bounds are IGNORED.
+   * Please use {@link PsiUtil#equalOnEquivalentClasses(PsiClassType, PsiClass, PsiClassType, PsiClass)} instead.
+   */
   public static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1, @NotNull PsiClass aClass, @NotNull PsiSubstitutor s2, @NotNull PsiClass bClass) {
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
@@ -605,9 +626,7 @@ public final class PsiUtil extends PsiUtilCore {
     for (int i = 0; i < typeParameters1.length; i++) {
       final PsiType substituted2 = s2.substitute(typeParameters2[i]);
       final PsiType substituted1 = s1.substitute(typeParameters1[i]);
-      if (!Comparing.equal(s1.substituteWithBoundsPromotion(typeParameters1[i]), substituted2) &&
-          !Comparing.equal(s2.substituteWithBoundsPromotion(typeParameters2[i]), substituted1) &&
-          !Comparing.equal(substituted1, substituted2)) return false;
+      if (!Comparing.equal(substituted1, substituted2)) return false;
     }
     if (aClass.hasModifierProperty(PsiModifier.STATIC)) return true;
     final PsiClass containingClass1 = aClass.getContainingClass();
@@ -713,7 +732,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @NotNull
-  public static PsiType captureToplevelWildcards(@NotNull final PsiType type, final PsiElement context) {
+  public static PsiType captureToplevelWildcards(@NotNull final PsiType type, @NotNull final PsiElement context) {
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
       final PsiClass aClass = result.getElement();
@@ -763,11 +782,10 @@ public final class PsiUtil extends PsiUtilCore {
       captureContext = captured.getContext();
     }
     PsiType glb = null;
-    PsiType originalBound = PsiType.NULL;
     if (substituted instanceof PsiWildcardType) {
       final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
       PsiManager manager = typeParameter.getManager();
-      originalBound = !((PsiWildcardType)substituted).isSuper() ? ((PsiWildcardType)substituted).getBound() : null;
+      PsiType originalBound = !((PsiWildcardType)substituted).isSuper() ? ((PsiWildcardType)substituted).getBound() : null;
       glb = originalBound;
       for (PsiType boundType : boundTypes) {
         PsiType substitutedBoundType = captureSubstitutor.substitute(boundType);

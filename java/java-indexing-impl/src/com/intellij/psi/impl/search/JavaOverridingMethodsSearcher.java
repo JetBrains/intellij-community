@@ -50,18 +50,18 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @Nullable
   private static PsiMethod findOverridingMethod(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
-    PsiSubstitutor substitutor = inheritor.isInheritor(parentClass, true) ?
-                                 TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY) :
-                                 PsiSubstitutor.EMPTY;
-    MethodSignature signature = method.getSignature(substitutor);
-    PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
-    if (found != null && isAcceptable(found, method)) {
-      return found;
+    String name = method.getName();
+    if (inheritor.findMethodsByName(name, false).length > 0) {
+      PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, getSuperSignature(inheritor, parentClass, method), false);
+      if (found != null && isAcceptable(found, method)) {
+        return found;
+      }
     }
 
     if (parentClass.isInterface() && !inheritor.isInterface()) {  //check for sibling implementation
       final PsiClass superClass = inheritor.getSuperClass();
-      if (superClass != null && !superClass.isInheritor(parentClass, true)) {
+      if (superClass != null && !superClass.isInheritor(parentClass, true) && superClass.findMethodsByName(name, true).length > 0) {
+        MethodSignature signature = getSuperSignature(inheritor, parentClass, method);
         PsiMethod derived = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, signature, true);
         if (derived != null && isAcceptable(derived, method)) {
           return derived;
@@ -70,6 +70,14 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     }
     return null;
   }
+
+  @NotNull
+  private static MethodSignature getSuperSignature(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
+    PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY, null);
+    // if null, we have EJB custom inheritance here and still check overriding
+    return method.getSignature(substitutor != null ? substitutor : PsiSubstitutor.EMPTY);
+  }
+
 
   private static boolean isAcceptable(final PsiMethod found, final PsiMethod method) {
     return !found.hasModifierProperty(PsiModifier.STATIC) &&

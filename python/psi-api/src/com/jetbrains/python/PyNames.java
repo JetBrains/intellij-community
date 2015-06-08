@@ -141,6 +141,7 @@ public class PyNames {
 
   public static final String ABSTRACTMETHOD = "abstractmethod";
   public static final String ABSTRACTPROPERTY = "abstractproperty";
+  public static final String ABC_META_CLASS = "ABCMeta";
 
   public static final String TUPLE = "tuple";
   public static final String SET = "set";

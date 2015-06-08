@@ -19,8 +19,6 @@ public abstract class JsonTestCase extends LightCodeInsightFixtureTestCase {
     Logger.setFactory(TestLoggerFactory.class);
   }
 
-  protected static final Logger LOG = Logger.getInstance(JsonTestCase.class);
-
   @Override
   public void setUp() throws Exception {
     PlatformTestCase.autodetectPlatformPrefix();

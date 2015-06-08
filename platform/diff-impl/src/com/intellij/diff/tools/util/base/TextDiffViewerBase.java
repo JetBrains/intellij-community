@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -112,9 +113,13 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
 
   @NotNull
   protected List<AnAction> createEditorPopupActions() {
-    return ContainerUtil.list(
-      ActionManager.getInstance().getAction("CompareClipboardWithSelection")
-    );
+    List<AnAction> result = new ArrayList<AnAction>();
+    result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
+
+    result.add(Separator.getInstance());
+    ContainerUtil.addAll(result, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP)).getChildren(null));
+
+    return result;
   }
 
   @CalledInAwt

@@ -34,7 +34,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -106,6 +105,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   @Override
   public void update(AnActionEvent e) {
   }
+
+  protected boolean shouldShowDisabledActions() {
+    return false;
+  }
+
 
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
@@ -267,7 +271,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       DataContext context = getDataContext();
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        myPopupTitle, group, context, false, false, false, onDispose, getMaxRows(), getPreselectCondition());
+        myPopupTitle, group, context, false, shouldShowDisabledActions(), false, onDispose, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
       return popup;
     }

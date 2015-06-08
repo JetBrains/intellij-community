@@ -15,21 +15,29 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createInfoMessage;
 
@@ -37,7 +45,7 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
  * @author nik
  */
 public class XVariablesView extends XVariablesViewBase {
-  public static final Key<Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>>> DEBUG_VARIABLES = Key.create("debug.variables");
+  public static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
   public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
@@ -95,5 +103,73 @@ public class XVariablesView extends XVariablesViewBase {
       node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
     }
     tree.setRoot(node, true);
+  }
+
+  public static class InlineVariablesInfo {
+    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData
+      = new THashMap<Pair<VirtualFile, Integer>, Set<Entry>>();
+
+    @Nullable
+    public List<XValueNodeImpl> get(@NotNull VirtualFile file, int line) {
+      synchronized (myData) {
+        Set<Entry> entries = myData.get(Pair.create(file, line));
+        if (entries == null) return null;
+        return ContainerUtil.map(entries, new Function<Entry, XValueNodeImpl>() {
+          @Override
+          public XValueNodeImpl fun(Entry entry) {
+            return entry.myNode;
+          }
+        });
+      }
+    }
+
+    public void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node) {
+      synchronized (myData) {
+        Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
+        Set<Entry> entries = myData.get(key);
+        if (entries == null) {
+          entries = new TreeSet<Entry>();
+          myData.put(key, entries);
+        }
+        entries.add(new Entry(position.getOffset(), node));
+      }
+    }
+
+    private static class Entry implements Comparable<Entry> {
+      private final long myOffset;
+      private final XValueNodeImpl myNode;
+
+      public Entry(long offset, @NotNull XValueNodeImpl node) {
+        myOffset = offset;
+        myNode = node;
+      }
+
+      @Override
+      public int compareTo(Entry o) {
+        if (myNode == o.myNode) return 0;
+        int res = Comparing.compare(myOffset, o.myOffset);
+        if (res == 0) {
+          return XValueNodeImpl.COMPARATOR.compare(myNode, o.myNode);
+        }
+        return res;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Entry entry = (Entry)o;
+
+        if (!myNode.equals(entry.myNode)) return false;
+
+        return true;
+      }
+
+      @Override
+      public int hashCode() {
+        return myNode.hashCode();
+      }
+    }
   }
 }

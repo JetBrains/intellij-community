@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for breaking a file into a sequence of tokens.
+ *
  * @see LexerBase for certain methods' implementation
  */
 public abstract class Lexer {
 
   /**
-   * Prepare for lexing character data from <code>buffer</code> passed. Internal lexer state is supposed to be <code>initialState</code>. It is guaranteed
-   * that the value of initialState has been returned by {@link #getState()} method of this <code>Lexer</code> at condition <code>startOffset=getTokenStart()</code>
-   * This method is used to incrementally relex changed characters using lexing data acquired from this particular lexer sometime in the past.
+   * Prepare for lexing character data from {@code buffer} passed. Internal lexer state is supposed to be {@code initialState}. It is guaranteed
+   * that the value of initialState is the same as returned by {@link #getState()} method of this lexer at condition {@code startOffset=getTokenStart()}.
+   * This method is used to incrementally re-lex changed characters using lexing data acquired from this particular lexer sometime in the past.
    *
    * @param buffer       character data for lexing.
    * @param startOffset  offset to start lexing from
@@ -109,6 +110,7 @@ public abstract class Lexer {
   /**
    * Returns the buffer sequence over which the lexer is running. This method should return the
    * same buffer instance which was passed to the <code>start()</code> method.
+   *
    * @return the lexer buffer.
    * @since IDEA 7
    */

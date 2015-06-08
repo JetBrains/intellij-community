@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -245,10 +244,11 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       }
       if (range == null) range = method;
       final MarkerType type = MarkerType.OVERRIDEN_METHOD;
-      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
+      LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
                                                            icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(),
                                                            type.getNavigationHandler(),
                                                            GutterIconRenderer.Alignment.RIGHT);
+      info.setNavigateActionTextProvider(type.getNavigateActionText());
       result.add(info);
     }
   }
@@ -257,6 +257,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
     private ArrowUpLineMarkerInfo(@NotNull PsiElement element, Icon icon, @NotNull MarkerType markerType) {
       super(element, element.getTextRange(), icon, Pass.UPDATE_ALL, markerType.getTooltip(),
             markerType.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
+      setNavigateActionTextProvider(markerType.getNavigateActionText());
     }
 
     @Override

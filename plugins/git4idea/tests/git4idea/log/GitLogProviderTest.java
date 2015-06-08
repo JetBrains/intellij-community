@@ -192,15 +192,15 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     git("config user.name 'bob.smith'");
     git("config user.name 'bob.smith@example.com'");
-    String commitByBob = tac("file.txt");
     if (takeAllUsers) {
+      String commitByBob = tac("file.txt");
       hashes.add(commitByBob);
     }
     setupUsername();
 
-    hashes.add(tac("file.txt"));
+    hashes.add(tac("file1.txt"));
     git("checkout -b feature");
-    String commitOnlyInFeature = tac("file1.txt");
+    String commitOnlyInFeature = tac("file2.txt");
     hashes.add(commitOnlyInFeature);
     git("checkout master");
     String commitOnlyInMaster = tac("master.txt");

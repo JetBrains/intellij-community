@@ -26,8 +26,8 @@ setProperty("buildName", "EDU-$buildNumber")
 setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
-requireProperty("jdk_bundled_mac", "1.7")
-getBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk_bundled_mac"), ".tar", "${home}/build/jdk/jdk_mac_redist_for_${buildNumber}.tar")
+
+bundledJDKs()
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
@@ -148,9 +148,10 @@ target('default': "Build artifacts") {
   notifyArtifactBuilt("${paths.artifacts}/pycharm${buildName}.sit")
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
 
-  signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
-  buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": "jdk_mac_redist_for_${buildNumber}.tar"])
-
+  if (p("jdk.bundled.mac") != "false" && new File(macJDK).exists()) {
+    signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": macJDK])
+    buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled"])
+  }
 }
 
 public layoutEducational(String classesPath, Set usedJars) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,6 +256,64 @@ public class MethodUtils {
     }
     final PsiStatement[] statements = body.getStatements();
     return statements.length == 0;
+  }
+
+  public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
+    return isTrivial(method.getBody(), throwIsTrivial);
+  }
+
+  public static boolean isTrivial(PsiClassInitializer initializer) {
+    return isTrivial(initializer.getBody(), false);
+  }
+
+  private static boolean isTrivial(PsiCodeBlock codeBlock, boolean throwIsTrivial) {
+    if (codeBlock == null) {
+      return true;
+    }
+    final PsiStatement[] statements = codeBlock.getStatements();
+    if (statements.length == 0) {
+      return true;
+    }
+    for (PsiStatement statement : statements) {
+      if (statement instanceof PsiEmptyStatement) {
+        continue;
+      }
+      else if (statement instanceof PsiReturnStatement) {
+        final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+        final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
+        if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
+          return true;
+        }
+      }
+      else if (statement instanceof PsiIfStatement) {
+        final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+        final PsiExpression condition = ifStatement.getCondition();
+        final Object result = ExpressionUtils.computeConstantExpression(condition);
+        if (result == null || !result.equals(Boolean.FALSE)) {
+          return false;
+        }
+      }
+      else if (statement instanceof PsiExpressionStatement) {
+        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+        final PsiExpression expression = expressionStatement.getExpression();
+        if (!(expression instanceof PsiMethodCallExpression)) {
+          return false;
+        }
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        if (!PsiKeyword.SUPER.equals(methodExpression.getText())) {
+          // constructor super call
+          return false;
+        }
+      }
+      else if (throwIsTrivial && statement instanceof PsiThrowStatement) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static boolean hasInThrows(@NotNull PsiMethod method, @NotNull String... exceptions) {

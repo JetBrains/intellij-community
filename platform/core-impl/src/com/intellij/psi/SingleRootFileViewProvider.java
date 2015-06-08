@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.google.common.util.concurrent.Atomics;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -46,6 +47,7 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
@@ -69,10 +71,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
-  private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
+  private final AtomicReference<PsiFile> myPsiFile = Atomics.newReference();
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
+  @NotNull private final FileType myFileType;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -88,10 +91,21 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
                                     @NotNull VirtualFile virtualFile,
                                     final boolean eventSystemEnabled,
                                     @NotNull final FileType fileType) {
-    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType));
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType), fileType);
   }
 
-  protected SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean eventSystemEnabled, @NotNull Language language) {
+  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                       @NotNull VirtualFile virtualFile,
+                                       final boolean eventSystemEnabled,
+                                       @NotNull Language language) {
+    this(manager, virtualFile, eventSystemEnabled, language, virtualFile.getFileType());
+  }
+
+  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                       @NotNull VirtualFile virtualFile,
+                                       final boolean eventSystemEnabled,
+                                       @NotNull Language language,
+                                       @NotNull FileType type) {
     myManager = manager;
     myVirtualFile = virtualFile;
     myEventSystemEnabled = eventSystemEnabled;
@@ -100,6 +114,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
+    myFileType = type;
   }
 
   @Override
@@ -159,6 +174,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     PsiFile psiFile = myPsiFile.get();
     if (psiFile == null) {
       psiFile = createFile();
+      if (psiFile == null) {
+        psiFile = PsiUtilCore.NULL_PSI_FILE;
+      }
       boolean set = myPsiFile.compareAndSet(null, psiFile);
       if (!set) {
         if (psiFile instanceof PsiFileImpl) {
@@ -167,7 +185,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         psiFile = myPsiFile.get();
       }
     }
-    return psiFile;
+    return psiFile == PsiUtilCore.NULL_PSI_FILE ? null : psiFile;
   }
 
   @Override
@@ -216,12 +234,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
 
   public PsiFile getCachedPsi(@NotNull Language target) {
-    return myPsiFile.get();
+    PsiFile file = myPsiFile.get();
+    return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
   }
 
   @NotNull
   public FileElement[] getKnownTreeRoots() {
-    PsiFile psiFile = myPsiFile.get();
+    PsiFile psiFile = getCachedPsi(myBaseLanguage);
     if (psiFile == null || !(psiFile instanceof PsiFileImpl)) return new FileElement[0];
     if (((PsiFileImpl)psiFile).getTreeElement() == null) return new FileElement[0];
     return new FileElement[]{(FileElement)psiFile.getNode()};
@@ -246,8 +265,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         }
       }
 
-      FileType fileType = vFile.getFileType();
-      return createFile(project, vFile, fileType);
+      return createFile(project, vFile, myFileType);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -371,7 +389,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Override
   public FileViewProvider clone() {
     final VirtualFile origFile = getVirtualFile();
-    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
+    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), myFileType, getContents(), origFile.getCharset(), getModificationStamp());
     copy.setOriginalFile(origFile);
     copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
     copy.setCharset(origFile.getCharset());
@@ -451,7 +469,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public void forceCachedPsi(@NotNull PsiFile psiFile) {
     PsiFile prev = myPsiFile.getAndSet(psiFile);
-    if (prev != psiFile && prev instanceof PsiFileImpl) {
+    if (prev != null && prev != psiFile && prev instanceof PsiFileImpl) {
       ((PsiFileImpl)prev).markInvalidated();
     }
     ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
@@ -484,7 +502,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void markInvalidated() {
-    PsiFile psiFile = myPsiFile.get();
+    PsiFile psiFile = getCachedPsi(myBaseLanguage);
     if (psiFile instanceof PsiFileImpl) {
       ((PsiFileImpl)psiFile).markInvalidated();
     }
@@ -591,5 +609,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     final PsiFile psi = getPsi(getBaseLanguage());
     assert psi != null;
     return psi;
+  }
+
+  @NotNull
+  @Override
+  public final FileType getFileType() {
+    return myFileType;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.Patches;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
@@ -87,7 +88,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     }
   }
 
-  private static final boolean ORACLE_BUG_8007219 = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7");
   private static final int ORACLE_BUG_8007219_THRESHOLD = 5;
 
   private Boolean myAlphaModeSupported = null;
@@ -531,7 +531,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   private void fixForOracleBug8007219(IdeFrameImpl frame) {
-    if ((myFrameExtendedState & Frame.MAXIMIZED_BOTH) > 0 && ORACLE_BUG_8007219) {
+    if ((myFrameExtendedState & Frame.MAXIMIZED_BOTH) > 0 && Patches.JDK_BUG_ID_8007219) {
       final Rectangle screenBounds = ScreenUtil.getMainScreenBounds();
       final Insets screenInsets = ScreenUtil.getScreenInsets(frame.getGraphicsConfiguration());
 

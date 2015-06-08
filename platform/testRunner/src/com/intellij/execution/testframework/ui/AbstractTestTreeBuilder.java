@@ -16,14 +16,17 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.util.Comparator;
 
 /**
  * @author: Roman Chernyatchik
@@ -68,6 +71,28 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
 
   public void setTestsComparator(boolean sortAlphabetically) {
     setNodeDescriptorComparator(sortAlphabetically ? AlphaComparator.INSTANCE : null);
+    queueUpdate();
+  }
+
+  public void setStatisticsComparator(TestConsoleProperties properties, boolean sortByStatistics) {
+    if (!sortByStatistics) {
+      setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(properties));
+    }
+    else {
+      setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
+              @Override
+              public int compare(NodeDescriptor o1, NodeDescriptor o2) {
+                if (o1.getParentDescriptor() == o2.getParentDescriptor() &&
+                    o1 instanceof BaseTestProxyNodeDescriptor &&
+                    o2 instanceof BaseTestProxyNodeDescriptor) {
+                  final Long d1 = ((BaseTestProxyNodeDescriptor)o1).getElement().getDuration();
+                  final Long d2 = ((BaseTestProxyNodeDescriptor)o2).getElement().getDuration();
+                  return Comparing.compare(d2, d1);
+                }
+                return 0;
+              }
+            });
+    }
     queueUpdate();
   }
 }

@@ -22,15 +22,14 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
@@ -76,7 +75,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     template.addVariable("ARG", "", "", false);
     TemplateContextType contextType = contextType(JavaCodeContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
-    addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
     manager.startTemplate(editor, (char)'\t');
     UIUtil.dispatchAllInvocationEvents()
@@ -107,7 +106,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     template.addVariable("TEST2", "", StringUtil.wrapWithDoubleQuote(secondDefaultValue), true)
     template.addVariable("TEST3", "", StringUtil.wrapWithDoubleQuote(thirdDefaultValue), true)
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
-    addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
     startTemplate(templateName, templateGroup)
     UIUtil.dispatchAllInvocationEvents()
@@ -636,15 +635,9 @@ class A {{
 
     myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }")
 
-    addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
     myFixture.type '\t'
     myFixture.checkResult 'class A { void f() { Stri   "; } }'
-  }
-
-  static void addTemplate(Template template, Disposable parentDisposable) {
-    def settings = TemplateSettings.getInstance()
-    settings.addTemplate(template);
-    Disposer.register(parentDisposable, { settings.removeTemplate(template) } as Disposable)
   }
 
   public void "test expand current live template on no suggestions in lookup"() {
@@ -870,7 +863,7 @@ class Foo {
     template.addVariable("VAR1", "", "", true)
     template.addVariable("VAR2", new MacroCallNode(new FileNameMacro()), new ConstantNode("default"), true)
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
-    addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
     startTemplate(template);
     myFixture.checkResult """\
@@ -904,7 +897,7 @@ class Foo {
     template.addVariable("VAR1", "", "", true)
     template.addVariable("VAR2", new MacroCallNode(new MyMirrorMacro("VAR1")), null, true)
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
-    addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
     writeCommand { startTemplate(template); }
     myFixture.checkResult """\

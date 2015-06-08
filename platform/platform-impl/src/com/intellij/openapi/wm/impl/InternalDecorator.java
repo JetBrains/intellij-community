@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -649,8 +649,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
 
   private final class ToggleContentUiTypeAction extends ToggleAction implements DumbAware {
-
-    boolean seenSeveralContents;
+    private boolean myHadSeveralContents;
 
     private ToggleContentUiTypeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_CONTENT_UI_TYPE_ACTION_ID));
@@ -658,9 +657,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      seenSeveralContents = seenSeveralContents || myToolWindow.getContentManager().getContentCount() > 1;
+      myHadSeveralContents = myHadSeveralContents || myToolWindow.getContentManager().getContentCount() > 1;
       super.update(e);
-      e.getPresentation().setVisible(seenSeveralContents);
+      e.getPresentation().setVisible(myHadSeveralContents);
     }
 
     @Override

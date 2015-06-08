@@ -19,21 +19,13 @@
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" />
     <editorNotificationProvider implementation="org.editorconfig.plugincomponents.EditorConfigNotifierProvider"/>
+    <applicationService serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent" serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent" />
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
-
-  <application-components>
-      <component>
-          <implementation-class>org.editorconfig.plugincomponents.SettingsProviderComponent</implementation-class>
-      </component>
-  </application-components>
 
   <project-components>
       <component>
           <implementation-class>org.editorconfig.plugincomponents.ConfigProjectComponent</implementation-class>
       </component>
   </project-components>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-  </extensions>
 </idea-plugin>

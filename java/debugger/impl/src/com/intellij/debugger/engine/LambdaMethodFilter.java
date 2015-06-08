@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
@@ -25,13 +26,14 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 10/26/13
  */
-public class LambdaMethodFilter implements BreakpointStepMethodFilter{
+public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   public static final String LAMBDA_METHOD_PREFIX = "lambda$";
   private final int myLambdaOrdinal;
   @Nullable
@@ -52,15 +54,16 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
         firstStatementPosition = SourcePosition.createFromElement(statements[0]);
         if (firstStatementPosition != null) {
           final PsiStatement lastStatement = statements[statements.length - 1];
-          lastStatementPosition = SourcePosition.createFromOffset(firstStatementPosition.getFile(), lastStatement.getTextRange().getEndOffset());
+          lastStatementPosition =
+            SourcePosition.createFromOffset(firstStatementPosition.getFile(), lastStatement.getTextRange().getEndOffset());
         }
       }
     }
-    else if (body != null){
+    else if (body != null) {
       firstStatementPosition = SourcePosition.createFromElement(body);
     }
     myFirstStatementPosition = firstStatementPosition;
-    myLastStatementLine = lastStatementPosition != null? lastStatementPosition.getLine() : -1;
+    myLastStatementLine = lastStatementPosition != null ? lastStatementPosition.getLine() : -1;
   }
 
   public int getLambdaOrdinal() {
@@ -79,12 +82,28 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
     final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
     final Method method = location.method();
-    return method.name().startsWith(LAMBDA_METHOD_PREFIX) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
+    return isLambdaName(method.name()) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
   }
 
   @Nullable
   @Override
   public Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
+  }
+
+  public static boolean isLambdaName(@Nullable String name) {
+    return !StringUtil.isEmpty(name) && name.startsWith(LAMBDA_METHOD_PREFIX);
+  }
+
+  public static int getLambdaOrdinal(@NotNull String name) {
+    int pos = name.lastIndexOf('$');
+    if (pos > -1) {
+      try {
+        return Integer.parseInt(name.substring(pos + 1));
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return -1;
   }
 }

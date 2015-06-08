@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public abstract class TestErrorViewAction extends AnAction{
     openView(project, view.getComponent());
     myMillis = 0L;
     myMessageCount = 0;
-    new Thread() {
+    new Thread("test error view") {
       public void run() {
         for (int idx = 0; idx < MESSAGE_COUNT; idx++) {
           addMessage(view, new String[] {"This is a warning test message" + idx + " line1", "This is a warning test message" + idx + " line2"}, MessageCategory.WARNING);

@@ -15,9 +15,10 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.util.containers.ContainerUtilRt;
 
 import java.lang.ref.WeakReference;
 import java.rmi.Remote;
@@ -42,7 +43,7 @@ public class RemoteObject implements Remote, Unreferenced {
     return myWeakRef;
   }
 
-  @Nullable
+  @Contract("!null->!null")
   public synchronized <T extends Remote> T export(@Nullable T child) throws RemoteException {
     if (child == null) return null;
     @SuppressWarnings("unchecked") final T result = (T)UnicastRemoteObject.exportObject(child, 0);
@@ -51,7 +52,7 @@ public class RemoteObject implements Remote, Unreferenced {
     return result;
   }
 
-  @Nullable
+  @Contract("!null->!null")
   public <T extends Remote> T export2(@Nullable T child) throws RemoteException {
     return export(child);
   }

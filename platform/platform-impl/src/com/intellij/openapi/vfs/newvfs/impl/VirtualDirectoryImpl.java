@@ -97,14 +97,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       result = findChild(name, false, ensureCanonicalName, delegate);
     }
 
-    if (result == null) {
-      synchronized (myData) {
-        if (!allChildrenLoaded()) {
-          myData.addAdoptedName(name, getFileSystem().isCaseSensitive());
-        }
-      }
-    }
-
     return result;
   }
 
@@ -172,10 +164,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (indexInReal >= 0) {
         return VfsData.getFileById(array[indexInReal], this);
       }
+      if (allChildrenLoaded()) {
+        return null;
+      }
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
       int id = ourPersistence.getId(this, name, delegate);
       if (id <= 0) {
+        myData.addAdoptedName(name, !ignoreCase);
         return null;
       }
       child = createChild(FileNameCache.storeName(name), id, delegate);
@@ -422,6 +418,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.removeAdoptedName(childName);
       if (indexInReal < 0) {
         insertChildAt(child, indexInReal);
+        ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
       }
       // else already stored
       assertConsistency(ignoreCase, child);
@@ -437,7 +434,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     assert appended[i] > 0 : file;
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myData.myChildrenIds = appended;
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public void removeChild(@NotNull VirtualFile file) {

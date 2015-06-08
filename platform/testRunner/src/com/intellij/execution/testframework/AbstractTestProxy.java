@@ -70,7 +70,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @Nullable
-  public String getDurationString() {
+  public String getDurationString(TestConsoleProperties consoleProperties) {
     return null;
   }
 

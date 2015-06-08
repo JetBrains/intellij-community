@@ -1385,8 +1385,9 @@ class FormatProcessor {
       myLastTokenBlock = myWrapper.getLastTokenBlock();
       myCurrentBlock = myFirstTokenBlock;
       myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-      myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
-      myLastWhiteSpace.append(myWrapper.getEndOffset(), myModel, myDefaultIndentOption);
+      int lastBlockOffset = getLastBlock().getEndOffset();
+      myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
+      myLastWhiteSpace.append(Math.max(lastBlockOffset, myWrapper.getEndOffset()), myModel, myDefaultIndentOption);
       myAlignmentsInsideRangesToModify = myWrapper.getAlignmentsInsideRangeToModify();
     }
   }

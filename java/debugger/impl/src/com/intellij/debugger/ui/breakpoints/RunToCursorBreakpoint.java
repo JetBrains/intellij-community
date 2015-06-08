@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.xdebugger.XSourcePosition;
+import com.sun.jdi.Location;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,17 +119,33 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
     return false;  // always enabled
   }
 
+  @Override
+  protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
+    if (!super.acceptLocation(debugProcess, classType, loc)) return false;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        PsiElement expectedElement = myCustomPosition.getElementAt();
+        if (expectedElement != null) {
+          SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+          if (position != null) {
+            PsiElement currentElement = position.getElementAt();
+            if (currentElement != null) {
+              NavigatablePsiElement expectedMethod = PsiTreeUtil.getParentOfType(expectedElement, PsiMethod.class, PsiLambdaExpression.class);
+              NavigatablePsiElement currentMethod = PsiTreeUtil.getParentOfType(currentElement, PsiMethod.class, PsiLambdaExpression.class);
+              return Comparing.equal(expectedMethod, currentMethod);
+            }
+          }
+        }
+        return true;
+      }
+    });
+  }
+
   @Nullable
-  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, boolean restoreBreakpoints) {
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile == null) {
-      return null;
-    }
-
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    SourcePosition pos = SourcePosition.createFromLine(psiFile, lineIndex);
-
-    return new RunToCursorBreakpoint(project, pos, restoreBreakpoints);
+  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull XSourcePosition position, boolean restoreBreakpoints) {
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
+    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
   }
 
   @Override
