@@ -257,16 +257,7 @@ public class JarHandler extends ZipHandler {
 
       if (currentVersion != VERSION) {
         PersistentHashMap.deleteFilesStartingWith(file);
-        DataOutputStream versionOutputStream = null;
-        try {
-          versionOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(versionFile)));
-          DataInputOutputUtil.writeINT(versionOutputStream, VERSION);
-        } catch (IOException ignore) {}
-        finally {
-          try {
-            if (versionOutputStream != null) versionOutputStream.close();
-          } catch (IOException ignore) {}
-        }
+        saveVersion(versionFile);
       }
 
       PersistentHashMap<String, CacheLibraryInfo> info = null;
@@ -291,6 +282,7 @@ public class JarHandler extends ZipHandler {
           break;
         } catch (IOException ex) {
           PersistentHashMap.deleteFilesStartingWith(file);
+          saveVersion(versionFile);
         }
       }
       assert info != null;
@@ -308,6 +300,19 @@ public class JarHandler extends ZipHandler {
           flushCachedLibraryInfos();
         }
       });
+    }
+
+    private static void saveVersion(File versionFile) {
+      DataOutputStream versionOutputStream = null;
+      try {
+        versionOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(versionFile)));
+        DataInputOutputUtil.writeINT(versionOutputStream, VERSION);
+      } catch (IOException ignore) {}
+      finally {
+        try {
+          if (versionOutputStream != null) versionOutputStream.close();
+        } catch (IOException ignore) {}
+      }
     }
 
     private static void flushCachedLibraryInfos() {
