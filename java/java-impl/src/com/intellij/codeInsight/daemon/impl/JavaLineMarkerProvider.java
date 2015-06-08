@@ -16,11 +16,9 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -75,7 +73,8 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
 
         final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
         final MarkerType type = MarkerType.OVERRIDING_METHOD;
-        return new ArrowUpLineMarkerInfo(element, icon, type);
+        ArrowUpLineMarkerInfo info = new ArrowUpLineMarkerInfo(element, icon, type);
+        return NavigateAction.setNavigateAction(info, "Go to super method", "GotoSuperMethod");
       }
     }
 
@@ -84,7 +83,8 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
     if (interfaceMethod != null && firstChild != null) {
       final Icon icon = AllIcons.Gutter.ImplementingMethod;
       final MarkerType type = MarkerType.OVERRIDING_METHOD;
-      return new ArrowUpLineMarkerInfo(firstChild, icon, type);
+      ArrowUpLineMarkerInfo info = new ArrowUpLineMarkerInfo(firstChild, icon, type);
+      return NavigateAction.setNavigateAction(info, "Go to super method", "GotoSuperMethod");
     }
 
     if (myDaemonSettings.SHOW_METHOD_SEPARATORS && firstChild == null) {
@@ -183,6 +183,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
                                                            icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(),
                                                            type.getNavigationHandler(),
                                                            GutterIconRenderer.Alignment.RIGHT);
+      NavigateAction.setNavigateAction(info, aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
       result.add(info);
     }
   }
@@ -243,12 +244,12 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
         }
       }
       if (range == null) range = method;
-      final MarkerType type = MarkerType.OVERRIDEN_METHOD;
+      final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       LineMarkerInfo<PsiElement> info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(),
                                                            icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(),
                                                            type.getNavigationHandler(),
                                                            GutterIconRenderer.Alignment.RIGHT);
-      info.setNavigateActionTextProvider(type.getNavigateActionText());
+      NavigateAction.setNavigateAction(info, overrides ? "Go to overriding methods" : "Go to implementation(s)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
       result.add(info);
     }
   }
@@ -257,7 +258,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
     private ArrowUpLineMarkerInfo(@NotNull PsiElement element, Icon icon, @NotNull MarkerType markerType) {
       super(element, element.getTextRange(), icon, Pass.UPDATE_ALL, markerType.getTooltip(),
             markerType.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
-      setNavigateActionTextProvider(markerType.getNavigateActionText());
     }
 
     @Override

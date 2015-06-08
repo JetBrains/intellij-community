@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +37,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -276,8 +277,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       runnable.run();
     }
     myDisposeActions.clear();
-    final JRootPane root = myDialog.getRootPane();
-
     Runnable disposer = new Runnable() {
       @Override
       public void run() {
@@ -287,20 +286,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (myDialog != null && root != null) {
-              myDialog.remove(root);
+            if (myDialog != null && myDialog.getRootPane() != null) {
+              myDialog.remove(myDialog.getRootPane());
             }
           }
         });
       }
     };
 
-    if (EventQueue.isDispatchThread()) {
-      disposer.run();
-    }
-    else {
-      SwingUtilities.invokeLater(disposer);
-    }
+    UIUtil.invokeLaterIfNeeded(disposer);
   }
 
   private boolean isProgressDialog() {
@@ -867,12 +861,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       if (rootPane != null) { // Workaround for bug in native code to hold rootPane
         try {
-          ReflectionUtil.resetField(rootPane.getClass(), null, "glassPane");
-          ReflectionUtil.resetField(rootPane.getClass(), null, "contentPane");
+          ReflectionUtil.resetField(rootPane, "glassPane");
+          ReflectionUtil.resetField(rootPane, "contentPane");
 
           rootPane = null;
 
-          ReflectionUtil.resetField(Window.class, null, "windowListener");
+          ReflectionUtil.resetField(this, "windowListener");
         }
         catch (Exception ignored) {
         }
@@ -880,8 +874,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       // http://bugs.sun.com/view_bug.do?bug_id=6614056
       try {
-        final List<?> list = ReflectionUtil.getField(Dialog.class, null, null, "modalDialogs");
-        list.remove(this);
+        synchronized (getTreeLock()) {
+          List<?> list = ReflectionUtil.getStaticFieldValue(Dialog.class, List.class, "modalDialogs");
+          list.remove(this);
+        }
       }
       catch (final Exception ignored) {
       }
@@ -1081,71 +1077,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       public Object getData(@NonNls String dataId) {
         final DialogWrapper wrapper = myDialogWrapper.get();
         return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
-      }
-    }
-
-
-    private class MyFocusCommand extends FocusCommand implements KeyEventProcessor {
-
-      private Context myContextOnFinish;
-      private final List<KeyEvent> myEvents = new ArrayList<KeyEvent>();
-      private final DialogWrapper myWrapper;
-
-      private MyFocusCommand(DialogWrapper wrapper) {
-        myWrapper = getDialogWrapper();
-        setToInvalidateRequestors(false);
-
-        Disposer.register(wrapper.getDisposable(), new Disposable() {
-          @Override
-          public void dispose() {
-            if (!myTypeAheadDone.isProcessed()) {
-              myTypeAheadDone.setDone();
-            }
-
-            flushEvents();
-          }
-        });
-      }
-
-      @Override
-      @NotNull
-      public ActionCallback run() {
-        return myTypeAheadDone;
-      }
-
-      @Override
-      public KeyEventProcessor getProcessor() {
-        return this;
-      }
-
-      @Override
-      public Boolean dispatch(@NotNull KeyEvent e, @NotNull Context context) {
-        if (myWrapper == null || myTypeAheadDone.isProcessed()) return null;
-
-        myEvents.addAll(context.getQueue());
-        context.getQueue().clear();
-
-        if (isToDispatchToDialogNow(e)) {
-          return false;
-        } else {
-          myEvents.add(e);
-          return true;
-        }
-      }
-
-      private boolean isToDispatchToDialogNow(KeyEvent e) {
-        return e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_ESCAPE || e.getKeyCode() == KeyEvent.VK_TAB;
-      }
-
-      @Override
-      public void finish(@NotNull Context context) {
-        myContextOnFinish = context;
-      }
-
-      private void flushEvents() {
-        if (myWrapper.isToDispatchTypeAhead() && myContextOnFinish != null) {
-          myContextOnFinish.dispatch(myEvents);
-        }
       }
     }
   }

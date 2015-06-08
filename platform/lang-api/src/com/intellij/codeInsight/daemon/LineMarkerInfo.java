@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 
 public class LineMarkerInfo<T extends PsiElement> {
@@ -45,7 +43,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   public final int updatePass;
   @Nullable private final Function<? super T, String> myTooltipProvider;
-  @Nullable private Function<? super T, String> myNavigateActionTextProvider;
+  private AnAction myNavigateAction = new NavigateAction<T>(this);
   @NotNull private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
@@ -112,31 +110,8 @@ public class LineMarkerInfo<T extends PsiElement> {
     return elementRef.get();
   }
 
-  public void setNavigateActionTextProvider(@Nullable Function<? super T, String> navigateActionTextProvider) {
-    myNavigateActionTextProvider = navigateActionTextProvider;
-  }
-
-  private class NavigateAction extends AnAction {
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      if (myNavigationHandler != null) {
-        MouseEvent mouseEvent = (MouseEvent)e.getInputEvent();
-        T element = getElement();
-        if (element == null || !element.isValid()) return;
-
-        myNavigationHandler.navigate(mouseEvent, element);
-      }
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      if (myNavigateActionTextProvider == null) return;
-      T element = getElement();
-      if (element != null && element.isValid()) {
-        String text = myNavigateActionTextProvider.fun(element);
-        e.getPresentation().setText(text);
-      }
-    }
+  public void setNavigateAction(AnAction navigateAction) {
+    myNavigateAction = navigateAction;
   }
 
   @Nullable
@@ -163,7 +138,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
     @Override
     public AnAction getClickAction() {
-      return myInfo.new NavigateAction();
+      return myInfo.myNavigateAction;
     }
 
     @Override

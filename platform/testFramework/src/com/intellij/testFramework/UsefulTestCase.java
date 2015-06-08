@@ -186,7 +186,7 @@ public abstract class UsefulTestCase extends TestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    Set<String> files = ReflectionUtil.getField(aClass, null, Set.class, "files");
+    Set<String> files = ReflectionUtil.getStaticFieldValue(aClass, Set.class, "files");
     DELETE_ON_EXIT_HOOK_CLASS = aClass;
     DELETE_ON_EXIT_HOOK_DOT_FILES = files;
   }
