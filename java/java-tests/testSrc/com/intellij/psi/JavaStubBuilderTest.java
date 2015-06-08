@@ -285,6 +285,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    try (Resource r = new Resource() {\n" +
            "           @Override public void close() { }\n" +
            "         }) { }\n" +
+           "    try (new Resource()) { }" +
            "  }\n" +
            "}",
 
