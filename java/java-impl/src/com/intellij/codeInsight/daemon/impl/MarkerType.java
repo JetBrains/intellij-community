@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.*;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -54,8 +53,7 @@ public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
 
-  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator,
-                    @Nullable Function<PsiElement, String> actionText, @Nullable String actionId) {
+  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
@@ -63,10 +61,6 @@ public class MarkerType {
         navigator.browse(e, elt);
       }
     };
-  }
-
-  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
-    this(tooltip, navigator, null, null);
   }
 
   @NotNull
@@ -96,7 +90,7 @@ public class MarkerType {
       PsiMethod method = (PsiMethod)parent;
       navigateToOverridingMethod(e, method, method != element.getParent());
     }
-  }, new ConstantFunction<PsiElement, String>("Go to overriding method(s)"), IdeActions.ACTION_GOTO_IMPLEMENTATION);
+  });
 
   @Nullable
   public static String calculateOverridingMethodTooltip(PsiMethod method, boolean acceptSelf) {
@@ -162,7 +156,7 @@ public class MarkerType {
       navigateToOverriddenMethod(e, (PsiMethod)parent);
 
     }
-  }, new ConstantFunction<PsiElement, String>("Go to overridden method"), IdeActions.ACTION_GOTO_IMPLEMENTATION);
+  });
 
   public static String getOverriddenMethodTooltip(final PsiMethod method) {
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
@@ -250,15 +244,7 @@ public class MarkerType {
 
       navigateToSubclassedClass(e, aClass);
     }
-  }, new Function<PsiElement, String>() {
-    @Override
-    public String fun(PsiElement element) {
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass)) return null;
-      final PsiClass aClass = (PsiClass)parent;
-      return aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)";
-    }
-  }, IdeActions.ACTION_GOTO_IMPLEMENTATION);
+  });
 
   public static String getSubclassedClassTooltip(PsiClass aClass) {
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
