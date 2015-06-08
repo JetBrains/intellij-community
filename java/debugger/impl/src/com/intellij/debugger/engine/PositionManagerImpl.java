@@ -150,7 +150,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    Method method = location.method();
+    final Method method = location.method();
 
     if (psiFile instanceof PsiCompiledElement || lineNumber < 0) {
       final String methodSignature = method.signature();
@@ -195,7 +195,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             return LambdaMethodFilter.getLambdaOrdinal(o1.method().name()) - LambdaMethodFilter.getLambdaOrdinal(o2.method().name());
           }
         });
-        lambdaOrdinal = lambdas.indexOf(location);
+        lambdaOrdinal = ContainerUtil.indexOf(lambdas, new Condition<Location>() {
+          @Override
+          public boolean value(Location location) {
+            return location.method().equals(method);
+          }
+        });
       }
     }
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
@@ -226,10 +231,9 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         else if ((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName()))) {
           if (insideBody(element, ((PsiMethod)method).getBody())) return element;
         }
-        //else if (method instanceof PsiLambdaExpression && (myLambdaOrdinal < 0 || myLambdaOrdinal == lambdaOrdinal)
-        //         && LambdaMethodFilter.isLambdaName(myExpectedMethodName)) {
-        //  if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
-        //}
+        else if (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName)) {
+          if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
+        }
       }
       return null;
     }

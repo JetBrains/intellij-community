@@ -253,8 +253,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
   @Override
   public void runToPosition(@NotNull XSourcePosition position) {
-    Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
-    myJavaSession.runToCursor(document, position.getLine(), false);
+    myJavaSession.runToCursor(position, false);
   }
 
   @NotNull

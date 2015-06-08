@@ -245,7 +245,7 @@ public abstract class SourcePosition implements Navigatable{
           }
 
           PsiElement element = null;
-          int offset = startOffset;
+          int offset = getOffset();
           while (true) {
             final CharSequence charsSequence = document.getCharsSequence();
             for (; offset < charsSequence.length(); offset++) {
