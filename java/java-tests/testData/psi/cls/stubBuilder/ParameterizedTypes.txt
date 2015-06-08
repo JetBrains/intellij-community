@@ -1,0 +1,35 @@
+PsiJavaFileStub [pkg]
+  PsiClassStub[name=ParameterizedTypes fqn=pkg.ParameterizedTypes]
+    PsiModifierListStub[mask=1025]
+    PsiTypeParameterListStub
+      PsiTypeParameter[P]
+        PsiRefListStub[EXTENDS_BOUNDS_LIST:]
+    PsiRefListStub[EXTENDS_LIST:]
+    PsiRefListStub[IMPLEMENTS_LIST:]
+    PsiClassStub[name=Inner fqn=pkg.ParameterizedTypes.Inner]
+      PsiModifierListStub[mask=1025]
+      PsiTypeParameterListStub
+        PsiTypeParameter[I]
+          PsiRefListStub[EXTENDS_BOUNDS_LIST:]
+      PsiRefListStub[EXTENDS_LIST:]
+      PsiRefListStub[IMPLEMENTS_LIST:]
+      PsiMethodStub[cons Inner:void]
+        PsiModifierListStub[mask=1]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+        PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[cons ParameterizedTypes:void]
+      PsiModifierListStub[mask=1]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+      PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[getUnspecificInner:pkg.ParameterizedTypes<P>.Inner<java.lang.String>]
+      PsiModifierListStub[mask=5120]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+      PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[getSpecificInner:pkg.ParameterizedTypes<java.lang.Number>.Inner<java.lang.String>]
+      PsiModifierListStub[mask=5120]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+      PsiRefListStub[THROWS_LIST:]

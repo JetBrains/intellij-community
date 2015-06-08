@@ -366,6 +366,43 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
+  public void testParameterizedTypes() {
+    doTest("package pkg;\n" +
+           "public abstract class ParameterizedTypes<P> {\n" +
+           "\tpublic abstract class Inner<I> {}\n" +
+           "\tabstract Inner<String> getUnspecificInner();\n" +
+           "\tabstract ParameterizedTypes<Number>.Inner<String> getSpecificInner();\n" +
+           "}",
+
+           "PsiJavaFileStub [pkg]\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[name=ParameterizedTypes fqn=pkg.ParameterizedTypes]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=1025]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      TYPE_PARAMETER:PsiTypeParameter[P]\n" +
+           "        EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    CLASS:PsiClassStub[name=Inner fqn=pkg.ParameterizedTypes.Inner]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=1025]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "        TYPE_PARAMETER:PsiTypeParameter[I]\n" +
+           "          EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
+           "      EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "      IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[getUnspecificInner:Inner<String>]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[getSpecificInner:ParameterizedTypes<Number>.Inner<String>]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+  }
+
+
   public void testTypeAnnotations() {
     doTest("import j.u.@A C;\n" +
            "import @A j.u.D;\n" +

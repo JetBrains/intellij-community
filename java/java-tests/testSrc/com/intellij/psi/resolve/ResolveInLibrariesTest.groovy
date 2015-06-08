@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.psi.resolve
-
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.JarFileSystem
@@ -23,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.JavaPsiFacadeEx
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -235,6 +235,56 @@ class Testcase {
       message.interfaces[0].containingFile.virtualFile.delete(this)
     }
     assert method.hierarchicalMethodSignature.superSignatures.size() == 0
+  }
+
+  public void "test nested generic signature from binary"() {
+    myFixture.testDataPath = PathManagerEx.getTestDataPath() + "/libResolve/genericSignature"
+    myFixture.copyDirectoryToProject("", "lib")
+    PsiTestUtil.addLibrary(myModule, "lib", myFixture.tempDirFixture.getFile("").path, "lib");
+
+    def javaPsiFacade = JavaPsiFacadeEx.getInstanceEx(project)
+    def factory = javaPsiFacade.elementFactory
+
+    def parameterizedTypes = JavaPsiFacade.getInstance(project).findClass('pkg.ParameterizedTypes', GlobalSearchScope.allScope(project))
+    assert parameterizedTypes
+
+    def parameterP = parameterizedTypes.typeParameters[0]
+    assert parameterP.name == 'P'
+
+    def classInner = parameterizedTypes.innerClasses[0]
+    assert classInner.name == 'Inner'
+
+    def parameterI = classInner.typeParameters[0]
+    assert parameterI.name == 'I'
+
+    def unspecificMethod = parameterizedTypes.findMethodsByName("getUnspecificInner", false)[0]
+    def unspecificReturnType = unspecificMethod.returnType
+
+    assert unspecificReturnType.canonicalText == 'pkg.ParameterizedTypes<P>.Inner<java.lang.String>'
+
+    def unspecificResolveResult = unspecificReturnType.resolveGenerics()
+    assert unspecificResolveResult.element == classInner
+
+    def unspecificOuter = factory.createType(parameterizedTypes, unspecificResolveResult.substitutor);
+    assert unspecificOuter.canonicalText == 'pkg.ParameterizedTypes<P>'
+
+    def specificMethod = parameterizedTypes.findMethodsByName("getSpecificInner", false)[0]
+    def specificReturnType = specificMethod.returnType
+
+    assert specificReturnType.canonicalText == 'pkg.ParameterizedTypes<java.lang.Number>.Inner<java.lang.String>'
+
+    def specificResolveResult = specificReturnType.resolveGenerics()
+    assert specificResolveResult.element == classInner
+
+    def substitutor = specificResolveResult.substitutor
+    def substitutionMap = substitutor.substitutionMap
+    assert substitutionMap.containsKey(parameterI) == true
+    assert substitutionMap.containsKey(parameterP) == true
+
+    assert substitutor.substitute(parameterP).canonicalText == 'java.lang.Number'
+
+    def specificOuter = factory.createType(parameterizedTypes, specificResolveResult.substitutor);
+    assert specificOuter.canonicalText == 'pkg.ParameterizedTypes<java.lang.Number>'
   }
 
 }
