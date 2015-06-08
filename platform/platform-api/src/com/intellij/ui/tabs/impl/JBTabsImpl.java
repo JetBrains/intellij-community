@@ -67,6 +67,9 @@ public class JBTabsImpl extends JComponent
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
+  static final int MIN_TAB_WIDTH = JBUI.scale(75);
+  public static final int DEFAULT_MAX_TAB_WIDTH = JBUI.scale(300);
+
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = new Comparator<TabInfo>() {
     @Override

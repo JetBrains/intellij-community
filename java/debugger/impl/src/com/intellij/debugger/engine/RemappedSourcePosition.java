@@ -40,29 +40,27 @@ abstract class RemappedSourcePosition extends SourcePosition {
 
   @Override
   public PsiElement getElementAt() {
+    checkRemap();
     return myDelegate.getElementAt();
   }
 
   @Override
   public int getLine() {
-    int line = myDelegate.getLine();
+    checkRemap();
+    return myDelegate.getLine();
+  }
+
+  private void checkRemap() {
     if (!myMapped) {
       myMapped = true;
       myDelegate = mapDelegate(myDelegate);
-      return myDelegate.getLine();
     }
-    return line;
   }
 
   @Override
   public int getOffset() {
-    int offset = myDelegate.getOffset(); //document loaded here
-    if (!myMapped) {
-      myMapped = true;
-      myDelegate = mapDelegate(myDelegate);
-      return myDelegate.getOffset();
-    }
-    return offset;
+    checkRemap();
+    return myDelegate.getOffset();
   }
 
   public abstract SourcePosition mapDelegate(SourcePosition original);

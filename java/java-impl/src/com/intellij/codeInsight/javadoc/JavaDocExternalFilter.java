@@ -24,7 +24,6 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,10 +53,10 @@ import java.util.regex.Pattern;
 public class JavaDocExternalFilter extends AbstractExternalFilter {
   private final Project myProject;
   
-  private static final Trinity<Pattern, Pattern, Boolean> ourPackageInfoSettings = Trinity.create(
+  private static final ParseSettings ourPackageInfoSettings = new ParseSettings(
     Pattern.compile("package\\s+[^\\s]+\\s+description", Pattern.CASE_INSENSITIVE),
     Pattern.compile("START OF BOTTOM NAVBAR", Pattern.CASE_INSENSITIVE),
-    Boolean.TRUE
+    true, false
   );
   
   protected static @NonNls final Pattern ourHTMLsuffix = Pattern.compile("[.][hH][tT][mM][lL]?");
@@ -124,7 +123,10 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     CharSequence externalDoc = null;
     String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
     if (docURL.startsWith(builtInServer)) {
-      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).get(docURL.substring(builtInServer.length()));
+      int refPosition = docURL.lastIndexOf('#');
+      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).get(
+        docURL.substring(builtInServer.length(), refPosition < builtInServer.length() ? docURL.length() : refPosition)
+      );
       if (file != null) {
         InputStreamReader reader = new InputStreamReader(file.getInputStream(), CharsetToolkit.UTF8_CHARSET);
         StringBuilder result = new StringBuilder();
@@ -168,7 +170,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
 
   @NotNull
   @Override
-  protected Trinity<Pattern, Pattern, Boolean> getParseSettings(@NotNull String url) {
+  protected ParseSettings getParseSettings(@NotNull String url) {
     return url.endsWith(JavaDocumentationProvider.PACKAGE_SUMMARY_FILE) ? ourPackageInfoSettings : super.getParseSettings(url);
   }
 }

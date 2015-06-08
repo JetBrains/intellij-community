@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.sun.jdi.ObjectCollectedException;
@@ -295,9 +296,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
     stepInto(ignoreFilters, smartStepFilter, StepRequest.STEP_LINE);
   }
 
-  public void runToCursor(Document document, int line, final boolean ignoreBreakpoints) {
+  public void runToCursor(@NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
     try {
-      DebugProcessImpl.ResumeCommand runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), document, line, ignoreBreakpoints);
+      DebugProcessImpl.ResumeCommand runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), position, ignoreBreakpoints);
       mySteppingThroughThreads.add(runToCursorCommand.getContextThread());
       resumeAction(runToCursorCommand, EVENT_STEP);
     }

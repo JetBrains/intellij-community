@@ -103,6 +103,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private boolean myCloseOnSneeze;
   
   private ActionCallback myLastAction;
+  private DocumentationComponent myTestDocumentationComponent;
 
   @Override
   protected String getToolwindowId() {
@@ -431,7 +432,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                            PopupUpdateProcessor updateProcessor,
                            final PsiElement originalElement,
                            @Nullable final Runnable closeCallback) {
-    final DocumentationComponent component = new DocumentationComponent(this);
+    final DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) : 
+                                             myTestDocumentationComponent;
     component.setNavigateCallback(new Consumer<PsiElement>() {
       @Override
       public void consume(PsiElement psiElement) {
@@ -1062,6 +1064,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @TestOnly
   public ActionCallback getLastAction() {
     return myLastAction;
+  }
+  
+  @TestOnly
+  public void setDocumentationComponent(DocumentationComponent documentationComponent) {
+    myTestDocumentationComponent = documentationComponent;
   }
 
   private interface DocumentationCollector {

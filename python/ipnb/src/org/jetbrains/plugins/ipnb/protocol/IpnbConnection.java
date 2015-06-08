@@ -79,11 +79,11 @@ public class IpnbConnection {
       public void onError(@NotNull Exception e) {
       }
     };
-    myShellThread = new Thread(myShellClient);
+    myShellThread = new Thread(myShellClient, "IPNB shell client");
     myShellThread.start();
 
     myIOPubClient = new IpnbWebSocketClient(getIOPubURI(), draft);
-    myIOPubThread = new Thread(myIOPubClient);
+    myIOPubThread = new Thread(myIOPubClient, "IPNB pub client");
     myIOPubThread.start();
   }
 

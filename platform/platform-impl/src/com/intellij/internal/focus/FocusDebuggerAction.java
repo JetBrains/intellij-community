@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,10 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
     private boolean myTemporary;
 
     private boolean myRunning = true;
+
+    public FocusDrawer() {
+      super("focus debugger");
+    }
 
     public void setRunning(final boolean running) {
       myRunning = running;

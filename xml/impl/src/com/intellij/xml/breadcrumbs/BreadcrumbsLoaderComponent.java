@@ -18,6 +18,7 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -60,10 +61,14 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
       if (isEnabled() && isSuitable(source.getProject(), file)) {
-        final FileEditor[] fileEditors = source.getEditors(file);
+        final FileEditor[] fileEditors = source.getAllEditors(file);
         for (final FileEditor fileEditor : fileEditors) {
           if (fileEditor instanceof TextEditor) {
-            final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(((TextEditor)fileEditor).getEditor());
+            Editor editor = ((TextEditor)fileEditor).getEditor();
+            if (BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor) != null) {
+              continue;
+            }
+            final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(editor);
             final JComponent c = wrapper.getComponent();
             source.addTopComponent(fileEditor, c);
 

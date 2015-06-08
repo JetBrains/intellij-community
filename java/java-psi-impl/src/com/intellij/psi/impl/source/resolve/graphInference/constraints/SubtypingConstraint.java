@@ -48,8 +48,6 @@ public class SubtypingConstraint implements ConstraintFormula {
 
     SubtypingConstraint that = (SubtypingConstraint)o;
 
-    if ( myS instanceof PsiCapturedWildcardType && myS != that.myS) return false;
-
     if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
     if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
 

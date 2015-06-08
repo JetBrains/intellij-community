@@ -43,6 +43,9 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   @Override
   public Configurable[] getConfigurables() {
     if (myChildren == null) {
+      if (myComponentManager.isDisposed()) {
+        return new Configurable[0];
+      }
       final ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
       Configurable[] components = myLoadComponents ? myComponentManager.getComponents(Configurable.class) : new Configurable[0];
 

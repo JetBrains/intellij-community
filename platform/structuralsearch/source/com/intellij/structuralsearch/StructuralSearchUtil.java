@@ -37,6 +37,10 @@ public class StructuralSearchUtil {
     return profile != null && profile.isIdentifier(element);
   }
 
+  public static PsiElement getParentIfIdentifier(PsiElement element) {
+    return !isIdentifier(element) ? element : element.getParent();
+  }
+
   private static StructuralSearchProfile[] getNewStyleProfiles() {
     if (ourNewStyleProfiles == null) {
       final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();

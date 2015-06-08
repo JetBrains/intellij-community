@@ -854,7 +854,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           if (tabbedPane != null) {
             try {
               int limit =
-                Integer.parseInt(file.getParentElement().getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), "0"));
+                Integer.parseInt(file.getParentElement().getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(),
+                                                                           String.valueOf(JBTabsImpl.DEFAULT_MAX_TAB_WIDTH)));
               UIUtil.putClientProperty(tabbedPane.getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit);
             }
             catch (NumberFormatException e) {

@@ -129,15 +129,6 @@ public class Main {
       return false;
     }
 
-    try {
-      Toolkit.getDefaultToolkit();
-    }
-    catch (Throwable t) {
-      hasGraphics = false;
-      showMessage("Startup Error", t);
-      return false;
-    }
-
     return true;
   }
 
@@ -226,14 +217,35 @@ public class Main {
     }
   }
 
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static void showMessage(String title, Throwable t) {
     StringWriter message = new StringWriter();
-    message.append("Internal error. Please report to https://");
-    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-    message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
-    message.append("\n\n");
+
+    AWTError awtError = findGraphicsError(t);
+    if (awtError != null) {
+      message.append("Failed to initialize graphics environment\n\n");
+      hasGraphics = false;
+      t = awtError;
+    }
+    else {
+      message.append("Internal error. Please report to https://");
+      boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+      message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
+      message.append("\n\n");
+    }
+
     t.printStackTrace(new PrintWriter(message));
     showMessage(title, message.toString(), true);
+  }
+
+  private static AWTError findGraphicsError(Throwable t) {
+    while (t != null) {
+      if (t instanceof AWTError) {
+        return (AWTError)t;
+      }
+      t = t.getCause();
+    }
+    return null;
   }
 
   @SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})

@@ -39,25 +39,25 @@ final class WindowStateProjectService extends WindowStateServiceImpl {
   }
 
   @Override
-  Point getDefaultLocationOn(GraphicsDevice screen, @NotNull String key) {
-    Rectangle bounds = getDefaultBoundsOn(screen, key);
+  Point getDefaultLocationFor(Object object, @NotNull String key) {
+    Rectangle bounds = getDefaultBoundsFor(object, key);
     return bounds == null ? null : bounds.getLocation();
   }
 
   @Override
-  Dimension getDefaultSizeOn(GraphicsDevice screen, @NotNull String key) {
-    Rectangle bounds = getDefaultBoundsOn(screen, key);
+  Dimension getDefaultSizeFor(Object object, @NotNull String key) {
+    Rectangle bounds = getDefaultBoundsFor(object, key);
     return bounds == null ? null : bounds.getSize();
   }
 
   @Override
-  Rectangle getDefaultBoundsOn(GraphicsDevice screen, @NotNull String key) {
+  Rectangle getDefaultBoundsFor(Object object, @NotNull String key) {
     //  backward compatibility when this service is used instead of ProjectFrameBounds
     return !key.equals("ProjectFrameBounds") ? null : ProjectFrameBounds.getInstance(myProject).getBounds();
   }
 
   @Override
-  boolean getDefaultMaximizedOn(GraphicsDevice screen, @NotNull String key) {
+  boolean getDefaultMaximizedFor(Object object, @NotNull String key) {
     return false;
   }
 }

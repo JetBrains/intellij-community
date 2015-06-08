@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -117,7 +118,7 @@ public class UrlClassLoaderTest extends TestCase {
     int threadCount = 3;
     final int resourceCount = 20;
 
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(threadCount);
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(threadCount, ConcurrencyUtil.newNamedThreadFactory("conc loading"));
     final Random random = new Random();
     UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
     for (int attempt = 0; attempt < attemptCount; attempt++) {
