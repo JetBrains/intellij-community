@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -400,11 +400,11 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       public void messageEdt(PlaybackContext context, String text, Type type) {
         if (type == Type.message || type == Type.error) {
           StatusBar statusBar = frame.getStatusBar();
-          if (context != null) {
-            if (statusBar != null) statusBar.setInfo("Line " + context.getCurrentLine() + ": " + text);
-          }
-          else {
-            if (statusBar != null) statusBar.setInfo(text);
+          if (statusBar != null) {
+            if (context != null) {
+              text = "Line " + context.getCurrentLine() + ": " + text;
+            }
+            statusBar.setInfo(text);
           }
         }
       }
