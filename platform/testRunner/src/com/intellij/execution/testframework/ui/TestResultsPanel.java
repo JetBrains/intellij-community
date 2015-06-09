@@ -159,7 +159,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     console.setFocusable(true);
     final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
     console.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
-                                         new SideBorder(editorBackground, SideBorder.LEFT, 1)));
+                                         new SideBorder(editorBackground, SideBorder.LEFT)));
     outputTab.add(console, BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
