@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option"));
+      myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.main"));
       myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
       myMainsCheckbox.addActionListener(new ActionListener() {
         @Override
@@ -77,7 +77,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridy = 0;
       add(myMainsCheckbox, gc);
 
-      myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option3"));
+      myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.applet"));
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
       myAppletToEntries.addActionListener(new ActionListener() {
         @Override
@@ -88,7 +88,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridy++;
       add(myAppletToEntries, gc);
 
-      myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option4"));
+      myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.servlet"));
       myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
       myServletToEntries.addActionListener(new ActionListener(){
         @Override
@@ -115,7 +115,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       }
 
       myNonJavaCheckbox =
-      new JCheckBox(InspectionsBundle.message("inspection.dead.code.option5"));
+      new JCheckBox(InspectionsBundle.message("inspection.dead.code.option.external"));
       myNonJavaCheckbox.setSelected(ADD_NONJAVA_TO_ENTRIES);
       myNonJavaCheckbox.addActionListener(new ActionListener() {
         @Override
