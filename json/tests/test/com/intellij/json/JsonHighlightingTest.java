@@ -1,5 +1,6 @@
 package com.intellij.json;
 
+import com.intellij.json.codeinsight.JsonDuplicatePropertyKeysInspection;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 
 /**
@@ -39,6 +40,11 @@ public class JsonHighlightingTest extends JsonTestCase {
 
   public void testComplianceProblems() {
     enableStandardComplianceInspection(true, true);
+    doTestHighlighting(false, true, true);
+  }
+
+  public void testDuplicatePropertyKeys() {
+    myFixture.enableInspections(JsonDuplicatePropertyKeysInspection.class);
     doTestHighlighting(false, true, true);
   }
 
