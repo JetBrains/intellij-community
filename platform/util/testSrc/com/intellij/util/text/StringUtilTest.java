@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,5 +379,12 @@ public class StringUtilTest extends TestCase {
     assertEquals("<![CDATA[abcd]]]><![CDATA[]>]]>", XmlStringUtil.wrapInCDATA("abcd]]>"));
     assertEquals("<![CDATA[abcd]]]><![CDATA[]>efgh]]>", XmlStringUtil.wrapInCDATA("abcd]]>efgh"));
     assertEquals("<![CDATA[123<![CDATA[wow<&>]]]><![CDATA[]>]]]><![CDATA[]><![CDATA[123]]>", XmlStringUtil.wrapInCDATA("123<![CDATA[wow<&>]]>]]><![CDATA[123"));
+  }
+
+  public void testGetPackageName() {
+    assertEquals("java.lang", StringUtil.getPackageName("java.lang.String"));
+    assertEquals("java.util.Map", StringUtil.getPackageName("java.util.Map.Entry"));
+    assertEquals("Map", StringUtil.getPackageName("Map.Entry"));
+    assertEquals("", StringUtil.getPackageName("Number"));
   }
 }
