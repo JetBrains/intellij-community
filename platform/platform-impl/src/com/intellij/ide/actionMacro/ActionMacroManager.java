@@ -399,11 +399,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
       public void messageEdt(PlaybackContext context, String text, Type type) {
         if (type == Type.message || type == Type.error) {
+          StatusBar statusBar = frame.getStatusBar();
           if (context != null) {
-            frame.getStatusBar().setInfo("Line " + context.getCurrentLine() + ": " + text);
+            if (statusBar != null) statusBar.setInfo("Line " + context.getCurrentLine() + ": " + text);
           }
           else {
-            frame.getStatusBar().setInfo(text);
+            if (statusBar != null) statusBar.setInfo(text);
           }
         }
       }
@@ -414,7 +415,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     runner.run()
       .doWhenDone(new Runnable() {
         public void run() {
-          frame.getStatusBar().setInfo("Script execution finished");
+          StatusBar statusBar = frame.getStatusBar();
+          statusBar.setInfo("Script execution finished");
         }
       })
       .doWhenProcessed(new Runnable() {
