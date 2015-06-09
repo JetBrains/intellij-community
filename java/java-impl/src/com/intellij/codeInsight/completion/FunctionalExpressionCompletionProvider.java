@@ -64,42 +64,45 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
         final PsiType functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
         final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         if (functionalInterfaceMethod != null) {
-          PsiParameter[] params = functionalInterfaceMethod.getParameterList().getParameters();
-          final Project project = functionalInterfaceMethod.getProject();
+          PsiParameter[] params = new PsiParameter[0];
           final PsiElement originalPosition = parameters.getPosition();
-          final JVMElementFactory jvmElementFactory = JVMElementFactories.getFactory(originalPosition.getLanguage(), project);
-          final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
           final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(functionalInterfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
-          if (jvmElementFactory != null) {
-            params = GenerateMembersUtil.overriddenParameters(params, jvmElementFactory, javaCodeStyleManager, substitutor, originalPosition);
-          }
-
-          String paramsString =
-            params.length == 1 ? getParamName(params[0], javaCodeStyleManager, originalPosition) : "(" + StringUtil.join(params, new Function<PsiParameter, String>() {
-            @Override
-            public String fun(PsiParameter parameter) {
-              return getParamName(parameter, javaCodeStyleManager, originalPosition);
+          if (!functionalInterfaceMethod.hasTypeParameters()) {
+            params = functionalInterfaceMethod.getParameterList().getParameters();
+            final Project project = functionalInterfaceMethod.getProject();
+            final JVMElementFactory jvmElementFactory = JVMElementFactories.getFactory(originalPosition.getLanguage(), project);
+            final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+            if (jvmElementFactory != null) {
+              params = GenerateMembersUtil.overriddenParameters(params, jvmElementFactory, javaCodeStyleManager, substitutor, originalPosition);
             }
-            }, ",") + ")";
 
-          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-          PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(project)
-            .createExpressionFromText(paramsString + " -> {}", null);
-          lambdaExpression = (PsiLambdaExpression)codeStyleManager.reformat(lambdaExpression);
-          paramsString = lambdaExpression.getParameterList().getText();
-          final LookupElementBuilder builder =
-            LookupElementBuilder.create(functionalInterfaceMethod, paramsString).withPresentableText(paramsString + " -> {}").withInsertHandler(new InsertHandler<LookupElement>() {
+            String paramsString =
+              params.length == 1 ? getParamName(params[0], javaCodeStyleManager, originalPosition) : "(" + StringUtil.join(params, new Function<PsiParameter, String>() {
               @Override
-              public void handleInsert(InsertionContext context, LookupElement item) {
-                final Editor editor = context.getEditor();
-                EditorModificationUtil.insertStringAtCaret(editor, " -> ");
+              public String fun(PsiParameter parameter) {
+                return getParamName(parameter, javaCodeStyleManager, originalPosition);
               }
-            }).withIcon(AllIcons.Nodes.AnonymousClass);
-          LookupElement lambdaElement = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-          if (prioritize) {
-            lambdaElement = PrioritizedLookupElement.withPriority(lambdaElement, 1);
+              }, ",") + ")";
+
+            final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+            PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(project)
+              .createExpressionFromText(paramsString + " -> {}", null);
+            lambdaExpression = (PsiLambdaExpression)codeStyleManager.reformat(lambdaExpression);
+            paramsString = lambdaExpression.getParameterList().getText();
+            final LookupElementBuilder builder =
+              LookupElementBuilder.create(functionalInterfaceMethod, paramsString).withPresentableText(paramsString + " -> {}").withInsertHandler(new InsertHandler<LookupElement>() {
+                @Override
+                public void handleInsert(InsertionContext context, LookupElement item) {
+                  final Editor editor = context.getEditor();
+                  EditorModificationUtil.insertStringAtCaret(editor, " -> ");
+                }
+              }).withIcon(AllIcons.Nodes.AnonymousClass);
+            LookupElement lambdaElement = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+            if (prioritize) {
+              lambdaElement = PrioritizedLookupElement.withPriority(lambdaElement, 1);
+            }
+            result.add(lambdaElement);
           }
-          result.add(lambdaElement);
 
           if (params.length == 1) {
             final PsiType expectedReturnType = substitutor.substitute(functionalInterfaceMethod.getReturnType());
