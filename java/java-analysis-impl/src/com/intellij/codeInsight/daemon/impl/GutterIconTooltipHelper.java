@@ -41,6 +41,10 @@ public class GutterIconTooltipHelper {
   }
 
   public static String composeText(@NotNull Iterable<? extends PsiElement> elements, String start, final String pattern) {
+    return composeText(elements, start, pattern, "");
+  }
+
+  public static String composeText(@NotNull Iterable<? extends PsiElement> elements, String start, final String pattern, String postfix) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
@@ -69,7 +73,7 @@ public class GutterIconTooltipHelper {
       sep = "<br>";
       result.append(name);
     }
-
+    result.append(postfix);
     result.append("</body></html>");
     return result.toString();
   }
