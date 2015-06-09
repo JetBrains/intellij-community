@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
@@ -215,7 +216,9 @@ public class SMTestRunnerConnectionUtil {
     // subscribes test runner's actions on results viewer events
     resultsViewer.addEventsListener(uiActionsHandler);
     // subscribes statistics tab viewer on event processor
-    eventsProcessor.addEventsListener(statisticsPane.createTestEventsListener());
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      eventsProcessor.addEventsListener(statisticsPane.createTestEventsListener());
+    }
     // subscribes test runner's notification balloons on results viewer events
     eventsProcessor.addEventsListener(notifierHandler);
 
