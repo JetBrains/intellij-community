@@ -92,38 +92,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
     };
   }
 
-  @NotNull
-  public static <T, E> JBIterable<E> from(@Nullable Iterable<T> iterable, final Function<? super T, Iterable<E>> fun) {
-    if (iterable == null) return empty();
-    final Iterable<T> thatIt = iterable;
-    return new JBIterable<E>() {
-      @Override
-      public Iterator<E> iterator() {
-        final Iterator<T> it = thatIt.iterator();
-        return new Iterator<E>() {
-          Iterator<E> cur;
-          @Override
-          public boolean hasNext() {
-            while ((cur == null || !cur.hasNext()) && it.hasNext()) {
-              cur = fun.fun(it.next()).iterator();
-            }
-            return cur != null && cur.hasNext();
-          }
-
-          @Override
-          public E next() {
-            return cur.next();
-          }
-
-          @Override
-          public void remove() {
-            cur.remove();
-          }
-        };
-      }
-    };
-  }
-
   /**
    * Returns a fluent iterable containing {@code elements} in the specified order.
    */
@@ -190,7 +158,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   public final <T> JBIterable<E> append(@Nullable Iterable<T> other, @NotNull Function<? super T, Iterable<E>> fun) {
-    return other == null ? this : this == EMPTY ? from(other, fun) : append(from(other, fun));
+    return other == null ? this : this == EMPTY ? from(other).flatten(fun) : append(from(other).flatten(fun));
   }
 
   /**
@@ -300,6 +268,47 @@ public abstract class JBIterable<E> implements Iterable<E> {
         };
       }
     });
+  }
+
+  /**
+   * Returns a fluent iterable that applies {@code function} to each element of this
+   * fluent iterable and concats the produced iterables in one.
+   * <p/>
+   * <p>The returned fluent iterable's iterator supports {@code remove()} if an underlying iterable's
+   * iterator does. After a successful {@code remove()} call, this fluent iterable no longer
+   * contains the corresponding element.
+   */
+  @NotNull
+  public <T> JBIterable<T> flatten(final Function<? super E, Iterable<T>> function) {
+    if (this == EMPTY) return empty();
+    final Iterable<E> thatIt = myIterable;
+    return new JBIterable<T>() {
+      @Override
+      public Iterator<T> iterator() {
+        final Iterator<E> it = thatIt.iterator();
+        return new Iterator<T>() {
+          Iterator<T> cur;
+
+          @Override
+          public boolean hasNext() {
+            while ((cur == null || !cur.hasNext()) && it.hasNext()) {
+              cur = function.fun(it.next()).iterator();
+            }
+            return cur != null && cur.hasNext();
+          }
+
+          @Override
+          public T next() {
+            return cur.next();
+          }
+
+          @Override
+          public void remove() {
+            cur.remove();
+          }
+        };
+      }
+    };
   }
 
   /**
