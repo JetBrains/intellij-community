@@ -401,8 +401,7 @@ public class DiffUtil {
 
   @NotNull
   private static JComponent createTitlePanel(@NotNull String title) {
-    if (title.isEmpty()) title = " "; // do not collapse
-    return new JLabel(title); // TODO: allow to copy text
+    return CopyableLabel.create(title);
   }
 
   @NotNull
