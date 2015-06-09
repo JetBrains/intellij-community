@@ -177,7 +177,7 @@ public class SourceResolver {
   @Nullable
   public MappingList findMappings(@NotNull List<Url> sourceUrls, @NotNull SourceMap sourceMap, @Nullable VirtualFile sourceFile) {
     for (Url sourceUrl : sourceUrls) {
-      int index = canonicalizedSourcesMap.get(sourceUrl.trimParameters());
+      int index = canonicalizedSourcesMap.get(sourceUrl);
       if (index != -1) {
         return sourceMap.sourceIndexToMappings[index];
       }
