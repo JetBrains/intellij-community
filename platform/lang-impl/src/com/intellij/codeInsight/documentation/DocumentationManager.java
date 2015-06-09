@@ -952,11 +952,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                 );
                 String url1 = urls != null && !urls.isEmpty() ? urls.get(0) : url;
                 BrowserUtil.browse(url1);
+                return "";
+              }
+              else if (url.startsWith("..")) {
+                return CodeInsightBundle.message("javadoc.error.resolving.url", url);
               }
               else {
                 BrowserUtil.browse(url);
+                return "";
               }
-              return "";
             }
 
             @Override
