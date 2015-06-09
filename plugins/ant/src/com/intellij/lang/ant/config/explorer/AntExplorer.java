@@ -890,7 +890,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
       final Keymap activeKeymap = keymapManager.getActiveKeymap();
       listenTo(activeKeymap);
-      keymapManager.addKeymapManagerListener(this);
+      keymapManager.addKeymapManagerListener(this, AntExplorer.this);
     }
 
     public void activeKeymapChanged(Keymap keymap) {
@@ -918,7 +918,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public void stopListen() {
       listenTo(null);
-      KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(this);
     }
   }
 

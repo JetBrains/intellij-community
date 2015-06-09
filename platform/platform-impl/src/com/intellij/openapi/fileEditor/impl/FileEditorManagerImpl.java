@@ -122,7 +122,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   /**
    * Removes invalid myEditor and updates "modified" status.
    */
-  private final MyEditorPropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
+  private final PropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
   private final DockManager myDockManager;
   private DockableEditorContainerFactory myContentFactory;
   private final EditorHistoryManager myEditorHistoryManager;
@@ -288,6 +288,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           panel.setOpaque(false);
           panel.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
+          Disposer.register(myProject, mySplitters);
           panel.add(mySplitters, BorderLayout.CENTER);
           myPanels = panel;
         }
@@ -1511,11 +1512,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @Override
   public void projectClosed() {
-    //myFocusWatcher.deinstall(myWindows.getComponent ());
-    getMainSplitters().dispose();
-
-// Dispose created editors. We do not use use closeEditor method because
-// it fires event and changes history.
+    // Dispose created editors. We do not use use closeEditor method because
+    // it fires event and changes history.
     closeAllFiles();
   }
 
