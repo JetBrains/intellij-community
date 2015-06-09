@@ -17,7 +17,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -33,6 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +143,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
                                          final Map<PsiTypeParameter, PsiType> substitutionMap) {
     final PsiClass containingClass = psiClass.getContainingClass();
     if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
-      final String outerClassRef = StringUtil.getPackageName(canonicalText);
+      final String outerClassRef = getOuterClassRef(canonicalText);
       final String[] classParameters = PsiNameHelper.getClassParametersText(outerClassRef);
       final PsiType[] args = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters).getTypeArguments();
       final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
@@ -154,6 +154,23 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       }
       collectOuterClassTypeArgs(containingClass, outerClassRef, substitutionMap);
     }
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  private String getOuterClassRef(String ref) {
+      int stack = 0;
+      for(int i = ref.length() - 1; i >=0; i--) {
+        char c = ref.charAt(i);
+        switch (c) {
+          case '<': { stack--; break; }
+          case '>': { stack++; break; }
+          case '.': if (stack == 0) {
+            return ref.substring(0, i);
+          }
+        }
+      }
+      return "";
   }
 
   @Override

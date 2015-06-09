@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -222,6 +223,42 @@ public class TypesTest extends GenericsTestCase {
     final PsiType initializerType = var.getInitializer().getType();
     assertEquals(initializerType, typeRawIterator);
     assertTrue(varType.isAssignableFrom(initializerType));
+  }
+
+  public void testParameterizedTypes() {
+    final JavaPsiFacadeEx psiManager = getJavaFacade();
+    final PsiElementFactory factory = psiManager.getElementFactory();
+    final PsiClass classA = psiManager.findClass("A");
+    assertNotNull(classA);
+
+    final PsiTypeParameter parameterX = classA.getTypeParameters()[0];
+    assertEquals("X", parameterX.getName());
+
+    final PsiClass classB = classA.getInnerClasses()[0];
+    assertEquals("B", classB.getName());
+
+    final PsiTypeParameter parameterY = classB.getTypeParameters()[0];
+    assertEquals("Y", parameterY.getName());
+    {
+      final PsiMethod methodA = classA.findMethodsByName("methodA", false)[0];
+      final PsiClassReferenceType returnTypeA = (PsiClassReferenceType)methodA.getReturnType();
+      assertEquals("A.B<java.lang.String>", returnTypeA.getCanonicalText());
+      final PsiClassType.ClassResolveResult resolveResultA = returnTypeA.resolveGenerics();
+      assertEquals(classB, resolveResultA.getElement());
+      final PsiType outerFromMethodA = factory.createType(classA, resolveResultA.getSubstitutor());
+      assertEquals("A<X>", outerFromMethodA.getCanonicalText());
+    }
+
+    {
+      final PsiMethod methodB = classA.findMethodsByName("methodB", false)[0];
+      final PsiClassReferenceType returnTypeB = (PsiClassReferenceType)methodB.getReturnType();
+      assertEquals("A<java.lang.Number>.B<java.lang.String>", returnTypeB.getCanonicalText());
+
+      final PsiClassType.ClassResolveResult resolveResultB = returnTypeB.resolveGenerics();
+      assertEquals(classB, resolveResultB.getElement());
+      final PsiType outerFromMethodB = factory.createType(classA, resolveResultB.getSubstitutor());
+      assertEquals("A<java.lang.Number>", outerFromMethodB.getCanonicalText());
+    }
   }
 
   public void testTypesInGenericClass() {

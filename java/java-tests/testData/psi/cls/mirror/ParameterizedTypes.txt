@@ -1,0 +1,17 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+package pkg;
+
+public abstract class ParameterizedTypes <P> {
+    public ParameterizedTypes() { /* compiled code */ }
+
+    abstract pkg.ParameterizedTypes<P>.Inner<java.lang.String> getUnspecificInner();
+
+    abstract pkg.ParameterizedTypes<java.lang.Number>.Inner<java.lang.String> getSpecificInner();
+
+    public abstract class Inner <I> {
+        public Inner() { /* compiled code */ }
+    }
+}
