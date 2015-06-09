@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -32,10 +33,10 @@ public class ColorChooser {
   @Nullable
   @Deprecated
   /**
-   * @deprecated Use {@link #chooseColor(java.awt.Component, String, java.awt.Color, boolean, java.util.List, boolean)}
+   * @deprecated Use {@link #chooseColor(Component, String, Color, boolean, java.util.List, boolean)}
    */
   public static Color chooseColor(Component parent,
-                                  String caption,
+                                  @Nls(capitalization = Nls.Capitalization.Title) String caption,
                                   @Nullable Color preselectedColor,
                                   boolean enableOpacity,
                                   ColorPickerListener[] listeners,
@@ -45,7 +46,7 @@ public class ColorChooser {
 
   @Nullable
   public static Color chooseColor(Component parent,
-                                  String caption,
+                                  @Nls(capitalization = Nls.Capitalization.Title) String caption,
                                   @Nullable Color preselectedColor,
                                   boolean enableOpacity,
                                   List<ColorPickerListener> listeners,
@@ -54,18 +55,18 @@ public class ColorChooser {
   }
 
   @Nullable
-  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
+  public static Color chooseColor(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
     return chooseColor(parent, caption, preselectedColor, enableOpacity, Collections.<ColorPickerListener>emptyList(), false);
   }
 
   @Nullable
-  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
+  public static Color chooseColor(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, @Nullable Color preselectedColor, boolean enableOpacity,
                                   boolean opacityInPercent) {
     return chooseColor(parent, caption, preselectedColor, enableOpacity, Collections.<ColorPickerListener>emptyList(), opacityInPercent);
   }
 
   @Nullable
-  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor) {
+  public static Color chooseColor(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, @Nullable Color preselectedColor) {
     return chooseColor(parent, caption, preselectedColor, false);
   }
 }

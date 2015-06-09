@@ -393,7 +393,7 @@
                       <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Show quick doc on mouse move"/>
+                      <text value="Show quick documentation on mouse move"/>
                     </properties>
                   </component>
                   <component id="ec4ad" class="javax.swing.JTextField" binding="myQuickDocDelayTextField">

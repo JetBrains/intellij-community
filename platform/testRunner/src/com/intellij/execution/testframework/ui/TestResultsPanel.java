@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.AwtVisitor;
@@ -174,7 +175,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   }
 
   protected static Splitter createSplitter(final String proportionProperty, final float defaultProportion) {
-    final Splitter splitter = new Splitter(false);
+    final Splitter splitter = new OnePixelSplitter(false);
     splitter.setHonorComponentsMinimumSize(true);
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     float proportion;

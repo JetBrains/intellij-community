@@ -22,6 +22,7 @@ import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBEmptyBorder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,16 +38,18 @@ public class TestStatusLine extends JPanel {
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
 
   public TestStatusLine() {
-    super(new GridLayout(1, 2));
-    final JPanel progressPanel = new JPanel(new GridBagLayout());
-    add(progressPanel);
+    super(new BorderLayout());
+    JPanel progressPanel = new JPanel(new GridBagLayout());
+    add(progressPanel, BorderLayout.WEST);
     myProgressBar.setMaximum(100);
-    myProgressBar.setBorder(null);
-    myProgressBar.setMaximumSize(new JBDimension(450, -1));
+    final Dimension size = new JBDimension(450, -1);
+    progressPanel.setMaximumSize(size);
+    progressPanel.setMinimumSize(size);
+    progressPanel.setPreferredSize(size);
     progressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                            new Insets(2, 0, 0, 8), 0, 0));
+                                                            new Insets(2, 2, 0, 8), 0, 0));
     setStatusColor(ColorProgressBar.GREEN);
-    add(myState);
+    add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
   }
 

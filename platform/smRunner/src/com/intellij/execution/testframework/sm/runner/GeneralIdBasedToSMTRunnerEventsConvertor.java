@@ -96,7 +96,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         // or it finished after all tests have been run
         // Lets assume, if at finish all nodes except root suite have final state (passed, failed or ignored),
         // then all is ok otherwise process was terminated by user
-        boolean completeTree = isTreeComplete();
+        boolean completeTree = isTreeComplete(myRunningTestNodes, myTestsRootProxy);
         if (completeTree) {
           myTestsRootProxy.setFinished();
         } else {
@@ -111,19 +111,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         fireOnTestingFinished();
       }
     });
-  }
-
-  private boolean isTreeComplete() {
-    if (!myRunningTestNodes.isEmpty()) {
-      return false;
-    }
-    List<? extends SMTestProxy> children = myTestsRootProxy.getChildren();
-    for (SMTestProxy child : children) {
-      if (!child.isFinal() || child.wasTerminated()) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
