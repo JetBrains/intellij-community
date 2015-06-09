@@ -596,7 +596,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
     else {
       totalTestCount = myTotalTestCount;
-      doneTestCount = myFinishedTestCount + myFailedTestCount + myIgnoredTestCount;
+      doneTestCount = myFinishedTestCount;
     }
     TestsUIUtil.showIconProgress(myProject, doneTestCount, totalTestCount, myFailedTestCount);
   }
@@ -655,7 +655,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   private void updateProgressOnTestDone() {
-    int doneTestCount = myFinishedTestCount + myFailedTestCount + myIgnoredTestCount;
+    int doneTestCount = myFinishedTestCount;
     // update progress
     if (myTotalTestCount != 0) {
       // if total is set
