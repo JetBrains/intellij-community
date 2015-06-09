@@ -36,7 +36,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
     for (LineMarkerInfo info : markers) {
       if (info.endOffset >= offset && info.startOffset <= offset) {
-        assertEquals("<html><body>Overrides method in 'I'</body></html>", info.getLineMarkerTooltip());
+        assertEquals("<html><body>Overrides method in <a href=\"#javaClass/I\">I</a></body></html>", info.getLineMarkerTooltip());
         return;
       }
     }
