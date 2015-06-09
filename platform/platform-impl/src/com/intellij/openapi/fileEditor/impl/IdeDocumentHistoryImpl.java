@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
 import gnu.trove.THashSet;
@@ -48,8 +49,8 @@ import java.util.*;
 public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl");
 
-  private static final int BACK_QUEUE_LIMIT = 25;
-  private static final int CHANGE_QUEUE_LIMIT = 25;
+  private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
+  private static final int CHANGE_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
 
   private final Project myProject;
 
