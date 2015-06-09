@@ -30,10 +30,10 @@ import java.util.Collection;
 public interface CustomUncommenter {
 
   /**
-   * Finds commented block in selected text
+   * Finds commented block in provided text.
    *
-   * @param text selected text
-   * @return commented block (including comment prefix and suffix!) or null if text is not commented
+   * @param text text to search comment for.
+   * @return commented block (including comment prefix and suffix!) or null if text does not contain any  commented blocks.
    */
   @Nullable
   TextRange findMaximumCommentedRange(@NotNull CharSequence text);
