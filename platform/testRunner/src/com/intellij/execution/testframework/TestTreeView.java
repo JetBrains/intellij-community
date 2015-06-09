@@ -195,18 +195,18 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
         if (isExpandableHandlerVisibleForCurrentRow(row)) {
           continue;
         }
-        Rectangle rowBounds = getRowBounds(row);
-        rowBounds.x = 0;
-        rowBounds.width = Integer.MAX_VALUE;
+        Object node = getPathForRow(row).getLastPathComponent();
+        if (node instanceof DefaultMutableTreeNode) {
+          Object data = ((DefaultMutableTreeNode)node).getUserObject();
+          if (data instanceof BaseTestProxyNodeDescriptor) {
+            final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
+            final String durationString = testProxy.getDurationString(properties);
+            if (durationString != null) {
+              Rectangle rowBounds = getRowBounds(row);
+              rowBounds.x = 0;
+              rowBounds.width = Integer.MAX_VALUE;
 
-        if (rowBounds.intersects(clip)) {
-          Object node = getPathForRow(row).getLastPathComponent();
-          if (node instanceof DefaultMutableTreeNode) {
-            Object data = ((DefaultMutableTreeNode)node).getUserObject();
-            if (data instanceof BaseTestProxyNodeDescriptor) {
-              final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
-              final String durationString = testProxy.getDurationString(properties);
-              if (durationString != null) {
+              if (rowBounds.intersects(clip)) {
                 final Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
                 final boolean rowSelected = isRowSelected(row);
                 final boolean hasTreeFocus = hasFocus();
