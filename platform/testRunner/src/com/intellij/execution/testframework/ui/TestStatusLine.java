@@ -47,7 +47,7 @@ public class TestStatusLine extends JPanel {
     progressPanel.setMinimumSize(size);
     progressPanel.setPreferredSize(size);
     progressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                            new Insets(2, 0, 0, 8), 0, 0));
+                                                            new Insets(2, 2, 0, 8), 0, 0));
     setStatusColor(ColorProgressBar.GREEN);
     add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
