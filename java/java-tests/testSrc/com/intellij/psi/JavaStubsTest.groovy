@@ -20,7 +20,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class JavaStubsTest extends LightCodeInsightFixtureTestCase {
 
-  public void "test resolve from annotation method defaule"() {
+  public void "test resolve from annotation method default"() {
     def cls = myFixture.addClass("""
 public @interface BrokenAnnotation {
 
