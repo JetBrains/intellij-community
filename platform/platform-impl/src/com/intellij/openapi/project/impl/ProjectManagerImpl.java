@@ -97,7 +97,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   private final Set<Project> myTestProjects = new THashSet<Project>();
 
-  private final MultiMap<Project, Pair<VirtualFile, StateStorage>> myChangedProjectFiles = MultiMap.createSet();
+  private final MultiMap<Project, Pair<VirtualFile, StateStorage>> myChangedProjectFiles = MultiMap.createWeakSet(); //guarded by myChangedProjectFiles
   private final SingleAlarm myChangedFilesAlarm;
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
@@ -766,7 +766,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       myChangedApplicationFiles.add(Pair.create(file, storage));
     }
     else {
-      myChangedProjectFiles.putValue(project, Pair.create(file, storage));
+      synchronized (myChangedProjectFiles) {
+        myChangedProjectFiles.putValue(project, Pair.create(file, storage));
+      }
     }
 
     if (storage instanceof StateStorageBase) {
@@ -780,7 +782,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @Override
   public void reloadProject(@NotNull Project project) {
-    myChangedProjectFiles.remove(project);
+    synchronized (myChangedProjectFiles) {
+      myChangedProjectFiles.remove(project);
+    }
     doReloadProject(project);
   }
 
@@ -844,7 +848,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
             myTestProjects.remove(project);
           }
 
-          myChangedProjectFiles.remove(project);
+          synchronized (myChangedProjectFiles) {
+            myChangedProjectFiles.remove(project);
+          }
 
           fireProjectClosed(project);
 
