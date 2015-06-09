@@ -151,15 +151,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
     myTreeView.setTestResultsViewer(this);
-    addTestsTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        AbstractTestProxy selectedTest = getTreeView().getSelectedTest();
-        if (selectedTest instanceof SMTestProxy) {
-          myStatisticsPane.selectProxy(((SMTestProxy)selectedTest), this, false);
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      addTestsTreeSelectionListener(new TreeSelectionListener() {
+        @Override
+        public void valueChanged(TreeSelectionEvent e) {
+          AbstractTestProxy selectedTest = getTreeView().getSelectedTest();
+          if (selectedTest instanceof SMTestProxy) {
+            myStatisticsPane.selectProxy(((SMTestProxy)selectedTest), this, false);
+          }
         }
-      }
-    });
+      });
+    }
 
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
