@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private static Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptionsDetector");
@@ -52,9 +52,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     IndentOptions indentOptions = (IndentOptions)CodeStyleSettingsManager.getSettings(myProject).getIndentOptions(myFile.getFileType()).clone();
 
     if (myDocument != null) {
-      List<LineIndentInfo> linesInfo = new LineIndentInfoBuilder(myDocument.getCharsSequence(), myLanguage).build();
-      IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
-      adjustIndentOptions(indentOptions, stats);
+      List<LineIndentInfo> linesInfo = new FormatterBasedLineIndentInfoBuilder(myFile).build();
+      if (linesInfo != null) {
+        IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
+        adjustIndentOptions(indentOptions, stats);
+      }
     }
 
     return indentOptions;
