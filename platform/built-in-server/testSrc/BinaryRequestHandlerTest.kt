@@ -21,7 +21,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 // we don't handle String in efficient way - because we want to test readContent/readChars also
 public class BinaryRequestHandlerTest {
@@ -43,7 +42,7 @@ public class BinaryRequestHandlerTest {
         channel.pipeline().addLast(object : Decoder() {
           override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
             val requiredLength = 4 + text.length()
-            val response = readContent(input, context, requiredLength) { buffer, context, isCumulateBuffer -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
+            val response = readContent(input, context, requiredLength) {(buffer, context, isCumulateBuffer) -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
             if (response != null) {
               result.setResult(response)
             }
@@ -63,7 +62,7 @@ public class BinaryRequestHandlerTest {
     val message = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8)
     buffer.writeShort(message.readableBytes())
     channel.write(buffer)
-    channel.writeAndFlush(message).await(5, TimeUnit.SECONDS)
+    channel.writeAndFlush(message).syncUninterruptibly()
 
     try {
       result.rejected(object : Consumer<Throwable> {
@@ -90,7 +89,7 @@ public class BinaryRequestHandlerTest {
   }
 
   class MyBinaryRequestHandler : BinaryRequestHandler() {
-    companion object {
+    class object {
       val ID = UUID.fromString("E5068DD6-1DB7-437C-A3FC-3CA53B6E1AC9")
     }
 
@@ -106,7 +105,7 @@ public class BinaryRequestHandlerTest {
       private var state = State.HEADER
 
       private enum class State {
-        HEADER,
+        HEADER
         CONTENT
       }
 
@@ -114,13 +113,20 @@ public class BinaryRequestHandlerTest {
         while (true) {
           when (state) {
             State.HEADER -> {
-              val buffer = getBufferIfSufficient(input, 2, context) ?: return
+              val buffer = getBufferIfSufficient(input, 2, context)
+              if (buffer == null) {
+                return
+              }
+
               contentLength = buffer.readUnsignedShort()
               state = State.CONTENT
             }
 
             State.CONTENT -> {
-              val messageText = readChars(input) ?: return
+              val messageText = readChars(input)
+              if (messageText == null) {
+                return
+              }
 
               state = State.HEADER
               context.writeAndFlush(Unpooled.copiedBuffer("got-" + messageText, CharsetUtil.UTF_8))

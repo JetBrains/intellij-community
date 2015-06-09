@@ -15,7 +15,7 @@ import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
 
 class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
-  companion object {
+  class object {
     val EXCLUDED_DIR_NAME = "excludedDir"
   }
 
