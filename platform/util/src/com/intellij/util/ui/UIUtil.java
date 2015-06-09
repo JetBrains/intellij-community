@@ -2236,7 +2236,7 @@ public class UIUtil {
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : 11;
+    int size = font != null ? font.getSize() : JBUI.scale(11);
 
     String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
     if (noGapsBetweenParagraphs) {
