@@ -54,14 +54,14 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   public void update(@NotNull AnActionEvent e) {
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(true);
-      return;
-    }
-
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
-    e.getPresentation().setEnabled(project != null && canShowDiff(project, changes));
+    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+      e.getPresentation().setEnabled(project != null && changes != null && changes.length > 0);
+    }
+    else {
+      e.getPresentation().setEnabled(project != null && canShowDiff(project, changes));
+    }
   }
 
   protected static boolean canShowDiff(@Nullable Project project, @Nullable Change[] changes) {
