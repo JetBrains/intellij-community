@@ -41,6 +41,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -232,6 +233,17 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
           htmlns = Html5SchemaProvider.getHtml5SchemaLocation();
         }
         nsDescriptor = getDefaultNSDescriptor(htmlns, false);
+      }
+      final XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
+      if (descriptorFile != null) {
+        final XmlNSDescriptor finalNsDescriptor = nsDescriptor;
+        return CachedValuesManager.getCachedValue(descriptorFile, new CachedValueProvider<XmlNSDescriptor>() {
+          @Nullable
+          @Override
+          public Result<XmlNSDescriptor> compute() {
+            return Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl(finalNsDescriptor), descriptorFile);
+          }
+        });
       }
       return new HtmlNSDescriptorImpl(nsDescriptor);
     }
