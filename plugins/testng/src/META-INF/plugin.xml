@@ -70,6 +70,9 @@
       <stacktrace.fold substring="at org.testng.TestRunner."/>
       <stacktrace.fold substring="at org.testng.SuiteRunner."/>
       <stacktrace.fold substring="at org.testng.TestNG.run"/>
+      <localInspection groupPath="Java" language="JAVA" shortName="TestNGDataProvider"
+                       implementationClass="com.theoryinpractice.testng.inspection.TestNGDataProviderInspection" displayName="Data provider problems"
+                       groupName="TestNG" enabledByDefault="true" level="WARNING"/>
     </extensions>
     <extensionPoints >
       <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>
