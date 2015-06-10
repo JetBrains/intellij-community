@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
       if (nearest) {
         return DebuggerContextUtil.findNearest(context, psiVariable, aClass.getContainingFile());
       }
-      return SourcePosition.createFromOffset(psiVariable.getContainingFile(), psiVariable.getTextOffset());
+      return SourcePosition.createFromElement(psiVariable);
     }
     else {
       final DebuggerSession session = context.getDebuggerSession();
@@ -115,13 +115,11 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
 
       if (aClass != null) {
         PsiField field = aClass.findFieldByName(fieldName, false);
-        if (field != null) {
-          PsiElement element = field.getNavigationElement();
-          if (nearest) {
-            return DebuggerContextUtil.findNearest(context, element, aClass.getContainingFile());
-          }
-          return SourcePosition.createFromOffset(element.getContainingFile(), element.getTextOffset());
+        if (field == null) return null;
+        if (nearest) {
+          return DebuggerContextUtil.findNearest(context, field.getNavigationElement(), aClass.getContainingFile());
         }
+        return SourcePosition.createFromElement(field);
       }
       return null;
     }
@@ -133,20 +131,16 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
                                                              @NotNull DebuggerContextImpl context,
                                                              boolean nearest) {
     PsiElement place = PositionUtil.getContextElement(context);
-    if (place == null) {
-      return null;
-    }
+    if (place == null) return null;
 
     PsiVariable psiVariable = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(descriptor.getName(), place);
-    if (psiVariable == null) {
-      return null;
-    }
+    if (psiVariable == null) return null;
 
     PsiFile containingFile = psiVariable.getContainingFile();
     if(containingFile == null) return null;
     if (nearest) {
       return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);
     }
-    return SourcePosition.createFromOffset(containingFile, psiVariable.getTextOffset());
+    return SourcePosition.createFromElement(psiVariable);
   }
 }

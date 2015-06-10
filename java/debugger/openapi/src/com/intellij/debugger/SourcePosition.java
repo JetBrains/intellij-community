@@ -274,7 +274,7 @@ public abstract class SourcePosition implements Navigatable{
     }
   }
 
-  public static SourcePosition createFromLineComputable(final PsiFile file, final Computable<Integer> line) {
+  public static SourcePosition createFromLineComputable(@NotNull final PsiFile file, final Computable<Integer> line) {
     return new SourcePositionCache(file) {
       @Override
       protected int calcLine() {
@@ -283,7 +283,7 @@ public abstract class SourcePosition implements Navigatable{
     };
   }
 
-  public static SourcePosition createFromLine(final PsiFile file, final int line) {
+  public static SourcePosition createFromLine(@NotNull final PsiFile file, final int line) {
     return new SourcePositionCache(file) {
       @Override
       protected int calcLine() {
@@ -297,9 +297,8 @@ public abstract class SourcePosition implements Navigatable{
     };
   }
 
-  public static SourcePosition createFromOffset(final PsiFile file, final int offset) {
+  public static SourcePosition createFromOffset(@NotNull final PsiFile file, final int offset) {
     return new SourcePositionCache(file) {
-
       @Override
       protected int calcOffset() {
         return offset;
@@ -311,7 +310,8 @@ public abstract class SourcePosition implements Navigatable{
       }
     };
   }
-     
+
+  @Nullable
   public static SourcePosition createFromElement(PsiElement element) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiElement navigationElement = element.getNavigationElement();
@@ -324,6 +324,7 @@ public abstract class SourcePosition implements Navigatable{
     else {
       psiFile = navigationElement.getContainingFile();
     }
+    if (psiFile == null) return null;
     return new SourcePositionCache(psiFile) {
       @Override
       protected PsiElement calcPsiElement() {
