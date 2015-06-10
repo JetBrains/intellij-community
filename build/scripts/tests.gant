@@ -23,10 +23,18 @@ if ("GIT_TESTS".equalsIgnoreCase(System.getProperty("idea.test.group"))) {
   setProperty("cucumber_test_dirs", [["git4idea", "Idea", "${home}/plugins/git4idea/test-features/git4idea", "git4idea"]])
 }
 
-def args = [
-  "-Xmx450m",
-  "-Dsun.io.useCanonCaches=false"
-]
+def args = []
+
+def mem = System.getProperty("test.jvm.memory")
+if (mem != null) {
+  args.addAll(mem.split())
+}
+else {
+  args += [
+    "-Xmx450m",
+    "-Dsun.io.useCanonCaches=false"
+  ]
+}
 
 if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
   String vendor = System.getProperty("java.vm.vendor")
