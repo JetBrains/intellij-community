@@ -22,6 +22,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 
@@ -99,6 +100,16 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
         loggingHandler.print(line);
       }
     };
+  }
+
+  @Override
+  public boolean isTtySupported() {
+    return myLogManager.isTtySupported();
+  }
+
+  @Override
+  public void createTerminal(final String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
+    myLogManager.addTerminal(pipeName, terminalOutput, terminalInput);
   }
 
   private static class LogListenerImpl implements LogListener {

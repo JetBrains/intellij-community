@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remoteServer.agent.util.log;
+package com.intellij.remoteServer.impl.runtime.log;
 
-import java.util.List;
+import com.intellij.openapi.Disposable;
 
-/**
- * @author michael.golubev
- */
-public interface LogPipeProvider {
+import javax.swing.*;
 
-  List<? extends LogPipeBase> createLogPipes(String deploymentName);
+public abstract class LoggingHandlerBase implements Disposable {
+
+  private final String myPresentableName;
+
+  public LoggingHandlerBase(String presentableName) {
+    myPresentableName = presentableName;
+  }
+
+  public String getPresentableName() {
+    return myPresentableName;
+  }
+
+  public abstract JComponent getComponent();
+
+  @Override
+  public void dispose() {
+
+  }
 }
