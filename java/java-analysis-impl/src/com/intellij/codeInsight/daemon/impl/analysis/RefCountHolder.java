@@ -71,7 +71,7 @@ class RefCountHolder {
   private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
 
   @NotNull
-  public static RefCountHolder get(@NotNull PsiFile file) {
+  static RefCountHolder get(@NotNull PsiFile file) {
     Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
     if (holder == null) {
@@ -171,7 +171,7 @@ class RefCountHolder {
     }
   }
 
-  public boolean isReferenced(@NotNull PsiElement element) {
+  boolean isReferenced(@NotNull PsiElement element) {
     Collection<PsiReference> array;
     synchronized (myLocalRefsMap) {
       array = myLocalRefsMap.get(element);
@@ -272,10 +272,10 @@ class RefCountHolder {
     return false;
   }
 
-  public boolean analyze(@NotNull PsiFile file,
-                         TextRange dirtyScope,
-                         @NotNull ProgressIndicator indicator,
-                         @NotNull Runnable analyze) {
+  boolean analyze(@NotNull PsiFile file,
+                  TextRange dirtyScope,
+                  @NotNull ProgressIndicator indicator,
+                  @NotNull Runnable analyze) {
     ProgressIndicator result;
     if (myState.compareAndSet(EMPTY, indicator)) {
       if (!file.getTextRange().equals(dirtyScope)) {

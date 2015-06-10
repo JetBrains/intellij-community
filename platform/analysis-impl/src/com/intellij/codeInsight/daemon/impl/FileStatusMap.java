@@ -351,6 +351,11 @@ public class FileStatusMap implements Disposable {
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String toString() {
+      return "WHOLE_FILE";
+    }
   };
 
   // logging
