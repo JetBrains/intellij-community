@@ -48,5 +48,5 @@ public interface CustomUncommenter {
    * @return list of couples: [commentPrefix-start,commentPrefix-end], [commentSuffix-start,commentSuffix-end]
    */
   @NotNull
-  Collection<? extends Couple<TextRange>> getCommentRangesToDelete(@NotNull String text);
+  Collection<? extends Couple<TextRange>> getCommentRangesToDelete(@NotNull CharSequence text);
 }
