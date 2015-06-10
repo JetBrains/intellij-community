@@ -73,12 +73,14 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
         TestsPresentationUtil.formatTestProxy(testProxy, this);
       }
 
-      String durationString = testProxy.getDurationString(myConsoleProperties);
-      if (durationString != null) {
-        durationString = "  " + durationString;
-        myDurationWidth = getFontMetrics(getFont()).stringWidth(durationString);
-        if (((TestTreeView)myTree).isExpandableHandlerVisibleForCurrentRow(myRow)) {
-          append(durationString);
+      if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(myConsoleProperties)) {
+        String durationString = testProxy.getDurationString(myConsoleProperties);
+        if (durationString != null) {
+          durationString = "  " + durationString;
+          myDurationWidth = getFontMetrics(getFont()).stringWidth(durationString);
+          if (((TestTreeView)myTree).isExpandableHandlerVisibleForCurrentRow(myRow)) {
+            append(durationString);
+          }
         }
       }
       //Done

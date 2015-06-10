@@ -17,6 +17,9 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
@@ -28,13 +31,11 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
 
@@ -76,7 +77,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
   @NotNull private final Set<CommitId> myBranchesCommitId;
   @NotNull private final Set<Integer> myBranchNodeIds;
-  @NotNull private final ContainingBranchesGetter myBranchesGetter;
+  @NotNull private final ReachableNodes myReachableNodes;
   @NotNull private final BekIntMap myBekIntMap;
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
@@ -90,7 +91,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myGraphColorManager = graphColorManager;
     myBranchesCommitId = branchesCommitId;
     myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
-    myBranchesGetter = new ContainingBranchesGetter(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph), myBranchNodeIds);
+    myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
     myBekIntMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
   }
 
@@ -160,7 +161,48 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @Override
   public Set<CommitId> getContainingBranches(@NotNull CommitId commit) {
     int commitIndex = myPermanentCommitsInfo.getNodeId(commit);
-    return myPermanentCommitsInfo.convertToCommitIdSet(myBranchesGetter.getBranchNodeIndexes(commitIndex));
+    return myPermanentCommitsInfo.convertToCommitIdSet(myReachableNodes.getContainingBranches(commitIndex, myBranchNodeIds));
+  }
+
+  @NotNull
+  @Override
+  public Condition<CommitId> getContainedInBranchCondition(@NotNull final Collection<CommitId> heads) {
+    List<Integer> headIds = ContainerUtil.map(heads, new Function<CommitId, Integer>() {
+      @Override
+      public Integer fun(CommitId head) {
+        return myPermanentCommitsInfo.getNodeId(head);
+      }
+    });
+    if (!heads.isEmpty() && ContainerUtil.getFirstItem(heads) instanceof Integer) {
+      final TIntHashSet branchNodes = new TIntHashSet();
+      myReachableNodes.walk(headIds, new Consumer<Integer>() {
+        @Override
+        public void consume(Integer node) {
+          branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node));
+        }
+      });
+      return new Condition<CommitId>() {
+        @Override
+        public boolean value(CommitId commitId) {
+          return branchNodes.contains((Integer)commitId);
+        }
+      };
+    }
+    else {
+      final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
+      myReachableNodes.walk(headIds, new Consumer<Integer>() {
+        @Override
+        public void consume(Integer node) {
+          branchNodes.add(myPermanentCommitsInfo.getCommitId(node));
+        }
+      });
+      return new Condition<CommitId>() {
+        @Override
+        public boolean value(CommitId commitId) {
+          return branchNodes.contains(commitId);
+        }
+      };
+    }
   }
 
   @NotNull

@@ -239,14 +239,16 @@ public class JUnitTreeByDescriptionHierarchyTest {
     buf.setLength(0);
 
     sender.testRunStarted(testA);
-    sender.testAssumptionFailure(new Failure(testA, new Throwable()));
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    sender.testAssumptionFailure(new Failure(testA, exception));
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
                                           "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
                                           "##teamcity[testSuiteStarted name='TestA']\n" +
                                           "##teamcity[testStarted name='testName' locationHint='java:test://TestA.testName']\n" +
-                                          "##teamcity[testIgnored name='testName' details='java.lang.Throwable|n\tat com.intellij.execution.junit.JUnitTreeByDescriptionHierarchyTest.testSetupClassFailure(JUnitTreeByDescriptionHierarchyTest.java:242)|n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)|n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)|n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)|n\tat java.lang.reflect.Method.invoke(Method.java:497)|n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)|n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)|n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)|n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)|n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)|n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)|n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)|n\tat org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)|n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)|n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)|n\tat org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)|n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)|n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:363)|n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:137)|n\tat com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:88)|n\tat com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:228)|n\tat com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:74)|n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)|n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)|n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)|n\tat java.lang.reflect.Method.invoke(Method.java:497)|n\tat com.intellij.rt.execution.application.AppMain.main(AppMain.java:140)|n' error='true' message='']\n" +
+                                          "##teamcity[testIgnored name='testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='testName']\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
@@ -309,6 +311,11 @@ public class JUnitTreeByDescriptionHierarchyTest {
       @Override
       protected long currentTime() {
         return 0;
+      }
+
+      @Override
+      protected String getTrace(Failure failure) {
+        return StringUtil.convertLineSeparators(super.getTrace(failure));
       }
     };
   }

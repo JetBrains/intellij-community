@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -399,11 +399,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
       public void messageEdt(PlaybackContext context, String text, Type type) {
         if (type == Type.message || type == Type.error) {
-          if (context != null) {
-            frame.getStatusBar().setInfo("Line " + context.getCurrentLine() + ": " + text);
-          }
-          else {
-            frame.getStatusBar().setInfo(text);
+          StatusBar statusBar = frame.getStatusBar();
+          if (statusBar != null) {
+            if (context != null) {
+              text = "Line " + context.getCurrentLine() + ": " + text;
+            }
+            statusBar.setInfo(text);
           }
         }
       }
@@ -414,7 +415,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     runner.run()
       .doWhenDone(new Runnable() {
         public void run() {
-          frame.getStatusBar().setInfo("Script execution finished");
+          StatusBar statusBar = frame.getStatusBar();
+          statusBar.setInfo("Script execution finished");
         }
       })
       .doWhenProcessed(new Runnable() {

@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -27,31 +26,59 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Map;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
-  private static final JBColor ME_BG = new JBColor(new Color(255, 255, 228), new Color(73, 71, 63));
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
   public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
+    // migration to map storage
+    if (!myUiProperties.isHighlightMyCommits()) {
+      // by default, my commits highlighter was enabled
+      // if it was disabled we need to migrate that
+      myUiProperties.enableHighlighter(Factory.ID, false);
+      myUiProperties.setHighlightMyCommits(true);
+    }
   }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || !myUiProperties.isHighlightMyCommits()) return VcsCommitStyle.DEFAULT;
+    if (!myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     Map<VirtualFile, VcsUser> users = myDataHolder.getCurrentUser();
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
       VcsUser currentUser = users.get(details.getRoot());
       if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
-        return VcsCommitStyleFactory.background(ME_BG);
+        return VcsCommitStyleFactory.bold();
       }
     }
     return VcsCommitStyle.DEFAULT;
+  }
+
+  public static class Factory implements VcsLogHighlighterFactory {
+    @NotNull
+    private static final String ID = "MY_COMMITS";
+
+    @NotNull
+    @Override
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+      return new MyCommitsHighlighter(logDataHolder, uiProperties);
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return ID;
+    }
+
+    @NotNull
+    @Override
+    public String getTitle() {
+      return "My Commits";
+    }
   }
 }

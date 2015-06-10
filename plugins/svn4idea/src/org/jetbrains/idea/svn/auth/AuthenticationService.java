@@ -28,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IdeHttpClientHelpers;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import org.apache.http.client.HttpClient;
@@ -253,17 +254,23 @@ public class AuthenticationService {
     List<String> supportedProtocols = getSupportedSslProtocols();
     SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, ArrayUtil.toStringArray(supportedProtocols), null,
                                                                               SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-    HttpConfigurable httpSettings = HttpConfigurable.getInstance();
-
     // TODO: Seems more suitable here to read timeout values directly from config file - without utilizing SvnAuthenticationManager.
+    final RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
+    final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    if (haveDataForTmpConfig()) {
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyIfEnabled(requestConfigBuilder);
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyCredentialsIfEnabled(credentialsProvider);
+    }
+
     return HttpClients.custom()
       .setSSLSocketFactory(socketFactory)
-      .setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(getAuthenticationManager().getReadTimeout(repositoryUrl)).build())
-      .setDefaultRequestConfig(
-        httpSettings.setProxy(RequestConfig.custom(), haveDataForTmpConfig())
-          .setConnectTimeout(getAuthenticationManager().getConnectTimeout(repositoryUrl))
-          .build())
-      .setDefaultCredentialsProvider(httpSettings.setProxyCredentials(new BasicCredentialsProvider(), haveDataForTmpConfig()))
+      .setDefaultSocketConfig(SocketConfig.custom()
+                                .setSoTimeout(getAuthenticationManager().getReadTimeout(repositoryUrl))
+                                .build())
+      .setDefaultRequestConfig(requestConfigBuilder
+                                 .setConnectTimeout(getAuthenticationManager().getConnectTimeout(repositoryUrl))
+                                 .build())
+      .setDefaultCredentialsProvider(credentialsProvider)
       .build();
   }
 

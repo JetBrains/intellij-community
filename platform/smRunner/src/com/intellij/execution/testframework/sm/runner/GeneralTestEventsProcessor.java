@@ -29,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Processes events of test runner in general text-based form.
@@ -134,5 +137,19 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     else {
       myTransferToEDTQueue.offer(runnable);
     }
+  }
+
+
+  protected static <T> boolean isTreeComplete(Collection<T> runningTests, SMTestProxy.SMRootTestProxy rootNode) {
+    if (!runningTests.isEmpty()) {
+      return false;
+    }
+    List<? extends SMTestProxy> children = rootNode.getChildren();
+    for (SMTestProxy child : children) {
+      if (!child.isFinal() || child.wasTerminated()) {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -100,7 +100,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         // or it finished after all tests have been run
         // Lets assume, if at finish all suites except root suite are passed
         // then all is ok otherwise process was terminated by user
-        if (!myTestsRootNode.equals(mySuitesStack.getCurrentSuite())) {
+        if (!isTreeComplete(myRunningTestsFullNameToProxy.keySet(), myTestsRootNode)) {
           myTestsRootNode.setTerminated();
           myRunningTestsFullNameToProxy.clear();
         }

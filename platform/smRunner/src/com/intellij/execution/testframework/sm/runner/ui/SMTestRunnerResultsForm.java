@@ -151,15 +151,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
     myTreeView.setTestResultsViewer(this);
-    addTestsTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        AbstractTestProxy selectedTest = getTreeView().getSelectedTest();
-        if (selectedTest instanceof SMTestProxy) {
-          myStatisticsPane.selectProxy(((SMTestProxy)selectedTest), this, false);
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      addTestsTreeSelectionListener(new TreeSelectionListener() {
+        @Override
+        public void valueChanged(TreeSelectionEvent e) {
+          AbstractTestProxy selectedTest = getTreeView().getSelectedTest();
+          if (selectedTest instanceof SMTestProxy) {
+            myStatisticsPane.selectProxy(((SMTestProxy)selectedTest), this, false);
+          }
         }
-      }
-    });
+      });
+    }
 
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
@@ -596,7 +598,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
     else {
       totalTestCount = myTotalTestCount;
-      doneTestCount = myFinishedTestCount + myFailedTestCount + myIgnoredTestCount;
+      doneTestCount = myFinishedTestCount;
     }
     TestsUIUtil.showIconProgress(myProject, doneTestCount, totalTestCount, myFailedTestCount);
   }
@@ -655,7 +657,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   private void updateProgressOnTestDone() {
-    int doneTestCount = myFinishedTestCount + myFailedTestCount + myIgnoredTestCount;
+    int doneTestCount = myFinishedTestCount;
     // update progress
     if (myTotalTestCount != 0) {
       // if total is set

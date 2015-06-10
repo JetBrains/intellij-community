@@ -24,7 +24,11 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.ide.util.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -37,7 +41,10 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +116,16 @@ public class MarkerType {
     else{
       key = sameSignature ? "method.overrides" : "method.overrides.in";
     }
-    return GutterIconTooltipHelper.composeText(superMethods, "", DaemonBundle.message(key));
+    return composeText(superMethods, "", DaemonBundle.message(key), "GotoSuperMethod");
+  }
+
+  private static String composeText(PsiElement[] methods, String start, String pattern, String actionId) {
+    Shortcut[] shortcuts = ActionManager.getInstance().getAction(actionId).getShortcutSet().getShortcuts();
+    Shortcut shortcut = ArrayUtil.getFirstElement(shortcuts);
+    String postfix = "<br><div style='margin-top: 5px'><font size='2'>Click";
+    if (shortcut != null) postfix += " or press " + KeymapUtil.getShortcutText(shortcut);
+    postfix += " to navigate</font></div>";
+    return GutterIconTooltipHelper.composeText(Arrays.asList(methods), start, pattern, postfix);
   }
 
   public static void navigateToOverridingMethod(MouseEvent e, PsiMethod method, boolean acceptSelf) {
@@ -182,7 +198,7 @@ public class MarkerType {
 
     String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
     @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{1}\">{1}</a>";
-    return GutterIconTooltipHelper.composeText(overridings, start, pattern);
+    return composeText(overridings, start, pattern, IdeActions.ACTION_GOTO_IMPLEMENTATION);
   }
 
   public static void navigateToOverriddenMethod(MouseEvent e, final PsiMethod method) {
@@ -274,7 +290,7 @@ public class MarkerType {
                    ? DaemonBundle.message("interface.is.implemented.by.header")
                    : DaemonBundle.message("class.is.subclassed.by.header");
     @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{0}\">{0}</a>";
-    return GutterIconTooltipHelper.composeText(subclasses, start, pattern);
+    return composeText(subclasses, start, pattern, IdeActions.ACTION_GOTO_IMPLEMENTATION);
   }
 
   public static void navigateToSubclassedClass(MouseEvent e, final PsiClass aClass) {

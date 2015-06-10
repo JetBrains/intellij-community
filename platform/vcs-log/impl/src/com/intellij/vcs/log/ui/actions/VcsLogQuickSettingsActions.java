@@ -17,19 +17,24 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.util.List;
 
 public class VcsLogQuickSettingsActions extends DumbAwareAction {
 
@@ -71,7 +76,13 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new ShowBranchesPanelAction(), new ShowRootsColumnAction(), new HighlightMyCommitsAction()};
+      List<AnAction> actions = ContainerUtil.<AnAction>newArrayList(new ShowBranchesPanelAction(), new ShowRootsColumnAction());
+
+      actions.add(new Separator("Highlight"));
+      for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
+        actions.add(new EnableHighlighterAction(factory));
+      }
+      return actions.toArray(new AnAction[actions.size()]);
     }
 
     private class ShowBranchesPanelAction extends ToggleAction implements DumbAware {
@@ -115,20 +126,22 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
       }
     }
 
-    private class HighlightMyCommitsAction extends ToggleAction implements DumbAware {
+    private class EnableHighlighterAction extends ToggleAction implements DumbAware {
+      private final VcsLogHighlighterFactory myFactory;
 
-      public HighlightMyCommitsAction() {
-        super("Highlight My Commits");
+      private EnableHighlighterAction(VcsLogHighlighterFactory factory) {
+        super(factory.getTitle());
+        myFactory = factory;
       }
 
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return myUi.isHighlightMyCommits();
+        return myUi.isHighlighterEnabled(myFactory.getId());
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        myUi.setHighlightMyCommits(state);
+        myUi.setHighlighterEnabled(myFactory.getId(), state);
       }
     }
   }

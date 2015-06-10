@@ -39,9 +39,9 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   }
 
   public enum PropertyAlignment {
-    DO_NOT_ALIGN(JsonBundle.message("msg.align.properties.none"), 0),
-    ALIGN_ON_VALUE(JsonBundle.message("msg.align.properties.on.value"), 1),
-    ALIGN_ON_COLON(JsonBundle.message("msg.align.properties.on.colon"), 2);
+    DO_NOT_ALIGN(JsonBundle.message("formatter.align.properties.none"), 0),
+    ALIGN_ON_VALUE(JsonBundle.message("formatter.align.properties.on.value"), 1),
+    ALIGN_ON_COLON(JsonBundle.message("formatter.align.properties.on.colon"), 2);
 
     private final String myDescription;
     private final int myId;

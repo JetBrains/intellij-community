@@ -54,7 +54,7 @@
 }
 
 // For compatibility we allow any value at root level (see JsonStandardComplianceAnnotator)
-json ::= value
+json ::= value+
 
 object ::= '{' object_element* '}' {
   pin=1

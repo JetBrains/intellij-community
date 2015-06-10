@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,80 +17,69 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder;
-import com.intellij.util.Function;
-import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 /**
- * User: anna
- * Date: 7/4/13
+ * Testdata from https://github.com/bwesterb/py-tarjan
+ *
+ * @author anna
+ * @since 4.07.2013
  */
-public class TarjanTest extends TestCase {
-
-  //testdata from https://github.com/bwesterb/py-tarjan/
+public class TarjanTest {
+  @Test
   public void testResultGraph() throws Exception {
-    
+    List<List<InferenceVariablesOrder.InferenceGraphNode<Integer>>> tarjan = InferenceVariablesOrder.tarjan(getNodes());
+    String messages = StringUtil.join(tarjan, nodes -> StringUtil.join(nodes, node -> String.valueOf(node.getValue()), ", "), "\n");
+    assertEquals("[9]\n" +
+                 "[8], [7], [6]\n" +
+                 "[5]\n" +
+                 "[2], [1]\n" +
+                 "[4], [3]", messages);
+  }
 
-    final List<List<InferenceVariablesOrder.InferenceGraphNode<Integer>>> tarjan = InferenceVariablesOrder.tarjan(Arrays.asList(initNodes()));
-    final String messages = StringUtil.join(tarjan, new Function<List<InferenceVariablesOrder.InferenceGraphNode<Integer>>, String>() {
-      @Override
-      public String fun(List<InferenceVariablesOrder.InferenceGraphNode<Integer>> nodes) {
-        return StringUtil.join(nodes, new Function<InferenceVariablesOrder.InferenceGraphNode<Integer>, String>() {
-          @Override
-          public String fun(InferenceVariablesOrder.InferenceGraphNode<Integer> node) {
-            return String.valueOf(node.getValue());
-          }
-        }, ",");
-      }
-    }, "\n");
-
-    Assert.assertEquals("[9]\n" +
-                        "[8],[7],[6]\n" +
-                        "[5]\n" +
-                        "[2],[1]\n" +
-                        "[4],[3]", messages);
-
-    final ArrayList<InferenceVariablesOrder.InferenceGraphNode<Integer>> acyclicNodes = InferenceVariablesOrder.initNodes(Arrays.asList(initNodes()));
-    final String aMessages = StringUtil.join(acyclicNodes, new Function<InferenceVariablesOrder.InferenceGraphNode<Integer>, String>() {
-      @Override
-      public String fun(InferenceVariablesOrder.InferenceGraphNode<Integer> node) {
-        return String.valueOf(node.getValue());
-      }
-    }, ",");
-
-
-    Assert.assertEquals("[9],[8, 7, 6],[5],[2, 1],[4, 3]", aMessages);
+  @Test
+  public void testAcyclic() throws Exception {
+    List<InferenceVariablesOrder.InferenceGraphNode<Integer>> acyclicNodes = InferenceVariablesOrder.initNodes(getNodes());
+    String messages = StringUtil.join(acyclicNodes, node -> String.valueOf(node.getValue()), "\n");
+    assertEquals("[9]\n" +
+                 "[8, 7, 6]\n" +
+                 "[5]\n" +
+                 "[2, 1]\n" +
+                 "[4, 3]", messages);
   }
 
   //{1:[2],2:[1,5],3:[4],4:[3,5],5:[6],6:[7],7:[8],8:[6,9],9:[]}
-  private static InferenceVariablesOrder.InferenceGraphNode<Integer>[] initNodes() {
-    InferenceVariablesOrder.InferenceGraphNode<Integer>[] nodes = new InferenceVariablesOrder.InferenceGraphNode[9];
-    for (int i = 0; i < nodes.length; i++) {
-      nodes[i] = new InferenceVariablesOrder.InferenceGraphNode<Integer>(i + 1);
+  private static List<InferenceVariablesOrder.InferenceGraphNode<Integer>> getNodes() {
+    List<InferenceVariablesOrder.InferenceGraphNode<Integer>> nodes = new ArrayList<>(9);
+
+    for (int i = 0; i < 9; i++) {
+      nodes.add(new InferenceVariablesOrder.InferenceGraphNode<>(i + 1));
     }
 
-    nodes[0].getDependencies().add(nodes[1]);
+    nodes.get(0).getDependencies().add(nodes.get(1));
 
-    nodes[1].getDependencies().add(nodes[0]);
-    nodes[1].getDependencies().add(nodes[4]);
+    nodes.get(1).getDependencies().add(nodes.get(0));
+    nodes.get(1).getDependencies().add(nodes.get(4));
 
-    nodes[2].getDependencies().add(nodes[3]);
+    nodes.get(2).getDependencies().add(nodes.get(3));
 
-    nodes[3].getDependencies().add(nodes[2]);
-    nodes[3].getDependencies().add(nodes[4]);
+    nodes.get(3).getDependencies().add(nodes.get(2));
+    nodes.get(3).getDependencies().add(nodes.get(4));
 
-    nodes[4].getDependencies().add(nodes[5]);
+    nodes.get(4).getDependencies().add(nodes.get(5));
 
-    nodes[5].getDependencies().add(nodes[6]);
+    nodes.get(5).getDependencies().add(nodes.get(6));
 
-    nodes[6].getDependencies().add(nodes[7]);
+    nodes.get(6).getDependencies().add(nodes.get(7));
 
-    nodes[7].getDependencies().add(nodes[5]);
-    nodes[7].getDependencies().add(nodes[8]);
+    nodes.get(7).getDependencies().add(nodes.get(5));
+    nodes.get(7).getDependencies().add(nodes.get(8));
+
     return nodes;
   }
 }

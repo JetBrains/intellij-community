@@ -156,7 +156,7 @@ public class JUnit4TestListener extends RunListener {
       attrs.put("duration", Long.toString(duration));
     }
     try {
-      final String trace = failure.getTrace();
+      final String trace = getTrace(failure);
       final Throwable ex = failure.getException();
       final ComparisonFailureData notification = createExceptionNotification(ex);
       ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, ex);
@@ -170,6 +170,10 @@ public class JUnit4TestListener extends RunListener {
     finally {
       myPrintStream.println(ServiceMessage.asString(messageName, attrs));
     }
+  }
+
+  protected String getTrace(Failure failure) {
+    return failure.getTrace();
   }
 
   public void testAssumptionFailure(Failure failure) {

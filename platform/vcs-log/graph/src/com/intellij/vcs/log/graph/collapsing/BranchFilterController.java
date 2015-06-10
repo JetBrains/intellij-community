@@ -19,6 +19,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.CascadeController;
+import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ public class BranchFilterController extends CascadeController {
 
   private void updateCollapsedGraph() {
     UnsignedBitSet initVisibility =
-      BranchMatchedNodesGenerator.generateVisibleNodes(myPermanentGraphInfo.getPermanentLinearGraph(), myIdsOfVisibleBranches);
+      ReachableNodes.getReachableNodes(myPermanentGraphInfo.getPermanentLinearGraph(), myIdsOfVisibleBranches);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 

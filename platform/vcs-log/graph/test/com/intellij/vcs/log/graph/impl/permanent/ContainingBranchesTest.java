@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
-import com.intellij.vcs.log.graph.impl.facade.ContainingBranchesGetter;
+import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.junit.Test;
 
@@ -53,10 +53,11 @@ public abstract class ContainingBranchesTest<CommitId> extends AbstractTestWithT
     List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in.substring(0, i));
 
     LinearGraph graph = PermanentLinearGraphBuilder.newInstance(commits).build();
-    ContainingBranchesGetter containingBranchesGetter =
-      new ContainingBranchesGetter(LinearGraphUtils.asLiteLinearGraph(graph), parseBranchNodeIndex(in.substring(i + SEPARATOR.length())));
+    Set<Integer> branches = parseBranchNodeIndex(in.substring(i + SEPARATOR.length()));
+    ReachableNodes reachableNodes =
+      new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(graph));
 
-    assertEquals(out, containingBranchesGetterToStr(containingBranchesGetter, graph.nodesCount()));
+    assertEquals(out, containingBranchesGetterToStr(reachableNodes, branches, graph.nodesCount()));
   }
 
   protected abstract CommitIdManager<CommitId> getCommitIdManager();

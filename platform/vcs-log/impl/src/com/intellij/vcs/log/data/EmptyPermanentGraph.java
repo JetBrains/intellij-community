@@ -15,12 +15,15 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +60,12 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   @Override
   public Set<Integer> getContainingBranches(@NotNull Integer commit) {
     return Collections.emptySet();
+  }
+
+  @NotNull
+  @Override
+  public Condition<Integer> getContainedInBranchCondition(@NotNull Collection<Integer> currentBranchHead) {
+    return Conditions.alwaysFalse();
   }
 
 }

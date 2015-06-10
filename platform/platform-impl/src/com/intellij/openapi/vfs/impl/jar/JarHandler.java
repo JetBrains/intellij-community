@@ -31,7 +31,11 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +44,7 @@ import java.io.DataOutputStream;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 /**
  * @author max
@@ -238,10 +243,10 @@ public class JarHandler extends ZipHandler {
     private static final int VERSION = 1 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 15 : 0);
 
     static {
-      File file = new File(new File(getJarsDir()), "snapshots_info");
+      File snapshotInfoFile = new File(new File(getJarsDir()), "snapshots_info");
 
       int currentVersion = -1;
-      File versionFile = new File(file.getParentFile(), file.getName() + ".version");
+      File versionFile = getVersionFile(snapshotInfoFile);
       if (versionFile.exists()) {
         try {
           DataInputStream versionStream = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
@@ -254,7 +259,7 @@ public class JarHandler extends ZipHandler {
       }
 
       if (currentVersion != VERSION) {
-        PersistentHashMap.deleteFilesStartingWith(file);
+        PersistentHashMap.deleteFilesStartingWith(snapshotInfoFile);
         saveVersion(versionFile);
       }
 
@@ -262,7 +267,7 @@ public class JarHandler extends ZipHandler {
       for (int i = 0; i < 2; ++i) {
         try {
           info = new PersistentHashMap<String, CacheLibraryInfo>(
-            file, new EnumeratorStringDescriptor(), new DataExternalizer<CacheLibraryInfo>() {
+            snapshotInfoFile, new EnumeratorStringDescriptor(), new DataExternalizer<CacheLibraryInfo>() {
 
             @Override
             public void save(@NotNull DataOutput out, CacheLibraryInfo value) throws IOException {
@@ -277,12 +282,15 @@ public class JarHandler extends ZipHandler {
             }
           }
           );
+
+          if (i == 0) removeStaleJarFilesIfNeeded(snapshotInfoFile, info);
           break;
         } catch (IOException ex) {
-          PersistentHashMap.deleteFilesStartingWith(file);
+          PersistentHashMap.deleteFilesStartingWith(snapshotInfoFile);
           saveVersion(versionFile);
         }
       }
+
       assert info != null;
       ourCachedLibraryInfo = info;
       FlushingDaemon.everyFiveSeconds(new Runnable() {
@@ -298,6 +306,81 @@ public class JarHandler extends ZipHandler {
           flushCachedLibraryInfos();
         }
       });
+    }
+
+    @NotNull
+    private static File getVersionFile(File file) {
+      return new File(file.getParentFile(), file.getName() + ".version");
+    }
+
+    private static void removeStaleJarFilesIfNeeded(File snapshotInfoFile, PersistentHashMap<String, CacheLibraryInfo> info) throws IOException {
+      File versionFile = getVersionFile(snapshotInfoFile);
+      long lastModified = versionFile.lastModified();
+      if ((System.currentTimeMillis() - lastModified) < 30 * 24 * 60 * 60 * 1000L) {
+        return;
+      }
+
+      // snapshotInfo is persistent mapping of project library path -> jar snapshot path
+      // Stale jars are the jars that do not exist with registered paths, to remove them:
+      // - Take all snapshot library files in jar directory
+      // - Collect librarySnapshot -> projectLibraryPaths and existing projectLibraryPath -> librarySnapshot
+      // - Remove all projectLibraryPaths that doesn't exist from persistent mapping
+      // - Remove jar library snapshots that have no projectLibraryPath
+      Set<String> availableLibrarySnapshots = new THashSet<String>(Arrays.asList(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          int lastDotPosition = name.lastIndexOf('.');
+          if (lastDotPosition == -1) return false;
+          String extension = name.substring(lastDotPosition + 1);
+          if (extension.length() != 40 || !consistsOfHexLetters(extension)) return false;
+          return true;
+        }
+
+        private boolean consistsOfHexLetters(String extension) {
+          for (int i = 0; i < extension.length(); ++i) {
+            if (Character.digit(extension.charAt(i), 16) == -1) return false;
+          }
+          return true;
+        }
+      })));
+
+      final List<String> invalidLibraryFilePaths = new ArrayList<String>();
+      final List<String> allLibraryFilePaths = new ArrayList<String>();
+      MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<String, String>();
+      Map<String, String> validLibraryFilePathToJarSnapshotFilePaths = new THashMap<String, String>();
+
+      info.processKeys(new CommonProcessors.CollectProcessor<String>(allLibraryFilePaths));
+      for(String filePath:allLibraryFilePaths) {
+        CacheLibraryInfo libraryInfo = info.get(filePath);
+        if (libraryInfo == null) continue;
+
+        jarSnapshotFileToLibraryFilePaths.putValue(libraryInfo.mySnapshotPath, filePath);
+        if (new File(filePath).exists()) {
+          validLibraryFilePathToJarSnapshotFilePaths.put(filePath, libraryInfo.mySnapshotPath);
+        } else {
+          invalidLibraryFilePaths.add(filePath);
+        }
+      }
+
+      for (String invalidLibraryFilePath : invalidLibraryFilePaths) {
+        LOG.info("removing stale library reference:" + invalidLibraryFilePath);
+        info.remove(invalidLibraryFilePath);
+      }
+      for(Map.Entry<String, Collection<String>> e: jarSnapshotFileToLibraryFilePaths.entrySet()) {
+        for(String libraryFilePath:e.getValue()) {
+          if (validLibraryFilePathToJarSnapshotFilePaths.containsKey(libraryFilePath)) {
+            availableLibrarySnapshots.remove(e.getKey());
+            break;
+          }
+        }
+      }
+      for(String availableLibrarySnapshot:availableLibrarySnapshots) {
+        File librarySnapshotFileToDelete = new File(snapshotInfoFile.getParentFile(), availableLibrarySnapshot);
+        LOG.info("removing stale library snapshot:" + librarySnapshotFileToDelete);
+        FileUtil.delete(librarySnapshotFileToDelete);
+      }
+
+      saveVersion(versionFile); // time stamp will change to start another time interval when stale jar files are tracked
     }
 
     private static void saveVersion(File versionFile) {

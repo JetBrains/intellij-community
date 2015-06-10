@@ -34,5 +34,5 @@ JsonFile: Simple2.json
       PsiElement(])(']')
     PsiWhiteSpace(' ')
     PsiElement(])(']')
-  PsiErrorElement:',' unexpected
+  PsiErrorElement:<value> expected, got ','
     PsiElement(,)(',')

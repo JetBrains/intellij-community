@@ -354,13 +354,13 @@ public class LineStatusTrackerDrawing {
       }
     }
 
-    EditorFragmentComponent fragmentComponent =
+    JComponent fragmentComponent =
       EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getVcsLine1(), range.getVcsLine2(), false, false);
     int leftBorder = fragmentComponent.getBorder().getBorderInsets(fragmentComponent).left;
 
     EditorFactory.getInstance().releaseEditor(uEditor);
 
-    return Pair.<JComponent, Integer>create(fragmentComponent, leftBorder);
+    return Pair.create(fragmentComponent, leftBorder);
   }
 
   private static String getFileName(final Document document) {

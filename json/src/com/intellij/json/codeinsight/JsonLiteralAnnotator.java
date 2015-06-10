@@ -55,7 +55,7 @@ public class JsonLiteralAnnotator implements Annotator {
 
       // Check that string literal is closed properly
       if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || JsonPsiUtil.isEscapedChar(text, length - 1)) {
-        holder.createErrorAnnotation(element, JsonBundle.message("msg.missing.closing.quote"));
+        holder.createErrorAnnotation(element, JsonBundle.message("syntax.error.missing.closing.quote"));
       }
 
       // Check escapes
@@ -65,17 +65,18 @@ public class JsonLiteralAnnotator implements Annotator {
         if (fragmentText.startsWith("\\") && fragmentText.length() > 1 && !VALID_ESCAPE.matcher(fragmentText).matches()) {
           final TextRange fragmentRange = fragment.getFirst();
           if (fragmentText.startsWith("\\u")) {
-            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message("msg.illegal.unicode.escape.sequence"));
+            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message(
+              "syntax.error.illegal.unicode.escape.sequence"));
           }
           else {
-            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message("msg.illegal.escape.sequence"));
+            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message("syntax.error.illegal.escape.sequence"));
           }
         }
       }
     }
     else if (element instanceof JsonNumberLiteral) {
       if (!VALID_NUMBER_LITERAL.matcher(text).matches()) {
-        holder.createErrorAnnotation(element, JsonBundle.message("msg.illegal.floating.point.literal"));
+        holder.createErrorAnnotation(element, JsonBundle.message("syntax.error.illegal.floating.point.literal"));
       }
     }
   }

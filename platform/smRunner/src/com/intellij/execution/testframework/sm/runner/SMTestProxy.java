@@ -75,6 +75,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myIsEmpty = true;
   private SMTestLocator myLocator = null;
   private Printer myPreferredPrinter = null;
+  private String myPresentableName;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
@@ -587,10 +588,14 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @NotNull
   public String getPresentableName() {
-    if (myPreservePresentableName) {
-      return TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
+    if (myPresentableName == null) {
+      if (myPreservePresentableName) {
+        myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
+      } else {
+        myPresentableName = TestsPresentationUtil.getPresentableName(this);
+      }
     }
-    return TestsPresentationUtil.getPresentableName(this);
+    return myPresentableName;
   }
 
   @Override

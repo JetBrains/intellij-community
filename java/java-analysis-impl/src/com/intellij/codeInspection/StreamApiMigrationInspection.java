@@ -387,7 +387,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
                     if (argumentList != null && argumentList.getExpressions().length == 0) {
                       restoreComments(foreachStatement, body);
-                      final String callText = builder.toString() + createInitializerReplacementText(initializer) + ")";
+                      final String callText = builder.toString() + createInitializerReplacementText(((PsiVariable)resolve).getType(), initializer) + ")";
                       result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
                       simplifyRedundantCast(result);
                       foreachStatement.delete();
@@ -412,14 +412,24 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
-    private static String createInitializerReplacementText(PsiExpression initializer) {
+    private static String createInitializerReplacementText(PsiType varType, PsiExpression initializer) {
       final PsiType initializerType = initializer.getType();
       final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
-      if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST)) {
+      final PsiClassType rawVarType = varType instanceof PsiClassType ? ((PsiClassType)varType).rawType() : null;
+      if (rawType != null && rawVarType != null &&
+          rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
+          rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST)) {
         return "toList()";
-      } else if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET)) {
+      }
+      else if (rawType != null && rawVarType != null &&
+               rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
+               rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET)) {
         return "toSet()";
-      } else {
+      }
+      else if (rawType != null) {
+        return "toCollection(" + rawType.getClassName() + "::new)";
+      }
+      else {
         return "toCollection(() -> " + initializer.getText() +")";
       }
     }

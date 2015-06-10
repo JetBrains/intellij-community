@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.preview;
 
-import com.intellij.codeInsight.intention.impl.ColorChooserIntentionAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiExpressionPattern;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -31,6 +33,27 @@ import java.awt.*;
  * @author yole
  */
 public class JavaPreviewHintProvider implements PreviewHintProvider {
+
+  private static final PsiMethodPattern DECODE_METHOD = PsiJavaPatterns.psiMethod()
+    .definedInClass(Color.class.getName())
+    .withName("decode");
+  private static final PsiExpressionPattern.Capture<PsiExpression> DECODE_METHOD_CALL_PARAMETER =
+    PsiJavaPatterns.psiExpression().methodCallParameter(0, DECODE_METHOD);
+  private static final PsiMethodPattern GET_COLOR_METHOD = PsiJavaPatterns.psiMethod()
+    .definedInClass(Color.class.getName())
+    .withName("getColor");
+  private static final PsiExpressionPattern.Capture<PsiExpression> GET_METHOD_CALL_PARAMETER =
+    PsiJavaPatterns.psiExpression().methodCallParameter(0, GET_COLOR_METHOD);
+
+  private static boolean isInsideDecodeOrGetColorMethod(PsiElement element) {
+    if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.STRING_LITERAL) {
+      element = element.getParent();
+    }
+
+    return DECODE_METHOD_CALL_PARAMETER.accepts(element) ||
+           GET_METHOD_CALL_PARAMETER.accepts(element);
+  }
+
   @Override
   public boolean isSupportedFile(PsiFile file) {
     return file instanceof PsiJavaFile;
@@ -120,7 +143,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
       }
     }
 
-    if (ColorChooserIntentionAction.isInsideDecodeOrGetColorMethod(element)) {
+    if (isInsideDecodeOrGetColorMethod(element)) {
       final String color = StringUtil.unquoteString(element.getText());
       try {
         return new ColorPreviewComponent(Color.decode(color));
