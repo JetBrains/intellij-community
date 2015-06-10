@@ -19,7 +19,7 @@ import java.util.Queue;
  */
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public static final String TEAMCITY_PREFIX = "##teamcity";
-  public static final String TEMPLATE_SCENARIOS_COUNT = TEAMCITY_PREFIX + "[testCount count = '%s' timestamp = '%s']";
+  public static final int MILLION = 1000000;
   private int scenarioCount;
   private int passedScenarioCount;
   private boolean scenarioPassed = true;
@@ -44,7 +44,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   private static final String TEMPLATE_TEST_FINISHED =
     TEAMCITY_PREFIX +
-    "[testFinished timestamp = '%s' diagnosticInfo = 'cucumber  f/s=(1344855950447, 1344855950447), duration=0, time.now=%s' duration = '0' name = '%s']";
+    "[testFinished timestamp = '%s' duration = '%s' name = '%s']";
 
   private static final String TEMPLATE_ENTER_THE_MATRIX = TEAMCITY_PREFIX + "[enteredTheMatrix timestamp = '%s']";
 
@@ -153,7 +153,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @Override
   public void endOfScenarioLifeCycle(Scenario scenario) {
-
   }
 
   @Override
@@ -179,7 +178,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       }
 
       outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), escape(details), escape(message), stepFullName, ""), true);
-      //outCommand(String.format(TEMPLATE_SCENARIO_FAILED, getCurrentTime()), true);
     }
     else if (result.getStatus().equals(RESULT_STATUS_PENDING)) {
       pendingStepCount++;
@@ -202,8 +200,8 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       passedStepCount++;
     }
 
-    String currentTime = getCurrentTime();
-    outCommand(String.format(TEMPLATE_TEST_FINISHED, currentTime, currentTime, stepFullName), true);
+    final String currentTime = getCurrentTime();
+    outCommand(String.format(TEMPLATE_TEST_FINISHED, currentTime, result.getDuration() / MILLION, stepFullName), true);
   }
 
   private void closeScenario() {
