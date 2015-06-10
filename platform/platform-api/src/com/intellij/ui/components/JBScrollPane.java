@@ -35,6 +35,9 @@ public class JBScrollPane extends JScrollPane {
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
 
+  private int myOverriddenVPolicy = -1;
+  private int myOverriddenHPolicy = -1;
+
   public JBScrollPane(int viewportWidth) {
     init(false);
     myViewportBorderWidth = viewportWidth;
@@ -128,11 +131,49 @@ public class JBScrollPane extends JScrollPane {
     return new JBViewport();
   }
 
+  @Override
+  public int getHorizontalScrollBarPolicy() {
+    // See layout() for explanation
+    //noinspection MagicConstant
+    return myOverriddenHPolicy != -1 ? myOverriddenHPolicy : super.getHorizontalScrollBarPolicy();
+  }
+
+  @Override
+  public int getVerticalScrollBarPolicy() {
+    // See layout() for explanation
+    //noinspection MagicConstant
+    return myOverriddenVPolicy != -1 ? myOverriddenVPolicy : super.getVerticalScrollBarPolicy();
+  }
+
   @SuppressWarnings("deprecation")
   @Override
   public void layout() {
     LayoutManager layout = getLayout();
     ScrollPaneLayout scrollLayout = layout instanceof ScrollPaneLayout ? (ScrollPaneLayout)layout : null;
+
+    // Logic here is a workaround necessary to support OS X overlaid scrollbars.
+
+    int oldHPolicy = -1;
+    int oldVPolicy = -1;
+    if (scrollLayout != null) {
+      // First, we override scrollbar policy to HORIZONTAL_SCROLLBAR_AS_NEEDED so JScrollPane could correctly lay them out.
+      // We do so only when policy is ALWAYS so they could be hidden by JScrollPane when necessary.
+      // Also, we only override when scrollbar is an overlay scrollbar.
+      // (The related problem is IDEA-123688)
+      if (isOverlaidScrollbar(getHorizontalScrollBar())) {
+        oldHPolicy = scrollLayout.getHorizontalScrollBarPolicy();
+        if (oldHPolicy == HORIZONTAL_SCROLLBAR_ALWAYS) {
+          scrollLayout.setHorizontalScrollBarPolicy(myOverriddenHPolicy = HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        }
+      }
+
+      if (isOverlaidScrollbar(getVerticalScrollBar())) {
+        oldVPolicy = scrollLayout.getVerticalScrollBarPolicy();
+        if (oldVPolicy == VERTICAL_SCROLLBAR_ALWAYS) {
+          scrollLayout.setVerticalScrollBarPolicy(myOverriddenVPolicy = VERTICAL_SCROLLBAR_AS_NEEDED);
+        }
+      }
+    }
 
     // Now we let JScrollPane layout everything as necessary
     super.layout();
@@ -144,6 +185,12 @@ public class JBScrollPane extends JScrollPane {
         this, scrollLayout,
         myHasOverlayScrollbars // If last time we did relayouting, we should restore it back.
       );
+
+      // Now we restore overridden policies as though nothing happened at all.
+      if (oldHPolicy != -1) scrollLayout.setHorizontalScrollBarPolicy(oldHPolicy);
+      if (oldVPolicy != -1) scrollLayout.setVerticalScrollBarPolicy(oldVPolicy);
+      myOverriddenHPolicy = -1;
+      myOverriddenVPolicy = -1;
     }
     else {
       myHasOverlayScrollbars = false;
