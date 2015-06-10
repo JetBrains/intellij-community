@@ -351,11 +351,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       g.setColor(editor.getBackground());
       g.fillRect(xxx, y + 1, 5, H);
     } else {
-      g.setColor(UIUtil.getPanelBackground());
+      g.setColor(comboBox.getBackground());
       g.fillRoundRect(x + 1, y + 1, W, H, R, R);
       g.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
       g.fillRoundRect(xxx, y + 1, width - xxx, H, R, R);
-      g.setColor(UIUtil.getPanelBackground());
+      g.setColor(comboBox.getBackground());
       g.fillRect(xxx, y + 1, 5, H);
     }
     final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
