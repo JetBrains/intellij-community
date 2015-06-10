@@ -954,12 +954,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                 BrowserUtil.browse(url1);
                 return "";
               }
-              else if (url.startsWith("..")) {
-                return CodeInsightBundle.message("javadoc.error.resolving.url", url);
-              }
-              else {
+              else if (BrowserUtil.isAbsoluteURL(url)) {
                 BrowserUtil.browse(url);
                 return "";
+              }
+              else {
+                return CodeInsightBundle.message("javadoc.error.resolving.url", url);
               }
             }
 
