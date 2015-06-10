@@ -296,4 +296,8 @@ public abstract class DebugProcessImpl<C extends VmConnection> extends XDebugPro
       return true;
     }
   }
+
+  public void saveResolvedFile(@NotNull Url url, @NotNull VirtualFile file) {
+    urlToFileCache.putIfAbsent(url, file);
+  }
 }

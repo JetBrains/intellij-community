@@ -32,7 +32,7 @@ import static org.jetbrains.rpc.CommandProcessor.LOG;
 
 public class NameMapper {
   public static final String S1 = ",()[]{}=";
-  private static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"));
+  protected static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"));
   // don't trim trailing .&: - could be part of expression
   private static final CharMatcher OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1));
 
@@ -75,7 +75,7 @@ public class NameMapper {
     }
 
     String sourceEntryName = sourceEntry.getName();
-    String generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry), true);
+    String generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry));
     if (!generatedName.isEmpty()) {
       String sourceName = sourceEntryName;
       if (sourceName == null) {
@@ -106,8 +106,8 @@ public class NameMapper {
   }
 
   @NotNull
-  protected String extractName(@NotNull CharSequence rawGeneratedName, boolean isLastToken) {
-    return trimName(rawGeneratedName, isLastToken);
+  protected String extractName(@NotNull CharSequence rawGeneratedName) {
+    return NAME_TRIMMER.trimFrom(rawGeneratedName);
   }
 
   @NotNull
