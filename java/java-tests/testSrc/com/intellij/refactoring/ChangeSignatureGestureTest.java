@@ -102,34 +102,28 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   }
 
   public void testOnAnotherMethod() {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.type("int param");
-        final int nextMethodOffset = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[1].getTextOffset();
-        myFixture.getEditor().getCaretModel().moveToOffset(nextMethodOffset);
-      }
+    doTest(() -> {
+      myFixture.type("int param");
+      final int nextMethodOffset = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[1].getTextOffset();
+      myFixture.getEditor().getCaretModel().moveToOffset(nextMethodOffset);
     }, false, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
   }
   
   public void testAddParamChangeReturnType() {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.type("int param");
-        CaretModel model = myFixture.getEditor().getCaretModel();
-        PsiElement element = myFixture.getElementAtCaret();
-        PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
-        assertTrue(method != null);
-        PsiTypeElement returnTypeElement = method.getReturnTypeElement();
-        assertTrue(returnTypeElement != null);
-        model.moveToOffset(returnTypeElement.getTextRange().getEndOffset());
-        int i = returnTypeElement.getTextLength();
-        while (i-- > 0) {
-          myFixture.type('\b');
-        }
-        myFixture.type("boolean");
+    doTest(() -> {
+      myFixture.type("int param");
+      CaretModel model = myFixture.getEditor().getCaretModel();
+      PsiElement element = myFixture.getElementAtCaret();
+      PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+      assertTrue(method != null);
+      PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+      assertTrue(returnTypeElement != null);
+      model.moveToOffset(returnTypeElement.getTextRange().getEndOffset());
+      int i = returnTypeElement.getTextLength();
+      while (i-- > 0) {
+        myFixture.type('\b');
       }
+      myFixture.type("boolean");
     }, true, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
   }
 
@@ -154,12 +148,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   }
 
   private void doTypingTest(final String param, final String hint) {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.type(param);
-      }
-    }, true, hint);
+    doTest(() -> myFixture.type(param), true, hint);
   }
 
   public void testReturnValue() {
@@ -175,12 +164,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   }
 
   private void doTypingNoBorderTest(final String param) {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        myFixture.type(param);
-      }
-    }, false, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
+    doTest(() -> myFixture.type(param), false, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
   }
 
   public void testDeleteParamInSuperUsed() {
@@ -188,17 +172,14 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   }
 
   private void doDeleteTest() {
-    doTest(new Runnable() {
-      @Override
-      public void run() {
-        final Editor editor = myFixture.getEditor();
-        final Document document = editor.getDocument();
-        final int selectionStart = editor.getSelectionModel().getSelectionStart();
-        final int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-        CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
-        document.deleteString(selectionStart, selectionEnd);
-        editor.getCaretModel().moveToOffset(selectionStart);
-      }
+    doTest(() -> {
+      final Editor editor = myFixture.getEditor();
+      final Document document = editor.getDocument();
+      final int selectionStart = editor.getSelectionModel().getSelectionStart();
+      final int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+      CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      document.deleteString(selectionStart, selectionEnd);
+      editor.getCaretModel().moveToOffset(selectionStart);
     }, true, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
   }
 

@@ -225,6 +225,7 @@
     <action id="ParameterInfo">
       <keyboard-shortcut first-keystroke="control shift SPACE"/>
     </action>
+    <action id="ExpressionTypeInfo"/>
     <action id="PreviousOccurence" />
     <action id="PreviousTab">
       <keyboard-shortcut first-keystroke="shift meta F6" />

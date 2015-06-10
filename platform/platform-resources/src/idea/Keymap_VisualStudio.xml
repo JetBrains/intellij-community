@@ -88,6 +88,7 @@
     <action id="ParameterInfo">
       <keyboard-shortcut first-keystroke="shift control SPACE"/>
     </action>
+    <action id="ExpressionTypeInfo"/>
     <action id="RunClass">
       <keyboard-shortcut first-keystroke="control F9"/>
     </action>

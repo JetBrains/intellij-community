@@ -278,11 +278,8 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
   
   private void doTest(@NonNls final String qClassName) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        SafeDeleteTest.this.performAction(qClassName);
-      }
+    doTest((rootDir, rootAfter) -> {
+      SafeDeleteTest.this.performAction(qClassName);
     });
   }
 

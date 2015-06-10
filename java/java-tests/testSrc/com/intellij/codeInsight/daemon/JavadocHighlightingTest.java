@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.openapi.paths.WebReference;
@@ -25,14 +24,27 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/javaDoc";
+
+  private JavaDocLocalInspection myInspection;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myInspection = new JavaDocLocalInspection();
+    myInspection.setIgnoreDuplicatedThrows(false);
+    enableInspectionTools(myInspection, new JavaDocReferenceInspection());
+  }
 
   @NotNull
   @Override
@@ -40,130 +52,83 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @NotNull
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    JavaDocLocalInspection localInspection = new JavaDocLocalInspection();
-    localInspection.setIgnoreDuplicatedThrows(false);
-    return new LocalInspectionTool[]{
-      localInspection,
-      new JavaDocReferenceInspection()
-    };
-  }
+  public void testJavadocPeriod() { myInspection.IGNORE_JAVADOC_PERIOD = false; doTest(); }
+  public void testJavadocPeriod1() { myInspection.IGNORE_JAVADOC_PERIOD = false; doTest(); }
+  public void testJavadocPeriod2() { myInspection.IGNORE_JAVADOC_PERIOD = false; doTest(); }
+  public void testInlineTagAsDescription() { doTest(); }
+  public void testParam0() { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testParam1() { doTest(); }
+  public void testParam2() { doTest(); }
+  public void testParam3() { doTest(); }
+  public void testParam4() { doTest(); }
+  public void testSee0() { doTest(); }
+  public void testSee1() { doTest(); }
+  public void testSee2() { doTest(); }
+  public void testSee3() { doTest(); }
+  public void testSee4() { doTest(); }
+  public void testSee5() { doTest(); }
+  public void testSee6() { doTest(); }
+  public void testSeeConstants() { doTest(); }
+  public void testReturn0() { doTest(); }
+  public void testException0() { doTest(); }
+  public void testException1() { doTest(); }
+  public void testException2() { doTest(); }
+  public void testException3() { doTest(); }
+  public void testException4() { myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package"; doTest(); }
+  public void testMultipleThrows() { doTest(); }
+  public void testInheritJavaDoc() { doTestWithLangLevel(LanguageLevel.JDK_1_3); }
+  public void testLink0() { doTest(); }
+  public void testLinkFromInnerClassToSelfMethod() { doTest(); }
+  public void testValueBadReference() { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testValueGoodReference() { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testValueReference14() { doTestWithLangLevel(LanguageLevel.JDK_1_4); }
+  public void testValueEmpty() { doTestWithLangLevel(LanguageLevel.JDK_1_4); }
+  public void testValueNotOnField() { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testValueNotOnStaticField() { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testValueOnNotInitializedField() { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testJava18Tags() { doTestWithLangLevel(LanguageLevel.JDK_1_8); }
+  public void testUnknownInlineTag() { doTest(); }
+  public void testUnknownTags() { doTest(); }
+  public void testBadCharacters() { doTest(); }
+  public void testVararg() { doTest(); }
+  public void testInnerClassReferenceInSignature() { doTest(); }
+  public void testBadReference() { doTest(); }
+  public void testMissingReturnDescription() { doTest(); }
+  public void testDoubleParenthesesInCode() { doTest(); }
 
-  public void testJavadocPeriod() throws Exception {
-    final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();
-    javaDocLocalInspection.IGNORE_JAVADOC_PERIOD = false;
-    enableInspectionTool(javaDocLocalInspection);
-    doTest();
-  }
-
-  public void testJavadocPeriod1() throws Exception {
-    final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();
-    javaDocLocalInspection.IGNORE_JAVADOC_PERIOD = false;
-    enableInspectionTool(javaDocLocalInspection);
-    doTest();
-  }
-
-  public void testJavadocPeriod2() throws Exception {
-    final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();
-    javaDocLocalInspection.IGNORE_JAVADOC_PERIOD = false;
-    enableInspectionTool(javaDocLocalInspection);
-    doTest();
-  }
-
-  public void testInlineTagAsDescription() throws Exception { doTest(); }
-
-  public void testParam0() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
-  public void testParam1() throws Exception { doTest(); }
-  public void testParam2() throws Exception { doTest(); }
-  public void testParam3() throws Exception { doTest(); }
-  public void testParam4() throws Exception { doTest(); }
-  public void testSee0() throws Exception { doTest(); }
-  public void testSee1() throws Exception { doTest(); }
-  public void testSee2() throws Exception { doTest(); }
-  public void testSee3() throws Exception { doTest(); }
-  public void testSee4() throws Exception { doTest(); }
-  public void testSee5() throws Exception { doTest(); }
-  public void testSee6() throws Exception { doTest(); }
-  public void testSeeConstants() throws Exception { doTest(); }
-  public void testReturn0() throws Exception { doTest(); }
-  public void testException0() throws Exception { doTest(); }
-  public void testException1() throws Exception { doTest(); }
-  public void testException2() throws Exception { doTest(); }
-  public void testException3() throws Exception { doTest(); }
-  public void testException4() throws Exception { 
-    final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();
-    javaDocLocalInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
-    enableInspectionTool(javaDocLocalInspection);
-    doTest(); 
-  }
-  public void testMultipleThrows() throws Exception { doTest(); }
-  public void testInheritJavaDoc() throws Exception {doTestWithLangLevel(LanguageLevel.JDK_1_3);}
-  public void testLink0() throws Exception { doTest(); }
-  public void testLinkFromInnerClassToSelfMethod() throws Exception { doTest(); }
-
-  public void testValueBadReference() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
-  public void testValueGoodReference() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
-  public void testValueReference14() throws Exception { doTestWithLangLevel(LanguageLevel.JDK_1_4); }
-  public void testValueEmpty() throws Exception { doTestWithLangLevel(LanguageLevel.JDK_1_4); }
-  public void testValueNotOnField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
-  public void testValueNotOnStaticField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
-  public void testValueOnNotInitializedField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
-  public void testJava18Tags() throws Exception { doTestWithLangLevel(LanguageLevel.JDK_1_8); }
-
-  public void testUnknownInlineTag() throws Exception { doTest(); }
-  public void testUnknownTags() throws Exception { doTest(); }
-
-  public void testBadCharacters() throws Exception { doTest(); }
-
-  public void testVararg() throws Exception { doTest(); }
-
-  public void testInnerClassReferenceInSignature() throws Exception { doTest(); }
-
-  public void testBadReference() throws Exception { doTest(); }
-
-  public void testMissingReturnDescription() throws Exception { doTest(); }
-
-  public void testDoubleParenthesesInCode() throws Exception {
-    doTest();
-  }
-
-  private void doTestWithLangLevel(final LanguageLevel langLevel) throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(langLevel);
-    doTest();
-  }
-
-  public void testLinksInJavaDoc() throws Exception {
+  public void testLinksInJavaDoc() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    final List<WebReference> refs = new ArrayList<WebReference>();
+
+    final List<WebReference> refs = new ArrayList<>();
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        for(PsiReference ref:element.getReferences()) {
+        for (PsiReference ref : element.getReferences()) {
           if (ref instanceof WebReference) refs.add((WebReference)ref);
         }
-
         super.visitElement(element);
       }
     });
 
-    String[] targets = {"http://www.unicode.org/unicode/standard/standard.html",
+    assertTrue(refs.stream().allMatch(PsiReferenceBase::isSoft));
+
+    assertTrue(refs.stream().allMatch(ref -> ref.resolve() != null));
+
+    @SuppressWarnings("SpellCheckingInspection") Set<String> expected = ContainerUtil.newHashSet(
+      "http://www.unicode.org/unicode/standard/standard.html",
       "http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html",
       "https://youtrack.jetbrains.com/issue/IDEA-131621",
-      "mailto:webmaster@jetbrains.com"
-    };
-    assertTrue(refs.size() == targets.length);
-    int i = 0;
-
-    for(WebReference ref:refs) {
-      assertEquals(ref.getCanonicalText(), targets[i++]);
-      assertTrue(ref.isSoft());
-      assertNotNull(ref.resolve());
-    }
+      "mailto:webmaster@jetbrains.com");
+    Set<String> actual = refs.stream().map(PsiReferenceBase::getCanonicalText).collect(Collectors.toSet());
+    assertEquals(expected, actual);
   }
 
-  protected void doTest() throws Exception {
+  private void doTestWithLangLevel(LanguageLevel level) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+    doTest();
+  }
+
+  protected void doTest() {
     super.doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

@@ -99,41 +99,35 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
   }
 
   private void doTest(final String className, final String methodSignature, final String newName) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final JavaPsiFacade manager = getJavaFacade();
-        final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));
-        assertNotNull(aClass);
-        final PsiMethod methodBySignature = aClass.findMethodBySignature(manager.getElementFactory().createMethodFromText(
-                  methodSignature + "{}", null), false);
-        assertNotNull(methodBySignature);
-        final RenameProcessor renameProcessor = new RenameProcessor(myProject, methodBySignature, newName, false, false);
-        renameProcessor.run();
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
+    doTest((rootDir, rootAfter) -> {
+      final JavaPsiFacade manager = getJavaFacade();
+      final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));
+      assertNotNull(aClass);
+      final PsiMethod methodBySignature = aClass.findMethodBySignature(manager.getElementFactory().createMethodFromText(
+                methodSignature + "{}", null), false);
+      assertNotNull(methodBySignature);
+      final RenameProcessor renameProcessor = new RenameProcessor(myProject, methodBySignature, newName, false, false);
+      renameProcessor.run();
+      FileDocumentManager.getInstance().saveAllDocuments();
     });
   }
 
   private void doAutomaticRenameMethod(final String className, final String methodSignature, final String newName) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final JavaPsiFacade manager = getJavaFacade();
-        final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));
-        assertNotNull(aClass);
-        final PsiMethod methodBySignature = aClass.findMethodBySignature(manager.getElementFactory().createMethodFromText(
-          methodSignature + "{}", null), false);
-        assertNotNull(methodBySignature);
+    doTest((rootDir, rootAfter) -> {
+      final JavaPsiFacade manager = getJavaFacade();
+      final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));
+      assertNotNull(aClass);
+      final PsiMethod methodBySignature = aClass.findMethodBySignature(manager.getElementFactory().createMethodFromText(
+        methodSignature + "{}", null), false);
+      assertNotNull(methodBySignature);
 
-        final RenameProcessor processor = new RenameProcessor(myProject, methodBySignature, newName, false, false);
-        for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-          processor.addRenamerFactory(factory);
-        }
-        processor.run();
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        FileDocumentManager.getInstance().saveAllDocuments();
+      final RenameProcessor processor = new RenameProcessor(myProject, methodBySignature, newName, false, false);
+      for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+        processor.addRenamerFactory(factory);
       }
+      processor.run();
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments();
     });
   }
 

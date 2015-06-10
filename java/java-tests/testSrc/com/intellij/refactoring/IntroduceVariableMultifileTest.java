@@ -94,20 +94,17 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
   }
 
   PerformAction createAction(final String className, final IntroduceVariableBase testMe) {
-    return new PerformAction() {
-      @Override
-      public void performAction(VirtualFile vroot, VirtualFile rootAfter) {
-        final JavaPsiFacade psiManager = getJavaFacade();
-        final PsiClass aClass = psiManager.findClass(className, GlobalSearchScope.allScope(myProject));
-        assertTrue(className + " class not found", aClass != null);
-        final PsiFile containingFile = aClass.getContainingFile();
-        final VirtualFile virtualFile = containingFile.getVirtualFile();
-        assertTrue(virtualFile != null);
-        final Editor editor = createEditor(virtualFile);
-        setupCursorAndSelection(editor);
-        testMe.invoke(myProject, editor, containingFile, null);
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
+    return (vroot, rootAfter) -> {
+      final JavaPsiFacade psiManager = getJavaFacade();
+      final PsiClass aClass = psiManager.findClass(className, GlobalSearchScope.allScope(myProject));
+      assertTrue(className + " class not found", aClass != null);
+      final PsiFile containingFile = aClass.getContainingFile();
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      assertTrue(virtualFile != null);
+      final Editor editor = createEditor(virtualFile);
+      setupCursorAndSelection(editor);
+      testMe.invoke(myProject, editor, containingFile, null);
+      FileDocumentManager.getInstance().saveAllDocuments();
     };
   }
 }

@@ -90,7 +90,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
-    final Set<String> result = new LinkedHashSet<String>();
+    final Set<String> result = new LinkedHashSet<>();
     new JavaNameSuggestionProvider().getSuggestedNames(element, getFile(), result);
 
     CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), result.iterator().next(), getEditor(), element);

@@ -80,6 +80,10 @@ public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProc
   }
 
   @Override
+  public void onCustomProgressTestFinished() {
+  }
+
+  @Override
   public void onCustomProgressTestFailed() {
   }
 

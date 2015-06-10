@@ -22,120 +22,65 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
   }
 
   public void testNoParams() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[]{
-          new TypeParameterInfo(aClass, "T", "java.lang.String")
-        };
-      }
+    doTest(aClass -> new TypeParameterInfo[]{
+      new TypeParameterInfo(aClass, "T", "java.lang.String")
     });
   }
 
   public void testInstanceOf() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[]{
-          new TypeParameterInfo(aClass, "T", "java.lang.String")
-        };
-      }
+    doTest(aClass -> new TypeParameterInfo[]{
+      new TypeParameterInfo(aClass, "T", "java.lang.String")
     });
   }
 
   public void testSubstituteParamInsideClass() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[0];
-      }
-    });
+    doTest(aClass -> new TypeParameterInfo[0]);
   }
 
   public void testRemoveAllParams() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) {
-        return new TypeParameterInfo[0];
-      }
-    });
+    doTest(aClass -> new TypeParameterInfo[0]);
   }
 
   public void testReorderParams() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) {
-        return new TypeParameterInfo[] {
-          new TypeParameterInfo(1),
-          new TypeParameterInfo(0)
-        };
-      }
+    doTest(aClass -> new TypeParameterInfo[] {
+      new TypeParameterInfo(1),
+      new TypeParameterInfo(0)
     });
   }
 
   public void testAddParam() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[] {
-          new TypeParameterInfo(0),
-          new TypeParameterInfo(aClass, "E", "L<T>")
-        };
-      }
+    doTest(aClass -> new TypeParameterInfo[] {
+      new TypeParameterInfo(0),
+      new TypeParameterInfo(aClass, "E", "L<T>")
     });
   }
 
   public void testAddParamDiamond() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[] {
-          new TypeParameterInfo(0),
-          new TypeParameterInfo(aClass, "I", "Integer")
-        };
-      }
+    doTest(aClass -> new TypeParameterInfo[] {
+      new TypeParameterInfo(0),
+      new TypeParameterInfo(aClass, "I", "Integer")
     });
   }
 
   public void testAddOneFirst() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[]{
-          new TypeParameterInfo(aClass, "T", "java.lang.String")
-        };
-      }
+    doTest(aClass -> new TypeParameterInfo[]{
+      new TypeParameterInfo(aClass, "T", "java.lang.String")
     }, "Zero.java", "OneString.java");
   }
 
   public void testAddManyFirst() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[]{
-          new TypeParameterInfo(aClass, "U", "SubjectFace"),
-          new TypeParameterInfo(aClass, "V", "java.util.Set<java.lang.Object>")
-        };
-      }
+    doTest(aClass -> new TypeParameterInfo[]{
+      new TypeParameterInfo(aClass, "U", "SubjectFace"),
+      new TypeParameterInfo(aClass, "V", "java.util.Set<java.lang.Object>")
     }, "Zero.java", "TwoSubjectFaceSetObject.java");
   }
 
   public void testRemoveOneLast() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[0];
-      }
-    }, "OneString.java", "Zero.java");
+    doTest(aClass -> new TypeParameterInfo[0], "OneString.java", "Zero.java");
   }
 
   public void testRemoveManyLast() throws Exception {
-    doTest(new GenParams() {
-      @Override
-      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
-        return new TypeParameterInfo[0];
-      }
-    }, "TwoSubjectFaceSetObject.java", "Zero.java");
+    doTest(aClass -> new TypeParameterInfo[0], "TwoSubjectFaceSetObject.java", "Zero.java");
   }
 
   private void doTest(GenParams gen) throws Exception {

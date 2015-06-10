@@ -193,6 +193,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  private void fireOnCustomProgressTestFinished() {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onCustomProgressTestFinished();
+    }
+  }
+
   private void fireOnCustomProgressTestFailed() {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
@@ -329,6 +336,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
     @NonNls private static final String ATTR_KEY_TESTS_CATEGORY = "testsCategory";
     @NonNls private static final String ATTR_VAL_TEST_STARTED = "testStarted";
+    @NonNls private static final String ATTR_VAL_TEST_FINISHED = "testFinished";
     @NonNls private static final String ATTR_VAL_TEST_FAILED = "testFailed";
 
     public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
@@ -544,6 +552,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       if (msgType != null) {
         if (msgType.equals(ATTR_VAL_TEST_STARTED)) {
           fireOnCustomProgressTestStarted();
+        }
+        else if (msgType.equals(ATTR_VAL_TEST_FINISHED)) {
+          fireOnCustomProgressTestFinished();
         }
         else if (msgType.equals(ATTR_VAL_TEST_FAILED)) {
           fireOnCustomProgressTestFailed();

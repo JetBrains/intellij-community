@@ -77,18 +77,15 @@ public class InlineSuperClassTest extends MultiFileTestCase {
 
   private void doTest(boolean fail, final boolean inlineOne) {
     try {
-      doTest(new PerformAction() {
-        @Override
-        public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-          GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-          PsiClass aClass = myJavaFacade.findClass("Test", scope);
-          if (aClass == null) aClass = myJavaFacade.findClass("p.Test", scope);
-          assertNotNull("Class Test not found", aClass);
-          PsiClass superClass = myJavaFacade.findClass("Super", scope);
-          if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
-          assertNotNull("Class Super not found", superClass);
-          new InlineSuperClassRefactoringProcessor(myProject, inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS, aClass).run();
-        }
+      doTest((rootDir, rootAfter) -> {
+        GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+        PsiClass aClass = myJavaFacade.findClass("Test", scope);
+        if (aClass == null) aClass = myJavaFacade.findClass("p.Test", scope);
+        assertNotNull("Class Test not found", aClass);
+        PsiClass superClass = myJavaFacade.findClass("Super", scope);
+        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
+        assertNotNull("Class Super not found", superClass);
+        new InlineSuperClassRefactoringProcessor(myProject, inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS, aClass).run();
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
@@ -105,17 +102,14 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   }
 
   private void doTestMultipleSubclasses() {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-        PsiClass superClass = myJavaFacade.findClass("Super", scope);
-        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
-        assertNotNull("Class Super not found", superClass);
-        PsiClass target1 = myJavaFacade.findClass("Test", scope);
-        PsiClass target2 = myJavaFacade.findClass("Test1", scope);
-        new InlineSuperClassRefactoringProcessor(myProject, null, superClass, DocCommentPolicy.ASIS, target1, target2).run();
-      }
+    doTest((rootDir, rootAfter) -> {
+      GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+      PsiClass superClass = myJavaFacade.findClass("Super", scope);
+      if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
+      assertNotNull("Class Super not found", superClass);
+      PsiClass target1 = myJavaFacade.findClass("Test", scope);
+      PsiClass target2 = myJavaFacade.findClass("Test1", scope);
+      new InlineSuperClassRefactoringProcessor(myProject, null, superClass, DocCommentPolicy.ASIS, target1, target2).run();
     });
   }
 }

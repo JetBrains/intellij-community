@@ -189,7 +189,7 @@ public class PullUpTest extends LightRefactoringTestCase {
   private void doTest(final boolean checkMembersMovedCount,
                       String conflictMessage,
                       RefactoringTestUtil.MemberDescriptor... membersToFind) {
-    final MultiMap<PsiElement, String> conflictsMap = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflictsMap = new MultiMap<>();
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
@@ -206,24 +206,17 @@ public class PullUpTest extends LightRefactoringTestCase {
     final MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = {0};
-    final MoveMemberListener listener = new MoveMemberListener() {
-      @Override
-      public void memberMoved(PsiClass aClass, PsiMember member) {
-        assertEquals(sourceClass, aClass);
-        countMoved[0]++;
-      }
+    final MoveMemberListener listener = (aClass, member) -> {
+      assertEquals(sourceClass, aClass);
+      countMoved[0]++;
     };
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
     final PsiDirectory targetDirectory = targetClass.getContainingFile().getContainingDirectory();
     final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
     conflictsMap.putAllValues(
       PullUpConflictsUtil
-        .checkConflicts(infos, sourceClass, targetClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
-          @Override
-          public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-            return PullUpProcessor.checkedInterfacesContain(Arrays.asList(infos), psiMethod);
-          }
-        })
+        .checkConflicts(infos, sourceClass, targetClass, targetPackage, targetDirectory,
+                        psiMethod -> PullUpProcessor.checkedInterfacesContain(Arrays.asList(infos), psiMethod))
     );
     final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();

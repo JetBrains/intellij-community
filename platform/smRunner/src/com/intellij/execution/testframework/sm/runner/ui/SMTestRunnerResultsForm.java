@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.registry.Registry;
@@ -294,6 +295,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     fireOnTestingFinished();
+
+    if (testsRoot.isEmptySuite() &&
+        !testsRoot.isInterrupted() &&
+        myConsoleProperties instanceof SMTRunnerConsoleProperties &&
+        ((SMTRunnerConsoleProperties)myConsoleProperties).fixEmptySuite()) {
+      return;
+    }
+    final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
+      .getPresentation(myFailedTestCount, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount, myTotalTestCount - myFinishedTestCount, myIgnoredTestCount);
+    TestsUIUtil.notifyByBalloon(myConsoleProperties.getProject(), testsRoot, myConsoleProperties, presentation);
   }
 
   public void onTestsCountInSuite(final int count) {
@@ -354,6 +365,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   public void onCustomProgressTestFailed() {
     updateOnTestFailed(true);
+  }
+
+  @Override
+  public void onCustomProgressTestFinished() {
+    updateOnTestFinished(true);
   }
 
   public void onTestFinished(@NotNull final SMTestProxy test) {

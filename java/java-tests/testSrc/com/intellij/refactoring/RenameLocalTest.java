@@ -62,7 +62,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
-    final HashSet<String> result = new HashSet<String>();
+    final HashSet<String> result = new HashSet<>();
     new JavaNameSuggestionProvider().getSuggestedNames(element, getFile(), result);
     assertTrue(result.toString(), result.contains("window"));
   }

@@ -130,7 +130,7 @@ public class ModifierChooser {
     PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
 
     if (parent instanceof PsiJavaFile || parent instanceof PsiClass) {
-      if (prev == null || JavaCompletionData.END_OF_BLOCK.isAcceptable(element, prev.getParent())) {
+      if (prev == null || JavaCompletionData.END_OF_BLOCK.getValue().isAcceptable(element, prev.getParent())) {
         return true;
       }
     }
