@@ -98,6 +98,8 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public abstract void onCustomProgressTestStarted();
 
+  public abstract void onCustomProgressTestFinished();
+
   public abstract void onCustomProgressTestFailed();
 
   // workflow/service methods

@@ -356,6 +356,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateOnTestFailed(true);
   }
 
+  @Override
+  public void onCustomProgressTestFinished() {
+    updateOnTestFinished(true);
+  }
+
   public void onTestFinished(@NotNull final SMTestProxy test) {
     updateOnTestFinished(false);
     updateIconProgress();
