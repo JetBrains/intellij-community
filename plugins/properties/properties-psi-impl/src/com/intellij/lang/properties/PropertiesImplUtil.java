@@ -84,19 +84,20 @@ public class PropertiesImplUtil extends PropertiesUtil {
       }
     });
     for (final PsiFile psiFile : psiFiles) {
+      final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
+      if (propertiesFile == null) {
+        continue;
+      }
       if (baseName.equals(bundleBaseNameManager.getBaseName(psiFile))) {
-        final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
-        if (propertiesFile != null) {
-          if (defaultPropertiesFile == null) {
+        if (defaultPropertiesFile == null) {
+          defaultPropertiesFile = propertiesFile;
+        } else {
+          final int nameDiff = FileUtil.getNameWithoutExtension(defaultPropertiesFile.getName()).compareTo(FileUtil.getNameWithoutExtension(propertiesFile.getName()));
+          if (nameDiff > 0) {
             defaultPropertiesFile = propertiesFile;
-          } else {
-            final int nameDiff = FileUtil.getNameWithoutExtension(defaultPropertiesFile.getName()).compareTo(FileUtil.getNameWithoutExtension(propertiesFile.getName()));
-            if (nameDiff > 0) {
-              defaultPropertiesFile = propertiesFile;
-            } else if (nameDiff == 0) {
-              //means 2 default properties files
-              return null;
-            }
+          } else if (nameDiff == 0) {
+            //means 2 default properties files
+            return null;
           }
         }
       }
