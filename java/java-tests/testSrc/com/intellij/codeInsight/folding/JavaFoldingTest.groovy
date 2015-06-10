@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1115,6 +1115,31 @@ class Foo {
 \t\t});
 \t}
 }""");
+  }
+  
+  public void testCollapseExistingButExpandedBlock() {
+    String text = '''class Foo {
+    void m {
+        if (true) {
+            System.out.println();
+        }
+    }
+}
+'''
+    configure text
+    
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
+    myFixture.performEditorAction("CollapseBlock")
+    
+    myFixture.performEditorAction("ExpandAllRegions")
+
+    myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
+    myFixture.performEditorAction("CollapseBlock")
+
+    def topLevelRegions = ((FoldingModelEx)myFixture.editor.foldingModel).fetchTopLevel()
+    assert topLevelRegions.length == 1
+    assert topLevelRegions[0].startOffset == text.indexOf('{', text.indexOf("if"))
+    assert topLevelRegions[0].endOffset == text.indexOf('}', text.indexOf("if")) + 1
   }
 
   private int getFoldRegionsCount() {
