@@ -28,6 +28,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   private int pendingStepCount;
   private int failedStepCount;
   private int undefinedStepCount;
+  private boolean endedByNewLine = true;
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSZ");
 
@@ -89,7 +90,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + feature.getLine(), currentFeatureName));
   }
 
-  private boolean isRealScenario(final Scenario scenario) {
+  private static boolean isRealScenario(final Scenario scenario) {
     return scenario.getKeyword().equals("Scenario");
   }
 
@@ -291,9 +292,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @Override
   public void close() {
     outCommand(String.format(TEMPLATE_SCENARIO_COUNTING_FINISHED, getCurrentTime()));
-
-    outCommand(scenarioCount + " scenario (" + passedScenarioCount + " passed)\n");
-    outCommand(stepCount + " steps (" + passedStepCount + " passed)\n");
   }
 
   @Override
@@ -301,11 +299,11 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     outCommand("before\n");
   }
 
-  private String getCurrentTime() {
+  private static String getCurrentTime() {
     return DATE_FORMAT.format(new Date());
   }
 
-  private String escape(String source) {
+  private static String escape(String source) {
     return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("[", "|[").replace("]", "|]");
   }
 
@@ -319,9 +317,12 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     }
     else {
       try {
-        appendable.append("\n");
+        if (!endedByNewLine) {
+          appendable.append("\n");
+        }
         appendable.append(s);
         appendable.append("\n");
+        endedByNewLine = true;
       }
       catch (IOException ignored) {
       }
@@ -331,12 +332,13 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   private void out(String s) {
     try {
       appendable.append(s);
+      endedByNewLine = s.endsWith("\n");
     }
     catch (IOException ignored) {
     }
   }
 
-  private String getName(Scenario scenario) {
+  private static String getName(Scenario scenario) {
     if (scenario.getKeyword().equals("Scenario Outline")) {
       return escape("Scenario: Line: " + scenario.getLine());
     }
@@ -345,15 +347,15 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     }
   }
 
-  private String getName(ScenarioOutline outline) {
+  private static String getName(ScenarioOutline outline) {
     return escape("Scenario Outline: " + outline.getName());
   }
 
-  private String getName(Step step) {
+  private static String getName(Step step) {
     return escape(step.getKeyword() + " " + step.getName());
   }
 
-  private String getName(Feature feature) {
+  private static String getName(Feature feature) {
     return escape(feature.getName());
   }
 }
