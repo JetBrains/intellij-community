@@ -27,7 +27,7 @@ public interface MemberFilter {
   Collection<Variable> getAdditionalVariables();
 
   @NotNull
-  String getName(@NotNull Variable variable);
+  String rawNameToSource(@NotNull Variable variable);
 
   @Nullable
   String sourceNameToRaw(@NotNull String name);

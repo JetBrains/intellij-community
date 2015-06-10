@@ -40,7 +40,7 @@ public abstract class MemberFilterBase implements MemberFilter {
 
   @NotNull
   @Override
-  public String getName(@NotNull Variable variable) {
+  public String rawNameToSource(@NotNull Variable variable) {
     return variable.getName();
   }
 

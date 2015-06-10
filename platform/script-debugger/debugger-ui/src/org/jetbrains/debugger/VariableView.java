@@ -468,7 +468,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     for (int i = notGroupedVariablesOffset; i < variables.size(); i++) {
       Variable variable = variables.get(i);
-      groupList.add(new VariableView(memberFilter.getName(variable), variable, this));
+      groupList.add(new VariableView(memberFilter.rawNameToSource(variable), variable, this));
     }
 
     node.addChildren(groupList, true);
