@@ -16,8 +16,12 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.openapi.util.SystemInfo;
 
+import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,5 +40,21 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   protected DefaultMetalTheme createMetalTheme() {
     return new IdeaBlueMetalTheme();
+  }
+
+  @Override
+  public UIDefaults getDefaults() {
+    UIDefaults defaults = super.getDefaults();
+    if (SystemInfo.isMacOSYosemite) {
+      installMacOSXFonts(defaults);
+    }
+    return defaults;
+  }
+
+  private static void installMacOSXFonts(UIDefaults defaults) {
+    FontUIResource font = new FontUIResource("HelveticaNeue-CondensedBlack", Font.PLAIN, 13);
+    defaults.put("Label.font", font);
+    defaults.put("CheckBox.font", font);
+    defaults.put("RadioButton.font", font);
   }
 }
