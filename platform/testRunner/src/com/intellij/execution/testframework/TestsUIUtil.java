@@ -112,6 +112,13 @@ public class TestsUIUtil {
                                      final AbstractTestProxy root,
                                      final TestConsoleProperties properties,
                                      @Nullable final String comment) {
+    notifyByBalloon(project, root, properties, new TestResultPresentation(root, started, comment).getPresentation());
+  }
+
+  public static void notifyByBalloon(@NotNull final Project project,
+                                     final AbstractTestProxy root,
+                                     final TestConsoleProperties properties,
+                                     TestResultPresentation testResultPresentation) {
     if (project.isDisposed()) return;
     if (properties == null) return;
 
@@ -120,15 +127,10 @@ public class TestsUIUtil {
     final String testRunDebugId = properties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
 
-    String title;
-    String text;
-    String balloonText;
-    MessageType type;
-    TestResultPresentation testResultPresentation = new TestResultPresentation(root, started, comment).getPresentation();
-    type = testResultPresentation.getType();
-    balloonText = testResultPresentation.getBalloonText();
-    title = testResultPresentation.getTitle();
-    text = testResultPresentation.getText();
+    final String title = testResultPresentation.getTitle();
+    final String text = testResultPresentation.getText();
+    final String balloonText = testResultPresentation.getBalloonText();
+    final MessageType type = testResultPresentation.getType();
 
     if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
       toolWindowManager.notifyByBalloon(testRunDebugId, type, balloonText, null, null);
@@ -172,10 +174,10 @@ public class TestsUIUtil {
     AppIcon.getInstance().setErrorBadge(project, null);
   }
 
-  private static class TestResultPresentation {
+  public static class TestResultPresentation {
     private AbstractTestProxy myRoot;
     private boolean myStarted;
-    private final String myComment;
+    private String myComment;
     private String myTitle;
     private String myText;
     private String myBalloonText;
@@ -208,30 +210,34 @@ public class TestsUIUtil {
     }
 
     public TestResultPresentation getPresentation() {
+      List allTests = Filter.LEAF.select(myRoot.getAllTests());
+      final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
+      final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
+      notStarted.removeAll(failed);
+      final List ignored = Filter.IGNORED.select(allTests);
+      notStarted.removeAll(ignored);
+      failed.removeAll(ignored);
+      int failedCount = failed.size();
+      int notStartedCount = notStarted.size() + ignored.size();
+      int passedCount = allTests.size() - failedCount - notStartedCount;
+      return getPresentation(failedCount, passedCount, notStartedCount, ignored.size());
+    }
+
+    public TestResultPresentation getPresentation(int failedCount, int passedCount, int notStartedCount, int ignoredCount) {
       if (myRoot == null) {
         myBalloonText = myTitle = myStarted ? "Tests were interrupted" : ExecutionBundle.message("test.not.started.progress.text");
         myText = "";
         myType = MessageType.WARNING;
       } else{
-        List allTests = Filter.LEAF.select(myRoot.getAllTests());
-        final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
-        final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
-        notStarted.removeAll(failed);
-        final List ignored = Filter.IGNORED.select(allTests);
-        notStarted.removeAll(ignored);
-        failed.removeAll(ignored);
-        int failedCount = failed.size();
-        int notStartedCount = notStarted.size() + ignored.size();
-        int passedCount = allTests.size() - failedCount - notStartedCount;
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
           myText = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");
           myType = MessageType.ERROR;
         }
         else if (notStartedCount > 0) {
-          myTitle = !notStarted.isEmpty() ? ExecutionBundle.message("junit.running.info.failed.to.start.error.message") : "Tests Ignored";
-          myText = passedCount + " passed, " + notStartedCount + (!notStarted.isEmpty() ? " not started" : " ignored");
-          myType = notStarted.isEmpty() ? MessageType.WARNING : MessageType.ERROR;
+          myTitle = ignoredCount > 0 ? "Tests Ignored" : ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
+          myText = passedCount + " passed, " + notStartedCount + (ignoredCount > 0 ? " ignored" : " not started");
+          myType = ignoredCount == 0 ? MessageType.WARNING : MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");

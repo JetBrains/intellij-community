@@ -204,8 +204,6 @@ public class SMTestRunnerConnectionUtil {
 
     // UI actions
     final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
-    // notifications
-    final SMTRunnerNotificationsHandler notifierHandler = new SMTRunnerNotificationsHandler(consoleProperties);
 
     // subscribe to events
 
@@ -219,8 +217,6 @@ public class SMTestRunnerConnectionUtil {
     if (Registry.is("tests.view.old.statistics.panel")) {
       eventsProcessor.addEventsListener(statisticsPane.createTestEventsListener());
     }
-    // subscribes test runner's notification balloons on results viewer events
-    eventsProcessor.addEventsListener(notifierHandler);
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
