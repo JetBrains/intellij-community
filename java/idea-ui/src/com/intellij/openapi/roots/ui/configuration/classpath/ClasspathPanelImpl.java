@@ -819,7 +819,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           for (DependenciesBuilder builder : builders) {
             for (Set<PsiFile> files : builder.getDependencies().values()) {
               if (!files.isEmpty()) {
-                Messages.showInfoMessage(myEntryTable,
+                Messages.showInfoMessage(myProject,
                                          "Dependencies were successfully collected in \"" +
                                          ToolWindowId.DEPENDENCIES + "\" toolwindow",
                                          FindBundle.message("find.pointcut.applications.not.found.title"));
@@ -827,7 +827,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               }
             }
           }
-          if (Messages.showOkCancelDialog(myEntryTable,
+          if (Messages.showOkCancelDialog(myProject,
                                           "No code dependencies were found. Would you like to remove the dependency?",
                                           CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
             removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
