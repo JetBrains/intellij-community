@@ -95,6 +95,17 @@ public class JsonFormattingTest extends FormatterTestCase {
     withPreservedSettings(this::doTest);
   }
 
+  // IDEA-139848
+  public void testItemsAlignmentAndAlternativeBracesPlacement() throws Exception {
+    withPreservedSettings(() -> {
+      getCustomSettings().KEEP_BRACES_ON_SEPARATE_LINES = false;
+      getCustomSettings().KEEP_BRACKETS_ON_SEPARATE_LINES = false;
+      getCustomSettings().OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+      getCustomSettings().ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+      doTest();
+    });
+  }
+
   // Moved from JavaScript
 
   public void testWeb3830() throws Exception {

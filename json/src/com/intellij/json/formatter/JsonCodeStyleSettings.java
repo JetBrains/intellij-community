@@ -34,6 +34,9 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   // CHOP_DOWN_IF_LONG seems more appropriate however for short arrays.
   public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
 
+  public boolean KEEP_BRACKETS_ON_SEPARATE_LINES = true;
+  public boolean KEEP_BRACES_ON_SEPARATE_LINES = true;
+
   public JsonCodeStyleSettings(CodeStyleSettings container) {
     super(JsonLanguage.INSTANCE.getID(), container);
   }

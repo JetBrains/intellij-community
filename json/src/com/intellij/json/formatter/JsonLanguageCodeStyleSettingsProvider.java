@@ -45,6 +45,7 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "KEEP_LINE_BREAKS",
                                    "WRAP_LONG_LINES");
 
+      // Array settings
       consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "ARRAY_WRAPPING",
                                 "Arrays",
@@ -53,12 +54,22 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "KEEP_BRACKETS_ON_SEPARATE_LINES",
+                                "Place brackets on their own lines",
+                                "Arrays");
+
+      // Object settings
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "OBJECT_WRAPPING",
                                 "Objects",
                                 null,
                                 CodeStyleSettingsCustomizable.WRAP_OPTIONS,
                                 CodeStyleSettingsCustomizable.WRAP_VALUES);
 
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "KEEP_BRACES_ON_SEPARATE_LINES",
+                                "Place braces on their own lines",
+                                "Objects");
     }
   }
 

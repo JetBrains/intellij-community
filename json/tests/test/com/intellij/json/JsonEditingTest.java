@@ -53,6 +53,16 @@ public class JsonEditingTest extends JsonTestCase {
     }
   }
 
+  // IDEA-139848
+  public void testAlignCaretForAlternativeBracesPlacement() {
+    doTest("\n");
+  }
+
+  // IDEA-139848
+  public void testAlignCloseBraceForAlternativeBracePlacement() {
+    doTest("\n");
+  }
+
   // Moved from JavaScript
 
   // WEB-11600

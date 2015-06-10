@@ -46,6 +46,7 @@ public class JsonBlock implements ASTBlock {
   private final SpacingBuilder mySpacingBuilder;
   // lazy initialized on first call to #getSubBlocks()
   private List<Block> mySubBlocks = null;
+  private final Alignment myChildAlignment = Alignment.createAlignment();
 
   private final Alignment myPropertyValueAlignment;
   private final Wrap myChildWrap;
@@ -121,12 +122,21 @@ public class JsonBlock implements ASTBlock {
         assert myChildWrap != null;
         wrap = myChildWrap;
         indent = Indent.getNormalIndent();
+        if (canUseAlignmentForContainerItem(myNode)) {
+          alignment = myChildAlignment;
+        }
       }
       else if (hasElementType(childNode, JSON_OPEN_BRACES)) {
         if (JsonPsiUtil.isPropertyValue(myPsiElement) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_VALUE) {
           // WEB-13587 Align compound values on opening brace/bracket, not the whole block
           assert myParent != null && myParent.myParent != null && myParent.myParent.myPropertyValueAlignment != null;
           alignment = myParent.myParent.myPropertyValueAlignment;
+        }
+      }
+      else if (hasElementType(childNode, JSON_CLOSE_BRACES)) {
+        // It's better to align close brace/bracket with other items in container, than to leave it floating
+        if (canUseAlignmentForContainerItem(myNode)) {
+          alignment = myChildAlignment;
         }
       }
     }
@@ -173,10 +183,7 @@ public class JsonBlock implements ASTBlock {
   @Override
   public ChildAttributes getChildAttributes(int newChildIndex) {
     if (hasElementType(myNode, JSON_CONTAINERS)) {
-      // WEB-13675: For some reason including alignment in child attributes causes
-      // indents to consist solely of spaces when both USE_TABS and SMART_TAB
-      // options are enabled.
-      return new ChildAttributes(Indent.getNormalIndent(), null);
+      return new ChildAttributes(Indent.getNormalIndent(), canUseAlignmentForContainerItem(myNode) ? myChildAlignment : null);
     }
     else if (myNode.getPsi() instanceof PsiFile) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
@@ -203,6 +210,39 @@ public class JsonBlock implements ASTBlock {
   @Override
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
+  }
+
+  /**
+   * Use alignment only when it's necessary e.g. it should be used before properties in the following fragment
+   * <pre>
+   *   {"foo": null
+   *    "bar": 42}
+   * </pre>
+   * but not in
+   * <pre>
+   *   {
+   *     "foo": null,
+   *     "bar": 42
+   *   }
+   * </pre>
+   * <p/>
+   * This method is somewhat simplified version of PyBlock#hasHangingIdent.
+   */
+  private static boolean canUseAlignmentForContainerItem(@NotNull ASTNode containerNode) {
+    assert hasElementType(containerNode, JSON_CONTAINERS);
+    // Do not use alignment for empty containers
+    if (hasElementType(containerNode, OBJECT) && containerNode.getPsi(JsonObject.class).getPropertyList().isEmpty()) {
+      return false;
+    }
+    if (hasElementType(containerNode, ARRAY) && containerNode.getPsi(JsonArray.class).getValueList().isEmpty()) {
+      return false;
+    }
+    final ASTNode firstChild = containerNode.getFirstChildNode();
+    if (hasElementType(firstChild, JSON_OPEN_BRACES)) {
+      final ASTNode secondChild = firstChild.getTreeNext();
+      return !(secondChild != null && hasElementType(secondChild, TokenType.WHITE_SPACE) && secondChild.textContains('\n'));
+    }
+    return false;
   }
 
   private static boolean isWhitespaceOrEmpty(ASTNode node) {
