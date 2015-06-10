@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -70,11 +72,11 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   @Override
   public void visitIdentifier(PsiIdentifier identifier) {
     super.visitIdentifier(identifier);
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(identifier);
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+    final JavaSdkVersion version = JavaVersionService.getInstance().getJavaSdkVersion(identifier);
+    if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
       if ("_".equals(identifier.getText())) {
         myHolder.registerProblem(identifier, JavaErrorMessages.message("underscore.identifier"),
-                                 languageLevel.isAtLeast(LanguageLevel.JDK_1_9) ? ProblemHighlightType.ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                 version.isAtLeast(JavaSdkVersion.JDK_1_9) ? ProblemHighlightType.ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }
   }
