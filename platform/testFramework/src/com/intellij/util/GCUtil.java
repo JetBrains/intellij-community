@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.List;
+import java.util.ArrayList;
 
 public class GCUtil {
   /**
@@ -46,7 +46,7 @@ public class GCUtil {
   public static void tryGcSoftlyReachableObjects() {
     ReferenceQueue<Object> q = new ReferenceQueue<Object>();
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
-    List<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
+    ArrayList<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
     for (int i = 0; i < 100; i++) {
       System.gc();
       if (q.poll() != null) {
@@ -55,6 +55,10 @@ public class GCUtil {
       TimeoutUtil.sleep(10);
       long bytes = Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE);
       list.add(new SoftReference<byte[]>(new byte[(int)bytes]));
+
+      // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
+      // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
+      list.ensureCapacity(list.size() + useReference(ref));
     }
   }
 
