@@ -38,7 +38,7 @@ public class ApplicationRunLineMarkerProvider implements LineMarkerProvider {
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null)
       return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
-    if (element instanceof PsiMethod && PsiMethodUtil.isMainMethod((PsiMethod)element))
+    if (element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element))
       return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
     return null;
   }
