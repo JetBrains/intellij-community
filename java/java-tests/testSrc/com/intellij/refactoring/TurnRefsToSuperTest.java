@@ -67,11 +67,8 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   //public void testForEach2() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
 
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
-      }
+    doTest((rootDir, rootAfter) -> {
+      TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
     }, true);
   }
 

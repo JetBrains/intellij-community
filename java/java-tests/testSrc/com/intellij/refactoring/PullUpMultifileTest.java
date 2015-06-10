@@ -21,13 +21,11 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -49,42 +47,35 @@ public class PullUpMultifileTest extends MultiFileTestCase {
   }
 
   private void doTest(final String... conflicts) throws Exception {
-    final MultiMap<PsiElement, String> conflictsMap = new MultiMap<PsiElement, String>();
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
-        assertTrue("Source class not found", srcClass != null);
+    final MultiMap<PsiElement, String> conflictsMap = new MultiMap<>();
+    doTest((rootDir, rootAfter) -> {
+      final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
+      assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myJavaFacade.findClass("b.B", GlobalSearchScope.allScope(myProject));
-        assertTrue("Target class not found", targetClass != null);
+      final PsiClass targetClass = myJavaFacade.findClass("b.B", GlobalSearchScope.allScope(myProject));
+      assertTrue("Target class not found", targetClass != null);
 
-        final PsiMethod[] methods = srcClass.getMethods();
-        assertTrue("No methods found", methods.length > 0);
-        final MemberInfo[] membersToMove = new MemberInfo[1];
-        final MemberInfo memberInfo = new MemberInfo(methods[0]);
-        memberInfo.setChecked(true);
-        membersToMove[0] = memberInfo;
+      final PsiMethod[] methods = srcClass.getMethods();
+      assertTrue("No methods found", methods.length > 0);
+      final MemberInfo[] membersToMove = new MemberInfo[1];
+      final MemberInfo memberInfo = new MemberInfo(methods[0]);
+      memberInfo.setChecked(true);
+      membersToMove[0] = memberInfo;
 
-        final PsiDirectory targetDirectory = targetClass.getContainingFile().getContainingDirectory();
-        final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
-        conflictsMap.putAllValues(
-          PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
-            @Override
-            public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-              return PullUpProcessor.checkedInterfacesContain(Arrays.asList(membersToMove), psiMethod);
-            }
-          }));
+      final PsiDirectory targetDirectory = targetClass.getContainingFile().getContainingDirectory();
+      final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
+      conflictsMap.putAllValues(
+        PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, targetPackage, targetDirectory,
+                                           psiMethod -> PullUpProcessor.checkedInterfacesContain(Arrays.asList(membersToMove), psiMethod)));
 
-        new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
-      }
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
     });
 
     if (conflicts.length != 0 && conflictsMap.isEmpty()) {
       fail("Conflict was not detected");
     }
-    final HashSet<String> values = new HashSet<String>(conflictsMap.values());
-    final HashSet<String> expected = new HashSet<String>(Arrays.asList(conflicts));
+    final HashSet<String> values = new HashSet<>(conflictsMap.values());
+    final HashSet<String> expected = new HashSet<>(Arrays.asList(conflicts));
 
     assertEquals(expected.size(), values.size());
     for (String value : values) {

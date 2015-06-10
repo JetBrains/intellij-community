@@ -46,28 +46,22 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                         @Nullable final String[] parameters,
                         @Nullable final String[] exceptions,
                         boolean delegate) {
-    GenParams genParams = parameters == null ? new SimpleParameterGen() : new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
-        for (int i = 0; i < parameters.length; i++) {
-          PsiType type = myFactory.createTypeFromText(parameters[i], method);
-          parameterInfos[i] = new ParameterInfoImpl(-1, "p" + (i + 1), type);
-        }
-        return parameterInfos;
+    GenParams genParams = parameters == null ? new SimpleParameterGen() : method -> {
+      ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
+      for (int i = 0; i < parameters.length; i++) {
+        PsiType type = myFactory.createTypeFromText(parameters[i], method);
+        parameterInfos[i] = new ParameterInfoImpl(-1, "p" + (i + 1), type);
       }
+      return parameterInfos;
     };
 
-    GenExceptions genExceptions = exceptions == null ? new SimpleExceptionsGen() : new GenExceptions() {
-      @Override
-      public ThrownExceptionInfo[] genExceptions(PsiMethod method) throws IncorrectOperationException {
-        ThrownExceptionInfo[] exceptionInfos = new ThrownExceptionInfo[exceptions.length];
-        for (int i = 0; i < exceptions.length; i++) {
-          PsiType type = myFactory.createTypeFromText(exceptions[i], method);
-          exceptionInfos[i] = new JavaThrownExceptionInfo(-1, (PsiClassType)type);
-        }
-        return exceptionInfos;
+    GenExceptions genExceptions = exceptions == null ? new SimpleExceptionsGen() : method -> {
+      ThrownExceptionInfo[] exceptionInfos = new ThrownExceptionInfo[exceptions.length];
+      for (int i = 0; i < exceptions.length; i++) {
+        PsiType type = myFactory.createTypeFromText(exceptions[i], method);
+        exceptionInfos[i] = new JavaThrownExceptionInfo(-1, (PsiClassType)type);
       }
+      return exceptionInfos;
     };
 
     doTest(null, null, returnType, genParams, genExceptions, delegate);

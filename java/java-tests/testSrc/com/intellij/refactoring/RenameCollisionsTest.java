@@ -283,7 +283,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     PsiElement element = TargetElementUtil
         .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
-    final UsageInfo[] usageInfos = RenameUtil.findUsages(element, "newName", true, true, new HashMap<PsiElement, String>());
+    final UsageInfo[] usageInfos = RenameUtil.findUsages(element, "newName", true, true, new HashMap<>());
     assertSize(1, usageInfos);
     for (UsageInfo usageInfo : usageInfos) {
       assertTrue(usageInfo instanceof MoveRenameUsageInfo);

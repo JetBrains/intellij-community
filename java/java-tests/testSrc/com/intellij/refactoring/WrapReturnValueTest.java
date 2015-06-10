@@ -70,18 +70,15 @@ public class WrapReturnValueTest extends MultiFileTestCase {
 
   private void doTest(final boolean existing, String exceptionMessage, final boolean createInnerClass) {
     try {
-      doTest(new PerformAction() {
-        @Override
-        public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) {
-          PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
-          assertNotNull("Class Test not found", aClass);
-          PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-          String wrapperClassName = "Wrapper";
-          PsiClass wrapperClass = myJavaFacade.findClass(wrapperClassName, GlobalSearchScope.projectScope(getProject()));
-          assertTrue(!existing || wrapperClass != null);
-          PsiField delegateField = existing ? wrapperClass.findFieldByName("myField", false) : null;
-          new WrapReturnValueProcessor(wrapperClassName, "", null, method, existing, createInnerClass, delegateField).run();
-        }
+      doTest((rootDir, rootAfter) -> {
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
+        assertNotNull("Class Test not found", aClass);
+        PsiMethod method = aClass.findMethodsByName("foo", false)[0];
+        String wrapperClassName = "Wrapper";
+        PsiClass wrapperClass = myJavaFacade.findClass(wrapperClassName, GlobalSearchScope.projectScope(getProject()));
+        assertTrue(!existing || wrapperClass != null);
+        PsiField delegateField = existing ? wrapperClass.findFieldByName("myField", false) : null;
+        new WrapReturnValueProcessor(wrapperClassName, "", null, method, existing, createInnerClass, delegateField).run();
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {

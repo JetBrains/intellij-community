@@ -23,7 +23,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
@@ -48,31 +47,23 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   private void doTest(final boolean delegate, final boolean createInner) throws Exception {
-    doTest(delegate, createInner, new Function<PsiMethod, VariableData[]>() {
-      @Override
-      public VariableData[] fun(PsiMethod psiMethod) {
-        return generateParams(psiMethod);
-      }
-    });
+    doTest(delegate, createInner, IntroduceParameterObjectTest::generateParams);
   }
 
   private void doTest(final boolean delegate,
                       final boolean createInner,
                       final Function<PsiMethod, VariableData[]> function) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
+    doTest((rootDir, rootAfter) -> {
+      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
 
-        assertNotNull("Class Test not found", aClass);
+      assertNotNull("Class Test not found", aClass);
 
-        final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-        final VariableData[] datas = function.fun(method);
+      final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
+      final VariableData[] datas = function.fun(method);
 
-        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", null, method, datas, delegate, false,
-                                                                                            createInner, null, false);
-        processor.run();
-      }
+      IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", null, method, datas, delegate, false,
+                                                                                          createInner, null, false);
+      processor.run();
     });
   }
 
@@ -134,53 +125,44 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testSameTypeAndVarargs() throws Exception {
-    doTest(false, false, new Function<PsiMethod, VariableData[]>() {
-      @Override
-      public VariableData[] fun(PsiMethod method) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
+    doTest(false, false, method -> {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-        final VariableData[] datas = new VariableData[parameters.length - 1];
-        for (int i = 0; i < parameters.length - 1; i++) {
-          PsiParameter parameter = parameters[i];
-          datas[i] = new VariableData(parameter);
-          datas[i].name = parameter.getName();
-          datas[i].passAsParameter = true;
-        }
-        return datas;
+      final VariableData[] datas = new VariableData[parameters.length - 1];
+      for (int i = 0; i < parameters.length - 1; i++) {
+        PsiParameter parameter = parameters[i];
+        datas[i] = new VariableData(parameter);
+        datas[i].name = parameter.getName();
+        datas[i].passAsParameter = true;
       }
+      return datas;
     });
   }
 
   public void testCopyJavadoc1() throws Exception {
-    doTest(false, true, new Function<PsiMethod, VariableData[]>() {
-      @Override
-      public VariableData[] fun(PsiMethod method) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
+    doTest(false, true, method -> {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-        final VariableData[] datas = new VariableData[parameters.length - 1];
-        for (int i = 0; i < parameters.length - 1; i++) {
-          PsiParameter parameter = parameters[i];
-          datas[i] = new VariableData(parameter);
-          datas[i].name = parameter.getName();
-          datas[i].passAsParameter = true;
-        }
-        return datas;
+      final VariableData[] datas = new VariableData[parameters.length - 1];
+      for (int i = 0; i < parameters.length - 1; i++) {
+        PsiParameter parameter = parameters[i];
+        datas[i] = new VariableData(parameter);
+        datas[i].name = parameter.getName();
+        datas[i].passAsParameter = true;
       }
+      return datas;
     });
   }
 
   public void testTypeParametersWithChosenSubtype() throws Exception {
-    doTest(false, true, new Function<PsiMethod, VariableData[]>() {
-      @Override
-      public VariableData[] fun(PsiMethod psiMethod) {
-        final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
-        final PsiClass collectionClass = getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
-        final VariableData variableData =
-          new VariableData(parameter, JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
-        variableData.name = parameter.getName();
-        variableData.passAsParameter = true;
-        return new VariableData[]{variableData};
-      }
+    doTest(false, true, psiMethod -> {
+      final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
+      final PsiClass collectionClass = getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
+      final VariableData variableData =
+        new VariableData(parameter, JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
+      variableData.name = parameter.getName();
+      variableData.passAsParameter = true;
+      return new VariableData[]{variableData};
     });
   }
 
@@ -198,23 +180,20 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors,
                                    final String newVisibility) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
-        if (aClass == null) {
-          aClass = myJavaFacade.findClass("p2.Test", GlobalSearchScope.projectScope(getProject()));
-        }
-        assertNotNull("Class Test not found", aClass);
-
-        final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, null, method,
-                                                                                            generateParams(method), false, true,
-                                                                                            false, newVisibility, generateAccessors);
-        processor.run();
-        LocalFileSystem.getInstance().refresh(false);
-        FileDocumentManager.getInstance().saveAllDocuments();
+    doTest((rootDir, rootAfter) -> {
+      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
+      if (aClass == null) {
+        aClass = myJavaFacade.findClass("p2.Test", GlobalSearchScope.projectScope(getProject()));
       }
+      assertNotNull("Class Test not found", aClass);
+
+      final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
+      IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, null, method,
+                                                                                          generateParams(method), false, true,
+                                                                                          false, newVisibility, generateAccessors);
+      processor.run();
+      LocalFileSystem.getInstance().refresh(false);
+      FileDocumentManager.getInstance().saveAllDocuments();
     });
   }
 

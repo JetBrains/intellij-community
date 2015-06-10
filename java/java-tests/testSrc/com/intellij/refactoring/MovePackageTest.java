@@ -56,12 +56,7 @@ public class MovePackageTest extends MultiFileTestCase {
   }
 
   private void doTest(final String[] packageNames, final String newPackageName) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        MovePackageTest.this.performAction(packageNames, newPackageName);
-      }
-    });
+    doTest((rootDir, rootAfter) -> MovePackageTest.this.performAction(packageNames, newPackageName));
   }
 
   private void performAction(String[] packageNames, String newPackageName) throws Exception {

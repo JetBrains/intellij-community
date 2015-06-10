@@ -77,15 +77,12 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
   }
 
   public void testMoveJavadocToGetter() throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
-        assertNotNull("Tested class not found", aClass);
-        final PsiField field = aClass.findFieldByName("i", false);
-        assertNotNull(field);
-        doTest(aClass, field, null, true, true);
-      }
+    doTest((rootDir, rootAfter) -> {
+      final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
+      assertNotNull("Tested class not found", aClass);
+      final PsiField field = aClass.findFieldByName("i", false);
+      assertNotNull(field);
+      doTest(aClass, field, null, true, true);
     });
   }
 
@@ -106,16 +103,13 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
   }
 
   private void doTest(final String fieldName, final String className, final String conflicts) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(myProject));
+    doTest((rootDir, rootAfter) -> {
+      PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(myProject));
 
-        assertNotNull("Tested class not found", aClass);
+      assertNotNull("Tested class not found", aClass);
 
 
-        doTest(aClass, aClass.findFieldByName(fieldName, false), conflicts, true, true);
-      }
+      doTest(aClass, aClass.findFieldByName(fieldName, false), conflicts, true, true);
     });
   }
 

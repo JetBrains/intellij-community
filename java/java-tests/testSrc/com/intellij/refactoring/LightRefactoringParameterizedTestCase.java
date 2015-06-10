@@ -51,57 +51,44 @@ public abstract class LightRefactoringParameterizedTestCase extends LightRefacto
   public void runSingle() throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
+    final Runnable runnable = () -> {
+      try {
+        final String filePath = getBeforeFile(myFileSuffix);
+        configureByFile(filePath);
+
+        final File testDir = new File(getTestDataPath(), filePath).getParentFile();
+        final String afterName = getAfterFile(myFileSuffix);
+        final boolean conflictShouldBeFound = !new File(testDir, afterName).exists();
         try {
-          final String filePath = getBeforeFile(myFileSuffix);
-          configureByFile(filePath);
-
-          final File testDir = new File(getTestDataPath(), filePath).getParentFile();
-          final String afterName = getAfterFile(myFileSuffix);
-          final boolean conflictShouldBeFound = !new File(testDir, afterName).exists();
-          try {
-            perform();
-            if (conflictShouldBeFound) {
-              fail("Conflict expected.");
-            }
+          perform();
+          if (conflictShouldBeFound) {
+            fail("Conflict expected.");
           }
-          catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
-            if (!conflictShouldBeFound) {
-              fail("Conflict not expected");
-            } else {
-              final File conflicts = new File(testDir, FileUtilRt.getNameWithoutExtension(myFileSuffix) + CONFLICTS_SUFFIX);
-              if (!conflicts.exists()) {
-                fail("Conflict file " + conflicts.getPath() + " not found");
-              }
-              final VirtualFile conflictsFile = VfsUtil.findFileByIoFile(conflicts, false);
-              assertNotNull(conflictsFile);
-              assertEquals(LoadTextUtil.loadText(conflictsFile).toString(), exception.getMessage());
-            }
-          }
-
+        }
+        catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
           if (!conflictShouldBeFound) {
-            checkResultByFile(getAfterFile(myFileSuffix));
+            fail("Conflict not expected");
+          } else {
+            final File conflicts = new File(testDir, FileUtilRt.getNameWithoutExtension(myFileSuffix) + CONFLICTS_SUFFIX);
+            if (!conflicts.exists()) {
+              fail("Conflict file " + conflicts.getPath() + " not found");
+            }
+            final VirtualFile conflictsFile = VfsUtil.findFileByIoFile(conflicts, false);
+            assertNotNull(conflictsFile);
+            assertEquals(LoadTextUtil.loadText(conflictsFile).toString(), exception.getMessage());
           }
         }
-        catch (Throwable e) {
-          throwables[0] = e;
+
+        if (!conflictShouldBeFound) {
+          checkResultByFile(getAfterFile(myFileSuffix));
         }
+      }
+      catch (Throwable e) {
+        throwables[0] = e;
       }
     };
 
-    invokeTestRunnable(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            runnable.run();
-          }
-        }, "", null);
-      }
-    });
+    invokeTestRunnable(() -> CommandProcessor.getInstance().executeCommand(getProject(), runnable::run, "", null));
 
     if (throwables[0] != null) {
       throw throwables[0];
