@@ -185,7 +185,7 @@ public class BuildDataManager implements StorageOwner {
 
   public void clean() throws IOException {
     try {
-      myTargetStoragesOwner.close();
+      myTargetStoragesOwner.clean();
       myTargetStorages.clear();
     }
     finally {

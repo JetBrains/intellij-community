@@ -80,6 +80,35 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
     return null;
   }
 
+  @NotNull
+  public JBIterable<T> parents(@Nullable final T element) {
+    return new JBIterable<T>() {
+      @Override
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          T cur = element;
+
+          @Override
+          public boolean hasNext() {
+            return cur != null;
+          }
+
+          @Override
+          public T next() {
+            T result = cur;
+            cur = parent(cur);
+            return result;
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
+  }
+
   private abstract static class FirstNextTraverser<T> extends SyntaxTraverser<T> {
 
     public FirstNextTraverser(Meta<T> meta) {
@@ -161,7 +190,8 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
     @Nullable
     @Override
     public PsiElement parent(@NotNull PsiElement node) {
-      return node.getParent();
+      PsiElement parent = node.getParent();
+      return parent instanceof PsiFile ? null : parent;
     }
   }
 

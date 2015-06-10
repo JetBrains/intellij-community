@@ -32,9 +32,9 @@ import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.*;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -344,10 +344,10 @@ public class JarHandler extends ZipHandler {
         }
       })));
 
-      final List<String> invalidLibraryFilePaths = new ArrayList<String>();
-      final List<String> allLibraryFilePaths = new ArrayList<String>();
+      final List<String> invalidLibraryFilePaths = ContainerUtil.newArrayList();
+      final List<String> allLibraryFilePaths = ContainerUtil.newArrayList();
       MultiMap<String, String> jarSnapshotFileToLibraryFilePaths = new MultiMap<String, String>();
-      Map<String, String> validLibraryFilePathToJarSnapshotFilePaths = new THashMap<String, String>();
+      Set<String> validLibraryFilePathToJarSnapshotFilePaths = ContainerUtil.newTroveSet();
 
       info.processKeys(new CommonProcessors.CollectProcessor<String>(allLibraryFilePaths));
       for(String filePath:allLibraryFilePaths) {
@@ -356,7 +356,7 @@ public class JarHandler extends ZipHandler {
 
         jarSnapshotFileToLibraryFilePaths.putValue(libraryInfo.mySnapshotPath, filePath);
         if (new File(filePath).exists()) {
-          validLibraryFilePathToJarSnapshotFilePaths.put(filePath, libraryInfo.mySnapshotPath);
+          validLibraryFilePathToJarSnapshotFilePaths.add(filePath);
         } else {
           invalidLibraryFilePaths.add(filePath);
         }
@@ -368,7 +368,7 @@ public class JarHandler extends ZipHandler {
       }
       for(Map.Entry<String, Collection<String>> e: jarSnapshotFileToLibraryFilePaths.entrySet()) {
         for(String libraryFilePath:e.getValue()) {
-          if (validLibraryFilePathToJarSnapshotFilePaths.containsKey(libraryFilePath)) {
+          if (validLibraryFilePathToJarSnapshotFilePaths.contains(libraryFilePath)) {
             availableLibrarySnapshots.remove(e.getKey());
             break;
           }

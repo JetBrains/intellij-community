@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.Keymap;
@@ -25,6 +26,7 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -56,28 +58,27 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   public static boolean ourKeymapManagerInitialized = false;
 
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
-    mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH,
-                                                    new BaseSchemeProcessor<KeymapImpl>() {
-                                                      @NotNull
-                                                      @Override
-                                                      public KeymapImpl readScheme(@NotNull Element element) throws InvalidDataException {
-                                                        KeymapImpl keymap = new KeymapImpl();
-                                                        keymap.readExternal(element, getAllIncludingDefaultsKeymaps());
-                                                        return keymap;
-                                                      }
+    BaseSchemeProcessor<KeymapImpl> schemeProcessor = new BaseSchemeProcessor<KeymapImpl>() {
+      @NotNull
+      @Override
+      public KeymapImpl readScheme(@NotNull Element element) throws InvalidDataException {
+        KeymapImpl keymap = new KeymapImpl();
+        keymap.readExternal(element, getAllIncludingDefaultsKeymaps());
+        return keymap;
+      }
 
-                                                      @Override
-                                                      public Element writeScheme(@NotNull final KeymapImpl scheme) {
-                                                        return scheme.writeExternal();
-                                                      }
+      @Override
+      public Element writeScheme(@NotNull final KeymapImpl scheme) {
+        return scheme.writeExternal();
+      }
 
-                                                      @NotNull
-                                                      @Override
-                                                      public State getState(@NotNull KeymapImpl scheme) {
-                                                        return scheme.canModify() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
-                                                      }
-                                                    },
-                                                    RoamingType.PER_USER);
+      @NotNull
+      @Override
+      public State getState(@NotNull KeymapImpl scheme) {
+        return scheme.canModify() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+      }
+    };
+    mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH, schemeProcessor, RoamingType.PER_USER);
 
     Keymap[] keymaps = defaultKeymap.getKeymaps();
     String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
@@ -229,6 +230,18 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   public void addKeymapManagerListener(@NotNull KeymapManagerListener listener) {
     pollQueue();
     myListeners.add(listener);
+  }
+
+  @Override
+  public void addKeymapManagerListener(@NotNull final KeymapManagerListener listener, @NotNull Disposable parentDisposable) {
+    pollQueue();
+    myListeners.add(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeKeymapManagerListener(listener);
+      }
+    });
   }
 
   private void pollQueue() {

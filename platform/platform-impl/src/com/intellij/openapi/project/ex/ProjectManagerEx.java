@@ -42,11 +42,11 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException;
 
-  public abstract boolean openProject(Project project);
+  public abstract boolean openProject(@NotNull Project project);
 
   public abstract boolean isProjectOpened(Project project);
 
-  public abstract boolean canClose(Project project);
+  public abstract boolean canClose(@NotNull Project project);
 
   public abstract void saveChangedProjectFile(@NotNull VirtualFile file, @NotNull Project project);
 
@@ -71,5 +71,5 @@ public abstract class ProjectManagerEx extends ProjectManager {
   }
 
   @Nullable
-  public abstract Project convertAndLoadProject(String filePath) throws IOException;
+  public abstract Project convertAndLoadProject(@NotNull String filePath) throws IOException;
 }

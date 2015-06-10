@@ -97,7 +97,7 @@ public final class Variables {
         Comparator<Variable> comparator = memberFilter.hasNameMappings() ? new Comparator<Variable>() {
           @Override
           public int compare(@NotNull Variable o1, @NotNull Variable o2) {
-            return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
+            return naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2));
           }
         } : NATURAL_NAME_COMPARATOR;
 
@@ -172,7 +172,7 @@ public final class Variables {
                                             @NotNull MemberFilter memberFilter) {
     ol: for (Variable variable : additionalVariables) {
       for (Variable frameVariable : variables) {
-        if (memberFilter.getName(frameVariable).equals(memberFilter.getName(variable))) {
+        if (memberFilter.rawNameToSource(frameVariable).equals(memberFilter.rawNameToSource(variable))) {
           continue ol;
         }
       }
@@ -280,7 +280,7 @@ public final class Variables {
     VariableContext getterOrSetterContext = null;
     for (int i = from; i < to; i++) {
       Variable variable = variables.get(i);
-      String normalizedName = memberFilter == null ? variable.getName() : memberFilter.getName(variable);
+      String normalizedName = memberFilter == null ? variable.getName() : memberFilter.rawNameToSource(variable);
       list.add(new VariableView(normalizedName, variable, variableContext));
       if (variable instanceof ObjectProperty) {
         ObjectProperty property = (ObjectProperty)variable;

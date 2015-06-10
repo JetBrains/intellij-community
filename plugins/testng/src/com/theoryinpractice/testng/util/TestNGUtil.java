@@ -36,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -544,5 +545,20 @@ public class TestNGUtil {
       }
     }
     return false;
+  }
+
+  public static PsiClass getProviderClass(final PsiElement element, final PsiClass topLevelClass) {
+    final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
+    if (annotation != null) {
+      final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dataProviderClass");
+      if (value instanceof PsiClassObjectAccessExpression) {
+        final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+        final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());
+        if (psiClass != null) {
+          return psiClass;
+        }
+      }
+    }
+    return topLevelClass;
   }
 }

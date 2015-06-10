@@ -1028,6 +1028,7 @@
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA"
                                implementationClass="com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler"/>
+    <codeInsight.typeInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.JavaTypeProvider"/>
 
     <codeInsight.overrideMethod language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaImplementMethodsHandler"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -362,7 +362,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  protected void doCommit(@NotNull final Document document) {
+  private void doCommit(@NotNull final Document document) {
     assert !myIsCommitInProgress : "Do not call commitDocument() from inside PSI change listener";
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -782,7 +782,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     char[] fileText = psiFile.textToCharArray();
-    @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
+    @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
     @NonNls String error = "File '" + psiFile.getName() + "' text mismatch after reparse. " +
                            "File length=" + fileText.length + "; Doc length=" + documentLength + "\n";
     int i = 0;

@@ -135,7 +135,7 @@ public class PsiPolyExpressionUtil {
   private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {
     return PsiUtil.isCondition(expr, context) ||
            context instanceof PsiReturnStatement ||
-           context instanceof PsiAssignmentExpression ||
+           context instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)context).getOperationTokenType() == JavaTokenType.EQ ||
            context instanceof PsiVariable ||
            context instanceof PsiLambdaExpression;
   }

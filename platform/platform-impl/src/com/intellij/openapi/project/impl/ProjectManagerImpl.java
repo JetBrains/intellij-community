@@ -75,13 +75,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@State(
-  name = "ProjectManager",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/project.default.xml"
-    )}
-)
+@State(name = "ProjectManager", storages = @Storage(
+  file = StoragePathMacros.APP_CONFIG + "/project.default.xml"
+))
 public class ProjectManagerImpl extends ProjectManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
 
@@ -89,9 +85,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
   private boolean myDefaultProjectConfigurationChanged;
 
@@ -101,13 +97,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   private final Set<Project> myTestProjects = new THashSet<Project>();
 
-  private final MultiMap<Project, Pair<VirtualFile, StateStorage>> myChangedProjectFiles = MultiMap.createSet();
+  private final MultiMap<Project, Pair<VirtualFile, StateStorage>> myChangedProjectFiles = MultiMap.createWeakSet(); //guarded by myChangedProjectFiles
   private final SingleAlarm myChangedFilesAlarm;
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
 
   private final ProgressManager myProgressManager;
-  private volatile boolean myDefaultProjectWasDisposed = false;
+  private volatile boolean myDefaultProjectWasDisposed;
 
   private final Runnable restartApplicationOrReloadProjectTask = new Runnable() {
     @Override
@@ -119,7 +115,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   };
 
   @NotNull
-  private static List<ProjectManagerListener> getListeners(Project project) {
+  private static List<ProjectManagerListener> getListeners(@NotNull Project project) {
     List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (array == null) return Collections.emptyList();
     return array;
@@ -222,7 +218,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     }
   }
 
-  public static int TEST_PROJECTS_CREATED = 0;
+  public static int TEST_PROJECTS_CREATED;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
   private static final int MAX_LEAKY_PROJECTS = 42;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
@@ -234,7 +230,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @Nullable
-  public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy,
+  public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy,
                             boolean optimiseTestLoadSpeed) {
     filePath = toCanonicalName(filePath);
 
@@ -285,7 +281,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @NonNls
-  private static String message(Throwable e) {
+  @NotNull
+  private static String message(@NotNull Throwable e) {
     String message = e.getMessage();
     if (message != null) return message;
     message = e.getLocalizedMessage();
@@ -336,7 +333,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
                      : new ProjectImpl(this, new File(filePath).getAbsolutePath(), isOptimiseTestLoadSpeed, projectName);
   }
 
-  private static void scheduleDispose(final ProjectImpl project) {
+  private static void scheduleDispose(@NotNull final ProjectImpl project) {
     if (project.isDefault()) {
       return;
     }
@@ -442,7 +439,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @Override
-  public boolean openProject(final Project project) {
+  public boolean openProject(@NotNull final Project project) {
     if (isLight(project)) {
       throw new AssertionError("must not open light project");
     }
@@ -533,7 +530,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
-  private static void waitForFileWatcher(ProgressIndicator indicator) {
+  private static void waitForFileWatcher(@NotNull ProgressIndicator indicator) {
     LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!(fs instanceof LocalFileSystemImpl)) return;
 
@@ -582,7 +579,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
    */
   @Override
   @Nullable
-  public Project convertAndLoadProject(String filePath) throws IOException {
+  public Project convertAndLoadProject(@NotNull String filePath) throws IOException {
     final String fp = toCanonicalName(filePath);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
     if (conversionResult.openingIsCanceled()) {
@@ -696,9 +693,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     }
 
     Collection<Pair<VirtualFile, StateStorage>> causes = new SmartList<Pair<VirtualFile, StateStorage>>();
-    Collection<Pair<VirtualFile, StateStorage>> changes;
     synchronized (myChangedProjectFiles) {
-      changes = myChangedProjectFiles.remove(project);
+      Collection<Pair<VirtualFile, StateStorage>> changes = myChangedProjectFiles.remove(project);
       if (!ContainerUtil.isEmpty(changes)) {
         for (Pair<VirtualFile, StateStorage> change : changes) {
           causes.add(change);
@@ -739,6 +735,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     }
   }
 
+  @NotNull
   @Override
   public Collection<Project> closeTestProject(@NotNull Project project) {
     synchronized (myOpenProjects) {
@@ -769,7 +766,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       myChangedApplicationFiles.add(Pair.create(file, storage));
     }
     else {
-      myChangedProjectFiles.putValue(project, Pair.create(file, storage));
+      synchronized (myChangedProjectFiles) {
+        myChangedProjectFiles.putValue(project, Pair.create(file, storage));
+      }
     }
 
     if (storage instanceof StateStorageBase) {
@@ -783,7 +782,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @Override
   public void reloadProject(@NotNull Project project) {
-    myChangedProjectFiles.remove(project);
+    synchronized (myChangedProjectFiles) {
+      myChangedProjectFiles.remove(project);
+    }
     doReloadProject(project);
   }
 
@@ -847,7 +848,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
             myTestProjects.remove(project);
           }
 
-          myChangedProjectFiles.remove(project);
+          synchronized (myChangedProjectFiles) {
+            myChangedProjectFiles.remove(project);
+          }
 
           fireProjectClosed(project);
 
@@ -864,6 +867,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     return true;
   }
 
+  @TestOnly
   public static boolean isLight(@NotNull Project project) {
     return ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("light_temp_");
   }
@@ -873,7 +877,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     return closeProject(project, true, true, true);
   }
 
-  private void fireProjectClosing(Project project) {
+  private void fireProjectClosing(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: fireProjectClosing()");
     }
@@ -928,7 +932,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     LOG.assertTrue(removed);
   }
 
-  private void fireProjectOpened(Project project) {
+  private void fireProjectOpened(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }
@@ -943,7 +947,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     }
   }
 
-  private void fireProjectClosed(Project project) {
+  private void fireProjectClosed(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectClosed");
     }
@@ -959,7 +963,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @Override
-  public boolean canClose(Project project) {
+  public boolean canClose(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: canClose()");
     }
@@ -1057,7 +1061,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     private Project myProject;
     public VirtualFile[] myFiles;
 
-    public UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
+    public UnableToSaveProjectNotification(@NotNull final Project project, @NotNull VirtualFile[] readOnlyFiles) {
       super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
                                                            " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR, new NotificationListener() {
         @Override

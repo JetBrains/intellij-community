@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import javax.swing.tree.TreePath;
+import java.util.Collection;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,7 +30,8 @@ public interface EditableTreeModel {
    */
   TreePath addNode(TreePath parentOrNeighbour);
 
-  void removeNode(TreePath parent);
+  void removeNode(TreePath path);
+  void removeNodes(Collection<TreePath> path);
 
   void moveNodeTo(TreePath parentOrNeighbour);
 }
