@@ -312,6 +312,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
 
     @Override
     public void rootsChanged() {
+      resetVersionString();
       if (myListeners.isEmpty()) {
         return;
       }
