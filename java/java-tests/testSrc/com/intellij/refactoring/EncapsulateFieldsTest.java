@@ -25,16 +25,11 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDescriptor;
-import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor;
-import com.intellij.refactoring.encapsulateFields.FieldDescriptor;
-import com.intellij.refactoring.encapsulateFields.FieldDescriptorImpl;
+import com.intellij.refactoring.encapsulateFields.*;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +77,15 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
       assertNotNull("Tested class not found", aClass);
       final PsiField field = aClass.findFieldByName("i", false);
       assertNotNull(field);
-      doTest(aClass, field, null, true, true);
+      doTest(aClass, null, true, true, field);
+    });
+  }
+
+  public void testFilterEnumConstants() throws Exception {
+    doTest((rootDir, rootAfter) -> {
+      final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
+      assertNotNull("Tested class not found", aClass);
+      doTest(aClass, null, true, true, new JavaEncapsulateFieldHelper().getApplicableFields(aClass));
     });
   }
 
@@ -109,28 +112,32 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
       assertNotNull("Tested class not found", aClass);
 
 
-      doTest(aClass, aClass.findFieldByName(fieldName, false), conflicts, true, true);
+      doTest(aClass, conflicts, true, true, aClass.findFieldByName(fieldName, false));
     });
   }
 
 
   private static void doTest(final PsiClass aClass,
-                             final PsiField field,
                              final String conflicts,
                              final boolean generateGetters,
-                             final boolean generateSetters) {
+                             final boolean generateSetters,
+                             final PsiField... fields) {
     try {
       final Project project = aClass.getProject();
       EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, new EncapsulateFieldsDescriptor() {
         @Override
         public FieldDescriptor[] getSelectedFields() {
-          return new FieldDescriptor[]{new FieldDescriptorImpl(
-            field,
-            GenerateMembersUtil.suggestGetterName(field),
-            GenerateMembersUtil.suggestSetterName(field),
-            isToEncapsulateGet() ? GenerateMembersUtil.generateGetterPrototype(field) : null,
-            isToEncapsulateSet() ? GenerateMembersUtil.generateSetterPrototype(field) : null
-          )};
+          final FieldDescriptor[] descriptors = new FieldDescriptor[fields.length];
+          for (int i = 0; i < fields.length; i++) {
+            descriptors[i] = new FieldDescriptorImpl(
+              fields[i],
+              GenerateMembersUtil.suggestGetterName(fields[i]),
+              GenerateMembersUtil.suggestSetterName(fields[i]),
+              isToEncapsulateGet() ? GenerateMembersUtil.generateGetterPrototype(fields[i]) : null,
+              isToEncapsulateSet() ? GenerateMembersUtil.generateSetterPrototype(fields[i]) : null
+            );
+          }
+          return descriptors;
         }
 
         @Override

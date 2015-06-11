@@ -17,6 +17,7 @@ package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -25,9 +26,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -307,7 +311,13 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   @NotNull
   @Override
   public PsiField[] getApplicableFields(@NotNull PsiClass aClass) {
-    return aClass.getFields();
+    final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), new Condition<PsiField>() {
+      @Override
+      public boolean value(PsiField field) {
+        return !(field instanceof PsiEnumConstant);
+      }
+    });
+    return fields.toArray(new PsiField[fields.size()]);
   }
 
   @Override
