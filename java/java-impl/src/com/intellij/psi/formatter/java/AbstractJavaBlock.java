@@ -176,7 +176,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (isStatement(child, child.getTreeParent())) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    if (child instanceof PsiComment &&
+    if (isBuildInjectedBlocks() &&
+        child instanceof PsiComment &&
         child instanceof PsiLanguageInjectionHost &&
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings);

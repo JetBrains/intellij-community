@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.autodetect;
+package com.intellij.psi.formatter.common;
 
 import com.intellij.formatting.Block;
 import com.intellij.openapi.editor.Document;
@@ -91,6 +91,11 @@ public class NewLineBlocksIterator implements Iterator<Block> {
   }
 
   private void pushAll(Block current) {
+    if (current instanceof AbstractBlock) {
+      //building blocks as fast as possible
+      ((AbstractBlock)current).setBuildInjectedBlocks(false);
+    }
+
     List<Block> blocks = current.getSubBlocks();
     Collections.reverse(blocks);
     for (Block block : blocks) {
