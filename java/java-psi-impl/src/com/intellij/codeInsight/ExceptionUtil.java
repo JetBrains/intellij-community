@@ -336,7 +336,8 @@ public class ExceptionUtil {
     final JavaResolveResult resolveResult = methodReferenceExpression.advancedResolve(false);
     final PsiElement resolve = resolveResult.getElement();
     if (resolve instanceof PsiMethod) {
-      return getUnhandledExceptions((PsiMethod)resolve, methodReferenceExpression, topElement, resolveResult.getSubstitutor());
+      final PsiElement referenceNameElement = methodReferenceExpression.getReferenceNameElement();
+      return getUnhandledExceptions((PsiMethod)resolve, referenceNameElement, topElement, resolveResult.getSubstitutor());
     }
     return Collections.emptyList();
   }
@@ -667,12 +668,9 @@ public class ExceptionUtil {
       // like in void f() throws XXX { new AA(methodThrowingXXX()) { ... }; }
       return parent instanceof PsiAnonymousClass && isHandled(parent, exceptionType, topElement);
     }
-    else if (parent instanceof PsiLambdaExpression) {
-      final PsiType interfaceType = ((PsiLambdaExpression)parent).getFunctionalInterfaceType();
-      return isDeclaredBySAMMethod(exceptionType, interfaceType);
-    }
-    else if (element instanceof PsiMethodReferenceExpression) {
-      final PsiType interfaceType = ((PsiMethodReferenceExpression)element).getFunctionalInterfaceType();
+    else if (parent instanceof PsiLambdaExpression ||
+             parent instanceof PsiMethodReferenceExpression && element == ((PsiMethodReferenceExpression)parent).getReferenceNameElement()) {
+      final PsiType interfaceType = ((PsiFunctionalExpression)parent).getFunctionalInterfaceType();
       return isDeclaredBySAMMethod(exceptionType, interfaceType);
     }
     else if (parent instanceof PsiClassInitializer) {
