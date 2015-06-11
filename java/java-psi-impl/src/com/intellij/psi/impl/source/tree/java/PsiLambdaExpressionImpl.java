@@ -272,6 +272,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   @Nullable
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Nodes.AnonymousClass;
+    return AllIcons.Nodes.Function;
   }
 }
