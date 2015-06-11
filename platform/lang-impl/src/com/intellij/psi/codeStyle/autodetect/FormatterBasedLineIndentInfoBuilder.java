@@ -20,6 +20,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -83,6 +84,9 @@ public class FormatterBasedLineIndentInfoBuilder {
     int currentLine = 0;
     while (newLineBlocksIterator.hasNext() && currentLine < MAX_NEW_LINE_BLOCKS_TO_PROCESS) {
       Block next = newLineBlocksIterator.next();
+      if (next instanceof ASTBlock && ((ASTBlock)next).getNode() instanceof PsiComment) {
+        continue;
+      }
       newLineBlocks.add(next);
       currentLine++;
     }
