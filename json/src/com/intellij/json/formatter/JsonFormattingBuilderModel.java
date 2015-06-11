@@ -37,13 +37,32 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
     final int spacesBeforeComma = commonSettings.SPACE_BEFORE_COMMA ? 1 : 0;
     final int spacesBeforeColon = jsonSettings.SPACE_BEFORE_COLON ? 1 : 0;
     final int spacesAfterColon = jsonSettings.SPACE_AFTER_COLON ? 1 : 0;
+    final int spacesWithinBraces = commonSettings.SPACE_WITHIN_BRACES ? 1 : 0;
+    final int spacesWithinBrackets = commonSettings.SPACE_WITHIN_BRACES ? 1 : 0;
 
-    return new SpacingBuilder(settings, JsonLanguage.INSTANCE)
-      .before(COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
+    final SpacingBuilder builder = new SpacingBuilder(settings, JsonLanguage.INSTANCE).before(COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
       .after(COLON).spacing(spacesAfterColon, spacesAfterColon, 0, false, 0)
-      .withinPair(L_BRACKET, R_BRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS, jsonSettings.KEEP_BRACKETS_ON_SEPARATE_LINES)
-      .withinPair(L_CURLY, R_CURLY).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS, jsonSettings.KEEP_BRACES_ON_SEPARATE_LINES)
       .before(COMMA).spacing(spacesBeforeComma, spacesBeforeComma, 0, false, 0)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
+
+    if (jsonSettings.OBJECT_BRACES_STYLE == JsonCodeStyleSettings.BRACES_STYLE_ON_SEPARATE_LINES) {
+      builder.withinPair(L_CURLY, R_CURLY).parentDependentLFSpacing(spacesWithinBraces, spacesWithinBraces,
+                                                                    commonSettings.KEEP_LINE_BREAKS,
+                                                                    commonSettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else {
+      builder.withinPair(L_CURLY, R_CURLY).spacing(spacesWithinBraces, spacesWithinBraces, 0, false, 0);
+    }
+
+    if (jsonSettings.ARRAY_BRACKETS_STYLE == JsonCodeStyleSettings.BRACES_STYLE_ON_SEPARATE_LINES) {
+      builder.withinPair(L_BRACKET, R_BRACKET).parentDependentLFSpacing(spacesWithinBrackets, spacesWithinBrackets,
+                                                                        commonSettings.KEEP_LINE_BREAKS,
+                                                                        commonSettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else {
+      builder.withinPair(L_BRACKET, R_BRACKET).spacing(spacesWithinBrackets, spacesWithinBrackets, 0, false, 0);
+    }
+
+    return builder;
   }
 }

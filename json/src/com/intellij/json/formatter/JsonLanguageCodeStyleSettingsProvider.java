@@ -54,19 +54,11 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JsonCodeStyleSettings.class,
-                                "KEEP_BRACKETS_ON_SEPARATE_LINES",
-                                "Place brackets on their own lines",
-                                "Arrays");
-
-      consumer.showCustomOption(JsonCodeStyleSettings.class,
-                                "ALIGN_ARRAY_ELEMENTS",
-                                "Align array elements",
-                                "Arrays");
-
-      consumer.showCustomOption(JsonCodeStyleSettings.class,
-                                "ALIGN_CLOSING_BRACKET",
-                                "Align closing bracket with array elements",
-                                "Arrays");
+                                "ARRAY_BRACKETS_STYLE",
+                                "Brackets placement",
+                                "Arrays",
+                                JsonCodeStyleSettings.BRACE_STYLE_NAMES,
+                                JsonCodeStyleSettings.BRACE_STYLE_VALUES);
 
       // Object settings
       consumer.showCustomOption(JsonCodeStyleSettings.class,
@@ -77,19 +69,11 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JsonCodeStyleSettings.class,
-                                "KEEP_BRACES_ON_SEPARATE_LINES",
-                                "Place braces on their own lines",
-                                "Objects");
-
-      consumer.showCustomOption(JsonCodeStyleSettings.class,
-                                "ALIGN_PROPERTIES",
-                                "Align properties",
-                                "Objects");
-
-      consumer.showCustomOption(JsonCodeStyleSettings.class,
-                                "ALIGN_CLOSING_BRACE",
-                                "Align closing brace with properties",
-                                "Objects");
+                                "OBJECT_BRACES_STYLE",
+                                "Braces placement",
+                                "Objects",
+                                JsonCodeStyleSettings.BRACE_STYLE_NAMES,
+                                JsonCodeStyleSettings.BRACE_STYLE_VALUES);
     }
   }
 

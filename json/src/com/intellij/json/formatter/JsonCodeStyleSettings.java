@@ -16,51 +16,6 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   public static int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
   public static int ALIGN_PROPERTY_ON_COLON = PropertyAlignment.ALIGN_ON_COLON.getId();
 
-  public boolean SPACE_AFTER_COLON = true;
-  public boolean SPACE_BEFORE_COLON = false;
-
-  // TODO: check whether it's possible to migrate CustomCodeStyleSettings to newer com.intellij.util.xmlb.XmlSerializer
-  /**
-   * Contains value of {@link com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment#getId()}
-   *
-   * @see #DO_NOT_ALIGN_PROPERTY
-   * @see #ALIGN_PROPERTY_ON_VALUE
-   * @see #ALIGN_PROPERTY_ON_COLON
-   */
-  public int PROPERTY_ALIGNMENT = PropertyAlignment.DO_NOT_ALIGN.getId();
-
-  public int OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
-  /**
-   * Keep braces on their own lines if containing object spans more than one line.
-   * Internally {@link com.intellij.formatting.DependentSpacingRule} is used to achieve that.
-   * <h2>Example</h2>
-   * <pre>
-   *   {"foo": 1,
-   *    "bar": {"baz": null}}
-   * </pre>
-   * will be transformed to
-   * <pre>
-   *   {
-   *     "foo": 1,
-   *     "bar": {"baz": null}
-   *   }
-   * </pre>
-   */
-  public boolean KEEP_BRACES_ON_SEPARATE_LINES = true;
-  public boolean ALIGN_PROPERTIES = false;
-  /**
-   * Align outstanding closing brace with object properties.
-   * <h2>Example</h2>
-   * <pre>
-   *   {"foo": "bar"
-   *    }
-   * </pre>
-   */
-  public boolean ALIGN_CLOSING_BRACE = false;
-
-  // This was default policy for array elements wrapping in JavaScript's JSON.
-  // CHOP_DOWN_IF_LONG seems more appropriate however for short arrays.
-  public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
   /**
    * Keep brackets on their own lines if containing object spans more than one line.
    * Internally {@link com.intellij.formatting.DependentSpacingRule} is used to achieve that.
@@ -79,18 +34,56 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
    *   ]
    * </pre>
    */
-  public boolean KEEP_BRACKETS_ON_SEPARATE_LINES = true;
-  public boolean ALIGN_ARRAY_ELEMENTS = false;
+  public static int BRACES_STYLE_ON_SEPARATE_LINES = 0;
   /**
-   * Align outstanding closing bracket with array elements.
+   * Lisp-style braces placement where braces "stick" to preceding/following elements.
    * <h2>Example</h2>
    * <pre>
-   *   [1,
-   *    2
-   *    ]
+   *   [
+   *    "foo",
+   *    "bar",
+   *    [
+   *      "baz"]]
+   * </pre>
+   * will be transformed to
+   * <pre>
+   *   ["foo",
+   *    "bar",
+   *    ["baz"]]
    * </pre>
    */
-  public boolean ALIGN_CLOSING_BRACKET = false;
+  public static int BRACES_STYLE_ON_SAME_LINE = 1;
+
+  public static int[] BRACE_STYLE_VALUES = {
+    BRACES_STYLE_ON_SEPARATE_LINES,
+    BRACES_STYLE_ON_SAME_LINE
+  };
+
+  public static String[] BRACE_STYLE_NAMES = {
+    "On separate lines",
+    "On the same lines"
+  };
+
+  public boolean SPACE_AFTER_COLON = true;
+  public boolean SPACE_BEFORE_COLON = false;
+
+  // TODO: check whether it's possible to migrate CustomCodeStyleSettings to newer com.intellij.util.xmlb.XmlSerializer
+  /**
+   * Contains value of {@link JsonCodeStyleSettings.PropertyAlignment#getId()}
+   *
+   * @see #DO_NOT_ALIGN_PROPERTY
+   * @see #ALIGN_PROPERTY_ON_VALUE
+   * @see #ALIGN_PROPERTY_ON_COLON
+   */
+  public int PROPERTY_ALIGNMENT = PropertyAlignment.DO_NOT_ALIGN.getId();
+
+  public int OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+  // This was default policy for array elements wrapping in JavaScript's JSON.
+  // CHOP_DOWN_IF_LONG seems more appropriate however for short arrays.
+  public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+
+  public int OBJECT_BRACES_STYLE = BRACES_STYLE_ON_SEPARATE_LINES;
+  public int ARRAY_BRACKETS_STYLE = BRACES_STYLE_ON_SEPARATE_LINES;
 
   public JsonCodeStyleSettings(CodeStyleSettings container) {
     super(JsonLanguage.INSTANCE.getID(), container);

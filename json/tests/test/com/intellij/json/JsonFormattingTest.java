@@ -98,12 +98,8 @@ public class JsonFormattingTest extends FormatterTestCase {
   // IDEA-139848
   public void testItemsAlignmentAndAlternativeBracesPlacement() throws Exception {
     withPreservedSettings(() -> {
-      getCustomSettings().KEEP_BRACES_ON_SEPARATE_LINES = false;
-      getCustomSettings().ALIGN_PROPERTIES = true;
-      getCustomSettings().ALIGN_CLOSING_BRACE = true;
-      getCustomSettings().KEEP_BRACKETS_ON_SEPARATE_LINES = false;
-      getCustomSettings().ALIGN_ARRAY_ELEMENTS = true;
-      getCustomSettings().ALIGN_CLOSING_BRACKET = true;
+      getCustomSettings().OBJECT_BRACES_STYLE = JsonCodeStyleSettings.BRACES_STYLE_ON_SAME_LINE;
+      getCustomSettings().ARRAY_BRACKETS_STYLE = JsonCodeStyleSettings.BRACES_STYLE_ON_SAME_LINE;
       doTest();
     });
   }

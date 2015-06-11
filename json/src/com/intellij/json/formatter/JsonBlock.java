@@ -137,14 +137,22 @@ public class JsonBlock implements ASTBlock {
         }
       }
       else if (hasElementType(childNode, JSON_CLOSE_BRACES)) {
-        // It's better to align close brace/bracket with other items in container, than to leave it floating
-        if (alignContainerClosingBrace(myNode)) {
-          alignment = myChildAlignment;
+        // Hack to align closing brace on enter in cases like the following:
+        // {"foo": "bar",<caret/>}
+        if (alignContainerItem(myNode)) {
+          ASTNode prevNode = childNode;
+          do {
+            prevNode = prevNode.getTreePrev();
+          }
+          while (prevNode != null && isWhitespaceOrEmpty(prevNode));
+          if (prevNode != null && hasElementType(prevNode, COMMA)) {
+            alignment = myChildAlignment;
+          }
         }
       }
     }
     // Handle properties alignment
-    else if (hasElementType(myNode, PROPERTY) ) {
+    else if (hasElementType(myNode, PROPERTY)) {
       assert myParent != null && myParent.myPropertyValueAlignment != null;
       if (hasElementType(childNode, COLON) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_COLON) {
         alignment = myParent.myPropertyValueAlignment;
@@ -218,24 +226,12 @@ public class JsonBlock implements ASTBlock {
   private boolean alignContainerItem(@NotNull ASTNode containerNode) {
     assert hasElementType(containerNode, JSON_CONTAINERS);
     if (hasElementType(containerNode, OBJECT)) {
-      return getCustomSettings().ALIGN_PROPERTIES;
+      return getCustomSettings().OBJECT_BRACES_STYLE == JsonCodeStyleSettings.BRACES_STYLE_ON_SAME_LINE;
     }
     if (hasElementType(containerNode, ARRAY)) {
-      return getCustomSettings().ALIGN_ARRAY_ELEMENTS;
+      return getCustomSettings().ARRAY_BRACKETS_STYLE == JsonCodeStyleSettings.BRACES_STYLE_ON_SAME_LINE;
     }
     return false;
-  }
-
-  private boolean alignContainerClosingBrace(@NotNull ASTNode containerNode) {
-    assert hasElementType(containerNode, JSON_CONTAINERS);
-    if (hasElementType(containerNode, OBJECT)) {
-      return !containerNode.getPsi(JsonObject.class).getPropertyList().isEmpty() && getCustomSettings().ALIGN_CLOSING_BRACE;
-    }
-    if (hasElementType(containerNode, ARRAY)) {
-      return !containerNode.getPsi(JsonArray.class).getValueList().isEmpty() && getCustomSettings().ALIGN_CLOSING_BRACKET;
-    }
-    return false;
-
   }
 
   private static boolean isWhitespaceOrEmpty(ASTNode node) {
