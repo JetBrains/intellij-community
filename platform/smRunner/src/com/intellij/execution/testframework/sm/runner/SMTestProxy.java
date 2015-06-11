@@ -146,7 +146,7 @@ public class SMTestProxy extends AbstractTestProxy {
     final boolean canCacheErrors = !myState.isInProgress();
     // calculate
     final boolean hasErrors = calcHasErrors();
-    if (canCacheErrors) {
+    if (canCacheErrors || hasErrors) {
       myHasCriticalErrors = hasErrors;
       myHasErrorsCached = true;
     }
