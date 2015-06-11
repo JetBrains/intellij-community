@@ -61,7 +61,7 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
     return null;
   }
 
-  private static class AddNewlineQuickFix extends LocalQuickFixOnPsiElement {
+  private static class AddNewlineQuickFix extends AbstractManifestQuickFix {
     private AddNewlineQuickFix(Section section) {
       super(section);
     }
@@ -70,12 +70,6 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
     @Override
     public String getText() {
       return ManifestBundle.message("inspection.newline.fix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return ManifestBundle.message("inspection.group");
     }
 
     @Override
