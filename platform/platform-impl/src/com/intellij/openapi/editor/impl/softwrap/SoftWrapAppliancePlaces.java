@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,5 +25,5 @@ package com.intellij.openapi.editor.impl.softwrap;
  * @since 9/30/10 7:32 PM
  */
 public enum SoftWrapAppliancePlaces {
-  MAIN_EDITOR, CONSOLE, VCS_DIFF
+  MAIN_EDITOR, CONSOLE
 }

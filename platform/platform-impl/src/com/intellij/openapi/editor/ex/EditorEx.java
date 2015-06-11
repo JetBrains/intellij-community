@@ -261,11 +261,13 @@ public interface EditorEx extends Editor {
   /**
    * We often re-use the logic encapsulated at the editor. For example, every time we show editor fragment (folding, preview etc) we
    * create a dedicated graphics object and ask the editor to paint into it.
-   * <p/>
+   * <p>
    * The thing is that the editor itself may change its state if any postponed operation is triggered by the painting request
    * (e.g. soft wraps recalculation is triggered by the paint request and newly calculated soft wraps cause caret to change its position).
-   * <p/>
+   * <p>
    * This method allows to inform the editor that all subsequent painting request should not change the editor state.
+   * <p>
+   * In 'pure painting mode' editor also behaves as if soft wraps were not enabled.
    *
    * @param enabled  'pure painting mode' status to use
    */

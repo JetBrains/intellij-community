@@ -83,7 +83,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    */
   private final List<TextRange> myDeferredFoldRegions = new ArrayList<TextRange>();
 
-  private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
   private final SoftWrapsStorage                   myStorage;
   private       SoftWrapPainter                    myPainter;
@@ -138,7 +137,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myEditorTextRepresentationHelper = new DefaultEditorTextRepresentationHelper(editor);
     myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage);
     myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper);
-    myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
     myVisualSizeManager = new SoftWrapAwareVisualSizeManager(myPainter);
 
     myApplianceManager.addListener(myVisualSizeManager);
@@ -434,8 +432,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * @return      <code>true</code> if soft wraps-aware processing should be used; <code>false</code> otherwise
    */
   private boolean prepareToMapping() {
-    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0
-                             && myFoldBasedApplianceStrategy.processSoftWraps();
+    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0;
 
     if (!useSoftWraps) {
       return false;
@@ -534,10 +531,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     
     myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
     caretModel.moveToVisualPosition(visualCaretPosition);
-  }
-
-  public void setPlace(@NotNull SoftWrapAppliancePlaces place) {
-    myFoldBasedApplianceStrategy.setCurrentPlace(place);
   }
 
   @Override
