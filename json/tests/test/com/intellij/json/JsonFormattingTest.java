@@ -99,9 +99,11 @@ public class JsonFormattingTest extends FormatterTestCase {
   public void testItemsAlignmentAndAlternativeBracesPlacement() throws Exception {
     withPreservedSettings(() -> {
       getCustomSettings().KEEP_BRACES_ON_SEPARATE_LINES = false;
+      getCustomSettings().ALIGN_PROPERTIES = true;
+      getCustomSettings().ALIGN_CLOSING_BRACE = true;
       getCustomSettings().KEEP_BRACKETS_ON_SEPARATE_LINES = false;
-      getCustomSettings().OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-      getCustomSettings().ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+      getCustomSettings().ALIGN_ARRAY_ELEMENTS = true;
+      getCustomSettings().ALIGN_CLOSING_BRACKET = true;
       doTest();
     });
   }

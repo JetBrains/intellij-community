@@ -58,6 +58,16 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "Place brackets on their own lines",
                                 "Arrays");
 
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "ALIGN_ARRAY_ELEMENTS",
+                                "Align array elements",
+                                "Arrays");
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "ALIGN_CLOSING_BRACKET",
+                                "Align closing bracket with array elements",
+                                "Arrays");
+
       // Object settings
       consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "OBJECT_WRAPPING",
@@ -69,6 +79,16 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JsonCodeStyleSettings.class,
                                 "KEEP_BRACES_ON_SEPARATE_LINES",
                                 "Place braces on their own lines",
+                                "Objects");
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "ALIGN_PROPERTIES",
+                                "Align properties",
+                                "Objects");
+
+      consumer.showCustomOption(JsonCodeStyleSettings.class,
+                                "ALIGN_CLOSING_BRACE",
+                                "Align closing brace with properties",
                                 "Objects");
     }
   }

@@ -55,11 +55,14 @@ public class JsonEditingTest extends JsonTestCase {
 
   // IDEA-139848
   public void testAlignCaretForAlternativeBracesPlacement() {
+    getCustomCodeStyleSettings().ALIGN_PROPERTIES = true;
     doTest("\n");
   }
 
   // IDEA-139848
   public void testAlignCloseBraceForAlternativeBracePlacement() {
+    getCustomCodeStyleSettings().ALIGN_PROPERTIES = true;
+    getCustomCodeStyleSettings().ALIGN_CLOSING_BRACE = true;
     doTest("\n");
   }
 

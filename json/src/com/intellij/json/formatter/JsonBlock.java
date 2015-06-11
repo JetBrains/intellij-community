@@ -125,7 +125,7 @@ public class JsonBlock implements ASTBlock {
           wrap = myChildWrap;
         }
         indent = Indent.getNormalIndent();
-        if (canUseAlignmentForContainerItem(myNode)) {
+        if (alignContainerItem(myNode)) {
           alignment = myChildAlignment;
         }
       }
@@ -138,7 +138,7 @@ public class JsonBlock implements ASTBlock {
       }
       else if (hasElementType(childNode, JSON_CLOSE_BRACES)) {
         // It's better to align close brace/bracket with other items in container, than to leave it floating
-        if (canUseAlignmentForContainerItem(myNode)) {
+        if (alignContainerClosingBrace(myNode)) {
           alignment = myChildAlignment;
         }
       }
@@ -186,7 +186,7 @@ public class JsonBlock implements ASTBlock {
   @Override
   public ChildAttributes getChildAttributes(int newChildIndex) {
     if (hasElementType(myNode, JSON_CONTAINERS)) {
-      return new ChildAttributes(Indent.getNormalIndent(), canUseAlignmentForContainerItem(myNode) ? myChildAlignment : null);
+      return new ChildAttributes(Indent.getNormalIndent(), alignContainerItem(myNode) ? myChildAlignment : null);
     }
     else if (myNode.getPsi() instanceof PsiFile) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
@@ -215,37 +215,27 @@ public class JsonBlock implements ASTBlock {
     return myNode.getFirstChildNode() == null;
   }
 
-  /**
-   * Use alignment only when it's necessary e.g. it should be used before properties in the following fragment
-   * <pre>
-   *   {"foo": null
-   *    "bar": 42}
-   * </pre>
-   * but not in
-   * <pre>
-   *   {
-   *     "foo": null,
-   *     "bar": 42
-   *   }
-   * </pre>
-   * <p/>
-   * This method is somewhat simplified version of PyBlock#hasHangingIdent.
-   */
-  private static boolean canUseAlignmentForContainerItem(@NotNull ASTNode containerNode) {
+  private boolean alignContainerItem(@NotNull ASTNode containerNode) {
     assert hasElementType(containerNode, JSON_CONTAINERS);
-    // Do not use alignment for empty containers
-    if (hasElementType(containerNode, OBJECT) && containerNode.getPsi(JsonObject.class).getPropertyList().isEmpty()) {
-      return false;
+    if (hasElementType(containerNode, OBJECT)) {
+      return getCustomSettings().ALIGN_PROPERTIES;
     }
-    if (hasElementType(containerNode, ARRAY) && containerNode.getPsi(JsonArray.class).getValueList().isEmpty()) {
-      return false;
-    }
-    final ASTNode firstChild = containerNode.getFirstChildNode();
-    if (hasElementType(firstChild, JSON_OPEN_BRACES)) {
-      final ASTNode secondChild = firstChild.getTreeNext();
-      return !(secondChild != null && hasElementType(secondChild, TokenType.WHITE_SPACE) && secondChild.textContains('\n'));
+    if (hasElementType(containerNode, ARRAY)) {
+      return getCustomSettings().ALIGN_ARRAY_ELEMENTS;
     }
     return false;
+  }
+
+  private boolean alignContainerClosingBrace(@NotNull ASTNode containerNode) {
+    assert hasElementType(containerNode, JSON_CONTAINERS);
+    if (hasElementType(containerNode, OBJECT)) {
+      return !containerNode.getPsi(JsonObject.class).getPropertyList().isEmpty() && getCustomSettings().ALIGN_CLOSING_BRACE;
+    }
+    if (hasElementType(containerNode, ARRAY)) {
+      return !containerNode.getPsi(JsonArray.class).getValueList().isEmpty() && getCustomSettings().ALIGN_CLOSING_BRACKET;
+    }
+    return false;
+
   }
 
   private static boolean isWhitespaceOrEmpty(ASTNode node) {

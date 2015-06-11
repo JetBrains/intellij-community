@@ -30,12 +30,67 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   public int PROPERTY_ALIGNMENT = PropertyAlignment.DO_NOT_ALIGN.getId();
 
   public int OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+  /**
+   * Keep braces on their own lines if containing object spans more than one line.
+   * Internally {@link com.intellij.formatting.DependentSpacingRule} is used to achieve that.
+   * <h2>Example</h2>
+   * <pre>
+   *   {"foo": 1,
+   *    "bar": {"baz": null}}
+   * </pre>
+   * will be transformed to
+   * <pre>
+   *   {
+   *     "foo": 1,
+   *     "bar": {"baz": null}
+   *   }
+   * </pre>
+   */
+  public boolean KEEP_BRACES_ON_SEPARATE_LINES = true;
+  public boolean ALIGN_PROPERTIES = false;
+  /**
+   * Align outstanding closing brace with object properties.
+   * <h2>Example</h2>
+   * <pre>
+   *   {"foo": "bar"
+   *    }
+   * </pre>
+   */
+  public boolean ALIGN_CLOSING_BRACE = false;
+
   // This was default policy for array elements wrapping in JavaScript's JSON.
   // CHOP_DOWN_IF_LONG seems more appropriate however for short arrays.
   public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
-
+  /**
+   * Keep brackets on their own lines if containing object spans more than one line.
+   * Internally {@link com.intellij.formatting.DependentSpacingRule} is used to achieve that.
+   * <h2>Example</h2>
+   * <pre>
+   *   ["foo",
+   *    "bar",
+   *    ["baz"]]
+   * </pre>
+   * will be transformed to
+   * <pre>
+   *   [
+   *     "foo",
+   *     "bar",
+   *     ["baz"]
+   *   ]
+   * </pre>
+   */
   public boolean KEEP_BRACKETS_ON_SEPARATE_LINES = true;
-  public boolean KEEP_BRACES_ON_SEPARATE_LINES = true;
+  public boolean ALIGN_ARRAY_ELEMENTS = false;
+  /**
+   * Align outstanding closing bracket with array elements.
+   * <h2>Example</h2>
+   * <pre>
+   *   [1,
+   *    2
+   *    ]
+   * </pre>
+   */
+  public boolean ALIGN_CLOSING_BRACKET = false;
 
   public JsonCodeStyleSettings(CodeStyleSettings container) {
     super(JsonLanguage.INSTANCE.getID(), container);
