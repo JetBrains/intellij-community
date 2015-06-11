@@ -1,3 +1,5 @@
+package com.jetbrains.edu.learning;
+
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
