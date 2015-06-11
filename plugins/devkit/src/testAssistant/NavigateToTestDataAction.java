@@ -65,7 +65,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   }
 
   @Nullable
-  public static List<String> findTestDataFiles(@NotNull DataContext context) {
+  static List<String> findTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = findTargetMethod(context);
     if (method == null) {
       return null;

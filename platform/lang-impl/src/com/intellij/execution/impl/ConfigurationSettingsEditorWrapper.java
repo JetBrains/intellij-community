@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -44,8 +43,9 @@ import java.util.List;
  */
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
   implements BeforeRunStepsPanel.StepsBeforeRunListener {
-  public static DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
+  public static final DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
   @NonNls private static final String EXPAND_PROPERTY_KEY = "ExpandBeforeRunStepsPanel";
+
   private JPanel myComponentPlace;
   private JPanel myWholePanel;
 
@@ -79,6 +79,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         super.off();
         storeState();
       }
+
       private void storeState() {
         PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()));
       }
@@ -153,7 +154,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   private class MyDataProvider implements DataProvider {
-
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {

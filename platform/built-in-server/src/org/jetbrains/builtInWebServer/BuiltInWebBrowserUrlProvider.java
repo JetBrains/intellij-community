@@ -59,7 +59,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
   }
 
   public static boolean compareAuthority(@Nullable String currentAuthority) {
-    if (currentAuthority == null) {
+    if (StringUtil.isEmpty(currentAuthority)) {
       return false;
     }
 

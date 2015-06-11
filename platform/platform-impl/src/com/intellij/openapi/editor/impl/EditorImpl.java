@@ -1236,13 +1236,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (line == 0 && myPrefixText != null) {
       px -= myPrefixWidthInPixels;
     }
+    if (px < 0) {
+      px = 0;
+    }
 
     int textLength = myDocument.getTextLength();
     LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
     int offset = logicalPositionToOffset(logicalPosition);
     int plainSpaceSize = EditorUtil.getSpaceWidth(Font.PLAIN, this);
 
-    if (offset >= textLength) return new VisualPosition(line, EditorUtil.columnsNumber(p.x, plainSpaceSize));
+    if (offset >= textLength) return new VisualPosition(line, EditorUtil.columnsNumber(px, plainSpaceSize));
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
     // We mark that we're under such circumstances then.
@@ -1260,7 +1263,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         + "to offset %d (end offset). State: %s",
         p, line, line, 0, logicalPosition, offset, line + 1, 0, endLogicalPosition, endOffset, dumpState()
       ));
-      return new VisualPosition(line, EditorUtil.columnsNumber(p.x, plainSpaceSize));
+      return new VisualPosition(line, EditorUtil.columnsNumber(px, plainSpaceSize));
     }
     IterationState state = new IterationState(this, offset, endOffset, false);
 

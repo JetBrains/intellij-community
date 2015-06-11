@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.execution.lineMarker.RunLineMarkerInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +36,14 @@ public class ApplicationRunLineMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null)
-      return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
-    if (element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element))
-      return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
+  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement e) {
+    if (e instanceof PsiIdentifier) {
+      PsiElement element = e.getParent();
+      if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null)
+        return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
+      if (element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element))
+        return new RunLineMarkerInfo(element, ApplicationConfigurationType.getInstance().getIcon(), null);
+    }
     return null;
   }
 

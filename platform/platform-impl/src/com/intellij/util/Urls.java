@@ -141,15 +141,21 @@ public final class Urls {
     }
 
     String authority = StringUtil.nullize(matcher.group(3));
-
     String path = StringUtil.nullize(matcher.group(4));
-    if (path != null) {
-      path = FileUtil.toCanonicalUriPath(path);
+    boolean hasUrlSeparator = !StringUtil.isEmpty(matcher.group(2));
+    if (authority == null) {
+      if (hasUrlSeparator) {
+        authority = "";
+      }
+    }
+    else if (StandardFileSystems.FILE_PROTOCOL.equals(scheme) || !hasUrlSeparator) {
+      path = path == null ? authority : (authority + path);
+      authority = hasUrlSeparator ? "" : null;
     }
 
-    if (authority != null && (StandardFileSystems.FILE_PROTOCOL.equals(scheme) || StringUtil.isEmpty(matcher.group(2)))) {
-      path = path == null ? authority : (authority + path);
-      authority = null;
+    // canonicalize only if authority is not empty or file url - we should not canonicalize URL with unknown scheme (webpack:///./modules/flux-orion-plugin/fluxPlugin.ts)
+    if (path != null && (!StringUtil.isEmpty(authority) || StandardFileSystems.FILE_PROTOCOL.equals(scheme))) {
+      path = FileUtil.toCanonicalUriPath(path);
     }
     return new UrlImpl(scheme, authority, path, matcher.group(5));
   }

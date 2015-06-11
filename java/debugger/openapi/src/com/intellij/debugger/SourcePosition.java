@@ -312,7 +312,7 @@ public abstract class SourcePosition implements Navigatable{
   }
 
   @Nullable
-  public static SourcePosition createFromElement(PsiElement element) {
+  public static SourcePosition createFromElement(@NotNull PsiElement element) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiElement navigationElement = element.getNavigationElement();
     final SmartPsiElementPointer<PsiElement> pointer =
