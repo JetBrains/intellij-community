@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.registry.Registry;
@@ -237,6 +236,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myAnimator.setCurrentTestCase(myTestsRootNode);
+    //ensure that tree built before tests were started is updated
+    myTreeBuilder.updateFromRoot();
 
     // Status line
     myStatusLine.setStatusColor(ColorProgressBar.GREEN);
@@ -326,12 +327,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @Override
   public void onSuiteTreeNodeAdded(SMTestProxy testProxy) {
     myTotalTestCount++;
-    _addTestOrSuite(testProxy);
   }
 
   @Override
   public void onSuiteTreeStarted(SMTestProxy suite) {
-    _addTestOrSuite(suite);
   }
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
