@@ -15,16 +15,8 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="python-ide-community" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module-library" scope="TEST">
-      <library>
-        <CLASSES>
-          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="educational" />
   </component>
 </module>
