@@ -91,9 +91,9 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   // IDEA-138902
-  public void testObjectsWithSingleProperty() throws Exception {
-    withPreservedSettings(this::doTest);
-  }
+  //public void testObjectsWithSingleProperty() throws Exception {
+  //  withPreservedSettings(this::doTest);
+  //}
 
   // IDEA-139848
   public void testItemsAlignmentAndAlternativeBracesPlacement() throws Exception {

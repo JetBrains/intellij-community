@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -120,7 +121,9 @@ public class JsonBlock implements ASTBlock {
       }
       else if (!hasElementType(childNode, JSON_ALL_BRACES)) {
         assert myChildWrap != null;
-        wrap = myChildWrap;
+        if (!FormatterUtil.isPrecededBy(childNode, JSON_OPEN_BRACES)) {
+          wrap = myChildWrap;
+        }
         indent = Indent.getNormalIndent();
         if (canUseAlignmentForContainerItem(myNode)) {
           alignment = myChildAlignment;
