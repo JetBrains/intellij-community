@@ -100,6 +100,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
+  private String myEvalLicenseUrl = "https://www.jetbrains.com/company/useterms.html";
 
   private Rectangle myAboutLogoRect;
 
@@ -172,6 +173,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   private static final String STEPS_PROVIDER = "provider";
+  private static final String ELEMENT_EVALUATION = "evaluation";
+  private static final String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
 
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
@@ -489,6 +492,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   @Override
+  public String getEvalLicenseUrl() {
+    return myEvalLicenseUrl;
+  }
+
+  @Override
   public Rectangle getAboutLogoRect() {
     return myAboutLogoRect;
   }
@@ -764,6 +772,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (tvElement != null) {
       myJetbrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
     }
+
+    Element evaluationElement = parentNode.getChild(ELEMENT_EVALUATION);
+    if (evaluationElement != null) {
+      final String url = evaluationElement.getAttributeValue(ATTRIBUTE_EVAL_LICENSE_URL);
+      if (url != null && !url.isEmpty()) {
+        myEvalLicenseUrl = url;
+      }
+    }
+
   }
 
   private static void setBuildNumber(String apiVersion, String buildNumber) {
