@@ -89,6 +89,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     this(node, wrap, indent, settings, javaSettings, JavaWrapManager.INSTANCE, alignmentStrategy);
   }
 
+  private AbstractJavaBlock(@NotNull ASTNode ignored,
+                            @NotNull CommonCodeStyleSettings commonSettings,
+                            @NotNull JavaCodeStyleSettings javaSettings) {
+    super(ignored, null, null);
+    mySettings = commonSettings;
+    myJavaSettings = javaSettings;
+    myIndentSettings = commonSettings.getIndentOptions();
+    myIndent = null;
+    myWrapManager = JavaWrapManager.INSTANCE;
+    myAlignmentStrategy = AlignmentStrategy.getNullStrategy();
+  }
+
   protected AbstractJavaBlock(@NotNull final ASTNode node,
                               final Wrap wrap,
                               final Indent indent,
@@ -116,33 +128,33 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @NotNull
-  public static Block createJavaBlock(@NotNull ASTNode child,
-                                      @NotNull CommonCodeStyleSettings settings,
-                                      @NotNull JavaCodeStyleSettings javaSettings,
-                                      @Nullable Indent indent,
-                                      @Nullable Wrap wrap,
-                                      Alignment alignment) {
+  public Block createJavaBlock(@NotNull ASTNode child,
+                               @NotNull CommonCodeStyleSettings settings,
+                               @NotNull JavaCodeStyleSettings javaSettings,
+                               @Nullable Indent indent,
+                               @Nullable Wrap wrap,
+                               Alignment alignment) {
     return createJavaBlock(child, settings, javaSettings,indent, wrap, AlignmentStrategy.wrap(alignment));
   }
 
   @NotNull
-  public static Block createJavaBlock(@NotNull ASTNode child,
-                                      @NotNull CommonCodeStyleSettings settings,
-                                      @NotNull JavaCodeStyleSettings javaSettings,
-                                      final Indent indent,
-                                      @Nullable Wrap wrap,
-                                      @NotNull AlignmentStrategy alignmentStrategy) {
+  public Block createJavaBlock(@NotNull ASTNode child,
+                               @NotNull CommonCodeStyleSettings settings,
+                               @NotNull JavaCodeStyleSettings javaSettings,
+                               final Indent indent,
+                               @Nullable Wrap wrap,
+                               @NotNull AlignmentStrategy alignmentStrategy) {
     return createJavaBlock(child, settings, javaSettings, indent, wrap, alignmentStrategy, -1);
   }
 
   @NotNull
-  private static Block createJavaBlock(@NotNull ASTNode child,
-                                       @NotNull CommonCodeStyleSettings settings,
-                                       @NotNull JavaCodeStyleSettings javaSettings,
-                                       @Nullable Indent indent,
-                                       Wrap wrap,
-                                       @NotNull AlignmentStrategy alignmentStrategy,
-                                       int startOffset) {
+  private Block createJavaBlock(@NotNull ASTNode child,
+                                @NotNull CommonCodeStyleSettings settings,
+                                @NotNull JavaCodeStyleSettings javaSettings,
+                                @Nullable Indent indent,
+                                Wrap wrap,
+                                @NotNull AlignmentStrategy alignmentStrategy,
+                                int startOffset) {
     Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)) : indent;
     final IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
@@ -194,12 +206,26 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @NotNull
-  public static Block createJavaBlock(@NotNull ASTNode child,
+  public static Block newJavaBlock(@NotNull ASTNode child,
                                       @NotNull CommonCodeStyleSettings settings,
                                       @NotNull JavaCodeStyleSettings javaSettings) {
-    return createJavaBlock(
-      child, settings, javaSettings, getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)), null, AlignmentStrategy.getNullStrategy()
-    );
+    final Indent indent = getDefaultSubtreeIndent(child, getJavaIndentOptions(settings));
+    return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy());
+  }
+
+  @NotNull
+  public static Block newJavaBlock(@NotNull ASTNode child,
+                                   @NotNull CommonCodeStyleSettings settings,
+                                   @NotNull JavaCodeStyleSettings javaSettings,
+                                   @Nullable Indent indent,
+                                   @Nullable Wrap wrap,
+                                   @NotNull AlignmentStrategy strategy) {
+    return new AbstractJavaBlock(child, settings, javaSettings) {
+      @Override
+      protected List<Block> buildChildren() {
+        return null;
+      }
+    }.createJavaBlock(child, settings, javaSettings, indent, wrap, strategy);
   }
 
   @NotNull

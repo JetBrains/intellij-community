@@ -54,7 +54,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     LOG.assertTrue(fileElement != null, "File element should not be null for " + element);
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     JavaCodeStyleSettings customJavaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    Block block = AbstractJavaBlock.createJavaBlock(fileElement, commonSettings, customJavaSettings);
+    Block block = AbstractJavaBlock.newJavaBlock(fileElement, commonSettings, customJavaSettings);
     FormattingDocumentModelImpl model = FormattingDocumentModelImpl.createOn(element.getContainingFile());
     return new PsiBasedFormatterModelWithShiftIndentInside (element.getContainingFile(), block, model);
   }
