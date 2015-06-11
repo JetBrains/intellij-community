@@ -25,9 +25,9 @@ import java.util.Map;
 @State(
   name = "StudySettings",
   storages = {
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage(
-      id = "others",
-      file = "$PROJECT_CONFIG_DIR$/study_project.xml",
+      file = StoragePathMacros.PROJECT_CONFIG_DIR + "/study_project.xml",
       scheme = StorageScheme.DIRECTORY_BASED
     )}
 )
