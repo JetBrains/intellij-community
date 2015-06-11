@@ -28,6 +28,7 @@ import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 /**
  * @author Eugene Zhuravlev
@@ -112,6 +113,11 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   @Override
   public boolean isValid() {
     return true;
+  }
+
+  @Override
+  protected JavaBreakpointProperties getProperties() {
+    return null;
   }
 
   @Override
