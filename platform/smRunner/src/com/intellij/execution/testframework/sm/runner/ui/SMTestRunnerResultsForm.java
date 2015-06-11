@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPa
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
@@ -535,7 +536,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         myTreeBuilder.updateTestsSubtree(parentSuite);
       }
     };
-    if (myRequests.add(update)) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      update.run();
+    }
+    else if (myRequests.add(update)) {
       myUpdateQueue.addRequest(update, 100);
     }
     myTreeBuilder.repaintWithParents(newTestOrSuite);
