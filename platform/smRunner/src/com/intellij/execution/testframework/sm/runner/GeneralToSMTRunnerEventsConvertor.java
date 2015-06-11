@@ -112,6 +112,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         fireOnTestingFinished();
       }
     });
+    stopEventProcessing();
   }
 
   @Override

@@ -111,6 +111,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         fireOnTestingFinished();
       }
     });
+    stopEventProcessing();
   }
 
   @Override
