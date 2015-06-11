@@ -114,7 +114,7 @@ public class CacheUpdateRunner extends DumbModeTask {
         synchronized (processed) {
           boolean added = processed.add(virtualFile);
           indicator.setFraction(processed.size() / total);
-          if (!added || virtualFile.getLength() > FILE_SIZE_TO_SHOW_THRESHOLD) {
+          if (!added || (virtualFile.isValid() && virtualFile.getLength() > FILE_SIZE_TO_SHOW_THRESHOLD)) {
             indicator.setText2(virtualFile.getPresentableUrl());
             fileNameWasShown = true;
           } else if (fileNameWasShown) {
