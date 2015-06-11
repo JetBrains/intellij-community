@@ -79,6 +79,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     return defaultValue;
   }
 
+  @Nullable
   @Override
   public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;

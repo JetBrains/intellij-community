@@ -58,6 +58,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
@@ -778,5 +779,86 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     res.append(location.method().name());
     return res.toString();
+  }
+
+  private static PsiElement getNextElement(PsiElement element) {
+    PsiElement sibling = element.getNextSibling();
+    if (sibling != null) return sibling;
+    element = element.getParent();
+    if (element != null) return getNextElement(element);
+    return null;
+  }
+
+  public static List<PsiLambdaExpression> collectLambdas(SourcePosition position, final boolean onlyOnTheLine) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiFile file = position.getFile();
+    int line = position.getLine();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null || line >= document.getLineCount()) {
+      return Collections.emptyList();
+    }
+    PsiElement element = position.getElementAt();
+    final TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    do {
+      PsiElement parent = element.getParent();
+      if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
+        break;
+      }
+      element = parent;
+    }
+    while(true);
+
+    final List<PsiLambdaExpression> lambdas = new ArrayList<PsiLambdaExpression>(3);
+    final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        super.visitLambdaExpression(expression);
+        if (!onlyOnTheLine || lineRange.intersects(expression.getTextRange())) {
+          lambdas.add(expression);
+        }
+      }
+    };
+    element.accept(lambdaCollector);
+    // add initial lambda if we're inside already
+    NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+    if (method instanceof PsiLambdaExpression) {
+      lambdas.add((PsiLambdaExpression)method);
+    }
+    for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
+      if (!lineRange.intersects(sibling.getTextRange())) {
+        break;
+      }
+      sibling.accept(lambdaCollector);
+    }
+    return lambdas;
+  }
+
+  @Nullable
+  public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    if (!lineRange.intersects(lambda.getTextRange())) return null;
+    PsiElement body = lambda.getBody();
+    if (body instanceof PsiCodeBlock) {
+      for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
+        if (lineRange.intersects(statement.getTextRange())) {
+          return statement;
+        }
+      }
+    }
+    return body;
+  }
+
+  public static boolean inTheSameMethod(@NotNull SourcePosition pos1, @NotNull SourcePosition pos2) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiElement elem1 = pos1.getElementAt();
+    PsiElement elem2 = pos2.getElementAt();
+    if (elem1 == null) return elem2 == null;
+    if (elem2 != null) {
+      NavigatablePsiElement expectedMethod = PsiTreeUtil.getParentOfType(elem1, PsiMethod.class, PsiLambdaExpression.class);
+      NavigatablePsiElement currentMethod = PsiTreeUtil.getParentOfType(elem2, PsiMethod.class, PsiLambdaExpression.class);
+      return Comparing.equal(expectedMethod, currentMethod);
+    }
+    return false;
   }
 }

@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.java.debugger.breakpoints.properties;
+package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author egor
  */
-public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaLineBreakpointProperties> {
-  private Integer myOffset = null;
-
-  @OptionTag("offset")
-  public Integer getOffset() {
-    return myOffset;
-  }
-
-  public void setOffset(Integer offset) {
-    myOffset = offset;
-  }
+public interface XLineBreakpointVariantsProvider<V extends XLineBreakpointVariant> {
+  @NotNull
+  List<V> computeLineBreakpointVariants(@NotNull Project project, @NotNull XSourcePosition position);
 }

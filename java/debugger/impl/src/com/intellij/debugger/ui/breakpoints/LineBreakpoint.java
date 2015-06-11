@@ -62,6 +62,7 @@ import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -198,12 +199,30 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return false;
   }
 
-  protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
+  protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
     Method method = loc.method();
     if (DebuggerUtils.isSynthetic(method)) {
       return false;
     }
-    return !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
+    boolean res = !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
+    if (!res) return false;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        if (getProperties() instanceof JavaLineBreakpointProperties) {
+          Integer offset = ((JavaLineBreakpointProperties)getProperties()).getOffset();
+          if (offset == null) return true;
+          PsiFile file = getPsiFile();
+          if (file != null) {
+            SourcePosition exactPosition = SourcePosition.createFromOffset(file, offset);
+            SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+            if (position == null) return false;
+            return DebuggerUtilsEx.inTheSameMethod(exactPosition, position);
+          }
+        }
+        return true;
+      }
+    });
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
