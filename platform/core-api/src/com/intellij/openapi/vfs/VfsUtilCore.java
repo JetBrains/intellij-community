@@ -418,7 +418,7 @@ public class VfsUtilCore {
         return prefix + ":///" + suffix;
       }
     }
-    else if (url.charAt(index + 3) == '/' && SystemInfoRt.isWindows && url.regionMatches(0, StandardFileSystems.FILE_PROTOCOL_PREFIX, 0, StandardFileSystems.FILE_PROTOCOL_PREFIX.length())) {
+    else if (SystemInfoRt.isWindows && (index + 3) < url.length() && url.charAt(index + 3) == '/' && url.regionMatches(0, StandardFileSystems.FILE_PROTOCOL_PREFIX, 0, StandardFileSystems.FILE_PROTOCOL_PREFIX.length())) {
       // file:///C:/test/file.js -> file://C:/test/file.js
       for (int i = index + 4; i < url.length(); i++) {
         char c = url.charAt(i);
