@@ -51,7 +51,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
           return element.hasModifierProperty(PsiModifier.PUBLIC)
                  && !element.hasModifierProperty(PsiModifier.STATIC);
         }
-        else if (element instanceof PsiField) {
+        else if (element instanceof PsiField && !(element instanceof PsiEnumConstant)) {
           return element.hasModifierProperty(PsiModifier.FINAL)
                  && element.hasModifierProperty(PsiModifier.STATIC)
                  && element.hasModifierProperty(PsiModifier.PUBLIC);
