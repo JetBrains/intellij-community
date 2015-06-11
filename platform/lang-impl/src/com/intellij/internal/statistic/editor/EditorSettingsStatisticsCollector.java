@@ -63,7 +63,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isWhitespacesShown() && es.isTrailingWhitespacesShown(), false, "showTrailingWhitespace");
     addIfDiffers(set, es.isIndentGuidesShown(), true, "noIndentGuides");
     addIfDiffers(set, es.isSmoothScrolling(), true, "noAnimatedScroll");
-    addIfDiffers(set, es.isDndEnabled(), false, "dragNDrop");
+    addIfDiffers(set, es.isDndEnabled(), true, "noDragNDrop");
     addIfDiffers(set, es.isWheelFontChangeEnabled(), false, "wheelZoom");
     addIfDiffers(set, es.isMouseClickSelectionHonorsCamelWords(), true, "mouseNoCamel");
     addIfDiffers(set, es.isVariableInplaceRenameEnabled(), true, "noInplaceRename");
