@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -153,6 +154,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         getEditor().getSettings().setLineNumbersShown(true);
         getEditor().getSettings().setFoldingOutlineShown(false);
         ((EditorEx)getEditor()).getFoldingModel().setFoldingEnabled(false);
+        ((EditorEx)getEditor()).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.VCS_DIFF); // temporary hack, fixed properly in master branch
 
         add(getEditor().getComponent(), BorderLayout.CENTER);
       }
