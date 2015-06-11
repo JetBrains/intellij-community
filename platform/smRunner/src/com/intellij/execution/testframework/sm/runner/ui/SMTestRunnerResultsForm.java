@@ -27,14 +27,18 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,9 +49,8 @@ import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author: Roman Chernyatchik
@@ -89,6 +92,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
   private boolean myTestsRunning = true;
   private AbstractTestProxy myLastSelected;
+  private Alarm myUpdateQueue;
+  private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
 
   public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
@@ -195,7 +200,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     //TODO always hide root node
     //myTreeView.setRootVisible(false);
-
+    myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     return myTreeView;
   }
 
@@ -236,7 +241,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myAnimator.setCurrentTestCase(myTestsRootNode);
-    //ensure that tree built before tests were started is updated
     myTreeBuilder.updateFromRoot();
 
     // Status line
@@ -524,7 +528,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     assert parentSuite != null;
 
     // Tree
-    myTreeBuilder.updateTestsSubtree(parentSuite);
+    final Update update = new Update(parentSuite) {
+      @Override
+      public void run() {
+        myRequests.remove(this);
+        myTreeBuilder.updateTestsSubtree(parentSuite);
+      }
+    };
+    if (myRequests.add(update)) {
+      myUpdateQueue.addRequest(update, 100);
+    }
     myTreeBuilder.repaintWithParents(newTestOrSuite);
 
     myAnimator.setCurrentTestCase(newTestOrSuite);
