@@ -31,14 +31,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
@@ -116,13 +115,11 @@ public class DissociateResourceBundleAction extends AnAction {
     final PsiElement[] psiElements = event.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (psiElements != null) {
       for (PsiElement element : psiElements) {
-        if (element instanceof PsiFile) {
-          final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)element);
-          if (propertiesFile != null) {
-            final ResourceBundle bundle = propertiesFile.getResourceBundle();
-            if (bundle.getPropertiesFiles().size() > 1) {
-              targetResourceBundles.add(bundle);
-            }
+        final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(element);
+        if (propertiesFile != null) {
+          final ResourceBundle bundle = propertiesFile.getResourceBundle();
+          if (bundle.getPropertiesFiles().size() > 1) {
+            targetResourceBundles.add(bundle);
           }
         }
       }

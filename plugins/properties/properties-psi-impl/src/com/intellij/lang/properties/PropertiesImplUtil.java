@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -120,6 +121,12 @@ public class PropertiesImplUtil extends PropertiesUtil {
   public static PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
     if (file == null) return null;
     return file instanceof PropertiesFile ? (PropertiesFile)file : XmlPropertiesFileImpl.getPropertiesFile(file);
+  }
+
+  @Nullable
+  public static PropertiesFile getPropertiesFile(@Nullable PsiElement element) {
+    if (!(element instanceof PsiFile)) return null;
+    return getPropertiesFile((PsiFile)element);
   }
 
   @NotNull

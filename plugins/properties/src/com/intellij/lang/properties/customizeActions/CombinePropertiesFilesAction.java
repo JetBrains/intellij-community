@@ -32,11 +32,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
@@ -49,7 +48,16 @@ public class CombinePropertiesFilesAction extends AnAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final List<PropertiesFile> propertiesFiles = getPropertiesFiles(e);
+    final List<PropertiesFile> initialPropertiesFiles = getPropertiesFiles(e);
+    final List<PropertiesFile> propertiesFiles = initialPropertiesFiles == null ? new ArrayList<PropertiesFile>()
+                                                                                : new ArrayList<PropertiesFile>(initialPropertiesFiles);
+    final List<ResourceBundle> resourceBundles = getResourceBundles(e);
+    if (resourceBundles != null) {
+      for (ResourceBundle bundle : resourceBundles) {
+        propertiesFiles.addAll(bundle.getPropertiesFiles());
+      }
+    }
+
     final String newBaseName = Messages.showInputDialog(propertiesFiles.get(0).getProject(),
                                                         PropertiesBundle.message("combine.properties.files.prompt.text"),
                                                         PropertiesBundle.message("combine.properties.files.title"),
@@ -58,7 +66,20 @@ public class CombinePropertiesFilesAction extends AnAction {
                                                         new MyInputValidator(propertiesFiles));
     if (newBaseName != null) {
       final Project project = propertiesFiles.get(0).getProject();
-      ResourceBundleManager.getInstance(project).combineToResourceBundle(propertiesFiles, newBaseName);
+
+      final Set<ResourceBundle> uniqueBundlesToDissociate = new HashSet<ResourceBundle>();
+      for (PropertiesFile file : propertiesFiles) {
+        final ResourceBundle resourceBundle = file.getResourceBundle();
+        if (resourceBundle.getPropertiesFiles().size() != 1) {
+          uniqueBundlesToDissociate.add(resourceBundle);
+        }
+      }
+      final ResourceBundleManager resourceBundleManager = ResourceBundleManager.getInstance(project);
+      for (ResourceBundle resourceBundle : uniqueBundlesToDissociate) {
+        resourceBundleManager.dissociateResourceBundle(resourceBundle);
+      }
+
+      resourceBundleManager.combineToResourceBundle(propertiesFiles, newBaseName);
       final ResourceBundle resourceBundle = propertiesFiles.get(0).getResourceBundle();
       FileEditorManager.getInstance(project).openFile(new ResourceBundleAsVirtualFile(resourceBundle), true);
       ProjectView.getInstance(project).refresh();
@@ -67,17 +88,22 @@ public class CombinePropertiesFilesAction extends AnAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    final List<PropertiesFile> propertiesFiles = getPropertiesFiles(e);
-    boolean isAvailable = propertiesFiles != null && propertiesFiles.size() > 1;
-    if (isAvailable) {
-      for (PropertiesFile propertiesFile : propertiesFiles) {
-        if (propertiesFile.getResourceBundle().getPropertiesFiles().size() != 1) {
-          isAvailable = false;
-          break;
-        }
-      }
+    final Collection<PropertiesFile> propertiesFiles = getPropertiesFiles(e);
+    final List<ResourceBundle> resourceBundles = getResourceBundles(e);
+    int elementCount = 0;
+    if (propertiesFiles != null) {
+      elementCount += propertiesFiles.size();
     }
-    e.getPresentation().setVisible(isAvailable);
+    if (resourceBundles != null) {
+      elementCount += resourceBundles.size();
+    }
+    e.getPresentation().setEnabledAndVisible(elementCount > 1);
+  }
+
+  @Nullable
+  private static List<ResourceBundle> getResourceBundles(AnActionEvent e) {
+    final ResourceBundle[] resourceBundles = e.getData(ResourceBundle.ARRAY_DATA_KEY);
+    return resourceBundles == null ? null : ContainerUtil.newArrayList(resourceBundles);
   }
 
   @Nullable
@@ -88,10 +114,7 @@ public class CombinePropertiesFilesAction extends AnAction {
     }
     final List<PropertiesFile> files = new ArrayList<PropertiesFile>(psiElements.length);
     for (PsiElement psiElement : psiElements) {
-      if (!(psiElement instanceof PsiFile)) {
-        return null;
-      }
-      final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)psiElement);
+      final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiElement);
       if (propertiesFile == null) {
         return null;
       }
