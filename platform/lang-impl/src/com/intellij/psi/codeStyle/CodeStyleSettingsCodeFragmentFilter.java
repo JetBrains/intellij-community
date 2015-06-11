@@ -68,7 +68,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     try {
       codeStyleSettingsManager.setTemporarySettings(clonedSettings);
 
-      SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title"));
+      String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
+      SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, StringUtil.capitalizeWords(title, true));
       progressTask.setCancelText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.cancel"));
       CompositeSequentialTask compositeTask = new CompositeSequentialTask(progressTask);
       compositeTask.setProgressText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text"));
