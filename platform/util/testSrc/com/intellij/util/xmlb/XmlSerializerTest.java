@@ -168,6 +168,37 @@ public class XmlSerializerTest extends TestCase {
       bean, new SkipDefaultsSerializationFilter());
   }
 
+  public final static class BeanWithEquals {
+    public String STRING_V = "hello";
+
+    public BeanWithEquals() {
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      // any instance of this class is equal
+      return this == o || (o != null && getClass() == o.getClass());
+    }
+  }
+
+  public static class BeanWithSubBeanWithEquals {
+    public EmptyBeanWithCustomName BEAN1 = new EmptyBeanWithCustomName();
+    public BeanWithEquals BEAN2 = new BeanWithEquals();
+  }
+
+  public void testSubBeanWithEqualsSerializationAndSkipDefaults() {
+    BeanWithSubBeanWithEquals bean = new BeanWithSubBeanWithEquals();
+    SkipDefaultsSerializationFilter filter = new SkipDefaultsSerializationFilter();
+    doSerializerTest(
+      "<BeanWithSubBeanWithEquals />",
+      bean, filter);
+
+    bean.BEAN2.STRING_V = "new";
+    doSerializerTest(
+      "<BeanWithSubBeanWithEquals />",
+      bean, filter);
+  }
+
   public void testNullFieldValue() {
     BeanWithPublicFields bean1 = new BeanWithPublicFields();
 

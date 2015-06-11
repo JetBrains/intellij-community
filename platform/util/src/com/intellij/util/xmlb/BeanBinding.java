@@ -50,7 +50,7 @@ class BeanBinding extends Binding implements MainBinding {
 
   final Class<?> myBeanClass;
 
-  ThreeState hasEqualMethod = ThreeState.UNSURE;
+  ThreeState compareByFields = ThreeState.UNSURE;
 
   public BeanBinding(@NotNull Class<?> beanClass, @Nullable MutableAccessor accessor) {
     super(accessor);
