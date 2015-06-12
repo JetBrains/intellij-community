@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.LevenshteinDistance;
+import com.intellij.util.text.EditDistance;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -46,7 +46,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final LevenshteinDistance metrics = new LevenshteinDistance();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
   private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -244,7 +243,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     List<String> rawSuggestions = restore(transformed.charAt(0), 0, Integer.MAX_VALUE, bundledDictionaries);
     rawSuggestions.addAll(restore(word.charAt(0), 0, Integer.MAX_VALUE, dictionaries));
     for (String rawSuggestion : rawSuggestions) {
-      final int distance = metrics.calculateMetrics(transformed, rawSuggestion);
+      int distance = EditDistance.levenshtein(transformed, rawSuggestion, true);
       suggestions.add(new Suggestion(rawSuggestion, distance));
     }
     List<String> result = new ArrayList<String>();
