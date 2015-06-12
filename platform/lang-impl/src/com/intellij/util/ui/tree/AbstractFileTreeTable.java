@@ -48,7 +48,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public abstract class AbstractFileTreeTable<T> extends TreeTable {
+public class AbstractFileTreeTable<T> extends TreeTable {
   private final MyModel<T> myModel;
   private final Project myProject;
 
@@ -57,7 +57,16 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
                                @NotNull String valueTitle,
                                @NotNull VirtualFileFilter filter,
                                boolean showProjectNode) {
-    super(new MyModel<T>(project, valueClass, valueTitle, filter));
+    this(project, valueClass, valueTitle, filter, showProjectNode, true);
+  }
+
+  public AbstractFileTreeTable(@NotNull Project project,
+                               @NotNull Class<T> valueClass,
+                               @NotNull String valueTitle,
+                               @NotNull VirtualFileFilter filter,
+                               boolean showProjectNode,
+                               boolean filterNonContentFiles) {
+    super(new MyModel<T>(project, valueClass, valueTitle, filterNonContentFiles ? new NonContentFileFilter(project, filter) : filter));
     myProject = project;
 
     //noinspection unchecked
@@ -85,6 +94,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     getTree().setShowsRootHandles(true);
     getTree().setLineStyleAngled();
     getTree().setRootVisible(showProjectNode);
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {
       @Override
       public Component getTreeCellRendererComponent(final JTree tree, final Object value, final boolean sel, final boolean expanded,
@@ -98,7 +108,12 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
         FileNode fileNode = (FileNode)value;
         VirtualFile file = fileNode.getObject();
         setText(fileNode.getParent() instanceof FileNode ? file.getName() : file.getPresentableUrl());
-        setIcon(file.isDirectory() ? PlatformIcons.DIRECTORY_CLOSED_ICON : IconUtil.getIcon(file, 0, null));
+        if (file.isDirectory()) {
+          setIcon(fileIndex.isExcluded(file) ? AllIcons.Modules.ExcludeRoot : PlatformIcons.DIRECTORY_CLOSED_ICON);
+        }
+        else {
+          setIcon(IconUtil.getIcon(file, 0, null));
+        }
         return this;
       }
     });
@@ -444,9 +459,8 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
     @Override
     protected void appendChildrenTo(@NotNull final Collection<ConvenientNode> children) {
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (VirtualFile child : getObject().getChildren()) {
-        if (myFilter.accept(child) && fileIndex.isInContent(child)) {
+        if (myFilter.accept(child)) {
           children.add(new FileNode(child, myProject, myFilter));
         }
       }
