@@ -144,6 +144,9 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
         include(name: "*.*")
       }
     }
+
+    ant.mkdir(dir: "license") // in case the license directory is absent, create it
+
     dir("license") {
       fileset(dir: "${home}/license")
     }
