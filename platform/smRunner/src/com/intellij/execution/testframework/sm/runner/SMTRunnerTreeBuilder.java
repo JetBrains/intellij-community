@@ -44,10 +44,7 @@ public class SMTRunnerTreeBuilder extends AbstractTestTreeBuilder {
   }
 
   public void updateTestsSubtree(final SMTestProxy parentTestProxy) {
-    final AbstractTreeUpdater updater = getUpdater();
-    if (updater != null) {
-      updater.addSubtreeToUpdateByElement(parentTestProxy);
-    }
+    queueUpdateFrom(parentTestProxy, false, true);
   }
 
 

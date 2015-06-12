@@ -96,7 +96,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if (myCreator.tryCreate(getEnteredName()).length == 0) {
+    if (myCreator != null && myCreator.tryCreate(getEnteredName()).length == 0) {
       return;
     }
     super.doOKAction();

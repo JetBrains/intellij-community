@@ -6,6 +6,8 @@
     <projectConfigurable groupId="tools" groupWeight="130" displayName="Terminal" id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
 
     <fileEditorProvider implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
+
+    <remoteServer.CloudTerminalProvider implementation="org.jetbrains.plugins.terminal.cloud.CloudTerminalProviderImpl"/>
   </extensions>
 
   <project-components>

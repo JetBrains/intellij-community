@@ -248,7 +248,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
-    final ArrayList<VariableData> parametersForFields = new ArrayList<VariableData>();
+    final ArrayList<VariableData> parametersForFields = new ArrayList<>();
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(method, parametersForFields);
 
     new MakeMethodStaticProcessor(

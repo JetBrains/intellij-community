@@ -141,6 +141,15 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     }
   }
 
+  public void stopEventProcessing() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myTransferToEDTQueue.drain();
+      }
+    });
+  }
+
 
   protected static <T> boolean isTreeComplete(Collection<T> runningTests, SMTestProxy.SMRootTestProxy rootNode) {
     if (!runningTests.isEmpty()) {

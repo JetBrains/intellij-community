@@ -36,23 +36,11 @@ public class DndMoveTest extends CodeInsightTestCase {
   }
 
   public void testPublicJavaClass() throws Exception {
-    doTest("d", new Computable<PsiElement>() {
-      @Nullable
-      @Override
-      public PsiElement compute() {
-        return getJavaFacade().findClass("d.MyClass");
-      }
-    }, true);
+    doTest("d", () -> getJavaFacade().findClass("d.MyClass"), true);
   }
 
   public void testSecondJavaClass() throws Exception {
-    doTest("d", new Computable<PsiElement>() {
-      @Nullable
-      @Override
-      public PsiElement compute() {
-        return getJavaFacade().findClass("d.Second");
-      }
-    }, false);
+    doTest("d", () -> getJavaFacade().findClass("d.Second"), false);
   }
 
   private void doTest(final String targetDirName, final Computable<PsiElement> source, final boolean expected) throws Exception {

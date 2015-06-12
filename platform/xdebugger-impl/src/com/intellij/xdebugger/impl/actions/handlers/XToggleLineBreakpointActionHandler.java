@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     Set<Integer> processedLines = new HashSet<Integer>();
     for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
       if (processedLines.add(position.getLine())) {
-        XBreakpointUtil.toggleLineBreakpoint(project, position.getFile(), editor, position.getLine(), myTemporary, true);
+        XBreakpointUtil.toggleLineBreakpoint(project, position, editor, myTemporary, true);
       }
     }
   }

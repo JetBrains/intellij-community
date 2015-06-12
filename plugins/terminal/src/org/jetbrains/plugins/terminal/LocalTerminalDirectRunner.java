@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,13 +156,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
-
     private final PtyProcess myProcess;
-    private final ProcessWaitFor myWaitFor;
 
     public PtyProcessHandler(PtyProcess process) {
       myProcess = process;
-      myWaitFor = new ProcessWaitFor(process, this);
     }
 
     @Override
@@ -171,7 +168,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         @Override
         public void startNotified(ProcessEvent event) {
           try {
-            myWaitFor.setTerminationCallback(new Consumer<Integer>() {
+            ProcessWaitFor.attach(myProcess, new Consumer<Integer>() {
               @Override
               public void consume(Integer integer) {
                 notifyProcessTerminated(integer);

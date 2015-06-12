@@ -75,20 +75,17 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   private void doRenameClass(final String className, final String newName) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
-        assertNotNull("Class XX not found", aClass);
+    doTest((rootDir, rootAfter) -> {
+      PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
+      assertNotNull("Class XX not found", aClass);
 
-        final RenameProcessor processor = new RenameProcessor(myProject, aClass, newName, true, true);
-        for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-          processor.addRenamerFactory(factory);
-        }
-        processor.run();
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        FileDocumentManager.getInstance().saveAllDocuments();
+      final RenameProcessor processor = new RenameProcessor(myProject, aClass, newName, true, true);
+      for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+        processor.addRenamerFactory(factory);
       }
+      processor.run();
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments();
     });
   }
 
@@ -101,12 +98,7 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   private void doTest(@NonNls final String qClassName, @NonNls final String newName) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        RenameClassTest.this.performAction(qClassName, newName);
-      }
-    });
+    doTest((rootDir, rootAfter) -> RenameClassTest.this.performAction(qClassName, newName));
   }
 
   private void performAction(String qClassName, String newName) throws Exception {

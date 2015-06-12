@@ -83,7 +83,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
-    final ArrayList<VariableData> parametersForFields = new ArrayList<VariableData>();
+    final ArrayList<VariableData> parametersForFields = new ArrayList<>();
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(aClass, parametersForFields);
 
     new MakeClassStaticProcessor(

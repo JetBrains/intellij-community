@@ -22,17 +22,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.List;
 
 public class EncapsulateFieldsHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler");
@@ -108,8 +108,13 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     }
 
     LOG.assertTrue(aClass != null);
-    final PsiField[] fields = aClass.getFields();
-    if (fields.length == 0) {
+    final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(), new Condition<PsiField>() {
+      @Override
+      public boolean value(PsiField field) {
+        return !(field instanceof PsiEnumConstant);
+      }
+    });
+    if (fields.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, CommonDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate",
                                           REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
       return;

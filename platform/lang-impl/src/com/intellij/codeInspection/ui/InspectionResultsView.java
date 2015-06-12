@@ -130,7 +130,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     myBrowser = new Browser(this);
 
-    mySplitter = new Splitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
+    mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
 
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT | SideBorder.RIGHT));
     mySplitter.setSecondComponent(myBrowser);

@@ -136,7 +136,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
       return elementParent;
     }
     if (elementParent instanceof PsiClass && ((PsiClass)elementParent).getNameIdentifier()==element) {
-      if (((PsiClass)elementParent).isAnnotationType()) {
+      if (((PsiClass)elementParent).isAnnotationType() || ((PsiClass)elementParent).isEnum()) {
         return null;
       }
       return elementParent;

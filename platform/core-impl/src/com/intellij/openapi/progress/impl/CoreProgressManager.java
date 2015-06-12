@@ -64,7 +64,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static volatile boolean thereIsProcessUnderCanceledIndicator;
 
   // active (i.e. which have executeProcessUnderProgress() method running) indicators which are not inherited from StandardProgressIndicator.
-  // for them an extra processing thread (see myCheckCancelledFuture) has to be run to call their non-standard checkCanceled() method
+  // for them an extra processing thread (see myCheckCancelledFuture) has to be run to call their non-standard checkCanceled() method periodically.
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   public CoreProgressManager() {

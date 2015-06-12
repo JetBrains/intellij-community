@@ -22,5 +22,5 @@ import java.util.List;
  */
 public interface LogPipeProvider {
 
-  List<? extends LogPipe> createLogPipes(String deploymentName);
+  List<? extends LogPipeBase> createLogPipes(String deploymentName);
 }

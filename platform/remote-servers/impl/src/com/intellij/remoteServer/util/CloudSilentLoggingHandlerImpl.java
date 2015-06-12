@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
@@ -31,5 +32,15 @@ public class CloudSilentLoggingHandlerImpl implements CloudAgentLoggingHandler {
   @Override
   public LogListener createConsole(String pipeName, OutputStream consoleInput) {
     return LogListener.NULL;
+  }
+
+  @Override
+  public boolean isTtySupported() {
+    return false;
+  }
+
+  @Override
+  public void createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
+
   }
 }

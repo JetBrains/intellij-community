@@ -136,7 +136,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
-  private static TestCase ourTestCase = null;
+  private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
   private static boolean ourHaveShutdownHook;
@@ -253,7 +253,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
-        ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer.toString());
+        ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
         ourPathToKeep = projectFile.getPath();
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
@@ -310,14 +310,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         });
 
         MessageBusConnection connection = ourProject.getMessageBus().connect();
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-          @Override
-          public void beforeRootsChange(ModuleRootEvent event) {
-            /*if (!event.isCausedByFileTypesChange()) {
-              fail("Root modification in LightIdeaTestCase is not allowed.");
-            }*/
-          }
-        });
         connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
           @Override
           public void moduleAdded(@NotNull Project project, @NotNull Module module) {
@@ -372,7 +364,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
           ourApplication.setDataProvider(LightPlatformTestCase.this);
-          SimpleLightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
+          LightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
           doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
           InjectedLanguageManagerImpl.pushInjectors(getProject());
 
@@ -417,7 +409,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     try {
       passed = StartupManagerEx.getInstanceEx(getProject()).startupActivityPassed();
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
 
     }
     assertTrue("open: " + getProject().isOpen() +
@@ -733,7 +725,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * @param fileName - name of the file to create. Extension is used to choose what PSI should be created like java, jsp, aj, xml etc.
    * @param text     - file text.
    * @return dummy psi file.
-   * @throws com.intellij.util.IncorrectOperationException
+   * @throws IncorrectOperationException
    *
    */
   protected static PsiFile createFile(@NonNls String fileName, @NonNls String text) throws IncorrectOperationException {
@@ -788,19 +780,21 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ApplicationManager.getApplication().assertWriteAccessAllowed();
 
       ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
-      VirtualFile projectFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
-      File ioFile = projectFile == null ? null : VfsUtilCore.virtualToIoFile(projectFile);
-      if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
-
-      if (ioFile != null) {
-        File dir = ioFile.getParentFile();
-        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-          FileUtil.delete(dir);
-        }
-        else {
-          FileUtil.delete(ioFile);
+      if (!ourProject.isDisposed()) {
+        VirtualFile projectFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
+        File ioFile = projectFile == null ? null : VfsUtilCore.virtualToIoFile(projectFile);
+        Disposer.dispose(ourProject);
+        if (ioFile != null) {
+          File dir = ioFile.getParentFile();
+          if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+            FileUtil.delete(dir);
+          }
+          else {
+            FileUtil.delete(ioFile);
+          }
         }
       }
+
 
       ProjectManagerEx.getInstanceEx().closeTestProject(ourProject);
       ourProject = null;

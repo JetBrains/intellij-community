@@ -50,34 +50,31 @@ public class RemoveMiddleManTest extends MultiFileTestCase{
   }
 
   private void doTest(final String conflict) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(getProject()));
+    doTest((rootDir, rootAfter) -> {
+      PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(getProject()));
 
-        if (aClass == null) aClass = myJavaFacade.findClass("p.Test", GlobalSearchScope.allScope(getProject()));
-        assertNotNull("Class Test not found", aClass);
+      if (aClass == null) aClass = myJavaFacade.findClass("p.Test", GlobalSearchScope.allScope(getProject()));
+      assertNotNull("Class Test not found", aClass);
 
-        final PsiField field = aClass.findFieldByName("myField", false);
-        final Set<PsiMethod> methods = DelegationUtils.getDelegatingMethodsForField(field);
-        List<MemberInfo> infos = new ArrayList<MemberInfo>();
-        for (PsiMethod method : methods) {
-          final MemberInfo info = new MemberInfo(method);
-          info.setChecked(true);
-          info.setToAbstract(true);
-          infos.add(info);
-        }
-        try {
-          RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos);
-          processor.run();
-          LocalFileSystem.getInstance().refresh(false);
-          FileDocumentManager.getInstance().saveAllDocuments();
-          if (conflict != null) fail("Conflict expected");
-        }
-        catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-          if (conflict == null) throw e;
-          assertEquals(conflict, e.getMessage());
-        }
+      final PsiField field = aClass.findFieldByName("myField", false);
+      final Set<PsiMethod> methods = DelegationUtils.getDelegatingMethodsForField(field);
+      List<MemberInfo> infos = new ArrayList<>();
+      for (PsiMethod method : methods) {
+        final MemberInfo info = new MemberInfo(method);
+        info.setChecked(true);
+        info.setToAbstract(true);
+        infos.add(info);
+      }
+      try {
+        RemoveMiddlemanProcessor processor = new RemoveMiddlemanProcessor(field, infos);
+        processor.run();
+        LocalFileSystem.getInstance().refresh(false);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        if (conflict != null) fail("Conflict expected");
+      }
+      catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+        if (conflict == null) throw e;
+        assertEquals(conflict, e.getMessage());
       }
     });
   }

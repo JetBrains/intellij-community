@@ -222,11 +222,8 @@ public class MoveMembersTest extends MultiFileTestCase {
                       final String defaultVisibility,
                       final int... memberIndices)
     throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility);
-      }
+    doTest((rootDir, rootAfter) -> {
+      MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility);
     }, lowercaseFirstLetter);
   }
 
@@ -237,14 +234,14 @@ public class MoveMembersTest extends MultiFileTestCase {
     assertNotNull("Class " + targetClassName + " not found", targetClass);
 
     PsiElement[] children = sourceClass.getChildren();
-    ArrayList<PsiMember> members = new ArrayList<PsiMember>();
+    ArrayList<PsiMember> members = new ArrayList<>();
     for (PsiElement child : children) {
       if (child instanceof PsiMember) {
         members.add(((PsiMember) child));
       }
     }
 
-    LinkedHashSet<PsiMember> memberSet = new LinkedHashSet<PsiMember>();
+    LinkedHashSet<PsiMember> memberSet = new LinkedHashSet<>();
     for (int index : memberIndices) {
       PsiMember member = members.get(index);
       assertTrue(member.hasModifierProperty(PsiModifier.STATIC));

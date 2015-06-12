@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
@@ -50,7 +52,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Configure code style";
+    return CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
   }
 
   @Nls
@@ -108,7 +110,9 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       myEditor = editor;
       myDocument = editor.getDocument();
 
-      setTitle("Configure Code Style Settings: " + language.getDisplayName());
+
+      String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
+      setTitle(StringUtil.capitalizeWords(title, true) + ": " + language.getDisplayName());
       setOKButtonText("Save");
 
       setInitialLocationCallback(new Computable<Point>() {

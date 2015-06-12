@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -25,7 +24,6 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.List;
 
 public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
@@ -43,7 +41,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "<version>1</version>");
   }
 
-  @Bombed(year = 2014, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testGroupIdCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -60,7 +57,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "org.codehaus.plexus", "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo");
   }
 
-  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testArtifactIdCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -96,7 +92,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "2.0.2");
   }
 
-  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testArtifactWithoutGroupCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -823,7 +818,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
-  @Bombed(year = 2014, month = Calendar.MARCH, day = 25, user = "sergey.evdokimov")
   public void testDocumentationForParameter() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

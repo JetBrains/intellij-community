@@ -124,7 +124,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AnnotationTypeFilter();
     }
 
-    if (JavaCompletionData.DECLARATION_START.accepts(position) ||
+    if (JavaCompletionData.DECLARATION_START.getValue().accepts(position) ||
         JavaCompletionData.isInsideParameterList(position) ||
         psiElement().inside(psiElement(PsiJavaCodeReferenceElement.class).withParent(psiAnnotation())).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);

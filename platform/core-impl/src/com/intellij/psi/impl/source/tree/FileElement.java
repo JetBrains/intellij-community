@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
+  public static final FileElement[] EMPTY_ARRAY = new FileElement[0];
   private volatile CharTable myCharTable = new CharTableImpl();
   private volatile boolean myDetached;
 

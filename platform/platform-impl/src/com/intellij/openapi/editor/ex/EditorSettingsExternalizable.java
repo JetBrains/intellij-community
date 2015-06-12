@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,10 +143,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     for (String placeName : placeNames) {
       try {
         SoftWrapAppliancePlaces place = SoftWrapAppliancePlaces.valueOf(placeName);
-        if (place == SoftWrapAppliancePlaces.VCS_DIFF) {
-          // Don't keep separate setting for vcs diff window for now and let it share the value for main editor.
-          continue;
-        }
         myPlacesToUseSoftWraps.add(place);
       }
       catch (IllegalArgumentException e) {
@@ -255,15 +251,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public boolean isUseSoftWraps(@NotNull SoftWrapAppliancePlaces place) {
-    if (myPlacesToUseSoftWraps.contains(place)) {
-      return true;
-    }
-
-    // For now use soft wraps at vcs diff if they are enabled for the main editors.
-    if (place == SoftWrapAppliancePlaces.VCS_DIFF) {
-      return myPlacesToUseSoftWraps.contains(SoftWrapAppliancePlaces.MAIN_EDITOR);
-    }
-    return false;
+    return myPlacesToUseSoftWraps.contains(place);
   }
 
   public void setUseSoftWraps(boolean use) {

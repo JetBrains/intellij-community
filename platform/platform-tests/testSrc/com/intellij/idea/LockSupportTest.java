@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author mike
  */
-@Bombed(day = 10, month = Calendar.JUNE)
+@Bombed(day = 20, month = Calendar.JUNE)
 public class LockSupportTest extends TestCase {
   public void testLock() throws Exception {
     final SocketLock lock = new SocketLock();

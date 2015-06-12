@@ -26,7 +26,7 @@ import java.io.InputStreamReader;
 /**
  * @author michael.golubev
  */
-public abstract class LogPipe {
+public abstract class LogPipe extends LogPipeBase {
 
   private final String myDeploymentName;
   private final String myLogPipeName;

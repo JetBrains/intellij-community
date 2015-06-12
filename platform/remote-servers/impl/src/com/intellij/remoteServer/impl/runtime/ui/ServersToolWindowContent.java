@@ -136,11 +136,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     myLastSelection = node;
     if (node instanceof ServersTreeStructure.LogProvidingNode) {
       ServersTreeStructure.LogProvidingNode logNode = (ServersTreeStructure.LogProvidingNode)node;
-      LoggingHandlerImpl loggingHandler = logNode.getLoggingHandler();
-      if (loggingHandler != null) {
+      JComponent logComponent = logNode.getComponent();
+      if (logComponent != null) {
         String cardName = logNode.getLogId();
         JComponent oldComponent = myLogComponents.get(cardName);
-        JComponent logComponent = loggingHandler.getConsole().getComponent();
         if (!logComponent.equals(oldComponent)) {
           myLogComponents.put(cardName, logComponent);
           if (oldComponent != null) {
@@ -316,7 +315,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
             AbstractTreeNode parent = node.getParent();
             return parent instanceof ServersTreeStructure.DeploymentNodeImpl
                    && isDeploymentNodeMatch((ServersTreeStructure.DeploymentNodeImpl)parent, connection, deploymentName)
-                   && node.getValue().second.equals(logName);
+                   && node.getValue().getPresentableName().equals(logName);
           }
         }, null, false);
       }

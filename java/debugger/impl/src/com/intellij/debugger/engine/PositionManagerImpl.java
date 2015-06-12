@@ -20,6 +20,7 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
@@ -122,6 +123,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     });
   }
 
+  @Nullable
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(location == null) {
@@ -254,51 +256,17 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           PsiFile file = original.getFile();
           int line = original.getLine();
           if (LambdaMethodFilter.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
+            List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, false);
+
             Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
             if (document == null || line >= document.getLineCount()) {
               return original;
             }
-            PsiElement element = original.getElementAt();
-            TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
-            do {
-              PsiElement parent = element.getParent();
-              if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
-                break;
-              }
-              element = parent;
-            }
-            while(true);
-            final List<PsiLambdaExpression> lambdas = new ArrayList<PsiLambdaExpression>(3);
-            final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
-              @Override
-              public void visitLambdaExpression(PsiLambdaExpression expression) {
-                super.visitLambdaExpression(expression);
-                lambdas.add(expression);
-              }
-            };
-            element.accept(lambdaCollector);
-            // add initial lambda if we're inside already
-            NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
-            if (method instanceof PsiLambdaExpression) {
-              lambdas.add((PsiLambdaExpression)method);
-            }
-            for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
-              if (!lineRange.intersects(sibling.getTextRange())) {
-                break;
-              }
-              sibling.accept(lambdaCollector);
-            }
             if (myLambdaOrdinal < lambdas.size()) {
-              PsiElement body = lambdas.get(myLambdaOrdinal).getBody();
-              if (body instanceof PsiCodeBlock) {
-                for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
-                  if (lineRange.intersects(statement.getTextRange())) {
-                    body = statement;
-                    break;
-                  }
-                }
+              PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambdas.get(myLambdaOrdinal), document, line);
+              if (firstElem != null) {
+                return SourcePosition.createFromElement(firstElem);
               }
-              return SourcePosition.createFromElement(body);
             }
           }
           else {
@@ -314,14 +282,6 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return original;
         }
       });
-    }
-
-    private static PsiElement getNextElement(PsiElement element) {
-      PsiElement sibling = element.getNextSibling();
-      if (sibling != null) return sibling;
-      element = element.getParent();
-      if (element != null) return getNextElement(element);
-      return null;
     }
 
     @Nullable

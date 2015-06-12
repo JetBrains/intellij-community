@@ -6,6 +6,9 @@
 
     <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
                     interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
+
+    <extensionPoint name="remoteServer.CloudTerminalProvider"
+                    interface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

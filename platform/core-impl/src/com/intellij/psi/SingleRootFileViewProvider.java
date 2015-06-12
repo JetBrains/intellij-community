@@ -241,8 +241,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @NotNull
   public FileElement[] getKnownTreeRoots() {
     PsiFile psiFile = getCachedPsi(myBaseLanguage);
-    if (psiFile == null || !(psiFile instanceof PsiFileImpl)) return new FileElement[0];
-    if (((PsiFileImpl)psiFile).getTreeElement() == null) return new FileElement[0];
+    if (!(psiFile instanceof PsiFileImpl)) return FileElement.EMPTY_ARRAY;
+    if (((PsiFileImpl)psiFile).getTreeElement() == null) return FileElement.EMPTY_ARRAY;
     return new FileElement[]{(FileElement)psiFile.getNode()};
   }
 
@@ -528,9 +528,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       if (document == null) {
         return LoadTextUtil.loadText(virtualFile);
       }
-      else {
-        return getLastCommittedText(document);
-      }
+      return getLastCommittedText(document);
     }
 
     @Override
@@ -546,9 +544,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       if (document == null) {
         return virtualFile.getModificationStamp();
       }
-      else {
-        return getLastCommittedStamp(document);
-      }
+      return getLastCommittedStamp(document);
     }
 
     @NonNls
@@ -567,7 +563,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private class PsiFileContent implements Content {
     private final PsiFileImpl myFile;
-    private volatile String myContent = null;
+    private volatile String myContent;
     private final long myModificationStamp;
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")

@@ -22,13 +22,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
 import java.util.concurrent.CountDownLatch
-
 /**
  * @author peter
  */
@@ -121,6 +121,48 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             sameStartCondition.countDown()
             sameStartCondition.await()
             assert myFixture.findClass("Foo").node
+          }
+        });
+      }
+
+      for(future in futuresToWait) future.get();
+    }
+  }
+
+  public void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
+    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
+    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
+    assert myFixture.findClass("Foo").node
+
+    for (i in 1..20) {
+      println "iteration $i"
+      WriteCommandAction.runWriteCommandAction(project) {
+        ((PsiJavaFile) file).importList.add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand("foo.bar$i"))
+      }
+      PlatformTestUtil.tryGcSoftlyReachableObjects()
+      assert !file.contentsLoaded
+
+      myFixture.addFileToProject("Foo" + i + ".java", "class Foo" + i + " {" + ("public void foo() {}\n") * 1000 + "}")
+
+      def futuresToWait = []
+      def sameStartCondition = new CountDownLatch(N)
+
+      for(j in 1..N/2) {
+        futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
+          ApplicationManager.application.runReadAction {
+            sameStartCondition.countDown()
+            sameStartCondition.await()
+            assert myFixture.getJavaFacade().findClass("Foo", GlobalSearchScope.fileScope(file)).node
+          }
+        })
+      }
+
+      for(j in 1..N/2) {
+        futuresToWait.add(ApplicationManager.application.executeOnPooledThread {
+          ApplicationManager.application.runReadAction {
+            sameStartCondition.countDown()
+            sameStartCondition.await()
+            assert myFixture.findClass("Foo" + i).node
           }
         });
       }

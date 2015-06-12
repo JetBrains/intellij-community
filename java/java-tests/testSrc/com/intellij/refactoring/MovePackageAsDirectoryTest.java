@@ -52,16 +52,13 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
   }
 
   public void testRenamePackage() throws Exception {
-    final PerformAction action = new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-        final PsiPackage sourcePackage = psiFacade.findPackage("pack1");
-        assertNotNull(sourcePackage);
-        
-        RenamePsiPackageProcessor.createRenameMoveProcessor("pack1.pack2", sourcePackage, false, false).run();
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
+    final PerformAction action = (rootDir, rootAfter) -> {
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+      final PsiPackage sourcePackage = psiFacade.findPackage("pack1");
+      assertNotNull(sourcePackage);
+
+      RenamePsiPackageProcessor.createRenameMoveProcessor("pack1.pack2", sourcePackage, false, false).run();
+      FileDocumentManager.getInstance().saveAllDocuments();
     };
     doTest(action);
   }
@@ -105,21 +102,15 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
         final PsiFile empty = srcDirectory.findFile(EMPTY_TXT);
         assert empty != null;
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          public void run() {
-            empty.delete();
-          }
-        });
+        WriteCommandAction.runWriteCommandAction(null, empty::delete);
       }
 
       @Override
       protected void postProcessTargetDir(PsiDirectory targetDirectory) {
         final PsiDirectory subdirectory = targetDirectory.findSubdirectory(packageName);
         assert subdirectory != null;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            subdirectory.createFile(EMPTY_TXT);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          subdirectory.createFile(EMPTY_TXT);
         });
       }
     });
@@ -133,11 +124,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
         final PsiClass empty = JavaPsiFacade.getInstance(getProject()).findClass(FOO, GlobalSearchScope.projectScope(getProject()));
         assert empty != null;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            empty.delete();
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(empty::delete);
       }
 
       @Override
@@ -146,10 +133,8 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
         assert subdirectory != null;
         final PsiDirectory emptyDir = subdirectory.findSubdirectory("subPack");
         assert emptyDir != null;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            emptyDir.createFile(EMPTY_TXT);
-          }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          emptyDir.createFile(EMPTY_TXT);
         });
       }
     });
@@ -182,12 +167,8 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     @Override
     public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-      final Comparator<PsiDirectory> directoryComparator = new Comparator<PsiDirectory>() {
-        @Override
-        public int compare(PsiDirectory o1, PsiDirectory o2) {
-          return o1.getVirtualFile().getPresentableUrl().compareTo(o2.getVirtualFile().getPresentableUrl());
-        }
-      };
+      final Comparator<PsiDirectory> directoryComparator =
+        (o1, o2) -> o1.getVirtualFile().getPresentableUrl().compareTo(o2.getVirtualFile().getPresentableUrl());
 
       final PsiPackage sourcePackage = psiFacade.findPackage(myPackageName);
       assertNotNull(sourcePackage);

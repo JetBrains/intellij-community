@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -109,6 +110,7 @@ public class PythonTask {
     if (env != null) {
       commandLine.getEnvironment().putAll(env);
     }
+    PydevConsoleRunner.setCorrectStdOutEncoding(commandLine.getEnvironment(), myModule.getProject()); // To support UTF-8 output
 
     ProcessHandler handler;
     if (PySdkUtil.isRemote(mySdk)) {

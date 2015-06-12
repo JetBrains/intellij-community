@@ -48,11 +48,11 @@ public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSeri
         Binding referencedBinding = ((BasePrimitiveBinding)binding).myBinding;
         if (referencedBinding instanceof BeanBinding) {
           BeanBinding classBinding = (BeanBinding)referencedBinding;
-          ThreeState compareByFields = classBinding.hasEqualMethod;
+          ThreeState compareByFields = classBinding.compareByFields;
           if (compareByFields == ThreeState.UNSURE) {
             compareByFields = ReflectionUtil.getDeclaredMethod(classBinding.myBeanClass, "equals", Object.class) == null ? ThreeState.YES : ThreeState.NO;
 
-            classBinding.hasEqualMethod = compareByFields;
+            classBinding.compareByFields = compareByFields;
           }
 
           if (compareByFields == ThreeState.YES) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,13 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class SliceUtil {
-  public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
-                                                 @NotNull Processor<SliceUsage> processor,
-                                                 @NotNull SliceUsage parent,
-                                                 @NotNull PsiSubstitutor parentSubstitutor,
-                                                 int indexNesting,
-                                                 @NotNull String syntheticField) {
+class SliceUtil {
+  static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
+                                          @NotNull Processor<SliceUsage> processor,
+                                          @NotNull SliceUsage parent,
+                                          @NotNull PsiSubstitutor parentSubstitutor,
+                                          int indexNesting,
+                                          @NotNull String syntheticField) {
     assert indexNesting >= 0 : indexNesting;
     expression = simplify(expression);
     PsiElement original = expression;
@@ -337,16 +337,18 @@ public class SliceUtil {
   }
 
   @NotNull
-  public static SliceUsage createSliceUsage(@NotNull PsiElement element,
-                                            @NotNull SliceUsage parent,
-                                            @NotNull PsiSubstitutor substitutor,
-                                            int indexNesting,
-                                            @NotNull String syntheticField) {
+  static SliceUsage createSliceUsage(@NotNull PsiElement element,
+                                     @NotNull SliceUsage parent,
+                                     @NotNull PsiSubstitutor substitutor,
+                                     int indexNesting,
+                                     @NotNull String syntheticField) {
     return new SliceUsage(simplify(element), parent, substitutor,indexNesting, syntheticField);
   }
 
   @NotNull
-  public static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+  private static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element,
+                                                     @NotNull SliceUsage parent,
+                                                     @NotNull PsiSubstitutor substitutor) {
     return new SliceTooComplexDFAUsage(simplify(element), parent, substitutor);
   }
 

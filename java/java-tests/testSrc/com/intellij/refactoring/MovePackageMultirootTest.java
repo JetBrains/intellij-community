@@ -51,23 +51,20 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
   }
 
   private PerformAction createAction(final String[] packageNames, final String targetPackageName) {
-    return new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final PsiManager manager = PsiManager.getInstance(myProject);
-        PsiPackage[] sourcePackages = new PsiPackage[packageNames.length];
-        for (int i = 0; i < packageNames.length; i++) {
-          String packageName = packageNames[i];
-          sourcePackages[i] = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
-          assertNotNull(sourcePackages[i]);
-        }
-        PsiPackage targetPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(targetPackageName);
-        assertNotNull(targetPackage);
-        new MoveClassesOrPackagesProcessor(myProject, sourcePackages,
-                                           new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
-                                           true, true, null).run();
-        FileDocumentManager.getInstance().saveAllDocuments();
+    return (rootDir, rootAfter) -> {
+      final PsiManager manager = PsiManager.getInstance(myProject);
+      PsiPackage[] sourcePackages = new PsiPackage[packageNames.length];
+      for (int i = 0; i < packageNames.length; i++) {
+        String packageName = packageNames[i];
+        sourcePackages[i] = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
+        assertNotNull(sourcePackages[i]);
       }
+      PsiPackage targetPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(targetPackageName);
+      assertNotNull(targetPackage);
+      new MoveClassesOrPackagesProcessor(myProject, sourcePackages,
+                                         new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
+                                         true, true, null).run();
+      FileDocumentManager.getInstance().saveAllDocuments();
     };
   }
 

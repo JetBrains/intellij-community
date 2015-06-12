@@ -51,14 +51,12 @@ public class InlineLibraryMethodTest extends RefactoringTestCase {
     PsiClass fileClass = getJavaFacade().findClass("mycompany.File");
     assertNotNull(fileClass);
     final PsiFile file = fileClass.getContainingFile();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        try {
-          ((VirtualFileSystemEntry)file.getVirtualFile()).setWritable(false);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      try {
+        ((VirtualFileSystemEntry)file.getVirtualFile()).setWritable(false);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
 
