@@ -166,6 +166,15 @@ public class BaseDelombokHandler {
 
     for (PsiParameter parameter : fromMethod.getParameterList().getParameters()) {
       PsiParameter param = elementFactory.createParameter(parameter.getName(), parameter.getType());
+      if (parameter.getModifierList() != null) {
+        PsiModifierList modifierList = param.getModifierList();
+        for (PsiAnnotation originalAnnotation : parameter.getModifierList().getAnnotations()) {
+          final PsiAnnotation annotation = modifierList.addAnnotation(originalAnnotation.getQualifiedName());
+          for (PsiNameValuePair nameValuePair : originalAnnotation.getParameterList().getAttributes()) {
+            annotation.setDeclaredAttributeValue(nameValuePair.getName(), nameValuePair.getValue());
+          }
+        }
+      }
       resultMethod.getParameterList().add(param);
     }
 

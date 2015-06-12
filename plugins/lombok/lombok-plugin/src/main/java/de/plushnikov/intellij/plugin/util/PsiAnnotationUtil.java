@@ -169,6 +169,10 @@ public class PsiAnnotationUtil {
       if (asClass.isAssignableFrom(PsiType.class)) {
         value = (T) elementValue.getType();
       }
+    } else if (psiElement instanceof PsiAnnotation) {
+      if (asClass.isAssignableFrom(PsiAnnotation.class)) {
+        value = (T) psiElement;
+      }
     }
     return value;
   }

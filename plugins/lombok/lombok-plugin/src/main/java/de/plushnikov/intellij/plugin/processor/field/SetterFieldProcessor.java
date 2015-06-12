@@ -126,6 +126,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
+    final PsiAnnotation setterAnnotation = PsiAnnotationUtil.findAnnotation(psiField, Setter.class);
 
     final String methodName = getSetterName(psiField, PsiType.BOOLEAN.equals(psiFieldType));
 
@@ -151,7 +152,9 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
       for (String annotationFQN : annotationsToCopy) {
         methodParameterModifierList.addAnnotation(annotationFQN);
       }
+      addOnXAnnotations(setterAnnotation, methodParameterModifierList, "onParam");
     }
+
 
     final String thisOrClass = isStatic ? psiClass.getName() : "this";
     String blockText = String.format("%s.%s = %s;", thisOrClass, psiField.getName(), methodParameter.getName());
@@ -161,7 +164,9 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
 
     method.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, psiClass));
 
-    copyAnnotations(psiField, method.getModifierList(), LombokUtils.DEPRECATED_PATTERN);
+    PsiModifierList methodModifierList = method.getModifierList();
+    copyAnnotations(psiField, methodModifierList, LombokUtils.DEPRECATED_PATTERN);
+    addOnXAnnotations(setterAnnotation, methodModifierList, "onMethod");
 
     return method;
   }

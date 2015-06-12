@@ -196,6 +196,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         .withModifier(modifier);
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
+    final PsiModifierList modifierList = constructor.getModifierList();
 
     if (!suppressConstructorProperties && !params.isEmpty()) {
       StringBuilder constructorPropertiesAnnotation = new StringBuilder("java.beans.ConstructorProperties( {");
@@ -205,8 +206,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       constructorPropertiesAnnotation.deleteCharAt(constructorPropertiesAnnotation.length() - 1);
       constructorPropertiesAnnotation.append("} ) ");
 
-      constructor.getModifierList().addAnnotation(constructorPropertiesAnnotation.toString());
+      modifierList.addAnnotation(constructorPropertiesAnnotation.toString());
     }
+
+    addOnXAnnotations(psiAnnotation, modifierList, "onConstructor");
 
     for (PsiField param : params) {
       constructor.withParameter(accessorsInfo.removePrefix(param.getName()), param.getType());
