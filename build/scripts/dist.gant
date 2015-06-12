@@ -138,7 +138,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
     notifyArtifactBuilt(paths.artifacts_jps)
   }
 
-  ant.mkdir(dir: paths.distAll + "/license") // in case the license directory is absent, create it
+//  ant.mkdir(dir: paths.distAll + "/license") // in case the license directory is absent, create it
 
   layout(paths.distAll) {
     dir("bin") {
@@ -146,6 +146,9 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
         include(name: "*.*")
       }
     }
+
+    ant.mkdir(dir: "${home}/license") // in case the source license directory is absent, create it
+
     dir("license") {
       fileset(dir: "${home}/license")
     }
