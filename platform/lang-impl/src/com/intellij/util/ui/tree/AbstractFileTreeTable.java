@@ -60,6 +60,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     super(new MyModel<T>(project, valueClass, valueTitle, filter));
     myProject = project;
 
+    //noinspection unchecked
     myModel = (MyModel)getTableModel();
     myModel.setTreeTable(this);
 
@@ -96,20 +97,12 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
         }
         FileNode fileNode = (FileNode)value;
         VirtualFile file = fileNode.getObject();
-        if (fileNode.getParent() instanceof FileNode) {
-          setText(file.getName());
-        }
-        else {
-          setText(file.getPresentableUrl());
-        }
-
-        Icon icon = file.isDirectory() ? PlatformIcons.DIRECTORY_CLOSED_ICON : IconUtil.getIcon(file, 0, null);
-        setIcon(icon);
+        setText(fileNode.getParent() instanceof FileNode ? file.getName() : file.getPresentableUrl());
+        setIcon(file.isDirectory() ? PlatformIcons.DIRECTORY_CLOSED_ICON : IconUtil.getIcon(file, 0, null));
         return this;
       }
     });
     getTableHeader().setReorderingAllowed(false);
-
 
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setPreferredScrollableViewportSize(new Dimension(300, getRowHeight() * 10));
@@ -140,8 +133,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
   public static void press(final Container comboComponent) {
     if (comboComponent instanceof JButton) {
-      final JButton button = (JButton)comboComponent;
-      button.doClick();
+      ((JButton)comboComponent).doClick();
     }
     else {
       for (int i = 0; i < comboComponent.getComponentCount(); i++) {
@@ -191,8 +183,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
   public void reset(@NotNull Map<VirtualFile, T> mappings) {
     myModel.reset(mappings);
-    final TreeNode root = (TreeNode)myModel.getRoot();
-    myModel.nodeChanged(root);
+    myModel.nodeChanged((TreeNode)myModel.getRoot());
     getTree().setModel(null);
     getTree().setModel(myModel);
     TreeUtil.expandRootChildIfOnlyOne(getTree());
@@ -222,7 +213,6 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       }
     }
   }
-
 
   private static class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
     private final Map<VirtualFile, T> myCurrentMapping = new HashMap<VirtualFile, T>();
@@ -310,11 +300,14 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
     @Override
     public void setValueAt(final Object aValue, final Object node, final int column) {
-      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-      final Object userObject = treeNode.getUserObject();
-      if (userObject instanceof Project) return;
+      final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+      if (userObject instanceof Project) {
+        return;
+      }
+
       final VirtualFile file = (VirtualFile)userObject;
-      final T t = (T)aValue;
+      @SuppressWarnings("unchecked")
+      T t = (T)aValue;
       if (t == null || myTreeTable.isNullObject(t)) {
         myCurrentMapping.remove(file);
       }
@@ -426,8 +419,8 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     public void clearCachedChildren() {
       if (children != null) {
         for (Object child : children) {
-          ConvenientNode<T> node = (ConvenientNode<T>)child;
-          node.clearCachedChildren();
+          //noinspection unchecked
+          ((ConvenientNode<T>)child).clearCachedChildren();
         }
       }
       removeAllChildren();
@@ -451,14 +444,12 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
     @Override
     protected void appendChildrenTo(@NotNull final Collection<ConvenientNode> children) {
-      VirtualFile[] childrenf = getObject().getChildren();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      for (VirtualFile child : childrenf) {
+      for (VirtualFile child : getObject().getChildren()) {
         if (myFilter.accept(child) && fileIndex.isInContent(child)) {
           children.add(new FileNode(child, myProject, myFilter));
         }
       }
     }
   }
-
 }
