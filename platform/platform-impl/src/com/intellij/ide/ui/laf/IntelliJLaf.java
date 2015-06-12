@@ -56,5 +56,11 @@ public class IntelliJLaf extends DarculaLaf {
     defaults.put("Label.font", font);
     defaults.put("CheckBox.font", font);
     defaults.put("RadioButton.font", font);
+    defaults.put("ComboBox.font", font);
+  }
+
+  public static boolean isGraphite() {
+    Color c = UIManager.getColor("controlHighlight");
+    return c != null && c.getBlue() < 150;
   }
 }
