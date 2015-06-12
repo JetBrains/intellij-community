@@ -812,26 +812,13 @@ public final class PsiUtil extends PsiUtilCore {
         }
       }
 
-      if (glb != null) {
-        if (!((PsiWildcardType)substituted).isSuper()) {
-          substituted = glb instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)glb).getWildcard()
-                                                               : PsiWildcardType.createExtends(manager, glb);
-        }
-        else {
-          if (captureContext != null) {
-            final PsiCapturedWildcardType capturedWildcardType = oldSubstituted instanceof PsiCapturedWildcardType
-                                                                 ? (PsiCapturedWildcardType)oldSubstituted
-                                                                 : (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
-            LOG.assertTrue(capturedWildcardType != null);
-            capturedWildcardType.setUpperBound(glb);
-            return capturedWildcardType;
-          }
-        }
+      if (glb != null && !((PsiWildcardType)substituted).isSuper()) {
+        substituted = glb instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)glb).getWildcard()
+                                                             : PsiWildcardType.createExtends(manager, glb);
       }
     }
 
     if (captureContext != null) {
-      LOG.assertTrue(substituted instanceof PsiWildcardType, substituted);
       substituted =
         oldSubstituted instanceof PsiCapturedWildcardType && substituted.equals(((PsiCapturedWildcardType)oldSubstituted).getWildcard())
         ? oldSubstituted
