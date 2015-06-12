@@ -138,8 +138,6 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
     notifyArtifactBuilt(paths.artifacts_jps)
   }
 
-//  ant.mkdir(dir: paths.distAll + "/license") // in case the license directory is absent, create it
-
   layout(paths.distAll) {
     dir("bin") {
       fileset(dir: "${home}/bin") {
