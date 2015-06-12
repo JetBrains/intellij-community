@@ -68,6 +68,7 @@ public class JavaParametersUtil {
     parameters.getVMParametersList().addParametersString(vmParameters);
   }
 
+  @MagicConstant(valuesFromClass = JavaParameters.class)
   public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
                                      final boolean classMustHaveSource) throws CantRunException {
     final Module module = configurationModule.getModule();
