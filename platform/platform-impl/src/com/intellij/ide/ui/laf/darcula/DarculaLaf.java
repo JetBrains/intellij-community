@@ -437,4 +437,8 @@ public class DarculaLaf extends BasicLookAndFeel {
   public boolean getSupportsWindowDecorations() {
     return true;
   }
+
+  public static Icon loadIcon(String path) {
+    return IconLoader.findIcon(path, DarculaLaf.class, true);
+  }
 }
