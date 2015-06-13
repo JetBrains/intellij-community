@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.spellchecker.compress;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class UnitBitSetTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
+public class UnitBitSetTest {
+  @Test
   public void testUnitValue() {
     int bitsPerUnit = 256;
     for (int i = 0; i < bitsPerUnit - 1; i++) {
@@ -28,7 +30,4 @@ public class UnitBitSetTest extends TestCase {
       assertEquals(0, bs.getUnitValue(1));
     }
   }
-
-
-
 }
