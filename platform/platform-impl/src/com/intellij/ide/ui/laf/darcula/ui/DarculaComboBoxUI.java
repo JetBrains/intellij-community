@@ -342,6 +342,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
     final int R = JBUI.scale(5);
+    if (hasFocus) {
+      g.setClip(2, 2, comboBox.getWidth()- 4, comboBox.getHeight() - 4); //todo[kb] check HiDPI
+    }
     if (editor != null && comboBox.isEditable()) {
       ((JComponent)editor).setBorder(null);
       g.setColor(editor.getBackground());
@@ -351,11 +354,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       g.setColor(editor.getBackground());
       g.fillRect(xxx, y + 1, 5, H);
     } else {
-      g.setColor(comboBox.getBackground());
+      g.setColor(UIUtil.getPanelBackground());
       g.fillRoundRect(x + 1, y + 1, W, H, R, R);
       g.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
       g.fillRoundRect(xxx, y + 1, width - xxx, H, R, R);
-      g.setColor(comboBox.getBackground());
+      g.setColor(UIUtil.getPanelBackground());
       g.fillRect(xxx, y + 1, 5, H);
     }
     final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
@@ -368,6 +371,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     paintCurrentValue(g, r, false);
 
     if (hasFocus) {
+      g.setClip(0, 0, comboBox.getWidth(), comboBox.getHeight());
       DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4));
     }
     else {
