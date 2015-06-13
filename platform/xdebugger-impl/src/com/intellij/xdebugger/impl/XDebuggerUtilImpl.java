@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -130,9 +129,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                 @NotNull final XSourcePosition position,
                                                                                                 final boolean temporary,
                                                                                                 final RelativePoint relativePoint) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<AsyncResult<XLineBreakpoint>>() {
+    return new WriteAction<AsyncResult<XLineBreakpoint>>() {
       @Override
-      public AsyncResult<XLineBreakpoint> compute() {
+      protected void run(@NotNull Result<AsyncResult<XLineBreakpoint>> result) throws Throwable {
         final VirtualFile file = position.getFile();
         final int line = position.getLine();
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
@@ -173,21 +172,25 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                       return FINAL_CHOICE;
                     }
                   }).show(relativePoint);
-                return res;
+                result.setResult(res);
+                return;
               }
               else {
                 P properties = (P)variants.get(0).createProperties();
-                return AsyncResult.done(
-                  (XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
+                result.setResult(AsyncResult.done(
+                  (XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+                return;
               }
             }
           }
           P properties = type.createBreakpointProperties(file, line);
-          return AsyncResult.done((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
+          result.setResult(AsyncResult
+                             .done((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+          return;
         }
-        return AsyncResult.rejected();
+        result.setResult(AsyncResult.<XLineBreakpoint>rejected());
       }
-    });
+    }.execute().getResultObject();
   }
 
   @Override

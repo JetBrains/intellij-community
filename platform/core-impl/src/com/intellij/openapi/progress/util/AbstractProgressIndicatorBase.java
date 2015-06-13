@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -43,6 +44,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile boolean myFinished;
 
   private volatile boolean myIndeterminate;
+  private volatile Object myMacActivity;
 
   private Stack<String> myTextStack;
   private DoubleArrayList myFractionStack;
@@ -68,6 +70,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myText = "";
     myFraction = 0;
     myText2 = "";
+    myMacActivity = MacUtil.wakeUpNeo(toString());
     myRunning = true;
   }
 
@@ -82,6 +85,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
     myFinished = true;
+    MacUtil.matrixHasYou(myMacActivity);
+    myMacActivity = null;
   }
 
   @Override
