@@ -539,7 +539,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       update.run();
     }
-    else if (myRequests.add(update)) {
+    else if (myRequests.add(update) && !myUpdateQueue.isDisposed()) {
       myUpdateQueue.addRequest(update, 100);
     }
     myTreeBuilder.repaintWithParents(newTestOrSuite);
