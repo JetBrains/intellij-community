@@ -258,6 +258,9 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
+  public void paintCurrentValue(Graphics g,Rectangle bounds,boolean hasFocus) {
+    super.paintCurrentValue(g, bounds, comboBox.isPopupVisible());
+  }
 
   @Override
   public void paint(Graphics g, JComponent c) {
