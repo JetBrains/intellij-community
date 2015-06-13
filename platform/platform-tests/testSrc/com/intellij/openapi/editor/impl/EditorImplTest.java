@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,5 +140,15 @@ public class EditorImplTest extends AbstractEditorTest {
     
     assertEquals(new LogicalPosition(0, 3), myEditor.getCaretModel().getLogicalPosition());
     assertEquals(new VisualPosition(0, 3), myEditor.getCaretModel().getVisualPosition());
+  }
+  
+  public void testSoftWrapModeUpdateDuringBulkModeChange() throws Exception {
+    initText("long long line<caret>");
+    configureSoftWraps(12);
+    DocumentEx document = (DocumentEx)myEditor.getDocument();
+    document.setInBulkUpdate(true);
+    document.replaceString(4, 5, "-");
+    document.setInBulkUpdate(false);
+    assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getVisualPosition());
   }
 }
