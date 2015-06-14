@@ -30,6 +30,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 
@@ -56,7 +57,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull private final MockRefManager myRefManager;
   @NotNull private final ReducibleSemaphore myFullLogSemaphore;
   @NotNull private final ReducibleSemaphore myRefreshSemaphore;
-  private int myReadFirstBlockCounter;
+  @NotNull private AtomicInteger myReadFirstBlockCounter = new AtomicInteger();
 
   private final Function<TimedVcsCommit, VcsCommitMetadata> myCommitToMetadataConvertor =
     new Function<TimedVcsCommit, VcsCommitMetadata>() {
@@ -90,7 +91,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
         throw new RuntimeException(e);
       }
     }
-    myReadFirstBlockCounter++;
+    myReadFirstBlockCounter.incrementAndGet();
     assertRoot(root);
     List<VcsCommitMetadata> metadatas = ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()),
                                                           myCommitToMetadataConvertor);
@@ -197,11 +198,11 @@ public class TestVcsLogProvider implements VcsLogProvider {
   }
 
   public void resetReadFirstBlockCounter() {
-    myReadFirstBlockCounter = 0;
+    myReadFirstBlockCounter.set(0);
   }
 
   public int getReadFirstBlockCounter() {
-    return myReadFirstBlockCounter;
+    return myReadFirstBlockCounter.get();
   }
 
   @Nullable
