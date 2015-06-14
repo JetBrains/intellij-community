@@ -87,6 +87,15 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
     }
   }
 
+  @NotNull
+  @Override
+  protected Collection<String> getDebugLogCategories() {
+    return Arrays.asList("#" + SingleTaskController.class.getName(),
+                         "#" + VcsLogRefresherImpl.class.getName(),
+                         "#" + VcsLogRefresherTest.class.getName(),
+                         "#" + TestVcsLogProvider.class.getName());
+  }
+
   public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
     DataPack result = myLoader.readFirstBlock();
     assertNotNull(result);
