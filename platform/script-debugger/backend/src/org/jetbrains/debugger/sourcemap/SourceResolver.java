@@ -47,6 +47,10 @@ public class SourceResolver {
   private String[] sourceIndexToAbsoluteLocalPath;
 
   public SourceResolver(@NotNull List<String> sourceUrls, boolean trimFileScheme, @Nullable Url baseFileUrl, @Nullable List<String> sourceContents) {
+    this(sourceUrls, trimFileScheme, baseFileUrl, true, sourceContents);
+  }
+
+  public SourceResolver(@NotNull List<String> sourceUrls, boolean trimFileScheme, @Nullable Url baseFileUrl, boolean baseUrlIsFile, @Nullable List<String> sourceContents) {
     rawSources = sourceUrls;
     this.sourceContents = sourceContents;
     canonicalizedSources = new Url[sourceUrls.size()];
@@ -55,7 +59,7 @@ public class SourceResolver {
                               : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
     for (int i = 0; i < sourceUrls.size(); i++) {
       String rawSource = sourceUrls.get(i);
-      Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i);
+      Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i, baseUrlIsFile);
       canonicalizedSources[i] = url;
       canonicalizedSourcesMap.put(url, i);
     }
@@ -66,7 +70,7 @@ public class SourceResolver {
   }
 
   // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
-  protected Url canonicalizeUrl(@NotNull String url, @Nullable Url baseUrl, boolean trimFileScheme, int sourceIndex) {
+  protected Url canonicalizeUrl(@NotNull String url, @Nullable Url baseUrl, boolean trimFileScheme, int sourceIndex, boolean baseUrlIsFile) {
     if (trimFileScheme && url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
       return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length()), '/'));
     }
@@ -77,15 +81,20 @@ public class SourceResolver {
     String path = url;
     if (url.charAt(0) != '/') {
       String basePath = baseUrl.getPath();
-      int lastSlashIndex = basePath.lastIndexOf('/');
-      StringBuilder pathBuilder = new StringBuilder();
-      if (lastSlashIndex == -1) {
-        pathBuilder.append(basePath).append('/');
+      if (baseUrlIsFile) {
+        int lastSlashIndex = basePath.lastIndexOf('/');
+        StringBuilder pathBuilder = new StringBuilder();
+        if (lastSlashIndex == -1) {
+          pathBuilder.append('/');
+        }
+        else {
+          pathBuilder.append(basePath, 0, lastSlashIndex + 1);
+        }
+        path = pathBuilder.append(url).toString();
       }
       else {
-        pathBuilder.append(basePath, 0, lastSlashIndex + 1);
+        path = basePath + '/' + url;
       }
-      path = pathBuilder.append(url).toString();
     }
     path = FileUtil.toCanonicalPath(path, '/');
 

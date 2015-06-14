@@ -1,6 +1,5 @@
 package org.jetbrains.io;
 
-import com.intellij.util.text.CharArrayCharSequence;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.ByteBufUtilEx;
@@ -13,13 +12,13 @@ import java.nio.CharBuffer;
 public final class ChannelBufferToString {
   @NotNull
   public static CharSequence readChars(@NotNull ByteBuf buffer) throws IOException {
-    return new MyCharArrayCharSequence(readIntoCharBuffer(buffer, buffer.readableBytes(), null));
+    return new JsonReaderEx.CharSequenceBackedByChars(readIntoCharBuffer(buffer, buffer.readableBytes(), null));
   }
 
   @SuppressWarnings("unused")
   @NotNull
   public static CharSequence readChars(@NotNull ByteBuf buffer, int byteCount) throws IOException {
-    return new MyCharArrayCharSequence(readIntoCharBuffer(buffer, byteCount, null));
+    return new JsonReaderEx.CharSequenceBackedByChars(readIntoCharBuffer(buffer, byteCount, null));
   }
 
   @NotNull
@@ -33,17 +32,5 @@ public final class ChannelBufferToString {
 
   public static void writeIntAsAscii(int value, @NotNull ByteBuf buffer) {
     ByteBufUtil.writeAscii(buffer, new StringBuilder().append(value));
-  }
-
-  // we must return string on subSequence() - JsonReaderEx will call toString in any case
-  public static final class MyCharArrayCharSequence extends CharArrayCharSequence {
-    public MyCharArrayCharSequence(@NotNull CharBuffer charBuffer) {
-      super(charBuffer.array(), charBuffer.arrayOffset(), charBuffer.position());
-    }
-
-    @Override
-    public CharSequence subSequence(int start, int end) {
-      return start == 0 && end == length() ? this : new String(myChars, myStart + start, end - start);
-    }
   }
 }
