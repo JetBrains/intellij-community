@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
@@ -35,6 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertEquals;
 
 public class TestVcsLogProvider implements VcsLogProvider {
+
+  private static final Logger LOG = Logger.getInstance(TestVcsLogProvider.class);
 
   public static final VcsRefType BRANCH_TYPE = new VcsRefType() {
     @Override
@@ -80,9 +83,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public DetailedLogData readFirstBlock(@NotNull final VirtualFile root,
-                                                   @NotNull Requirements requirements)
-    throws VcsException {
+  public DetailedLogData readFirstBlock(@NotNull final VirtualFile root, @NotNull Requirements requirements) throws VcsException {
+    LOG.debug("readFirstBlock began");
     if (requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh()) {
       try {
         myRefreshSemaphore.acquire();
@@ -91,7 +93,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
         throw new RuntimeException(e);
       }
     }
-    myReadFirstBlockCounter.incrementAndGet();
+    int readFirstBlockCounter = myReadFirstBlockCounter.incrementAndGet();
+    LOG.debug("readFirstBlock passed the semaphore: " + readFirstBlockCounter);
     assertRoot(root);
     List<VcsCommitMetadata> metadatas = ContainerUtil.map(myCommits.subList(0, requirements.getCommitCount()),
                                                           myCommitToMetadataConvertor);
@@ -101,12 +104,14 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+    LOG.debug("readAllHashes");
     try {
       myFullLogSemaphore.acquire();
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+    LOG.debug("readAllHashes passed the semaphore");
     assertRoot(root);
     for (TimedVcsCommit commit : myCommits) {
       commitConsumer.consume(commit);

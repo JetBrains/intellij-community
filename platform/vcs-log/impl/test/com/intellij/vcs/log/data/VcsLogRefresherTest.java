@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -37,6 +38,8 @@ import java.util.concurrent.*;
 import static com.intellij.vcs.log.TimedCommitParser.log;
 
 public class VcsLogRefresherTest extends VcsLogPlatformTest {
+
+  private static final Logger LOG = Logger.getInstance(VcsLogRefresherTest.class);
 
   private static final int RECENT_COMMITS_COUNT = 2;
   public static final Consumer<Exception> FAILING_EXCEPTION_HANDLER = new Consumer<Exception>() {
@@ -209,7 +212,9 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
+            LOG.debug("Starting a background task...");
             myStartedTasks.add(((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask));
+            LOG.debug(myStartedTasks.size() + " started tasks");
           }
         });
       }
