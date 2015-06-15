@@ -22,6 +22,7 @@ package com.intellij.execution.testframework.stacktrace;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
@@ -31,6 +32,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -135,9 +139,13 @@ public class DiffHyperlink implements Printable {
     return result;
   }
 
-  public class DiffHyperlinkInfo implements HyperlinkInfo {
-    public void navigate(final Project project) {
-      ViewAssertEqualsDiffAction.openDiff(DataManager.getInstance().getDataContext(), DiffHyperlink.this);
+  public class DiffHyperlinkInfo extends HyperlinkInfoBase {
+    @Override
+    public void navigate(@NotNull Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
+      final DataManager dataManager = DataManager.getInstance();
+      final DataContext dataContext = hyperlinkLocationPoint != null ?
+                                      dataManager.getDataContext(hyperlinkLocationPoint.getOriginalComponent()) : dataManager.getDataContext();
+      ViewAssertEqualsDiffAction.openDiff(dataContext, DiffHyperlink.this);
     }
 
     public DiffHyperlink getPrintable() {
