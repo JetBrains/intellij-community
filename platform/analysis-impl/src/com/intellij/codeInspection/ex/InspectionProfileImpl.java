@@ -81,7 +81,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private final ExternalInfo myExternalInfo = new ExternalInfo();
   protected InspectionProfileImpl mySource;
   private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
-  private Map<String, Boolean> myDisplayLevelMap;
+  private volatile Map<String, Boolean> myDisplayLevelMap;
   @Attribute("is_locked")
   private boolean myLockedProfile;
   private final InspectionProfileImpl myBaseProfile;
@@ -933,10 +933,16 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private Map<String, Boolean> getDisplayLevelMap() {
     if (myBaseProfile == null) return null;
     if (myDisplayLevelMap == null) {
-      initInspectionTools(null);
-      myDisplayLevelMap = new TreeMap<String, Boolean>();
-      for (String toolId : myTools.keySet()) {
-        myDisplayLevelMap.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
+      // Synchronizing on myExternalInfo as initInspectionTools() synchronizes on it internally.
+      synchronized (myExternalInfo) {
+        if (myDisplayLevelMap == null) {
+          initInspectionTools(null);
+          TreeMap<String,Boolean> map = new TreeMap<String, Boolean>();
+          for (String toolId : myTools.keySet()) {
+            map.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
+          }
+          myDisplayLevelMap = map;
+        }
       }
     }
     return myDisplayLevelMap;
