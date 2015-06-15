@@ -156,7 +156,7 @@ public class ZipHandler extends ArchiveHandler {
                                  long time,
                                  @NotNull String entryName) {
     CharSequence sequence = shortName instanceof ByteArrayCharSequence ? shortName : ByteArrayCharSequence.convertToBytesIfAsciiString(shortName);
-    EntryInfo info = new EntryInfo(parentInfo, sequence, isDirectory, size, time);
+    EntryInfo info = new EntryInfo(sequence, isDirectory, size, time, parentInfo);
     map.put(entryName, info);
     return info;
   }
