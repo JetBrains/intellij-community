@@ -43,7 +43,6 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public abstract class GitPlatformTest extends UsefulTestCase {
@@ -178,15 +177,10 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       super.defaultRunBare();
     }
     catch (Throwable throwable) {
-      try {
-        if (myTestStartedIndicator != null) {
-          TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator);
-        }
-        throw throwable;
+      if (myTestStartedIndicator != null) {
+        TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator);
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      throw throwable;
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.junit.Test;
@@ -27,7 +28,7 @@ import static org.junit.Assert.assertTrue;
 public class ProcessWaitForTest {
   @Test(timeout = 10000)
   public void notification() throws IOException, InterruptedException {
-    File jvm = new File(System.getProperty("java.home"), "bin/java");
+    File jvm = new File(System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java"));
     assertTrue(jvm.canExecute());
 
     final Semaphore semaphore1 = new Semaphore();

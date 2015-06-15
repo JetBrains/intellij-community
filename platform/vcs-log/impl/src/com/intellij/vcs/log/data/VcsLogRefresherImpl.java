@@ -91,6 +91,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        LOG.debug("Starting a background task...");
         ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask);
       }
     });
@@ -208,11 +209,13 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      LOG.debug("Refresh task started");
       indicator.setIndeterminate(true);
       DataPack dataPack = myCurrentDataPack;
       while (true) {
         List<RefreshRequest> requests = mySingleTaskController.popRequests();
         Collection<VirtualFile> rootsToRefresh = getRootsToRefresh(requests);
+        LOG.debug("Requests: " + requests + ". roots to refresh: " + rootsToRefresh);
         if (rootsToRefresh.isEmpty()) {
           mySingleTaskController.taskCompleted(dataPack);
           break;
@@ -371,11 +374,21 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   }
 
   private static class RefreshRequest {
-    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.<VirtualFile>emptyList());
+    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.<VirtualFile>emptyList()) {
+      @Override
+      public String toString() {
+        return "RELOAD_ALL";
+      }
+    };
     private final Collection<VirtualFile> rootsToRefresh;
 
     RefreshRequest(@NotNull Collection<VirtualFile> rootsToRefresh) {
       this.rootsToRefresh = rootsToRefresh;
+    }
+
+    @Override
+    public String toString() {
+      return "{" + rootsToRefresh + "}";
     }
   }
 

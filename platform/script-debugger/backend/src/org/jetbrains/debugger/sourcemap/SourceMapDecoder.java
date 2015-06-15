@@ -22,7 +22,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
@@ -69,27 +68,19 @@ public final class SourceMapDecoder {
   }
 
   @Nullable
-  public static SourceMap decode(@NotNull String contents, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
-    if (contents.isEmpty()) {
+  public static SourceMap decode(@NotNull CharSequence in, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
+    if (in.length() == 0) {
       throw new IOException("source map contents cannot be empty");
     }
 
-    CharSequence in = contents;
-    if (contents.startsWith(")]}")) {
-      in = new CharSequenceSubSequence(contents, contents.indexOf('\n') + 1, contents.length());
-    }
-    return decode(in, sourceResolverFactory);
-  }
-
-  @Nullable
-  public static SourceMap decode(@NotNull CharSequence in, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
     JsonReaderEx reader = new JsonReaderEx(in);
+    reader.setLenient(true);
     List<MappingEntry> mappings = new ArrayList<MappingEntry>();
     return parseMap(reader, 0, 0, mappings, sourceResolverFactory);
   }
 
   @Nullable
-  private static SourceMap parseMap(JsonReaderEx reader,
+  private static SourceMap parseMap(@NotNull JsonReaderEx reader,
                                     int line,
                                     int column,
                                     List<MappingEntry> mappings,

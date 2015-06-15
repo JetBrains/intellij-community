@@ -36,6 +36,10 @@ public class JavaFXRenameTest extends JavaFXDaemonAnalyzerTestCase {
     doTest(getTestName(false) + "1");
   }
 
+  public void testInRoot() throws Exception {
+    doTest(getTestName(false) + "1");
+  }
+
   public void testControllerField() throws Exception {
     doTest("newFieldName");
   }

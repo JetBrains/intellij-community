@@ -1,3 +1,5 @@
+package com.jetbrains.edu.learning;
+
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,6 +35,6 @@ public class JsonParserTest extends TestCase {
     assertEquals(myCourse.getLessons().get(1).getTaskList().size(), 1);
   }
   protected String getTestDataPath() {
-    return PythonHelpersLocator.getPythonCommunityPath() + "/edu/learn-python/testData";
+    return PythonHelpersLocator.getPythonCommunityPath() + "/edu/interactive-learning-python/testData";
   }
 }

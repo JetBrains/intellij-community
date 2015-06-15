@@ -17,17 +17,18 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 /**
  * @author Eugene Zhuravlev
@@ -115,6 +116,11 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   }
 
   @Override
+  protected JavaBreakpointProperties getProperties() {
+    return null;
+  }
+
+  @Override
   protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
     return false;  // always enabled
   }
@@ -125,19 +131,9 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        PsiElement expectedElement = myCustomPosition.getElementAt();
-        if (expectedElement != null) {
-          SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
-          if (position != null) {
-            PsiElement currentElement = position.getElementAt();
-            if (currentElement != null) {
-              NavigatablePsiElement expectedMethod = PsiTreeUtil.getParentOfType(expectedElement, PsiMethod.class, PsiLambdaExpression.class);
-              NavigatablePsiElement currentMethod = PsiTreeUtil.getParentOfType(currentElement, PsiMethod.class, PsiLambdaExpression.class);
-              return Comparing.equal(expectedMethod, currentMethod);
-            }
-          }
-        }
-        return true;
+        SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+        if (position == null) return false;
+        return DebuggerUtilsEx.inTheSameMethod(myCustomPosition, position);
       }
     });
   }

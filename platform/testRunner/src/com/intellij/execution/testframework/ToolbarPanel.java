@@ -123,22 +123,26 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                  null, properties, TestConsoleProperties.TRACK_RUNNING_TEST));
     secondaryGroup.add(new ToggleBooleanProperty("Hide Ignored", null, null, properties,
                                                  TestConsoleProperties.HIDE_IGNORED_TEST));
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
-                                                 null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
-                                                 ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
-                                                 null, properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE));
-    myScrollToSource = new ScrollToTestSourceAction(properties);
-    secondaryGroup.add(myScrollToSource);
-    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
-                                                 ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
-                                                 null, properties, TestConsoleProperties.OPEN_FAILURE_LINE));
     if (Registry.is("tests.view.old.statistics.panel")) {
       secondaryGroup.add(new ShowStatisticsAction(properties));
     }
     secondaryGroup.add(new ToggleBooleanProperty("Show Inline Statistics", "Toggle the visibility of the test duration in the tree",
                                                  null, properties, TestConsoleProperties.SHOW_INLINE_STATISTICS));
+
+    secondaryGroup.addSeparator();
+    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
+                                                 ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
+                                                 null, properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE));
+    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
+                                                 ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
+                                                 null, properties, TestConsoleProperties.OPEN_FAILURE_LINE));
+    myScrollToSource = new ScrollToTestSourceAction(properties);
+    secondaryGroup.add(myScrollToSource);
+
     secondaryGroup.add(new AdjustAutotestDelayActionGroup(parent));
+    secondaryGroup.addSeparator();
+    secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
+                                                 null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
     properties.appendAdditionalActions(secondaryGroup, environment, parent);
     actionGroup.add(secondaryGroup);
 

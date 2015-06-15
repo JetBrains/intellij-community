@@ -95,16 +95,21 @@ public class TestLoggerFactory implements Logger.Factory {
     return PathManager.getSystemPath() + "/" + LOG_DIR;
   }
 
-  public static void dumpLogToStdout(@NotNull String testStartMarker) throws IOException {
+  public static void dumpLogToStdout(@NotNull String testStartMarker) {
     File ideaLog = new File(getTestLogDir(), "idea.log");
     if (ideaLog.exists()) {
-      String logText = FileUtil.loadFile(ideaLog);
-      Pattern logStart = Pattern.compile("[0-9\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
-      System.out.println("\n\nIdea Log:");
-      for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
-        Matcher matcher = logStart.matcher(line);
-        int lineStart = matcher.lookingAt() ? matcher.end() : 0;
-        System.out.println(line.substring(lineStart));
+      try {
+        String logText = FileUtil.loadFile(ideaLog);
+        Pattern logStart = Pattern.compile("[0-9\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
+        System.out.println("\n\nIdea Log:");
+        for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
+          Matcher matcher = logStart.matcher(line);
+          int lineStart = matcher.lookingAt() ? matcher.end() : 0;
+          System.out.println(line.substring(lineStart));
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
   }

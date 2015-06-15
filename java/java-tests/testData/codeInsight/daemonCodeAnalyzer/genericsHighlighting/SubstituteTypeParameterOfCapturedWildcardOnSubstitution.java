@@ -9,7 +9,7 @@ abstract class A<T> {
   <K> void baz7(B<K, K> a) {}
   abstract B<T, ? extends T> foo7();
   void bar7(A<?> a) {
-    baz7<error descr="'baz7(B<capture<?>,capture<?>>)' in 'A' cannot be applied to '(B<capture<?>,capture<?>>)'">(a.foo7())</error>;
+    baz7<error descr="'baz7(B<capture<? extends capture<?>>,capture<? extends capture<?>>>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo7())</error>;
   }
 
   <K> void baz9(B<K, K> a) {}

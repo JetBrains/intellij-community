@@ -18,7 +18,7 @@ abstract class A<T> {
   <K> void baz256(B<? super K, ?> a) {}
   abstract B<? super T, ? extends T> foo256();
   void bar256(A<?> a) {
-    baz256<error descr="'baz256(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<?>>)'">(a.foo256())</error>;
+    baz256<error descr="'baz256(B<? super java.lang.Object,?>)' in 'A' cannot be applied to '(B<capture<? super capture<?>>,capture<? extends capture<?>>>)'">(a.foo256())</error>;
   }
 
 

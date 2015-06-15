@@ -269,7 +269,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         if (firstChild instanceof PsiModifierList) {
           final PsiModifierList modifierList = (PsiModifierList)firstChild;
           for (PsiElement child : modifierList.getChildren()) {
-            elementParent.add(child);
+            elementParent.addBefore(child, elementToReplace);
           }
         }
       }

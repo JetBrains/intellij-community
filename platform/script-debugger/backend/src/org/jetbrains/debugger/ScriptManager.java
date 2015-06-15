@@ -2,6 +2,7 @@ package org.jetbrains.debugger;
 
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -36,6 +37,9 @@ public interface ScriptManager {
 
   @Nullable
   Script findScriptByUrl(@NotNull String rawUrl);
+
+  @Nullable
+  Script findScriptByUrl(@NotNull Url url);
 
   @Nullable
   Script findScriptById(@NotNull String id);

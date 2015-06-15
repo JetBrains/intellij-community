@@ -116,4 +116,8 @@ public class DataPack {
     return myFull;
   }
 
+  @Override
+  public String toString() {
+    return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}";
+  }
 }
