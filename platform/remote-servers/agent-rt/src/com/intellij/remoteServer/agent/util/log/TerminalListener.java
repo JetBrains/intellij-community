@@ -13,30 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remoteServer.impl.runtime.log;
+package com.intellij.remoteServer.agent.util.log;
 
-import com.intellij.openapi.Disposable;
+public interface TerminalListener {
 
-import javax.swing.*;
+  void close();
 
-public abstract class LoggingHandlerBase implements Disposable {
+  static TerminalListener NULL = new TerminalListener() {
 
-  private final String myPresentableName;
+    public void close() {
 
-  public LoggingHandlerBase(String presentableName) {
-    myPresentableName = presentableName;
-  }
-
-  public String getPresentableName() {
-    return myPresentableName;
-  }
-
-  public abstract JComponent getComponent();
-
-  public abstract boolean isClosed();
-
-  @Override
-  public void dispose() {
-
-  }
+    }
+  };
 }

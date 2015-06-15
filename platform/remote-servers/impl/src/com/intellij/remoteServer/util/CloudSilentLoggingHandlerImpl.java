@@ -3,6 +3,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
+import com.intellij.remoteServer.agent.util.log.TerminalListener;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,7 +41,7 @@ public class CloudSilentLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
-  public void createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
-
+  public TerminalListener createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
+    return TerminalListener.NULL;
   }
 }

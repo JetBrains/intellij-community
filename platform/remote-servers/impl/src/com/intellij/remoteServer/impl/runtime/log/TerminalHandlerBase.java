@@ -15,28 +15,28 @@
  */
 package com.intellij.remoteServer.impl.runtime.log;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.remoteServer.runtime.log.TerminalHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class LoggingHandlerBase implements Disposable {
+public abstract class TerminalHandlerBase extends LoggingHandlerBase implements TerminalHandler {
 
-  private final String myPresentableName;
+  private boolean myClosed = false;
 
-  public LoggingHandlerBase(String presentableName) {
-    myPresentableName = presentableName;
+  public TerminalHandlerBase(@NotNull String presentableName) {
+    super(presentableName);
   }
-
-  public String getPresentableName() {
-    return myPresentableName;
-  }
-
-  public abstract JComponent getComponent();
-
-  public abstract boolean isClosed();
 
   @Override
-  public void dispose() {
+  public abstract JComponent getComponent();
 
+  @Override
+  public boolean isClosed() {
+    return myClosed;
+  }
+
+  public void close() {
+    myClosed = true;
   }
 }

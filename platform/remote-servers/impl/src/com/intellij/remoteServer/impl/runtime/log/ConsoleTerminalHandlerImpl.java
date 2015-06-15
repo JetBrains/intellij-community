@@ -26,17 +26,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 
-public class ConsoleTerminalHandlerImpl extends LoggingHandlerBase {
+public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
 
   private static final Logger LOG = Logger.getInstance("#" + ConsoleTerminalHandlerImpl.class.getName());
 
   public static final CloudTerminalProvider PROVIDER = new CloudTerminalProvider() {
 
     @Override
-    public LoggingHandlerBase createTerminal(@NotNull String presentableName,
-                                             @NotNull Project project,
-                                             @NotNull InputStream terminalOutput,
-                                             @NotNull OutputStream terminalInput) {
+    public TerminalHandlerBase createTerminal(@NotNull String presentableName,
+                                              @NotNull Project project,
+                                              @NotNull InputStream terminalOutput,
+                                              @NotNull OutputStream terminalInput) {
       return new ConsoleTerminalHandlerImpl(presentableName, project, terminalOutput, terminalInput);
     }
 
@@ -86,7 +86,7 @@ public class ConsoleTerminalHandlerImpl extends LoggingHandlerBase {
       public void run() {
         BufferedReader outputReader = new BufferedReader(new InputStreamReader(terminalOutput));
         try {
-          while (true) {
+          while (!isClosed()) {
             String line = outputReader.readLine();
             if (line == null) {
               break;
