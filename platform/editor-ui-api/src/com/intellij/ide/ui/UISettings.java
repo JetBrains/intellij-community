@@ -23,6 +23,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
@@ -264,7 +265,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     UISettings uiSettings = getInstance();
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-    if (!isRemoteDesktopConnected() && UIUtil.isRetina()) {
+    if (!isRemoteDesktopConnected() && UIUtil.isRetina() && !Registry.is("force.default.lcd.rendering.settings")) {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
     else {
