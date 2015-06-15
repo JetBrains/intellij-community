@@ -63,30 +63,19 @@ public class ExtensionsRootType extends RootType {
   }
 
   @Nullable
-  public String getPath(@Nullable VirtualFile file) {
-    VirtualFile pluginResourcesDir = getPluginResourcesDirectory(file);
-    PluginId pluginId = getOwnerPluginId(pluginResourcesDir);
-    return pluginResourcesDir != null && pluginId != null ? VfsUtilCore.getRelativePath(file, pluginResourcesDir) : null;
-  }
-
-  @Nullable
   public VirtualFile findExtension(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
-    return findFile(null, pluginId.getIdString() + "/" + path, createIfMissing ? Option.create_if_missing : Option.existing_only);
+    extractBundledExtensionsIfNeeded(pluginId);
+    return findExtensionImpl(pluginId, path, createIfMissing);
   }
 
   @Nullable
   public VirtualFile findExtensionsDirectory(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
-    String resourceDirPath = getPath(pluginId, path);
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    VirtualFile file = fs.refreshAndFindFileByPath(resourceDirPath);
-    if (file == null && createIfMissing) {
-      return VfsUtil.createDirectories(resourceDirPath);
-    }
-    return file != null && file.isDirectory() ? file : null;
+    extractBundledExtensionsIfNeeded(pluginId);
+    return findExtensionsDirectoryImpl(pluginId, path, createIfMissing);
   }
 
   public void extractBundledExtensions(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
-    VirtualFile resourcesDirectory = findExtensionsDirectory(pluginId, path, true);
+    VirtualFile resourcesDirectory = findExtensionsDirectoryImpl(pluginId, path, true);
     if (resourcesDirectory == null) return;
 
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
@@ -127,6 +116,29 @@ public class ExtensionsRootType extends RootType {
     catch (IOException ignore) {
     }
     return super.substituteName(project, file);
+  }
+
+  @Nullable
+  String getPath(@Nullable VirtualFile file) {
+    VirtualFile pluginResourcesDir = getPluginResourcesDirectory(file);
+    PluginId pluginId = getOwnerPluginId(pluginResourcesDir);
+    return pluginResourcesDir != null && pluginId != null ? VfsUtilCore.getRelativePath(file, pluginResourcesDir) : null;
+  }
+
+  @Nullable
+  private VirtualFile findExtensionImpl(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
+    return findFile(null, pluginId.getIdString() + "/" + path, createIfMissing ? Option.create_if_missing : Option.existing_only);
+  }
+
+  @Nullable
+  private VirtualFile findExtensionsDirectoryImpl(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
+    String resourceDirPath = getPath(pluginId, path);
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    VirtualFile file = fs.refreshAndFindFileByPath(resourceDirPath);
+    if (file == null && createIfMissing) {
+      return VfsUtil.createDirectories(resourceDirPath);
+    }
+    return file != null && file.isDirectory() ? file : null;
   }
 
   @Nullable
@@ -175,7 +187,7 @@ public class ExtensionsRootType extends RootType {
 
   @NotNull
   private String getPath(@NotNull PluginId pluginId, @NotNull String path) {
-    return ScratchFileService.getInstance().getRootPath(this) + "/" + pluginId.getIdString() + "/" + path;
+    return ScratchFileService.getInstance().getRootPath(this) + "/" + pluginId.getIdString() + (StringUtil.isEmpty(path) ? "" : "/" + path);
   }
 
   private static void extractResources(@NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
@@ -239,5 +251,13 @@ public class ExtensionsRootType extends RootType {
       i++;
     }
     virtualFile.rename(ExtensionsRootType.class, newName);
+  }
+
+  private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) throws IOException {
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    if (plugin == null || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) return;
+
+    extractBundledExtensions(pluginId, "");
+    ResourceVersions.getInstance().resourcesUpdated(plugin);
   }
 }

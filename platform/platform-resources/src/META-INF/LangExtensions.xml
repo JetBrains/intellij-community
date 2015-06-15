@@ -339,9 +339,13 @@
     <syntaxHighlighter factoryClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Highlighter" order="first"/>
 
     <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType" />
-    <scratch.rootType implementation="com.intellij.ide.extensionResources.ExtensionsRootType"/>
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
     <scratch.rootType implementation="com.intellij.execution.console.IdeConsoleRootType"/>
+
+    <!-- Extension resources -->
+    <applicationService serviceInterface="com.intellij.ide.extensionResources.ResourceVersions"
+                        serviceImplementation="com.intellij.ide.extensionResources.ResourceVersions"/>
+    <scratch.rootType implementation="com.intellij.ide.extensionResources.ExtensionsRootType"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="defaultLanguage"/>
