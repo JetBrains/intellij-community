@@ -34,6 +34,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -102,7 +103,8 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     }
 
     if (myCanceled) return false;
-    if (myPopup.isDisposed()) return false;
+    final JComponent content = myPopup.getContent();
+    if (content == null || myPopup.isDisposed()) return false;
 
     synchronized (lock) {
       if (myData.contains(element)) return true;
@@ -126,7 +128,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
         myPopup.setCaption(getCaption(getCurrentSize()));
         myPopup.pack(true, true);
       }
-    }, 200, ModalityState.stateForComponent(myPopup.getContent()));
+    }, 200, ModalityState.stateForComponent(content));
     return true;
   }
 
