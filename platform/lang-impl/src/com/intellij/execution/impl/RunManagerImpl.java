@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -39,7 +38,6 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -66,7 +64,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new THashMap<String, Boolean>();
-  private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<RunConfiguration, List<BeforeRunTask>>();
+  private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = ContainerUtil.createConcurrentWeakMap();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
@@ -155,7 +153,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @NotNull
   public RunnerAndConfigurationSettings createConfiguration(@NotNull final RunConfiguration runConfiguration,
                                                             @NotNull final ConfigurationFactory factory) {
-    assertDispatchThread();
     RunnerAndConfigurationSettings template = getConfigurationTemplate(factory);
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, runConfiguration, false);
     settings.importRunnerAndConfigurationSettings((RunnerAndConfigurationSettingsImpl)template);
@@ -163,12 +160,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       shareConfiguration(settings, isConfigurationShared(template));
     }
     return settings;
-  }
-
-  private void assertDispatchThread() {
-    if (myProject.isInitialized()) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-    }
   }
 
   @Override
@@ -344,7 +335,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   public void addConfiguration(RunnerAndConfigurationSettings settings,
                                boolean shared,
                                List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-    assertDispatchThread();
     String existingId = findExistingConfigurationId(settings);
     String newId = settings.getUniqueID();
     RunnerAndConfigurationSettings existingSettings = null;
@@ -425,7 +415,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   public void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings) {
-    assertDispatchThread();
     if (settings == null) return;
 
     for (Iterator<RunnerAndConfigurationSettings> it = getSortedConfigurations().iterator(); it.hasNext(); ) {
@@ -818,7 +807,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   private void clear(boolean allConfigurations) {
-    assertDispatchThread();
     List<RunnerAndConfigurationSettings> configurations;
     if (allConfigurations) {
       myConfigurations.clear();
@@ -1147,7 +1135,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @NotNull
   @Override
   public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
-    assertDispatchThread();
     if (settings instanceof WrappingRunConfiguration) {
       return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer(), taskProviderID);
     }
@@ -1169,7 +1156,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   @Override
   @NotNull
   public List<BeforeRunTask> getBeforeRunTasks(final RunConfiguration settings) {
-    assertDispatchThread();
     if (settings instanceof WrappingRunConfiguration) {
       return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer());
     }
@@ -1225,7 +1211,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
-    assertDispatchThread();
     List<BeforeRunTask> result = new SmartList<BeforeRunTask>(tasks);
     if (addEnabledTemplateTasksIfAbsent) {
       List<BeforeRunTask> templates = getTemplateBeforeRunTasks(runConfiguration);
@@ -1246,7 +1231,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public final void resetBeforeRunTasks(final RunConfiguration runConfiguration) {
-    assertDispatchThread();
     myConfigurationToBeforeTasksMap.remove(runConfiguration);
     fireBeforeRunTasksUpdated();
   }
