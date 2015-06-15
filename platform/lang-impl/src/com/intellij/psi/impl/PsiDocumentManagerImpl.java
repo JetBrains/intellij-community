@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -121,6 +122,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         commitAllDocuments();
       }
     }
+  }
+
+  @Override
+  boolean shouldNotifySmartPointers(@NotNull VirtualFile virtualFile) {
+    // for an open file do not do fasten/unfasten, they should always stay fastened to improve responsiveness
+    return !myProject.isDefault() && !FileEditorManager.getInstance(myProject).isFileOpen(virtualFile);
   }
 
   @Override

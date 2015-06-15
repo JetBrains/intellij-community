@@ -68,7 +68,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     }
   }
 
-  protected void setRange(@NotNull Segment range) {
+  void setRange(@NotNull Segment range) {
     mySyncStartOffset = range.getStartOffset();
     mySyncEndOffset = range.getEndOffset();
   }
@@ -267,11 +267,13 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   }
 
   int getSyncEndOffset() {
-    return mySyncEndOffset;
+    RangeMarker marker = myRangeMarker;
+    return marker == null || !marker.isValid() ? mySyncEndOffset : marker.getEndOffset();
   }
 
   int getSyncStartOffset() {
-    return mySyncStartOffset;
+    RangeMarker marker = myRangeMarker;
+    return marker == null || !marker.isValid() ? mySyncStartOffset : marker.getStartOffset();
   }
 
   @Override
@@ -288,8 +290,8 @@ public class SelfElementInfo implements SmartPointerElementInfo {
              && myType == otherInfo.myType
              && mySyncMarkerIsValid
              && otherInfo.mySyncMarkerIsValid
-             && mySyncStartOffset == otherInfo.mySyncStartOffset
-             && mySyncEndOffset == otherInfo.mySyncEndOffset
+             && getSyncStartOffset() == otherInfo.getSyncStartOffset()
+             && getSyncEndOffset() == otherInfo.getSyncEndOffset()
         ;
     }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
