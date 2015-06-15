@@ -17,7 +17,6 @@ package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.MemberChooser;
@@ -37,13 +36,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +73,7 @@ public class PyOverrideImplementUtil {
     }
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     if (pyClass == null && element instanceof PsiWhiteSpace && element.getPrevSibling() instanceof PyClass) {
-      return (PyClass)element.getPrevSibling();
+      return (PyClass) element.getPrevSibling();
     }
     return pyClass;
   }
@@ -89,8 +85,8 @@ public class PyOverrideImplementUtil {
 
 
   private static void chooseAndOverrideOrImplementMethods(final Project project,
-                                                          @NotNull final Editor editor,
-                                                          @NotNull final PyClass pyClass) {
+                                                         @NotNull final Editor editor,
+                                                         @NotNull final PyClass pyClass) {
     LOG.assertTrue(pyClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -159,17 +155,16 @@ public class PyOverrideImplementUtil {
     final PyStatementList statementList = pyClass.getStatementList();
     final int offset = editor.getCaretModel().getOffset();
     PsiElement anchor = null;
-    for (PyStatement statement : statementList.getStatements()) {
+    for (PyStatement statement: statementList.getStatements()) {
       if (statement.getTextRange().getStartOffset() < offset ||
-          (statement instanceof PyExpressionStatement &&
-           ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression)) {
+          (statement instanceof PyExpressionStatement && ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression)) {
         anchor = statement;
       }
     }
 
     PyFunction element = null;
     for (PyMethodMember newMember : newMembers) {
-      PyFunction baseFunction = (PyFunction)newMember.getPsiElement();
+      PyFunction baseFunction = (PyFunction) newMember.getPsiElement();
       final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction, implement);
       PyFunction function = builder.addFunctionAfter(statementList, anchor, LanguageLevel.forElement(statementList));
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
@@ -215,7 +210,7 @@ public class PyOverrideImplementUtil {
 
     boolean hadStar = false;
     List<String> parameters = new ArrayList<String>();
-    for (PyParameter parameter : baseParams) {
+    for (PyParameter parameter: baseParams) {
       final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
       if (pyNamedParameter != null) {
         String repr = pyNamedParameter.getRepr(false);
@@ -249,7 +244,7 @@ public class PyOverrideImplementUtil {
           PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);
           String className = pyClass.getName();
           final List<String> nameResult = Lists.newArrayList(className);
-          while (outerClass != null) {
+          while(outerClass != null) {
             nameResult.add(0, ((PyClass)outerClass).getName());
             outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true, PyFunction.class);
           }
@@ -302,7 +297,7 @@ public class PyOverrideImplementUtil {
     final PyExpression[] superClassExpressions = fromClass.getSuperClassExpressions();
     for (PyExpression expression : superClassExpressions) {
       if (expression instanceof PyReferenceExpression) {
-        PsiElement target = ((PyReferenceExpression)expression).getReference().resolve();
+        PsiElement target = ((PyReferenceExpression) expression).getReference().resolve();
         if (target == toClass) {
           return expression.getText();
         }
@@ -312,57 +307,13 @@ public class PyOverrideImplementUtil {
   }
 
   @NotNull
-  public static Collection<PyFunction> getAllSuperFunctions(@NotNull final PyClass pyClass) {
+  public static Collection<PyFunction> getAllSuperFunctions(@NotNull PyClass pyClass) {
     final Map<String, PyFunction> superFunctions = new HashMap<String, PyFunction>();
-    for (final PyFunction function : ArrayUtil.mergeArrays(pyClass.getMethods(true), getCalculatedParentMethods(pyClass))) {
+    for (PyFunction function : pyClass.getMethods(true)) {
       if (!superFunctions.containsKey(function.getName())) {
         superFunctions.put(function.getName(), function);
       }
     }
     return superFunctions.values();
-  }
-
-
-  /**
-   * Since some classes inherit from {@link PyClassLikeType} they have no {@link PyClass} parent, hence have no
-   * {@link PyClass#getMethods(boolean)}. But they still do have some methods, and such methods should also be overwritable.
-   * <p/>
-   * This method fetches all methods, provided by parents regardless their type, and returns them.
-   *
-   * @param pyClass class to get parent methods from
-   * @return parent methods
-   */
-  @NotNull
-  private static PyFunction[] getCalculatedParentMethods(@NotNull final PyClass pyClass) {
-    final TypeEvalContext context = TypeEvalContext.deepCodeInsight(pyClass.getProject());
-    final PyClassLikeType type = PyUtil.as(context.getType(pyClass), PyClassLikeType.class);
-    if (type == null) {
-      return PyFunction.EMPTY_ARRAY;
-    }
-
-    final List<PyFunction> result = new ArrayList<PyFunction>();
-    /**
-     * Ideally there has to be <pre>getMembers</pre> method in {@link PyClassLikeType}, but there is no such method for now,
-     * and it can't be added easily due to huge refactoring {@link com.jetbrains.python.psi.types.PyClassTypeImpl} should have
-     * to fetch members from parents as well:
-     * See ({@link com.jetbrains.python.psi.types.PyClassTypeImpl#addInheritedMembers(String, PsiElement, Set, ProcessingContext, List, TypeEvalContext)}
-     * It is tied to completion, but contains required logic.
-     *
-     * For now, we use {@link PyClassLikeType#getCompletionVariants(String, PsiElement, ProcessingContext)} as temporary hack.
-     */
-    // TODO: Use "getMembers" instead of "getCompletionVariants" hack.
-    for (final Object completion : type.getCompletionVariants("", null, new ProcessingContext())) {
-      // It could be PyFunction itself or lookup element with function
-      if (completion instanceof PyFunction) {
-        result.add((PyFunction)completion);
-      }
-      else if (completion instanceof LookupElement) {
-        final PyFunction element = PyUtil.as(((LookupElement)completion).getPsiElement(), PyFunction.class);
-        if (element != null) {
-          result.add(element);
-        }
-      }
-    }
-    return result.toArray(new PyFunction[result.size()]);
   }
 }
