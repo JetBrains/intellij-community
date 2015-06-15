@@ -15,18 +15,14 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.util.diff.Diff;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * author: lesya
- */
 public class Range {
   private static final Logger LOG = Logger.getInstance(Range.class);
   public static final byte EQUAL = 0;
@@ -41,81 +37,64 @@ public class Range {
   private int myLine2;
   private final int myVcsLine1;
   private final int myVcsLine2;
-  private final byte myType;
-  @Nullable private RangeHighlighter myRangeHighlighter;
 
   @Nullable private final List<InnerRange> myInnerRanges;
 
+  @Nullable private RangeHighlighter myRangeHighlighter;
   private boolean myValid = true;
 
   public Range(@NotNull Range range) {
-    this(range.getLine1(), range.getLine2(), range.getVcsLine1(), range.getVcsLine2(), range.getType());
+    this(range.getLine1(), range.getLine2(), range.getVcsLine1(), range.getVcsLine2());
   }
 
-  public Range(int line1, int line2, int vcsLine1, int vcsLine2, byte type) {
-    this(line1, line2, vcsLine1, vcsLine2, type, null);
+  public Range(int line1, int line2, int vcsLine1, int vcsLine2) {
+    this(line1, line2, vcsLine1, vcsLine2, null);
   }
 
-  public Range(int line1, int line2, int vcsLine1, int vcsLine2, byte type, @Nullable List<InnerRange> innerRanges) {
+  public Range(int line1, int line2, int vcsLine1, int vcsLine2, @Nullable List<InnerRange> innerRanges) {
+    assert line1 != line2 || vcsLine1 != vcsLine2;
+
     myLine1 = line1;
     myLine2 = line2;
     myVcsLine1 = vcsLine1;
     myVcsLine2 = vcsLine2;
-    myType = type;
     myInnerRanges = innerRanges;
   }
 
   public int hashCode() {
-    return myVcsLine1 ^ myVcsLine2 ^ myType ^ myLine1 ^ myLine2;
+    return myVcsLine1 ^ myVcsLine2 ^ myLine1 ^ myLine2;
   }
 
-  public boolean equals(Object object) {
-    if (!(object instanceof Range)) return false;
-    Range other = (Range)object;
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    if (myInnerRanges != null) {
-      if (other.myInnerRanges == null) return false;
-      if (myInnerRanges.size() != other.myInnerRanges.size()) return false;
+    Range range = (Range)o;
 
-      for (int i = 0; i < myInnerRanges.size(); i++) {
-        if (!myInnerRanges.get(i).equals(other.myInnerRanges.get(i))) return false;
-      }
+    if (myLine1 != range.myLine1) return false;
+    if (myLine2 != range.myLine2) return false;
+    if (myVcsLine1 != range.myVcsLine1) return false;
+    if (myVcsLine2 != range.myVcsLine2) return false;
+
+    if (myInnerRanges == null) return range.myInnerRanges == null;
+    if (range.myInnerRanges == null) return false;
+
+    if (myInnerRanges.size() != range.myInnerRanges.size()) return false;
+    for (int i = 0; i < myInnerRanges.size(); i++) {
+      if (!myInnerRanges.get(i).equals(range.myInnerRanges.get(i))) return false;
     }
-    else {
-      if (other.myInnerRanges != null) return false;
-    }
 
-    return
-      (myVcsLine1 == other.myVcsLine1)
-      && (myVcsLine2 == other.myVcsLine2)
-      && (myLine1 == other.myLine1)
-      && (myLine2 == other.myLine2)
-      && (myType == other.myType);
+    return true;
   }
 
   public String toString() {
-    return String.format("%s, %s, %s, %s, %s", myLine1, myLine2, myVcsLine1, myVcsLine2, getTypeName());
-  }
-
-  @NonNls
-  private String getTypeName() {
-    switch (myType) {
-      case MODIFIED:
-        return "MODIFIED";
-      case INSERTED:
-        return "INSERTED";
-      case DELETED:
-        return "DELETED";
-    }
-    return "UNKNOWN";
+    return String.format("%s, %s, %s, %s", myLine1, myLine2, myVcsLine1, myVcsLine2);
   }
 
   public byte getType() {
-    return myType;
-  }
-
-  public int getUpToDateRangeLength() {
-    return myVcsLine2 - myVcsLine1;
+    if (myLine1 == myLine2) return DELETED;
+    if (myVcsLine1 == myVcsLine2) return INSERTED;
+    return MODIFIED;
   }
 
   public void shift(int shift) {
@@ -150,15 +129,11 @@ public class Range {
     return myVcsLine2;
   }
 
-  public boolean rightBefore(@NotNull Range range) {
-    return myLine2 == range.myLine1;
-  }
-
   public boolean hasHighlighter() {
     return myRangeHighlighter != null;
   }
 
-  public void setHighlighter(RangeHighlighter highlighter) {
+  public void setHighlighter(@Nullable RangeHighlighter highlighter) {
     myRangeHighlighter = highlighter;
   }
 
@@ -210,8 +185,8 @@ public class Range {
 
       InnerRange range = (InnerRange)o;
 
-      if (myLine2 != range.myLine2) return false;
       if (myLine1 != range.myLine1) return false;
+      if (myLine2 != range.myLine2) return false;
       if (myType != range.myType) return false;
 
       return true;
@@ -226,22 +201,7 @@ public class Range {
     }
 
     public String toString() {
-      return String.format("%s, %s, %s", myLine1, myLine2, getTypeName());
-    }
-
-    @NonNls
-    private String getTypeName() {
-      switch (myType) {
-        case MODIFIED:
-          return "MODIFIED";
-        case INSERTED:
-          return "INSERTED";
-        case DELETED:
-          return "DELETED";
-        case EQUAL:
-          return "EQUAL";
-      }
-      return "UNKNOWN";
+      return String.format("%s, %s, %s", myLine1, myLine2, getTypeName(myType));
     }
   }
 
@@ -249,12 +209,21 @@ public class Range {
    * Check, if caret at <line> is corresponds to the current range
    */
   public boolean isSelectedByLine(int line) {
-    if (getType() == DELETED && line == myLine1) {
-      return true;
+    return DiffUtil.isSelectedByLine(line, myLine1, myLine2);
+  }
+
+  @NotNull
+  private static String getTypeName(byte type) {
+    switch (type) {
+      case MODIFIED:
+        return "MODIFIED";
+      case INSERTED:
+        return "INSERTED";
+      case DELETED:
+        return "DELETED";
+      case EQUAL:
+        return "EQUAL";
     }
-    else if (line >= myLine1 && line < myLine2) {
-      return true;
-    }
-    return false;
+    return "UNKNOWN(" + type + ")";
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring
 
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
@@ -107,7 +107,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
       TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
       myEditor.settings.preselectRename = preselect;
       int offset = myEditor.caretModel.offset
-      final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.getInstance().getAllAccepted())
+      final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
 
       assertNotNull(element)
 

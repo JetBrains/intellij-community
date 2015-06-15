@@ -58,7 +58,7 @@ public class HgBranchUtil {
     Collection<String> commonBookmarkNames = null;
     for (HgRepository repository : repositories) {
       Collection<HgNameWithHashInfo> bookmarksInfo = repository.getBookmarks();
-      Collection<String> names = HgUtil.getNamesWithoutHashes(bookmarksInfo);
+      Collection<String> names = HgUtil.getSortedNamesWithoutHashes(bookmarksInfo);
       if (commonBookmarkNames == null) {
         commonBookmarkNames = names;
       }

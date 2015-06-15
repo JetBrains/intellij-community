@@ -28,7 +28,9 @@ import com.intellij.ui.ColorPanel;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -199,18 +201,19 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     Pair<ColorSettingsPage, AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
     if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
       String attrName = baseDescriptor.second.getDisplayName();
+      String attrLabel = attrName.replaceAll(ColorOptionsTree.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
       ColorSettingsPage settingsPage = baseDescriptor.first;
       String style = "<div style=\"text-align:right\" vertical-align=\"top\">";
       String tooltipText;
       String labelText;
       if (settingsPage != null) {
         String pageName = settingsPage.getDisplayName();
-        tooltipText = "'" + attrName + "' from<br>'" + pageName + "' section";
-        labelText = style + "'" + attrName + "'<br>of <a href=\"" + attrName + "\">" + pageName;
+        tooltipText = "'" + attrLabel + "' from<br>'" + pageName + "' section";
+        labelText = style + "'" + attrLabel + "'<br>of <a href=\"" + attrName + "\">" + pageName;
       }
       else {
-        tooltipText = attrName;
-        labelText = style + attrName + "<br>&nbsp;";
+        tooltipText = attrLabel;
+        labelText = style + attrLabel + "<br>&nbsp;";
       }
 
       myInheritanceLabel.setText(labelText);

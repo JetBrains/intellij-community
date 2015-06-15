@@ -45,6 +45,7 @@ import java.util.EventObject;
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
   public static final int COLUMN_RESIZE_AREA_WIDTH = 3; // same as in BasicTableHeaderUI
+  private static final int DEFAULT_MIN_COLUMN_WIDTH = 15; // see TableColumn constructor javadoc
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
@@ -794,27 +795,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       });
     }
 
-    protected int getExpandedColumnWidth(int columnToExpand) {
-      int expandedWidth = getPreferredHeaderWidth(columnToExpand);
-      for (int row = 0; row < getRowCount(); row++) {
-        TableCellRenderer cellRenderer = getCellRenderer(row, columnToExpand);
-        if (cellRenderer != null) {
-          Component c = JBTable.this.prepareRenderer(cellRenderer, row, columnToExpand);
-          expandedWidth = Math.max(expandedWidth, c.getPreferredSize().width);
-        }
-      }
-      return expandedWidth;
-    }
-
-    private int getPreferredHeaderWidth(int columnIdx) {
-      TableColumn column = getColumnModel().getColumn(columnIdx);
-      TableCellRenderer renderer = column.getHeaderRenderer();
-      renderer = renderer == null ? getDefaultRenderer() : renderer;
-      Object headerValue = column.getHeaderValue();
-      Component headerCellRenderer = renderer.getTableCellRendererComponent(JBTable.this, headerValue, false, false, -1, columnIdx);
-      return headerCellRenderer.getPreferredSize().width;
-    }
-
     private int getColumnToPack(Point p) {
       int viewColumnIdx = JBTable.this.columnAtPoint(p);
       if (viewColumnIdx == -1) return -1;
@@ -834,6 +814,33 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       TableColumnModel columnModel = getColumnModel();
       return resizingAllowed && columnModel.getColumn(columnIdx).getResizable();
     }
+  }
+
+  public int getExpandedColumnWidth(int columnToExpand) {
+    int expandedWidth = getPreferredHeaderWidth(columnToExpand);
+    for (int row = 0; row < getRowCount(); row++) {
+      TableCellRenderer cellRenderer = getCellRenderer(row, columnToExpand);
+      if (cellRenderer != null) {
+        Component c = prepareRenderer(cellRenderer, row, columnToExpand);
+        expandedWidth = Math.max(expandedWidth, c.getPreferredSize().width);
+      }
+    }
+    return expandedWidth;
+  }
+
+  private int getPreferredHeaderWidth(int columnIdx) {
+    TableColumn column = getColumnModel().getColumn(columnIdx);
+    TableCellRenderer renderer = column.getHeaderRenderer();
+    if (renderer == null) {
+      JTableHeader header = getTableHeader();
+      if (header == null) {
+        return DEFAULT_MIN_COLUMN_WIDTH;
+      }
+      renderer = header.getDefaultRenderer();
+    }
+    Object headerValue = column.getHeaderValue();
+    Component headerCellRenderer = renderer.getTableCellRendererComponent(this, headerValue, false, false, -1, columnIdx);
+    return headerCellRenderer.getPreferredSize().width;
   }
 
   /**

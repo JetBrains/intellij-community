@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,12 @@ public class TraceableDisposable {
     }
   }
 
+  public void killExceptionally(@NotNull Throwable throwable) {
+    if (CREATE_TRACE != null) {
+      KILL_TRACE = throwable;
+    }
+  }
+
   public void throwDisposalError(@NonNls String msg) throws RuntimeException {
     throw new DisposalException(msg);
   }
@@ -52,7 +58,7 @@ public class TraceableDisposable {
     }
 
     @Override
-    public void printStackTrace(PrintStream s) {
+    public void printStackTrace(@NotNull PrintStream s) {
       //noinspection IOResourceOpenedButNotSafelyClosed
       PrintWriter writer = new PrintWriter(s);
       printStackTrace(writer);

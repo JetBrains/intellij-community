@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -143,16 +142,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
 
-  public void testNoLeftRecursion() throws Throwable {
-    final boolean old = CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE;
-    CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE = true;
-    try {
-      doAntiTest();
-    }
-    finally {
-      CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE = old;
-    }
-  }
+  public void testNoLeftRecursion() { doAntiTest(); }
 
   public void testNoRedundantCasts() throws Throwable {
     configure();

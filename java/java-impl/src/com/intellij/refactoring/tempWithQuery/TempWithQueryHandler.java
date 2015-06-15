@@ -15,12 +15,10 @@
  */
 package com.intellij.refactoring.tempWithQuery;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,9 +53,11 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("replace.temp.with.query.title");
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
-      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase
-      .LOOKUP_ITEM_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil
+                                                                       .ELEMENT_NAME_ACCEPTED |
+                                                                     TargetElementUtil
+                                                                       .LOOKUP_ITEM_ACCEPTED |
+                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!(element instanceof PsiLocalVariable)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.name"));

@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +88,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
     if (diffProvider == null) return null;
 
-    if (AbstractVcs.fileInVcsByFileStatus(project, new FilePathImpl(selectedFile))) {
+    if (AbstractVcs.fileInVcsByFileStatus(project, VcsUtil.getFilePath(selectedFile))) {
       return vcs;
     }
     return null;

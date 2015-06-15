@@ -174,7 +174,7 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
                                                                           newClassName,
                                                                           psiClass, members,
                                                                           false,
-                                                                          new DocCommentPolicy<PsiComment>(DocCommentPolicy.ASIS));
+                                                                          new DocCommentPolicy<>(DocCommentPolicy.ASIS));
     final PsiPackage targetPackage;
     if (targetDirectory != null) {
       targetPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
@@ -184,18 +184,14 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
     }
     final PsiClass superClass = psiClass.getExtendsListTypes().length > 0 ? psiClass.getSuperClass() : null;
     final MultiMap<PsiElement, String> conflictsMap =
-      PullUpConflictsUtil.checkConflicts(members, psiClass, superClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
-        @Override
-        public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-          return PullUpProcessor.checkedInterfacesContain(Arrays.asList(members), psiMethod);
-        }
-      }, false);
+      PullUpConflictsUtil.checkConflicts(members, psiClass, superClass, targetPackage, targetDirectory,
+                                         psiMethod -> PullUpProcessor.checkedInterfacesContain(Arrays.asList(members), psiMethod), false);
     if (conflicts != null) {
       if (conflictsMap.isEmpty()) {
         fail("Conflicts were not detected");
       }
-      final HashSet<String> expectedConflicts = new HashSet<String>(Arrays.asList(conflicts));
-      final HashSet<String> actualConflicts = new HashSet<String>(conflictsMap.values());
+      final HashSet<String> expectedConflicts = new HashSet<>(Arrays.asList(conflicts));
+      final HashSet<String> actualConflicts = new HashSet<>(conflictsMap.values());
       assertEquals(expectedConflicts.size(), actualConflicts.size());
       for (String actualConflict : actualConflicts) {
         if (!expectedConflicts.contains(actualConflict)) {

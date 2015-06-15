@@ -30,11 +30,13 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.Responses;
+import org.xml.sax.SAXParseException;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -94,10 +96,15 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
     if (request.method() == HttpMethod.POST) {
       ByteBuf result;
-      ByteBufInputStream in = new ByteBufInputStream(request.content());
+      ByteBuf content = request.content();
+      if (content.readableBytes() == 0) {
+        Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), request);
+        return true;
+      }
+
+      ByteBufInputStream in = new ByteBufInputStream(content);
       try {
         XmlRpcServerRequest xmlRpcServerRequest = new XmlRpcRequestProcessor().decodeRequest(in);
-
         if (StringUtil.isEmpty(xmlRpcServerRequest.getMethodName())) {
           LOG.warn("method name empty");
           return false;
@@ -105,6 +112,11 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
         Object response = invokeHandler(getHandler(xmlRpcServerRequest.getMethodName(), handlers == null ? handlerMapping : handlers), xmlRpcServerRequest);
         result = Unpooled.wrappedBuffer(new XmlRpcResponseProcessor().encodeResponse(response, CharsetToolkit.UTF8));
+      }
+      catch (SAXParseException e) {
+        LOG.warn(e);
+        Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), request);
+        return true;
       }
       catch (Throwable e) {
         context.channel().close();

@@ -102,7 +102,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
    * Registers the diff action which will be called when the diff shortcut is pressed in the table.
    */
   public void registerDiffAction(@NotNull AnAction diffAction) {
-    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myTable);
+    diffAction.registerCustomShortcutSet(diffAction.getShortcutSet(), myTable);
   }
 
   // Make changes available for diff action

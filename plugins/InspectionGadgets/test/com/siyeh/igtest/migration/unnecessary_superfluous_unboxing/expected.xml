@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>UnnecessaryUnboxing.java</file>
-    <line>39</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary unboxing</problem_class>
-    <description>Unnecessary unboxing &lt;code&gt;i.intValue()&lt;/code&gt; #loc</description>
-  </problem>
-</problems>

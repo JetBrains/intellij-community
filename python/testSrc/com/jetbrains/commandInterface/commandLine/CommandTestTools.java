@@ -58,7 +58,8 @@ final class CommandTestTools {
     final List<Option> options = new ArrayList<Option>();
 
 
-    options.add(new Option(Pair.create(1, new Argument(new Help("option argument"), Collections.singletonList("available_argument"))), new Help(""),
+    final Pair<List<String>, Boolean> argument = Pair.create(Collections.singletonList("available_argument"), true);
+    options.add(new Option(Pair.create(1, new Argument(new Help("option argument"), argument)), new Help(""),
                                        Collections.<String>emptyList(),
                                        Collections.singletonList("--available-option")));
 
@@ -72,7 +73,7 @@ final class CommandTestTools {
 
     final ArgumentsInfo argumentInfo = new KnownArgumentsInfo(Collections.singletonList(
       new Argument(new Help("positional_argument"),
-                   Collections.singletonList("positional_argument"))), 1, 1);
+                   Pair.create(Collections.singletonList("positional_argument"), true))), 1, 1);
 
     EasyMock.expect(command.getArgumentsInfo()).andReturn(argumentInfo)
       .anyTimes();

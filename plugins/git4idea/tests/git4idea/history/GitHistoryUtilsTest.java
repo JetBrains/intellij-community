@@ -17,7 +17,7 @@ package git4idea.history;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -199,7 +199,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     Collections.reverse(commits);
     VirtualFile vFile = VcsUtil.getVirtualFileWithRefresh(new File(filePath));
     assertNotNull(vFile);
-    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, new FilePathImpl(vFile));
+    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, VcsUtil.getFilePath(vFile));
     assertEquals("History size doesn't match. Actual history: \n" + toReadable(history), commits.size(), history.size());
     assertEquals("History is different.", toReadable(commits), toReadable(history));
   }
@@ -315,8 +315,8 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   @NotNull
-  private static FilePathImpl toFilePath(@NotNull File file) {
-    return new FilePathImpl(file, file.isDirectory());
+  private static FilePath toFilePath(@NotNull File file) {
+    return VcsUtil.getFilePath(file);
   }
 
   @Test(enabled = false)

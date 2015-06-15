@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.*;
@@ -53,6 +54,8 @@ public abstract class PythonRemoteInterpreterManager {
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
   public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =
     "Remote interpreter can't be executed. Please enable the Remote Hosts Access plugin."; //TODO: this message is incorrect
+
+  public final static Key<PathMappingSettings> PATH_MAPPING_SETTINGS_KEY = Key.create("PATH_MAPPING_SETTINGS_KEY");
 
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
                                                     @NotNull PyRemoteSdkCredentials data,
@@ -103,7 +106,7 @@ public abstract class PythonRemoteInterpreterManager {
                                         RemoteProjectSettings settings,
                                         RemoteSdkCredentials data);
 
-  public abstract void copyFromRemote(@NotNull Project project,
+  public abstract void copyFromRemote(Sdk sdk, @NotNull Project project,
                                       RemoteSdkCredentials data,
                                       List<PathMappingSettings.PathMapping> mappings);
 

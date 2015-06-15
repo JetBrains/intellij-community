@@ -78,15 +78,11 @@ public class DFAEngine<E> {
 
   @Nullable
   private ArrayList<E> performDFA(boolean timeout) {
-    long msLimit = Registry.intValue("ide.dfa.time.limit.online");
-    WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
+    WorkingTimeMeasurer measurer = null;
 
-    ArrayList<E> info = new ArrayList<E>(myFlow.length);
+    ArrayList<E> info = new ArrayList<E>(Collections.nCopies(myFlow.length, myDfa.initial()));
     CallEnvironment env = new MyCallEnvironment(myFlow.length);
-    for (int i = 0; i < myFlow.length; i++) {
-      info.add(myDfa.initial());
-    }
-
+    
     boolean[] visited = new boolean[myFlow.length];
 
     final boolean forward = myDfa.isForward();
@@ -103,7 +99,16 @@ public class DFAEngine<E> {
 
         while (!workList.isEmpty()) {
           count++;
-          if (timeout && count % 512 == 0 && measurer.isTimeOver()) return null;
+          if (timeout && count % 512 == 0) {
+            if (measurer == null) {
+              long msLimit = Registry.intValue("ide.dfa.time.limit.online");
+
+              measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
+            }
+            else if (measurer.isTimeOver()) {
+              return null;
+            }
+          }
 
           ProgressManager.checkCanceled();
           final Instruction curr = workList.remove();

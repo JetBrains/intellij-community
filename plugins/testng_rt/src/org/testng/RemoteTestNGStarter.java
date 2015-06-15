@@ -38,10 +38,14 @@ public class RemoteTestNGStarter {
   private static final String SOCKET = "-socket";
   public static void main(String[] args) throws Exception {
     int i = 0;
+    String param = null;
     Vector resultArgs = new Vector();
     for (; i < args.length; i++) {
       String arg = args[i];
-      if (arg.startsWith(SOCKET)) {
+      if (arg.startsWith("@name")) {
+        param = arg.substring(5);
+        continue;
+      } else if (arg.startsWith(SOCKET)) {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
@@ -95,7 +99,7 @@ public class RemoteTestNGStarter {
     }
 
     if (SM_RUNNER) {
-      final IDEARemoteTestNG testNG = new IDEARemoteTestNG();
+      final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
       CommandLineArgs cla = new CommandLineArgs();
       RemoteArgs ra = new RemoteArgs();
       new JCommander(Arrays.asList(cla, ra), (String[])resultArgs.toArray(new String[resultArgs.size()]));

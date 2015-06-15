@@ -30,7 +30,6 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +37,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Author: dmitrylomov
  */
 public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
-  private final ConcurrentMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = ContainerUtil.newConcurrentMap();
   private final PsiManagerEx myManager;
   private volatile Set<String> myNontrivialPackagePrefixes = null;
   private boolean myDisposed = false;
@@ -60,19 +57,11 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
         myNontrivialPackagePrefixes = null;
       }
     });
-
-    myManager.registerRunnableToRunOnChange(new Runnable() {
-      @Override
-      public void run() {
-        myCachedObjectClassMap.clear();
-      }
-    });
   }
 
   @Override
   public void dispose() {
     myDisposed = true;
-    myCachedObjectClassMap.clear();
   }
 
   @Override
@@ -83,6 +72,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return new PsiPackageImpl(myManager, packageName);
   }
 
+  @NotNull
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
@@ -122,19 +112,6 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     LOG.assertTrue(!myDisposed);
-
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) { // optimization
-      PsiClass cached = myCachedObjectClassMap.get(scope);
-      if (cached == null) {
-        cached = findClassInIndex(qName, scope);
-        if (cached != null) {
-          cached = ConcurrencyUtil.cacheOrGet(myCachedObjectClassMap, scope, cached);
-        }
-      }
-
-      return cached;
-    }
-
     return findClassInIndex(qName, scope);
   }
 
@@ -190,6 +167,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return true;
   }
 
+  @NotNull
   @Override
   public Collection<String> getNonTrivialPackagePrefixes() {
     Set<String> names = myNontrivialPackagePrefixes;

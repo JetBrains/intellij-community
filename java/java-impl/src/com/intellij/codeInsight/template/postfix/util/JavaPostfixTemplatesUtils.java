@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpres
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelectorBase;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.Conditions.and;
@@ -80,6 +82,8 @@ public abstract class JavaPostfixTemplatesUtils {
       @NotNull
       @Override
       public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+        if (DumbService.getInstance(context.getProject()).isDumb()) return Collections.emptyList();
+        
         List<PsiElement> expressions = super.getExpressions(context, document, offset);
         if (!expressions.isEmpty()) return expressions;
 

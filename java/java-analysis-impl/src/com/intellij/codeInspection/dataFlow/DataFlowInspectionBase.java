@@ -34,6 +34,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -53,7 +54,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +169,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
-      createDescription(dfaRunner, holder, visitor, onTheFly);
+      createDescription(dfaRunner, holder, visitor, onTheFly, scope);
 
       MultiMap<PsiElement,DfaMemoryState> nestedClosures = dfaRunner.getNestedClosures();
       for (PsiElement closure : nestedClosures.keySet()) {
@@ -211,7 +211,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
 
-      ContainerUtil.addIfNotNull(fixes, ReplaceOptionalOfWithOfNullableFix.registerReplaceOptionalOfWithOfNullableFix(qualifier));
+      ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));
       return fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]);
     }
     catch (IncorrectOperationException e) {
@@ -227,7 +227,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
   }
 
-  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor, final boolean onTheFly) {
+  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor, final boolean onTheFly, PsiElement scope) {
     Pair<Set<Instruction>, Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
@@ -265,15 +265,31 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     reportNullableArguments(visitor, holder, reportedAnchors);
     reportNullableAssignments(visitor, holder, reportedAnchors);
     reportUnboxedNullables(visitor, holder, reportedAnchors);
-    if (!runner.isInNullableMethod() && runner.isInMethod() && (runner.isInNotNullMethod() || SUGGEST_NULLABLE_ANNOTATIONS)) {
-      reportNullableReturns(runner, visitor, holder, reportedAnchors);
-    }
+    reportNullableReturns(visitor, holder, reportedAnchors, scope);
     if (SUGGEST_NULLABLE_ANNOTATIONS) {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
     }
 
+    reportOptionalOfNullableImprovements(holder, visitor, reportedAnchors);
+
+
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
+    }
+  }
+
+  private static void reportOptionalOfNullableImprovements(ProblemsHolder holder,
+                                                           DataFlowInstructionVisitor visitor,
+                                                           HashSet<PsiElement> reportedAnchors) {
+    for (PsiElement expr : visitor.getProblems(NullabilityProblem.passingNullToOptional)) {
+      if (!reportedAnchors.add(expr)) continue;
+      holder.registerProblem(expr, "Passing <code>null</code> argument to Optional",
+                             DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(expr));
+    }
+    for (PsiElement expr : visitor.getProblems(NullabilityProblem.passingNotNullToOptional)) {
+      if (!reportedAnchors.add(expr)) continue;
+      holder.registerProblem(expr, "Passing a non-null argument to Optional",
+                             DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix());
     }
   }
 
@@ -480,13 +496,37 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private static void reportNullableReturns(StandardDataFlowRunner runner, DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
+  @Nullable
+  private static PsiMethod getScopeMethod(PsiElement block) {
+    PsiElement parent = block.getParent();
+    if (parent instanceof PsiMethod) return (PsiMethod)parent;
+    if (parent instanceof PsiLambdaExpression) return LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
+    return null;
+  }
+
+  private void reportNullableReturns(DataFlowInstructionVisitor visitor,
+                                     ProblemsHolder holder,
+                                     Set<PsiElement> reportedAnchors,
+                                     @NotNull PsiElement block) {
+    final PsiMethod method = getScopeMethod(block);
+    if (method == null || NullableStuffInspectionBase.isNullableNotInferred(method, true)) return;
+
+    boolean notNullRequired = NullableNotNullManager.isNotNull(method);
+    if (!notNullRequired && !SUGGEST_NULLABLE_ANNOTATIONS) return;
+
+    PsiType returnType = method.getReturnType();
+    // no warnings in void lambdas, where the expression is not returned anyway
+    if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && returnType == PsiType.VOID) return;
+    
+    // no warnings for Void methods, where only null can be possibly returned
+    if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
+
     for (PsiElement statement : visitor.getProblems(NullabilityProblem.nullableReturn)) {
       assert statement instanceof PsiExpression; 
       final PsiExpression expr = (PsiExpression)statement;
       if (!reportedAnchors.add(expr)) continue;
 
-      if (runner.isInNotNullMethod()) {
+      if (notNullRequired) {
         final String text = isNullLiteralExpression(expr)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull")
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull");
@@ -762,70 +802,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       boolean ephemeralNpe;
       boolean normalNpe;
       boolean normalOk;
-    }
-  }
-
-  private static class ReplaceOptionalOfWithOfNullableFix implements LocalQuickFix {
-
-    public static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
-    public static final String JAVA_OPTIONAL = "java.util.Optional";
-    private final String myTargetMethodName;
-
-    public ReplaceOptionalOfWithOfNullableFix(final String targetMethodName) {
-      myTargetMethodName = targetMethodName;
-    }
-
-    private static LocalQuickFix registerReplaceOptionalOfWithOfNullableFix(PsiExpression qualifier) {
-      final PsiElement argList = PsiUtil.skipParenthesizedExprUp(qualifier).getParent();
-      if (argList instanceof PsiExpressionList) {
-        final PsiElement parent = argList.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          final PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
-          if (method != null) {
-            final PsiClass containingClass = method.getContainingClass();
-            if ("of".equals(method.getName()) && containingClass != null) {
-              final String qualifiedName = containingClass.getQualifiedName();
-              if (JAVA_OPTIONAL.equals(qualifiedName)) {
-                return new ReplaceOptionalOfWithOfNullableFix("ofNullable");
-              } 
-              else if (GUAVA_OPTIONAL.equals(qualifiedName)) {
-                return new ReplaceOptionalOfWithOfNullableFix("fromNullable");
-              }
-            }
-          }
-        }
-      }
-      return null;
-    }
-    
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace with '." + myTargetMethodName + "()'";
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression
-        methodCallExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      if (methodCallExpression != null) {
-        final PsiElement ofNullableExprName =
-          ((PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project)
-            .createExpressionFromText("Optional.ofNullable(null)", null)).getMethodExpression();
-        final PsiElement referenceNameElement = methodCallExpression.getMethodExpression().getReferenceNameElement();
-        if (referenceNameElement != null) {
-          final PsiElement ofNullableNameElement = ((PsiReferenceExpression)ofNullableExprName).getReferenceNameElement();
-          LOG.assertTrue(ofNullableNameElement != null);
-          referenceNameElement.replace(ofNullableNameElement);
-        }
-      }
     }
   }
 }

@@ -26,7 +26,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -110,7 +109,7 @@ public class FileHeaderChecker {
         }
 
         if (!newText.isEmpty()) {
-          PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(newText);
+          PsiComment newComment = JavaPsiFacade.getElementFactory(project).createCommentFromText(newText, null);
           element.replace(newComment);
         }
         else {

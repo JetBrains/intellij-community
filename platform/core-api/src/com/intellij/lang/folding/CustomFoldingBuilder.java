@@ -19,6 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.Stack;
@@ -38,7 +40,7 @@ import java.util.Set;
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
 
   private CustomFoldingProvider myDefaultProvider;
-  private static final int MAX_LOOKUP_DEPTH = 10;
+  private static final RegistryValue myMaxLookupDepth = Registry.get("custom.folding.max.lookup.depth");
   private static final ThreadLocal<Set<ASTNode>> ourCustomRegionElements = new ThreadLocal<Set<ASTNode>>();
 
   @NotNull
@@ -103,7 +105,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
         }
       }
       else {
-        if (currDepth < MAX_LOOKUP_DEPTH) {
+        if (currDepth < myMaxLookupDepth.asInteger()) {
           addCustomFoldingRegionsRecursively(localFoldingStack, child, descriptors, currDepth + 1);
         }
       }

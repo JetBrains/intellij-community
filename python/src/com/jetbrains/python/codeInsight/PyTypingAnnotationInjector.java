@@ -24,16 +24,27 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+
 /**
  * @author vlan
  */
 public class PyTypingAnnotationInjector extends PyInjectorBase {
+  public static final Pattern RE_TYPING_ANNOTATION = Pattern.compile("\\s*\\S+(\\[.*\\])?\\s*");
+
   @Nullable
   @Override
   public Language getInjectedLanguage(@NotNull PsiElement context) {
-    if (context instanceof PyStringLiteralExpression && PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true) != null) {
-      return PyDocstringLanguageDialect.getInstance();
+    if (context instanceof PyStringLiteralExpression) {
+      final PyStringLiteralExpression expr = (PyStringLiteralExpression)context;
+      if (PsiTreeUtil.getParentOfType(context, PyAnnotation.class, true) != null && isTypingAnnotation(expr.getStringValue())) {
+        return PyDocstringLanguageDialect.getInstance();
+      }
     }
     return null;
+  }
+
+  private static boolean isTypingAnnotation(@NotNull String s) {
+    return RE_TYPING_ANNOTATION.matcher(s).matches();
   }
 }

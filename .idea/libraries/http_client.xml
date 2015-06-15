@@ -1,20 +1,21 @@
 <component name="libraryTable">
   <library name="http-client">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/httpcore-4.3.3.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/httpmime-4.3.6.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/httpclient-4.3.6.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/fluent-hc-4.3.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpcore-4.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpmime-4.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpclient-4.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/fluent-hc-4.4.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.3.6-src.zip!/httpcomponents-client-4.3.6/httpmime/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.3.6-src.zip!/httpcomponents-client-4.3.6/httpmime/src/main/java-deprecated" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.3.6-src.zip!/httpcomponents-client-4.3.6/fluent-hc/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.3.6-src.zip!/httpcomponents-client-4.3.6/httpclient/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.3.6-src.zip!/httpcomponents-client-4.3.6/httpclient/src/main/java-deprecated" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.3.3-src.zip!/httpcomponents-core-4.3.3/httpcore/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.3.3-src.zip!/httpcomponents-core-4.3.3/httpcore/src/main/java-deprecated" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/httpmime/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/httpmime/src/main/java-deprecated" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/fluent-hc/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/httpclient/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/httpclient/src/main/java-deprecated" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.4.1
+      -src.zip!/httpcomponents-core-4.3.3/httpcore/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.4.1-src.zip!/httpcomponents-core-4.3.3/httpcore/src/main/java-deprecated" />
     </SOURCES>
   </library>
 </component>

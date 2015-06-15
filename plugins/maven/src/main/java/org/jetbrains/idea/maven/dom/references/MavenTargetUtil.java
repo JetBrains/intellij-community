@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,7 +33,7 @@ public class MavenTargetUtil {
   public static PsiElement getFindTarget(Editor editor, PsiFile file) {
     if (editor == null || file == null) return null;
 
-    PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     if (target instanceof MavenPsiElementWrapper) {
       return ((MavenPsiElementWrapper)target).getWrappee();
     }

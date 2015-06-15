@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -27,7 +28,7 @@ public class SoftWrapTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testSoftWrapInInjection() throws Exception {
 
     myFixture.configureByFile("softWrap.html");
-    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), 83);
+    EditorTestUtil.configureSoftWraps(((EditorWindow)myFixture.getEditor()).getDelegate(), 83);
     myFixture.type('j');
     myFixture.checkResultByFile("softWrap_after.html");
   }

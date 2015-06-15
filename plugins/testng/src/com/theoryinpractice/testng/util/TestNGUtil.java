@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -37,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -91,6 +91,20 @@ public class TestNGUtil {
       AfterTest.class.getName()
   };
 
+  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
+      Configuration.class.getName(),
+      Factory.class.getName(),
+      ObjectFactory.class.getName(),
+      BeforeClass.class.getName(),
+      BeforeGroups.class.getName(),
+      BeforeSuite.class.getName(),
+      BeforeTest.class.getName(),
+      AfterClass.class.getName(),
+      AfterGroups.class.getName(),
+      AfterSuite.class.getName(),
+      AfterTest.class.getName()
+  };
+
   @NonNls
   private static final String[] CONFIG_JAVADOC_TAGS = {
       "testng.configuration",
@@ -113,19 +127,24 @@ public class TestNGUtil {
   private static final String SUITE_TAG_NAME = "suite";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
+    return hasConfig(element, CONFIG_ANNOTATIONS_FQN);
+  }
+
+  public static boolean hasConfig(PsiModifierListOwner element,
+                                  String[] configAnnotationsFqn) {
     if (element instanceof PsiClass) {
       for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
-        if (isConfigMethod(method)) return true;
+        if (isConfigMethod(method, configAnnotationsFqn)) return true;
       }
     } else {
       if (!(element instanceof PsiMethod)) return false;
-      return isConfigMethod((PsiMethod)element);
+      return isConfigMethod((PsiMethod)element, configAnnotationsFqn);
     }
     return false;
   }
 
-  private static boolean isConfigMethod(PsiMethod method) {
-    for (String fqn : CONFIG_ANNOTATIONS_FQN) {
+  private static boolean isConfigMethod(PsiMethod method, String[] configAnnotationsFqn) {
+    for (String fqn : configAnnotationsFqn) {
       if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
     }
 
@@ -185,27 +204,35 @@ public class TestNGUtil {
       }
       return true;
     }
-    if (element instanceof PsiDocCommentOwner && hasTestJavaDoc((PsiDocCommentOwner) element, checkJavadoc))
+    if (element instanceof PsiDocCommentOwner && checkJavadoc && getTextJavaDoc((PsiDocCommentOwner)element) != null)
       return true;
     //now we check all methods for the test annotation
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass) element;
       for (PsiMethod method : psiClass.getAllMethods()) {
-        if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION_FQN, false, true)) return true;
+        PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, TEST_ANNOTATION_FQN);
+        if (annotation != null) {
+          if (checkDisabled) {
+            if (isDisabled(annotation)) continue;
+          }
+          return true;
+        }
         if (AnnotationUtil.isAnnotated(method, FACTORY_ANNOTATION_FQN, false, true)) return true;
-        if (hasTestJavaDoc(method, checkJavadoc)) return true;
+        if (checkJavadoc && getTextJavaDoc(method) != null) return true;
       }
-      return AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, true, true);
+      return false;
     } else if (element instanceof PsiMethod) {
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, true, true)) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, true, TEST_ANNOTATION_FQN);
+        if (annotation != null) {
+          if (checkDisabled && isDisabled(annotation)) return false;
           //even if it has a global test, we ignore private methods
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
           return !isPrivate && !element.hasModifierProperty(PsiModifier.STATIC) && !hasConfig(element);
         }
-        if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
+        else if (checkJavadoc && getTextJavaDoc(psiClass) != null) return true;
       }
     }
     return false;
@@ -214,13 +241,6 @@ public class TestNGUtil {
   public static boolean isDisabled(PsiAnnotation annotation) {
     final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("enabled");
     return attributeValue != null && attributeValue.textMatches("false");
-  }
-
-  private static boolean hasTestJavaDoc(@NotNull PsiDocCommentOwner element, final boolean checkJavadoc) {
-    if (checkJavadoc) {
-      return getTextJavaDoc(element) != null;
-    }
-    return false;
   }
 
   private static PsiDocTag getTextJavaDoc(@NotNull final PsiDocCommentOwner element) {
@@ -410,21 +430,22 @@ public class TestNGUtil {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-        final Collection<PsiClass> set = new HashSet<PsiClass>();
-        PsiManager manager = PsiManager.getInstance(filter.getProject());
-        GlobalSearchScope scope = filter.getScope();
-        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-        scope = projectScope.intersectWith(scope);
-        for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
+        final Collection<PsiClass> set = new LinkedHashSet<PsiClass>();
+        final PsiManager manager = PsiManager.getInstance(filter.getProject());
+        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
+        final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
               if (filter.isAccepted(psiClass)) {
-                indicator.setText2("Found test class " + psiClass.getQualifiedName());
+                if (indicator != null) {
+                  indicator.setText2("Found test class " + psiClass.getQualifiedName());
+                }
                 set.add(psiClass);
               }
             }
-          });
-        }
+          }
+        });
         holder[0] = set.toArray(new PsiClass[set.size()]);
       }
     };
@@ -524,5 +545,20 @@ public class TestNGUtil {
       }
     }
     return false;
+  }
+
+  public static PsiClass getProviderClass(final PsiElement element, final PsiClass topLevelClass) {
+    final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
+    if (annotation != null) {
+      final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dataProviderClass");
+      if (value instanceof PsiClassObjectAccessExpression) {
+        final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+        final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());
+        if (psiClass != null) {
+          return psiClass;
+        }
+      }
+    }
+    return topLevelClass;
   }
 }

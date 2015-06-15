@@ -18,6 +18,7 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
@@ -124,7 +126,22 @@ public class FileTemplateUtil{
           return 0L;
         }
       });
-      Velocity.init();
+
+      Thread thread = Thread.currentThread();
+      ClassLoader classLoader = thread.getContextClassLoader();
+      Application application = ApplicationManager.getApplication();
+
+      if (application.isInternal() && !application.isUnitTestMode() &&
+          SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
+        thread.setContextClassLoader(FileTemplate.class.getClassLoader());
+      }
+
+      try {
+        Velocity.init();
+      }
+      finally {
+        thread.setContextClassLoader(classLoader);
+      }
     }
     catch (Exception e){
       LOG.error("Unable to init Velocity", e);

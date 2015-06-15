@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -151,9 +152,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
       }
       dimension.height += dimension1.height;
     }
-    Insets insets = container.getInsets();
-    dimension.width += insets.left + insets.right + hGap * 2;
-    dimension.height += insets.top + insets.bottom + vGap * 2;
+    addInsets(dimension, container);
     return dimension;
   }
 
@@ -170,9 +169,13 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
       }
       dimension.height += dimension1.height;
     }
-    Insets insets = container.getInsets();
-    dimension.width += insets.left + insets.right + hGap * 2;
-    dimension.height += insets.top + insets.bottom + vGap * 2;
+    addInsets(dimension, container);
     return dimension;
+  }
+
+  private void addInsets(Dimension dimension, Container container) {
+    JBInsets.addTo(dimension, container.getInsets());
+    dimension.width += hGap + hGap;
+    dimension.height += vGap + vGap;
   }
 }

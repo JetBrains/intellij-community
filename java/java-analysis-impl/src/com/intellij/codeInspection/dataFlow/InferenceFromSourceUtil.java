@@ -44,8 +44,18 @@ public class InferenceFromSourceUtil {
 
   private static boolean isUnusedInAnonymousClass(@NotNull PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
-    return containingClass instanceof PsiAnonymousClass &&
-           MethodReferencesSearch.search(method, new LocalSearchScope(containingClass), false).findFirst() == null;
+    if (!(containingClass instanceof PsiAnonymousClass)) {
+      return false;
+    }
+
+    if (containingClass.getParent() instanceof PsiNewExpression && 
+        containingClass.getParent().getParent() instanceof PsiVariable && 
+        !method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) {
+      // references outside anonymous class can still resolve to this method, see com.intellij.psi.scope.util.PsiScopesUtil.setupAndRunProcessor()
+      return false;
+    }
+    
+    return MethodReferencesSearch.search(method, new LocalSearchScope(containingClass), false).findFirst() == null;
   }
 
   private static boolean isLibraryCode(@NotNull PsiMethod method) {

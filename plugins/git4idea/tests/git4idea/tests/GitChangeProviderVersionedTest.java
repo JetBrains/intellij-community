@@ -17,11 +17,11 @@ package git4idea.tests;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.Test;
 
 import static com.intellij.openapi.vcs.FileStatus.*;
@@ -65,7 +65,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
           @Override
           public void run() {
             final VirtualFile dir = myProjectRoot.findChild("dir");
-            myDirtyScope.addDirtyDirRecursively(new FilePathImpl(dir));
+            myDirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(dir));
             FileUtil.delete(VfsUtilCore.virtualToIoFile(dir));
           }
         });

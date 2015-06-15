@@ -25,9 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -1160,7 +1158,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @NotNull
   public Collection<Change> getChangesIn(VirtualFile dir) {
-    return getChangesIn(new FilePathImpl(dir));
+    return getChangesIn(VcsUtil.getFilePath(dir));
   }
 
   @NotNull
@@ -1215,19 +1213,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
-          Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+          final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
           Set<VirtualFile> parents =
             vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
 
           // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
           // (inside the method) - so common add logic just needs to refresh statuses of parents
-          List<VcsException> result = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+          final List<VcsException> result = ContainerUtil.newArrayList();
+          ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              indicator.setIndeterminate(true);
+              List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+              if (exs != null) {
+                ContainerUtil.addAll(result, exs);
+              }
+            }
+          });
 
           allProcessedFiles.addAll(descendants);
           allProcessedFiles.addAll(parents);
-          if (result != null) {
-            exceptions.addAll(result);
-          }
+          exceptions.addAll(result);
         }
       }
     });
@@ -1677,7 +1683,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final AbstractVcs vcs = getVcs(was);
           if (vcs != null) {
-            myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
+            myRevisionsCache.plus(Pair.create(was.getPath().getPath(), vcs));
           }
           // maybe define modify method?
           myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
@@ -1692,7 +1698,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final AbstractVcs vcs = getVcs(baseRevision);
           if (vcs != null) {
-            myRevisionsCache.plus(Pair.create(baseRevision.getPath(), vcs));
+            myRevisionsCache.plus(Pair.create(baseRevision.getPath().getPath(), vcs));
           }
           myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
         }
@@ -1706,9 +1712,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final AbstractVcs vcs = getVcs(baseRevision);
           if (vcs != null) {
-            myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+            myRevisionsCache.minus(Pair.create(baseRevision.getPath().getPath(), vcs));
           }
-          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath().getPath());
         }
       });
     }
@@ -1717,7 +1723,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     private AbstractVcs getVcs(final BaseRevision baseRevision) {
       VcsKey vcsKey = baseRevision.getVcs();
       if (vcsKey == null) {
-        final String path = baseRevision.getPath();
+        FilePath path = baseRevision.getPath();
         vcsKey = findVcs(path);
         if (vcsKey == null) return null;
       }
@@ -1725,9 +1731,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     @Nullable
-    private VcsKey findVcs(final String path) {
+    private VcsKey findVcs(final FilePath path) {
       // does not matter directory or not
-      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      VirtualFile vf = path.getVirtualFile();
+      if (vf == null) {
+        vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.getIOFile());
+      }
       if (vf == null) return null;
       final AbstractVcs vcs = myVcsManager.getVcsFor(vf);
       return vcs == null ? null : vcs.getKeyInstanceMethod();

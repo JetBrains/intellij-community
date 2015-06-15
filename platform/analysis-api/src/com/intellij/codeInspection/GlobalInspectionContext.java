@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ public interface GlobalInspectionContext extends UserDataHolder {
    *
    * @return the reference graph instance.
    */
-  @NotNull RefManager getRefManager();
+  @NotNull
+  RefManager getRefManager();
 
   /**
    * Checks if the inspection with the specified ID is suppressed for the
@@ -52,7 +53,7 @@ public interface GlobalInspectionContext extends UserDataHolder {
    * @return true if the inspection is suppressed, false otherwise.
    * @deprecated use #shouldCheck instead
    */
-  boolean isSuppressed(RefEntity entity, String inspectionToolId);
+  boolean isSuppressed(@NotNull RefEntity entity, @NotNull String inspectionToolId);
 
   /**
    * Checks if the inspection is suppressed for the specified reference graph node. Should not be called manually in normal case.
@@ -61,7 +62,7 @@ public interface GlobalInspectionContext extends UserDataHolder {
    * @param tool             the inspection to check.
    * @return true if the inspection is suppressed, false otherwise.
    */
-  boolean shouldCheck(RefEntity entity, GlobalInspectionTool tool);
+  boolean shouldCheck(@NotNull RefEntity entity, @NotNull GlobalInspectionTool tool);
 
   /**
    * Checks if the inspection with the specified ID is suppressed for the
@@ -76,9 +77,9 @@ public interface GlobalInspectionContext extends UserDataHolder {
   @NotNull
   Project getProject();
 
-  <T> T getExtension(Key<T> key);
+  <T> T getExtension(@NotNull Key<T> key);
 
-  void incrementJobDoneAmount(JobDescriptor job, String message);
+  void incrementJobDoneAmount(@NotNull JobDescriptor job, @NotNull String message);
 
   @NotNull
   StdJobDescriptors getStdJobDescriptors();

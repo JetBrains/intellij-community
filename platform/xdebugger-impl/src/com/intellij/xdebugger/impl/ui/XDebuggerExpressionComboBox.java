@@ -103,6 +103,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       @Override
       protected void onEditorCreate(EditorEx editor) {
         editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
+        editor.getColorsScheme().setEditorFontSize(myComboBox.getFont().getSize());
       }
     };
     myEditor.getEditorComponent().setFontInheritedFromLAF(false);

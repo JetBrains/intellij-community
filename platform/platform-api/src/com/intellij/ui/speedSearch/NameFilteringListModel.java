@@ -76,16 +76,19 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     super.addToFiltered(elt);
 
     if (myNamer != null) {
-      String filterString = StringUtil.toUpperCase(myPattern.compute());
-      String candidateString = StringUtil.toUpperCase(myNamer.fun(elt));
-      int index = getSize() - 1;
+      String name = myNamer.fun(elt);
+      if (name != null) {
+        String filterString = StringUtil.toUpperCase(myPattern.compute());
+        String candidateString = StringUtil.toUpperCase(name);
+        int index = getSize() - 1;
 
-      if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
-        myFullMatchIndex = index;
-      }
+        if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
+          myFullMatchIndex = index;
+        }
 
-      if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
-        myStartsWithIndex = index;
+        if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
+          myStartsWithIndex = index;
+        }
       }
     }
   }

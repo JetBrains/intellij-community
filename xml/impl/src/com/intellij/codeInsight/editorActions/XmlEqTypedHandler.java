@@ -31,9 +31,8 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
-    if (WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
-      boolean inXml = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
-      if (c == '=' && inXml) {
+    if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
+      if (file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage) {
         TypedHandler.commitDocumentIfCurrentCaretIsNotTheFirstOne(editor, project);
         
         PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);
@@ -51,7 +50,13 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (needToInsertQuotes) {
       int offset = editor.getCaretModel().getOffset();
-      editor.getDocument().insertString(offset, "\"\"");
+      PsiElement fileContext = file.getContext();
+      String toInsert= "\"\"";
+
+      if(fileContext != null) {
+        if (fileContext.getText().startsWith("\"")) toInsert = "''";
+      }
+      editor.getDocument().insertString(offset, toInsert);
       editor.getCaretModel().moveToOffset(offset + 1);
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
     }

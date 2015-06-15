@@ -124,7 +124,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AnnotationTypeFilter();
     }
 
-    if (JavaCompletionData.DECLARATION_START.accepts(position) ||
+    if (JavaCompletionData.DECLARATION_START.getValue().accepts(position) ||
         JavaCompletionData.isInsideParameterList(position) ||
         psiElement().inside(psiElement(PsiJavaCodeReferenceElement.class).withParent(psiAnnotation())).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
@@ -161,10 +161,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       return createAnnotationFilter(position);
     }
 
-    if (psiElement().afterLeaf("=").inside(PsiVariable.class).accepts(position)) {
-      return new OrFilter(
-        new ClassFilter(PsiVariable.class, false),
-        new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));
+    PsiVariable var = PsiTreeUtil.getParentOfType(position, PsiVariable.class, false, PsiClass.class);
+    if (var != null && PsiTreeUtil.isAncestor(var.getInitializer(), position, false)) {
+      return new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class));
     }
 
     if (SWITCH_LABEL.accepts(position)) {
@@ -226,9 +225,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
-      for (LookupElement element : LambdaCompletionProvider.getLambdaVariants(parameters)) {
-        result.addElement(PrioritizedLookupElement.withPriority(element, 1));
-      }
+      result.addAllElements(FunctionalExpressionCompletionProvider.getLambdaVariants(parameters, true));
     }
 
     PrefixMatcher matcher = result.getPrefixMatcher();
@@ -241,6 +238,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     addKeywords(parameters, result);
+
+    addExpressionVariants(parameters, position, result);
 
     Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
 
@@ -263,6 +262,16 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
     result.stopHere();
+  }
+
+  private void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, CompletionResultSet result) {
+    if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
+        !JavaCompletionData.AFTER_DOT.accepts(position)) {
+      JavaCompletionData.addExpectedTypeMembers(parameters, result);
+      if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
+        new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
+      }
+    }
   }
 
   public static boolean isInJavaContext(PsiElement position) {
@@ -383,17 +392,26 @@ public class JavaCompletionContributor extends CompletionContributor {
     return usedWords;
   }
 
-  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
+  private static void addKeywords(CompletionParameters parameters, final CompletionResultSet result) {
+    Consumer<LookupElement> noMiddleMatches = new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        if (element.getLookupString().startsWith(result.getPrefixMatcher().getPrefix())) {
+          result.addElement(element);
+        }
+      }
+    };
+
     PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
     final JavaCompletionData completionData = getCompletionData(PsiUtil.getLanguageLevel(position));
     completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
     completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
-    completionData.fillCompletions(parameters, result);
+    completionData.fillCompletions(parameters, noMiddleMatches);
 
     for (final LookupElement item : lookupSet) {
-      result.addElement(item);
+      noMiddleMatches.consume(item);
     }
   }
 

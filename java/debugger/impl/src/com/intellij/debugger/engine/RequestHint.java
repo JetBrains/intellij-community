@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -49,6 +48,7 @@ public class RequestHint {
   private final int myDepth;
   private final SourcePosition myPosition;
   private final int myFrameCount;
+  private boolean mySteppedOut = false;
 
   @Nullable
   private final MethodFilter myMethodFilter;
@@ -140,11 +140,14 @@ public class RequestHint {
     return myMethodFilter instanceof BreakpointStepMethodFilter || myTargetMethodMatched;
   }
 
-  private boolean isTheSameDepth(SuspendContextImpl context) {
+  private boolean isTheSameFrame(SuspendContextImpl context) {
+    if (mySteppedOut) return false;
     final ThreadReferenceProxyImpl contextThread = context.getThread();
     if (contextThread != null) {
       try {
-        return myFrameCount == contextThread.frameCount();
+        int currentDepth = contextThread.frameCount();
+        if (currentDepth < myFrameCount) mySteppedOut = true;
+        return currentDepth == myFrameCount;
       }
       catch (EvaluateException ignored) {
       }
@@ -158,7 +161,7 @@ public class RequestHint {
     }
     else {
       Range<Integer> exprLines = myMethodFilter.getCallingExpressionLines();
-      return exprLines != null && locationPosition.getLine() >= exprLines.getFrom() && locationPosition.getLine() <= exprLines.getTo();
+      return exprLines != null && exprLines.isWithin(locationPosition.getLine());
     }
   }
 
@@ -171,7 +174,7 @@ public class RequestHint {
           frameProxy != null &&
           !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
           myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location()) &&
-          !isTheSameDepth(context)
+          !isTheSameFrame(context)
         ) {
         myTargetMethodMatched = true;
         return STOP;
@@ -182,7 +185,7 @@ public class RequestHint {
           public Integer compute() {
             final SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
             if (locationPosition != null) {
-              if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameDepth(context)) {
+              if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
                 return isOnTheSameLine(locationPosition) ? myDepth : STOP;
               }
             }
@@ -211,8 +214,8 @@ public class RequestHint {
         if(settings.SKIP_GETTERS) {
           boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
             public Boolean compute() {
-              final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class);
-              return (psiMethod != null && DebuggerUtils.isSimpleGetter(psiMethod))? Boolean.TRUE : Boolean.FALSE;
+              PsiElement contextElement = PositionUtil.getContextElement(context);
+              return (contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement))? Boolean.TRUE : Boolean.FALSE;
             }
           }).booleanValue();
 

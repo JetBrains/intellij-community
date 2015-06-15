@@ -134,6 +134,10 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
     return false;
   }
 
+  public void hide() {
+    myContentPane.setVisible(false);
+  }
+
   @Override
   void loadProperties() {
     SuspendPolicy suspendPolicy = myBreakpoint.getSuspendPolicy();

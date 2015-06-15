@@ -41,25 +41,8 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
   @NotNull
   private static List<VcsRevisionNumber> getRevisionNumbersFromContext(@NotNull AnActionEvent e) {
     VcsRevisionNumber[] revisionNumbers = e.getData(VcsDataKeys.VCS_REVISION_NUMBERS);
-    if (revisionNumbers != null) {
-      return Arrays.asList(revisionNumbers);
-    }
 
-    VcsRevisionNumber revision = e.getData(VcsDataKeys.VCS_REVISION_NUMBER);
-    if (revision != null) {
-      return Collections.singletonList(revision);
-    }
-
-    VcsFileRevision[] fileRevisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
-    if (fileRevisions != null) {
-      return ContainerUtil.map(fileRevisions, new Function<VcsFileRevision, VcsRevisionNumber>() {
-        @Override
-        public VcsRevisionNumber fun(VcsFileRevision revision) {
-          return revision.getRevisionNumber();
-        }
-      });
-    }
-    return Collections.emptyList();
+    return revisionNumbers != null ? Arrays.asList(revisionNumbers) : Collections.<VcsRevisionNumber>emptyList();
   }
 
   @NotNull

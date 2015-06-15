@@ -18,23 +18,31 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.EditorLinePainter;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LineExtensionInfo;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Collection;
 
-class EditorSizeManager implements PrioritizedDocumentListener, Disposable {
+/**
+ * Calculates width (in pixels) of editor contents.
+ */
+class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener {
   private final EditorView myView;
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
   
+  private final TIntArrayList myLineWidths = new TIntArrayList();   
   private int myWidthInPixels;
 
   private int myMaxLineWithExtensionWidth;
@@ -45,6 +53,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable {
     myEditor = view.getEditor();
     myDocument = myEditor.getDocument(); 
     myDocument.addDocumentListener(this, this);
+    myEditor.getFoldingModel().addListener(this, this);
   }
 
   @Override
@@ -62,7 +71,27 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable {
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    invalidateCachedWidth();
+    invalidateRange(event.getOffset(), event.getOffset() + event.getNewLength());
+  }
+  
+  private int foldingChangeStartOffset = Integer.MAX_VALUE;
+  private int foldingChangeEndOffset = Integer.MIN_VALUE;
+  
+  @Override
+  public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+    if (region.isValid()) {
+      foldingChangeStartOffset = Math.min(foldingChangeStartOffset, region.getStartOffset());
+      foldingChangeEndOffset = Math.max(foldingChangeEndOffset, region.getEndOffset());
+    }
+  }
+
+  @Override
+  public void onFoldProcessingEnd() {
+    if (foldingChangeStartOffset <= foldingChangeEndOffset) {
+      invalidateRange(foldingChangeStartOffset, foldingChangeEndOffset);
+    }
+    foldingChangeStartOffset = Integer.MAX_VALUE;
+    foldingChangeEndOffset = Integer.MIN_VALUE;
   }
 
   Dimension getPreferredSize() {
@@ -70,7 +99,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable {
     if (!myDocument.isInBulkUpdate()) {
       for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
         if (caret.isUpToDate()) {
-          int caretX = myView.visualPositionToXY(caret.getVisualPosition(), true).x;
+          int caretX = myView.visualPositionToXY(caret.getVisualPosition()).x;
           width = Math.max(caretX, width);
         }
       }
@@ -104,37 +133,38 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable {
   }
 
   private int calculatePreferredWidth() {
-    int lineCount = myDocument.getLineCount();
-    int maxWidth = (lineCount == 0 ? 0 : myView.getLineWidth(0));
-    for (int line = 1; line < lineCount; line++) {
-      LineLayout lineLayout = myView.getCachedLineLayout(line);
-      if (lineLayout != null) {
-        maxWidth = Math.max(maxWidth, (int)lineLayout.getMaxX());
+    int lineCount = myLineWidths.size();
+    int maxWidth = 0;
+    for (int i = 0; i < lineCount; i++) {
+      int width = myLineWidths.get(i);
+      if (width < 0) {
+        width = myView.getMaxWidthInLineRange(i, i);
+        myLineWidths.set(i, width);
       }
-    }
-    int longestLineNumber = guessLongestLineNumber();
-    if (longestLineNumber > 0) {
-      maxWidth = Math.max(maxWidth, myView.getLineWidth(longestLineNumber));
+      maxWidth = Math.max(maxWidth, width);
     }
     return maxWidth;
   }
 
-  private int guessLongestLineNumber() {
-    int lineCount = myDocument.getLineCount();
-    int longestLineNumber = -1;
-    int longestLine = -1;
-    for (int line = 0; line < lineCount; line++) {
-      int lineChars = myDocument.getLineEndOffset(line) - myDocument.getLineStartOffset(line);
-      if (lineChars > longestLine) {
-        longestLine = lineChars;
-        longestLineNumber = line;
-      }
-    }
-    return longestLineNumber;
+  void reset() {
+    invalidateRange(0, myDocument.getTextLength());
   }
 
-  void invalidateCachedWidth() {
+  void invalidateRange(int startOffset, int endOffset) {
     myWidthInPixels = -1;
+    int startVisualLine = myView.offsetToVisualLine(startOffset);
+    int endVisualLine = myView.offsetToVisualLine(endOffset);
+    int lineDiff = myEditor.getVisibleLineCount() - myLineWidths.size();
+    if (lineDiff > 0) {
+      int[] newEntries = new int[lineDiff];
+      myLineWidths.insert(startVisualLine, newEntries);
+    }
+    else if (lineDiff < 0) {
+      myLineWidths.remove(startVisualLine, -lineDiff);
+    }
+    for (int i = startVisualLine; i <= endVisualLine && i < myLineWidths.size(); i++) {
+      myLineWidths.set(i, -1);
+    }
   }
 
   int getMaxLineWithExtensionWidth() {
@@ -144,13 +174,5 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable {
   void setMaxLineWithExtensionWidth(int lineNumber, int width) {
     myWidestLineWithExtension = lineNumber;
     myMaxLineWithExtensionWidth = width;
-  }
-  
-  void validateCurrentWidth(LineLayout lineLayout) {
-    int width = (int)lineLayout.getMaxX();
-    if (myWidthInPixels >= 0 && width > myWidthInPixels) {
-      myWidthInPixels = width;
-      myEditor.getContentComponent().revalidate();
-    }
   }
 }

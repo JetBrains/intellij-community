@@ -22,32 +22,45 @@
  */
 package com.theoryinpractice.testng.model;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
+import javax.swing.*;
+import javax.swing.table.TableCellEditor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestNGParametersTableModel extends ListTableModel<Map.Entry>
+public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String, String>>
 {
 
-    private ArrayList<Map.Entry> parameterList;
+    private ArrayList<Map.Entry<String, String>> parameterList;
 
     public TestNGParametersTableModel() {
         super(
-                new ColumnInfo("Name")
+                new ColumnInfo<Map.Entry<String, String>, String>("Name")
                 {
-                    public Object valueOf(Object object) {
-                        Map.Entry entry = (Map.Entry) object;
-                        return entry.getKey();
+                    public String valueOf(Map.Entry<String, String> object) {
+                        return object.getKey();
+                    }
+
+                    public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
+                        final JTextField textField = new JTextField();
+                        textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
+                        return new DefaultCellEditor(textField);
                     }
                 },
-                new ColumnInfo("Value")
+                new ColumnInfo<Map.Entry<String, String>, String>("Value")
                 {
-                    public Object valueOf(Object object) {
-                        Map.Entry entry = (Map.Entry) object;
-                        return entry.getValue();
+                    public String valueOf(Map.Entry<String, String> object) {
+                        return object.getValue();
+                    }
+
+                    public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
+                        final JTextField textField = new JTextField();
+                        textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
+                        return new DefaultCellEditor(textField);
                     }
                 }
         );
@@ -57,35 +70,35 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry>
         return true;
     }
 
-    public void setParameterList(ArrayList<Map.Entry> parameterList) {
+    public void setParameterList(ArrayList<Map.Entry<String, String>> parameterList) {
         this.parameterList = parameterList;
         setItems(parameterList);
     }
 
     public void addParameter() {
-        Map map = new HashMap();
+        Map<String, String> map = new HashMap<String, String>();
         map.put("", "");
         parameterList.addAll(map.entrySet());
         setParameterList(parameterList);
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        Map.Entry entry = parameterList.get(rowIndex);
+        Map.Entry<String, String> entry = parameterList.get(rowIndex);
         parameterList.remove(rowIndex);
 
-        Object key = entry.getKey();
-        Object value = entry.getValue();
+        String key = entry.getKey();
+        String value = entry.getValue();
 
         switch (columnIndex) {
             case 0:
-                key = aValue;
+                key = (String)aValue;
                 break;
             case 1:
-                value = aValue;
+                value = (String)aValue;
                 break;
         }
 
-        Map map = new HashMap();
+        Map<String, String> map = new HashMap<String, String>();
         map.put(key, value);
         parameterList.addAll(map.entrySet());
         setParameterList(parameterList);

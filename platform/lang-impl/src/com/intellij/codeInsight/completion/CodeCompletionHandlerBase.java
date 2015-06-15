@@ -182,6 +182,7 @@ public class CodeCompletionHandlerBase {
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+      CompletionAssertions.checkEditorValid(editor);
       if (!restarted && shouldSkipAutoPopup(editor, initializationContext[0].getFile())) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         return;
@@ -457,6 +458,8 @@ public class CodeCompletionHandlerBase {
   private void insertDummyIdentifier(final CompletionInitializationContext initContext,
                                      final boolean hasModifiers,
                                      final int invocationCount) {
+    CompletionAssertions.checkEditorValid(initContext.getEditor());
+
     final PsiFile originalFile = initContext.getFile();
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(originalFile.getProject());
     final PsiFile hostFile = manager.getTopLevelFile(originalFile);

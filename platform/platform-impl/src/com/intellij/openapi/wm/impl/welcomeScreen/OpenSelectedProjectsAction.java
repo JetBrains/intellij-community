@@ -15,28 +15,63 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.ProjectGroupActionGroup;
+import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.DumbAwareAction;
+
+import java.awt.event.InputEvent;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class OpenSelectedProjectsAction extends DumbAwareAction {
+public class OpenSelectedProjectsAction extends RecentProjectsWelcomeScreenActionBase {
   @Override
   public void actionPerformed(AnActionEvent e) {
-
+    List<AnAction> elements = getSelectedElements(e);
+    e = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), InputEvent.SHIFT_MASK);
+    for (AnAction element : elements) {
+      if (element instanceof ProjectGroupActionGroup) {
+        for (AnAction action : ((ProjectGroupActionGroup)element).getChildren(e)) {
+          action.actionPerformed(e);
+        }
+      } else {
+        element.actionPerformed(e);
+      }
+    }
   }
 
   @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
+    List<AnAction> selectedElements = getSelectedElements(e);
+    boolean hasProject = false;
+    boolean hasGroup = false;
+    for (AnAction element : selectedElements) {
+      if (element instanceof ReopenProjectAction) {
+        hasProject = true;
+      }
+      if (element instanceof ProjectGroupActionGroup) {
+        hasGroup = true;
+      }
+
+      if (hasGroup && hasProject) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+    }
     if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
       presentation.setEnabledAndVisible(true);
-      presentation.setText("Open Selected");
-      return;
+      if (selectedElements.size() == 1 && selectedElements.get(0) instanceof ProjectGroupActionGroup) {
+        presentation.setText("Open All Projects in Group");
+      } else {
+        presentation.setText("Open Selected");
+      }
+    } else {
+      presentation.setEnabledAndVisible(false);
     }
-    presentation.setEnabledAndVisible(false);
   }
 }

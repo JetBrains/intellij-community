@@ -2,6 +2,7 @@ package com.siyeh.igtest.bugs.mismatched_collection_query_update;
 
 import java.util.*;
 import java.io.FileInputStream;
+import java.util.concurrent.BlockingQueue;
 
 public class MismatchedCollectionQueryUpdate {
     private Set foo = new HashSet();
@@ -257,6 +258,31 @@ class CollectionsUser {
   private final List<Object> <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList<Object>();
   public void add() {
     Collections.addAll(list, "Hello");
+  }
+
+  Supplier<List<String>> i() {
+    final List<String> bas = new ArrayList<>();
+    bas.add("asdf");
+    return () -> bas;
+  }
+
+  Supplier<List<String>> j() {
+    final List<String> bas = new ArrayList<>();
+    bas.add("asdf");
+    return () -> {return bas;};
+  }
+
+  interface Supplier<T> {
+    T get();
+  }
+
+  void draining(BlockingQueue<Object> queue) {
+    List<Object> objects = new ArrayList<>();
+    queue.drainTo(objects);
+    // ...
+    for (Object obj : objects) {
+      //  ...
+    }
   }
 }
 

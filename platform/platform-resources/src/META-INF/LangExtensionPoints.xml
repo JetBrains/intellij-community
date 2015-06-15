@@ -254,6 +254,7 @@
     <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.UseScopeOptimizer"/>
 
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
+    <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
 
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
@@ -429,6 +430,9 @@
                     interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
     <extensionPoint name="runConfigurationProducer"
                     interface="com.intellij.execution.actions.RunConfigurationProducer"/>
+    <extensionPoint name="runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
+    </extensionPoint>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -552,6 +556,9 @@
     <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.parameterInfo.ParameterInfoHandler"/>
     </extensionPoint>
+    <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="codeInsight.fillParagraph" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler"/>
@@ -605,7 +612,7 @@
     </extensionPoint>
 
     <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.CodeInsightActionHandler"/>
     </extensionPoint>
 
     <extensionPoint name="codeInsight.lineMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -718,6 +725,7 @@
     <extensionPoint name="templateCompletionProcessor"
                     interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 
+    <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender"/>
     <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
@@ -832,6 +840,10 @@
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger"/>
 
     <extensionPoint name="scratch.rootType" interface="com.intellij.ide.scratch.RootType"/>
+
+    <extensionPoint name="packageDependencies.visitor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.packageDependencies.DependencyVisitorFactory"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
 

@@ -105,7 +105,7 @@ public class RunContentExecutor implements Disposable {
     final JComponent consolePanel = createConsolePanel(console, actions);
     RunContentDescriptor descriptor = new RunContentDescriptor(console, myProcess, consolePanel, myTitle);
 
-    Disposer.register(this, descriptor);
+    Disposer.register(console, descriptor);
 
     actions.add(new RerunAction(consolePanel));
     actions.add(new StopAction());
@@ -117,6 +117,7 @@ public class RunContentExecutor implements Disposable {
       activateToolWindow();
     }
 
+    Disposer.register(this, console);
     return console;
   }
 

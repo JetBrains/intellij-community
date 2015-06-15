@@ -47,6 +47,8 @@
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
     <extensionPoint name="resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
     <extensionPoint name="settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"/>
+    <extensionPoint name="importCustomizer" interface="org.jetbrains.plugins.gradle.service.project.GradleImportCustomizer"/>
+    <extensionPoint name="frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -63,6 +65,8 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

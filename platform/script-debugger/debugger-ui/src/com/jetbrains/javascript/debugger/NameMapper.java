@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.javascript.debugger;
 
 import com.google.common.base.CharMatcher;
@@ -15,9 +30,9 @@ import java.util.Map;
 
 import static org.jetbrains.rpc.CommandProcessor.LOG;
 
-public final class NameMapper {
+public class NameMapper {
   public static final String S1 = ",()[]{}=";
-  private static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"));
+  protected static final CharMatcher NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"));
   // don't trim trailing .&: - could be part of expression
   private static final CharMatcher OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1));
 
@@ -60,7 +75,7 @@ public final class NameMapper {
     }
 
     String sourceEntryName = sourceEntry.getName();
-    String generatedName = trimName(getGeneratedName(generatedDocument, sourceMap, sourceEntry), true);
+    String generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry));
     if (!generatedName.isEmpty()) {
       String sourceName = sourceEntryName;
       if (sourceName == null) {
@@ -82,16 +97,17 @@ public final class NameMapper {
   public static void warnSeveralMapping(@NotNull PsiElement element) {
     // see https://dl.dropboxusercontent.com/u/43511007/s/Screen%20Shot%202015-01-21%20at%2020.33.44.png
     // var1 mapped to the whole "var c, notes, templates, ..." expression text + unrelated text "   ;"
-    LOG.warn("incorrect sourcemap, several mappings for named element " + element);
+    LOG.warn("incorrect sourcemap, several mappings for named element " + element.getText());
   }
 
   @NotNull
   public static String trimName(@NotNull CharSequence rawGeneratedName, boolean isLastToken) {
-    String generatedName = (isLastToken ? NAME_TRIMMER : OPERATOR_TRIMMER).trimFrom(rawGeneratedName);
-    // GWT - button_0_g$ = new Button_5_g$('Click me');
-    // so, we should remove all after "="
-    int i = generatedName.indexOf('=');
-    return i > 0 ? NAME_TRIMMER.trimFrom(generatedName.substring(0, i)) : generatedName;
+    return (isLastToken ? NAME_TRIMMER : OPERATOR_TRIMMER).trimFrom(rawGeneratedName);
+  }
+
+  @NotNull
+  protected String extractName(@NotNull CharSequence rawGeneratedName) {
+    return NAME_TRIMMER.trimFrom(rawGeneratedName);
   }
 
   @NotNull

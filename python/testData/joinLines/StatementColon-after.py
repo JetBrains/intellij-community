@@ -1,2 +1,1 @@
-if True:
-  return "No special handling"
+if True: return "No special handling"

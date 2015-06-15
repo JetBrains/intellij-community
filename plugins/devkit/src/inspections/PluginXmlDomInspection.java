@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (DomUtil.hasXml(interfaceAttribute)) {
       final PsiClass value = interfaceAttribute.getValue();
       if (value != null && value.isDeprecated()) {
-        holder.createProblem(extension, ProblemHighlightType.LIKE_DEPRECATED, "Deprecated EP", null);
+        holder.createProblem(extension, ProblemHighlightType.LIKE_DEPRECATED,
+                             "Deprecated EP '" + extensionPoint.getEffectiveQualifiedName() + "'", null);
         return;
       }
     }
@@ -165,7 +166,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     holder.createProblem(attributeValue,
                          ProblemHighlightType.LIKE_DEPRECATED,
-                         "Not used anymore",
+                         "Attribute '" + attributeValue.getXmlElementName() + "' not used anymore",
                          null, new RemoveDomElementQuickFix(attributeValue))
       .highlightWholeElement();
   }

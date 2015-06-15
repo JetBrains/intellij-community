@@ -110,6 +110,13 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return (T)node.getPsi();
   }
 
+  @Nullable
+  protected <T extends PyElement> T childToPsi(@NotNull TokenSet elTypes) {
+    final ASTNode node = getNode().findChildByType(elTypes);
+    //noinspection unchecked
+    return node != null ? (T)node.getPsi() : null;
+  }
+
   @NotNull
   protected <T extends PyElement> T childToPsiNotNull(TokenSet filterSet, int index) {
     final PyElement child = childToPsi(filterSet, index);

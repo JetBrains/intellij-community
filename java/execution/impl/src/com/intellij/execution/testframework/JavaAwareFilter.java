@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 20-Feb-2008
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -26,18 +21,22 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author anna
+ * @since 20-Feb-2008
+ */
 public class JavaAwareFilter {
-  private JavaAwareFilter() {
-  }
+  private JavaAwareFilter() { }
 
-  public static Filter METHOD(final Project project, final GlobalSearchScope searchScope) {
+  public static Filter METHOD(@NotNull final Project project, @NotNull final GlobalSearchScope searchScope) {
     return new Filter() {
+      @Override
       public boolean shouldAccept(final AbstractTestProxy test) {
-        final Location location = test.getLocation(project, searchScope);
-        if (location instanceof MethodLocation) return true;
-        if (location instanceof PsiLocation && location.getPsiElement() instanceof PsiMethod) return true;
-        return false;
+        Location location = test.getLocation(project, searchScope);
+        return location instanceof MethodLocation ||
+               location instanceof PsiLocation && location.getPsiElement() instanceof PsiMethod;
       }
     };
   }

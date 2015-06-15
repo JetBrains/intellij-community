@@ -238,8 +238,15 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
     final String prefix;
     final String suffix;
-    if (commenter instanceof CustomUncommenter) {
-      return ((CustomUncommenter)commenter).findMaximumCommentedRange(text);
+    // Custom uncommenter is able to find commented block inside of selected text
+    final String selectedText = myCaret.getSelectedText();
+    if ((commenter instanceof CustomUncommenter) && selectedText != null) {
+      final TextRange commentedRange = ((CustomUncommenter)commenter).findMaximumCommentedRange(selectedText);
+      if (commentedRange == null) {
+        return null;
+      }
+      // Uncommenter returns range relative to text start, so we need to shift it to make abosolute.
+      return commentedRange.shiftRight(myCaret.getSelectionStart());
     }
 
     if (commenter instanceof SelfManagingCommenter) {

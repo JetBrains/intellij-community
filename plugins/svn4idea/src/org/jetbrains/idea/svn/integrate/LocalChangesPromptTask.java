@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -29,6 +28,7 @@ import com.intellij.util.FilePathByPathComparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -135,7 +135,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
         File localPath = getLocalPath(path);
 
         if (localPath != null) {
-          result.add(new FilePathImpl(localPath, false));
+          result.add(VcsUtil.getFilePath(localPath, false));
         }
       }
     }

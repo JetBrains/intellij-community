@@ -244,10 +244,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
 
-      @SuppressWarnings("deprecation") boolean showHidden =
-        chooserDescriptor.isShowHiddenFiles() ||
-        chooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES) == Boolean.TRUE ||
-        Registry.is("ide.mac.file.chooser.show.hidden.files");
+      boolean showHidden = chooserDescriptor.isShowHiddenFiles() || Registry.is("ide.mac.file.chooser.show.hidden.files");
       if (showHidden) {
         if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);

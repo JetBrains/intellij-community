@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -137,6 +138,9 @@ public class ProcessPopup  {
     builder.setCancelButton(new MinimizeButton("Hide"));
 
     JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel);
+
+    updateContentUI();
+    myActiveContentComponent.setBorder(null);
     if (frame != null) {
       Dimension contentSize = myRootContent.getPreferredSize();
       Rectangle bounds = frame.getBounds();
@@ -176,9 +180,18 @@ public class ProcessPopup  {
         }
       }
     };
-    scrolls.getViewport().setBackground(myActiveFocusedContent.getBackground());
-    scrolls.setBorder(null);
     myActiveContentComponent = scrolls;
+    updateContentUI();
+  }
+
+  private void updateContentUI() {
+    if (myActiveContentComponent == null || myActiveFocusedContent == null) return;
+    IJSwingUtilities.updateComponentTreeUI(myActiveContentComponent);
+    if (myActiveContentComponent instanceof JScrollPane) {
+      ((JScrollPane)myActiveContentComponent).getViewport().setBackground(myActiveFocusedContent.getBackground());
+    }
+    myActiveContentComponent.setBorder(null);
+
   }
 
   private static Dimension getEmptyPreferredSize() {

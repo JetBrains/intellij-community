@@ -56,6 +56,61 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_do_wrap_on_asterisks() {
+    doTextTest(
+        "/***********\n" +
+        " *\n" +
+        " *********************/\n" +
+        "\n" +
+        "\n" +
+        "   public class Test {\n" +
+        "}\n",
+        "/***********\n" +
+        " *\n" +
+        " *********************/\n" +
+        "\n" +
+        "\n" +
+        "public class Test {\n" +
+        "}\n"
+    );
+  }
+
+  public void test_wrap_after_asterisks() {
+    doTextTest(
+        "/******* hollla la\n" +
+        " * I am javadoc comment\n" +
+        " * heey ***********/\n" +
+        "   class T {   }\n",
+        "/*******\n" +
+        " * hollla la\n" +
+        " * I am javadoc comment\n" +
+        " * heey\n" +
+        " ***********/\n" +
+        "class T {\n" +
+        "}\n"
+    );
+  }
+
+  public void test_strange_comment() {
+    doTextTest(
+        "/******F*****/\n" +
+        "public class T {\n" +
+        "}",
+        "/******\n" +
+        " * F\n" +
+        " *****/\n" +
+        "public class T {\n" +
+        "}"
+    );
+  }
+
+  public void test_incomplete_javadoc() {
+    doTextTest(
+        "/**\n",
+        "/**\n"
+    );
+  }
+
   public void testEA49739() throws Exception {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 35;
@@ -720,4 +775,70 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(before, after);
   }
 
+  public void test_DoNotTouch_SingleLineComments() {
+    getSettings().getRootSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+
+    doClassTest(
+      "/****** AAAAAAA *******/\n" +
+      "  \n" +
+      "  public void t() {\n" +
+      "         }",
+      "/****** AAAAAAA *******/\n" +
+      "\n" +
+      "public void t() {\n" +
+      "}"
+    );
+  }
+
+  public void test_Keep_P_Tags() {
+    getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+
+    doClassTest(
+      "/**\n" +
+      " * <pre>new\n" +
+      " * code</pre>\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      "    */\n" +
+      "public static void main(String[] args) {\n" +
+      "     }",
+      "/**\n" +
+      " * <pre>new\n" +
+      " * code</pre>\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      " */\n" +
+      "public static void main(String[] args) {\n" +
+      "}"
+    );
+  }
+
+  public void test_Touch_Nothing_Inside_Pre_Tag() {
+    doClassTest(
+      "/**\n" +
+      " *   Holla\n" +
+      " * <pre>\n" +
+      " * @Override\n" +
+      " *              Test me\n" +
+      " * </pre>\n" +
+      " */\n" +
+      "public void test() {\n" +
+      "}",
+      "/**\n" +
+      " * Holla\n" +
+      " * <pre>\n" +
+      " * @Override\n" +
+      " *              Test me\n" +
+      " * </pre>\n" +
+      " */\n" +
+      "public void test() {\n" +
+      "}"
+    );
+  }
 }

@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +98,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
             unversionedFiles.add(vFile);
             if (changedFiles != null) changedFiles.add(vFile);
           } else if (FileStatus.NOT_CHANGED.equals(status) && vFile.isDirectory()) {
-            addAllChangesUnderPath(changedFiles, changeListManager, changesInFiles, new FilePathImpl(vFile));
+            addAllChangesUnderPath(changedFiles, changeListManager, changesInFiles, VcsUtil.getFilePath(vFile));
           }
           continue;
         }

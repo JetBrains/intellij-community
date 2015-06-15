@@ -68,12 +68,4 @@ public class StandardFileSystems {
     String localPath = path.substring(0, separatorIndex);
     return local().findFileByPath(localPath);
   }
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@link URLUtil#JAR_SEPARATOR} (to be removed in IDEA 15) */
-  public static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use {@link URLUtil#HTTP_PROTOCOL} (to be removed in IDEA 15) */
-  public static final String HTTP_PROTOCOL = URLUtil.HTTP_PROTOCOL;
 }

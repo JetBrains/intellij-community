@@ -15,17 +15,17 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
  */
 class CachePoolImpl implements UrlClassLoader.CachePool {
-  private final Map<URL, ClasspathCache.LoaderData> myLoaderIndexCache = ContainerUtil.newConcurrentMap();
+  private final Map<URL, ClasspathCache.LoaderData> myLoaderIndexCache = new ConcurrentHashMap<URL, ClasspathCache.LoaderData>();
   
   void cacheData(@NotNull URL url, @NotNull ClasspathCache.LoaderData data) {
     myLoaderIndexCache.put(url, data);

@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
@@ -62,11 +64,15 @@ class InitialInfoBuilder {
   private LeafBlockWrapper                 myLastTokenBlock;
   private SpacingImpl                      myCurrentSpaceProperty;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
-  private boolean                          myReadOnlyMode;
+  private boolean                          myInsideFormatRestrictingTag;
 
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
-  private InitialInfoBuilder(final FormattingDocumentModel model,
+  private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
+  private boolean myCollectAlignmentsInsideFormattingRange = false;
+
+  private InitialInfoBuilder(final Block rootBlock,
+                             final FormattingDocumentModel model,
                              @Nullable final FormatTextRanges affectedRanges,
                              @NotNull CodeStyleSettings settings,
                              final CommonCodeStyleSettings.IndentOptions options,
@@ -76,14 +82,14 @@ class InitialInfoBuilder {
     myModel = model;
     myAffectedRanges = affectedRanges;
     myProgressCallback = progressCallback;
-    myCurrentWhiteSpace = new WhiteSpace(0, true);
+    myCurrentWhiteSpace = new WhiteSpace(getStartOffset(rootBlock), true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
-    myReadOnlyMode = false;
+    myInsideFormatRestrictingTag = false;
     myFormatterTagHandler = new FormatterTagHandler(settings);
   }
 
-  public static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
+  protected static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
                                                                     FormattingDocumentModel model,
                                                                     @Nullable final FormatTextRanges affectedRanges,
                                                                     @NotNull CodeStyleSettings settings,
@@ -91,9 +97,30 @@ class InitialInfoBuilder {
                                                                     int interestingOffset,
                                                                     @NotNull FormattingProgressCallback progressCallback)
   {
-    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, settings, options, interestingOffset, progressCallback);
+    InitialInfoBuilder builder = new InitialInfoBuilder(root, model, affectedRanges, settings, options, interestingOffset, progressCallback);
     builder.buildFrom(root, 0, null, null, null, true);
     return builder;
+  }
+
+  private int getStartOffset(@NotNull Block rootBlock) {
+    int minOffset = rootBlock.getTextRange().getStartOffset();
+    if (myAffectedRanges != null) {
+      for (FormatTextRanges.FormatTextRange range : myAffectedRanges.getRanges()) {
+        if (range.getStartOffset() < minOffset) minOffset = range.getStartOffset();
+      }
+    }
+    return minOffset;
+  }
+
+  int getEndOffset() {
+    int maxDocOffset = myModel.getTextLength();
+    int maxOffset = myRootBlockWrapper != null ? myRootBlockWrapper.getEndOffset() : 0;
+    if (myAffectedRanges != null) {
+      for (FormatTextRanges.FormatTextRange range : myAffectedRanges.getRanges()) {
+        if (range.getTextRange().getEndOffset() > maxOffset) maxOffset = range.getTextRange().getEndOffset();
+      }
+    }
+    return   maxOffset < maxDocOffset ? maxOffset : maxDocOffset;
   }
 
   /**
@@ -163,14 +190,20 @@ class InitialInfoBuilder {
     }
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
-    boolean isReadOnly = isReadOnly(rootBlock, rootBlockIsRightBlock);
+
+    boolean isInsideFormattingRanges = isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock);
+    if (myCollectAlignmentsInsideFormattingRange && rootBlock.getAlignment() != null
+        && isInsideFormattingRanges && !myInsideFormatRestrictingTag)
+    {
+      myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
+    }
 
     ReadOnlyBlockInformationProvider previousProvider = myReadOnlyBlockInformationProvider;
     try {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
       }
-      if (isReadOnly) {
+      if (!isInsideFormattingRanges && !myCollectAlignmentsInsideFormattingRange) {
         return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
       }
 
@@ -293,10 +326,10 @@ class InitialInfoBuilder {
 
     switch (myFormatterTagHandler.getFormatterTag(rootBlock)) {
       case ON:
-        myReadOnlyMode = false;
+        myInsideFormatRestrictingTag = false;
         break;
       case OFF:
-        myReadOnlyMode = true;
+        myInsideFormatRestrictingTag = true;
         break;
       case NONE:
         break;
@@ -332,7 +365,7 @@ class InitialInfoBuilder {
 
     info.setSpaceProperty(myCurrentSpaceProperty);
     myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), false);
-    if (myReadOnlyMode) myCurrentWhiteSpace.setReadOnly(true);
+    if (myInsideFormatRestrictingTag) myCurrentWhiteSpace.setReadOnly(true);
     myPreviousBlock = info;
 
     if (myPositionOfInterest != -1 && (textRange.contains(myPositionOfInterest) || textRange.getEndOffset() == myPositionOfInterest)) {
@@ -352,9 +385,9 @@ class InitialInfoBuilder {
     }
   }
 
-  private boolean isReadOnly(final Block block, boolean rootIsRightBlock) {
-    if (myAffectedRanges == null) return false;
-    return myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock);
+  private boolean isInsideFormattingRanges(final Block block, boolean rootIsRightBlock) {
+    if (myAffectedRanges == null) return true;
+    return !myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock);
   }
 
   public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {
@@ -430,6 +463,14 @@ class InitialInfoBuilder {
     modifiedStackTrace[0] = ste;
     langThrowable.setStackTrace(modifiedStackTrace);
     return langThrowable;
+  }
+
+  public Set<Alignment> getAlignmentsInsideRangeToModify() {
+    return myAlignmentsInsideRangeToModify;
+  }
+
+  public void setCollectAlignmentsInsideFormattingRange(boolean value) {
+    myCollectAlignmentsInsideFormattingRange = value;
   }
 
   /**

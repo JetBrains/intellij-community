@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -72,6 +73,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
 
   }
 
+  @NotNull
   public AnalysisUIOptions copy() {
     final AnalysisUIOptions result = new AnalysisUIOptions();
     XmlSerializerUtil.copyBean(this, result);

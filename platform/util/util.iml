@@ -24,6 +24,7 @@
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" exported="" name="ForkJoin" level="project" />
+    <orderEntry type="library" exported="" name="Snappy-Java" level="project" />
   </component>
   <component name="copyright">
     <Base>
@@ -178,4 +179,3 @@
     </LanguageOptions>
   </component>
 </module>
-

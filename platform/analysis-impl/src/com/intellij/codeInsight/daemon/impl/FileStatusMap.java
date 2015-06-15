@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public class FileStatusMap implements Disposable {
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
+  // Don't reduce visibility rules here because this class is used in Upsource as well.
   public FileStatusMap(@NotNull Project project) {
     myProject = project;
   }
@@ -60,10 +61,11 @@ public class FileStatusMap implements Disposable {
   @Override
   public void dispose() {
     // clear dangling references to PsiFiles/Documents. SCR#10358
-    markAllFilesDirty();
+    markAllFilesDirty("FileStatusMap dispose");
   }
 
   @Nullable("null means the file is clean")
+  // used in scala
   public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
 
@@ -87,7 +89,7 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public boolean wasErrorFound(@NotNull Document document) {
+  boolean wasErrorFound(@NotNull Document document) {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && status.errorFound;
@@ -164,9 +166,9 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public void markAllFilesDirty() {
+  void markAllFilesDirty(@NotNull @NonNls Object reason) {
     assertAllowModifications();
-    LOG.debug("********************************* Mark all dirty");
+    LOG.debug("Mark all dirty: ", reason);
     synchronized (myDocumentToStatusMap) {
       myDocumentToStatusMap.clear();
     }
@@ -220,10 +222,10 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public void markFileScopeDirtyDefensively(@NotNull PsiFile file) {
+  void markFileScopeDirtyDefensively(@NotNull PsiFile file, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("********************************* Mark dirty file defensively: "+file.getName());
+      LOG.debug("Mark dirty file defensively: "+file.getName()+": "+reason);
     }
     // mark whole file dirty in case no subsequent PSI events will come, but file requires rehighlighting nevertheless
     // e.g. in the case of quick typing/backspacing char
@@ -236,10 +238,10 @@ public class FileStatusMap implements Disposable {
     }
   }
 
-  public void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength) {
+  void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("********************************* Mark dirty: "+scope);
+      LOG.debug("Mark scope dirty: "+scope+" : "+reason);
     }
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
@@ -270,7 +272,7 @@ public class FileStatusMap implements Disposable {
     return document.createRangeMarker(union);
   }
 
-  public boolean allDirtyScopesAreNull(@NotNull Document document) {
+  boolean allDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
@@ -342,12 +344,17 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      throw null;
+      throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+      return "WHOLE_FILE";
     }
   };
 

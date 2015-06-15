@@ -101,6 +101,18 @@ public class TypesDistinctProver {
 
     final PsiClassType.ClassResolveResult classResolveResult1 = PsiUtil.resolveGenericsClassInType(type1);
     final PsiClassType.ClassResolveResult classResolveResult2 = PsiUtil.resolveGenericsClassInType(type2);
+
+    final PsiClass boundClass1 = classResolveResult1.getElement();
+    final PsiClass boundClass2 = classResolveResult2.getElement();
+
+    if (boundClass1 instanceof PsiTypeParameter && level < 2) {
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, boundClass2, type1)) return false;
+    }
+
+    if (boundClass2 instanceof PsiTypeParameter && level < 2) {
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, boundClass1, type2)) return false;
+    }
+
     if (Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(type2))) {
       final PsiSubstitutor substitutor1 = classResolveResult1.getSubstitutor();
       final PsiSubstitutor substitutor2 = classResolveResult2.getSubstitutor();
@@ -124,16 +136,6 @@ public class TypesDistinctProver {
       if (level < 2) return false;
     }
 
-    final PsiClass boundClass1 = classResolveResult1.getElement();
-    final PsiClass boundClass2 = classResolveResult2.getElement();
-
-    if (boundClass1 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, boundClass2, type1)) return false;
-    }
-
-    if (boundClass2 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, boundClass1, type2)) return false;
-    }
     return type2 != null && type1 != null && !type1.equals(type2) &&
            (!InheritanceUtil.isInheritorOrSelf(boundClass1, boundClass2, true) ||
             !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true));

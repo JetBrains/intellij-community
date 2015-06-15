@@ -96,7 +96,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
           final PsiType tSubstituted = tSubstitutor.substitute(typeParameter);
-          final PsiType sSubstituted = sSubstitutor.substitute(typeParameter);
+          final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(typeParameter);
           if (tSubstituted != null && sSubstituted != null) {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
           }
@@ -107,11 +107,6 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     if (myT instanceof PsiArrayType && myS instanceof PsiArrayType) {
       constraints.add(new TypeEqualityConstraint(((PsiArrayType)myT).getComponentType(), ((PsiArrayType)myS).getComponentType()));
       return true;
-    }
-
-    if (myT instanceof PsiCapturedWildcardType && myS instanceof PsiCapturedWildcardType) {
-      return new TypeEqualityConstraint(((PsiCapturedWildcardType)myT).getWildcard(), 
-                                        ((PsiCapturedWildcardType)myS).getWildcard()).reduce(session, constraints);
     }
 
     return false;
@@ -129,9 +124,6 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     TypeEqualityConstraint that = (TypeEqualityConstraint)o;
-
-    if (myS instanceof PsiCapturedWildcardType && myS != that.myS) return false;
-    if (myT instanceof PsiCapturedWildcardType && myT != that.myT) return false;
 
     if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
     if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;

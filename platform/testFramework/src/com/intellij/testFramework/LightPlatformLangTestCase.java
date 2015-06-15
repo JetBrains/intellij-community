@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.testFramework;
 
+/** @deprecated platform autodetection should work well enough, just use base class instead (to be removed in IDEA 16) */
+@SuppressWarnings("ALL")
 public abstract class LightPlatformLangTestCase extends LightPlatformTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected LightPlatformLangTestCase() {
-    PlatformTestCase.initPlatformLangPrefix();
+    PlatformTestCase.autodetectPlatformPrefix();
   }
 }

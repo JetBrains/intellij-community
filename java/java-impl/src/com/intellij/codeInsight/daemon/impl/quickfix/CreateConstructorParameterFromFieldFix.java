@@ -47,7 +47,6 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -279,9 +278,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     final int minUsagesNumber = containingClass.findMethodsBySignature(fromText, false).length > 0 ? 0 : 1;
     final List<ParameterInfoImpl> parameterInfos =
       ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true);
-
-    final ParameterInfoImpl[] resultParams = parameterInfos != null ? parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]) :
-                                             newParamInfos;
+    if (parameterInfos == null) return false;
+    final ParameterInfoImpl[] resultParams = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
     return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {

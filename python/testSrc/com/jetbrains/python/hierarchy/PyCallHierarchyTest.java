@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.hierarchy;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
@@ -106,9 +106,9 @@ public class PyCallHierarchyTest extends PyTestCase {
   private void doTestCallHierarchy(String ... fileNames) throws Exception {
     configureByFiles(fileNames);
 
-    final PsiElement targetElement = TargetElementUtilBase
+    final PsiElement targetElement = TargetElementUtil
       .findTargetElement(myFixture.getEditor(),
-                         TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+                         TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assert targetElement != null : "Cannot find referenced element";
     assert targetElement instanceof PyFunction : "Referenced element is not PyFunction";
 

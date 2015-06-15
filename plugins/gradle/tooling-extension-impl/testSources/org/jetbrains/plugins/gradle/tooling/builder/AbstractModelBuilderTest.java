@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 import com.intellij.openapi.externalSystem.model.ExternalProject;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,6 +68,7 @@ public abstract class AbstractModelBuilderTest {
     {"1.9"}, {"1.10"}, {"1.11"}, {"1.12"},
     {"2.0"}, {"2.1"}, {"2.2"} , {"2.3"}
   };
+  public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
   public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
 
@@ -135,6 +137,8 @@ public abstract class AbstractModelBuilderTest {
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
+      String jdkHome = IdeaTestUtil.requireRealJdkHome();
+      buildActionExecutor.setJavaHome(new File(jdkHome));
       buildActionExecutor.setJvmArguments("-Xmx64m", "-XX:MaxPermSize=64m");
       buildActionExecutor.withArguments("--info", "--recompile-scripts", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
       allModels = buildActionExecutor.run();

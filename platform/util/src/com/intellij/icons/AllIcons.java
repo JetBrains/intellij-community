@@ -579,9 +579,7 @@ public class AllIcons {
   public static final Icon Icon_CE = IconLoader.getIcon("/icon_CE.png"); // 32x32
   public static final Icon Icon_CE_128 = IconLoader.getIcon("/icon_CE_128.png"); // 128x128
   public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png"); // 16x16
-  public static final Icon Icon_CEwhite = IconLoader.getIcon("/icon_CEwhite.png"); // 32x32
   public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png"); // 16x16
-  public static final Icon Icon_white = IconLoader.getIcon("/icon_white.png"); // 32x32
   
   public static class Icons {
     
@@ -796,6 +794,7 @@ public class AllIcons {
     public static final Icon CollapseNode = IconLoader.getIcon("/nodes/collapseNode.png"); // 9x9
     public static final Icon CompiledClassesFolder = IconLoader.getIcon("/nodes/compiledClassesFolder.png"); // 16x16
     public static final Icon CopyOfFolder = IconLoader.getIcon("/nodes/copyOfFolder.png"); // 16x16
+    public static final Icon CustomRegion = IconLoader.getIcon("/nodes/customRegion.png"); // 16x16
     public static final Icon Cvs_global = IconLoader.getIcon("/nodes/cvs_global.png"); // 16x16
     public static final Icon Cvs_roots = IconLoader.getIcon("/nodes/cvs_roots.png"); // 16x16
     public static final Icon DataColumn = IconLoader.getIcon("/nodes/dataColumn.png"); // 16x16
@@ -860,6 +859,7 @@ public class AllIcons {
     public static final Icon KeymapTools = IconLoader.getIcon("/nodes/keymapTools.png"); // 16x16
     public static final Icon Locked = IconLoader.getIcon("/nodes/locked.png"); // 16x16
     public static final Icon Method = IconLoader.getIcon("/nodes/method.png"); // 16x16
+    public static final Icon MethodReference = IconLoader.getIcon("/nodes/methodReference.png"); // 16x16
     public static final Icon Module = IconLoader.getIcon("/nodes/Module.png"); // 16x16
     public static final Icon ModuleGroup = IconLoader.getIcon("/nodes/moduleGroup.png"); // 16x16
     public static final Icon NativeLibrariesFolder = IconLoader.getIcon("/nodes/nativeLibrariesFolder.png"); // 16x16
@@ -1059,7 +1059,7 @@ public class AllIcons {
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.png"); // 16x16
     public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); // 16x16
     public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png"); // 16x16
-    public static final Icon ShowStatistics = IconLoader.getIcon("/runConfigurations/showStatistics.png"); // 16x16
+    public static final Icon SortbyDuration = IconLoader.getIcon("/runConfigurations/sortbyDuration.png"); // 16x16
     public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png"); // 16x16
     public static final Icon TestError = IconLoader.getIcon("/runConfigurations/testError.png"); // 16x16
     public static final Icon TestFailed = IconLoader.getIcon("/runConfigurations/testFailed.png"); // 16x16

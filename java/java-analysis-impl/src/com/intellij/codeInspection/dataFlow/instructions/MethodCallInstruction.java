@@ -27,7 +27,6 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +125,7 @@ public class MethodCallInstruction extends Instruction {
 
   private boolean isPureCall() {
     if (myTargetMethod == null) return false;
-    return ControlFlowAnalyzer.isPure(myTargetMethod) || PropertyUtil.isSimplePropertyGetter(myTargetMethod);
+    return ControlFlowAnalyzer.isPure(myTargetMethod);
   }
 
   @Nullable

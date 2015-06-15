@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,26 @@
  */
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
 public enum LanguageLevel {
-  JDK_1_3, JDK_1_4, JDK_1_5, JDK_1_6, JDK_1_7, JDK_1_8, JDK_1_9
+  JDK_1_3("1.3"), JDK_1_4("1.4"), JDK_1_5("1.5"), JDK_1_6("1.6"), JDK_1_7("1.7"), JDK_1_8("1.8"), JDK_1_9("1.9");
+
+  private final String myComplianceOption;
+
+  LanguageLevel(String complianceOption) {
+    myComplianceOption = complianceOption;
+  }
+
+  /**
+   * String representation of the level, suitable to pass as a value of compiler's "-source" and "-target" options.
+   * Should work for Javac and ECJ (including ECJ-based) compilers.
+   */
+  @NotNull
+  public String getComplianceOption() {
+    return myComplianceOption;
+  }
 }

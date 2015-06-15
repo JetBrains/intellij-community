@@ -1,5 +1,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
+import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -7,12 +9,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
-import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,16 +69,22 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
   //
 
   private class MyChangesBrowser extends ChangesBrowser implements Runnable {
-    @NotNull Ref<JBPopup> myPopup;
+    @NotNull private final Ref<JBPopup> myPopup;
 
     public MyChangesBrowser(@NotNull Project project,
                             @NotNull List<Change> changes,
-                            @Nullable Change currentChange,
+                            @Nullable final Change currentChange,
                             @NotNull Ref<JBPopup> popup) {
       super(project, null, changes, null, false, false, null, MyUseCase.LOCAL_CHANGES, null);
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       setChangesToDisplay(changes);
-      if (currentChange != null) select(Collections.singletonList(currentChange));
+
+      UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+        @Override
+        public void run() {
+          if (currentChange != null) select(Collections.singletonList(currentChange));
+        }
+      });
 
       myPopup = popup;
     }

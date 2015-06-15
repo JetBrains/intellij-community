@@ -16,7 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -118,7 +118,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         return true;
       }
     });
-    final PsiReference reference = TargetElementUtilBase.findReference(editor);
+    final PsiReference reference = TargetElementUtil.findReference(editor);
     final PsiReferenceExpression refExpr = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference) : null;
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(refExpr, PsiCodeBlock.class);
     if (codeBlock != null) {

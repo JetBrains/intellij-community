@@ -59,6 +59,7 @@ public interface SMTRunnerEventsListener {
   void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount);
   void onCustomProgressTestStarted();
   void onCustomProgressTestFailed();
+  void onCustomProgressTestFinished();
 
   void onSuiteTreeNodeAdded(SMTestProxy testProxy);
   void onSuiteTreeStarted(SMTestProxy suite);

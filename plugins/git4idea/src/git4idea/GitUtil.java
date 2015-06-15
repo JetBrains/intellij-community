@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -685,8 +686,16 @@ public class GitUtil {
     });
   }
 
+  @NotNull
+  public static GitRemoteBranch findOrCreateRemoteBranch(@NotNull GitRepository repository,
+                                                         @NotNull GitRemote remote,
+                                                         @NotNull String branchName) {
+    GitRemoteBranch remoteBranch = findRemoteBranch(repository, remote, branchName);
+    return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName, GitBranch.DUMMY_HASH));
+  }
+
   @Nullable
-  private static GitRemote findOrigin(Collection<GitRemote> remotes) {
+  public static GitRemote findOrigin(Collection<GitRemote> remotes) {
     for (GitRemote remote : remotes) {
       if (remote.getName().equals("origin")) {
         return remote;

@@ -101,17 +101,19 @@ public class GitExecutor extends Executor {
     git("add --verbose " + path);
   }
 
-  public static void addCommit(@NotNull String message) {
+  @NotNull
+  public static String addCommit(@NotNull String message) {
     add();
-    commit(message);
+    return commit(message);
   }
 
   public static void checkout(@NotNull String... params) {
     git("checkout " + StringUtil.join(params, " "));
   }
 
-  public static void commit(@NotNull String message) {
+  public static String commit(@NotNull String message) {
     git("commit -m '" + message + "'");
+    return last();
   }
 
   @NotNull

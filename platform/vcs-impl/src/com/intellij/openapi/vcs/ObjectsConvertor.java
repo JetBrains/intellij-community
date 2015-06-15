@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.Convertor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ public class ObjectsConvertor {
 
   public static final Convertor<VirtualFile, FilePath> VIRTUAL_FILEPATH = new Convertor<VirtualFile, FilePath>() {
     public FilePath convert(VirtualFile vf) {
-      return new FilePathImpl(vf);
+      return VcsUtil.getFilePath(vf);
     }
   };
 

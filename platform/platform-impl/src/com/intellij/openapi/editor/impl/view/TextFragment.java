@@ -19,17 +19,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphJustificationInfo;
-import java.awt.font.GlyphMetrics;
 import java.awt.font.GlyphVector;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 
 /**
  * Fragment of text using a common font
  */
 class TextFragment implements LineFragment {
+  // glyph location that should definitely be outside of painted region
+  private static final Point NOWHERE = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
+  
   @NotNull
   private final GlyphVector myGlyphVector;
   @NotNull
@@ -64,27 +63,70 @@ class TextFragment implements LineFragment {
   }
 
   @Override
-  public int getColumnCount(float startX) {
+  public int getLogicalColumnCount(int startColumn) {
     return myCharPositions.length;
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
-    assert startOffset >= 0; 
-    assert endOffset <= myCharPositions.length;
-    assert startOffset < endOffset;
-    GlyphVector vector;
-    if (startOffset == 0 && endOffset == myCharPositions.length) {
-      vector = myGlyphVector;
+  public int getVisualColumnCount(float startX) {
+    return myCharPositions.length;
+  }
+
+  @Override
+  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+    assert startColumn >= 0; 
+    assert endColumn <= myCharPositions.length;
+    assert startColumn < endColumn;
+    if (startColumn == 0 && endColumn == myCharPositions.length) {
+      g.drawGlyphVector(myGlyphVector, x, y);
     }
     else {
-      boolean isRtl = (myGlyphVector.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0;
-      vector = new GlyphVectorWindow(myGlyphVector, 
-                                     isRtl ? myCharPositions.length - endOffset : startOffset, 
-                                     isRtl ? myCharPositions.length - startOffset : endOffset,
-                                     getX(startOffset));
+      // We cannot use our own GlyphVector implementation, as it wouldn't support
+      // Mac-specific automatic font fallback (negative glyph indices will be rejected,
+      // even though they are used inside StandardGlyphVector in that case).
+      // We also cannot clone myGlyphVector without casting to sun.font.StandardGlyphVector, 
+      // as clone() method is not public in GlyphVector (even though it's Cloneable).
+      // So we are modifying glyph positions in-place, and restore them after painting.
+      int logicalStartOffset = isRtl() ? myCharPositions.length - endColumn : startColumn;
+      int logicalEndOffset = isRtl() ? myCharPositions.length - startColumn : endColumn;
+      int glyphCount = myGlyphVector.getNumGlyphs();
+      Point2D[] savedPositions = new Point2D[glyphCount + 1];
+      int lastPaintedGlyph = -1;
+      for (int i = 0; i < glyphCount; i++) {
+        savedPositions[i] = myGlyphVector.getGlyphPosition(i);
+        int c = myGlyphVector.getGlyphCharIndex(i);
+        if (c >= logicalStartOffset && c < logicalEndOffset) {
+          lastPaintedGlyph = i;
+        }
+        else {
+          myGlyphVector.setGlyphPosition(i, NOWHERE);
+        }
+      }
+      savedPositions[glyphCount] = myGlyphVector.getGlyphPosition(glyphCount);
+      myGlyphVector.setGlyphPosition(glyphCount, savedPositions[lastPaintedGlyph + 1]);
+      try {
+        g.drawGlyphVector(myGlyphVector, x - getX(startColumn), y);
+      }
+      finally {
+        for (int i = 0; i <= glyphCount; i++) {
+          myGlyphVector.setGlyphPosition(i, savedPositions[i]);
+        }
+      }
     }
-    g.drawGlyphVector(vector, x, y);
+  }
+  
+  private boolean isRtl() {
+    return (myGlyphVector.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0;
+  }
+
+  @NotNull
+  @Override
+  public LineFragment subFragment(int startOffset, int endOffset) {
+    assert startOffset >= 0;
+    assert endOffset <= myCharPositions.length;
+    assert startOffset < endOffset;
+    if (startOffset == 0 && endOffset == myCharPositions.length) return this;
+    return new TextFragmentWindow(startOffset, endOffset);
   }
 
   @Override
@@ -97,213 +139,101 @@ class TextFragment implements LineFragment {
   }
 
   @Override
-  public int offsetToColumn(float startX, int offset) {
-    return offset;
-  }
-
-  @Override
-  public int columnToOffset(float startX, int column) {
+  public int logicalToVisualColumn(float startX, int startColumn, int column) {
     return column;
   }
 
   @Override
-  public int xToColumn(float startX, float x) {
+  public int visualToLogicalColumn(float startX, int startColumn, int column) {
+    return column;
+  }
+
+  @Override
+  public int[] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     for (int i = 0; i < myCharPositions.length; i++) {
       float newPos = myCharPositions[i];
       if (relX < (newPos + prevPos) / 2) {
-        return i;
+        return new int[] {i, relX <= prevPos ? 0 : 1};
       }
       prevPos = newPos;
     }
-    return myCharPositions.length;
+    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
   }
 
   @Override
-  public float columnToX(float startX, int column) {
+  public float visualColumnToX(float startX, int column) {
     return startX + getX(column);
   }
 
-  /**
-   * GlyphVector that represents a portion of another (previously laid out) GlyphVector
-   */
-  private static class GlyphVectorWindow extends GlyphVector {
-    private final GlyphVector myDelegate;
-    private final int[] myGlyphMap;
-    private final int myStartChar;
-    private final float myStartX;
+  private class TextFragmentWindow implements LineFragment {
+    private final int myStartOffset;
+    private final int myEndOffset;
 
-    GlyphVectorWindow(@NotNull GlyphVector delegate, int startOffset, int endOffset, float startX) {
-      myDelegate = delegate;
-      myStartChar = startOffset;
-      myStartX = startX;
-      
-      int glyphCount = 0;
-      for (int i = 0; i < delegate.getNumGlyphs(); i++) {
-        int c = delegate.getGlyphCharIndex(i);
-        if (c >= startOffset && c < endOffset) {
-          glyphCount++;
-        }
-      }
-      
-      assert glyphCount > 0;
-
-      myGlyphMap = new int[glyphCount];
-      int p = 0;
-      for (int i = 0; i < delegate.getNumGlyphs(); i++) {
-        int c = delegate.getGlyphCharIndex(i);
-        if (c >= startOffset && c < endOffset) {
-          myGlyphMap[p++] = i;
-        }
-      }
+    private TextFragmentWindow(int startOffset, int endOffset) {
+      myStartOffset = startOffset;
+      myEndOffset = endOffset;
     }
 
     @Override
-    public Font getFont() {
-      return myDelegate.getFont();
+    public int getLength() {
+      return myEndOffset - myStartOffset;
     }
 
     @Override
-    public FontRenderContext getFontRenderContext() {
-      return myDelegate.getFontRenderContext();
+    public int getLogicalColumnCount(int startColumn) {
+      return getLength();
     }
 
     @Override
-    public int getNumGlyphs() {
-      return myGlyphMap.length;
+    public int getVisualColumnCount(float startX) {
+      return getLength();
     }
 
     @Override
-    public int getGlyphCode(int glyphIndex) {
-      return myDelegate.getGlyphCode(myGlyphMap[glyphIndex]);
+    public int logicalToVisualColumn(float startX, int startColumn, int column) {
+      return column;
     }
 
     @Override
-    public int[] getGlyphCodes(int beginGlyphIndex, int numEntries, int[] codeReturn) {
-      if (codeReturn == null) {
-        codeReturn = new int[numEntries];
-      }
-      for (int i = 0; i < numEntries; i++) {
-        codeReturn[i] = myDelegate.getGlyphCode(myGlyphMap[beginGlyphIndex + i]);
-      }
-      return codeReturn;
+    public int visualToLogicalColumn(float startX, int startColumn, int column) {
+      return column;
     }
 
     @Override
-    public int getLayoutFlags() {
-      return myDelegate.getLayoutFlags() | FLAG_HAS_POSITION_ADJUSTMENTS;
+    public float offsetToX(float startX, int startOffset, int offset) {
+      return TextFragment.this.offsetToX(startX, visualColumnToParent(startOffset), visualColumnToParent(offset));
     }
 
     @Override
-    public int getGlyphCharIndex(int glyphIndex) {
-      return myDelegate.getGlyphCharIndex(myGlyphMap[glyphIndex]) - myStartChar;
+    public float visualColumnToX(float startX, int column) {
+      return startX + getX(visualColumnToParent(column)) - getX(visualColumnToParent(0));
     }
 
     @Override
-    public int[] getGlyphCharIndices(int beginGlyphIndex, int numEntries, int[] codeReturn) {
-      if (codeReturn == null) {
-        codeReturn = new int[numEntries];
-      }
-      for (int i = 0; i < numEntries; i++) {
-        codeReturn[i] = myDelegate.getGlyphCharIndex(myGlyphMap[beginGlyphIndex + i]) - myStartChar;
-      }
-      return codeReturn;
+    public int[] xToVisualColumn(float startX, float x) {
+      int startColumnInParent = visualColumnToParent(0);
+      float parentStartX = startX - getX(startColumnInParent);
+      int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
+      int column = parentColumn[0] - startColumnInParent;
+      int length = getLength();
+      return column < 0 ? new int[] {0, 0} : column > length ? new int[] {length, 1} : new int[] {column, parentColumn[1]};
+    }
+
+    private int visualColumnToParent(int column) {
+      return column + (isRtl() ? myCharPositions.length - myEndOffset : myStartOffset);
     }
 
     @Override
-    public Point2D getGlyphPosition(int glyphIndex) {
-      Point2D.Float pos = (Point2D.Float) myDelegate.getGlyphPosition(glyphIndex < myGlyphMap.length ? 
-                                                                      myGlyphMap[glyphIndex] : 
-                                                                      myGlyphMap[glyphIndex - 1] + 1);
-      pos.x -= myStartX;
-      return pos;
+    public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+      TextFragment.this.draw(g, x, y, visualColumnToParent(startColumn), visualColumnToParent(endColumn));
     }
 
+    @NotNull
     @Override
-    public float[] getGlyphPositions(int beginGlyphIndex, int numEntries, float[] positionReturn) {
-      if (positionReturn == null) {
-        positionReturn = new float[numEntries * 2];
-      }
-      for (int i = 0; i < numEntries; i++) {
-        int index = beginGlyphIndex + i;
-        int delegateIndex = index < myGlyphMap.length ? myGlyphMap[index] : myGlyphMap[index - 1] + 1;
-        Point2D.Float pos = (Point2D.Float) myDelegate.getGlyphPosition(delegateIndex);
-        positionReturn[i * 2] = pos.x - myStartX;
-        positionReturn[i * 2 + 1] = pos.y;
-      }
-      return positionReturn;
-    }
-
-    @Override
-    public AffineTransform getGlyphTransform(int glyphIndex) {
-      return myDelegate.getGlyphTransform(myGlyphMap[glyphIndex]);
-    }
-
-    @Override
-    public void performDefaultLayout() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Rectangle2D getLogicalBounds() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Rectangle2D getVisualBounds() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Shape getOutline() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Shape getOutline(float x, float y) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Shape getGlyphOutline(int glyphIndex) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setGlyphPosition(int glyphIndex, Point2D newPos) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setGlyphTransform(int glyphIndex, AffineTransform newTX) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Shape getGlyphLogicalBounds(int glyphIndex) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Shape getGlyphVisualBounds(int glyphIndex) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public GlyphMetrics getGlyphMetrics(int glyphIndex) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public GlyphJustificationInfo getGlyphJustificationInfo(int glyphIndex) {
-      throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("CovariantEquals")
-    @Override
-    public boolean equals(GlyphVector set) {
-      throw new UnsupportedOperationException();
+    public LineFragment subFragment(int startOffset, int endOffset) {
+      return new TextFragmentWindow(startOffset + myStartOffset, endOffset + myStartOffset);
     }
   }
 }

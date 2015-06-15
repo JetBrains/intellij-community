@@ -100,7 +100,6 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiVariable psiVariable = getVariable(element);
     LOG.assertTrue(psiVariable != null);
-    psiVariable.normalizeDeclaration();
 
     final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);
 
@@ -110,6 +109,8 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       elements.add(reference.getElement());
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+
+    psiVariable.normalizeDeclaration();
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

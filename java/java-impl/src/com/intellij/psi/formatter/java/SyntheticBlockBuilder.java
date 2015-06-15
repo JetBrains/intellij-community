@@ -51,7 +51,7 @@ public class SyntheticBlockBuilder {
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == JavaTokenType.DOT) {
       AlignmentStrategy strategy = AlignmentStrategy.getNullStrategy();
-      Block block = createJavaBlock(firstNode, mySettings, myJavaSettings, Indent.getNoneIndent(), null, strategy);
+      Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, Indent.getNoneIndent(), null, strategy);
       subBlocks.add(block);
       subNodes.remove(0);
       if (!subNodes.isEmpty()) {
@@ -67,7 +67,7 @@ public class SyntheticBlockBuilder {
     final ArrayList<Block> result = new ArrayList<Block>();
     for (ASTNode node : subNodes) {
       Indent indent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
-      result.add(createJavaBlock(node, mySettings, myJavaSettings, indent, null, AlignmentStrategy.getNullStrategy()));
+      result.add(newJavaBlock(node, mySettings, myJavaSettings, indent, null, AlignmentStrategy.getNullStrategy()));
     }
     return result;
   }

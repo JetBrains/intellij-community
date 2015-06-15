@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -24,8 +23,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -37,16 +34,15 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -54,16 +50,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author ignatov
  */
 public class NewScratchFileAction extends DumbAwareAction {
-  public static final int MAX_VISIBLE_SIZE = 20;
+  private static final int MAX_VISIBLE_SIZE = 20;
+  static Key<Boolean> IS_NEW_SCRATCH = Key.create("IS_NEW_SCRATCH");
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -81,23 +76,11 @@ public class NewScratchFileAction extends DumbAwareAction {
     
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    
-    Language language = getLanguageFromCaret(project, editor, file);
-    String text = getSelectionText(editor);
-    if (language != null && text != null) {
-      openNewFile(project, language, text, false);
-      return;
-    }
 
-    final Ref<Boolean> tenMinuteScratch = Ref.create(false);
-    ListPopup popup = buildLanguageSelectionPopup(project, "New Scratch", language, new Consumer<Language>() {
-      @Override
-      public void consume(@NotNull Language language) {
-        openNewFile(project, language, "", tenMinuteScratch.get());
-      }
-    });
-    setupShiftActions((ListPopupImpl)popup, tenMinuteScratch);
-    popup.showCenteredInCurrentWindow(project);
+    String text = StringUtil.notNullize(getSelectionText(editor));
+    Language language = ObjectUtils.notNull(
+      text.isEmpty() ? null : getLanguageFromCaret(project, editor, file), StdLanguages.TEXT);
+    openNewFile(project, language, text);
   }
 
   @Nullable
@@ -118,13 +101,13 @@ public class NewScratchFileAction extends DumbAwareAction {
     return file.getLanguage();
   }
 
-  public static VirtualFile openNewFile(@NotNull Project project, @NotNull Language language, @NotNull String text, boolean altMode) {
+  public static VirtualFile openNewFile(@NotNull Project project, @NotNull Language language, @NotNull String text) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
     storeLRULanguages(project, language);
     VirtualFile file = ScratchRootType.getInstance().createScratchFile(project, "scratch", language, text);
     if (file != null) {
       FileEditorManager.getInstance(project).openFile(file, true);
-      if (altMode) scheduleSelfDestruct(file);
+      file.putUserData(IS_NEW_SCRATCH, Boolean.TRUE);
     }
     return file;
   }
@@ -157,7 +140,13 @@ public class NewScratchFileAction extends DumbAwareAction {
   @NotNull
   public static ListPopup buildLanguageSelectionPopup(@NotNull Project project, @NotNull String title,
                                                       @Nullable Language context, @NotNull final Consumer<Language> onChosen) {
-    List<Language> languages = LanguageUtil.getFileLanguages();
+    return buildLanguageSelectionPopup(project, title, context, LanguageUtil.getFileLanguages(), onChosen);
+  }
+
+  @NotNull
+  public static ListPopup buildLanguageSelectionPopup(@NotNull Project project, @NotNull String title,
+                                                      @Nullable Language context, @NotNull List<Language> languages,
+                                                      @NotNull final Consumer<Language> onChosen) {
     final List<String> ids = ContainerUtil.newArrayList(restoreLRULanguages(project));
     if (context != null) {
       ids.add(context.getID());
@@ -165,7 +154,7 @@ public class NewScratchFileAction extends DumbAwareAction {
     if (ids.isEmpty()) {
       ids.add(StdLanguages.TEXT.getID());
     }
-    
+
     ContainerUtil.sort(languages, new Comparator<Language>() {
       @Override
       public int compare(@NotNull Language o1, @NotNull Language o2) {
@@ -222,54 +211,6 @@ public class NewScratchFileAction extends DumbAwareAction {
       popup.setSize(size);
     }
     return popup;
-  }
-
-  private static void setupShiftActions(final ListPopupImpl popup, final Ref<Boolean> tenMinuteScratch) {
-    popup.registerAction("alternateMode", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        tenMinuteScratch.set(true);
-        popup.setCaption("New 10 Minute Scratch");
-      }
-    });
-
-    popup.registerAction("regularMode", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        tenMinuteScratch.set(false);
-        popup.setCaption("New Scratch");
-      }
-    });
-
-    popup.registerAction("invokeAlternate", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        popup.handleSelect(true);
-      }
-    });
-  }
-
-  private static void scheduleSelfDestruct(final VirtualFile virtualFile) {
-    VfsUtilCore.virtualToIoFile(virtualFile).deleteOnExit();
-    JobScheduler.getScheduler().schedule(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(NewScratchFileAction.class);
-            try {
-              virtualFile.delete(NewScratchFileAction.class);
-            }
-            catch (Exception ignored) {
-            }
-            finally {
-              token.finish();
-            }
-          }
-        });
-      }
-    }, 10, TimeUnit.MINUTES);
   }
 
 }

@@ -390,4 +390,18 @@ def foo(anObject) {
 foo(5)
 ''')
   }
+  
+  void testIntroduceFromInjection() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false ,'''\
+def foo() {
+  def bar = "bar"
+  println "$<selection>bar</selection>"
+}
+''', '''\
+def foo(String anObject) {
+  def bar = "bar"
+  println "${anObject}"
+}
+''')
+  }
 }

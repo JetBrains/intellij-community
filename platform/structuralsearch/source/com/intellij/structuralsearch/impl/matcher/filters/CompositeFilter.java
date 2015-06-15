@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 public class CompositeFilter implements NodeFilter {
   private final NodeFilter first;
   private final NodeFilter second;
-  protected boolean result;
 
   public boolean accepts(PsiElement element) {
     return first.accepts(element) ||

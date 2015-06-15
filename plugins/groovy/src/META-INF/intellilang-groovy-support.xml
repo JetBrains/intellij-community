@@ -12,7 +12,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.groovy.GrConcatenation2InjectorAdapter" order="last"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.groovy.GrConcatenationInjector"/>
-    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.groovy.GrLanguageReferenceProvider"/>
+    <psi.referenceContributor language="Groovy" implementation="org.intellij.plugins.intelliLang.inject.groovy.GrLanguageReferenceProvider"/>
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.groovy.GrConcatenationAwareInjector"/>
   </extensions>
 

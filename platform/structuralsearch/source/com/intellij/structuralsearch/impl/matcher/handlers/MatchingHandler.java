@@ -66,7 +66,7 @@ public abstract class MatchingHandler extends MatchPredicate {
     skipIfNecessary(nodes2, nodes, strategy);
 
     final PsiElement patternElement = nodes.current();
-    final MatchingHandler handler = context.getPattern().getHandler(nodes.current());
+    final MatchingHandler handler = context.getPattern().getHandler(patternElement);
     if (nodes2.hasNext() && handler.match(patternElement, nodes2.current(), context)) {
 
       nodes.advance();

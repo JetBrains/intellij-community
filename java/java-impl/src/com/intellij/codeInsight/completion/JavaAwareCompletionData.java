@@ -86,6 +86,4 @@ public class JavaAwareCompletionData extends CompletionData{
     }
   }
 
-  public void fillCompletions(CompletionParameters parameters, CompletionResultSet result) {
-  }
 }

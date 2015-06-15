@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -299,18 +299,6 @@ public abstract class PsiType implements PsiAnnotationOwner {
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
-  }
-
-  /** @deprecated use {@link PsiNameHelper#appendAnnotations(StringBuilder, PsiAnnotation[], boolean)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected String getAnnotationsTextPrefix(boolean qualified, boolean leadingSpace, boolean trailingSpace) {
-    PsiAnnotation[] annotations = getAnnotations();
-    if (annotations.length == 0) return "";
-
-    StringBuilder sb = new StringBuilder();
-    if (leadingSpace) sb.append(' ');
-    if (PsiNameHelper.appendAnnotations(sb, annotations, qualified) &&!trailingSpace) sb.setLength(sb.length() - 1);
-    return sb.toString();
   }
 
   @Override

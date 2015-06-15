@@ -44,8 +44,8 @@ import java.util.List;
  *   This is made to avoid urls transformation logic from the code using GitRemote, leaving it all in GitConfig parsing.
  * </p>
  * <p>
- *   Same applies to fetch and push specs: {@link #getPushRefSpecs()} returns the spec,
- *   even if there are no separate record in {@code .git/config}
+ *   This is not applied to fetch and push specs though: {@link #getPushRefSpecs()} returns the spec,
+ *   only if it is defined in {@code .git/config}.
  * </p>
  *
  * <p>

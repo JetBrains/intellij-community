@@ -17,7 +17,9 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -83,20 +85,6 @@ public class JavaFormatterUtil {
     return false;
   }
 
-  public static boolean canHaveMultilineArgumentsAfterWrap(@NotNull PsiExpression[] arguments, @NotNull CommonCodeStyleSettings settings) {
-    for (PsiExpression argument: arguments) {
-      ASTNode node = argument.getNode();
-
-      if (node instanceof PsiMethodCallExpression) {
-        if (settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE || settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE) {
-          if (((PsiMethodCallExpression)node).getArgumentList().getExpressions().length > 0) return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public static boolean isMultilineExceptArguments(@NotNull PsiExpression[] arguments) {
     for (PsiExpression argument : arguments) {
       ASTNode beforeArgument = argument.getNode().getTreePrev();
@@ -107,11 +95,6 @@ public class JavaFormatterUtil {
     PsiExpression lastArgument = arguments[arguments.length - 1];
     ASTNode afterLastArgument = lastArgument.getNode().getTreeNext();
     return isWhiteSpaceWithLineFeed(afterLastArgument);
-  }
-
-  public static boolean canBeMultilineExceptArgumentsAfterWrap(@NotNull PsiExpression[] arguments, @NotNull CommonCodeStyleSettings settings) {
-    return arguments.length > 0
-           && (settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE || settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE);
   }
 
   private static boolean isWhiteSpaceWithLineFeed(@NotNull ASTNode node) {

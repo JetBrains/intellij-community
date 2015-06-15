@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
@@ -44,9 +44,9 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return null;
 
-      final PsiElement targetElement = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-                                                                                       TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-                                                                                       TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED);
+      final PsiElement targetElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                                                                   TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                   TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
       if (LOG.isDebugEnabled()) {
         LOG.debug("target element " + targetElement);
       }

@@ -1,7 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -34,7 +34,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
 
   public void testParamTypeSubst() throws Exception {
     final PsiMethod method = getPrimaryMethod();
-    final HashSet<PsiMethod> methods = new HashSet<PsiMethod>();
+    final HashSet<PsiMethod> methods = new HashSet<>();
     for (PsiReference reference : ReferencesSearch.search(method)) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
       if (psiMethod != null) {
@@ -63,7 +63,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   }
 
   private static HashSet<PsiMethod> collectNonPhysicalMethodsToPropagate(PsiMethod method) {
-    final HashSet<PsiMethod> methodsToPropagate = new HashSet<PsiMethod>();
+    final HashSet<PsiMethod> methodsToPropagate = new HashSet<>();
     final PsiReference[] references =
       MethodReferencesSearch.search(method, GlobalSearchScope.allScope(getProject()), true).toArray(PsiReference.EMPTY_ARRAY);
     for (PsiReference reference : references) {
@@ -91,7 +91,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   }
 
   private static HashSet<PsiMethod> collectDefaultConstructorsToPropagate(PsiMethod method) {
-    final HashSet<PsiMethod> methodsToPropagate = new HashSet<PsiMethod>();
+    final HashSet<PsiMethod> methodsToPropagate = new HashSet<>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(method.getContainingClass())) {
       methodsToPropagate.add(inheritor.getConstructors()[0]);
     }
@@ -105,7 +105,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
 
   private void parameterPropagationTest(final PsiClassType paramType) throws Exception {
     final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, new HashSet<PsiMethod>(Arrays.asList(method.getContainingClass().getMethods())),
+    parameterPropagationTest(method, new HashSet<>(Arrays.asList(method.getContainingClass().getMethods())),
                              paramType);
   }
 
@@ -116,7 +116,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
 
   private void exceptionPropagationTest() throws Exception {
     final PsiMethod method = getPrimaryMethod();
-    exceptionPropagationTest(method, new HashSet<PsiMethod>(Arrays.asList(method.getContainingClass().getMethods())));
+    exceptionPropagationTest(method, new HashSet<>(Arrays.asList(method.getContainingClass().getMethods())));
   }
 
   private void exceptionPropagationTest(final PsiMethod method, final Set<PsiMethod> methodsToPropagateExceptions) throws Exception {
@@ -146,7 +146,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   private PsiMethod getPrimaryMethod() throws Exception {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
-    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     return (PsiMethod) targetElement;
   }

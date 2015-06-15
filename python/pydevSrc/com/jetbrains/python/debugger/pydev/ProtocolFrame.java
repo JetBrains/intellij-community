@@ -26,7 +26,7 @@ public class ProtocolFrame {
 
     myCommand = Integer.parseInt(parts[0]);
     mySequence = Integer.parseInt(parts[1]);
-    myPayload = (parts.length == 3 && !"".equals(parts[2]) ? ProtocolParser.decode(parts[2]) : "");
+    myPayload = (parts.length == 3 && !"".equals(parts[2]) ? ProtocolParser.decode(parts[2]) : "").trim();
   }
 
   public int getCommand() {

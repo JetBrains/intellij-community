@@ -136,27 +136,16 @@ public class MacUIUtil {
 
       g.setColor(c.getBackground());
       g.fillRect(x1, y1, width1, height1);
-      
+
       if (!myEnabledComponent.isEnabled()) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
       }
 
       g.setColor(new Color(100, 100, 100, 200));
-      g.drawLine(x1, y1, x1 + width1 - 1, y1);
-
-      g.setColor(new Color(212, 212, 212, 200));
-      g.drawLine(x1, y1 + 1, x1 + width1 - 1, y1 + 1);
+      g.drawRect(x1, y1, width1 - 1, height1 - 1);
 
       g.setColor(Gray._225);
-      g.drawLine(x1 + 1, y1 + height1 - 1, x1 + width1 - 2, y1 + height1 - 1);
-
-      g.setColor(new Color(30, 30, 30, 70));
-      g.drawLine(x1, y1, x1, y1 + height1 - 1);
-      g.drawLine(x1 + width1 - 1, y1, x1 + width1 - 1, y1 + height1 - 1);
-
-      g.setColor(new Color(30, 30, 30, 10));
-      g.drawLine(x1 + 1, y1, x1 + 1, y1 + height1 - 1);
-      g.drawLine(x1 + width1 - 2, y1, x1 + width1 - 2, y1 + height1 - 1);
+      g.drawRect(x1 + 1, y1 + 1, width1 - 3, height1 - 3);
 
       if (myEnabledComponent.isEnabled() && myEnabledComponent.isVisible() && hasFocus(myEnabledComponent)) {
         paintTextFieldFocusRing((Graphics2D) g, new Rectangle(x1, y1, width1, height1));

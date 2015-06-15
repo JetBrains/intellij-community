@@ -70,7 +70,9 @@ class ProgressDialog implements Disposable {
       myTitlePanel.setText(myProgressWindow.getTitle() != null && !myProgressWindow.getTitle().isEmpty() ? myProgressWindow.getTitle() : " ");
 
       myLastTimeDrawn = System.currentTimeMillis();
-      myRepaintedFlag = true;
+      synchronized (ProgressDialog.this) {
+        myRepaintedFlag = true;
+      }
     }
   };
 
@@ -91,7 +93,6 @@ class ProgressDialog implements Disposable {
       update();
     }
   };
-
   JPanel myPanel;
 
   private JLabel myTextLabel;
@@ -101,7 +102,7 @@ class ProgressDialog implements Disposable {
   private JButton myBackgroundButton;
 
   private JProgressBar myProgressBar;
-  private boolean myRepaintedFlag = true;
+  private boolean myRepaintedFlag = true; // guarded by this
   private TitlePanel myTitlePanel;
   private JPanel myInnerPanel;
   DialogWrapper myPopup;
@@ -135,14 +136,14 @@ class ProgressDialog implements Disposable {
 
     myCancelButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         doCancelAction();
       }
     });
 
     myCancelButton.registerKeyboardAction(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (myCancelButton.isEnabled()) {
           doCancelAction();
         }
@@ -159,7 +160,7 @@ class ProgressDialog implements Disposable {
     myTitlePanel.setActive(true);
     myTitlePanel.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(@NotNull MouseEvent e) {
         final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
         myLastClicked = new RelativePoint(e).getScreenPoint();
         myLastClicked.x -= titleOffset.x;
@@ -169,7 +170,7 @@ class ProgressDialog implements Disposable {
 
     myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
       @Override
-      public void mouseDragged(MouseEvent e) {
+      public void mouseDragged(@NotNull MouseEvent e) {
         if (myLastClicked == null) {
           return;
         }
@@ -242,7 +243,7 @@ class ProgressDialog implements Disposable {
     myBackgroundButton.addActionListener(
       new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           if (myShouldShowBackground) {
             myProgressWindow.background();
           }
@@ -328,7 +329,7 @@ class ProgressDialog implements Disposable {
             }
           }
 
-          myProgressWindow.getFocusManager().requestFocus(myCancelButton, true);
+          myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
         }
       }
     });

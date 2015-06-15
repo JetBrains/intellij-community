@@ -48,7 +48,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private int myPostprocessShift = 0;
 
   public static final Class[] IMPLICIT_WRAP_CLASSES = new Class[] {
-    PySequenceExpression.class,
+    PyListLiteralExpression.class,
+    PySetLiteralExpression.class,
+    PyDictLiteralExpression.class,
     PyDictLiteralExpression.class,
     PyParenthesizedExpression.class,
     PyArgumentList.class,

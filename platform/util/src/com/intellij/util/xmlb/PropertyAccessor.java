@@ -29,7 +29,7 @@ class PropertyAccessor implements MutableAccessor {
   private final String myName;
   private final Class<?> myType;
   private final Method myReadMethod;
-  private final Method setter;
+  private final Method myWriteMethod;
   private final Type myGenericType;
 
   public PropertyAccessor(PropertyDescriptor descriptor) {
@@ -40,15 +40,14 @@ class PropertyAccessor implements MutableAccessor {
     myName = name;
     myType = type;
     myReadMethod = readMethod;
-    setter = writeMethod;
+    myWriteMethod = writeMethod;
     myGenericType = myReadMethod.getGenericReturnType();
 
     try {
       myReadMethod.setAccessible(true);
-      setter.setAccessible(true);
+      myWriteMethod.setAccessible(true);
     }
-    catch (SecurityException ignored) {
-    }
+    catch (SecurityException ignored) { }
   }
 
   @Override
@@ -67,7 +66,7 @@ class PropertyAccessor implements MutableAccessor {
   @Override
   public void set(@NotNull Object host, @Nullable Object value) {
     try {
-      setter.invoke(host, value);
+      myWriteMethod.invoke(host, value);
     }
     catch (IllegalAccessException e) {
       throw new XmlSerializationException(e);
@@ -110,7 +109,8 @@ class PropertyAccessor implements MutableAccessor {
   @Override
   public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
     T annotation = myReadMethod.getAnnotation(annotationClass);
-    return annotation == null ? setter.getAnnotation(annotationClass) : annotation;
+    if (annotation == null) annotation = myWriteMethod.getAnnotation(annotationClass);
+    return annotation;
   }
 
   @Override

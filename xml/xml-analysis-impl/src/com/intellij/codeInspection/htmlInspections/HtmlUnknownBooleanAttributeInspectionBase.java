@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
@@ -92,14 +93,28 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
         if (attributeDescriptor != null && !(attributeDescriptor instanceof AnyXmlAttributeDescriptor)) {
           String name = attribute.getName();
           if (!HtmlUtil.isBooleanAttribute(attributeDescriptor, null) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
-            LocalQuickFix[] quickFixes = new LocalQuickFix[]{
+            final boolean html5 = HtmlUtil.isHtml5Context(tag);
+            LocalQuickFix[] quickFixes = !html5 ? new LocalQuickFix[]{
               new AddCustomHtmlElementIntentionAction(BOOLEAN_ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.boolean.attribute", name)),
               XmlQuickFixFactory.getInstance().addAttributeValueFix(attribute),
               new RemoveAttributeIntentionAction(name),
+            } : new LocalQuickFix[] {
+              XmlQuickFixFactory.getInstance().addAttributeValueFix(attribute)
             };
 
-            registerProblemOnAttributeName(attribute, XmlErrorMessages.message("attribute.is.not.boolean", attribute.getName()), holder,
-                                           quickFixes);
+
+            String error = null;
+            if (html5) {
+              if (attributeDescriptor instanceof XmlEnumerationDescriptor &&
+                  ((XmlEnumerationDescriptor)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
+                error = XmlErrorMessages.message("wrong.value", "attribute");
+              }
+            } else {
+              error = XmlErrorMessages.message("attribute.is.not.boolean", attribute.getName());
+            }
+            if (error != null) {
+              registerProblemOnAttributeName(attribute, error, holder, quickFixes);
+            }
           }
         }
       }

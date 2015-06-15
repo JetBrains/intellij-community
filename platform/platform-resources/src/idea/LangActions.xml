@@ -165,6 +165,7 @@
       <group id="CodeEditorViewGroup">
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
+        <action id="ExpressionTypeInfo" class="com.intellij.codeInsight.hint.actions.ShowExpressionTypeAction"/>
         <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
         <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
       </group>
@@ -794,10 +795,13 @@
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
-      <action id="Debugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction"/>
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
-      <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
-      <action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>
+      <separator/>
+      <reference ref="XDebugger.ToggleSortValues"/>
+      <!--<action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>-->
+      <!--<action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>-->
+      <separator/>
+      <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
     </group>
 
     <group id="RunnerLayoutActions">
@@ -854,7 +858,7 @@
 
     <group>
       <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction"
-              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="CompareTwoFiles"/>
+              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="Diff.ShowDiff"/>
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>

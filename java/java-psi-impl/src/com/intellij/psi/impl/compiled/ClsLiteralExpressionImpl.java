@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,17 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiteralExpression {
-  private ClsElementImpl myParent;
+class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiteralExpression {
+  private final ClsElementImpl myParent;
   private final String myText;
   private final PsiType myType;
   private final Object myValue;
 
-  public ClsLiteralExpressionImpl(ClsElementImpl parent, String text, PsiType type, Object value) {
+  ClsLiteralExpressionImpl(ClsElementImpl parent, String text, PsiType type, Object value) {
     myParent = parent;
     myText = text;
     myType = type;
     myValue = value;
-  }
-
-  void setParent(ClsElementImpl parent) {
-    myParent = parent;
   }
 
   @Override

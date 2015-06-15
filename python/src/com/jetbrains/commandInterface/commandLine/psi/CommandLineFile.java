@@ -20,8 +20,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.CommandLinePart;
 import com.jetbrains.commandInterface.commandLine.ValidationResult;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +37,9 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class CommandLineFile extends PsiFileBase implements CommandLinePart {
+  /**
+   * List of commands, available on this file.
+   */
   private static final Key<List<Command>> COMMANDS = Key.create("COMMANDS");
 
   public CommandLineFile(final FileViewProvider provider) {
@@ -46,8 +49,7 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
   @NotNull
   @Override
   public FileType getFileType() {
-
-    return getViewProvider().getVirtualFile().getFileType();
+    return getViewProvider().getFileType();
   }
 
   @Nullable
@@ -56,9 +58,16 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
     return this;
   }
 
+
   /**
-   * @return list of commands, available for this file
-   * @see #setCommands(List)
+   * @param commands list of commands, available for this file. Better to provide one, if you know
+   */
+  public void setCommands(@Nullable final List<Command> commands) {
+    putCopyableUserData(COMMANDS, commands);
+  }
+
+  /**
+   * @return List of commands, available on this file. May be null if no info available
    */
   @Nullable
   public List<Command> getCommands() {
@@ -67,16 +76,8 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
 
 
   /**
-   * @param commands list of commands, available for this file. Better to provide one, if you know
-   */
-  public void setCommands(@NotNull final List<Command> commands) {
-    putCopyableUserData(COMMANDS, commands);
-  }
-
-
-  /**
    * Tries to find real command used in this file.
-   * You need to first inject list of commands {@link #setCommands(List)}.
+   * You need to first inject list of {@link #setCommands(List)}.
    *
    * @return Command if found and available, or null if command can't be parsed or bad command.
    */
@@ -84,12 +85,12 @@ public final class CommandLineFile extends PsiFileBase implements CommandLinePar
   @Nullable
   public Command findRealCommand() {
     final String command = getCommand();
-    final List<Command> realCommands = getCommands();
-    if (realCommands == null) {
+    final List<Command> commands = getCommands();
+
+    if (commands == null || command == null) {
       return null;
     }
-
-    for (final Command realCommand : realCommands) {
+    for (final Command realCommand : commands) {
       if (realCommand.getName().equals(command)) {
         return realCommand;
       }

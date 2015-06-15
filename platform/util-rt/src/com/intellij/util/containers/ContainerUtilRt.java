@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @since 12.0
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
@@ -59,7 +59,7 @@ public class ContainerUtilRt {
       throw new IllegalArgumentException(keys + " should have same length as " + values);
     }
 
-    Map<K, V> map = newHashMap();
+    Map<K, V> map = newHashMap(keys.size());
     for (int i = 0; i < keys.size(); ++i) {
       map.put(keys.get(i), values.get(i));
     }
@@ -68,10 +68,10 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K,V> newHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>[] entries) {
-    Map<K, V> map = newHashMap();
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
+    Map<K, V> map = newHashMap(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());
-    for (Pair<K, V> entry : entries) {
+    for (Pair<K, ? extends V> entry : entries) {
       map.put(entry.getFirst(), entry.getSecond());
     }
     return map;
@@ -166,12 +166,6 @@ public class ContainerUtilRt {
       return new ArrayList<T>(collection);
     }
     return copy(ContainerUtilRt.<T>newArrayList(), elements);
-  }
-
-  /** @deprecated Use {@link #newArrayListWithCapacity(int)} (to remove in IDEA 15) */
-  @Contract(pure=true)
-  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
-    return newArrayListWithCapacity(size);
   }
 
   @NotNull
@@ -322,7 +316,7 @@ public class ContainerUtilRt {
 
     @NotNull
     @Override
-    public <T> T[] toArray(@NotNull T[] a) {
+    public <E> E[] toArray(@NotNull E[] a) {
       if (a.length != 0) {
         a[0] = null;
       }

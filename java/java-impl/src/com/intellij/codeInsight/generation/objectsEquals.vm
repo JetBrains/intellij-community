@@ -13,7 +13,19 @@ Object $paramName){
      &&
      #end
      #set($i = $i + 1)
+     #if ($field.primitive)
+       #if ($field.double || $field.float)
+         #addDoubleFieldComparisonCondition($field) ##
+       #else
+         #addPrimitiveFieldComparisonCondition($field) ##
+       #end
+     #elseif ($field.enum)
+       #addPrimitiveFieldComparisonCondition($field) ##
+     #elseif ($field.array)
+java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)##
+     #else
 java.util.Objects.equals($field.accessor, ${classInstanceName}.$field.accessor)##
+     #end
    #end
   ;
 }

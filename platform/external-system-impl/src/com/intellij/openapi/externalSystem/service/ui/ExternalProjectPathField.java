@@ -237,7 +237,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     }
   }
 
-  private static void collapse(@NotNull final Editor editor, @NotNull final String placeholder) {
+  public static void collapse(@NotNull final Editor editor, @NotNull final String placeholder) {
     final FoldingModel foldingModel = editor.getFoldingModel();
     foldingModel.runBatchFoldingOperation(new Runnable() {
       @Override

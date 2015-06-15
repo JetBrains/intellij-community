@@ -23,6 +23,8 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -62,8 +64,40 @@ public class JavaSdkImpl extends JavaSdk {
   private static final String JAVA_VERSION_PREFIX = "java version ";
   private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
 
-  public JavaSdkImpl() {
+  public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
     super("JavaSDK");
+
+    fileManager.addVirtualFileListener(new VirtualFileAdapter() {
+
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        updateCache(event);
+      }
+
+      @Override
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        updateCache(event);
+      }
+
+      @Override
+      public void fileCreated(@NotNull VirtualFileEvent event) {
+        updateCache(event);
+      }
+
+      private void updateCache(VirtualFileEvent event) {
+        final VirtualFile file = event.getFile();
+        if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
+          final String filePath = file.getPath();
+          synchronized (myCachedVersionStrings) {
+            for (String sdkHome : myCachedVersionStrings.keySet()) {
+              if (FileUtil.isAncestor(sdkHome, filePath, false)) {
+                myCachedVersionStrings.remove(sdkHome);
+                break;
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   @Override
@@ -428,7 +462,7 @@ public class JavaSdkImpl extends JavaSdk {
     modificator.addRoot(root, annoType);
   }
 
-  private final Map<String, String> myCachedVersionStrings = new HashMap<String, String>();
+  private final Map<String, String> myCachedVersionStrings = Collections.synchronizedMap(new HashMap<String, String>());
 
   @Override
   public final String getVersionString(String sdkHome) {

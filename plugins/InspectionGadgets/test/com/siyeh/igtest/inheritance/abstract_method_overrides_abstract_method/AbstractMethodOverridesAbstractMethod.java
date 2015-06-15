@@ -62,6 +62,23 @@ class SuperclassSubst {
 }
 
 class Java8DefaultMethods {
+
+  interface A {
+    String method();
+  }
+
+  interface B {
+    default String method() {
+      return null;
+    }
+  }
+
+  //without override would inherit abstract & default - red code
+  interface C extends A, B {
+    @Override
+    String method();
+  }
+
   interface Super
   {
       default void method()

@@ -31,6 +31,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -213,9 +214,9 @@ public class RevisionsList {
       myLabelPanel.setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(Container parent) {
-          Insets i = parent.getInsets();
-          Dimension pref = myLabelContainer.getPreferredSize();
-          return new Dimension(pref.width + i.left + i.right, pref.height + i.top + i.bottom);
+          Dimension size = myLabelContainer.getPreferredSize();
+          JBInsets.addTo(size, parent.getInsets());
+          return size;
         }
 
         @Override

@@ -69,7 +69,7 @@ class TryIdenticalCatches {
      catch(ClassNotFoundException cnfe) {
        System.out.println();
      }
-     <warning descr="catch branch identical to 'ClassNotFoundException' branch">catch(NumberFormatException nfe)</warning> {
+     <warning descr="'catch' branch identical to 'ClassNotFoundException' branch">catch(NumberFormatException nfe)</warning> {
       System.out.println();
      }
    }
@@ -86,7 +86,7 @@ class TryIdenticalCatches {
     catch(ClassNotFoundException cnfe) {
       log(cnfe);
     }
-    <warning descr="catch branch identical to 'ClassNotFoundException' branch">catch(NumberFormatException n<caret>fe)</warning> {
+    <warning descr="'catch' branch identical to 'ClassNotFoundException' branch">catch(NumberFormatException n<caret>fe)</warning> {
       log(nfe);
     }
   }
@@ -103,9 +103,9 @@ class TryIdenticalCatches {
     try {
 
     } catch (E4 e) {
-    } <warning descr="catch branch identical to 'E4' branch">catch (E2 e)</warning> {
-    } <warning descr="catch branch identical to 'E4' branch">catch (E3 e)</warning> {
-    } <warning descr="catch branch identical to 'E2' branch">catch (E1 e)</warning> {
+    } <warning descr="'catch' branch identical to 'E4' branch">catch (E2 e)</warning> {
+    } <warning descr="'catch' branch identical to 'E4' branch">catch (E3 e)</warning> {
+    } <warning descr="'catch' branch identical to 'E2' branch">catch (E1 e)</warning> {
     }
   }
 
@@ -127,9 +127,9 @@ class TryIdenticalCatches {
       throw new NullPointerException();
     } catch (final NullPointerException e) {
       causeException = e;
-    } <warning descr="catch branch identical to 'NullPointerException' branch">catch (final IllegalArgumentException e)</warning> {
+    } <warning descr="'catch' branch identical to 'NullPointerException' branch">catch (final IllegalArgumentException e)</warning> {
       causeException = e;
-    } <warning descr="catch branch identical to 'NullPointerException' branch">catch (final IndexOutOfBoundsException e)</warning> {
+    } <warning descr="'catch' branch identical to 'NullPointerException' branch">catch (final IndexOutOfBoundsException e)</warning> {
       causeException = e;
     }
     System.out.println("causeException = " + causeException);

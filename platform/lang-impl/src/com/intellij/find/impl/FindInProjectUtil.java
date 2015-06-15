@@ -301,11 +301,17 @@ public class FindInProjectUtil {
       presentation.setUsagesString("files");
     }
     else {
-      presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind));
-      presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope));
+      FindModel.SearchContext searchContext = findModel.getSearchContext();
+      String contextText = "";
+      if (searchContext != FindModel.SearchContext.ANY) {
+        contextText = FindBundle.message("find.context.presentation.scope.label", FindDialog.getPresentableName(searchContext));
+      }
+      presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind, contextText));
+      presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope, contextText));
       presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", stringToFind));
       presentation.setUsagesWord(FindBundle.message("occurrence"));
       presentation.setCodeUsagesString(FindBundle.message("found.occurrences"));
+      presentation.setContextText(contextText);
     }
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);

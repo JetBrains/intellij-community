@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -409,10 +409,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
                   treeEvent.setChild(oldPsiFile);
                   myManager.childRemoved(treeEvent);
                 }
-                else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
-                         newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
-                         languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
-                         !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages())) {
+                else if (!FileManagerImpl.areViewProvidersEquivalent(fileViewProvider, oldFileViewProvider)) {
                   myFileManager.setViewProvider(vFile, fileViewProvider);
 
                   treeEvent.setOldChild(oldPsiFile);
@@ -563,10 +560,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
               myManager.childRemoved(treeEvent);
             }
             else {
-              if (oldElement.getClass().equals(newElement.getClass())) {
+              if (newElement instanceof PsiDirectory || FileManagerImpl.areViewProvidersEquivalent(newViewProvider, ((PsiFile) oldElement).getViewProvider())) {
                 treeEvent.setOldParent(oldParentDir);
                 treeEvent.setNewParent(newParentDir);
-                treeEvent.setChild(newElement);
+                treeEvent.setChild(oldElement);
                 myManager.childMoved(treeEvent);
               }
               else {
@@ -687,9 +684,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   private void handleVfsChangeWithoutPsi(@NotNull VirtualFile vFile) {
     if (!myReportedUnloadedPsiChange && isInRootModel(vFile)) {
       PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
-      myManager.beforePropertyChange(event);
-      myManager.propertyChanged(event);
+      myFileManager.firePropertyChangedForUnloadedPsi(event, vFile);
       myReportedUnloadedPsiChange = true;
     }
   }

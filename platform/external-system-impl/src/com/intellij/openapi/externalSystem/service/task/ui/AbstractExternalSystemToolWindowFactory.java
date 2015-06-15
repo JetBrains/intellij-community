@@ -18,7 +18,7 @@ package com.intellij.openapi.externalSystem.service.task.ui;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -44,7 +44,7 @@ public abstract class AbstractExternalSystemToolWindowFactory implements ToolWin
   public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
     toolWindow.setTitle(myExternalSystemId.getReadableName());
     ContentManager contentManager = toolWindow.getContentManager();
-    final ExternalProjectsView projectsView = new ExternalProjectsView(project, (ToolWindowEx)toolWindow, myExternalSystemId);
+    final ExternalProjectsViewImpl projectsView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, myExternalSystemId);
     ExternalProjectsManager.getInstance(project).registerView(projectsView);
     ContentImpl tasksContent = new ContentImpl(projectsView, ExternalSystemBundle.message("tool.window.title.projects"), true);
     contentManager.addContent(tasksContent);

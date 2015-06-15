@@ -186,5 +186,11 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     LOG.warn("Couldn't parse hg log commit info attribute " + index);
     return "";
   }
+
+  @NotNull
+  public static String extractSubject(@NotNull String message) {
+    int subjectIndex = message.indexOf('\n');
+    return subjectIndex == -1 ? message : message.substring(0, subjectIndex);
+  }
 }
 

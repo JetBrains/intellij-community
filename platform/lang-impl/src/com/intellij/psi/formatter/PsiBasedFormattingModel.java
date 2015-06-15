@@ -27,6 +27,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,18 +37,19 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
 
+  private final Project myProject;
   private final ASTNode myASTNode;
   private final FormattingDocumentModelImpl myDocumentModel;
   @NotNull private final Block myRootBlock;
   protected boolean myCanModifyAllWhiteSpaces = false;
-  
+
   public PsiBasedFormattingModel(final PsiFile file,
                                  @NotNull final Block rootBlock,
                                  final FormattingDocumentModelImpl documentModel) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myDocumentModel = documentModel;
     myRootBlock = rootBlock;
-
+    myProject = file.getProject();
   }
 
 
@@ -71,7 +73,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   }
 
   @Override
-  public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
+  public TextRange shiftIndentInsideRange(ASTNode node, TextRange textRange, int shift) {
     return textRange; // TODO: Remove this method from here...
   }
 
@@ -81,7 +83,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
 
 
   @Nullable
-  private String replaceWithPSI(final TextRange textRange, String whiteSpace) {
+  private String replaceWithPSI(final TextRange textRange, final String whiteSpace) {
     final int offset = textRange.getEndOffset();
     ASTNode leafElement = findElementAt(offset);
 
@@ -101,7 +103,14 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
         return replaceWithPsiInLeaf(textRange, whiteSpace, leafElement);
       }
     } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
-      FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
+
+      CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
+        @Override
+        public void run() {
+          FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
+        }
+      });
+
       return whiteSpace;
     } else {
       return null;
@@ -109,12 +118,18 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   }
 
   @Nullable
-  protected String replaceWithPsiInLeaf(final TextRange textRange, String whiteSpace, ASTNode leafElement) {
+  protected String replaceWithPsiInLeaf(final TextRange textRange, final String whiteSpace, final ASTNode leafElement) {
     if (!myCanModifyAllWhiteSpaces) {
       if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;
     }
 
-    FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, TokenType.WHITE_SPACE, textRange);
+    CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
+      @Override
+      public void run() {
+        FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, TokenType.WHITE_SPACE, textRange);
+      }
+    });
+
     return whiteSpace;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class LibraryUtil {
 
-  private LibraryUtil() {
-    super();
+  private LibraryUtil() {}
+
+  public static boolean isTypeInLibrary(@Nullable PsiType type) {
+    if (!(type instanceof PsiClassType)) {
+      return false;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    return classIsInLibrary(aClass);
   }
 
   public static boolean classIsInLibrary(@Nullable PsiClass aClass) {

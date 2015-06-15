@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,18 +234,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return <code>true</code> if this file is a directory, <code>false</code> otherwise
    */
   public abstract boolean isDirectory();
-
-  /** @deprecated use {@link #is(VFileProperty)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public boolean isSymLink() {
-    return is(VFileProperty.SYMLINK);
-  }
-
-  /** @deprecated use {@link #is(VFileProperty)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public boolean isSpecialFile() {
-    return is(VFileProperty.SPECIAL);
-  }
 
   /**
    * Checks whether this file has a specific property.

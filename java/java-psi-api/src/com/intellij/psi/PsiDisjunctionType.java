@@ -148,4 +148,24 @@ public class PsiDisjunctionType extends PsiType.Stub {
       return new PsiType[]{lub};
     }
   }
+
+  @Override
+  public int hashCode() {
+    return myTypes.get(0).hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final PsiDisjunctionType that = (PsiDisjunctionType)o;
+    if (that.myTypes.size() != myTypes.size()) return false;
+
+    for (int i = 0; i < myTypes.size(); i++) {
+      if (!myTypes.get(i).equals(that.myTypes.get(i))) return false;
+    }
+
+    return true;
+  }
 }

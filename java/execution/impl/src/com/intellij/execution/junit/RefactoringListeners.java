@@ -26,6 +26,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RefactoringListeners {
   public static RefactoringElementListener getListener(final PsiPackage psiPackage, final Accessor<PsiPackage> accessor) {
@@ -112,6 +113,7 @@ public class RefactoringListeners {
       }
     }
 
+    @Nullable
     protected abstract T findNewElement(T newParent, String qualifiedName);
 
     protected abstract String getQualifiedName(T element);
@@ -141,13 +143,40 @@ public class RefactoringListeners {
       super(accessor, path);
     }
 
+    @Nullable
     public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
+      final Module module = JavaExecutionUtil.findModule(psiClass);
+      if (module == null) {
+        return null;
+      }
       return JavaPsiFacade.getInstance(psiClass.getProject())
-        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(JavaExecutionUtil.findModule(psiClass)));
+        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(module));
     }
 
     public String getQualifiedName(final PsiClass psiClass) {
       return psiClass.getQualifiedName();
+    }
+  }
+  
+  public static class RefactorPackageByClass extends RenameElement<PsiClass> {
+    public RefactorPackageByClass(final Accessor<PsiClass> accessor) {
+      super(accessor, "*");
+    }
+
+    @Nullable
+    public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
+      final Module module = JavaExecutionUtil.findModule(psiClass);
+      if (module == null) {
+        return null;
+      }
+      return JavaPsiFacade.getInstance(psiClass.getProject())
+        .findClass(qualifiedName.replace('$', '.').replace("\\*", psiClass.getName()), 
+                   GlobalSearchScope.moduleScope(module));
+    }
+
+    public String getQualifiedName(final PsiClass psiClass) {
+      final String qualifiedName = psiClass.getQualifiedName();
+      return qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
     }
   }
 

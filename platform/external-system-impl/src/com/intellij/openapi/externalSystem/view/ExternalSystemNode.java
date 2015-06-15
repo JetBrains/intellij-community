@@ -157,7 +157,12 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   public ExternalProjectsStructure.DisplayKind getDisplayKind() {
-    return ExternalProjectsStructure.DisplayKind.NORMAL;
+    Class[] visibles = getStructure().getVisibleNodesClasses();
+    if (visibles == null) return ExternalProjectsStructure.DisplayKind.NORMAL;
+    for (Class each : visibles) {
+      if (each.isInstance(this)) return ExternalProjectsStructure.DisplayKind.ALWAYS;
+    }
+    return ExternalProjectsStructure.DisplayKind.NEVER;
   }
 
   @NotNull
@@ -270,7 +275,8 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   @NotNull
   protected List<? extends ExternalSystemNode> doBuildChildren() {
     if (myDataNode != null && !myDataNode.getChildren().isEmpty()) {
-      return getExternalProjectsView().createNodes(this, myDataNode);
+      final ExternalProjectsView externalProjectsView = getExternalProjectsView();
+      return externalProjectsView.createNodes(externalProjectsView, this, myDataNode);
     }
     else {
       return myChildrenList;
@@ -367,9 +373,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   @Override
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
     String actionId = getActionId();
-    if (actionId != null) {
-      ExternalSystemActionUtil.executeAction(actionId, inputEvent);
-    }
+    getExternalProjectsView().handleDoubleClickOrEnter(this, actionId, inputEvent);
   }
 
   @Override

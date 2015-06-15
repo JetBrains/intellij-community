@@ -25,7 +25,6 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,13 +61,6 @@ public abstract class StructuralSearchProfile {
   }
 
   public abstract boolean isMyLanguage(@NotNull Language language);
-
-  public boolean isMyFile(PsiFile file, @NotNull Language language, Language... patternLanguages) {
-    if (isMyLanguage(language) && ArrayUtil.find(patternLanguages, language) >= 0) {
-      return true;
-    }
-    return false;
-  }
 
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,
@@ -226,10 +218,6 @@ public abstract class StructuralSearchProfile {
                                 StringBuilder result,
                                 int offset,
                                 HashMap<String, MatchResult> matchMap) {
-    return defaultHandleSubstitution(info, match, result, offset);
-  }
-
-  public static int defaultHandleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, int offset) {
     if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean forceAddingNewLine = false;
@@ -239,7 +227,7 @@ public abstract class StructuralSearchProfile {
 
         for (final MatchResult matchResult : match.getAllSons()) {
           final PsiElement currentElement = matchResult.getMatch();
-          
+
           if (buf.length() > 0) {
             if (info.isArgumentContext()) {
               buf.append(',');
@@ -261,13 +249,21 @@ public abstract class StructuralSearchProfile {
       offset = Replacer.insertSubstitution(result, offset, info, replacementString);
       if (forceAddingNewLine && info.isStatementContext()) {
         result.insert(info.getStartIndex() + offset + 1, '\n');
-        offset ++;
+        offset++;
       }
     }
     return offset;
   }
 
-  public int processAdditionalOptions(ParameterInfo info, int offset, StringBuilder result, MatchResult r) {
+  public int handleNoSubstitution(ParameterInfo info, int offset, StringBuilder result) {
+    if (info.isHasCommaBefore()) {
+      result.delete(info.getBeforeDelimiterPos() + offset, info.getBeforeDelimiterPos() + 1 + offset);
+      --offset;
+    }
+    else if (info.isHasCommaAfter()) {
+      result.delete(info.getAfterDelimiterPos() + offset, info.getAfterDelimiterPos() + 1 + offset);
+      --offset;
+    }
     return offset;
   }
 

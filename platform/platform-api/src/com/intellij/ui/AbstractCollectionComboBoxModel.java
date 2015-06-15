@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public abstract class AbstractCollectionComboBoxModel<T> extends AbstractListMod
   public void setSelectedItem(@Nullable Object anItem) {
     //noinspection unchecked
     mySelection = (T)anItem;
+    update();
   }
 
   @Override

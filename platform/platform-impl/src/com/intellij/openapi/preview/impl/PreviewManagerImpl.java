@@ -401,8 +401,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
     @Override
     public void paint(Graphics g) {
       boolean isDarkBackground = UIUtil.isUnderDarcula();
-      UIUtil.applyRenderingHints(g);
-      GraphicsUtil.setupAntialiasing(g, true, false);
+      UISettings.setupAntialiasing(g);
       g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
       g.setFont(JBUI.Fonts.label(isDarkBackground ? 24f : 20f));
 

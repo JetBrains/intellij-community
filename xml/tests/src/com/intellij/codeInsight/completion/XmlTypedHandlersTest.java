@@ -132,6 +132,12 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
+  public void testPi() throws Exception {
+    doTest("<<caret>", '?', "<?<caret> ?>");
+    doTest("<caret>", '?', "?");
+    doTest("<<caret> ?>", '?', "<?<caret> ?>");
+  }
+
   private void doTest(String text, char c, String result) {
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     myFixture.type(c);

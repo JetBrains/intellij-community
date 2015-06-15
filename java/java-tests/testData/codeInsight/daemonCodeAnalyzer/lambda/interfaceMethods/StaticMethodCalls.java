@@ -20,6 +20,6 @@ class Bug {
 
     Function<Integer, Integer> g = <error descr="Static method may be invoked on containing interface class only">f.identity();</error>
 
-    Function<Integer, Integer> h = <error descr="Static method may be invoked on containing interface class only">IFunction.identity();</error>
+    Function<Integer, Integer> h = IFunction.<error descr="Static method may be invoked on containing interface class only">identity</error>();
   }
 }

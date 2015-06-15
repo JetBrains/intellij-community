@@ -48,7 +48,7 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
       @Override
       public void run() {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
-        StatusBar statusBar = frame.getStatusBar();
+        StatusBar statusBar = frame != null ? frame.getStatusBar() : null;
         StatusBarWidget widget = statusBar != null ? statusBar.getWidget("LineSeparator") : null;
 
         if (widget instanceof LineSeparatorPanel) {

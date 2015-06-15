@@ -101,15 +101,13 @@ public class RangesBuilder {
   }
 
   private static Range createOn(@NotNull Diff.Change change, int shift, int vcsShift) {
-    byte type = getChangeType(change);
-
     int offset1 = shift + change.line1;
     int offset2 = offset1 + change.inserted;
 
     int uOffset1 = vcsShift + change.line0;
     int uOffset2 = uOffset1 + change.deleted;
 
-    return new Range(offset1, offset2, uOffset1, uOffset2, type);
+    return new Range(offset1, offset2, uOffset1, uOffset2);
   }
 
   private static Range createOnSmart(@NotNull Diff.Change change,
@@ -126,7 +124,7 @@ public class RangesBuilder {
     int uOffset2 = uOffset1 + change.deleted;
 
     if (type != Range.MODIFIED) {
-      return new Range(offset1, offset2, uOffset1, uOffset2, type, Collections.singletonList(new Range.InnerRange(offset1, offset2, type)));
+      return new Range(offset1, offset2, uOffset1, uOffset2, Collections.singletonList(new Range.InnerRange(offset1, offset2, type)));
     }
 
     LineWrapper[] lines1 = new LineWrapper[change.deleted];
@@ -169,7 +167,7 @@ public class RangesBuilder {
       inner.add(new Range.InnerRange(innerStart, innerEnd, innerType));
     }
 
-    return new Range(offset1, offset2, uOffset1, uOffset2, type, inner);
+    return new Range(offset1, offset2, uOffset1, uOffset2, inner);
   }
 
   private static byte getChangeType(@NotNull Diff.Change change) {

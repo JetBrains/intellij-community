@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -38,6 +39,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
@@ -45,6 +47,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -91,7 +94,7 @@ public class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
-  public static RelativePoint calcPopupLocation(Editor editor, final int line) {
+  public static RelativePoint calcPopupLocation(@NotNull Editor editor, final int line) {
     Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
@@ -345,5 +348,17 @@ public class DebuggerUIUtil {
     else {
       return valueNode.getRawValue();
     }
+  }
+
+  /**
+   * Checks if value has evaluation expression ready, or calculation is pending
+   */
+  public static boolean hasEvaluationExpression(@NotNull XValue value) {
+    Promise<String> promise = value.calculateEvaluationExpression();
+    if (promise.getState() == Promise.State.PENDING) return true;
+    if (promise instanceof Getter) {
+      return ((Getter)promise).get() != null;
+    }
+    return true;
   }
 }

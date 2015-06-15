@@ -15,10 +15,12 @@
  */
 package git4idea.rebase;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -27,12 +29,15 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitRebaseSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitReferenceValidator;
 import git4idea.util.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -115,7 +120,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * The current branch
    */
-  protected GitBranch myCurrentBranch;
+  @Nullable protected GitBranch myCurrentBranch;
   /**
    * The tags
    */
@@ -128,6 +133,9 @@ public class GitRebaseDialog extends DialogWrapper {
    * The validator for from field
    */
   private final GitReferenceValidator myFromValidator;
+  @NotNull private final GitRebaseSettings mySettings;
+
+  @Nullable private final String myOriginalOntoBranch;
 
   /**
    * A constructor
@@ -142,6 +150,7 @@ public class GitRebaseDialog extends DialogWrapper {
     setOKButtonText(GitBundle.getString("rebase.button"));
     init();
     myProject = project;
+    mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
     final Runnable validateRunnable = new Runnable() {
       public void run() {
         validateFields();
@@ -157,9 +166,48 @@ public class GitRebaseDialog extends DialogWrapper {
         validateFields();
       }
     });
+
     setupBranches();
     setupStrategy();
+
+    myInteractiveCheckBox.setSelected(mySettings.isInteractive());
+    myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
+    myShowTagsCheckBox.setSelected(mySettings.showTags());
+    myShowRemoteBranchesCheckBox.setSelected(mySettings.showRemoteBranches());
+    overwriteOntoForCurrentBranch(mySettings);
+
+    myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
+
     validateFields();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myOntoComboBox;
+  }
+
+  private void overwriteOntoForCurrentBranch(@NotNull GitRebaseSettings settings) {
+    String onto = settings.getOnto();
+    if (onto != null && !onto.equals(myBranchComboBox.getSelectedItem())) {
+      if (!isValidRevision(onto)) {
+        mySettings.setOnto(null);
+      }
+      else {
+        myOntoComboBox.setSelectedItem(onto);
+      }
+    }
+  }
+
+  private boolean isValidRevision(@NotNull String revisionExpression) {
+    try {
+      GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
+      return true;
+    }
+    catch (VcsException e) {
+      LOG.debug(e);
+      return false;
+    }
   }
 
   public GitLineHandler handler() {
@@ -193,6 +241,27 @@ public class GitRebaseDialog extends DialogWrapper {
       h.addParameters(selectedBranch);
     }
     return h;
+  }
+
+  @Override
+  protected void doOKAction() {
+    try {
+      rememberFields();
+    }
+    finally {
+      super.doOKAction();
+    }
+  }
+
+  private void rememberFields() {
+    mySettings.setInteractive(myInteractiveCheckBox.isSelected());
+    mySettings.setPreserveMerges(myPreserveMergesCheckBox.isSelected());
+    mySettings.setShowTags(myShowTagsCheckBox.isSelected());
+    mySettings.setShowRemoteBranches(myShowRemoteBranchesCheckBox.isSelected());
+    String onto = StringUtil.nullize(GitUIUtil.getTextField(myOntoComboBox).getText(), true);
+    if (onto != null && !onto.equals(myOriginalOntoBranch)) {
+      mySettings.setOnto(onto);
+    }
   }
 
   /**

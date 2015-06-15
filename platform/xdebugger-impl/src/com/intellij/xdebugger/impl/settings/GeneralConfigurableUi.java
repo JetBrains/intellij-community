@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,22 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
   private JCheckBox hideDebugWindowCheckBox;
   private JCheckBox focusApplicationOnBreakpointCheckBox;
   private JCheckBox myShowDebugWindowOnCheckBox;
+  private JCheckBox myScrollExecutionPointToCheckBox;
 
   @Override
   public void reset(@NotNull XDebuggerGeneralSettings settings) {
     focusApplicationOnBreakpointCheckBox.setSelected(Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
     hideDebugWindowCheckBox.setSelected(settings.isHideDebuggerOnProcessTermination());
     myShowDebugWindowOnCheckBox.setSelected(settings.isShowDebuggerOnBreakpoint());
+    myScrollExecutionPointToCheckBox.setSelected(settings.isScrollToCenter());
   }
 
   @Override
   public boolean isModified(@NotNull XDebuggerGeneralSettings settings) {
     return focusApplicationOnBreakpointCheckBox.isSelected() != Registry.is("debugger.mayBringFrameToFrontOnBreakpoint") ||
            hideDebugWindowCheckBox.isSelected() != settings.isHideDebuggerOnProcessTermination() ||
-           myShowDebugWindowOnCheckBox.isSelected() != settings.isShowDebuggerOnBreakpoint();
+           myShowDebugWindowOnCheckBox.isSelected() != settings.isShowDebuggerOnBreakpoint() ||
+           myScrollExecutionPointToCheckBox.isSelected() != settings.isScrollToCenter();
   }
 
   @Override
@@ -46,6 +49,7 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     Registry.get("debugger.mayBringFrameToFrontOnBreakpoint").setValue(focusApplicationOnBreakpointCheckBox.isSelected());
     settings.setHideDebuggerOnProcessTermination(hideDebugWindowCheckBox.isSelected());
     settings.setShowDebuggerOnBreakpoint(myShowDebugWindowOnCheckBox.isSelected());
+    settings.setScrollToCenter(myScrollExecutionPointToCheckBox.isSelected());
   }
 
   @NotNull

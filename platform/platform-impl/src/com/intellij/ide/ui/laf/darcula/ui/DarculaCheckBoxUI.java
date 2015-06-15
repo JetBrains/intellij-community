@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -45,7 +46,6 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   public synchronized void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
     JCheckBox b = (JCheckBox) c;
-    final ButtonModel model = b.getModel();
     final Dimension size = c.getSize();
     final Font font = c.getFont();
 
@@ -56,11 +56,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
 
-    Insets i = c.getInsets();
-    viewRect.x += i.left;
-    viewRect.y += i.top;
-    viewRect.width -= (i.right + viewRect.x);
-    viewRect.height -= (i.bottom + viewRect.y);
+    JBInsets.removeFrom(viewRect, c.getInsets());
 
     String text = SwingUtilities.layoutCompoundLabel(c, fm, b.getText(), getDefaultIcon(),
                                                      b.getVerticalAlignment(), b.getHorizontalAlignment(),
@@ -75,6 +71,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
     final boolean selected = b.isSelected();
     final boolean enabled = b.isEnabled();
+    drawCheckIcon(c, g, b, iconRect, selected, enabled);
+    drawText(c, g, b, fm, textRect, text);
+  }
+
+  protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
     if (selected && b.getSelectedIcon() != null) {
       b.getSelectedIcon().paintIcon(b, g, iconRect.x + JBUI.scale(4), iconRect.y + JBUI.scale(2));
     } else if (!selected && b.getIcon() != null) {
@@ -88,7 +89,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
       g.translate(x, y);
       final Paint paint = UIUtil.getGradientPaint(w / 2, 0, b.getBackground().brighter(),
-                                                    w / 2, h, b.getBackground());
+                                                  w / 2, h, b.getBackground());
       g.setPaint(paint);
       final int fillOffset = JBUI.scale(1);
       g.fillRect(fillOffset, fillOffset, w - 2*fillOffset, h - 2*fillOffset);
@@ -126,14 +127,16 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       g.translate(-x, -y);
       config.restore();
     }
+  }
 
+  protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
     //text
     if(text != null) {
       View view = (View) c.getClientProperty(BasicHTML.propertyKey);
       if (view != null) {
         view.paint(g, textRect);
       } else {
-        g.setColor(model.isEnabled() ? b.getForeground() : getDisabledTextColor());
+        g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
         SwingUtilities2.drawStringUnderlineCharAt(c, g, text,
                                                   b.getDisplayedMnemonicIndex(),
                                                   textRect.x,

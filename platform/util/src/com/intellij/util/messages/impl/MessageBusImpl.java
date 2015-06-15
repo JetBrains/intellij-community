@@ -79,14 +79,14 @@ public class MessageBusImpl implements MessageBus {
   private boolean myDisposed;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
-    myOwner = owner.toString();
+    myOwner = owner.toString() + " of " + owner.getClass();
     myParentBus = (MessageBusImpl)parentBus;
     myOrder = myParentBus.notifyChildBusCreated(this);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
   }
 
   private MessageBusImpl(Object owner) {
-    myOwner = owner.toString();
+    myOwner = owner.toString() + " of " + owner.getClass();
     myOrder = Collections.emptyList();
   }
 
@@ -101,10 +101,15 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private RootBus asRoot() {
-    if ((this instanceof RootBus)) {
+    if (this instanceof RootBus) {
       return (RootBus)this;
     }
-    throw new AssertionError("Accessing disposed message bus; " + myOwner);
+    throw new AssertionError("Accessing disposed message bus " + this);
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + "; owner=" + myOwner + (myDisposed ? "; disposed" : "");
   }
 
   private List<Integer> notifyChildBusCreated(final MessageBusImpl childBus) {
@@ -223,7 +228,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void checkNotDisposed() {
-    if (myDisposed) LOG.error("Already disposed: " + myOwner);
+    if (myDisposed) LOG.error("Already disposed: " + this);
   }
 
   private void calcSubscribers(Topic topic, List<MessageBusConnectionImpl> result) {

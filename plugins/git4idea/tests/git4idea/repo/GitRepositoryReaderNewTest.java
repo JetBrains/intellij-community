@@ -17,9 +17,11 @@ package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
+import git4idea.branch.GitBranchUtil;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,6 +87,22 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
     assertEquals("Detached HEAD is not detected", GitRepository.State.DETACHED, state.getState());
     assertEquals("Detached HEAD hash is incorrect", head, state.getCurrentRevision());
     assertTrue("There should be no local branches", state.getLocalBranches().isEmpty());
+  }
+
+  public void test_tracking_remote_with_complex_name() throws IOException {
+    makeCommit("file.txt");
+    git("remote add my/remote http://my.remote.git");
+    git("update-ref refs/remotes/my/remote/master HEAD");
+    git("config branch.master.remote my/remote");
+    git("config branch.master.merge refs/heads/master");
+    myRepo.update();
+
+
+    GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(myRepo, ObjectUtils.assertNotNull(myRepo.getCurrentBranch()));
+    assertNotNull(trackInfo);
+    GitRemote remote = trackInfo.getRemote();
+    assertEquals("my/remote", remote.getName());
+    assertEquals("http://my.remote.git", remote.getFirstUrl());
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,8 +73,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private final Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<String, ContentManager>();
   private final Map<String, Icon> myToolwindowIdToBaseIconMap = new THashMap<String, Icon>();
-
-  private final Map<RunContentListener, Disposable> myListeners = new THashMap<RunContentListener, Disposable>();
   private final LinkedList<String> myToolwindowIdZBuffer = new LinkedList<String>();
 
   public RunContentManagerImpl(@NotNull Project project, @NotNull DockManager dockManager) {
@@ -400,36 +396,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     });
   }
 
-  @Override
-  @Nullable
-  @Deprecated
-  public RunContentDescriptor getReuseContent(final Executor requestor, DataContext dataContext) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return null;
-    }
-    //noinspection deprecation
-    return getReuseContent(requestor, GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(dataContext));
-  }
-
-  @Override
-  @Nullable
-  @Deprecated
-  public RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return null;
-    }
-    if (contentToReuse != null) {
-      return contentToReuse;
-    }
-    return chooseReuseContentForDescriptor(getContentManagerForRunner(requestor), null, 0L, null);
-  }
-
-  @Nullable
-  @Override
-  public RunContentDescriptor getReuseContent(Executor requestor, @NotNull ExecutionEnvironment executionEnvironment) {
-    return getReuseContent(executionEnvironment);
-  }
-
   @Nullable
   @Override
   public RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment) {
@@ -583,44 +549,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void addRunContentListener(@NotNull final RunContentListener listener, final Executor executor) {
-    final Disposable disposable = Disposer.newDisposable();
-    myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
-      @Override
-      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor2) {
-        if (executor2.equals(executor)) {
-          listener.contentSelected(descriptor);
-        }
-      }
-
-      @Override
-      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor2) {
-        if (executor2.equals(executor)) {
-          listener.contentRemoved(descriptor);
-        }
-      }
-    });
-    myListeners.put(listener, disposable);
-  }
-
-  @Override
-  public void addRunContentListener(@NotNull final RunContentListener listener) {
-    final Disposable disposable = Disposer.newDisposable();
-    myProject.getMessageBus().connect(disposable).subscribe(TOPIC, new RunContentWithExecutorListener() {
-      @Override
-      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        listener.contentSelected(descriptor);
-      }
-
-      @Override
-      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        listener.contentRemoved(descriptor);
-      }
-    });
-    myListeners.put(listener, disposable);
-  }
-
-  @Override
   @NotNull
   public List<RunContentDescriptor> getAllDescriptors() {
     if (myToolwindowIdToContentManagerMap.isEmpty()) {
@@ -637,14 +565,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
     }
     return descriptors;
-  }
-
-  @Override
-  public void removeRunContentListener(final RunContentListener listener) {
-    Disposable disposable = myListeners.remove(listener);
-    if (disposable != null) {
-      Disposer.dispose(disposable);
-    }
   }
 
   @Nullable

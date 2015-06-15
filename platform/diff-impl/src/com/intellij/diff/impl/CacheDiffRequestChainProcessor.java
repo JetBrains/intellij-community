@@ -21,9 +21,9 @@ import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
+import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,9 +33,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +53,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   @NotNull private final SoftHardCacheMap<DiffRequestProducer, DiffRequest> myRequestCache =
     new SoftHardCacheMap<DiffRequestProducer, DiffRequest>(5, 5);
 
-  @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
+  @NotNull private final DiffTaskQueue myQueue = new DiffTaskQueue();
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project, requestChain);
@@ -62,6 +64,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   // Update
   //
 
+  @CalledInAwt
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
     int index = myRequestChain.getIndex();
@@ -78,12 +81,13 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
       return;
     }
 
-    myTaskExecutor.execute(
-      new Convertor<ProgressIndicator, Runnable>() {
+    myQueue.executeAndTryWait(
+      new Function<ProgressIndicator, Runnable>() {
         @Override
-        public Runnable convert(ProgressIndicator indicator) {
+        public Runnable fun(ProgressIndicator indicator) {
           final DiffRequest request = loadRequest(producer, indicator);
           return new Runnable() {
+            @CalledInAwt
             @Override
             public void run() {
               myRequestCache.put(producer, request);
@@ -131,9 +135,10 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   //
 
   @Override
+  @CalledInAwt
   protected void onDispose() {
     super.onDispose();
-    myTaskExecutor.abort();
+    myQueue.abort();
     myRequestCache.clear();
   }
 

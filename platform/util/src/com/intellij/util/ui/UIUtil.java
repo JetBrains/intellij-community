@@ -314,12 +314,15 @@ public class UIUtil {
       }
 
       try {
-        isRetina =  (getScaleFactorMethod == null) || ((Integer)getScaleFactorMethod.invoke(device) != 1);
+        isRetina =  getScaleFactorMethod == null || (Integer)getScaleFactorMethod.invoke(device) != 1;
       } catch (IllegalAccessException e) {
         LOG.debug("CGraphicsDevice.getScaleFactor(): Access issue");
         isRetina = false;
       } catch (InvocationTargetException e) {
         LOG.debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
+        isRetina = false;
+      } catch (IllegalArgumentException e) {
+        LOG.debug("object is not an instance of declaring class: " + device.getClass().getName());
         isRetina = false;
       }
 
@@ -705,7 +708,7 @@ public class UIUtil {
 
   private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
-    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint 
+    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
     String text = cb.getText();
 
@@ -781,18 +784,6 @@ public class UIUtil {
     final Color color = UIManager.getColor("Label.disabledForeground");
     if (color != null) return color;
     return UIManager.getColor("Label.disabledText");
-  }
-
-  /** @deprecated to remove in IDEA 14 */
-  @SuppressWarnings("UnusedDeclaration")
-  public static Icon getOptionPanelWarningIcon() {
-    return getWarningIcon();
-  }
-
-  /** @deprecated to remove in IDEA 14 */
-  @SuppressWarnings("UnusedDeclaration")
-  public static Icon getOptionPanelQuestionIcon() {
-    return getQuestionIcon();
   }
 
   @NotNull
@@ -1262,7 +1253,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderWindowsLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Windows");
+    return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1302,7 +1293,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderGTKLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("GTK");
+    return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
@@ -1631,22 +1622,28 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    g.setColor(getPanelBackground());
-    g.fillRect(x, 0, width, height);
-
-    ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
-    g.fillRect(x, 0, width, height);
-
-    g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
-    if (drawTopLine) g.drawLine(x, 0, width, 0);
-    if (drawBottomLine) g.drawLine(x, height - 1, width, height - 1);
-
-    g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
-    g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
-
-    if (active) {
-      g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+    height++;
+    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
+    try {
+      g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
+
+      ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+      g.fillRect(x, 0, width, height);
+
+      if (active) {
+        g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+        g.fillRect(x, 0, width, height);
+      }
+      g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
+      if (drawTopLine) g.drawLine(x, 0, width, 0);
+      if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
+
+      g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
+      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+
+    } finally {
+      config.restore();
     }
   }
 
@@ -1764,6 +1761,10 @@ public class UIUtil {
     return image;
   }
 
+  /** This method is intended to use when user settings are not accessible yet.
+   *  Use it to set up default RenderingHints.
+   *  @param g
+   */
   public static void applyRenderingHints(final Graphics g) {
     Graphics2D g2d = (Graphics2D)g;
     Toolkit tk = Toolkit.getDefaultToolkit();
@@ -1783,7 +1784,7 @@ public class UIUtil {
   }
 
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    if (DetectRetinaKit.isMacRetina(g)) {
+    if (isRetina(g)) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
@@ -1873,7 +1874,7 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
+    assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
@@ -2047,7 +2048,7 @@ public class UIUtil {
     @NonNls @Language("HTML")
     String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:#" + ColorUtil.toHex(fgColor)+";" : "") + "}\n";
     if (resource != null) {
-      body += "ul {list-style-image:url('" + resource.toExternalForm() + "');}\n";
+      body += "ul {list-style-image:url('" + StringUtil.escapeCharCharacters(resource.toExternalForm()) + "');}\n";
     }
     @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:#"+ColorUtil.toHex(linkColor) + ";}\n" : "";
     return "<style>\n" + body + link + "</style>";
@@ -2082,6 +2083,15 @@ public class UIUtil {
   public static Color toAlpha(final Color color, final int alpha) {
     Color actual = color != null ? color : Color.black;
     return new Color(actual.getRed(), actual.getGreen(), actual.getBlue(), alpha);
+  }
+
+  /**
+   * @param component to check whether it can be focused or not
+   * @return {@code true} if component is not {@code null} and can be focused
+   * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
+   */
+  public static boolean isFocusable(JComponent component) {
+    return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
   }
 
   public static void requestFocus(@NotNull final JComponent c) {
@@ -2220,11 +2230,18 @@ public class UIUtil {
   }
 
   public static HTMLEditorKit getHTMLEditorKit() {
+    return getHTMLEditorKit(true);
+  }
+  
+  public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : 11;
+    int size = font != null ? font.getSize() : JBUI.scale(11);
 
-    final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
+    String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
+    if (noGapsBetweenParagraphs) {
+      customCss += " p { margin-top: 0; }";
+    }
 
     final StyleSheet style = new StyleSheet();
     style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
@@ -2279,19 +2296,14 @@ public class UIUtil {
   }
 
   public static Point getCenterPoint(Dimension container, Dimension child) {
-    return getCenterPoint(new Rectangle(new Point(), container), child);
+    return getCenterPoint(new Rectangle(container), child);
   }
 
   public static Point getCenterPoint(Rectangle container, Dimension child) {
-    Point result = new Point();
-
-    Point containerLocation = container.getLocation();
-    Dimension containerSize = container.getSize();
-
-    result.x = containerLocation.x + containerSize.width / 2 - child.width / 2;
-    result.y = containerLocation.y + containerSize.height / 2 - child.height / 2;
-
-    return result;
+    return new Point(
+      container.x + (container.width - child.width) / 2,
+      container.y + (container.height - child.height) / 2
+    );
   }
 
   public static String toHtml(String html) {
@@ -2303,7 +2315,7 @@ public class UIUtil {
     html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : 11;
+    int size = font != null ? font.getSize() : JBUI.scale(11);
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
@@ -2340,12 +2352,11 @@ public class UIUtil {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(runnable);
+      EdtInvocationManager.getInstance().invokeLater(runnable);
     }
   }
 
@@ -2359,12 +2370,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
     else {
       try {
-        SwingUtilities.invokeAndWait(runnable);
+        EdtInvocationManager.getInstance().invokeAndWait(runnable);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -2402,12 +2413,12 @@ public class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
     else {
       final Ref<Throwable> ref = Ref.create();
-      SwingUtilities.invokeAndWait(new Runnable() {
+      EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
         @Override
         public void run() {
           try {
@@ -3019,16 +3030,6 @@ public class UIUtil {
     addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
-    Dimension ans = new Dimension(dimension);
-    ans.width += insets.left;
-    ans.width += insets.right;
-    ans.height += insets.top;
-    ans.height += insets.bottom;
-
-    return ans;
-  }
-
   public static void adjustWindowToMinimumSize(final Window window) {
     if (window == null) return;
     final Dimension minSize = window.getMinimumSize();
@@ -3225,7 +3226,7 @@ public class UIUtil {
           LOG.info(ignore);
         }
       }
-    }).start();
+    },"play sound").start();
   }
 
   // Experimental!!!

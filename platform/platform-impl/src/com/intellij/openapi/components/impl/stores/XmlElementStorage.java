@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -64,6 +63,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     return storageData.getStateAndArchive(componentName);
   }
 
+  @Override
   @NotNull
   protected StorageData loadData() {
     StorageData result = createStorageData();
@@ -186,19 +186,14 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
       }
     }
 
-    public void forceSave() {
+    public void forceSave() throws IOException {
       LOG.assertTrue(myCopiedStorageData == null);
 
       if (myBlockSavingTheContent) {
         return;
       }
 
-      try {
-        doSave(getElement(myOriginalStorageData, isCollapsePathsOnSave(), Collections.<String, Element>emptyMap()));
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
+      doSave(getElement(myOriginalStorageData, isCollapsePathsOnSave(), Collections.<String, Element>emptyMap()));
     }
 
     @Override

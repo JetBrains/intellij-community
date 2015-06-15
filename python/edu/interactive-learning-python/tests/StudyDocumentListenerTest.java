@@ -1,3 +1,5 @@
+package com.jetbrains.edu.learning;
+
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;

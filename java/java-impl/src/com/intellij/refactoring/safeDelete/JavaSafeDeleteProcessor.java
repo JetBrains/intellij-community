@@ -840,7 +840,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       public boolean process(final PsiReference reference) {
         PsiElement element = reference.getElement();
         if (element != null) {
-          JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage()).createUsageInfoForParameter(reference, usages, parameter, method);
+          final JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
+          if (safeDeleteDelegate != null) {
+            safeDeleteDelegate.createUsageInfoForParameter(reference, usages, parameter, method);
+          }
           if (!parameter.isVarArgs() && !RefactoringChangeUtil.isSuperMethodCall(element.getParent())) {
             final PsiParameter paramInCaller = SafeDeleteJavaCallerChooser.isTheOnlyOneParameterUsage(element.getParent(), parameterIndex, method);
             if (paramInCaller != null) {

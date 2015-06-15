@@ -88,7 +88,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         final PsiType qualifierType = PsiMethodReferenceUtil.getQualifierType(myExpression);
         final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
         if (qualifierClass != null) {
-          session.initBounds(myExpression, qualifierClass.getTypeParameters());
           final PsiType pType = signature.getParameterTypes()[0];
           constraints.add(new StrictSubtypingConstraint(session.substituteWithInferenceVariables(qualifierType), pType));
         }
@@ -185,7 +184,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
           //when targeting the return type of the function type, as defined in 18.5.2.
           session.collectApplicabilityConstraints(myExpression, ((MethodCandidateInfo)resolve), groundTargetType);
-          session.registerReturnTypeConstraints(referencedMethodReturnType, returnType);
+          session.registerReturnTypeConstraints(psiSubstitutor.substitute(referencedMethodReturnType), returnType);
           return true;
         }
       }

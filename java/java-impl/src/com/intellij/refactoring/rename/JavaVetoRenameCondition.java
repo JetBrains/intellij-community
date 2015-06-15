@@ -17,14 +17,17 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.FileTypeUtils;
 
 public class JavaVetoRenameCondition implements Condition<PsiElement> {
   @Override
   public boolean value(final PsiElement element) {
+    if (element instanceof LightMethod) {
+      final PsiClass containingClass = ((LightMethod)element).getContainingClass();
+      if (containingClass != null && containingClass.isEnum()) return true;
+    }
     return element instanceof PsiJavaFile &&
            !FileTypeUtils.isInServerPageFile(element) &&
            !JavaProjectRootsUtil.isOutsideJavaSourceRoot((PsiFile)element) &&

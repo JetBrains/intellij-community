@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 /**
  * Represents a value in debugger tree.
@@ -42,6 +43,14 @@ public abstract class XValue extends XValueContainer {
   @Nullable
   public String getEvaluationExpression() {
     return null;
+  }
+
+  /**
+   * Asynchronously calculates expression which evaluates to the current value
+   */
+  @NotNull
+  public Promise<String> calculateEvaluationExpression() {
+    return Promise.resolve(getEvaluationExpression());
   }
 
   /**

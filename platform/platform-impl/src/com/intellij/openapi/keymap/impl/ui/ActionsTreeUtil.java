@@ -247,7 +247,7 @@ public class ActionsTreeUtil {
             group.addGroup(subGroup);
           }
         }
-        else if (filtered == null || filtered.value(actionGroup)) {
+        else if (filtered == null || filtered.value(action)) {
           group.addGroup(subGroup);
         }
       }

@@ -134,6 +134,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     if (SystemInfo.isMac) {
       lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
+      if (Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled()) {
+        lafList.add(new IntelliJLookAndFeelInfo());
+      }
     }
     else {
       if (isIntelliJLafEnabled()) {

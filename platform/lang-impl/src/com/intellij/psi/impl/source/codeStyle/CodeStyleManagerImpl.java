@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,16 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     reformatText(file, ranges, null);
   }
 
+  @Override
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+    reformatText(file, ranges, null, true);
+  }
+
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
+    reformatText(file, ranges, editor, false);
+  }
+
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor, boolean reformatContext) throws IncorrectOperationException {
     if (ranges.isEmpty()) {
       return;
     }
@@ -181,6 +190,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     transformAllChildren(treeElement);
 
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), file.getLanguage());
+    codeFormatter.setReformatContext(reformatContext);
+
     LOG.assertTrue(file.isValid(), "File name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
 
     if (editor == null) {
@@ -466,7 +477,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   /**
    * Formatter trims line that contains white spaces symbols only, however, there is a possible case that we want
-   * to preserve them for particular line (e.g. for live template that defines blank line that contains $END$ marker).
+   * to preserve them for particular line 
+   * (e.g. for live template that defines line with whitespaces that contains $END$ marker: templateText   $END$).
    * <p/>
    * Current approach is to do the following:
    * <pre>
@@ -478,7 +490,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * </pre>
    * <p/>
    * This method inserts that dummy comment (fallback to identifier <code>xxx</code>, see {@link CodeStyleManagerImpl#createDummy(PsiFile)})
-   * if necessary (if target line contains white space symbols only).
+   * if necessary.
    * <p/>
 
    * <b>Note:</b> it's expected that the whole white space region that contains given offset is processed in a way that all
@@ -494,26 +506,22 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    */
   @Nullable
   public static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) {
-    CharSequence text = document.getCharsSequence();
-    if (offset < 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
+    CharSequence text = document.getImmutableCharSequence();
+    if (offset <= 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
       return null;
     }
-
-    for (int i = offset - 1; i >= 0; i--) {
-      char c = text.charAt(i);
-      // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
-      if (c == '\n') {
-        break;
-      }
-      if (!isWhiteSpaceSymbol(c)) {
-        return null;
-      }
+    
+    if (!isWhiteSpaceSymbol(text.charAt(offset - 1))) {
+      return null; // no whitespaces before offset
     }
 
     int end = offset;
     for (; end < text.length(); end++) {
+      if (text.charAt(end) == '\n') {
+        break; // line is empty till the end
+      }
       if (!isWhiteSpaceSymbol(text.charAt(end))) {
-        break;
+        return null;
       }
     }
 

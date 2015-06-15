@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,13 +70,8 @@ public class DuplicateConditionInspection extends BaseInspection {
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      final PsiElement parent = statement.getParent();
-      if (parent instanceof PsiIfStatement) {
-        final PsiIfStatement parentStatement = (PsiIfStatement)parent;
-        final PsiStatement elseBranch = parentStatement.getElseBranch();
-        if (statement.equals(elseBranch)) {
-          return;
-        }
+      if (ControlFlowUtils.isElseIf(statement)) {
+        return;
       }
       final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
       collectConditionsForIfStatement(statement, conditions, 0);

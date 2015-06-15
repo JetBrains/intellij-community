@@ -1,22 +1,21 @@
 package org.jetbrains.ide
 
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
-
+import java.io.File
 import java.lang.annotation.ElementType
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtilRt
-import java.io.File
 
 class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
-  class object {
+  companion object {
     val EXCLUDED_DIR_NAME = "excludedDir"
   }
 
@@ -38,7 +37,7 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
                                          public val status: Int = 200)
 
   override fun starting(description: Description) {
-    annotation = description.getAnnotation<TestDescriptor>(javaClass<TestDescriptor>())
+    annotation = description.getAnnotation(javaClass<TestDescriptor>())
     if (annotation == null) {
       return
     }

@@ -9,6 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="java-runtime" />
   </component>
 </module>
-

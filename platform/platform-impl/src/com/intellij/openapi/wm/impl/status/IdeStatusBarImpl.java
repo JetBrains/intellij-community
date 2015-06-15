@@ -550,7 +550,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
     else if (presentation instanceof StatusBarWidget.MultipleTextValuesPresentation) {
       wrapper = new MultipleTextValuesPresentationWrapper((StatusBarWidget.MultipleTextValuesPresentation)presentation);
-      wrapper.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+      wrapper.setBorder(StatusBarWidget.WidgetBorder.WIDE);
     }
     else {
       throw new IllegalArgumentException("Unable to find a wrapper for presentation: " + presentation.getClass().getSimpleName());
@@ -575,7 +575,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setUI((StatusBarUI)UIManager.getUI(this));
     }
     else {
-      setUI(SystemInfo.isMac && !UIUtil.isUnderDarcula() ? new MacStatusBarUI() : new StatusBarUI());
+      setUI(new StatusBarUI());
     }
   }
 
@@ -735,22 +735,15 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         final Insets insets = getInsets();
         Icon icon = AllIcons.Ide.Statusbar_arrows;
         icon.paintIcon(this, g,
-                       r.width - insets.right - icon.getIconWidth() - 2,
+                       r.width - insets.right - icon.getIconWidth() + 1,
                        r.height / 2 - icon.getIconHeight() / 2);
       }
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      final Dimension preferredSize = super.getPreferredSize();
-      return new Dimension(preferredSize.width + AllIcons.Ide.Statusbar_arrows.getIconWidth() + 4, preferredSize.height);
     }
   }
 
   private static final class TextPresentationWrapper extends TextPanel implements StatusBarWrapper {
     private final StatusBarWidget.TextPresentation myPresentation;
     private final Consumer<MouseEvent> myClickConsumer;
-    private boolean myMouseOver;
 
     private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
       super();
@@ -772,12 +765,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
         @Override
         public void mouseEntered(MouseEvent e) {
-          myMouseOver = true;
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-          myMouseOver = false;
         }
       });
 
@@ -824,10 +815,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     @Override
     public void beforeUpdate() {
       myIcon = myPresentation.getIcon();
-    }
-
-    private StatusBarWidget.IconPresentation getPresentation() {
-      return myPresentation;
     }
 
     @Override

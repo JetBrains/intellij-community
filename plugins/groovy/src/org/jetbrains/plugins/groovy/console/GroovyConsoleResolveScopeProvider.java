@@ -30,6 +30,6 @@ public class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
   public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
     final GroovyConsoleStateService projectConsole = GroovyConsoleStateService.getInstance(project);
     final Module module = projectConsole.getSelectedModule(file);
-    return module == null ? null : module.getModuleWithDependenciesAndLibrariesScope(false);
+    return module == null || module.isDisposed() ? null : module.getModuleWithDependenciesAndLibrariesScope(false);
   }
 }

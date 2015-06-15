@@ -23,7 +23,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,11 +32,14 @@ import org.jetbrains.annotations.Nullable;
  * @see EditorActionManager#getTypedAction()
  */
 public class TypedAction {
+  @NotNull
+  private TypedActionHandler myRawHandler;
   private TypedActionHandler myHandler;
   private boolean myHandlersLoaded;
 
   public TypedAction() {
     myHandler = new Handler();
+    myRawHandler = new DefaultRawHandler();
   }
 
   private void ensureHandlersLoaded() {
@@ -55,11 +57,6 @@ public class TypedAction {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (!FileDocumentManager.getInstance().requestWriting(doc, project)) {
-        return;
-      }
-
       doc.startGuardedBlockChecking();
       try {
         final String str = String.valueOf(charTyped);
@@ -99,43 +96,73 @@ public class TypedAction {
     return tmp;
   }
 
-  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
-    if (editor == null) return;
-
-    Runnable command = new TypingCommand(editor, charTyped, dataContext);
-
-    CommandProcessor.getInstance().executeCommand(CommonDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+  /**
+   * Gets the current 'raw' typing handler.
+   * 
+   * @see #setupRawHandler(TypedActionHandler)
+   */
+  @NotNull
+  public TypedActionHandler getRawHandler() {
+    return myRawHandler;
   }
 
-  private class TypingCommand implements Runnable {
-    private final Editor myEditor;
-    private final char myCharTyped;
-    private final DataContext myDataContext;
+  /**
+   * Replaces current 'raw' typing handler with the specified handler. The handler should pass unprocessed typing to the 
+   * previously registered 'raw' handler.
+   * <p>
+   * 'Raw' handler is a handler directly invoked by the code which handles typing in editor. Default 'raw' handler 
+   * performs some generic logic that has to be done on typing (like checking whether file has write access, creating a command
+   * instance for undo subsystem, initiating write action, etc), but delegates to 'normal' handler for actual typing logic.
+   *
+   * @param handler the handler to set.
+   * @return the previously registered handler.
+   *
+   * @see #getRawHandler()
+   * @see #getHandler()
+   * @see #setupHandler(TypedActionHandler)
+   */
+  @NotNull
+  public TypedActionHandler setupRawHandler(@NotNull TypedActionHandler handler) {
+    TypedActionHandler tmp = myRawHandler;
+    myRawHandler = handler;
+    return tmp;
+  }
 
-    public TypingCommand(Editor editor, char charTyped, DataContext dataContext) {
-      myEditor = editor;
-      myCharTyped = charTyped;
-      myDataContext = dataContext;
-    }
-
+  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
+    if (editor == null) return;
+    myRawHandler.execute(editor, charTyped, dataContext);
+  }
+  
+  private class DefaultRawHandler implements TypedActionHandler {
     @Override
-    public void run() {
-      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(myEditor.getDocument(), myEditor.getProject()) {
-        @Override
-        public void run() {
-          Document doc = myEditor.getDocument();
-          doc.startGuardedBlockChecking();
-          try {
-            getHandler().execute(myEditor, myCharTyped, myDataContext);
+    public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
+      CommandProcessor.getInstance().executeCommand(
+        CommonDataKeys.PROJECT.getData(dataContext), 
+        new Runnable() {
+          @Override
+          public void run() {
+            if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
+              return;
+            }
+            ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(), editor.getProject()) {
+              @Override
+              public void run() {
+                Document doc = editor.getDocument();
+                doc.startGuardedBlockChecking();
+                try {
+                  getHandler().execute(editor, charTyped, dataContext);
+                }
+                catch (ReadOnlyFragmentModificationException e) {
+                  EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+                }
+                finally {
+                  doc.stopGuardedBlockChecking();
+                }
+              }
+            });
           }
-          catch (ReadOnlyFragmentModificationException e) {
-            EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-          }
-          finally {
-            doc.stopGuardedBlockChecking();
-          }
-        }
-      });
+        }, 
+        "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());    
     }
   }
 }

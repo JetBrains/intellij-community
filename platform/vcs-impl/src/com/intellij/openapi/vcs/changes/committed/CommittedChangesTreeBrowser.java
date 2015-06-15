@@ -10,12 +10,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -110,9 +112,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     updateBySelectionChange();
 
-    ActionManager.getInstance().getAction("CommittedChanges.Details").registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_QUICK_JAVADOC)),
-      this);
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    CustomShortcutSet quickdocShortcuts = new CustomShortcutSet(keymap.getShortcuts(IdeActions.ACTION_QUICK_JAVADOC));
+    EmptyAction.registerWithShortcutSet("CommittedChanges.Details", quickdocShortcuts, this);
 
     myCopyProvider = new TreeCopyProvider(myChangesTree);
     myTreeExpander = new DefaultTreeExpander(myChangesTree);
@@ -120,7 +122,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myHelpId = ourHelpId;
 
-    myDetailsView.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
+    myDetailsView.getDiffAction().registerCustomShortcutSet(myDetailsView.getDiffAction().getShortcutSet(), myChangesTree);
 
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ITEMS_RELOADED, new CommittedChangesReloadListener() {
@@ -256,11 +258,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   @NotNull
   public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
     List<Change> result = new ArrayList<Change>();
-    Collections.sort(selectedChangeLists, new Comparator<CommittedChangeList>() {
-      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-        return o1.getCommitDate().compareTo(o2.getCommitDate());
-      }
-    });
+    Collections.sort(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
+
     for(CommittedChangeList cl: selectedChangeLists) {
       final Collection<Change> changes = withMovedTrees ? cl.getChangesWithMovedTrees() : cl.getChanges();
       for(Change c: changes) {
@@ -314,7 +313,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     for (AnAction action : auxiliaryActions) {
       menuGroup.add(action);
     }
-    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    menuGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
@@ -360,7 +359,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       myChangesTree);
     toolbarGroup.add(expandAllAction);
     toolbarGroup.add(collapseAllAction);
-    toolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    toolbarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     toolbarGroup.add(new ContextHelpAction(myHelpId));
     if (tailGroup != null) {
       toolbarGroup.add(tailGroup);

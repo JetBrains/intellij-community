@@ -8,11 +8,11 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.json.liveTemplates.JsonContextType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     assertNotNull(context);
     ((TemplateImpl)template).getTemplateContext().setEnabled(context, true);
 
-    TemplateSettings.getInstance().addTemplate(template);
+    CodeInsightTestUtil.addTemplate(template, myTestRootDisposable);
     return template;
   }
 
@@ -59,14 +59,11 @@ public class JsonLiveTemplateTest extends JsonTestCase {
     createJsonTemplate("foo", "foo", templateContent);
     myFixture.configureByText(JsonFileType.INSTANCE, "foo<caret>");
     final Editor editor = myFixture.getEditor();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        new ListTemplatesAction().actionPerformedImpl(getProject(), editor);
-        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-        assertNotNull(lookup);
-        lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      new ListTemplatesAction().actionPerformedImpl(getProject(), editor);
+      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      assertNotNull(lookup);
+      lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     });
     myFixture.checkResult(templateContent.replaceAll("\\$.*?\\$", ""));
   }

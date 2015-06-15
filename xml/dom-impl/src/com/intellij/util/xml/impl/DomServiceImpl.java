@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,12 +159,6 @@ public class DomServiceImpl extends DomService {
   @NotNull
   public XmlFileHeader getXmlFileHeader(XmlFile file) {
     return file.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, file, null).getValue() : XmlFileHeader.EMPTY;
-  }
-
-
-  @Override
-  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project) {
-    return getDomFileCandidates(description, project, GlobalSearchScope.allScope(project));
   }
 
   @Override

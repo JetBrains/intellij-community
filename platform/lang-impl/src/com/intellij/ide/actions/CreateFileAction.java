@@ -30,10 +30,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,9 +97,25 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       if (newName.contains("/")) {
         final List<String> subDirs = StringUtil.split(newName, "/");
         newName = subDirs.remove(subDirs.size() - 1);
+        boolean firstToken = true;
         for (String dir : subDirs) {
-          final PsiDirectory sub = directory.findSubdirectory(dir);
-          directory = sub == null ? directory.createSubdirectory(dir) : sub;
+          if (firstToken && "~".equals(dir)) {
+            final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
+            if (userHomeDir == null) throw new IncorrectOperationException("User home directory not found");
+            final PsiDirectory directory1 = directory.getManager().findDirectory(userHomeDir);
+            if (directory1 == null) throw new IncorrectOperationException("User home directory not found");
+            directory = directory1;
+          }
+          else if ("..".equals(dir)) {
+            final PsiDirectory parentDirectory = directory.getParentDirectory();
+            if (parentDirectory == null) throw new IncorrectOperationException("Not a valid directory");
+            directory = parentDirectory;
+          }
+          else if (!".".equals(dir)){
+            final PsiDirectory sub = directory.findSubdirectory(dir);
+            directory = sub == null ? directory.createSubdirectory(dir) : sub;
+          }
+          firstToken = false;
         }
       }
 
@@ -142,29 +161,50 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     @Override
     public boolean checkInput(String inputString) {
       final StringTokenizer tokenizer = new StringTokenizer(inputString, "\\/");
+      VirtualFile vFile = getDirectory().getVirtualFile();
       boolean firstToken = true;
       while (tokenizer.hasMoreTokens()) {
         final String token = tokenizer.nextToken();
-        if (token.equals(".") || token.equals("..")) {
-          myErrorText = tokenizer.hasMoreTokens()
-                        ? "Can't create directory with name '" + token + "'"
-                        : "Can't create file with name '" + token + "'";
+        if ((token.equals(".") || token.equals("..")) && !tokenizer.hasMoreTokens()) {
+          myErrorText = "Can't create file with name '" + token + "'";
           return false;
         }
-        if (firstToken) {
-          final VirtualFile vFile = getDirectory().getVirtualFile();
-          final VirtualFile child = vFile.findChild(token);
-          if (child != null) {
-            myErrorText = "A " + (child.isDirectory() ? "directory" : "file") +
-                          " with name '" + token + "' already exists";
-            return false;
+        if (vFile != null) {
+          if (firstToken && "~".equals(token)) {
+            final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
+            if (userHomeDir == null) {
+              myErrorText = "User home directory not found";
+              return false;
+            }
+            vFile = userHomeDir;
+          }
+          else if ("..".equals(token)) {
+            vFile = vFile.getParent();
+            if (vFile == null) {
+              myErrorText = "Not a valid directory";
+              return false;
+            }
+          }
+          else if (!".".equals(token)){
+            final VirtualFile child = vFile.findChild(token);
+            if (child != null) {
+              if (!child.isDirectory()) {
+                myErrorText = "A file with name '" + token + "' already exists";
+                return false;
+              }
+              else if (!tokenizer.hasMoreTokens()) {
+                myErrorText = "A directory with name '" + token + "' already exists";
+                return false;
+              }
+            }
+            vFile = child;
           }
         }
-        firstToken = false;
         if (FileTypeManager.getInstance().isFileIgnored(getFileName(token))) {
           myErrorText = "'" + token + "' is an ignored name (Settings | Editor | File Types | Ignore files and folders)";
           return true;
         }
+        firstToken = false;
       }
       myErrorText = null;
       return true;

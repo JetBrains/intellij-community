@@ -156,7 +156,7 @@ public class HgVFSListener extends VcsVFSListener {
             statusCommand.execute(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<VirtualFile, FilePath>() {
               @Override
               public FilePath fun(VirtualFile virtualFile) {
-                return new FilePathImpl(virtualFile);
+                return VcsUtil.getFilePath(virtualFile);
               }
             }));
           for (HgChange change : changes) {

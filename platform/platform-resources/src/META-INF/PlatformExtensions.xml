@@ -178,11 +178,19 @@
                         serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
+    <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
+                        serviceImplementation="com.intellij.openapi.util.WindowStateApplicationService"/>
+    <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
+                    serviceImplementation="com.intellij.openapi.util.WindowStateProjectService"/>
+
     <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
                         serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoImpl"/>
 
     <applicationService serviceInterface="com.intellij.execution.RunnerRegistry"
                         serviceImplementation="com.intellij.execution.impl.RunnerRegistryImpl"/>
+
+    <applicationService serviceInterface="org.jetbrains.ide.script.IdeScriptEngineManager"
+                        serviceImplementation="org.jetbrains.ide.script.Jsr223IdeScriptEngineManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
 
@@ -292,6 +300,8 @@
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.keymap.KeyboardSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"/>
 
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
@@ -302,6 +312,7 @@
 
     <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">
+      <configurable instance="com.intellij.javaee.DefaultSchemasConfigurable" displayName="Default XML Schemas" id="xml.defaultSchemas"/>
       <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog" id="xml.catalog"/>
     </projectConfigurable>
 
@@ -368,10 +379,12 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.AppearanceOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.AppearanceOptionsTopHitProvider$Ex"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.SystemOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ui.tabs.FileColorsOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.EditorOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.EditorOptionsTopHitProvider$Ex"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.InspectionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser" order="before OpenFilesActivity"/>
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>

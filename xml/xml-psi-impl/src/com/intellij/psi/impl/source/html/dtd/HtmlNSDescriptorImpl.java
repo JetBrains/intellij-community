@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
@@ -69,6 +70,18 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myCaseSensitive = caseSensitive;
   }
 
+  public static XmlAttributeDescriptor[] getCommonAttributeDescriptors(XmlTag context) {
+    final XmlNSDescriptor nsDescriptor = context != null ? context.getNSDescriptor(context.getNamespace(), false) : null;
+    if (nsDescriptor instanceof HtmlNSDescriptorImpl) {
+      XmlElementDescriptor descriptor = ((HtmlNSDescriptorImpl)nsDescriptor).getElementDescriptorByName("div");
+      descriptor = descriptor == null ? ((HtmlNSDescriptorImpl)nsDescriptor).getElementDescriptorByName("span") : descriptor;
+      if (descriptor != null) {
+        return descriptor.getAttributesDescriptors(context);
+      }
+    }
+    return XmlAttributeDescriptor.EMPTY;
+  }
+
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
     return myCachedDeclsCache.get(this);
   }
@@ -89,14 +102,17 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
 
   @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
-    String name = tag.getLocalName();
-    if (!myCaseSensitive) name = name.toLowerCase();
-
-    XmlElementDescriptor xmlElementDescriptor = buildDeclarationMap().get(name);
+    XmlElementDescriptor xmlElementDescriptor = getElementDescriptorByName(tag.getLocalName());
     if (xmlElementDescriptor == null && myRelaxed) {
       xmlElementDescriptor = myDelegate.getElementDescriptor(tag);
     }
     return xmlElementDescriptor;
+  }
+
+  private XmlElementDescriptor getElementDescriptorByName(String name) {
+    if (!myCaseSensitive) name = name.toLowerCase();
+
+    return buildDeclarationMap().get(name);
   }
 
   @Override

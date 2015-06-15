@@ -144,8 +144,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public boolean isEnabled(@NotNull PsiElement anchor) {
       if (myIsEnabled == null) {
         final boolean isPyCharm = PlatformUtils.isPyCharm();
-        myIsEnabled = (isPyCharm && PythonSdkType.getSdk(anchor) != null || !isPyCharm) &&
-                      !PySkeletonRefresher.isGeneratingSkeletons();
+        if (PySkeletonRefresher.isGeneratingSkeletons()) {
+          myIsEnabled = false;
+        }
+        else if (isPyCharm) {
+          myIsEnabled = PythonSdkType.getSdk(anchor) != null || PyUtil.isInScratchFile(anchor);
+        }
+        else {
+          myIsEnabled = true;
+        }
       }
       return myIsEnabled;
     }
@@ -593,14 +600,24 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
           if (module != null && sdk != null) {
             if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
-              final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
-              final String name = "Install package " + packageName;
-              actions.add(new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements));
+              addInstallPackageAction(actions, packageName, module, sdk);
+            }
+            else {
+              if (PyPIPackageUtil.PACKAGES_TOPLEVEL.containsKey(packageName)) {
+                final String suggestedPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL.get(packageName);
+                addInstallPackageAction(actions, suggestedPackage, module, sdk);
+              }
             }
           }
         }
       }
       registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
+    }
+
+    private static void addInstallPackageAction(List<LocalQuickFix> actions, String packageName, Module module, Sdk sdk) {
+      final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
+      final String name = "Install package " + packageName;
+      actions.add(new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements));
     }
 
     /**

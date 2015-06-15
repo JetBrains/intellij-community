@@ -143,7 +143,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     myInitialized = true;
     myDisposed = false;
-    myFileStatusMap.markAllFilesDirty();
+    myFileStatusMap.markAllFilesDirty("DCAI init");
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
@@ -239,26 +239,45 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
                                            @NotNull final ProgressIndicator progress) {
-    final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
-      List<TextEditorHighlightingPass> passes =
-        TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
-                                                                                             HighlightInfoProcessor.getEmpty());
+    // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
+    myFileStatusMap.markAllFilesDirty("prepare to run main passes");
+    stopProcess(false, "disable background daemon");
+    myPassExecutorService.cancelAll(true);
 
-      Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
-        @Override
-        public int compare(TextEditorHighlightingPass o1, TextEditorHighlightingPass o2) {
-          if (o1 instanceof GeneralHighlightingPass) return -1;
-          if (o2 instanceof GeneralHighlightingPass) return 1;
-          return 0;
+    final List<HighlightInfo> result;
+    try {
+      result = new ArrayList<HighlightInfo>();
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
+        List<TextEditorHighlightingPass> passes =
+          TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
+                                                                                               HighlightInfoProcessor.getEmpty());
+
+        Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
+          @Override
+          public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
+            if (o1 instanceof GeneralHighlightingPass) return -1;
+            if (o2 instanceof GeneralHighlightingPass) return 1;
+            return 0;
+          }
+        });
+
+        LOG.debug("All passes for " + psiFile.getName()+ " started (" + passes+"). progress canceled: "+progress.isCanceled());
+        try {
+          for (TextEditorHighlightingPass pass : passes) {
+            pass.doCollectInformation(progress);
+            result.addAll(pass.getInfos());
+          }
         }
-      });
-
-      for (TextEditorHighlightingPass pass : passes) {
-        pass.doCollectInformation(progress);
-        result.addAll(pass.getInfos());
+        catch (ProcessCanceledException e) {
+          LOG.debug("Canceled: " + progress);
+          throw e;
+        }
+        LOG.debug("All passes for " + psiFile.getName()+ " run. progress canceled: "+progress.isCanceled()+"; infos: "+result);
       }
+    }
+    finally {
+      stopProcess(true, "re-enable background daemon after main passes run");
     }
 
     return result;
@@ -344,6 +363,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           throw new RuntimeException(e);
         }
       }
+      HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getHighlightingSession(file, progress);
+      try {
+        myPassExecutorService.waitFor(50000);
+        if (session != null) {
+          session.waitForHighlightInfosApplied();
+        }
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();
@@ -371,9 +400,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @TestOnly
   public void cleanupAfterTest() {
-    if (!myProject.isOpen()) return;
-    setUpdateByTimerEnabled(false);
-    waitForTermination();
+    if (myProject.isOpen()) {
+      prepareForTest();
+    }
   }
 
   void waitForTermination() {
@@ -401,7 +430,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     stopProcess(value, "Update by timer change");
   }
 
-  private int myDisableCount = 0;
+  private int myDisableCount;
 
   @Override
   public void disableUpdateByTimer(@NotNull Disposable parentDisposable) {
@@ -477,7 +506,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public void restart() {
-    myFileStatusMap.markAllFilesDirty();
+    myFileStatusMap.markAllFilesDirty("Global restart");
     stopProcess(true, "Global restart");
   }
 
@@ -485,8 +514,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public void restart(@NotNull PsiFile file) {
     Document document = myPsiDocumentManager.getCachedDocument(file);
     if (document == null) return;
-    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength());
-    stopProcess(true, "Psi file restart");
+    String reason = "Psi file restart: " + file.getName();
+    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength(), reason);
+    stopProcess(true, reason);
   }
 
   @NotNull
@@ -547,7 +577,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
-    PassExecutorService.log(myUpdateProgress, null, "CancelX", reason, start);
+    PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, start);
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();
@@ -674,7 +704,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @Nullable
-  IntentionHintComponent getLastIntentionHint() {
+  public IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
   }
 
@@ -872,5 +902,4 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private List<Editor> getActiveEditors() {
     return myEditorTracker.getActiveEditors();
   }
-
 }

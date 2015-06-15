@@ -18,40 +18,32 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
-import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -61,8 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -75,11 +65,15 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
 
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
-    processConstructorUsages(p.getMethod(), p.getEffectiveSearchScope(), consumer, p.getOptimizer(), true, !p.isStrictSignatureSearch());
+    processConstructorUsages(p.getMethod(), p.getEffectiveSearchScope(), consumer, p.getOptimizer(), !p.isStrictSignatureSearch());
   }
 
   public static final Key<Set<PsiClass>> LITERALLY_CONSTRUCTED_CLASSES = Key.create("LITERALLY_CONSTRUCTED_CLASSES");
-  static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls, final boolean includeOverloads) {
+  static void processConstructorUsages(final PsiMethod constructor,
+                                       final SearchScope searchScope,
+                                       final Processor<PsiReference> consumer,
+                                       final SearchRequestCollector collector,
+                                       final boolean includeOverloads) {
     if (!constructor.isConstructor()) return;
 
     final PsiClass clazz = constructor.getContainingClass();
@@ -116,7 +110,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       }
     };
 
-    processGroovyClassUsages(clazz, searchScope, collector, searchGppCalls, newExpressionProcessor, literalProcessor);
+    processGroovyClassUsages(clazz, searchScope, collector, newExpressionProcessor, literalProcessor);
 
     //this()
     if (clazz instanceof GrTypeDefinition) {
@@ -139,135 +133,25 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   public static void processGroovyClassUsages(final PsiClass clazz,
                                               final SearchScope scope,
                                               SearchRequestCollector collector,
-                                              final boolean searchGppCalls,
                                               final Processor<GrNewExpression> newExpressionProcessor,
                                               final LiteralConstructorSearcher literalProcessor) {
-    final Set<PsiAnchor> processedMethods = ContainerUtil.newConcurrentSet();
-
     ReferencesSearch.searchOptimized(clazz, scope, false, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
       @Override
       public boolean process(PsiReference ref, SearchRequestCollector collector) {
         final PsiElement element = ref.getElement();
 
         if (element instanceof GrCodeReferenceElement) {
-          if (!processGroovyConstructorUsages((GrCodeReferenceElement)element, !searchGppCalls, newExpressionProcessor, literalProcessor)) {
+          if (!processGroovyConstructorUsages((GrCodeReferenceElement)element, newExpressionProcessor, literalProcessor)) {
             return false;
           }
         }
 
-        if (searchGppCalls) {
-          final PsiMethod method = getMethodToSearchForCallsWithLiteralArguments(element, clazz);
-          if (method != null && processedMethods.add(PsiAnchor.create(method))) {
-            processGppMethodCalls(clazz, scope, collector, method, literalProcessor);
-          }
-        }
         return true;
-      }
-    });
-  }
-
-  @Nullable
-  private static PsiMethod getMethodToSearchForCallsWithLiteralArguments(PsiElement element, PsiClass targetClass) {
-    final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
-    if (parameter != null) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-      if (method != null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        final int idx = Arrays.asList(parameters).indexOf(parameter);
-        if (idx >= 0) {
-          PsiType parameterType = parameter.getType();
-          if (parameterType instanceof PsiArrayType && idx == parameters.length - 1) {
-            parameterType = ((PsiArrayType)parameterType).getComponentType();
-          }
-          if (parameterType instanceof PsiClassType) {
-            if (method.getManager().areElementsEquivalent(targetClass, ((PsiClassType)parameterType).resolve())) {
-              return method;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static void processGppMethodCalls(final PsiClass targetClass,
-                                            SearchScope scope,
-                                            SearchRequestCollector originalCollector, @NotNull PsiMethod currentTarget,
-                                            final LiteralConstructorSearcher literalProcessor) {
-    final SearchScope gppScope = getGppScope(targetClass.getProject()).intersectWith(scope);
-
-    if (gppScope instanceof GlobalSearchScope) {
-      String name = currentTarget.getName();
-      if (PsiSearchHelper.SERVICE.getInstance(currentTarget.getProject()).isCheapEnoughToSearch(name, (GlobalSearchScope)gppScope, null,
-                                                                                                null) ==
-          PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
-        return;
-      }
-    }
-
-    final ReadActionProcessor<PsiReference> gppCallProcessor = new ReadActionProcessor<PsiReference>() {
-
-      @Nullable
-      private GrExpression[] getCallArguments(PsiReference psiReference) {
-        if (psiReference instanceof GrReferenceElement) {
-          final PsiElement parent = ((GrReferenceElement)psiReference).getParent();
-          if (parent instanceof GrCall) {
-            final GrArgumentList argList = ((GrCall)parent).getArgumentList();
-            if (argList != null) {
-              return argList.getExpressionArguments();
-            }
-          }
-        }
-        else if (psiReference instanceof LiteralConstructorReference) {
-          return ((LiteralConstructorReference)psiReference).getCallArguments();
-        }
-        return null;
-      }
-
-      @Override
-      public boolean processInReadAction(PsiReference psiReference) {
-        final GrExpression[] arguments = getCallArguments(psiReference);
-        if (arguments == null) {
-          return true;
-        }
-
-        boolean checkedTypedContext = false;
-        for (GrExpression argument : arguments) {
-          if (argument instanceof GrListOrMap) {
-            if (!checkedTypedContext) {
-              if (!GppTypeConverter.hasTypedContext(psiReference.getElement())) {
-                return true;
-              }
-              checkedTypedContext = true;
-            }
-
-            if (!literalProcessor.processLiteral((GrListOrMap)argument, true)) {
-              return false;
-            }
-          }
-        }
-        return true;
-      }
-    };
-    if (currentTarget.isConstructor()) {
-      processConstructorUsages(currentTarget, gppScope, gppCallProcessor, originalCollector, true, false);
-    }
-    else {
-      MethodReferencesSearch.searchOptimized(currentTarget, gppScope, true, originalCollector, gppCallProcessor);
-    }
-  }
-
-  private static GlobalSearchScope getGppScope(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<GlobalSearchScope>() {
-      @Override
-      public Result<GlobalSearchScope> compute() {
-        return Result.create(calcGppScope(project), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
     });
   }
 
   private static boolean processGroovyConstructorUsages(GrCodeReferenceElement element,
-                                                        boolean usualCallsOnly,
                                                         final Processor<GrNewExpression> newExpressionProcessor,
                                                         final LiteralConstructorSearcher literalProcessor) {
     PsiElement parent = element.getParent();
@@ -277,10 +161,6 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     }
     if (parent instanceof GrNewExpression) {
       return newExpressionProcessor.process((GrNewExpression)parent);
-    }
-
-    if (usualCallsOnly) {
-      return true;
     }
 
     if (parent instanceof GrTypeElement) {
@@ -328,38 +208,11 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     return true;
   }
 
-  private static GlobalSearchScope calcGppScope(Project project) {
-    final GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-    final GlobalSearchScope maximal = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, GroovyFileType.GROOVY_FILE_TYPE);
-    GlobalSearchScope gppExtensions = new DelegatingGlobalSearchScope(maximal, "groovy.gpp") {
-      @Override
-      public boolean contains(@NotNull VirtualFile file) {
-        return super.contains(file) && GppTypeConverter.isGppExtension(file.getExtension());
-      }
-    };
-    final PsiClass typed = JavaPsiFacade.getInstance(project).findClass(GppTypeConverter.GROOVY_LANG_TYPED, allScope);
-    if (typed != null) {
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
-      AnnotatedElementsSearch.searchElements(typed, maximal, PsiModifierListOwner.class).forEach(new Processor<PsiModifierListOwner>() {
-        @Override
-        public boolean process(PsiModifierListOwner occurrence) {
-          ContainerUtil.addIfNotNull(occurrence.getContainingFile().getVirtualFile(), files);
-          return true;
-        }
-      });
-
-      GlobalSearchScope withTypedAnno = GlobalSearchScope.filesScope(project, files);
-      return withTypedAnno.union(gppExtensions);
-    }
-
-    return gppExtensions;
-  }
-
   private static boolean checkLiteralInstantiation(GrExpression expression,
                                                    final LiteralConstructorSearcher literalProcessor) {
 
     if (expression instanceof GrListOrMap) {
-      return literalProcessor.processLiteral((GrListOrMap)expression, GppTypeConverter.hasTypedContext(expression));
+      return literalProcessor.processLiteral((GrListOrMap)expression);
     }
     return true;
   }

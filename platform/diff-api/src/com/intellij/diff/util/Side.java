@@ -76,6 +76,11 @@ public enum Side {
     return isLeft() ? left : right;
   }
 
+  public boolean select(@NotNull boolean[] array) {
+    assert array.length == 2;
+    return array[myIndex];
+  }
+
   public int select(@NotNull int[] array) {
     assert array.length == 2;
     return array[myIndex];

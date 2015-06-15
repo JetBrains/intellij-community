@@ -15,7 +15,7 @@
  */
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.ChangeBuilder;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil.TrimChangeBuilder;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
@@ -122,7 +122,7 @@ public class ByLine {
      *   c. match equal lines using result of the previous step
      */
 
-    final ChangeBuilder builder = new ChangeBuilder(lines1.size(), lines2.size());
+    final TrimChangeBuilder builder = new TrimChangeBuilder(lines1, lines2);
     new Object() {
       private CharSequence sample = null;
       private int last1 = -1;

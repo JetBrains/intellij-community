@@ -38,12 +38,17 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -53,6 +58,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
@@ -62,6 +68,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
@@ -424,6 +431,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     final String id = THREAD_DUMP_CONTENT_PREFIX + " #" + myCurrentThreadDumpId;
     final Content content = ui.createContent(id, panel, id, null, null);
+    content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     ui.addContent(content);
@@ -696,7 +704,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new JavaXSourcePosition(position, file);
   }
 
-  private static class JavaXSourcePosition implements XSourcePosition {
+  private static final Key<VirtualFile> ALTERNATIVE_SOURCE_KEY = new Key<VirtualFile>("DEBUGGER_ALTERNATIVE_SOURCE");
+
+  public static void setAlternativeSource(VirtualFile source, VirtualFile dest) {
+    ALTERNATIVE_SOURCE_KEY.set(source, dest);
+    ALTERNATIVE_SOURCE_KEY.set(dest, null);
+  }
+
+  private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;
 
@@ -718,13 +733,29 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
+      VirtualFile file = ALTERNATIVE_SOURCE_KEY.get(myFile);
+      if (file != null) {
+        return file;
+      }
       return myFile;
     }
 
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
+      if (ALTERNATIVE_SOURCE_KEY.get(myFile) != null) {
+        return new OpenFileDescriptor(project, getFile(), getLine(), 0);
+      }
       return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
+    }
+
+    @Nullable
+    @Override
+    public RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes) {
+      if (mySourcePosition instanceof ExecutionPointHighlighter.HighlighterProvider) {
+        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).createHighlighter(document, project, attributes);
+      }
+      return null;
     }
   }
 
@@ -748,5 +779,86 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     res.append(location.method().name());
     return res.toString();
+  }
+
+  private static PsiElement getNextElement(PsiElement element) {
+    PsiElement sibling = element.getNextSibling();
+    if (sibling != null) return sibling;
+    element = element.getParent();
+    if (element != null) return getNextElement(element);
+    return null;
+  }
+
+  public static List<PsiLambdaExpression> collectLambdas(SourcePosition position, final boolean onlyOnTheLine) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiFile file = position.getFile();
+    int line = position.getLine();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null || line >= document.getLineCount()) {
+      return Collections.emptyList();
+    }
+    PsiElement element = position.getElementAt();
+    final TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    do {
+      PsiElement parent = element.getParent();
+      if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
+        break;
+      }
+      element = parent;
+    }
+    while(true);
+
+    final List<PsiLambdaExpression> lambdas = new ArrayList<PsiLambdaExpression>(3);
+    final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {
+        super.visitLambdaExpression(expression);
+        if (!onlyOnTheLine || lineRange.intersects(expression.getTextRange())) {
+          lambdas.add(expression);
+        }
+      }
+    };
+    element.accept(lambdaCollector);
+    // add initial lambda if we're inside already
+    NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+    if (method instanceof PsiLambdaExpression) {
+      lambdas.add((PsiLambdaExpression)method);
+    }
+    for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
+      if (!lineRange.intersects(sibling.getTextRange())) {
+        break;
+      }
+      sibling.accept(lambdaCollector);
+    }
+    return lambdas;
+  }
+
+  @Nullable
+  public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    if (!lineRange.intersects(lambda.getTextRange())) return null;
+    PsiElement body = lambda.getBody();
+    if (body instanceof PsiCodeBlock) {
+      for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
+        if (lineRange.intersects(statement.getTextRange())) {
+          return statement;
+        }
+      }
+    }
+    return body;
+  }
+
+  public static boolean inTheSameMethod(@NotNull SourcePosition pos1, @NotNull SourcePosition pos2) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiElement elem1 = pos1.getElementAt();
+    PsiElement elem2 = pos2.getElementAt();
+    if (elem1 == null) return elem2 == null;
+    if (elem2 != null) {
+      NavigatablePsiElement expectedMethod = PsiTreeUtil.getParentOfType(elem1, PsiMethod.class, PsiLambdaExpression.class);
+      NavigatablePsiElement currentMethod = PsiTreeUtil.getParentOfType(elem2, PsiMethod.class, PsiLambdaExpression.class);
+      return Comparing.equal(expectedMethod, currentMethod);
+    }
+    return false;
   }
 }

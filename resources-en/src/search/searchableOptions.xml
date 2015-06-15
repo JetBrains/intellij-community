@@ -10379,8 +10379,8 @@
     <option name="opens" path="ActionManager" hit="Opens folder with log file" />
     <option name="with" path="ActionManager" hit="Opens folder with log file" />
     <option name="opera" path="ActionManager" hit="Opera" />
-    <option name="imports" path="ActionManager" hit="Optimize Imports..." />
-    <option name="optimize" path="ActionManager" hit="Optimize Imports..." />
+    <option name="imports" path="ActionManager" hit="Optimize Imports" />
+    <option name="optimize" path="ActionManager" hit="Optimize Imports" />
     <option name="options" path="ActionManager" hit="Options..." />
     <option name="organic" path="ActionManager" hit="Organic" />
     <option name="orthogonal" path="ActionManager" hit="Orthogonal" />
@@ -10874,8 +10874,8 @@
     <option name="2" path="ActionManager" hit="Refactoring Actions (2)" />
     <option name="actions" path="ActionManager" hit="Refactoring Actions (2)" />
     <option name="refactoring" path="ActionManager" hit="Refactoring Actions (2)" />
-    <option name="code" path="ActionManager" hit="Reformat Code..." />
-    <option name="reformat" path="ActionManager" hit="Reformat Code..." />
+    <option name="code" path="ActionManager" hit="Reformat Code" />
+    <option name="reformat" path="ActionManager" hit="Reformat Code" />
     <option name="code" path="ActionManager" hit="Reformat code" />
     <option name="reformat" path="ActionManager" hit="Reformat code" />
     <option name="80" path="ActionManager" hit="Reformat string literal or comment to fit maximum width (usually 80)" />

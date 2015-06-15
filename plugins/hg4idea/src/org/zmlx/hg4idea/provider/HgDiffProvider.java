@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.HgContentRevision;
@@ -95,8 +95,8 @@ public class HgDiffProvider implements DiffProvider {
     if (hgRevisionNumber.isWorkingVersion()) {
       throw new IllegalStateException("Should not compare against working copy");
     }
-    HgFile hgFile = new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file));
-    return new HgContentRevision(project, hgFile, hgRevisionNumber);
+    HgFile hgFile = new HgFile(vcsRoot, VfsUtilCore.virtualToIoFile(file));
+    return HgContentRevision.create(project, hgFile, hgRevisionNumber);
   }
 
 }

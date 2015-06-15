@@ -44,7 +44,6 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.annotations.DataProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,80 +79,6 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
       }
     });
-  }
-
-  private static class DataProviderReference extends PsiReferenceBase<PsiLiteral> {
-
-    public DataProviderReference(PsiLiteral element) {
-      super(element, false);
-    }
-
-    @Nullable
-    public PsiElement resolve() {
-      final PsiClass cls = getProviderClass(PsiUtil.getTopLevelClass(getElement()));
-      if (cls != null) {
-        PsiMethod[] methods = cls.getAllMethods();
-        @NonNls String val = getValue();
-        for (PsiMethod method : methods) {
-          PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
-          if (dataProviderAnnotation != null) {
-            final PsiAnnotationMemberValue dataProviderMethodName = dataProviderAnnotation.findDeclaredAttributeValue("name");
-            if (dataProviderMethodName != null && val.equals(StringUtil.unquoteString(dataProviderMethodName.getText()))) {
-              return method;
-            }
-            if (val.equals(method.getName())) {
-              return method;
-            }
-          }
-        }
-      }
-      return null;
-    }
-
-    @NotNull
-    public Object[] getVariants() {
-      final List<Object> list = new ArrayList<Object>();
-      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(getElement());
-      final PsiClass cls = getProviderClass(topLevelClass);
-      final boolean needToBeStatic = cls != topLevelClass;
-      if (cls != null) {
-        final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
-        final PsiMethod[] methods = cls.getAllMethods();
-        for (PsiMethod method : methods) {
-          if (current != null && method.getName().equals(current.getName())) continue;
-          if (needToBeStatic) {
-            if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
-          } else {
-            if (cls != method.getContainingClass() && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
-          }
-          final PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
-          if (dataProviderAnnotation != null) {
-            final PsiAnnotationMemberValue memberValue = dataProviderAnnotation.findDeclaredAttributeValue("name");
-            if (memberValue != null) {
-              list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
-            } else {
-              list.add(LookupValueFactory.createLookupValue(method.getName(), null));
-            }
-          }
-        }
-      }
-      return list.toArray();
-    }
-
-    private PsiClass getProviderClass(final PsiClass topLevelClass) {
-      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(getElement(), PsiAnnotation.class);
-      if (annotation != null) {
-        final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("dataProviderClass");
-        if (value instanceof PsiClassObjectAccessExpression) {
-          final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
-          final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());
-          if (psiClass != null) {
-            return psiClass;
-          }
-        }
-      }
-      return topLevelClass;
-    }
   }
 
   private static class MethodReference extends PsiReferenceBase<PsiLiteral> {

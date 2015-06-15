@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
@@ -54,6 +55,34 @@ class SomeClass {
     def wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection())
     def context = InspectionManager.getInstance(project).createNewGlobalContext(false)
     assertEmpty InspectionEngine.runInspectionOnFile(file, wrapper, context)
+  }
+
+  public void "test resolve super constructor reference"() {
+    PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
+    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("src"))
+
+    myFixture.addFileToProject("src/Foo.java", """
+class Foo<T> {
+    public Foo(T x) {
+    }
+}
+""")
+
+    myFixture.configureByText("Foo.java", """
+class Foo<T> {
+    public Foo(T x) {
+    }
+}
+
+class Bar extends Foo<String> {
+    public Bar() {
+        sup<caret>er("a");
+    }
+}
+""")
+
+    assert myFixture.file.physical
+    assert assertInstanceOf(myFixture.elementAtCaret, PsiMethod).name == 'Foo'
   }
   
 }

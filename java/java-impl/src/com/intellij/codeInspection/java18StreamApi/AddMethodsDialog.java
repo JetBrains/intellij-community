@@ -59,9 +59,7 @@ public class AddMethodsDialog extends DialogWrapper {
     for (String methodName : StreamApiConstants.STREAM_STREAM_API_METHODS.getValue()) {
       model.addElement(methodName);
     }
-    for (String fakeMethodName : StreamApiConstants.FAKE_STREAM_API_METHODS_TO_PATTERN.getValue().keySet()) {
-      model.addElement(fakeMethodName);
-    }
+    model.addElement(StreamApiConstants.FAKE_FIND_MATCHED);
     myPatternsCombo.setRenderer(new ColoredListCellRenderer<String>() {
       @Override
       protected void customizeCellRenderer(JList list, String methodName, int index, boolean selected, boolean hasFocus) {
@@ -70,9 +68,10 @@ public class AddMethodsDialog extends DialogWrapper {
           append(methodName + "()", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         else {
-          String pattern = StreamApiConstants.FAKE_STREAM_API_METHODS_TO_PATTERN.getValue().get(methodName);
-          LOG.assertTrue(pattern != null);
-          append(String.format(pattern, ""), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          LOG.assertTrue(StreamApiConstants.FAKE_FIND_MATCHED.equals(methodName));
+          append(String.format(StreamApiConstants.FAKE_FIND_MATCHED_PATTERN, "condition"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          append(" or ");
+          append(String.format(StreamApiConstants.FAKE_FIND_MATCHED_WITH_DEFAULT_PATTERN, "condition", "defaultValue"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
     });

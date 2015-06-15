@@ -314,6 +314,10 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
+  public void testConflictingNameWithParameterToDelete() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
   private void doTestThroughHandler() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     boolean enabled = true;

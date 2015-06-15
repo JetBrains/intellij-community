@@ -59,6 +59,10 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
     doTestWithTemplate(EqualsHashCodeTemplatesManager.OBJECTS_EQUAL_AND_HASH_CODE_GUAVA);
   }
 
+  public void testSingleArrayOfPrimitiveWithObjectsTemplate() throws Exception {
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
+  }
+
   private void doTestWithTemplate(String templateName) throws Exception {
     try {
       EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(templateName);

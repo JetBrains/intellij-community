@@ -17,6 +17,8 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   @NotNull private final String myLinkedExternalProjectPath;
 
   @NotNull private String myIdeProjectFileDirectoryPath;
+  private String myGroup;
+  private String myVersion;
 
   @Deprecated
   public ProjectData(@NotNull ProjectSystemId owner,
@@ -86,5 +88,21 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   @Override
   public String getId() {
     return "";
+  }
+
+  public String getGroup() {
+    return myGroup;
+  }
+
+  public void setGroup(String group) {
+    myGroup = group;
+  }
+
+  public String getVersion() {
+    return myVersion;
+  }
+
+  public void setVersion(String version) {
+    myVersion = version;
   }
 }

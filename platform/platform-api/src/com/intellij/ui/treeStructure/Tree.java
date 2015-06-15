@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;

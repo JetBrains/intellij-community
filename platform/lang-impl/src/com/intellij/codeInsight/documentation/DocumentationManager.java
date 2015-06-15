@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -98,11 +98,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private final ActionManagerEx myActionManagerEx;
 
-  private final TargetElementUtilBase myTargetElementUtilBase;
+  private final TargetElementUtil myTargetElementUtil;
 
   private boolean myCloseOnSneeze;
   
   private ActionCallback myLastAction;
+  private DocumentationComponent myTestDocumentationComponent;
 
   @Override
   protected String getToolwindowId() {
@@ -160,7 +161,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
-  public DocumentationManager(final Project project, ActionManagerEx managerEx, TargetElementUtilBase targetElementUtilBase) {
+  public DocumentationManager(final Project project, ActionManagerEx managerEx, TargetElementUtil targetElementUtil) {
     super(project);
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
@@ -199,7 +200,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     };
     myActionManagerEx.addAnActionListener(actionListener, project);
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myProject);
-    myTargetElementUtilBase = targetElementUtilBase;
+    myTargetElementUtil = targetElementUtil;
   }
 
   private void closeDocHint() {
@@ -431,7 +432,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                            PopupUpdateProcessor updateProcessor,
                            final PsiElement originalElement,
                            @Nullable final Runnable closeCallback) {
-    final DocumentationComponent component = new DocumentationComponent(this);
+    final DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) : 
+                                             myTestDocumentationComponent;
     component.setNavigateCallback(new Consumer<PsiElement>() {
       @Override
       public void consume(PsiElement psiElement) {
@@ -569,7 +571,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    */
   @Nullable
   private PsiElement findTargetElementUnsafe(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
-    TargetElementUtilBase util = TargetElementUtilBase.getInstance();
+    TargetElementUtil util = TargetElementUtil.getInstance();
     PsiElement element = assertSameProject(getElementFromLookup(editor, file));
     if (element == null && file != null) {
       final DocumentationProvider documentationProvider = getProviderFromElement(file);
@@ -579,11 +581,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      element = assertSameProject(util.findTargetElement(editor, myTargetElementUtilBase.getAllAccepted(), offset));
+      element = assertSameProject(util.findTargetElement(editor, myTargetElementUtil.getAllAccepted(), offset));
 
       // Allow context doc over xml tag content
       if (element != null || contextElement != null) {
-        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtilBase.getAllAccepted(), element, contextElement));
+        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtil.getAllAccepted(), element, contextElement));
         if (adjusted != null) {
           element = adjusted;
         }
@@ -591,7 +593,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+      final PsiReference ref = TargetElementUtil.findReference(editor, offset);
       if (ref != null) {
         element = assertSameProject(util.adjustReference(ref));
         if (ref instanceof PsiPolyVariantReference) {
@@ -617,7 +619,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
-        PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+        PsiReference ref = TargetElementUtil.findReference(editor, offset);
         PsiElement contextElement = file == null? null : file.findElementAt(offset);
         PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
         if (targetElement != null) {
@@ -639,6 +641,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, @Nullable final PsiElement originalElement) {
     return new DefaultDocumentationCollector(element, originalElement);
+  }
+
+  private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, @Nullable final PsiElement originalElement, String ref) {
+    return new DefaultDocumentationCollector(element, originalElement, ref);
   }
 
   @Nullable
@@ -748,7 +754,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               component.setText(component.getText(), element, true, clearHistory);
             }
             else {
-              component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl());
+              component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl(), provider.getRef());
             }
 
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
@@ -854,7 +860,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     else if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
-      final String refText = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
+      String refText = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
+      int separatorPos = refText.lastIndexOf(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR);
+      String ref = null;
+      if (separatorPos >= 0) {
+        ref = refText.substring(separatorPos + DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR.length());
+        refText = refText.substring(0, separatorPos);
+      }
       DocumentationProvider provider = getProviderFromElement(psiElement);
       PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
       if (targetElement == null) {
@@ -877,7 +889,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
       if (targetElement != null) {
-        fetchDocInfo(getDefaultCollector(targetElement, null), component);
+        fetchDocInfo(getDefaultCollector(targetElement, null, ref), component);
       }
     }
     else {
@@ -905,6 +917,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               public String getEffectiveExternalUrl() {
                 return url;
               }
+
+              @Nullable
+              @Override
+              public String getRef() {
+                return null;
+              }
             }, component);
             processed = true;
           }
@@ -921,6 +939,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           (new DocumentationCollector() {
             @Override
             public String getDocumentation() throws Exception {
+              //noinspection deprecation
               if (url.startsWith(DocumentationManagerProtocol.DOC_ELEMENT_PROTOCOL)) {
                 final List<String> urls = ApplicationManager.getApplication().runReadAction(
                   new NullableComputable<List<String>>() {
@@ -933,11 +952,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                 );
                 String url1 = urls != null && !urls.isEmpty() ? urls.get(0) : url;
                 BrowserUtil.browse(url1);
+                return "";
+              }
+              else if (BrowserUtil.isAbsoluteURL(url)) {
+                BrowserUtil.browse(url);
+                return "";
               }
               else {
-                BrowserUtil.browse(url);
+                return CodeInsightBundle.message("javadoc.error.resolving.url", url);
               }
-              return "";
             }
 
             @Override
@@ -956,6 +979,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             @Override
             public String getEffectiveExternalUrl() {
               return url;
+            }
+
+            @Nullable
+            @Override
+            public String getRef() {
+              return null;
             }
           }, component);
       }
@@ -1040,6 +1069,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public ActionCallback getLastAction() {
     return myLastAction;
   }
+  
+  @TestOnly
+  public void setDocumentationComponent(DocumentationComponent documentationComponent) {
+    myTestDocumentationComponent = documentationComponent;
+  }
 
   private interface DocumentationCollector {
     @Nullable
@@ -1048,18 +1082,26 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     PsiElement getElement();
     @Nullable
     String getEffectiveExternalUrl();
+    @Nullable
+    String getRef();
   }
 
   private class DefaultDocumentationCollector implements DocumentationCollector {
 
     private final PsiElement myElement;
     private final PsiElement myOriginalElement;
+    private final String myRef;
 
     private String myEffectiveUrl;
 
     private DefaultDocumentationCollector(PsiElement element, PsiElement originalElement) {
+      this(element, originalElement, null);
+    }
+
+    private DefaultDocumentationCollector(PsiElement element, PsiElement originalElement, String ref) {
       myElement = element;
       myOriginalElement = originalElement;
+      myRef = ref;
     }
 
     @Override
@@ -1120,6 +1162,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Override
     public String getEffectiveExternalUrl() {
       return myEffectiveUrl;
+    }
+
+    @Nullable
+    @Override
+    public String getRef() {
+      return myRef;
     }
   }
 }

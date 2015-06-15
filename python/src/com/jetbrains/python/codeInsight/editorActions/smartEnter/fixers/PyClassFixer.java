@@ -43,13 +43,17 @@ public class PyClassFixer extends PyFixer<PyClass> {
     final PsiElement colon = PyUtil.getFirstChildOfType(pyClass, PyTokenTypes.COLON);
     if (colon == null) {
       final PyArgumentList argList = PsiTreeUtil.getChildOfType(pyClass, PyArgumentList.class);
-      final int offset = sure(argList).getTextRange().getEndOffset();
+      final int colonOffset = sure(argList).getTextRange().getEndOffset();
       String textToInsert = ":";
       if (pyClass.getNameNode() == null) {
-        processor.registerUnresolvedError(argList.getTextRange().getEndOffset() + 1);
-        textToInsert = " :";
+        int newCaretOffset = argList.getTextOffset();
+        if (argList.getTextLength() == 0) {
+          newCaretOffset += 1;
+          textToInsert = " :";
+        }
+        processor.registerUnresolvedError(newCaretOffset);
       }
-      editor.getDocument().insertString(offset, textToInsert);
+      editor.getDocument().insertString(colonOffset, textToInsert);
     }
   }
 }

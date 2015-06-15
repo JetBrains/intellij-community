@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.preview.PreviewPanelProvider;
 import com.intellij.openapi.preview.PreviewProviderId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -38,14 +39,15 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
   private final FileEditorManagerImpl myManager;
   private final Project myProject;
 
-  private EditorWindow myWindow;
-  private EditorsSplitters myEditorsSplitters;
+  private final EditorWindow myWindow;
+  private final EditorsSplitters myEditorsSplitters;
 
   public FilePreviewPanelProvider(@NotNull Project project, @NotNull FileEditorManagerImpl manager, @NotNull DockManager dockManager) {
     super(ID);
     myProject = project;
     myManager = manager;
     myEditorsSplitters = new MyEditorsSplitters(manager, dockManager, false);
+    Disposer.register(this, myEditorsSplitters);
     myEditorsSplitters.createCurrentWindow();
     myWindow = myEditorsSplitters.getCurrentWindow();
     myWindow.setTabsPlacement(UISettings.TABS_NONE);
@@ -53,7 +55,6 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
 
   @Override
   public void dispose() {
-    myEditorsSplitters.dispose();
   }
 
   @NotNull
@@ -120,7 +121,7 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
   }
 
   private class MyEditorsSplitters extends EditorsSplitters {
-    public MyEditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
+    private MyEditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
       super(manager, dockManager, createOwnDockableContainer);
     }
 

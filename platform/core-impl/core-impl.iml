@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="core-api" exported="" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="boot" />
-    <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

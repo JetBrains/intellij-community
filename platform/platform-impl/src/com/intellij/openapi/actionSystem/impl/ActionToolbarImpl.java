@@ -42,6 +42,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -50,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -784,9 +784,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
     }
 
-    final Insets i = getInsets();
+    JBInsets.addTo(dimension, getInsets());
 
-    return new Dimension(dimension.width + i.left + i.right, dimension.height + i.top + i.bottom);
+    return dimension;
   }
 
   @Override
@@ -1296,7 +1296,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (myMinimalMode) {
       setMinimumButtonSize(JBUI.emptySize());
       setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
-      setBorder(new EmptyBorder(0, 0, 0, 0));
+      setBorder(JBUI.Borders.empty());
       setOpaque(false);
     } else {
       if (isInsideNavBar()) {

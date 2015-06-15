@@ -4,12 +4,14 @@ import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgRevertCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collections;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 public class HgRevertTest extends HgSingleUserTest {
   @Test
@@ -24,9 +26,9 @@ public class HgRevertTest extends HgSingleUserTest {
     revertCommand.execute(myRepo.getDir(), Collections.singleton(new File(myProjectDir, "file.txt").getPath()), null, false);
 
     HgCatCommand catCommand = new HgCatCommand(myProject);
-    String content = catCommand.execute(getHgFile("file.txt"), null, Charset.defaultCharset());
-
-    assertEquals(content, "initial contents");
+    HgCommandResult result = catCommand.execute(getHgFile("file.txt"), null, Charset.defaultCharset());
+    assertNotNull(result);
+    assertEquals(result.getRawOutput(), "initial contents");
   }
 
 
@@ -44,9 +46,9 @@ public class HgRevertTest extends HgSingleUserTest {
                           HgRevisionNumber.getLocalInstance("0"), false);
 
     HgCatCommand catCommand = new HgCatCommand(myProject);
-    String content = catCommand.execute(getHgFile("file.txt"), HgRevisionNumber.getLocalInstance("0"), Charset.defaultCharset());
-
-    assertEquals(content, "initial contents");
+    HgCommandResult result = catCommand.execute(getHgFile("file.txt"), HgRevisionNumber.getLocalInstance("0"), Charset.defaultCharset());
+    assertNotNull(result);
+    assertEquals(result.getRawOutput(), "initial contents");
   }
 
 }

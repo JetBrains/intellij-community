@@ -67,7 +67,7 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
-public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implements PanelWithAnchor {
+public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
     new TIntArrayList(new int[]{0}),
     new TIntArrayList(new int[]{1}),
@@ -76,7 +76,13 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     new TIntArrayList(new int[]{4}),
     new TIntArrayList(new int[]{5})
   );
-
+  private static final String[] FORK_MODE_ALL =
+    {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
+  private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
+  private final ConfigurationModuleSelector myModuleSelector;
+  private final LabeledComponent[] myTestLocations = new LabeledComponent[6];
+  private final JUnitConfigurationModel myModel;
+  private final BrowseModuleValueActionListener[] myBrowsers;
   private JComponent myPackagePanel;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myPackage;
   private LabeledComponent<TextFieldWithBrowseButton> myDir;
@@ -84,7 +90,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private LabeledComponent<EditorTextFieldWithBrowseButton> myClass;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMethod;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myCategory;
-
   // Fields
   private JPanel myWholePanel;
   private LabeledComponent<JComboBox> myModule;
@@ -93,12 +98,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private JRadioButton mySingleModuleScope;
   private JRadioButton myModuleWDScope;
   private TextFieldWithBrowseButton myPatternTextField;
-
-  private final ConfigurationModuleSelector myModuleSelector;
-  private final LabeledComponent[] myTestLocations = new LabeledComponent[6];
-  private final JUnitConfigurationModel myModel;
-
-  private final BrowseModuleValueActionListener[] myBrowsers;
   private AlternativeJREPanel myAlternativeJREPanel;
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
@@ -107,8 +106,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private JPanel myScopesPanel;
   private JComboBox myRepeatCb;
   private JTextField myRepeatCountField;
-  private static final String[] FORK_MODE_ALL = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
-  private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
   private Project myProject;
   private JComponent anchor;
 
@@ -240,6 +237,15 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     myCommonJavaParameters.setAnchor(myAlternativeJREPanel.getCbEnabled());
   }
 
+  private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
+    final ButtonGroup group = new ButtonGroup();
+    for (final JRadioButton radioButton : radioButtons) {
+      radioButton.getModel().addChangeListener(listener);
+      group.add(radioButton);
+    }
+    if (group.getSelection() == null) group.setSelected(radioButtons[0].getModel(), true);
+  }
+
   public void applyEditorTo(final JUnitConfiguration configuration) {
     myModel.apply(getModuleSelector().getModule(), configuration);
     applyHelpersTo(configuration);
@@ -351,7 +357,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
-    } 
+    }
     else {
       myPackagePanel.setVisible(false);
       myScopesPanel.setVisible(true);
@@ -437,8 +443,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }));
 
     myMethod = new LabeledComponent<EditorTextFieldWithBrowseButton>();
-    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true, 
-                                                                                                          JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
+    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true,
+                                                                                                          JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                                           PlainTextLanguage.INSTANCE.getAssociatedFileType());
     new TextFieldCompletionProvider() {
       @Override
@@ -478,15 +484,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     myCategory.setAnchor(anchor);
   }
 
-  private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
-    final ButtonGroup group = new ButtonGroup();
-    for (final JRadioButton radioButton : radioButtons) {
-      radioButton.getModel().addChangeListener(listener);
-      group.add(radioButton);
-    }
-    if (group.getSelection() == null) group.setSelected(radioButtons[0].getModel(), true);
-  }
-
   public void onTypeChanged(final int newType) {
     myTypeChooser.setSelectedItem(newType);
     final TIntArrayList enabledFields = ourEnabledFields.get(newType);
@@ -494,7 +491,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       getTestLocation(i).setEnabled(enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE && newType != JUnitConfigurationModel.PATTERN) {
+    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE &&
+                 newType != JUnitConfigurationModel.PATTERN &&
+                 newType != JUnitConfigurationModel.CATEGORY) {
       myModule.setEnabled(true);
     }
     else {
@@ -502,8 +501,41 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }
   }
 
+  private void onScopeChanged() {
+    final Integer selectedItem = (Integer)myTypeChooser.getSelectedItem();
+    final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE ||
+                                              selectedItem == JUnitConfigurationModel.PATTERN ||
+                                              selectedItem == JUnitConfigurationModel.CATEGORY) && myWholeProjectScope.isSelected();
+    myModule.setEnabled(!allInPackageAllInProject);
+    if (allInPackageAllInProject) {
+      myModule.getComponent().setSelectedItem(null);
+    }
+  }
+
+  private String getClassName() {
+    return ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CLASS)).getComponent().getText();
+  }
+
+  private void setPackage(final PsiPackage aPackage) {
+    if (aPackage == null) return;
+    ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent()
+      .setText(aPackage.getQualifiedName());
+  }
+
+  @NotNull
+  public JComponent createEditor() {
+    return myWholePanel;
+  }
+
+  private void applyHelpersTo(final JUnitConfiguration currentState) {
+    myCommonJavaParameters.applyTo(currentState);
+    getModuleSelector().applyTo(currentState);
+  }
+
   private static class PackageChooserActionListener extends BrowseModuleValueActionListener {
-    public PackageChooserActionListener(final Project project) {super(project);}
+    public PackageChooserActionListener(final Project project) {
+      super(project);
+    }
 
     protected String showDialog() {
       final PackageChooserDialog dialog = new PackageChooserDialog(ExecutionBundle.message("choose.package.dialog.title"), getProject());
@@ -540,15 +572,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     @Override
     public void actionPerformed(ActionEvent e) {
       showDialog();
-    }
-  }
-
-  private void onScopeChanged() {
-    final Integer selectedItem = (Integer)myTypeChooser.getSelectedItem();
-    final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE || selectedItem == JUnitConfigurationModel.PATTERN) && myWholeProjectScope.isSelected();
-    myModule.setEnabled(!allInPackageAllInProject);
-    if (allInPackageAllInProject) {
-      myModule.getComponent().setSelectedItem(null);
     }
   }
 
@@ -615,26 +638,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       }
       return null;
     }
-  }
-
-  private String getClassName() {
-    return ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CLASS)).getComponent().getText();
-  }
-
-  private void setPackage(final PsiPackage aPackage) {
-    if (aPackage == null) return;
-    ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent()
-      .setText(aPackage.getQualifiedName());
-  }
-
-  @NotNull
-  public JComponent createEditor() {
-    return myWholePanel;
-  }
-
-  private void applyHelpersTo(final JUnitConfiguration currentState) {
-    myCommonJavaParameters.applyTo(currentState);
-    getModuleSelector().applyTo(currentState);
   }
 
   private class CategoryBrowser extends ClassBrowser {

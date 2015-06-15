@@ -35,7 +35,6 @@ public class DiffRequestPanelImpl implements DiffRequestPanel {
 
   public DiffRequestPanelImpl(@Nullable Project project, @Nullable Window window) {
     myProcessor = new MyCacheDiffRequestChainProcessor(project, window);
-    myProcessor.init();
 
     myPanel = new JPanel(new BorderLayout()) {
       @Override

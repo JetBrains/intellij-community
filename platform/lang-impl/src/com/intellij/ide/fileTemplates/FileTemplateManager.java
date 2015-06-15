@@ -87,6 +87,9 @@ public abstract class FileTemplateManager{
 
   public abstract FileTemplate getTemplate(@NotNull @NonNls String templateName);
 
+  /**
+   * @return a new Properties object filled with predefined properties.
+   */
   @NotNull 
   public abstract Properties getDefaultProperties();
 

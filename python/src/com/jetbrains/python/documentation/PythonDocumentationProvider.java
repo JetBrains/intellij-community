@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.documentation;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
@@ -337,7 +337,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (document == null) {
       return element;
     }
-    int newOffset = TargetElementUtilBase.adjustOffset(file, document, element.getTextOffset());
+    int newOffset = TargetElementUtil.adjustOffset(file, document, element.getTextOffset());
     PsiElement newElement = file.findElementAt(newOffset);
     return newElement != null ? newElement : element;
   }

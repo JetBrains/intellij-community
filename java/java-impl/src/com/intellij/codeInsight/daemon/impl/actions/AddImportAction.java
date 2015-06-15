@@ -30,6 +30,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -196,7 +197,12 @@ public class AddImportAction implements QuestionAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            _addImport(ref, targetClass);
+            DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+              @Override
+              public void run() {
+                _addImport(ref, targetClass);
+              }
+            });
           }
         });
       }

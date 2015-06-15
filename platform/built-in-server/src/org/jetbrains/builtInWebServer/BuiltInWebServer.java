@@ -15,6 +15,7 @@
  */
 package org.jetbrains.builtInWebServer;
 
+import com.google.common.net.InetAddresses;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -106,7 +107,7 @@ public final class BuiltInWebServer extends HttpRequestHandler {
       host = host.substring(1, host.length() - 1);
     }
 
-    if (isIpv6 || Character.digit(host.charAt(0), 10) != -1 || host.charAt(0) == ':' || isOwnHostName(host)) {
+    if (isIpv6 || InetAddresses.isInetAddress(host) || isOwnHostName(host) || host.endsWith(".ngrok.io")) {
       if (urlDecoder.path().length() < 2) {
         return false;
       }

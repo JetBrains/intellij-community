@@ -60,4 +60,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testInnerLocal() { doTest("pkg/TestInnerLocal"); }
   @Test public void testInnerLocalPkg() { doTest("pkg/TestInnerLocalPkg"); }
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
+  @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
 }

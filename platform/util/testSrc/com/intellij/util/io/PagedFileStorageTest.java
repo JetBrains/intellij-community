@@ -102,6 +102,9 @@ public class PagedFileStorageTest extends TestCase {
       t = System.currentTimeMillis() - t;
       System.out.println("done in " + t + " ms");
 
+      file.putInt(Integer.MAX_VALUE + 20L, 5678);
+      assertEquals(5678, file.getInt(Integer.MAX_VALUE + 20L));
+
       t = System.currentTimeMillis();
       System.out.println("checking...");
       for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {

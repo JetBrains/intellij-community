@@ -23,8 +23,13 @@ import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.AwtVisitor;
@@ -34,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -70,7 +76,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
 
   public void initUI() {
     myLeftPane = ScrollPaneFactory.createScrollPane();
-    myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.RIGHT);
+    myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     myStatisticsComponent = createStatisticsPanel();
     myStatusLine = createStatusLine();
     JComponent testTreeView = createTestTreeView();
@@ -94,31 +100,23 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
     myStatisticsSplitter = createSplitter(myStatisticsSplitterProportionProperty, 0.5f);
-    new AwtVisitor(myConsole) {
-      @Override
-      public boolean visit(Component component) {
-        if (component instanceof JScrollPane) {
-          ((JScrollPane) component).putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.LEFT);
-          return true;
-        }
-        return false;
-      }
-    };
     myStatisticsSplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
-    if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
-      showStatistics();
-    }
-    myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
-      @Override
-      public void onChanged(Boolean value) {
-        if (value.booleanValue()) {
-          showStatistics();
-        }
-        else {
-          myStatisticsSplitter.setSecondComponent(null);
-        }
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
+        showStatistics();
       }
-    });
+      myProperties.addListener(TestConsoleProperties.SHOW_STATISTICS, new TestFrameworkPropertyListener<Boolean>() {
+        @Override
+        public void onChanged(Boolean value) {
+          if (value.booleanValue()) {
+            showStatistics();
+          }
+          else {
+            myStatisticsSplitter.setSecondComponent(null);
+          }
+        }
+      });
+    }
     rightPanel.add(myStatisticsSplitter, BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
     testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -159,10 +157,13 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   private static JComponent createOutputTab(JComponent console, AnAction[] consoleActions) {
     JPanel outputTab = new JPanel(new BorderLayout());
     console.setFocusable(true);
+    final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+    console.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
+                                         new SideBorder(editorBackground, SideBorder.LEFT)));
     outputTab.add(console, BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
-    outputTab.add(toolbar.getComponent(), BorderLayout.WEST);
+    outputTab.add(toolbar.getComponent(), BorderLayout.EAST);
     return outputTab;
   }
 
@@ -171,7 +172,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   }
 
   protected static Splitter createSplitter(final String proportionProperty, final float defaultProportion) {
-    final Splitter splitter = new Splitter(false);
+    final Splitter splitter = new OnePixelSplitter(false);
     splitter.setHonorComponentsMinimumSize(true);
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     float proportion;

@@ -1018,4 +1018,14 @@ public final class TreeUtil {
     }
     return -(low + 1);  // key not found
   }
+
+  @NotNull
+  public static Comparator<TreePath> getDisplayOrderComparator(@NotNull final JTree tree) {
+    return new Comparator<TreePath>() {
+      @Override
+      public int compare(TreePath path1, TreePath path2) {
+        return tree.getRowForPath(path1) - tree.getRowForPath(path2);
+      }
+    };
+  }
 }

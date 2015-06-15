@@ -46,12 +46,14 @@ import com.intellij.lexer.FlexLexer;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
+
+%eof{
+  return;
 %eof}
 
-WHITE_SPACE_CHAR=[\ \n\r\t\f]
+WHITE_SPACE_CHAR = [\ \n\r\t\f]
 
-IDENTIFIER=[:jletter:] [:jletterdigit:]*
+IDENTIFIER = [:jletter:] [:jletterdigit:]*
 
 C_STYLE_COMMENT=("/*"[^"*"]{COMMENT_TAIL})|"/*"
 DOC_COMMENT="/*""*"+("/"|([^"/""*"]{COMMENT_TAIL}))?
@@ -77,9 +79,9 @@ HEX_FP_LITERAL = {HEX_SIGNIFICAND} {HEX_EXPONENT}
 HEX_SIGNIFICAND = 0 [Xx] ({HEX_DIGIT_OR_UNDERSCORE}+ "."? | {HEX_DIGIT_OR_UNDERSCORE}* "." {HEX_DIGIT_OR_UNDERSCORE}+)
 HEX_EXPONENT = [Pp] [+-]? {DIGIT_OR_UNDERSCORE}*
 
-CHARACTER_LITERAL="'"([^\\\'\r\n]|{ESCAPE_SEQUENCE})*("'"|\\)?
-STRING_LITERAL=\"([^\\\"\r\n]|{ESCAPE_SEQUENCE})*(\"|\\)?
-ESCAPE_SEQUENCE=\\[^\r\n]
+ESCAPE_SEQUENCE = \\[^\r\n]
+CHARACTER_LITERAL = "'" ([^\\\'\r\n] | {ESCAPE_SEQUENCE})* ("'"|\\)?
+STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
 
 %%
 

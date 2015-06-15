@@ -19,14 +19,28 @@ import com.intellij.diff.tools.util.LineFragmentCache;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
   // DiffRequest
   //
-  enum ScrollToPolicy {FIRST_CHANGE, LAST_CHANGE}
+  enum ScrollToPolicy {
+    FIRST_CHANGE, LAST_CHANGE;
+
+    @Nullable
+    public <T> T select(@NotNull List<T> changes) {
+      if (this == FIRST_CHANGE) return ContainerUtil.getFirstItem(changes);
+      if (this == LAST_CHANGE) return ContainerUtil.getLastItem(changes);
+      throw new IllegalStateException();
+    }
+  }
+
   Key<ScrollToPolicy> SCROLL_TO_CHANGE = Key.create("Diff.ScrollToChange");
   Key<LogicalPosition[]> EDITORS_CARET_POSITION = Key.create("Diff.EditorsCaretPosition");
 

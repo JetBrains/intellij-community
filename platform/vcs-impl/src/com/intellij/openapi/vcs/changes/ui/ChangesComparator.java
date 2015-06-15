@@ -15,17 +15,18 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 public class ChangesComparator implements Comparator<Change> {
   private static final ChangesComparator ourFlattenedInstance = new ChangesComparator(false);
   private static final ChangesComparator ourTreeInstance = new ChangesComparator(true);
+  @NotNull private final HierarchicalFilePathComparator myFilePathComparator;
   private final boolean myTreeCompare;
 
   public static ChangesComparator getInstance(boolean flattened) {
@@ -38,49 +39,14 @@ public class ChangesComparator implements Comparator<Change> {
 
   private ChangesComparator(boolean treeCompare) {
     myTreeCompare = treeCompare;
+    myFilePathComparator = HierarchicalFilePathComparator.IGNORE_CASE;
   }
 
   public int compare(final Change o1, final Change o2) {
     final FilePath filePath1 = ChangesUtil.getFilePath(o1);
     final FilePath filePath2 = ChangesUtil.getFilePath(o2);
     if (myTreeCompare) {
-      final String path1 = FileUtilRt.toSystemIndependentName(filePath1.getPath());
-      final String path2 = FileUtilRt.toSystemIndependentName(filePath2.getPath());
-
-      int index1 = 0;
-      int index2 = 0;
-
-      int start = 0;
-
-      while (index1 < path1.length() && index2 < path2.length()) {
-        char c1 = path1.charAt(index1);
-        char c2 = path2.charAt(index2);
-
-        if (StringUtil.compare(c1, c2, true) != 0) break;
-
-        if (c1 == '/') start = index1;
-
-        index1++;
-        index2++;
-      }
-
-      if (index1 == path1.length() && index2 == path2.length()) return 0;
-      if (index1 == path1.length()) return -1;
-      if (index2 == path2.length()) return 1;
-
-      int end1 = path1.indexOf('/', start + 1);
-      int end2 = path2.indexOf('/', start + 1);
-
-      String name1 = end1 == -1 ? path1.substring(start) : path1.substring(start, end1);
-      String name2 = end2 == -1 ? path2.substring(start) : path2.substring(start, end2);
-
-      boolean isDirectory1 = end1 != -1 || filePath1.isDirectory();
-      boolean isDirectory2 = end2 != -1 || filePath2.isDirectory();
-
-      if (isDirectory1 && !isDirectory2) return -1;
-      if (!isDirectory1 && isDirectory2) return 1;
-
-      return name1.compareToIgnoreCase(name2);
+      return myFilePathComparator.compare(filePath1, filePath2);
     }
     else {
       return filePath1.getName().compareToIgnoreCase(filePath2.getName());

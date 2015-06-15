@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.intellij.byteCodeViewer;
 
-import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -30,10 +29,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 
 import javax.swing.*;
@@ -82,9 +81,23 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
 
   public void setText(final String bytecode, PsiElement element) {
     int offset = 0;
-    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+    PsiFile psiFile = element.getContainingFile();
+    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(psiFile);
     if (document != null) {
       int lineNumber = document.getLineNumber(element.getTextOffset());
+      VirtualFile file = psiFile.getVirtualFile();
+      if (file != null) {
+        LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+        if (mapping != null) {
+          int mappedLine = mapping.sourceToBytecode(lineNumber);
+          while (mappedLine == -1 && lineNumber < document.getLineCount()) {
+            mappedLine = mapping.sourceToBytecode(++lineNumber);
+          }
+          if (mappedLine > 0) {
+            lineNumber = mappedLine;
+          }
+        }
+      }
       offset = bytecode.indexOf("LINENUMBER " + lineNumber);
       while (offset == -1 && lineNumber < document.getLineCount()) {
         offset = bytecode.indexOf("LINENUMBER " + (lineNumber++));

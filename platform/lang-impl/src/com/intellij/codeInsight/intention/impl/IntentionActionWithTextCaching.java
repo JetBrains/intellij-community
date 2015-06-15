@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,16 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author cdr
@@ -41,15 +42,15 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
   private final String myDisplayName;
   private final Icon myIcon;
 
-  IntentionActionWithTextCaching(IntentionAction action){
+  IntentionActionWithTextCaching(@NotNull IntentionAction action){
     this(action, action.getText(), null);
   }
 
-  IntentionActionWithTextCaching(HighlightInfo.IntentionActionDescriptor action){
+  IntentionActionWithTextCaching(@NotNull HighlightInfo.IntentionActionDescriptor action){
     this(action.getAction(), action.getDisplayName(), action.getIcon());
   }
 
-  private IntentionActionWithTextCaching(IntentionAction action, String displayName, Icon icon) {
+  private IntentionActionWithTextCaching(@NotNull IntentionAction action, String displayName, @Nullable Icon icon) {
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
@@ -59,40 +60,46 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
     myDisplayName = displayName;
   }
 
+  @NotNull
   String getText() {
     return myText;
   }
 
-  public void addIntention(final IntentionAction action) {
+  void addIntention(@NotNull IntentionAction action) {
     myOptionIntentions.add(action);
   }
-  public void addErrorFix(final IntentionAction action) {
+  void addErrorFix(@NotNull IntentionAction action) {
     myOptionErrorFixes.add(action);
   }
-  public void addInspectionFix(final IntentionAction action) {
+  void addInspectionFix(@NotNull  IntentionAction action) {
     myOptionInspectionFixes.add(action);
   }
 
-  public IntentionAction getAction() {
+  @NotNull
+  IntentionAction getAction() {
     return myAction;
   }
 
-  public List<IntentionAction> getOptionIntentions() {
+  @NotNull
+  List<IntentionAction> getOptionIntentions() {
     return myOptionIntentions;
   }
 
-  public List<IntentionAction> getOptionErrorFixes() {
+  @NotNull
+  List<IntentionAction> getOptionErrorFixes() {
     return myOptionErrorFixes;
   }
 
-  public List<IntentionAction> getOptionInspectionFixes() {
+  @NotNull
+  List<IntentionAction> getOptionInspectionFixes() {
     return myOptionInspectionFixes;
   }
 
-  public String getToolName() {
+  String getToolName() {
     return myDisplayName;
   }
 
+  @NotNull
   public String toString() {
     return getText();
   }
@@ -100,15 +107,17 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
   @Override
   public int compareTo(@NotNull final IntentionActionWithTextCaching other) {
     if (myAction instanceof Comparable) {
+      //noinspection unchecked
       return ((Comparable)myAction).compareTo(other.getAction());
     }
-    else if (other.getAction() instanceof Comparable) {
+    if (other.getAction() instanceof Comparable) {
+      //noinspection unchecked
       return ((Comparable)other.getAction()).compareTo(myAction);
     }
     return Comparing.compare(getText(), other.getText());
   }
 
-  public Icon getIcon() {
+  Icon getIcon() {
     return myIcon;
   }
 

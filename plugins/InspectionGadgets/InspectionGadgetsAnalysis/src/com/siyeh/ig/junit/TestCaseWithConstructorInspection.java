@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class TestCaseWithConstructorInspection extends BaseInspection {
 
@@ -66,11 +68,10 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || !TestUtils.isJUnitTestClass(aClass) || AnnotationUtil.isAnnotated(aClass, "org.junit.runner.RunWith", true)) {
+      if (!TestUtils.isJUnitTestClass(aClass) && !TestUtils.isJUnit4TestClass(aClass, false)) {
         return;
       }
-      final PsiCodeBlock body = method.getBody();
-      if (isTrivial(body)) {
+      if (MethodUtils.isTrivial(method, false)) {
         return;
       }
       registerMethodError(method, Boolean.FALSE);
@@ -82,40 +83,13 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = initializer.getContainingClass();
-      if (!TestUtils.isJUnitTestClass(aClass)) {
+      if (!TestUtils.isJUnitTestClass(aClass) && !TestUtils.isJUnit4TestClass(aClass, true)) {
+        return;
+      }
+      if (MethodUtils.isTrivial(initializer)) {
         return;
       }
       registerClassInitializerError(initializer, Boolean.TRUE);
-    }
-
-    private static boolean isTrivial(@Nullable PsiCodeBlock codeBlock) {
-      if (codeBlock == null) {
-        return true;
-      }
-      final PsiStatement[] statements = codeBlock.getStatements();
-      if (statements.length == 0) {
-        return true;
-      }
-      if (statements.length > 1) {
-        return false;
-      }
-      final PsiStatement statement = statements[0];
-      if (!(statement instanceof PsiExpressionStatement)) {
-        return false;
-      }
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)statement;
-      final PsiExpression expression =
-        expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) {
-        return false;
-      }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)expression;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final String text = methodExpression.getText();
-      return PsiKeyword.SUPER.equals(text);
     }
   }
 }

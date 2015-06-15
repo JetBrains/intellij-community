@@ -4,12 +4,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
-public class PySequenceExpressionImpl extends PyElementImpl {
+public abstract class PySequenceExpressionImpl extends PyElementImpl implements PySequenceExpression {
   public PySequenceExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -25,5 +26,10 @@ public class PySequenceExpressionImpl extends PyElementImpl {
   @NotNull
   public PyExpression[] getElements() {
     return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens()) == null;
   }
 }

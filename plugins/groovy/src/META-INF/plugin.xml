@@ -283,7 +283,6 @@
                          displayName="Gant"/>
 
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryPresentationProvider" order="first"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings"
@@ -1106,7 +1105,9 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
 
-    <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
+    <packageDependencies.visitor language="Groovy"
+                                 implementationClass="org.jetbrains.plugins.groovy.codeInspection.dependencies.GrDependencyVisitorFactory"/>
+
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
     <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>
@@ -1664,7 +1665,6 @@
             text="Groovy Console..." description="Launch Groovy Console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </action>
     
     <action id="Groovy.Shell"

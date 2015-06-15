@@ -18,7 +18,6 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -308,7 +307,7 @@ public class PsiSuperMethodImplUtil {
               if (superClass.isInterface() ||
                   CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
                 if (superMethod.hasModifierProperty(PsiModifier.STATIC) ||
-                    superMethod.hasModifierProperty(PsiModifier.DEFAULT) && hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.STATIC)) {
+                    superMethod.hasModifierProperty(PsiModifier.DEFAULT) && hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.STATIC) && !InheritanceUtil.isInheritorOrSelf(containingClass, superClass, true)) {
                   return false;
                 }
 
@@ -395,12 +394,10 @@ public class PsiSuperMethodImplUtil {
           result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
         }
 
-        Project project = aClass == null ? method.getProject() : aClass.getProject();
-        // cache Cls method hierarchy until root changed
-        Object dependency = method instanceof PsiCompiledElement ? ProjectRootModificationTracker.getInstance(project) :
-                            !method.isPhysical() ? method :
-                            PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
-        return CachedValueProvider.Result.create(result, dependency);
+        if (!method.isPhysical()) {
+          return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, method);
+        }
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.psi.PsiPlainText;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPlainTextImpl extends OwnBufferLeafPsiElement implements PsiPlainText {
-  protected PsiPlainTextImpl(CharSequence text) {
+  protected PsiPlainTextImpl(@NotNull CharSequence text) {
     super(PlainTextTokenTypes.PLAIN_TEXT, text);
   }
 

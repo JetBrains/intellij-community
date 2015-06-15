@@ -80,8 +80,14 @@ public interface EditorEx extends Editor {
 
   void setColumnMode(boolean val);
 
+  /**
+   * @deprecated To be removed in IDEA 16.
+   */
   void setLastColumnNumber(int val);
 
+  /**
+   * @deprecated To be removed in IDEA 16.
+   */
   int getLastColumnNumber();
 
   int VERTICAL_SCROLLBAR_LEFT = 0;
@@ -182,8 +188,6 @@ public interface EditorEx extends Editor {
 
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
-   * @param customGlobalScheme
-   * @return
    */
   @NotNull
   EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme);
@@ -257,11 +261,13 @@ public interface EditorEx extends Editor {
   /**
    * We often re-use the logic encapsulated at the editor. For example, every time we show editor fragment (folding, preview etc) we
    * create a dedicated graphics object and ask the editor to paint into it.
-   * <p/>
+   * <p>
    * The thing is that the editor itself may change its state if any postponed operation is triggered by the painting request
    * (e.g. soft wraps recalculation is triggered by the paint request and newly calculated soft wraps cause caret to change its position).
-   * <p/>
+   * <p>
    * This method allows to inform the editor that all subsequent painting request should not change the editor state.
+   * <p>
+   * In 'pure painting mode' editor also behaves as if soft wraps were not enabled.
    *
    * @param enabled  'pure painting mode' status to use
    */
@@ -272,8 +278,16 @@ public interface EditorEx extends Editor {
    * This is needed to allow a parent component draw above the scrollbar components (e.g. in the merge tool),
    * otherwise the drawings are cleared once the scrollbar gets repainted (which may happen suddenly, because the scrollbar UI uses the
    * {@link com.intellij.util.ui.Animator} to draw itself.
-   * @param callback  callback which will be called from the {@link javax.swing.JComponent#paint(java.awt.Graphics)} method of
+   * @param callback  callback which will be called from the {@link JComponent#paint(Graphics)} method of
    *                  the editor vertical scrollbar.
    */
   void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
+
+  /**
+   * @return the offset that the caret is expected to be but maybe not yet.
+   * E.g. when user right-clicks the mouse the caret is not immediately jumps there but the click-handler wants to know that location already.
+   *
+   * When no mouse-clicks happened return the regular caret offset.
+   */
+  int getExpectedCaretOffset();
 }

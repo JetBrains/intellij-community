@@ -128,15 +128,15 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, AbstractVcs vcs, String repositoryPath) {
+  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs, String repositoryPath) {
   }
 
   @Override
-  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider,
+  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
                               AnnotationProvider annotationProvider,
-                              FilePath path,
+                              @NotNull FilePath path,
                               String repositoryPath,
-                              AbstractVcs vcs) {
+                              @NotNull AbstractVcs vcs) {
   }
 
   @Override

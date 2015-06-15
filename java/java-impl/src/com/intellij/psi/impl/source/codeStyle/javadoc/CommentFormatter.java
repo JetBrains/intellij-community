@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
@@ -31,8 +30,11 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.impl.source.codeStyle.javadoc.JDParser.CommentInfo;
 
 /**
  * @author max
@@ -63,47 +65,12 @@ public class CommentFormatter {
     if (!getSettings().ENABLE_JAVADOC_FORMATTING) return;
 
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
-    processElementComment(psiElement);
-  }
-
-  private void processElementComment(@Nullable PsiElement psiElement) {
-    if (psiElement instanceof PsiClass) {
-      String newCommentText = formatClassComment((PsiClass)psiElement);
-      replaceDocComment(newCommentText, (PsiDocCommentOwner)psiElement);
-    }
-    else if (psiElement instanceof PsiMethod) {
-      String newCommentText = formatMethodComment((PsiMethod)psiElement);
-      replaceDocComment(newCommentText, (PsiDocCommentOwner)psiElement);
-    }
-    else if (psiElement instanceof PsiField) {
-      String newCommentText = formatFieldComment((PsiField)psiElement);
-      replaceDocComment(newCommentText, (PsiDocCommentOwner)psiElement);
-    }
-    else if (psiElement instanceof PsiDocComment) {
-      PsiDocComment comment = (PsiDocComment)psiElement;
-      if (JavaDocUtil.isInsidePackageInfo(comment)) {
-        String newCommentText = formatPackageComment(comment);
-        replaceCommentText(newCommentText, comment);
-      } else {
-        processElementComment(psiElement.getParent());
-      }
+    if (psiElement != null) {
+      getParser().formatCommentText(psiElement, this);
     }
   }
 
-  private String formatPackageComment(@NotNull PsiDocComment comment) {
-    final String info = getCommentInfo(comment);
-    if (info == null) return null;
-
-    JDComment jdComment = getParser().parse(info, new JDComment(this));
-    return jdComment.generate("");
-  }
-
-  private void replaceDocComment(@Nullable String newCommentText, @NotNull final PsiDocCommentOwner psiDocCommentOwner) {
-    final PsiDocComment oldComment = psiDocCommentOwner.getDocComment();
-    replaceCommentText(newCommentText, oldComment);
-  }
-
-  private void replaceCommentText(@Nullable String newCommentText, @Nullable PsiDocComment oldComment) {
+  public void replaceCommentText(@Nullable String newCommentText, @Nullable PsiDocComment oldComment) {
     if (newCommentText != null) newCommentText = stripSpaces(newCommentText);
     if (newCommentText == null || oldComment == null || newCommentText.equals(oldComment.getText())) {
       return;
@@ -142,53 +109,22 @@ public class CommentFormatter {
   }
 
   @Nullable
-  private String formatClassComment(@NotNull PsiClass psiClass) {
-    final String info = getOrigCommentInfo(psiClass);
-    if (info == null) return null;
-
-    JDComment comment = getParser().parse(info, new JDClassComment(this));
-    return comment.generate(getIndent(psiClass));
-  }
-
-  @Nullable
-  private String formatMethodComment(@NotNull PsiMethod psiMethod) {
-    final String info = getOrigCommentInfo(psiMethod);
-    if (info == null) return null;
-
-    JDComment comment = getParser().parse(info, new JDMethodComment(this));
-    return comment.generate(getIndent(psiMethod));
-  }
-
-  @Nullable
-  private String formatFieldComment(@NotNull PsiField psiField) {
-    final String info = getOrigCommentInfo(psiField);
-    if (info == null) return null;
-
-    JDComment comment = getParser().parse(info, new JDComment(this));
-    return comment.generate(getIndent(psiField));
-  }
-
-
-  /**
-   * Returns the original comment info of the specified element or null
-   *
-   * @param element the specified element
-   * @return text chunk
-   */
-  @Nullable
-  private static String getOrigCommentInfo(PsiDocCommentOwner element) {
+  public static CommentInfo getOrigCommentInfo(PsiDocCommentOwner element) {
     PsiElement e = element.getFirstChild();
     if (!(e instanceof PsiComment)) {
       //no comments for this element
       return null;
     }
     else {
-      return getCommentInfo(((PsiComment)e));
+      return getCommentInfo((PsiComment)e);
     }
   }
 
   @Nullable
-  private static String getCommentInfo(PsiComment element) {
+  public static CommentInfo getCommentInfo(PsiComment element) {
+    String commentHeader = null;
+    String commentFooter = null;
+
     StringBuilder sb = new StringBuilder();
     PsiElement e = element;
     boolean first = true;
@@ -201,11 +137,18 @@ public class CommentFormatter {
           sb.append(text.substring(2).trim());
         }
         else if (text.startsWith("/*")) {
-          if (text.charAt(2) == '*') {
-            text = text.substring(3, Math.max(3, text.length() - 2));
+          int commentHeaderEndOffset = CharArrayUtil.shiftForward(text, 1, "*");
+          int commentFooterStartOffset = CharArrayUtil.shiftBackward(text, text.length() - 2, "*");
+
+          if (commentHeaderEndOffset <= commentFooterStartOffset) {
+            commentHeader = text.substring(0, commentHeaderEndOffset);
+            commentFooter = text.substring(commentFooterStartOffset + 1);
+            text = text.substring(commentHeaderEndOffset, commentFooterStartOffset + 1);
           }
           else {
-            text = text.substring(2, Math.max(2, text.length() - 2));
+            commentHeader = text.substring(0, commentHeaderEndOffset);
+            text = "";
+            commentFooter = "";
           }
           sb.append(text);
         }
@@ -217,7 +160,7 @@ public class CommentFormatter {
       e = e.getNextSibling();
     }
 
-    return sb.toString();
+    return new CommentInfo(commentHeader, sb.toString(), commentFooter);
   }
 
   /**
@@ -226,6 +169,9 @@ public class CommentFormatter {
    * @return indentation size
    */
   private int getIndentSpecial(@NotNull PsiElement element) {
+    if (element instanceof PsiDocComment) {
+      return 0;
+    }
     LOG.assertTrue(element instanceof PsiClass ||
                    element instanceof PsiField ||
                    element instanceof PsiMethod);
@@ -252,7 +198,7 @@ public class CommentFormatter {
    * @return indent which would be used for the given element when it's formatted according to the current code style settings
    */
   @NotNull
-  private String getIndent(@NotNull PsiElement element) {
+  public String getIndent(@NotNull PsiElement element) {
     return StringUtil.repeatSymbol(' ', getIndentSpecial(element));
   }
 }

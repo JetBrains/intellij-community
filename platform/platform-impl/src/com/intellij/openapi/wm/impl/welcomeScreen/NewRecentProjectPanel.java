@@ -27,6 +27,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -80,16 +82,43 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     list.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
-          if (frame != null) {
-            FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
-            if (policy != null) {
-              Component next = policy.getComponentAfter(frame, list);
-              if (next != null) {
-                next.requestFocus();
+        Object selected = list.getSelectedValue();
+        final ProjectGroup group;
+        if (selected instanceof ProjectGroupActionGroup) {
+          group = ((ProjectGroupActionGroup)selected).getGroup();
+        } else {
+          group = null;
+        }
+
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_RIGHT) {
+          if (group != null) {
+            if (!group.isExpanded()) {
+              group.setExpanded(true);
+              ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
+              int index = list.getSelectedIndex();
+              RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+              list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
+            }
+          } else {
+            FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
+            if (frame != null) {
+              FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
+              if (policy != null) {
+                Component next = policy.getComponentAfter(frame, list);
+                if (next != null) {
+                  next.requestFocus();
+                }
               }
             }
+          }
+        } else if (keyCode == KeyEvent.VK_LEFT ) {
+          if (group != null && group.isExpanded()) {
+            group.setExpanded(false);
+            int index = list.getSelectedIndex();
+            ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
+            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+            list.setSelectedIndex(index);
           }
         }
       }
@@ -97,6 +126,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     list.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
+        final int index = list.locationToIndex(new Point(x, y));
+        if (index != -1 && Arrays.binarySearch(list.getSelectedIndices(), index) < 0) {
+          list.setSelectedIndex(index);
+        }
         final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup");
         if (group != null) {
           ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).getComponent().show(comp, x, y);
@@ -186,7 +219,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         return new JPanel() {
           {
             setLayout(new BorderLayout());
-            setBackground(UIUtil.getListBackground(isSelected));
+            setBackground(back);
 
             boolean isGroup = value instanceof ProjectGroupActionGroup;
             boolean isInsideGroup = false;

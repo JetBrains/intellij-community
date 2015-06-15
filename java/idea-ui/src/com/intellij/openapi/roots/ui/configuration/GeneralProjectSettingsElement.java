@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -34,6 +35,7 @@ import com.intellij.util.graph.GraphAlgorithms;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
 
@@ -71,9 +73,9 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
 
     Graph<ModuleSourceSet> graph = ModuleCompilerUtil.createModuleSourceDependenciesGraph(myContext.getModulesConfigurator());
-    Collection<Chunk<ModuleSourceSet>> allSourceSetCycles = extractCycles(
-      GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph));
-    List<Chunk<ModuleSourceSet>> sourceSetCycles = filterDuplicates(allSourceSetCycles);
+    Collection<Chunk<ModuleSourceSet>> chunks = GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph);
+    List<Chunk<ModuleSourceSet>> sourceSetCycles =
+      removeSingleElementChunks(removeDummyNodes(filterDuplicates(removeSingleElementChunks(chunks))));
 
     List<String> cycles = new ArrayList<String>();
 
@@ -111,6 +113,31 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     }
   }
 
+  private List<Chunk<ModuleSourceSet>> removeDummyNodes(List<Chunk<ModuleSourceSet>> chunks) {
+    List<Chunk<ModuleSourceSet>> result = new ArrayList<Chunk<ModuleSourceSet>>(chunks.size());
+    for (Chunk<ModuleSourceSet> chunk : chunks) {
+      Set<ModuleSourceSet> nodes = new LinkedHashSet<ModuleSourceSet>();
+      for (ModuleSourceSet sourceSet : chunk.getNodes()) {
+        if (!isDummy(sourceSet)) {
+          nodes.add(sourceSet);
+        }
+      }
+      result.add(new Chunk<ModuleSourceSet>(nodes));
+    }
+    return result;
+  }
+
+  private boolean isDummy(ModuleSourceSet set) {
+    JavaSourceRootType type = set.getType() == ModuleSourceSet.Type.PRODUCTION ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
+    ModuleRootModel rootModel = myContext.getModulesConfigurator().getRootModel(set.getModule());
+    for (ContentEntry entry : rootModel.getContentEntries()) {
+      if (!entry.getSourceFolders(type).isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private boolean containsModuleWithInheritedSdk() {
     for (Module module : myContext.getModules()) {
       ModuleRootModel rootModel = myContext.getModulesConfigurator().getRootModel(module);
@@ -121,7 +148,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     return false;
   }
 
-  private static Collection<Chunk<ModuleSourceSet>> extractCycles(Collection<Chunk<ModuleSourceSet>> chunks) {
+  private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<Chunk<ModuleSourceSet>> chunks) {
     return ContainerUtil.filter(chunks, new Condition<Chunk<ModuleSourceSet>>() {
       @Override
       public boolean value(Chunk<ModuleSourceSet> chunk) {

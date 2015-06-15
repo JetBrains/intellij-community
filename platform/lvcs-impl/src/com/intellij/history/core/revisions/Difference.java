@@ -19,10 +19,10 @@ package com.intellij.history.core.revisions;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +71,7 @@ public class Difference {
 
       @NotNull
       public FilePath getFile() {
-        return new FilePathImpl(new File(e.getPath()), e.isDirectory());
+        return VcsUtil.getFilePath(new File(e.getPath()), e.isDirectory());
       }
 
       @NotNull

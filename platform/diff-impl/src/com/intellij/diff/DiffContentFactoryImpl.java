@@ -101,7 +101,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file);
     DocumentContent content = createDocument(project, file);
     if (content != null) return content;
-    return new BinaryFileContentImpl(project, file);
+    return new FileContentImpl(project, file);
   }
 
   @Override

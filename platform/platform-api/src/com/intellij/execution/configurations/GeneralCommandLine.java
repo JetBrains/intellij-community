@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,8 +79,14 @@ public class GeneralCommandLine implements UserDataHolder {
     return myExePath;
   }
 
-  public void setExePath(@NotNull @NonNls final String exePath) {
+  @NotNull
+  public GeneralCommandLine withExePath(@NotNull String exePath) {
     myExePath = exePath.trim();
+    return this;
+  }
+
+  public void setExePath(@NotNull String exePath) {
+    withExePath(exePath);
   }
 
   public File getWorkDirectory() {
@@ -89,28 +94,22 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withWorkDirectory(@Nullable final String path) {
+  public GeneralCommandLine withWorkDirectory(@Nullable String path) {
     return withWorkDirectory(path != null ? new File(path) : null);
   }
 
   @NotNull
-  public GeneralCommandLine withWorkDirectory(@Nullable final File workDirectory) {
+  public GeneralCommandLine withWorkDirectory(@Nullable File workDirectory) {
     myWorkDirectory = workDirectory;
     return this;
   }
 
-  /**
-   * @deprecated Use {@link #withWorkDirectory(String)} instead.
-   */
-  public void setWorkDirectory(@Nullable @NonNls final String path) {
+  public void setWorkDirectory(@Nullable String path) {
     withWorkDirectory(path);
   }
 
-  /**
-   * @deprecated Use {@link #withWorkDirectory(java.io.File)} instead.
-   */
-  public void setWorkDirectory(@Nullable final File workDirectory) {
-    myWorkDirectory = workDirectory;
+  public void setWorkDirectory(@Nullable File workDirectory) {
+    withWorkDirectory(workDirectory);
   }
 
   /**
@@ -129,63 +128,42 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  /**
-   * @deprecated use {@link #getEnvironment()} (to remove in IDEA 14)
-   */
-  @SuppressWarnings("unused")
-  public Map<String, String> getEnvParams() {
-    return getEnvironment();
-  }
-
-  /**
-   * @deprecated use {@link #getEnvironment()} (to remove in IDEA 14)
-   */
-  @SuppressWarnings("unused")
-  public void setEnvParams(@Nullable Map<String, String> envParams) {
-    myEnvParams.clear();
-    if (envParams != null) {
-      myEnvParams.putAll(envParams);
-    }
-  }
-
-  public void setPassParentEnvironment(boolean passParentEnvironment) {
-    myPassParentEnvironment = passParentEnvironment;
-  }
-
-  /**
-   * @deprecated use {@link #setPassParentEnvironment(boolean)} (to remove in IDEA 14)
-   */
-  @SuppressWarnings({"unused", "SpellCheckingInspection"})
-  public void setPassParentEnvs(boolean passParentEnvironment) {
-    setPassParentEnvironment(passParentEnvironment);
-  }
-
   public boolean isPassParentEnvironment() {
     return myPassParentEnvironment;
   }
 
+  @NotNull
+  public GeneralCommandLine withPassParentEnvironment(boolean passParentEnvironment) {
+    myPassParentEnvironment = passParentEnvironment;
+    return this;
+  }
+
+  public void setPassParentEnvironment(boolean passParentEnvironment) {
+    withPassParentEnvironment(passParentEnvironment);
+  }
+
   /**
-   * @return Environment, that will be passed to the process if isPassParentEnvironment() == true
+   * @return unmodifiable map of the parent environment, that will be passed to the process if isPassParentEnvironment() == true
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
-    return Collections.unmodifiableMap(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
-                                                                 : EnvironmentUtil.getEnvironmentMap());
+    return PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
+                                     : EnvironmentUtil.getEnvironmentMap();
   }
 
-  public void addParameters(final String... parameters) {
+  public void addParameters(String... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);
     }
   }
 
-  public void addParameters(@NotNull final List<String> parameters) {
-    for (final String parameter : parameters) {
+  public void addParameters(@NotNull List<String> parameters) {
+    for (String parameter : parameters) {
       addParameter(parameter);
     }
   }
 
-  public void addParameter(@NotNull @NonNls final String parameter) {
+  public void addParameter(@NotNull String parameter) {
     myProgramParams.add(parameter);
   }
 
@@ -198,24 +176,28 @@ public class GeneralCommandLine implements UserDataHolder {
     return myCharset;
   }
 
-  public GeneralCommandLine withCharset(@NotNull final Charset charset) {
+  @NotNull
+  public GeneralCommandLine withCharset(@NotNull Charset charset) {
     myCharset = charset;
     return this;
   }
 
-  /**
-   * @deprecated Use {@link #withCharset} instead.
-   */
-  public void setCharset(@NotNull final Charset charset) {
-    myCharset = charset;
+  public void setCharset(@NotNull Charset charset) {
+    withCharset(charset);
   }
 
   public boolean isRedirectErrorStream() {
     return myRedirectErrorStream;
   }
 
-  public void setRedirectErrorStream(final boolean redirectErrorStream) {
+  @NotNull
+  public GeneralCommandLine withRedirectErrorStream(boolean redirectErrorStream) {
     myRedirectErrorStream = redirectErrorStream;
+    return this;
+  }
+
+  public void setRedirectErrorStream(boolean redirectErrorStream) {
+    withRedirectErrorStream(redirectErrorStream);
   }
 
   /**
@@ -235,12 +217,12 @@ public class GeneralCommandLine implements UserDataHolder {
    * @param exeName use this executable name instead of given by {@link #setExePath(String)}
    * @return single-string representation of this command line.
    */
-  public String getCommandLineString(@Nullable final String exeName) {
+  public String getCommandLineString(@Nullable String exeName) {
     return ParametersList.join(getCommandLineList(exeName));
   }
 
-  public List<String> getCommandLineList(@Nullable final String exeName) {
-    final List<String> commands = new ArrayList<String>();
+  public List<String> getCommandLineList(@Nullable String exeName) {
+    List<String> commands = new ArrayList<String>();
     if (exeName != null) {
       commands.add(exeName);
     }
@@ -358,16 +340,16 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @Override
-  public <T> T getUserData(@NotNull final Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     if (myUserData != null) {
-      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) final T t = (T)myUserData.get(key);
+      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) T t = (T)myUserData.get(key);
       return t;
     }
     return null;
   }
 
   @Override
-  public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     if (myUserData == null) {
       myUserData = ContainerUtil.newHashMap();
     }

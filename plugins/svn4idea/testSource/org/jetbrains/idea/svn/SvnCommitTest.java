@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
+import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
@@ -187,7 +188,7 @@ public class SvnCommitTest extends Svn17TestCase {
 
         checkinFiles(dir, file, file2);
 
-        final FilePath dirPath = new FilePathImpl(new File(dir.getPath()), true);
+        final FilePath dirPath = VcsUtil.getFilePath(dir.getPath(), true);
         deleteFileInCommand(dir);
 
         myDirtyScopeManager.markEverythingDirty();

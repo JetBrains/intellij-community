@@ -16,6 +16,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
@@ -129,6 +130,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  */
 public class BuildManager implements ApplicationComponent{
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
+  private static final Key<Integer> COMPILER_PROCESS_DEBUG_PORT = Key.create("_compiler_process_debug_port_");
   private static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create(BuildParametersKeys.FORCE_MODEL_LOADING);
   private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
   private static final SimpleDateFormat USAGE_STAMP_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
@@ -779,6 +781,12 @@ public class BuildManager implements ApplicationComponent{
                   processHandler.startNotify();
                 }
 
+                Integer debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
+                if (debugPort != null) {
+                  String message = "Make: waiting for debugger connection on port " + debugPort;
+                  messageHandler.handleCompileMessage(sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse(message).getCompileMessage());
+                }
+
                 while (!processHandler.waitFor()) {
                   LOG.info("processHandler.waitFor() returned false for session " + sessionId + ", continue waiting");
                 }
@@ -1016,14 +1024,44 @@ public class BuildManager implements ApplicationComponent{
       vmExecutablePath = new File(forcedCompiledJdkHome, "bin/java").getAbsolutePath();
     }
 
+    final CompilerConfiguration projectConfig = CompilerConfiguration.getInstance(project);
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(vmExecutablePath);
     //cmdLine.addParameter("-XX:MaxPermSize=150m");
     //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    final int heapSize = config.getProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
 
-    cmdLine.addParameter("-Xmx" + heapSize + "m");
+    boolean isProfilingMode = false;
+    String userDefinedHeapSize = null;
+    final List<String> userAdditionalOptionsList = new SmartList<String>();
+    final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
+    final boolean userLocalOptionsActive = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions);
+    final String additionalOptions = userLocalOptionsActive ? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
+    if (!StringUtil.isEmptyOrSpaces(additionalOptions)) {
+      final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
+      while (tokenizer.hasMoreTokens()) {
+        final String option = tokenizer.nextToken();
+        if (StringUtil.startsWithIgnoreCase(option, "-Xmx")) {
+          if (userLocalOptionsActive) {
+            userDefinedHeapSize = option;
+          }
+        }
+        else {
+          if ("-Dprofiling.mode=true".equals(option)) {
+            isProfilingMode = true;
+          }
+          userAdditionalOptionsList.add(option);
+        }
+      }
+    }
+
+    if (userDefinedHeapSize != null) {
+      cmdLine.addParameter(userDefinedHeapSize);
+    }
+    else {
+      final int heapSize = projectConfig.getBuildProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
+      cmdLine.addParameter("-Xmx" + heapSize + "m");
+    }
 
     if (SystemInfo.isMac && sdkVersion != null && JavaSdkVersion.JDK_1_6.equals(sdkVersion) && Registry.is("compiler.process.32bit.vm.on.mac")) {
       // unfortunately -d32 is supported on jdk 1.6 only
@@ -1059,19 +1097,9 @@ public class BuildManager implements ApplicationComponent{
     // this will make netty initialization faster on some systems
     cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier());
 
-    boolean isProfilingMode = false;
-    final String additionalOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
-    if (!StringUtil.isEmpty(additionalOptions)) {
-      final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
-      while (tokenizer.hasMoreTokens()) {
-        final String option = tokenizer.nextToken();
-        if ("-Dprofiling.mode=true".equals(option)) {
-          isProfilingMode = true;
-        }
-        cmdLine.addParameter(option);
-      }
+    for (String option : userAdditionalOptionsList) {
+      cmdLine.addParameter(option);
     }
-
     if (isProfilingMode) {
       cmdLine.addParameter("-agentlib:yjpagent=disablealloc,delay=10000,sessionname=ExternalBuild");
     }
@@ -1143,6 +1171,13 @@ public class BuildManager implements ApplicationComponent{
 
     cmdLine.setWorkDirectory(workDirectory);
 
+    try {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).beforeBuildProcessStarted(project, sessionId);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+    
     final Process process = cmdLine.createProcess();
 
     final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset) {
@@ -1161,6 +1196,9 @@ public class BuildManager implements ApplicationComponent{
         }
       }
     });
+    if (debugPort > 0) {
+      processHandler.putUserData(COMPILER_PROCESS_DEBUG_PORT, debugPort);
+    }
 
     return processHandler;
   }
@@ -1204,7 +1242,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   @Nullable
-  private Pair<Date, File> readUsageFile(File usageFile) {
+  private static Pair<Date, File> readUsageFile(File usageFile) {
     try {
       final List<String> lines = FileUtil.loadLines(usageFile, CharsetToolkit.UTF8_CHARSET.name());
       if (!lines.isEmpty()) {

@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -48,6 +49,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,7 +71,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * Author: msk
  */
-public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
+public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
@@ -83,13 +85,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
-  int myInsideChange = 0;
+  int myInsideChange;
   private final MyFocusWatcher myFocusWatcher;
   private final Alarm myIconUpdaterAlarm = new Alarm();
-  private final KeymapManagerListener myKeymapListener;
   private final UIBuilder myUIBuilder = new UIBuilder();
 
-  public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
+  EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
@@ -101,15 +102,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       Disposer.register(manager.getProject(), dockable);
       dockManager.register(dockable);
     }
-    myKeymapListener = new KeymapManagerListener() {
+    KeymapManagerListener keymapListener = new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(Keymap keymap) {
         invalidate();
         repaint();
       }
     };
-    KeymapManager.getInstance().addKeymapManagerListener(myKeymapListener);
-    UISettings.getInstance().addUISettingsListener(this);
+    KeymapManager.getInstance().addKeymapManagerListener(keymapListener, this);
+    UISettings.getInstance().addUISettingsListener(this, this);
   }
   
   public FileEditorManagerImpl getManager() {
@@ -126,7 +127,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     repaint (); // revalidate doesn't repaint correctly after "Close All"
   }
 
-  public void startListeningFocus() {
+  void startListeningFocus() {
     myFocusWatcher.install(this);
   }
 
@@ -134,11 +135,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myFocusWatcher.deinstall(this);
   }
 
+  @Override
   public void dispose() {
     myIconUpdaterAlarm.cancelAllRequests();
     stopListeningFocus();
-    KeymapManager.getInstance().removeKeymapManagerListener(myKeymapListener);
-    UISettings.getInstance().removeUISettingsListener(this);
   }
 
   @Nullable
@@ -150,18 +150,18 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
 
-  protected boolean showEmptyText() {
+  private boolean showEmptyText() {
     return myCurrentWindow == null || myCurrentWindow.getFiles().length == 0;
   }
 
   @Override
   protected void paintComponent(Graphics g) {
     if (showEmptyText()) {
-      super.paintComponent(g);
+      Graphics2D gg = IdeBackgroundUtil.withFrameBackground(g, this);
+      super.paintComponent(gg);
       g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
       g.drawLine(0, 0, getWidth(), 0);
 
-      IdeBackgroundUtil.paintFrameBackground(g, this);
       ourPainter.paintEmptyText(this, g);
     }
   }
@@ -178,7 +178,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private Element writePanel(final JPanel panel) {
     final Component comp = panel.getComponent(0);
     if (comp instanceof Splitter) {
@@ -196,6 +196,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     else if (comp instanceof JBTabs) {
       final Element res = new Element("leaf");
+      Integer limit = UIUtil.getClientProperty(((JBTabs)comp).getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY);
+      if (limit != null) {
+        res.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), String.valueOf(limit));
+      }
+
       final EditorWindow window = findWindowWith(comp);
       writeWindow(res, window);
       return res;
@@ -309,7 +314,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull public VirtualFile[] getOpenFiles() {
-    final ArrayListSet<VirtualFile> files = new ArrayListSet<VirtualFile>();
+    final Set<VirtualFile> files = new ArrayListSet<VirtualFile>();
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
       for (final EditorWithProviderComposite editor : editors) {
@@ -325,7 +330,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull public VirtualFile[] getSelectedFiles() {
-    final ArrayListSet<VirtualFile> files = new ArrayListSet<VirtualFile>();
+    final Set<VirtualFile> files = new ArrayListSet<VirtualFile>();
     for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();
       if (file != null) {
@@ -391,7 +396,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }, 200, ModalityState.stateForComponent(this));
   }
 
-  public void updateFileColor(@NotNull final VirtualFile file) {
+  void updateFileColor(@NotNull final VirtualFile file) {
     final Collection<EditorWindow> windows = findWindows(file);
     for (final EditorWindow window : windows) {
       final int index = window.findEditorIndex(window.findFileComposite(file));
@@ -414,14 +419,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  public void setTabLayoutPolicy(int scrollTabLayout) {
+  void setTabLayoutPolicy(int scrollTabLayout) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
       windows[i].setTabLayoutPolicy(scrollTabLayout);
     }
   }
 
-  public void updateFileName(final VirtualFile updatedFile) {
+  void updateFileName(final VirtualFile updatedFile) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
       windows [i].updateFileName(updatedFile);
@@ -451,7 +456,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return frame;
   }
 
-  public boolean isInsideChange() {
+  boolean isInsideChange() {
     return myInsideChange > 0;
   }
 
@@ -462,14 +467,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myCurrentWindow = currentWindow;
   }
 
-  public void updateFileBackgroundColor(@NotNull VirtualFile file) {
+  void updateFileBackgroundColor(@NotNull VirtualFile file) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
       windows [i].updateFileBackgroundColor(file);
     }
   }
 
-  public int getSplitCount() {
+  int getSplitCount() {
     if (getComponentCount() > 0) {
       JPanel panel = (JPanel) getComponent(0);
       return getSplitCount(panel);
@@ -496,7 +501,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @Nullable
-  public JBTabs getTabsAt(RelativePoint point) {
+  JBTabs getTabsAt(RelativePoint point) {
     Point thisPoint = point.getPoint(this);
     Component c = SwingUtilities.getDeepestComponentAt(this, thisPoint.x, thisPoint.y);
     while (c != null) {
@@ -509,7 +514,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return null;
   }
 
-  public boolean isEmptyVisible() {
+  boolean isEmptyVisible() {
     EditorWindow[] windows = getWindows();
     for (EditorWindow each : windows) {
       if (!each.isEmptyVisible()) {
@@ -520,7 +525,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @Nullable
-  public VirtualFile findNextFile(final VirtualFile file) {
+  private VirtualFile findNextFile(final VirtualFile file) {
     final EditorWindow[] windows = getWindows(); // TODO: use current file as base
     for (int i = 0; i != windows.length; ++i) {
       final VirtualFile[] files = windows[i].getFiles();
@@ -560,6 +565,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Override
   public void uiSettingsChanged(UISettings source) {
+    if (!myManager.getProject().isOpen()) return;
     for (VirtualFile file : getOpenFiles()) {
       updateFileBackgroundColor(file);
       updateFileIcon(file);
@@ -611,7 +617,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return getCurrentWindow();
   }
 
-  public void createCurrentWindow() {
+  void createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
     setCurrentWindow(createEditorWindow());
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);
@@ -627,7 +633,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
-  public void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
+  void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
     final EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
 
     Runnable fireRunnable = new Runnable() {
@@ -697,7 +703,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull
-  public List<EditorWindow> findWindows(final VirtualFile file) {
+  private List<EditorWindow> findWindows(final VirtualFile file) {
     List<EditorWindow> res = new ArrayList<EditorWindow>();
     for (final EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
@@ -711,12 +717,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return myWindows.toArray(new EditorWindow [myWindows.size()]);
   }
 
-  @NotNull public EditorWindow[] getOrderedWindows() {
+  @NotNull
+  EditorWindow[] getOrderedWindows() {
     final List<EditorWindow> res = new ArrayList<EditorWindow>();
 
     // Collector for windows in tree ordering:
     class Inner{
-      final void collect(final JPanel panel){
+      private final void collect(final JPanel panel){
         final Component comp = panel.getComponent(0);
         if (comp instanceof Splitter) {
           final Splitter splitter = (Splitter)comp;
@@ -843,6 +850,20 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
       for (int i = 0; i < fileElements.size(); i++) {
         final Element file = fileElements.get(i);
+        if (i == 0) {
+          EditorTabbedContainer tabbedPane = window.getTabbedPane();
+          if (tabbedPane != null) {
+            try {
+              int limit =
+                Integer.parseInt(file.getParentElement().getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(),
+                                                                           String.valueOf(JBTabsImpl.DEFAULT_MAX_TAB_WIDTH)));
+              UIUtil.putClientProperty(tabbedPane.getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit);
+            }
+            catch (NumberFormatException e) {
+              //ignore
+            }
+          }
+        }
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
           Element historyElement = file.getChild(HistoryEntry.TAG);

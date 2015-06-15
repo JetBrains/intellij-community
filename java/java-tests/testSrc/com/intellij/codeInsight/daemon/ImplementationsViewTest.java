@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
@@ -43,7 +43,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     myFixture.completeBasic();
 
     PsiElement element =
-      TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+      TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert element != null;
     final String newText = ImplementationViewComponent.getNewText(element);
@@ -71,7 +71,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
                                         "    }\n" +
                                         "}");
     PsiElement element =
-      TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+      TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert element != null;
     final String newText = ImplementationViewComponent.getNewText(element);
@@ -120,7 +120,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
                                         "    \n" +
                                         "}");
     PsiClass psiClass =
-      (PsiClass)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+      (PsiClass)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert psiClass != null;
     final Collection<PsiElement> classes = getClassImplementations(psiClass);
@@ -152,7 +152,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
                                         "        }\n" +
                                         "}");
     PsiClass psiClass =
-      (PsiClass)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+      (PsiClass)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert psiClass != null;
     final Collection<PsiElement> classes = getClassImplementations(psiClass);
@@ -173,7 +173,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
                                         "        }\n" +
                                         "}");
     PsiMethod psiMethod =
-      (PsiMethod)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+      (PsiMethod)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert psiMethod != null;
     final Collection<PsiElement> methods = getMethodImplementations(psiMethod);
@@ -195,7 +195,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
                                         "        }\n" +
                                         "}");
     PsiMethod psiMethod =
-      (PsiMethod)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+      (PsiMethod)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert psiMethod != null;
     final Collection<PsiElement> methods = getMethodImplementations(psiMethod);
@@ -230,7 +230,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
                                           "    \n" +
                                           "}");
       PsiMethod psiMethod =
-        (PsiMethod)TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+        (PsiMethod)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
 
     assert psiMethod != null;
     final Collection<PsiMethod> methods = OverridingMethodsSearch.search(psiMethod).findAll();

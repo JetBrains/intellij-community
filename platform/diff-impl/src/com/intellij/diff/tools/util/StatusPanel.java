@@ -30,6 +30,7 @@ public abstract class StatusPanel extends JPanel {
   public StatusPanel() {
     super(new BorderLayout());
     myTextLabel = new JLabel("");
+    myTextLabel.setVisible(false);
     myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
     myBusySpinner.setVisible(false);
 
@@ -40,6 +41,7 @@ public abstract class StatusPanel extends JPanel {
 
   public void update() {
     int count = getChangesCount();
+    myTextLabel.setVisible(count != -1);
     myTextLabel.setText(DiffBundle.message("diff.count.differences.status.text", count));
   }
 

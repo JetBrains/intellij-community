@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -129,8 +130,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    size.width += (myMoreRec.width + myDownIconInsets.left + myDownIconInsets.right);
-    size.height += (myDownIconInsets.top + myDownIconInsets.bottom);
+    size.width += myMoreRec.width;
+    JBInsets.addTo(size, myDownIconInsets);
     return size;
   }
 

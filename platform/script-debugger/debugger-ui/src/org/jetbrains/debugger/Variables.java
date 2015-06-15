@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +80,7 @@ public final class Variables {
         List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
         List<Variable> functions = new SmartList<Variable>();
         for (Variable variable : variables) {
-          if (memberFilter.isMemberVisible(variable, false)) {
+          if (memberFilter.isMemberVisible(variable)) {
             Value value = variable.getValue();
             if (value != null &&
                 value.getType() == ValueType.FUNCTION &&
@@ -82,7 +97,7 @@ public final class Variables {
         Comparator<Variable> comparator = memberFilter.hasNameMappings() ? new Comparator<Variable>() {
           @Override
           public int compare(@NotNull Variable o1, @NotNull Variable o2) {
-            return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
+            return naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2));
           }
         } : NATURAL_NAME_COMPARATOR;
 
@@ -112,7 +127,7 @@ public final class Variables {
                                                             @NotNull MemberFilter memberFilter,
                                                             int maxChildrenToAdd,
                                                             boolean defaultIsLast) {
-    List<Variable> list = filterAndSort(variables, memberFilter, true);
+    List<Variable> list = filterAndSort(variables, memberFilter);
     if (list.isEmpty()) {
       if (defaultIsLast) {
         node.addChildren(XValueChildrenList.EMPTY, true);
@@ -133,7 +148,7 @@ public final class Variables {
   }
 
   @NotNull
-  public static List<Variable> filterAndSort(@NotNull List<Variable> variables, @NotNull MemberFilter memberFilter, boolean filterFunctions) {
+  public static List<Variable> filterAndSort(@NotNull List<Variable> variables, @NotNull MemberFilter memberFilter) {
     if (variables.isEmpty()) {
       return Collections.emptyList();
     }
@@ -141,7 +156,7 @@ public final class Variables {
     Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
     List<Variable> result = new ArrayList<Variable>(variables.size() + additionalVariables.size());
     for (Variable variable : variables) {
-      if (memberFilter.isMemberVisible(variable, filterFunctions)) {
+      if (memberFilter.isMemberVisible(variable)) {
         result.add(variable);
       }
     }
@@ -157,7 +172,7 @@ public final class Variables {
                                             @NotNull MemberFilter memberFilter) {
     ol: for (Variable variable : additionalVariables) {
       for (Variable frameVariable : variables) {
-        if (memberFilter.getName(frameVariable).equals(memberFilter.getName(variable))) {
+        if (memberFilter.rawNameToSource(frameVariable).equals(memberFilter.rawNameToSource(variable))) {
           continue ol;
         }
       }
@@ -265,7 +280,7 @@ public final class Variables {
     VariableContext getterOrSetterContext = null;
     for (int i = from; i < to; i++) {
       Variable variable = variables.get(i);
-      String normalizedName = memberFilter == null ? variable.getName() : memberFilter.getName(variable);
+      String normalizedName = memberFilter == null ? variable.getName() : memberFilter.rawNameToSource(variable);
       list.add(new VariableView(normalizedName, variable, variableContext));
       if (variable instanceof ObjectProperty) {
         ObjectProperty property = (ObjectProperty)variable;

@@ -119,6 +119,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   private boolean myAlwaysUpdateSnapshots;
 
   public Maven30ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
+    super(settings);
+
     File mavenHome = settings.getMavenHome();
     if (mavenHome != null) {
       System.setProperty("maven.home", mavenHome.getPath());
@@ -150,17 +152,26 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     Object cliRequest;
     try {
-      String[] commandLineOptions = new String[settings.getUserProperties().size()];
-      int idx = 0;
+      List<String> commandLineOptions = new ArrayList<String>(settings.getUserProperties().size());
       for (Map.Entry<Object, Object> each : settings.getUserProperties().entrySet()) {
-        commandLineOptions[idx++] = "-D" + each.getKey() + "=" + each.getValue();
+        commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
       }
 
+      if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DEBUG) {
+        commandLineOptions.add("-X");
+        commandLineOptions.add("-e");
+      }
+      else if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DISABLED) {
+        commandLineOptions.add("-q");
+      }
+
+      //noinspection unchecked
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
-      cliRequest = constructor.newInstance(commandLineOptions, classWorld);
+      //noinspection SSBasedInspection
+      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[commandLineOptions.size()]), classWorld);
 
-      for (String each : new String[]{"initialize", "cli", "properties", "container"}) {
+      for (String each : new String[]{"initialize", "cli", "logging", "properties", "container"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
         m.setAccessible(true);
         m.invoke(cli, cliRequest);
@@ -850,8 +861,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
     try {
-      resolve(artifact, remoteRepositories);
-      return artifact;
+      return resolve(artifact, remoteRepositories);
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
@@ -859,7 +869,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return artifact;
   }
 
-  public void resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
+  private Artifact resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
     throws ArtifactResolutionException, ArtifactNotFoundException {
 
     MavenExecutionRequest request = new DefaultMavenExecutionRequest();
@@ -873,6 +883,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
 
     getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
+    return artifact;
   }
 
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
@@ -1119,6 +1130,38 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   public interface Computable<T> {
     T compute();
+  }
+
+  private class MyLogger implements org.sonatype.aether.spi.log.Logger {
+    @Override
+    public boolean isDebugEnabled() {
+      return myConsoleWrapper.isDebugEnabled();
+    }
+
+    @Override
+    public void debug(String s) {
+      myConsoleWrapper.debug(s);
+    }
+
+    @Override
+    public void debug(String s, Throwable throwable) {
+      myConsoleWrapper.debug(s, throwable);
+    }
+
+    @Override
+    public boolean isWarnEnabled() {
+      return myConsoleWrapper.isWarnEnabled();
+    }
+
+    @Override
+    public void warn(String s) {
+      myConsoleWrapper.warn(s);
+    }
+
+    @Override
+    public void warn(String s, Throwable throwable) {
+      myConsoleWrapper.debug(s, throwable);
+    }
   }
 }
 

@@ -35,7 +35,12 @@ public abstract class ScriptManagerBaseEx<SCRIPT extends ScriptBase> extends Scr
   @Nullable
   @Override
   public final Script findScriptByUrl(@NotNull String rawUrl) {
-    Url url = rawUrlToOurUrl(rawUrl);
+    return findScriptByUrl(rawUrlToOurUrl(rawUrl));
+  }
+
+  @Nullable
+  @Override
+  public final Script findScriptByUrl(@NotNull Url url) {
     for (SCRIPT script : idToScript.values()) {
       if (url.equalsIgnoreParameters(script.getUrl())) {
         return script;

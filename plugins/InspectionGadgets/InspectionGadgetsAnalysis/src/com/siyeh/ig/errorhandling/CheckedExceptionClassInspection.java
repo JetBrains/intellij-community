@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,16 +44,14 @@ public class CheckedExceptionClassInspection extends BaseInspection {
     return new CheckedExceptionClassVisitor();
   }
 
-  private static class CheckedExceptionClassVisitor
-    extends BaseInspectionVisitor {
+  private static class CheckedExceptionClassVisitor extends BaseInspectionVisitor {
+
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (!InheritanceUtil.isInheritor(aClass,
-                                       CommonClassNames.JAVA_LANG_THROWABLE)) {
+      if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
         return;
       }
-      if (InheritanceUtil.isInheritor(aClass,
-                                      CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+      if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
         return;
       }
       registerClassError(aClass);

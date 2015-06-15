@@ -67,7 +67,8 @@ public class PythonUnitTestCommandLineState extends
       case TEST_FOLDER:
         final String folderName = FileUtil.toSystemDependentName(myConfig.getFolderName() + "/");
         if (!StringUtil.isEmpty(myConfig.getPattern()) && myConfig.usePattern()) {
-          specs.add(folderName + ";" + myConfig.getPattern());
+          // ";" can't be used with bash, so we use "_args_separator_"
+          specs.add(folderName + "_args_separator_" + myConfig.getPattern());
         }
         else {
           specs.add(folderName);

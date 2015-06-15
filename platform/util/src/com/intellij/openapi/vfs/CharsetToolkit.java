@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -297,16 +296,16 @@ public class CharsetToolkit {
 
   @NotNull
   public static String bytesToString(@NotNull byte[] bytes, @NotNull final Charset defaultCharset) {
-    return bytesToStringWithCharset(bytes, defaultCharset).getFirst();
+    Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
+    if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
+    return decodeString(bytes, charset);
   }
 
   @NotNull
-  public static Pair<String, Charset> bytesToStringWithCharset(@NotNull byte[] bytes, @NotNull final Charset defaultCharset) {
-    Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
-    if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
+  public static String decodeString(@NotNull byte[] bytes, @NotNull final Charset charset) {
     int bomLength = getBOMLength(bytes, charset);
     final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
-    return Pair.create(charBuffer.toString(), charset);
+    return charBuffer.toString();
   }
 
   public enum GuessedEncoding {

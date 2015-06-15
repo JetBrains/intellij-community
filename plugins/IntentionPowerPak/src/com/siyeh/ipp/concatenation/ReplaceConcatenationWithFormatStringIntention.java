@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
-    while (ConcatenationUtils.isConcatenation(parent)) {
+    while (ExpressionUtils.isConcatenation(parent)) {
       expression = (PsiPolyadicExpression)parent;
       parent = expression.getParent();
     }

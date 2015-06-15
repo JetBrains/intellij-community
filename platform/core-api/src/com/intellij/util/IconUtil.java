@@ -103,24 +103,34 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon flip(@NotNull Icon icon, boolean horizontal) {
-    int w = icon.getIconWidth();
-    int h = icon.getIconHeight();
-    BufferedImage first = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g = first.createGraphics();
-    icon.paintIcon(new JPanel(), g, 0, 0);
-    g.dispose();
+  public static Icon flip(@NotNull final Icon icon, final boolean horizontal) {
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        Graphics2D g2d = (Graphics2D)g.create();
+        try {
+          AffineTransform transform =
+            AffineTransform.getTranslateInstance(horizontal ? x + getIconWidth() : x, horizontal ? y : y + getIconHeight());
+          transform.concatenate(AffineTransform.getScaleInstance(horizontal ? -1 : 1, horizontal ? 1 : -1));
+          transform.preConcatenate(g2d.getTransform());
+          g2d.setTransform(transform);
+          icon.paintIcon(c, g2d, 0, 0);
+        }
+        finally {
+          g2d.dispose();
+        }
+      }
 
-    BufferedImage second = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
-    g = second.createGraphics();
-    if (horizontal) {
-      g.drawImage(first, 0, 0, w, h, w, 0, 0, h, null);
-    }
-    else {
-      g.drawImage(first, 0, 0, w, h, 0, h, w, 0, null);
-    }
-    g.dispose();
-    return new ImageIcon(second);
+      @Override
+      public int getIconWidth() {
+        return icon.getIconWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return icon.getIconHeight();
+      }
+    };
   }
 
   private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = new NullableFunction<FileIconKey, Icon>() {
@@ -385,11 +395,12 @@ public class IconUtil {
       public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D)g.create();
         try {
+          g2d.translate(x, y);
           AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
           transform.preConcatenate(g2d.getTransform());
           g2d.setTransform(transform);
           g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-          source.paintIcon(c, g2d, x, y);
+          source.paintIcon(c, g2d, 0, 0);
         } finally {
           g2d.dispose();
         }
@@ -436,6 +447,11 @@ public class IconUtil {
       }
     }
 
+    return createImageIcon(img);
+  }
+
+  @NotNull
+  public static JBImageIcon createImageIcon(@NotNull final BufferedImage img) {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {

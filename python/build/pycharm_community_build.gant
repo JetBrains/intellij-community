@@ -213,7 +213,10 @@ private layoutFull(Map args, String target, Set usedJars) {
         openapiModules.each { module it }
       }
 
-      jar("annotations.jar") { module("annotations") }
+      jar("annotations.jar") {
+        module("annotations-common")
+        module("annotations")
+      }
       jar("extensions.jar") { module("extensions") }
 
       jar("pycharm.jar") {

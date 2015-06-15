@@ -19,7 +19,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="vcs-log-graph-api" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />

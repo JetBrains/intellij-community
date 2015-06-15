@@ -16,13 +16,16 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,6 +54,22 @@ public class NewColorAndFontPanel extends JPanel {
 
     top.add(mySchemesPanel, BorderLayout.NORTH);
     top.add(myOptionsPanel.getPanel(), BorderLayout.CENTER);
+    if (optionsPanel instanceof ConsoleFontOptions) {
+      JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.TRAILING));
+      wrapper.add(new JButton(new AbstractAction(ApplicationBundle.message("action.apply.editor.font.settings")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          EditorColorsScheme scheme = ((ConsoleFontOptions)myOptionsPanel).getCurrentScheme();
+          scheme.setConsoleFontName(scheme.getEditorFontName());
+          scheme.setConsoleFontPreferences(scheme.getFontPreferences());
+          scheme.setConsoleFontSize(scheme.getEditorFontSize());
+          scheme.setConsoleLineSpacing(scheme.getLineSpacing());
+          myOptionsPanel.updateOptionsList();
+          myPreviewPanel.updateView();
+        }
+      }));
+      top.add(wrapper, BorderLayout.SOUTH);
+    }
 
     // We don't want to show non-used preview panel (it's considered to be not in use if it doesn't contain text).
     if (myPreviewPanel.getPanel() != null && (page == null || !StringUtil.isEmptyOrSpaces(page.getDemoText()))) {

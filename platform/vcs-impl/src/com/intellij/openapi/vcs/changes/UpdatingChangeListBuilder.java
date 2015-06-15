@@ -22,10 +22,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -133,7 +133,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(new FilePathImpl(file))) {
+    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
       if (myIgnoredFilesComponent.isIgnoredFile(file)) {
         myComposite.getIgnoredFileHolder().addFile(file);
       }
@@ -165,7 +165,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(new FilePathImpl(file))) {
+    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("processModifiedWithoutCheckout " + file);
       }
@@ -177,7 +177,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(new FilePathImpl(file))) {
+    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
       IgnoredFilesHolder ignoredFilesHolder = myComposite.getIgnoredFileHolder();
       if (ignoredFilesHolder instanceof IgnoredFilesCompositeHolder) {
         IgnoredFilesHolder holder = ((IgnoredFilesCompositeHolder)ignoredFilesHolder).getAppropriateIgnoredHolder();
@@ -193,7 +193,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processLockedFolder(final VirtualFile file) {
     if (file == null) return;
     checkIfDisposed();
-    if (myScope.belongsTo(new FilePathImpl(file))) {
+    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
       if (myFoldersCutDownWorker.addCurrent(file)) {
         myComposite.getVFHolder(FileHolder.HolderType.LOCKED).addFile(file);
       }
@@ -203,7 +203,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processLogicallyLockedFolder(VirtualFile file, LogicalLock logicalLock) {
     if (file == null) return;
     checkIfDisposed();
-    if (myScope.belongsTo(new FilePathImpl(file))) {
+    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
       ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
     }
   }
@@ -212,7 +212,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
-    if (myScope.belongsTo(new FilePathImpl(file))) {
+    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
       myChangeListWorker.addSwitched(file, branch, recursive);
     }
   }
@@ -220,7 +220,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processRootSwitch(VirtualFile file, String branch) {
     if (file == null) return;
     checkIfDisposed();
-    if (myScope.belongsTo(new FilePathImpl(file))) {
+    if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
       ((SwitchedFileHolder)myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
     }
   }

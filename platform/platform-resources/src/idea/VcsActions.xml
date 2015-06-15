@@ -88,7 +88,7 @@
       <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
               icon="AllIcons.Actions.MoveToAnotherChangelist"/>
       <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction"
-              icon="AllIcons.Actions.Diff"/>
+              icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
     </group>
 
     <group id="AlienCommitChangesDialog.AdditionalActions"/>
@@ -137,7 +137,7 @@
               text="Unshelve..." description="Correct paths where to apply patches and unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <action id="ShelvedChanges.Diff" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction"
-          icon="AllIcons.Actions.Diff"/>
+          icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
               icon="AllIcons.Actions.CreatePatch"/>
       <action id="ShelvedChanges.ImportPatches" class="com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction"/>
@@ -229,7 +229,7 @@
       <reference ref="EditSource"/>
       <reference ref="$Delete"/>
       <action id="Diff.UpdatedFiles" class="com.intellij.openapi.vcs.update.ShowUpdatedDiffAction"
-              use-shortcut-of="CompareTwoFiles" icon="AllIcons.Actions.Diff"/>
+              use-shortcut-of="Diff.ShowDiff" icon="AllIcons.Actions.Diff"/>
     </group>
 
     <group id="Vcs.MessageActionGroup">

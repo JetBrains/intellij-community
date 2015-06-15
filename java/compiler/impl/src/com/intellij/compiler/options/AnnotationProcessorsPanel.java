@@ -36,6 +36,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
@@ -270,14 +271,29 @@ public class AnnotationProcessorsPanel extends JPanel {
 
     @Override
     public void removeNode(TreePath nodePath) {
-      Object node = nodePath.getLastPathComponent();
-      if (node instanceof ProfileNode) {
-        final ProcessorConfigProfile nodeProfile = ((ProfileNode)node).myProfile;
-        if (nodeProfile != myDefaultProfile) {
+      removeNodes(Collections.singleton(nodePath));
+    }
+
+    public void removeNodes(Collection<TreePath> paths) {
+      final List<ProcessorConfigProfile> toRemove = new SmartList<ProcessorConfigProfile>();
+      for (TreePath path : paths) {
+        Object node = path.getLastPathComponent();
+        if (node instanceof ProfileNode) {
+          final ProcessorConfigProfile nodeProfile = ((ProfileNode)node).myProfile;
+          if (nodeProfile != myDefaultProfile) {
+            toRemove.add(nodeProfile);
+          }
+        }
+      }
+      if (!toRemove.isEmpty()) {
+        boolean changed = false;
+        for (ProcessorConfigProfile nodeProfile : toRemove) {
           if (mySelectedProfile == nodeProfile) {
             mySelectedProfile = null;
           }
-          myModuleProfiles.remove(nodeProfile);
+          changed |= myModuleProfiles.remove(nodeProfile);
+        }
+        if (changed) {
           ((DataSynchronizable)getRoot()).sync();
           final DefaultMutableTreeNode object = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)getRoot(), myDefaultProfile);
           if (object != null) {

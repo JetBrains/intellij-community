@@ -81,7 +81,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
 
   @Override
   public boolean isVisible() {
-    return true;
+    return super.isVisible();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 
 /**
  * @author: Roman Chernyatchik
@@ -34,6 +37,8 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
   private final TestConsoleProperties myConsoleProperties;
   private SMRootTestProxyFormatter myAdditionalRootFormatter;
+  private int myDurationWidth = -1;
+  private int myRow;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
@@ -46,6 +51,8 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
                                     final boolean leaf,
                                     final int row,
                                     final boolean hasFocus) {
+    myRow = row;
+    myDurationWidth = -1;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
     final Object userObj = node.getUserObject();
     if (userObj instanceof SMTRunnerNodeDescriptor) {
@@ -54,7 +61,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
       if (testProxy instanceof SMTestProxy.SMRootTestProxy) {
         SMTestProxy.SMRootTestProxy rootTestProxy = (SMTestProxy.SMRootTestProxy) testProxy;
-        if (rootTestProxy.isLeaf()) {
+        if (node.isLeaf()) {
           TestsPresentationUtil.formatRootNodeWithoutChildren(rootTestProxy, this);
         } else {
           TestsPresentationUtil.formatRootNodeWithChildren(rootTestProxy, this);
@@ -65,6 +72,17 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       } else {
         TestsPresentationUtil.formatTestProxy(testProxy, this);
       }
+
+      if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(myConsoleProperties)) {
+        String durationString = testProxy.getDurationString(myConsoleProperties);
+        if (durationString != null) {
+          durationString = "  " + durationString;
+          myDurationWidth = getFontMetrics(getFont()).stringWidth(durationString);
+          if (((TestTreeView)myTree).isExpandableHandlerVisibleForCurrentRow(myRow)) {
+            append(durationString);
+          }
+        }
+      }
       //Done
       return;
     }
@@ -73,6 +91,15 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     final String text = node.toString();
     //no icon
     append(text != null ? text : SPACE_STRING, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+  }
+
+  @NotNull
+  @Override
+  public Dimension getPreferredSize() {
+    final Dimension preferredSize = super.getPreferredSize();
+    return myDurationWidth < 0 || ((TestTreeView)myTree).isExpandableHandlerVisibleForCurrentRow(myRow) 
+           ? preferredSize 
+           : JBUI.size(preferredSize.width + myDurationWidth, preferredSize.height);
   }
 
   public TestConsoleProperties getConsoleProperties() {
@@ -86,4 +113,5 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   public void removeAdditionalRootFormatter() {
     myAdditionalRootFormatter = null;
   }
+
 }

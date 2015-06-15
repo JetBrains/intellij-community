@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.lang.UrlClassLoader;
@@ -63,13 +64,15 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
       }
     }
 
-    final String sandboxHome = getSandboxPath(jdk);
+    final File sandboxHome = getSandboxPath(jdk);
     if (sandboxHome != null) {
       if (!vm.hasProperty("idea.home.path")) {
-        vm.defineProperty("idea.home.path", sandboxHome + File.separator + "test");
+        File homeDir = new File(sandboxHome, "test");
+        FileUtil.createDirectory(homeDir);
+        vm.defineProperty("idea.home.path", homeDir.getAbsolutePath());
       }
       if (!vm.hasProperty("idea.plugins.path")) {
-        vm.defineProperty("idea.plugins.path", sandboxHome + File.separator + "plugins");
+        vm.defineProperty("idea.plugins.path", new File(sandboxHome, "plugins").getAbsolutePath());
       }
     }
 
@@ -79,16 +82,16 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
   }
 
   @Nullable
-  private static String getSandboxPath(final Sdk jdk) {
+  private static File getSandboxPath(final Sdk jdk) {
     String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
     if (sandboxHome != null) {
       try {
-        sandboxHome = new File(sandboxHome).getCanonicalPath();
+        return new File(sandboxHome).getCanonicalFile();
       }
       catch (IOException e) {
-        sandboxHome = new File(sandboxHome).getAbsolutePath();
+        return new File(sandboxHome).getAbsoluteFile();
       }
     }
-    return sandboxHome;
+    return null;
   }
 }

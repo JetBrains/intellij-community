@@ -82,7 +82,7 @@ public class ImportModuleAction extends AnAction {
   }
 
   public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
-    if (project == null && wizard.getStepCount() > 0) {
+    if (project == null) {
       Project newProject = NewProjectUtil.createFromWizard(wizard, null);
       return newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
     }
@@ -94,7 +94,6 @@ public class ImportModuleAction extends AnAction {
         return Collections.singletonList(module);
       }
       else {
-        assert project != null;
         return projectBuilder.commit(project);
       }
     }

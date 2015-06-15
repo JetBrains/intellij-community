@@ -12,6 +12,7 @@ args
 argv
 arial
 arity
+arquillian
 asensitive
 aspectj
 async
@@ -277,7 +278,6 @@ llvm
 localhost
 localtime
 localtimestamp
-locator
 logfile
 login
 logoff

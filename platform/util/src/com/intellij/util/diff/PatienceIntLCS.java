@@ -29,6 +29,8 @@ public class PatienceIntLCS {
   private final BitSet myChanges1;
   private final BitSet myChanges2;
 
+  private boolean myFailOnSmallReduction;
+
   public PatienceIntLCS(int[] first, int[] second) {
     this(first, second, 0, first.length, 0, second.length, new BitSet(first.length), new BitSet(second.length));
   }
@@ -43,6 +45,10 @@ public class PatienceIntLCS {
 
     myChanges1 = changes1;
     myChanges2 = changes2;
+  }
+
+  public void failOnSmallSizeReduction() {
+    myFailOnSmallReduction = true;
   }
 
   public void execute() throws FilesTooBigForDiffException {
@@ -71,6 +77,7 @@ public class PatienceIntLCS {
       int[][] matching = uniqueLCS.execute();
 
       if (matching == null) {
+        checkReduction(count1, count2);
         IntLCS intLCS = new IntLCS(myFirst, mySecond, start1, count1, start2, count2, myChanges1, myChanges2);
         intLCS.execute();
       }
@@ -79,8 +86,12 @@ public class PatienceIntLCS {
         int matched = matching[0].length;
         assert matched > 0;
 
+        c1 = matching[0][0];
+        c2 = matching[1][0];
+
+        checkReduction(c1, c2);
         PatienceIntLCS patienceDiff =
-          new PatienceIntLCS(myFirst, mySecond, start1, matching[0][0], start2, matching[1][0], myChanges1, myChanges2);
+          new PatienceIntLCS(myFirst, mySecond, start1, c1, start2, c2, myChanges1, myChanges2);
         patienceDiff.execute();
 
         for (int i = 1; i < matching[0].length; i++) {
@@ -91,6 +102,7 @@ public class PatienceIntLCS {
           c2 = matching[1][i] - s2;
 
           if (c1 > 0 || c2 > 0) {
+            checkReduction(c1, c2);
             patienceDiff = new PatienceIntLCS(myFirst, mySecond, start1 + s1, c1, start2 + s2, c2, myChanges1, myChanges2);
             patienceDiff.execute();
           }
@@ -113,6 +125,7 @@ public class PatienceIntLCS {
           c2 = count2 - s2;
         }
 
+        checkReduction(c1, c2);
         patienceDiff = new PatienceIntLCS(myFirst, mySecond, start1 + s1, c1, start2 + s2, c2, myChanges1, myChanges2);
         patienceDiff.execute();
       }
@@ -146,5 +159,12 @@ public class PatienceIntLCS {
 
   public BitSet[] getChanges() {
     return new BitSet[]{myChanges1, myChanges2};
+  }
+
+  private void checkReduction(int count1, int count2) throws FilesTooBigForDiffException {
+    if (!myFailOnSmallReduction) return;
+    if (count1 * 2 < myCount1) return;
+    if (count2 * 2 < myCount2) return;
+    throw new FilesTooBigForDiffException(0);
   }
 }

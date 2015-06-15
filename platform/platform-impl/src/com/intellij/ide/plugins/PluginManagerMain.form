@@ -54,12 +54,15 @@
                 <constraints>
                   <splitpane position="right"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <minimumSize width="50" height="50"/>
+                  <preferredSize width="300" height="200"/>
+                </properties>
                 <border type="none">
                   <size top="2" left="4" bottom="2" right="4"/>
                 </border>
                 <children>
-                  <scrollpane id="8853a" class="com.intellij.ui.components.JBScrollPane">
+                  <scrollpane id="8853a" class="com.intellij.ui.components.JBScrollPane" binding="myDescriptionScrollPane">
                     <constraints border-constraint="Center"/>
                     <properties/>
                     <border type="empty"/>
@@ -91,7 +94,10 @@
                 <constraints>
                   <splitpane position="left"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <minimumSize width="50" height="50"/>
+                  <preferredSize width="300" height="200"/>
+                </properties>
                 <border type="none"/>
                 <children/>
               </grid>

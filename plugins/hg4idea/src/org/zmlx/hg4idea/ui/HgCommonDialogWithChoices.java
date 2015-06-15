@@ -124,11 +124,11 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
   private void updateRepository() {
     HgRepository repo = hgRepositorySelectorComponent.getRepository();
     branchSelector.setModel(new DefaultComboBoxModel(repo.getOpenedBranches().toArray()));
-    DefaultComboBoxModel tagComboBoxModel = new DefaultComboBoxModel(HgUtil.getNamesWithoutHashes(repo.getTags()).toArray());
+    DefaultComboBoxModel tagComboBoxModel = new DefaultComboBoxModel(HgUtil.getSortedNamesWithoutHashes(repo.getTags()).toArray());
     tagComboBoxModel
       .addElement(TIP_REFERENCE);    //HgRepository does not store 'tip' tag because it is internal and not included in tags file
     tagSelector.setModel(tagComboBoxModel);
-    bookmarkSelector.setModel(new DefaultComboBoxModel(HgUtil.getNamesWithoutHashes(repo.getBookmarks()).toArray()));
+    bookmarkSelector.setModel(new DefaultComboBoxModel(HgUtil.getSortedNamesWithoutHashes(repo.getBookmarks()).toArray()));
     update();
   }
 

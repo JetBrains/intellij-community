@@ -65,7 +65,7 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
     SvnTarget target = command.getTarget();
     File workingDirectory = target.isFile() ? target.getFile() : null;
     // TODO: Do we really need search existing parent - or just take parent directory if target is file???
-    workingDirectory = CommandUtil.correctUpToExistingParent(workingDirectory);
+    workingDirectory = CommandUtil.findExistingParent(workingDirectory);
 
     if (workingDirectory == null) {
       workingDirectory =

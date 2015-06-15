@@ -96,17 +96,20 @@ public class CommonShortcuts {
     return shortcutsById(IdeActions.ACTION_NEW_ELEMENT);
   }
 
+  public static ShortcutSet getDuplicate() {
+    return shortcutsById(IdeActions.ACTION_EDITOR_DUPLICATE);
+  }
+
   public static ShortcutSet getMove() {
     return shortcutsById(IdeActions.ACTION_MOVE);
   }
-
 
   public static ShortcutSet getRename() {
     return shortcutsById(IdeActions.ACTION_RENAME);
   }
 
   public static ShortcutSet getDiff() {
-    return shortcutsById(IdeActions.ACTION_SHOW_DIFF);
+    return shortcutsById(IdeActions.ACTION_SHOW_DIFF_COMMON);
   }
 
   public static ShortcutSet getFind() {

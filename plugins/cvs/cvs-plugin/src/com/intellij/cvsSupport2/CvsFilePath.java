@@ -16,19 +16,18 @@
 package com.intellij.cvsSupport2;
 
 import com.intellij.cvsSupport2.changeBrowser.CvsRepositoryLocation;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.LocalFilePath;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CvsFilePath extends FilePathImpl {
+public class CvsFilePath extends LocalFilePath {
 
   private final CvsRepositoryLocation myRepositoryLocation;
 
-  public CvsFilePath(@NotNull VirtualFile virtualFile, @NotNull CvsRepositoryLocation repositoryLocation) {
-    super(virtualFile);
+  public CvsFilePath(@NotNull String path, boolean isDirectory, @NotNull CvsRepositoryLocation repositoryLocation) {
+    super(path, isDirectory);
     myRepositoryLocation = repositoryLocation;
   }
 

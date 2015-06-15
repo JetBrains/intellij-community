@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +120,16 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   }
 
   @Override
+  public XMLSchemaVersion getXmlSchemaVersion(@NotNull Project project) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String getCatalogPropertiesFile() {
     throw new UnsupportedOperationException();
   }
@@ -131,6 +142,11 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   @Override
   public long getModificationCount(@NotNull Project project) {
     return 0;
+  }
+
+  @Override
+  public MultiMap<String, String> getUrlsByNamespace(Project project) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

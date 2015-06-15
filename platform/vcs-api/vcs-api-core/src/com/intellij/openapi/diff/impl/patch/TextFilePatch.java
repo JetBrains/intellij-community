@@ -26,20 +26,16 @@ import java.util.List;
  * @author yole
  */
 public class TextFilePatch extends FilePatch {
-  @Nullable private Charset myCharset;
+  private Charset myCharset;
   private final List<PatchHunk> myHunks;
-
-  public void addHunk(final PatchHunk hunk) {
-    myHunks.add(hunk);
-  }
-
-  public List<PatchHunk> getHunks() {
-    return Collections.unmodifiableList(myHunks);
-  }
 
   public TextFilePatch(@Nullable Charset charset) {
     myCharset = charset;
     myHunks = new ArrayList<PatchHunk>();
+  }
+
+  public TextFilePatch pathsOnlyCopy() {
+    return new TextFilePatch(this);
   }
 
   private TextFilePatch(final TextFilePatch patch) {
@@ -51,10 +47,15 @@ public class TextFilePatch extends FilePatch {
     myHunks = patch.myHunks;
   }
 
-  public TextFilePatch pathsOnlyCopy() {
-    return new TextFilePatch(this);
+  public void addHunk(final PatchHunk hunk) {
+    myHunks.add(hunk);
   }
 
+  public List<PatchHunk> getHunks() {
+    return Collections.unmodifiableList(myHunks);
+  }
+
+  @Override
   public boolean isNewFile() {
     return myHunks.size() == 1 && myHunks.get(0).isNewContent();
   }
@@ -63,6 +64,7 @@ public class TextFilePatch extends FilePatch {
     return myHunks.get(0).getText();
   }
 
+  @Override
   public boolean isDeletedFile() {
     return myHunks.size() == 1 && myHunks.get(0).isDeletedContent();
   }
@@ -70,13 +72,5 @@ public class TextFilePatch extends FilePatch {
   @Nullable
   public Charset getCharset() {
     return myCharset;
-  }
-
-  /**
-   * To be removed in IDEA 15
-   */
-  @Deprecated
-  public void setCharset(@Nullable Charset charset) {
-    myCharset = charset;
   }
 }

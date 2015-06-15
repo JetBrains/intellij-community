@@ -18,10 +18,13 @@ package com.intellij.remoteServer.util;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
+import com.intellij.remoteServer.agent.util.log.TerminalListener;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
+import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 
@@ -97,6 +100,23 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       @Override
       public void lineLogged(String line) {
         loggingHandler.print(line);
+      }
+    };
+  }
+
+  @Override
+  public boolean isTtySupported() {
+    return myLogManager.isTtySupported();
+  }
+
+  @Override
+  public TerminalListener createTerminal(final String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
+    final TerminalHandler terminalHandler = myLogManager.addTerminal(pipeName, terminalOutput, terminalInput);
+    return new TerminalListener() {
+
+      @Override
+      public void close() {
+        terminalHandler.close();
       }
     };
   }

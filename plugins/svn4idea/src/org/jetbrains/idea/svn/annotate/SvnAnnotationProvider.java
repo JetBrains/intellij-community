@@ -25,13 +25,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -294,7 +294,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       lineAnnotationData.put(i,  revisionNumber);
     }
 
-    final VcsAnnotation vcsAnnotation = new VcsAnnotation(new FilePathImpl(svnFileAnnotation.getFile()), lineAnnotationData,
+    final VcsAnnotation vcsAnnotation = new VcsAnnotation(VcsUtil.getFilePath(svnFileAnnotation.getFile()), lineAnnotationData,
                                                           svnFileAnnotation.getFirstRevisionNumber());
 
     if (annotationSourceSwitcher != null) {

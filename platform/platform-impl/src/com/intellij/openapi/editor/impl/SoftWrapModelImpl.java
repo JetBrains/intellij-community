@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,7 +83,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    */
   private final List<TextRange> myDeferredFoldRegions = new ArrayList<TextRange>();
 
-  private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
   private final SoftWrapsStorage                   myStorage;
   private       SoftWrapPainter                    myPainter;
@@ -92,7 +90,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final SoftWrapAwareVisualSizeManager     myVisualSizeManager;
   private       EditorTextRepresentationHelper     myEditorTextRepresentationHelper;
 
-  private final EditorEx myEditor;
+  @NotNull
+  private final EditorImpl myEditor;
 
   /**
    * We don't want to use soft wraps-aware processing from non-EDT and profiling shows that 'is EDT' check that is called too
@@ -131,14 +130,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   
   private boolean myForceAdditionalColumns;
 
-  public SoftWrapModelImpl(@NotNull EditorEx editor) {
+  public SoftWrapModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
     myStorage = new SoftWrapsStorage();
     myPainter = new CompositeSoftWrapPainter(editor);
     myEditorTextRepresentationHelper = new DefaultEditorTextRepresentationHelper(editor);
     myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage);
     myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper);
-    myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
     myVisualSizeManager = new SoftWrapAwareVisualSizeManager(myPainter);
 
     myApplianceManager.addListener(myVisualSizeManager);
@@ -159,7 +157,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
-    return !(myEditor instanceof EditorWindow) && myEditor.getSettings().isUseSoftWraps() && !((EditorImpl) myEditor).myUseNewRendering 
+    return myEditor.getSettings().isUseSoftWraps() && !myEditor.myUseNewRendering 
            && (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
   }
 
@@ -434,8 +432,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * @return      <code>true</code> if soft wraps-aware processing should be used; <code>false</code> otherwise
    */
   private boolean prepareToMapping() {
-    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0
-                             && myFoldBasedApplianceStrategy.processSoftWraps();
+    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0;
 
     if (!useSoftWraps) {
       return false;
@@ -534,10 +531,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     
     myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
     caretModel.moveToVisualPosition(visualCaretPosition);
-  }
-
-  public void setPlace(@NotNull SoftWrapAppliancePlaces place) {
-    myFoldBasedApplianceStrategy.setCurrentPlace(place);
   }
 
   @Override
@@ -667,10 +660,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       task.run(true);
     } catch (Throwable e) {
       if (Boolean.getBoolean(DEBUG_PROPERTY_NAME) || ApplicationManager.getApplication().isUnitTestMode()) {
-        String info = "";
-        if (myEditor instanceof EditorImpl) {
-          info = ((EditorImpl)myEditor).dumpState();
-        } 
+        String info = myEditor.dumpState();
         LOG.error(String.format("Unexpected exception occurred during performing '%s'", task), e, info);
       }
       myEditor.getFoldingModel().rebuild();
@@ -682,10 +672,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         task.run(true);
       }
       catch (Throwable e1) {
-        String info = "";
-        if (myEditor instanceof EditorImpl) {
-          info = ((EditorImpl)myEditor).dumpState();
-        }
+        String info = myEditor.dumpState();
         LOG.error(String.format("Can't perform %s even with complete soft wraps cache re-parsing", task), e1, info);
         myEditor.getSettings().setUseSoftWraps(false);
         task.run(false);

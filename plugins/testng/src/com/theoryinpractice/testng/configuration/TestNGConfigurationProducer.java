@@ -20,21 +20,20 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.*;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
-import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
-import com.theoryinpractice.testng.model.TestData;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.theoryinpractice.testng.model.TestNGTestObject;
 
 public abstract class TestNGConfigurationProducer extends JavaRunConfigurationProducerBase<TestNGConfiguration> implements Cloneable {
 
@@ -48,14 +47,18 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
       return false;
     }
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(TestNGConfigurationType.getInstance());
-    Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
+    final Location contextLocation = context.getLocation();
+    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     final PsiElement element = location.getPsiElement();
     RunnerAndConfigurationSettings template = RunManager.getInstance(location.getProject()).getConfigurationTemplate(getConfigurationFactory());
     final Module predefinedModule = ((TestNGConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
     final String vmParameters =
       predefinedConfiguration instanceof TestNGConfiguration ? ((TestNGConfiguration)predefinedConfiguration).getVMParameters() : null;
     if (vmParameters != null && !Comparing.strEqual(vmParameters, testNGConfiguration.getVMParameters())) return false;
-    TestData testobject = testNGConfiguration.getPersistantData();
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? getInvocationNumber(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
+    if (paramSetName != null && !Comparing.strEqual(paramSetName, testNGConfiguration.getProgramParameters())) return false;
+    TestNGTestObject testobject = TestNGTestObject.fromConfig(testNGConfiguration);
     if (testobject != null) {
       if (testobject.isConfiguredByElement(element)) {
         final Module configurationModule = testNGConfiguration.getConfigurationModule().getModule();
@@ -64,5 +67,9 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
       }
     }
     return false;
+  }
+  
+  public static String getInvocationNumber(String str) {
+    return StringUtil.trimEnd(StringUtil.trimStart(str, "["), "]");
   }
 }

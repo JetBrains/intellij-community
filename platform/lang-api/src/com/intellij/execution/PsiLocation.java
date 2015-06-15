@@ -17,7 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,10 +32,14 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   private final Project myProject;
   private final Module myModule;
 
+  public PsiLocation(E psiElement) {
+    this(psiElement.getProject(), psiElement);
+  }
+
   public PsiLocation(@NotNull final Project project, @NotNull final E psiElement) {
     myPsiElement = psiElement;
     myProject = project;
-    myModule = ModuleUtil.findModuleForPsiElement(psiElement);
+    myModule = ModuleUtilCore.findModuleForPsiElement(psiElement);
   }
 
   public PsiLocation(@NotNull Project project, Module module, @NotNull E psiElement) {

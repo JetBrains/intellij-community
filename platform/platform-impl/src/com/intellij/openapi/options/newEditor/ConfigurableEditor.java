@@ -75,7 +75,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     @Override
     public void actionPerformed(ActionEvent event) {
       if (myConfigurable != null) {
-        myConfigurable.reset();
+        ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
       }
     }
@@ -143,6 +143,15 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   @Override
   public final void afterActionPerformed(AnAction action, DataContext context, AnActionEvent event) {
     requestUpdate();
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    if (myConfigurable instanceof BaseConfigurable) {
+      JComponent preferred = ((BaseConfigurable)myConfigurable).getPreferredFocusedComponent();
+      if (preferred != null) return preferred;
+    }
+    return super.getPreferredFocusedComponent();
   }
 
   @Override

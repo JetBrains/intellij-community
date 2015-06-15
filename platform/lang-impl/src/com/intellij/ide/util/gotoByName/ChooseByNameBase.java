@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,10 +81,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -278,9 +275,14 @@ public abstract class ChooseByNameBase {
 
     @Override
     public Object getData(String dataId) {
+      if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
+        return myTextField == null ? null : myTextField.getText();
+      }
+
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return myModel.getHelpId();
       }
+
       if (myCalcElementsThread != null) {
         return null;
       }
@@ -309,6 +311,9 @@ public abstract class ChooseByNameBase {
       }
       else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         return getBounds();
+      }
+      else if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
+        return myTextField == null ? null : myTextField.getText();
       }
       return null;
     }
@@ -530,7 +535,7 @@ public abstract class ChooseByNameBase {
                   return;
                 }
 
-                if (oppositeComponent != null && myProject != null) {
+                if (oppositeComponent != null && myProject != null && !myProject.isDisposed()) {
                   ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
                   ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
                   if (toolWindow != null) {
@@ -696,7 +701,7 @@ public abstract class ChooseByNameBase {
     });
 
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
-    myListScrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+    myListScrollPane.setViewportBorder(JBUI.Borders.empty());
 
     myTextFieldPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
 
@@ -803,14 +808,18 @@ public abstract class ChooseByNameBase {
   private boolean postponeCloseWhenListReady(boolean ok) {
     if (!isToFixLostTyping()) return false;
 
-    final String text = myTextField.getText();
-    if (ok && myCalcElementsThread != null && text != null && !text.trim().isEmpty()) {
+    final String text = getTrimmedText();
+    if (ok && myCalcElementsThread != null && !text.isEmpty()) {
       myPostponedOkAction = new ActionCallback();
       IdeFocusManager.getInstance(myProject).typeAheadUntil(myPostponedOkAction);
       return true;
     }
 
     return false;
+  }
+
+  @NotNull public String getTrimmedText() {
+    return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
 
   public void setFixLostTyping(boolean fixLostTyping) {
@@ -966,9 +975,8 @@ public abstract class ChooseByNameBase {
       calcElementsThread.cancel();
     }
 
-    final String text = myTextField.getText();
-    if (!canShowListForEmptyPattern() &&
-        (text == null || text.trim().isEmpty())) {
+    final String text = getTrimmedText();
+    if (!canShowListForEmptyPattern() && text.isEmpty()) {
       myListModel.clear();
       hideList();
       myTextFieldPanel.hideHint();
@@ -1068,7 +1076,7 @@ public abstract class ChooseByNameBase {
     int bestMatch = Integer.MIN_VALUE;
     final int count = myListModel.getSize();
 
-    Matcher matcher = buildPatternMatcher(transformPattern(myTextField.getText()));
+    Matcher matcher = buildPatternMatcher(transformPattern(getTrimmedText()));
 
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
@@ -1097,7 +1105,7 @@ public abstract class ChooseByNameBase {
   @NotNull
   @NonNls
   protected String statisticsContext() {
-    return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + myTextField.getText();
+    return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
   }
 
   private static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
@@ -1285,10 +1293,9 @@ public abstract class ChooseByNameBase {
       if (myCompletionKeyStroke != null && keyStroke.equals(myCompletionKeyStroke)) {
         completionKeyStrokeHappened = true;
         e.consume();
-        final String pattern = myTextField.getText();
-        final String oldText = myTextField.getText();
+        final String pattern = getTrimmedText();
         final int oldPos = myList.getSelectedIndex();
-        myHistory.add(Pair.create(oldText, oldPos));
+        myHistory.add(Pair.create(pattern, oldPos));
         final Runnable postRunnable = new Runnable() {
           @Override
           public void run() {
@@ -1301,7 +1308,7 @@ public abstract class ChooseByNameBase {
       if (backStroke != null && keyStroke.equals(backStroke)) {
         e.consume();
         if (!myHistory.isEmpty()) {
-          final String oldText = myTextField.getText();
+          final String oldText = getTrimmedText();
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
@@ -1313,7 +1320,7 @@ public abstract class ChooseByNameBase {
       if (forwardStroke != null && keyStroke.equals(forwardStroke)) {
         e.consume();
         if (!myFuture.isEmpty()) {
-          final String oldText = myTextField.getText();
+          final String oldText = getTrimmedText();
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
           myTextField.setText(next.first);
@@ -1348,7 +1355,7 @@ public abstract class ChooseByNameBase {
       final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(myCheckBox.isSelected()), pattern);
 
       if (isComplexPattern(pattern)) return; //TODO: support '*'
-      final String oldText = myTextField.getText();
+      final String oldText = getTrimmedText();
       final int oldPos = myList.getSelectedIndex();
 
       String commonPrefix = null;
@@ -1654,9 +1661,9 @@ public abstract class ChooseByNameBase {
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();
-      final String text = myTextField.getText();
-      final String prefixPattern = myFindUsagesTitle + " \'" + text.trim() + "\'";
-      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + text.trim() + "*\'";
+      final String text = getTrimmedText();
+      final String prefixPattern = myFindUsagesTitle + " \'" + text + "\'";
+      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + text + "*\'";
       presentation.setCodeUsagesString(prefixPattern);
       presentation.setUsagesInGeneratedCodeString(prefixPattern + " in generated code");
       presentation.setDynamicUsagesString(nonPrefixPattern);

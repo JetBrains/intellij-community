@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ExceptionUtils {
@@ -38,10 +38,23 @@ public class ExceptionUtils {
   }
 
   @NotNull
-  public static Set<PsiClassType> calculateExceptionsThrown(@NotNull PsiElement element) {
-    final ExceptionsThrownVisitor visitor = new ExceptionsThrownVisitor();
+  public static Set<PsiType> calculateExceptionsThrown(@Nullable PsiElement element) {
+    return calculateExceptionsThrown(element, new LinkedHashSet<PsiType>(5));
+  }
+
+  @NotNull
+  public static Set<PsiType> calculateExceptionsThrown(@Nullable PsiElement element, @NotNull Set<PsiType> out) {
+    if (element == null) return out;
+    if (element instanceof PsiResourceList) {
+      final PsiResourceList resourceList = (PsiResourceList)element;
+      for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
+        final PsiMethod method = PsiUtil.getResourceCloserMethod(variable);
+        collectExceptionsThrown(method, out);
+      }
+    }
+    final ExceptionsThrownVisitor visitor = new ExceptionsThrownVisitor(out);
     element.accept(visitor);
-    return visitor.getExceptionsThrown();
+    return out;
   }
 
   public static boolean isGenericExceptionClass(@Nullable PsiType exceptionType) {
@@ -193,22 +206,51 @@ public class ExceptionUtils {
     return false;
   }
 
+  private static void collectExceptionsThrown(@Nullable PsiMethod method, @NotNull Set<PsiType> out) {
+    if (method == null) {
+      return;
+    }
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+    for (PsiJavaCodeReferenceElement referenceElement : method.getThrowsList().getReferenceElements()) {
+      final PsiClass exceptionClass = (PsiClass)referenceElement.resolve();
+      if (exceptionClass != null) {
+        out.add(factory.createType(exceptionClass));
+      }
+    }
+  }
+
+  public static Set<PsiType> getExceptionTypesHandled(PsiTryStatement statement) {
+    final Set<PsiType> out = new HashSet<PsiType>(5);
+    for (PsiParameter parameter : statement.getCatchBlockParameters()) {
+      final PsiType type = parameter.getType();
+      if (type instanceof PsiDisjunctionType) {
+        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+        out.addAll(disjunctionType.getDisjunctions());
+      } else {
+        out.add(type);
+      }
+    }
+    return out;
+  }
+
   private static class ExceptionsThrownVisitor extends JavaRecursiveElementVisitor {
 
-    private final Set<PsiClassType> m_exceptionsThrown = new HashSet(4);
+    private final Set<PsiType> m_exceptionsThrown;
 
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiMethod method = expression.resolveMethod();
-      collectExceptionsThrown(method, m_exceptionsThrown);
+    public ExceptionsThrownVisitor(Set<PsiType> thrownTypes) {
+      m_exceptionsThrown = thrownTypes;
     }
 
     @Override
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      final PsiMethod method = expression.resolveMethod();
-      collectExceptionsThrown(method, m_exceptionsThrown);
+    public void visitClass(PsiClass aClass) {}
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      super.visitCallExpression(callExpression);
+      collectExceptionsThrown(callExpression.resolveMethod(), m_exceptionsThrown);
     }
 
     @Override
@@ -218,87 +260,39 @@ public class ExceptionUtils {
       if (exception == null) {
         return;
       }
-      final PsiType type = exception.getType();
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-      m_exceptionsThrown.add((PsiClassType)type);
+      m_exceptionsThrown.add(exception.getType());
     }
 
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       final Set<PsiType> exceptionsHandled = getExceptionTypesHandled(statement);
-      final PsiResourceList resourceList = statement.getResourceList();
-      if (resourceList != null) {
-        final List<PsiResourceVariable> resourceVariables = resourceList.getResourceVariables();
-        for (PsiResourceVariable resourceVariable : resourceVariables) {
-          final Set<PsiClassType> resourceExceptions = calculateExceptionsThrown(resourceVariable);
-          collectExceptionsThrown(PsiUtil.getResourceCloserMethod(resourceVariable), resourceExceptions);
-          for (PsiClassType resourceException : resourceExceptions) {
-            if (!isExceptionHandled(exceptionsHandled, resourceException)) {
-              m_exceptionsThrown.add(resourceException);
-            }
-          }
-        }
-      }
-      final PsiCodeBlock tryBlock = statement.getTryBlock();
-      if (tryBlock != null) {
-        final Set<PsiClassType> tryExceptions = calculateExceptionsThrown(tryBlock);
-        for (PsiClassType tryException : tryExceptions) {
-          if (!isExceptionHandled(exceptionsHandled, tryException)) {
-            m_exceptionsThrown.add(tryException);
-          }
-        }
-      }
-      final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
-      if (finallyBlock != null) {
-        final Set<PsiClassType> finallyExceptions = calculateExceptionsThrown(finallyBlock);
-        m_exceptionsThrown.addAll(finallyExceptions);
-      }
 
-      final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
-      for (PsiCodeBlock catchBlock : catchBlocks) {
-        final Set<PsiClassType> catchExceptions = calculateExceptionsThrown(catchBlock);
-        m_exceptionsThrown.addAll(catchExceptions);
+      for (PsiType resourceException : calculateExceptionsThrown(statement.getResourceList())) {
+        if (!isExceptionHandled(exceptionsHandled, resourceException)) {
+          m_exceptionsThrown.add(resourceException);
+        }
+      }
+      for (PsiType tryException : calculateExceptionsThrown(statement.getTryBlock())) {
+        if (!isExceptionHandled(exceptionsHandled, tryException)) {
+          m_exceptionsThrown.add(tryException);
+        }
+      }
+      calculateExceptionsThrown(statement.getFinallyBlock(), m_exceptionsThrown);
+      for (PsiCodeBlock catchBlock : statement.getCatchBlocks()) {
+        calculateExceptionsThrown(catchBlock, m_exceptionsThrown);
       }
     }
 
-    private static void collectExceptionsThrown(@Nullable PsiMethod method, @NotNull Set<PsiClassType> out) {
-      if (method == null) {
-        return;
+    private static boolean isExceptionHandled(Set<PsiType> exceptionsHandled, PsiType thrownType) {
+      if (exceptionsHandled.contains(thrownType)) {
+        return true;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-      final PsiJavaCodeReferenceElement[] referenceElements = method.getThrowsList().getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        final PsiClass exceptionClass = (PsiClass)referenceElement.resolve();
-        if (exceptionClass != null) {
-          out.add(factory.createType(exceptionClass));
-        }
-      }
-    }
-
-    private static boolean isExceptionHandled(Iterable<PsiType> exceptionsHandled, PsiType thrownType) {
       for (PsiType exceptionHandled : exceptionsHandled) {
         if (exceptionHandled.isAssignableFrom(thrownType)) {
           return true;
         }
       }
       return false;
-    }
-
-    private static Set<PsiType> getExceptionTypesHandled(@NotNull PsiTryStatement statement) {
-      final Set<PsiType> out = new HashSet<PsiType>(5);
-      final PsiParameter[] parameters = statement.getCatchBlockParameters();
-      for (PsiParameter parameter : parameters) {
-        final PsiType type = parameter.getType();
-        out.add(type);
-      }
-      return out;
-    }
-
-    @NotNull
-    public Set<PsiClassType> getExceptionsThrown() {
-      return m_exceptionsThrown;
     }
   }
 }

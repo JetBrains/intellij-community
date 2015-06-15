@@ -16,33 +16,36 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValueBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   private final PsiManager myManager;
-  protected long myLastPsiTimeStamp = -1;
+  protected volatile long myLastPsiTimeStamp = -1;
 
   public PsiCachedValue(@NotNull PsiManager manager) {
     myManager = manager;
   }
 
   @Override
-  protected Data<T> computeData(T value, Object[] dependencies) {
-    Data<T> data = super.computeData(value, dependencies);
-
+  protected void valueUpdated() {
     myLastPsiTimeStamp = myManager.getModificationTracker().getModificationCount();
+  }
 
-    return data;
+  @Nullable
+  @Override
+  protected <P> T getValueWithLock(P param) {
+    return super.getValueWithLock(param);
   }
 
   @Override

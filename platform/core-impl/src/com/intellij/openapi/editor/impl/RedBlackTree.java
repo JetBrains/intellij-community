@@ -36,7 +36,7 @@ public abstract class RedBlackTree<K> {
     verifyProperties();
   }
 
-  protected void rotateLeft(Node<K> n) {
+  protected void rotateLeft(@NotNull Node<K> n) {
     Node<K> r = n.getRight();
     replaceNode(n, r);
     n.setRight(r.getLeft());
@@ -47,7 +47,7 @@ public abstract class RedBlackTree<K> {
     n.setParent(r);
   }
 
-  protected void rotateRight(Node<K> n) {
+  protected void rotateRight(@NotNull Node<K> n) {
     Node<K> l = n.getLeft();
     replaceNode(n, l);
     n.setLeft(l.getRight());
@@ -177,10 +177,11 @@ public abstract class RedBlackTree<K> {
     verifyProperties();
   }
 
-  protected abstract Node<K> swapWithMaxPred(Node<K> nowAscendant, Node<K> nowDescendant);
+  @NotNull
+  protected abstract Node<K> swapWithMaxPred(@NotNull Node<K> nowAscendant, @NotNull Node<K> nowDescendant);
 
-  protected Node<K> maximumNode(Node<K> n) {
-    assert n != null;
+  @NotNull
+  protected Node<K> maximumNode(@NotNull Node<K> n) {
     while (n.getRight() != null) {
       n = n.getRight();
     }

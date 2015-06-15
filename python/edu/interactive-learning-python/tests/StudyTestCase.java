@@ -1,3 +1,5 @@
+package com.jetbrains.edu.learning;
+
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;

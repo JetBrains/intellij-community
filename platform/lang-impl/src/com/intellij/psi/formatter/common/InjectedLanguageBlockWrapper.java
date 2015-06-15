@@ -18,6 +18,8 @@ package com.intellij.psi.formatter.common;
 import com.intellij.formatting.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,11 +150,18 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
     Spacing spacing = myOriginal.getSpacing(child1ToUse, child2ToUse);
     if (spacing instanceof DependantSpacingImpl && shift != 0) {
       DependantSpacingImpl hostSpacing = (DependantSpacingImpl)spacing;
+      final int finalShift = shift;
+      List<TextRange> shiftedRanges = ContainerUtil.map(hostSpacing.getDependentRegionRanges(), new Function<TextRange, TextRange>() {
+        @Override
+        public TextRange fun(TextRange range) {
+          return range.shiftRight(finalShift);
+        }
+      });
       return new DependantSpacingImpl(
-        hostSpacing.getMinSpaces(), hostSpacing.getMaxSpaces(), hostSpacing.getDependency().shiftRight(shift),
+        hostSpacing.getMinSpaces(), hostSpacing.getMaxSpaces(), shiftedRanges,
         hostSpacing.shouldKeepLineFeeds(), hostSpacing.getKeepBlankLines(), DependentSpacingRule.DEFAULT
       );
-    } 
+    }
     return spacing;
   }
 

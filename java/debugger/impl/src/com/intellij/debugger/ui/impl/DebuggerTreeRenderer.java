@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,8 +91,24 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor) {
     Icon nodeIcon;
-    if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
+    if (valueDescriptor instanceof FieldDescriptorImpl) {
+      FieldDescriptorImpl fieldDescriptor = (FieldDescriptorImpl)valueDescriptor;
       nodeIcon = PlatformIcons.FIELD_ICON;
+      if (fieldDescriptor.getField().isFinal()) {
+        nodeIcon = new LayeredIcon(nodeIcon, AllIcons.Nodes.FinalMark);
+      }
+      if (fieldDescriptor.isStatic()) {
+        nodeIcon = new LayeredIcon(nodeIcon, AllIcons.Nodes.StaticMark);
+      }
+    }
+    else if (valueDescriptor instanceof ThrownExceptionValueDescriptorImpl) {
+      nodeIcon = AllIcons.Nodes.ExceptionClass;
+    }
+    else if (isParameter(valueDescriptor)) {
+      nodeIcon = PlatformIcons.PARAMETER_ICON;
+    }
+    else if (valueDescriptor.isEnumConstant()) {
+      nodeIcon = PlatformIcons.ENUM_ICON;
     }
     else if (valueDescriptor.isArray()) {
       nodeIcon = AllIcons.Debugger.Db_array;
@@ -116,6 +132,20 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = composite;
     }
     return nodeIcon;
+  }
+
+  private static boolean isParameter(ValueDescriptorImpl valueDescriptor) {
+    if (valueDescriptor instanceof LocalVariableDescriptorImpl) {
+      try {
+        return ((LocalVariableDescriptorImpl)valueDescriptor).getLocalVariable().getVariable().isArgument();
+      }
+      catch (EvaluateException ignored) {
+      }
+    }
+    else if (valueDescriptor instanceof ArgumentValueDescriptorImpl) {
+      return ((ArgumentValueDescriptorImpl)valueDescriptor).isParameter();
+    }
+    return false;
   }
 
   public static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,

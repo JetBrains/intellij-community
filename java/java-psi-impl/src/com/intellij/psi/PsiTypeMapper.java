@@ -42,7 +42,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
     if (mappedComponent == componentType) return type;
-    return new PsiArrayType(mappedComponent);
+    return new PsiArrayType(mappedComponent, type.getAnnotations());
   }
 
   @Override
@@ -51,7 +51,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
     if (mappedComponent == componentType) return type;
-    return new PsiEllipsisType(mappedComponent);
+    return new PsiEllipsisType(mappedComponent, type.getAnnotations());
   }
 
   @Override
@@ -67,7 +67,14 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   @Override
   public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType type) {
     PsiWildcardType mapped = mapType(type.getWildcard());
-    return mapped == null ? null : PsiCapturedWildcardType.create(mapped, type.getContext(), type.getTypeParameter());
+    if (mapped == null) {
+      return null;
+    }
+    else {
+      final PsiCapturedWildcardType capturedWildcardType = PsiCapturedWildcardType.create(mapped, type.getContext(), type.getTypeParameter());
+      capturedWildcardType.setUpperBound(mapType(type.getUpperBound()));
+      return capturedWildcardType;
+    }
   }
 
   @Override

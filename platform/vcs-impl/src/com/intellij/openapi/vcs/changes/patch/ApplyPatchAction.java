@@ -25,7 +25,6 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +47,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -57,6 +55,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +146,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       @Override
       public ApplyFilePatch.Result compute() {
         try {
-          return patch.apply(file, context, project, new FilePathImpl(file), new Getter<CharSequence>() {
+          return patch.apply(file, context, project, VcsUtil.getFilePath(file), new Getter<CharSequence>() {
             @Override
             public CharSequence get() {
               return getBaseContents((TextFilePatch)patchBase, commitContext, project);

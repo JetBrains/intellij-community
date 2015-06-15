@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -749,18 +749,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static String getLanguageLevel(JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    if (level != null) {
-      switch (level) {
-        case JDK_1_3: return "1.3";
-        case JDK_1_4: return "1.4";
-        case JDK_1_5: return "1.5";
-        case JDK_1_6: return "1.6";
-        case JDK_1_7: return "1.7";
-        case JDK_1_8: return "8";
-        case JDK_1_9: return "9";
-      }
-    }
-    return null;
+    return level != null ? level.getComplianceOption() : null;
   }
 
   private static boolean isEncodingSet(List<String> options) {

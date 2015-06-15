@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,12 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLinkedMap;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -52,7 +49,7 @@ public class FileNameCache {
       throw new RuntimeException("VFS name enumerator corrupted");
     }
 
-    CharSequence rawName = convertToBytesIfAsciiString(name);
+    CharSequence rawName = ByteArrayCharSequence.convertToBytesIfAsciiString(name);
     IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<CharSequence>(id, rawName);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -74,69 +71,18 @@ public class FileNameCache {
   }
 
   @NotNull
-  private static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
-    int length = name.length();
-    if (length == 0) return "";
-
-    if (!IOUtil.isAscii(name)) {
-      return new String(name); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
-    }
-
-    byte[] bytes = new byte[length];
-    for (int i = 0; i < length; i++) {
-      bytes[i] = (byte)name.charAt(i);
-    }
-    return new ByteArrayCharSequence(bytes);
-  }
-
-  @NotNull
-  private static IntObjectLinkedMap.MapEntry<CharSequence> getEntry(int id) {
-    assert id > 0;
-    final int stripe = calcStripeIdFromNameId(id);
+  public static CharSequence getVFileName(int nameId) {
+    assert nameId > 0;
+    final int stripe = calcStripeIdFromNameId(nameId);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
-      IntObjectLinkedMap.MapEntry<CharSequence> entry = cache.getCachedEntry(id);
+      IntObjectLinkedMap.MapEntry<CharSequence> entry = cache.getCachedEntry(nameId);
       if (entry != null) {
-        return entry;
+        return entry.value;
       }
     }
 
-    return cacheData(FSRecords.getNameByNameId(id), id, stripe);
+    return cacheData(FSRecords.getNameByNameId(nameId), nameId, stripe).value;
   }
-
-  @NotNull
-  public static CharSequence getVFileName(int nameId) {
-    return getEntry(nameId).value;
-  }
-
-  @NotNull
-  static char[] appendPathOnFileSystem(int nameId, @Nullable VirtualFileSystemEntry parent, int accumulatedPathLength, @NotNull int[] positionRef) {
-    IntObjectLinkedMap.MapEntry<CharSequence> entry = getEntry(nameId);
-    CharSequence o = entry.value;
-    int nameLength = o.length();
-    boolean appendSlash = SystemInfo.isWindows && parent == null && nameLength == 2 && o.charAt(1) == ':';
-
-    char[] chars;
-    if (parent != null) {
-      chars = parent.appendPathOnFileSystem(accumulatedPathLength + 1 + nameLength, positionRef);
-      if (positionRef[0] > 0 && chars[positionRef[0] - 1] != '/') {
-        chars[positionRef[0]++] = '/';
-      }
-    }
-    else {
-      int rootPathLength = accumulatedPathLength + nameLength;
-      if (appendSlash) ++rootPathLength;
-      chars = new char[rootPathLength];
-    }
-
-    positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], o);
-
-    if (appendSlash) {
-      chars[positionRef[0]++] = '/';
-    }
-
-    return chars;
-  }
-
 }

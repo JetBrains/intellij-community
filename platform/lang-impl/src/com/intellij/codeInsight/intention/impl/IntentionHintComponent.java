@@ -19,10 +19,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.PriorityQuestionAction;
-import com.intellij.codeInsight.hint.ScrollAwareHint;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
@@ -49,10 +46,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -98,7 +92,7 @@ import java.util.List;
 public class IntentionHintComponent extends JPanel implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
-  static final Icon ourInactiveArrowIcon = new EmptyIcon(AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
+  private static final Icon ourInactiveArrowIcon = new EmptyIcon(AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
 
   private static final int NORMAL_BORDER_SIZE = 6;
   private static final int SMALL_BORDER_SIZE = 4;
@@ -129,8 +123,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   private static final int DELAY = 500;
   private final MyComponentHint myComponentHint;
-  private volatile boolean myPopupShown = false;
-  private boolean myDisposed = false;
+  private volatile boolean myPopupShown;
+  private boolean myDisposed;
   private volatile ListPopup myPopup;
   private final PsiFile myFile;
 
@@ -200,29 +194,42 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     closePopup();
   }
 
+  public boolean isForEditor(@NotNull Editor editor) {
+    return editor == myEditor;
+  }
+
+
+  public enum PopupUpdateResult {
+    NOTHING_CHANGED,    // intentions did not change
+    CHANGED_INVISIBLE,  // intentions changed but the popup has not been shown yet, so can recreate list silently
+    HIDE_AND_RECREATE   // ahh, has to close already shown popup, recreate and re-show again
+  }
+
   //true if actions updated, there is nothing to do
   //false if has to recreate popup, no need to reshow
   //null if has to reshow
-  public Boolean updateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    if (myPopup.isDisposed()) return null;
-    if (!myFile.isValid()) return null;
+  @NotNull
+  public PopupUpdateResult updateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+    if (myPopup.isDisposed() || !myFile.isValid()) {
+      return PopupUpdateResult.HIDE_AND_RECREATE;
+    }
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
     if (!step.updateActions(intentions)) {
-      return Boolean.TRUE;
+      return PopupUpdateResult.NOTHING_CHANGED;
     }
     if (!myPopupShown) {
-      return Boolean.FALSE;
+      return PopupUpdateResult.CHANGED_INVISIBLE;
     }
-    return null;
+    return PopupUpdateResult.HIDE_AND_RECREATE;
   }
 
-  // for using in tests !
   @Nullable
+  @TestOnly
   public IntentionAction getAction(int index) {
     if (myPopup == null || myPopup.isDisposed()) {
       return null;
     }
-    IntentionListStep listStep = (IntentionListStep)myPopup.getListStep();
+    ListPopupStep listStep = myPopup.getListStep();
     List<IntentionActionWithTextCaching> values = listStep.getValues();
     if (values.size() <= index) {
       return null;
@@ -232,18 +239,18 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   public void recreate() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    IntentionListStep step = (IntentionListStep)myPopup.getListStep();
+    ListPopupStep step = myPopup.getListStep();
     recreateMyPopup(step);
   }
 
-  private void showIntentionHintImpl(final boolean delay, final Point position) {
+  private void showIntentionHintImpl(final boolean delay, @NotNull Point position) {
     final int offset = myEditor.getCaretModel().getOffset();
 
     myComponentHint.setShouldDelay(delay);
 
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
 
-    PriorityQuestionAction action = new PriorityQuestionAction() {
+    QuestionAction action = new PriorityQuestionAction() {
       @Override
       public boolean execute() {
         showPopup(false);
@@ -292,10 +299,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                                                                                 .getIconHeight() / 2));
     } else {
       // try to place bulb on the same line
-      final int borderHeight = NORMAL_BORDER_SIZE;
 
       int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
+        final int borderHeight = NORMAL_BORDER_SIZE;
         yShift = -(borderHeight + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) /2 + 3);
       }
 
@@ -364,25 +371,25 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     myIconLabel.addMouseListener(new MouseAdapter() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(@NotNull MouseEvent e) {
         if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
           showPopup(true);
         }
       }
 
       @Override
-      public void mouseEntered(MouseEvent e) {
+      public void mouseEntered(@NotNull MouseEvent e) {
         onMouseEnter(editor.isOneLineMode());
       }
 
       @Override
-      public void mouseExited(MouseEvent e) {
+      public void mouseExited(@NotNull MouseEvent e) {
         onMouseExit(editor.isOneLineMode());
       }
     });
 
     myComponentHint = new MyComponentHint(this);
-    IntentionListStep step = new IntentionListStep(this, intentions, myEditor, myFile, project);
+    ListPopupStep step = new IntentionListStep(this, intentions, myEditor, myFile, project);
     recreateMyPopup(step);
     // dispose myself when editor closed
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
@@ -446,7 +453,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myPopupShown = true;
   }
 
-  private void recreateMyPopup(@NotNull IntentionListStep step) {
+  private void recreateMyPopup(@NotNull ListPopupStep step) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup != null) {
       Disposer.dispose(myPopup);
@@ -470,7 +477,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     });
     myPopup.addListSelectionListener(new ListSelectionListener() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         final Object source = e.getSource();
         highlighter.dropHighlight();
         injectionHighlighter.dropHighlight();
@@ -525,7 +532,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     });
   }
 
-  void canceled(@NotNull IntentionListStep intentionListStep) {
+  void canceled(@NotNull ListPopupStep intentionListStep) {
     if (myPopup.getListStep() != intentionListStep || myDisposed) {
       return;
     }
@@ -534,7 +541,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   private static class MyComponentHint extends LightweightHint {
-    private boolean myVisible = false;
+    private boolean myVisible;
     private boolean myShouldDelay;
 
     private MyComponentHint(JComponent component) {
@@ -579,7 +586,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       return myVisible || super.isVisible();
     }
 
-    public void setShouldDelay(boolean shouldDelay) {
+    private void setShouldDelay(boolean shouldDelay) {
       myShouldDelay = shouldDelay;
     }
   }
@@ -643,11 +650,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
   }
 
-  private static abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
-    protected final String myFamilyName;
+  private abstract static class AbstractEditIntentionSettingsAction implements IntentionAction {
+    final String myFamilyName;
     private final boolean myDisabled;
 
-    public AbstractEditIntentionSettingsAction(IntentionAction action) {
+    private AbstractEditIntentionSettingsAction(IntentionAction action) {
       myFamilyName = action.getFamilyName();
       myDisabled = action instanceof IntentionActionWrapper &&
                    Comparing.equal(action.getFamilyName(), ((IntentionActionWrapper)action).getFullFamilyName());

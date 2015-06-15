@@ -54,5 +54,6 @@ public class EclipseJDOMUtil {
     writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     writer.write(lineSeparator);
     createOutputter(lineSeparator).output(element, writer);
+    writer.write(lineSeparator);
   }
 }

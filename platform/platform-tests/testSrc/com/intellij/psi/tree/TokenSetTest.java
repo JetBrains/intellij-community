@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class TokenSetTest {
   @Parameterized.Parameters
   public static List<Object[]> data() {
     return Collections.nCopies(10, ArrayUtil.EMPTY_OBJECT_ARRAY);
-     	}
+  }
 
   private static IElementType T1, T2, T3, T4, T5, T6;
   private TokenSet S1, S12, S3, S34, S5;
@@ -60,7 +60,6 @@ public class TokenSetTest {
     S3 = TokenSet.create(T3);
     S34 = TokenSet.create(T3, T4);
     S5 = TokenSet.create(T5);
-
   }
 
   @Test

@@ -422,6 +422,9 @@
   <action id="ParameterInfo">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
+  <action id="ExpressionTypeInfo">
+    <keyboard-shortcut first-keystroke="control shift P"/>
+  </action>
   <action id="ChangeSignature">
     <keyboard-shortcut first-keystroke="control F6"/>
   </action>
@@ -462,6 +465,9 @@
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
   <action id="CompareTwoFiles">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
+  <action id="Diff.ShowDiff">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
   <action id="Diff.ShowSettingsPopup">

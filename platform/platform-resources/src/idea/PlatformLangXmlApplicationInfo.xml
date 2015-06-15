@@ -4,13 +4,11 @@
   <install-over minbuild="0" maxbuild="0" version="9.0"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_community_about.png"/>
-  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png"/>
+  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size12="/toolwindows/toolWindowProject.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
 
-  <welcome-screen logo-url="/Logo_welcomeScreen.png"
-                  caption-url="/welcomeCaption_community.png" 
-                  slogan-url="/developSlogan_community.png"/>
+  <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
 
   <plugins url="http://plugins.jetbrains.com/"/>
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"

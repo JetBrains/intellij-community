@@ -271,6 +271,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testUnusedCallDoesNotMakeUnknown() { doTest(); }
   public void testEmptyCallDoesNotMakeNullable() { doTest(); }
   public void testGettersAndPureNoFlushing() { doTest(); }
+  public void testFalseGetters() { doTest(); }
   
   public void testNotNullAfterDereference() { doTest(); }
 
@@ -278,6 +279,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testSameComparisonTwice() { doTest(); }
   public void testRootThrowableCause() { doTest(); }
+
+  public void testNotNullOverridesNullable() { doTest(); }
 
   public void testOverridingInferredNotNullMethod() { doTest(); }
   public void testUseInferredContracts() { doTest(); }
@@ -348,6 +351,25 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package org.junit; public class Assert { " +
                        "public static <T> void assertThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
                        "public static <T> void assertThat(String msg, T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
+                       "}");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testGoogleTruth() {
+    myFixture.addClass("package com.google.common.truth; public class Truth { " +
+                       "public static Subject assertThat(Object o) {}\n" +
+                       "}");
+    myFixture.addClass("package com.google.common.truth; public class Subject { public void isNotNull() {} }");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testBooleanPreconditions() {
+    myFixture.addClass("package com.google.common.base; public class Preconditions { " +
+                       "public static <T> T checkArgument(boolean b) {}\n" +
+                       "public static <T> T checkArgument(boolean b, String msg) {}\n" +
+                       "public static <T> T checkState(boolean b, String msg) {}\n" +
                        "}");
     myFixture.enableInspections(new DataFlowInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");

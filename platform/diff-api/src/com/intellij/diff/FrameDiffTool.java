@@ -40,6 +40,10 @@ public interface FrameDiffTool extends DiffTool {
     @NotNull
     @CalledInAwt
     ToolbarComponents init();
+
+    @Override
+    @CalledInAwt
+    void dispose();
   }
 
   class ToolbarComponents {

@@ -15,12 +15,9 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-
-import java.util.Calendar;
 
 /**
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
@@ -267,9 +264,9 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
     doClassTest(
-      "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
-      "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
-      "public void doSomething(int x, int y) {\n}"
+        "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
+        "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
+        "public void doSomething(int x, int y) {\n}"
     );
   }
 
@@ -284,9 +281,9 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
     doMethodTest(
-      "int i = 1; int j = 2;",
-      "int i = 1;\n" +
-      "int j = 2;"
+        "int i = 1; int j = 2;",
+        "int i = 1;\n" +
+        "int j = 2;"
     );
   }
 
@@ -295,8 +292,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doClassTest(
-      "@NotNull Comparable<String>",
-      "@NotNull Comparable<String>"
+        "@NotNull Comparable<String>",
+        "@NotNull Comparable<String>"
     );
   }
 
@@ -384,14 +381,17 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    doMethodTest(before, after);
+    doMethodTest(before,
+                 "processingEnv.getMessenger().printMessage(\n" +
+                 "        Diagnostic.Kind.ERROR,\n" +
+                 "        String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString())\n" +
+                 ");");
 
     String literal = "\"" + StringUtil.repeatSymbol('A', 128) + "\"";
     before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, call(" + literal + "));\n";
     after = "processingEnv.getMessenger().printMessage(\n" +
-            "        Diagnostic.Kind.ERROR, call(\n" +
-            "                " + literal + "\n" +
-            "        )\n" +
+            "        Diagnostic.Kind.ERROR,\n" +
+            "        call(" + literal + ")\n" +
             ");\n";
 
     doMethodTest(before, after);
@@ -432,34 +432,34 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "//@formatter:on\n\n";
 
     doTextTest(
-      prefix + "interface C {\n" +
-      "    @TA(0)String m();\n" +
-      "    @A  @TA(1)  @TA(2)String m();\n" +
-      "    @A  public  @TA String m();\n" +
-      "}",
+        prefix + "interface C {\n" +
+        "    @TA(0)String m();\n" +
+        "    @A  @TA(1)  @TA(2)String m();\n" +
+        "    @A  public  @TA String m();\n" +
+        "}",
 
-      prefix + "interface C {\n" +
-      "    @TA(0) String m();\n\n" +
-      "    @A\n" +
-      "    @TA(1) @TA(2) String m();\n\n" +
-      "    @A\n" +
-      "    public @TA String m();\n" +
-      "}");
+        prefix + "interface C {\n" +
+        "    @TA(0) String m();\n\n" +
+        "    @A\n" +
+        "    @TA(1) @TA(2) String m();\n\n" +
+        "    @A\n" +
+        "    public @TA String m();\n" +
+        "}");
   }
 
   public void testKeepSingleFieldAnnotationOnSameLine() {
     getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
     doClassTest(
-      "@NotNull public String result = \"OK\"\n" +
-      "@NotNull String newResult = \"OK\"\n" +
-      "@NotNull\n" +
-      "@Deprecated public String bad = \"bad\"",
+        "@NotNull public String result = \"OK\"\n" +
+        "@NotNull String newResult = \"OK\"\n" +
+        "@NotNull\n" +
+        "@Deprecated public String bad = \"bad\"",
 
-      "@NotNull public String result = \"OK\"\n" +
-      "@NotNull String newResult = \"OK\"\n" +
-      "@NotNull\n" +
-      "@Deprecated\n" +
-      "public String bad = \"bad\""
+        "@NotNull public String result = \"OK\"\n" +
+        "@NotNull String newResult = \"OK\"\n" +
+        "@NotNull\n" +
+        "@Deprecated\n" +
+        "public String bad = \"bad\""
     );
   }
 
@@ -475,5 +475,158 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_Wrap_On_Method_Parameter_Declaration() {
+    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doClassTest(
+        "      public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}",
+        "public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}"
+    );
 
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doClassTest(
+        "      public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}",
+        "public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa,\n" +
+        "            (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}"
+    );
+  }
+
+  public void test_Do_Not_Wrap_On_Nested_Call_Arguments_If_Not_Needed() {
+    getSettings().PREFER_PARAMETERS_WRAP = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
+    doMethodTest("call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb, 1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));",
+                 "call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb,\n" +
+                 "        1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));");
+  }
+
+  public void test_PlaceOnNewLineParenth_DoNotWork_IfLineNotExceedsRightMargin() {
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+
+    doMethodTest("run(new Runnable() {\n" +
+                 "public void run() {\n" +
+                 "}\n" +
+                 "});",
+                 "run(new Runnable() {\n" +
+                 "    public void run() {\n" +
+                 "    }\n" +
+                 "});");
+
+    doMethodTest("run(() -> {\n" +
+                 "int a = 2;\n" +
+                 "});",
+                 "run(() -> {\n" +
+                 "    int a = 2;\n" +
+                 "});");
+  }
+
+  public void test_WrapIfLong_ActivatesPlaceNewLineAfterParenthesis() {
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccccccccccccccccccccccc\");",
+                 "fuun(\n" +
+                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccccccccccccccccccccccc\");");
+
+  }
+
+  public void test_WrapIfLong_On_Second_Parameter_ActivatesPlaceNewLineAfterParenthesis() {
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\n" +
+                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");");
+  }
+
+  public void test_LParen_OnNextLine_IfWrapped() {
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\n" +
+                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\");");
+
+
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\");");
+
+  }
+
+  public void test_RParen_OnNextLine_IfWrapped() {
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\"" +
+                 "\n);");
+
+
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\");");
+
+  }
+
+  public void test_ChainedCalls_FirstOnNewLine() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+
+    doMethodTest(
+      "obj.call().call().call().call();",
+      "obj\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call();"
+    );
+
+    doMethodTest(
+      "call().call().call().call();",
+      "call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call();"
+    );
+
+    doMethodTest(
+      "nestedCall(call().call().call().call());",
+      "nestedCall(call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call());"
+    );
+  }
+
+  public void test_ChainedCalls_NoWrapOnSingleCall() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+
+    doMethodTest(
+      "obj.call(    )",
+      "obj.call()"
+    );
+  }
 }

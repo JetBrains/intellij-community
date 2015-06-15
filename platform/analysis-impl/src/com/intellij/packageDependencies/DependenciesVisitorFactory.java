@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 21-Jan-2008
- */
 package com.intellij.packageDependencies;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 
+/** @deprecated use {@link DependencyVisitorFactory} (to be removed in IDEA 17) */
 public class DependenciesVisitorFactory {
-
+  @SuppressWarnings("deprecation")
   public static DependenciesVisitorFactory getInstance() {
     return ServiceManager.getService(DependenciesVisitorFactory.class);
   }

@@ -94,7 +94,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
   }
 
-  public HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
+  private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
   }
 
@@ -127,7 +127,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
-    // both PsiJavaFile and PsiCodeFragment
+    // both PsiJavaFile and PsiCodeFragment must match
     return file instanceof PsiImportHolder && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
 
@@ -175,13 +175,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         final RefCountHolder refCountHolder = RefCountHolder.get(file);
         myRefCountHolder = refCountHolder;
         final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
+        TextRange dirtyScope = ObjectUtils.notNull(document == null ? null : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL), file.getTextRange());
         success = refCountHolder.analyze(file, dirtyScope, progress, new Runnable(){
           @Override
           public void run() {
             highlight.run();
             progress.checkCanceled();
-            HighlightingSession highlightingSession = ProgressableTextEditorHighlightingPass.getHighlightingSession(progress);
+            HighlightingSession highlightingSession = HighlightingSessionImpl.getHighlightingSession(file, progress);
             PostHighlightingVisitor highlightingVisitor = new PostHighlightingVisitor(file, document, refCountHolder, highlightingSession);
             highlightingVisitor.collectHighlights(file, holder, progress);
           }
@@ -1126,7 +1126,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (owner instanceof PsiClass) {
           final PsiClass outerClass = (PsiClass)owner;
           if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
-            myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, aClass, (PsiClass)owner, ref));
+            myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, null, (PsiClass)owner, ref));
           }
         }
       }
@@ -1552,7 +1552,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (thenExpression != null && elseExpression != null) {
         final PsiType conditionalType = expression.getType();
         if (conditionalType != null) {
-          final PsiExpression[] sides = new PsiExpression[] {thenExpression, elseExpression};
+          final PsiExpression[] sides = {thenExpression, elseExpression};
           for (PsiExpression side : sides) {
             final PsiType sideType = side.getType();
             if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {

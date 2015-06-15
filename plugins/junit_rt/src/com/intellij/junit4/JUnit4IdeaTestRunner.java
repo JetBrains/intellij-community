@@ -17,8 +17,7 @@ package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.Packet;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
+import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
 import org.junit.runner.*;
@@ -52,9 +51,14 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       else if (request instanceof FilterRequest) {
         description = getFilteredDescription(request, description);
       }
-      TreeSender.sendTree(this, description, sendTree);
-      if (myTestsListener instanceof SMTestSender) {
-        ((SMTestSender)myTestsListener).sendTree(this, description);
+
+      if (myTestsListener instanceof JUnit4TestListener) {
+        if (sendTree) {
+          ((JUnit4TestListener)myTestsListener).sendTree(description);
+        }
+        sendTree = false;
+      } else {
+        TreeSender.sendTree(this, description, sendTree);
       }
     }
     catch (Exception e) {
@@ -183,11 +187,11 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   }
 
 
-  public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx) {
+  public void setStreams(Object segmentedOut, Object segmentedErr, int lastIdx) {
     if (JUnitStarter.SM_RUNNER) {
-      myTestsListener = new SMTestSender();
+      myTestsListener = new JUnit4TestListener();
     } else {
-      myRegistry = new JUnit4OutputObjectRegistry(segmentedOut, lastIdx);
+      myRegistry = new JUnit4OutputObjectRegistry((PacketProcessor)segmentedOut, lastIdx);
       myTestsListener = new JUnit4TestResultsSender(myRegistry);
     }
   }

@@ -16,13 +16,14 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.SMStacktraceParser;
+import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,49 +41,65 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
-public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
+public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
   private final RunConfiguration myConfiguration;
-  protected final CompositeFilter myCustomFilter;
-  private final boolean myPrintTestingStartedTime;
+  private final CompositeFilter myCustomFilter;
+  private boolean myIdBasedTestTree = false;
+  private boolean myPrintTestingStartedTime = true;
 
   /**
    * @param config
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
-                                    @NotNull String testFrameworkName,
-                                    @NotNull Executor executor) {
-    this(config, testFrameworkName, executor, true);
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
+    super(getStorage(testFrameworkName), config.getProject(), executor);
+    myConfiguration = config;
+    myCustomFilter = new CompositeFilter(config.getProject());
   }
 
-  /**
-   * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
-   * @param executor
-   */
+  /** @deprecated {@use #setPrintTestingStartedTime} (to be removed in IDEA 16) */
+  @SuppressWarnings("unused")
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
                                     @NotNull String testFrameworkName,
                                     @NotNull Executor executor,
                                     boolean printTestingStartedTime) {
-    super(getStorage(testFrameworkName), config.getProject(), executor);
-    myConfiguration = config;
-    myCustomFilter = new CompositeFilter(config.getProject());
-    myPrintTestingStartedTime = printTestingStartedTime;
+    this(config, testFrameworkName, executor);
+    setPrintTestingStartedTime(printTestingStartedTime);
   }
 
+  @NotNull
   private static Storage.PropertiesComponentStorage getStorage(String testFrameworkName) {
     return new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance());
   }
 
+  @Override
   public RunConfiguration getConfiguration() {
     return myConfiguration;
   }
 
+  public boolean isIdBasedTestTree() {
+    return myIdBasedTestTree;
+  }
+
+  public void setIdBasedTestTree(boolean idBasedTestTree) {
+    myIdBasedTestTree = idBasedTestTree;
+  }
+
   public boolean isPrintTestingStartedTime() {
     return myPrintTestingStartedTime;
+  }
+
+  public void setPrintTestingStartedTime(boolean printTestingStartedTime) {
+    myPrintTestingStartedTime = printTestingStartedTime;
+  }
+
+  @Nullable
+  @Override
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+    return getErrorNavigatable(location.getProject(), stacktrace);
   }
 
   @Override
@@ -138,9 +155,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   }
 
   @Nullable
-  protected Navigatable findSuitableNavigatableForLine(@NotNull final Project project,
-                                                       @NotNull final VirtualFile file,
-                                                       final int line) {
+  protected Navigatable findSuitableNavigatableForLine(@NotNull Project project, @NotNull VirtualFile file, int line) {
     // lets find first non-ws psi element
     
     final Document doc = FileDocumentManager.getInstance().getDocument(file);
@@ -160,5 +175,19 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     }
 
     return new OpenFileDescriptor(project, file, offset);
+  }
+
+  public boolean fixEmptySuite() {
+    return false;
+  }
+
+  @Nullable
+  public SMTestLocator getTestLocator() {
+    return null;
+  }
+
+  @Nullable
+  public TestProxyFilterProvider getFilterProvider() {
+    return null;
   }
 }

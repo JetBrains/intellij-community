@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ArrayUtil;
@@ -34,7 +33,7 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
 
   public GrFileStub(GroovyFile file) {
     super(file);
-    myName = StringRef.fromString(StringUtil.trimEnd(file.getName(), ".groovy"));
+    myName = StringRef.fromString(file.getViewProvider().getVirtualFile().getNameWithoutExtension());
     isScript = file.isScript();
     final GrPackageDefinition definition = file.getPackageDefinition();
     if (definition != null) {

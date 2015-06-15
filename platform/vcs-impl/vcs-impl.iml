@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />

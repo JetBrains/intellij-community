@@ -78,7 +78,7 @@ public class StudyProjectGenerator {
       });
   }
 
-  private static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
+  public static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
     LocalFileSystem.getInstance().refresh(false);
     final Lesson firstLesson = StudyUtils.getFirst(course.getLessons());
     final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
@@ -111,7 +111,7 @@ public class StudyProjectGenerator {
     }
   }
 
-  private void flushCourse(@NotNull final Course course) {
+  public void flushCourse(@NotNull final Course course) {
     final File courseDirectory = new File(myCoursesDir, course.getName());
     FileUtil.createDirectory(courseDirectory);
     flushCourseJson(course, courseDirectory);

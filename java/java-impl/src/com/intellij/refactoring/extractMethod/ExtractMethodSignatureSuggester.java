@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
@@ -69,8 +68,8 @@ public class ExtractMethodSignatureSuggester {
     }
   };
 
-  private Project myProject;
-  private PsiElementFactory myElementFactory;
+  private final Project myProject;
+  private final PsiElementFactory myElementFactory;
 
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;

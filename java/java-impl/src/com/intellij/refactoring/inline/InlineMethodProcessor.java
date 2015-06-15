@@ -25,6 +25,7 @@ import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -369,13 +370,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    int col = -1;
-    int line = -1;
+    RangeMarker position = null;
     if (myEditor != null) {
-      col = myEditor.getCaretModel().getLogicalPosition().column;
-      line = myEditor.getCaretModel().getLogicalPosition().line;
-      LogicalPosition pos = new LogicalPosition(0, 0);
-      myEditor.getCaretModel().moveToLogicalPosition(pos);
+      final int offset = myEditor.getCaretModel().getOffset();
+      position = myEditor.getDocument().createRangeMarker(offset, offset + 1);
     }
 
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
@@ -386,9 +384,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       a.finish();
     }
 
-    if (myEditor != null) {
-      LogicalPosition pos = new LogicalPosition(line, col);
-      myEditor.getCaretModel().moveToLogicalPosition(pos);
+    if (position != null) {
+      if (position.isValid()) {
+        myEditor.getCaretModel().moveToOffset(position.getStartOffset());
+      }
+      position.dispose();
     }
   }
 

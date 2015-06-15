@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -136,8 +137,12 @@ public abstract class TaskManager {
 
   public abstract void removeTask(LocalTask task);
 
+  @Deprecated // use {@code com.intellij.tasks.TaskManager.addTaskListener(com.intellij.tasks.TaskListener, com.intellij.openapi.Disposable)}
   public abstract void addTaskListener(TaskListener listener);
 
+  public abstract void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable);
+
+  @Deprecated // use {@code com.intellij.tasks.TaskManager.addTaskListener(com.intellij.tasks.TaskListener, com.intellij.openapi.Disposable)}
   public abstract void removeTaskListener(TaskListener listener);
   // repositories management
 

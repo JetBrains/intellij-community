@@ -50,26 +50,24 @@ public class TagNameVariantCollector {
     PsiElement context = element.getParent();
     PsiElement curElement = element.getParent();
 
-    {
-      while(curElement instanceof XmlTag){
-        final XmlTag declarationTag = (XmlTag)curElement;
-        final String namespace = declarationTag.getNamespace();
+    while(curElement instanceof XmlTag){
+      final XmlTag declarationTag = (XmlTag)curElement;
+      final String namespace = declarationTag.getNamespace();
 
-        if(!descriptorsMap.containsKey(namespace)) {
-          final XmlElementDescriptor descriptor = declarationTag.getDescriptor();
+      if(!descriptorsMap.containsKey(namespace)) {
+        final XmlElementDescriptor descriptor = declarationTag.getDescriptor();
 
-          if(descriptor != null) {
-            descriptorsMap.put(namespace, descriptor);
-            if(elementDescriptor == null) {
-              elementDescriptor = descriptor;
-              if (elementNamespace == null) {
-                elementNamespace = namespace;
-              }
+        if(descriptor != null) {
+          descriptorsMap.put(namespace, descriptor);
+          if(elementDescriptor == null) {
+            elementDescriptor = descriptor;
+            if (elementNamespace == null) {
+              elementNamespace = namespace;
             }
           }
         }
-        curElement = curElement.getContext();
       }
+      curElement = curElement.getContext();
     }
 
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();

@@ -15,259 +15,26 @@
  */
 package com.intellij.openapi.util.io;
 
-import com.intellij.openapi.diagnostic.LogUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
 
-/**
- * <p>Utility class which tries to keep frequently requested .zip files open
- * to avoid time loss on closing/reopening ZipFile instances.</p>
- *
- * <p>Clients obtain a file by calling {@link #acquire(String)}
- * and indicate the loss of interest to it via {@link #release(ZipFile)}.
- * Released files are closed after some period of time (about 30 seconds),
- * unless requested again within the period.</p>
- *
- * <p>Since ZipFiles are read-only objects allowing concurrent access,
- * a same instance may be returned to a different threads requesting a same path.
- * A file may be closed only after being released by all applicants.</p>
- *
- * <p>The class does not expect .zip files on a disk to be changed,
- * so it may return an outdated instance of ZipFile (reading from it
- * may return inaccurate data or even cause an exceptions to happen).
- * It's a clients' responsibility to keep a track of .zip files
- * and call the {@link #reset(Collection)} method for a paths
- * which are possibly changed. Reset paths are removed from the cache
- * and are closed immediately after being released.</p>
- */
+/** @deprecated use {@link ZipFile#ZipFile(String)} and {@link ZipFile#close()} instead (to be removed in IDEA 17) */
+@SuppressWarnings("unused")
 public class ZipFileCache {
-  private static final int PERIOD = 10000;   // disposer schedule, ms
-  private static final int TIMEOUT = 30000;  // released file close delay, ms
-
-  private static class CacheRecord {
-    private final String path;
-    private final ZipFile file;
-    private int count = 1;
-    private long released = 0;
-
-    private CacheRecord(@NotNull String path, @NotNull ZipFile file) throws IOException {
-      this.path = path;
-      this.file = file;
-    }
-  }
-
-  private static final Object ourLock = new Object();
-  private static final Map<String, CacheRecord> ourPathCache = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
-  private static final Map<ZipFile, CacheRecord> ourFileCache = ContainerUtil.newHashMap();
-  private static final Map<ZipFile, Integer> ourQueue = ContainerUtil.newHashMap();
-
-  private static final ScheduledThreadPoolExecutor ourExecutor;
-
-  static {
-    ourExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("ZipFileCache Dispose", Thread.MIN_PRIORITY);
-    ourExecutor.scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        List<ZipFile> toClose = getFilesToClose(0, System.currentTimeMillis() - TIMEOUT);
-        if (toClose != null) {
-          close(toClose);
-        }
-      }
-    }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
-  }
-
   @NotNull
   public static ZipFile acquire(@NotNull String path) throws IOException {
-    path = toCanonicalPath(path);
-
-    synchronized (ourLock) {
-      CacheRecord record = ourPathCache.get(path);
-      if (record != null) {
-        record.count++;
-        return record.file;
-      }
-    }
-
-    CacheRecord record;
-    ZipFile file = tryOpen(path);
-
-    synchronized (ourLock) {
-      record = ourPathCache.get(path);
-      if (record == null) {
-        record = new CacheRecord(path, file);
-        ourPathCache.put(path, record);
-        ourFileCache.put(file, record);
-        return file;
-      }
-      else {
-        record.count++;
-      }
-    }
-
-    close(file);
-    return record.file;
-  }
-
-  private static String toCanonicalPath(@NotNull String path) {
-    path = FileUtil.toSystemDependentName(path);
-
-    File file = new File(path);
-    try {
-      return file.getCanonicalPath();
-    }
-    catch (IOException e) {
-      return file.getAbsolutePath();
-    }
-  }
-
-  private static ZipFile tryOpen(String path) throws IOException {
-    debug("opening %s", path);
-    try {
-      return new ZipFile(path);
-    }
-    catch (IOException e) {
-      String reason = e.getMessage();
-      if ("too many open files".equalsIgnoreCase(reason) && tryCloseFiles() > 0) {
-        return new ZipFile(path);
-      }
-      else {
-        throw e;
-      }
-    }
-  }
-
-  private static int tryCloseFiles() {
-    List<ZipFile> toClose = getFilesToClose(5, 0);
-    if (toClose == null) return 0;
-    close(toClose);
-    logger().warn("too many open files, closed: " + toClose.size());
-    return toClose.size();
-  }
-
-  @Nullable
-  private static List<ZipFile> getFilesToClose(int limit, long timeout) {
-    List<ZipFile> toClose = null;
-
-    synchronized (ourLock) {
-      Iterator<CacheRecord> i = ourPathCache.values().iterator();
-      while (i.hasNext() && (limit == 0 || toClose == null || toClose.size() < limit)) {
-        CacheRecord record = i.next();
-        if (record.count <= 0 && (timeout == 0 || record.released <= timeout)) {
-          i.remove();
-          ourFileCache.remove(record.file);
-          if (toClose == null) toClose = ContainerUtil.newArrayList();
-          toClose.add(record.file);
-        }
-      }
-    }
-
-    return toClose;
+    return new ZipFile(path);
   }
 
   public static void release(@NotNull ZipFile file) {
-    synchronized (ourLock) {
-      CacheRecord record = ourFileCache.get(file);
-      if (record != null) {
-        record.count--;
-        record.released = System.currentTimeMillis();
-        logger().assertTrue(record.count >= 0, record.path);
-        return;
-      }
-
-      Integer count = ourQueue.get(file);
-      if (count != null) {
-        count--;
-        if (count == 0) {
-          ourQueue.remove(file);
-          close(file);
-        }
-        else {
-          ourQueue.put(file, count);
-        }
-        return;
-      }
-    }
-
-    logger().warn(new IllegalArgumentException("stray file: " + file.getName()));
-    close(file);
+    try { file.close(); }
+    catch (IOException ignored) { }
   }
 
-  public static void reset(@NotNull Collection<String> paths) {
-    debug("resetting %s", paths);
+  public static void reset(Collection<String> paths) { }
 
-    List<ZipFile> toClose = ContainerUtil.newSmartList();
-
-    paths = ContainerUtil.map(paths, new Function<String, String>() {
-      @Override
-      public String fun(String path) {
-        return toCanonicalPath(path);
-      }
-    });
-
-    synchronized (ourLock) {
-      for (String path : paths) {
-        CacheRecord record = ourPathCache.remove(path);
-        if (record != null) {
-          ourFileCache.remove(record.file);
-          if (record.count > 0) {
-            ourQueue.put(record.file, record.count);
-          }
-          else {
-            toClose.add(record.file);
-          }
-        }
-      }
-    }
-
-    close(toClose);
-  }
-
-  private static void close(@NotNull List<ZipFile> files) {
-    for (ZipFile file : files) {
-      close(file);
-    }
-  }
-
-  private static void close(@NotNull ZipFile file) {
-    debug("closing %s", file.getName());
-    try {
-      file.close();
-    }
-    catch (IOException e) {
-      logger().info(file.getName(), e);
-    }
-  }
-
-  private static Logger logger() {
-    return Logger.getInstance(ZipFileCache.class);
-  }
-
-  private static void debug(@NotNull String format, Object... args) {
-    LogUtil.debug(logger(), format, args);
-  }
-
-  /**
-   * ZipFileCache maintains a background thread. In server environments, this thread may run indefinitely and prevent the class loader from
-   * being gc-ed. Thus it's necessary to invoke this method to stop that thread and let the classes be garbage-collected.
-   */
-  @SuppressWarnings("unused")
-  public static void stopBackgroundThread() {
-    if (ourExecutor != null) {
-      ourExecutor.shutdown();
-    }
-  }
+  public static void stopBackgroundThread() { }
 }

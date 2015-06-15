@@ -61,28 +61,20 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
     return null;
   }
 
-  private static class AddNewlineQuickFix implements LocalQuickFix {
-    private final Section mySection;
-
+  private static class AddNewlineQuickFix extends AbstractManifestQuickFix {
     private AddNewlineQuickFix(Section section) {
-      mySection = section;
+      super(section);
     }
 
     @NotNull
     @Override
-    public String getName() {
+    public String getText() {
       return ManifestBundle.message("inspection.newline.fix");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
-      return ManifestBundle.message("inspection.group");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement lastChild = mySection.getLastChild();
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      PsiElement lastChild = startElement.getLastChild();
       if (lastChild instanceof Header) {
         lastChild.getNode().addLeaf(ManifestTokenType.NEWLINE, "\n", null);
       }

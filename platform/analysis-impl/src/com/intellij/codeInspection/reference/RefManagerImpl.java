@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -59,7 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ConcurrentMap;
 
 public class RefManagerImpl extends RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
@@ -70,31 +71,27 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private Map<PsiAnchor, RefElement> myRefTable = new THashMap<PsiAnchor, RefElement>();
+  private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<PsiAnchor, RefElement>(); // guarded by myRefTable
 
-  private Map<Module, RefModule> myModules;
-  private final ProjectIterator myProjectIterator;
+  private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
+  private final ProjectIterator myProjectIterator = new ProjectIterator();
   private volatile boolean myDeclarationsFound;
   private final PsiManager myPsiManager;
 
-  private volatile boolean myIsInProcess = false;
+  private volatile boolean myIsInProcess;
 
   private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
   private GlobalInspectionContext myContext;
 
-  private final Map<Key, RefManagerExtension> myExtensions = new HashMap<Key, RefManagerExtension>();
+  private final Map<Key, RefManagerExtension> myExtensions = new THashMap<Key, RefManagerExtension>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
 
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
-    myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
     myContext = context;
     myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
-    myProjectIterator = new ProjectIterator();
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final RefManagerExtension extension = factory.createRefManagerExtension(this);
       if (extension != null) {
@@ -116,30 +113,26 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public void iterate(@NotNull RefVisitor visitor) {
-    myLock.readLock().lock();
-    try {
-      for (RefElement refElement : getSortedElements()) {
-        refElement.accept(visitor);
-      }
-      if (myModules != null) {
-        for (RefModule refModule : myModules.values()) {
-          refModule.accept(visitor);
-        }
-      }
-      for (RefManagerExtension extension : myExtensions.values()) {
-        extension.iterate(visitor);
+    for (RefElement refElement : getSortedElements()) {
+      refElement.accept(visitor);
+    }
+    if (myModules != null) {
+      for (RefModule refModule : myModules.values()) {
+        refModule.accept(visitor);
       }
     }
-    finally {
-      myLock.readLock().unlock();
+    for (RefManagerExtension extension : myExtensions.values()) {
+      extension.iterate(visitor);
     }
   }
 
   public void cleanup() {
     myScope = null;
     myRefProject = null;
-    myRefTable = null;
-    myModules = null;
+    synchronized (myRefTable) {
+      myRefTable.clear();
+    }
+    myModules.clear();
     myContext = null;
 
     myGraphAnnotators.clear();
@@ -185,7 +178,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  public void registerGraphAnnotator(RefGraphAnnotator annotator) {
+  public void registerGraphAnnotator(@NotNull RefGraphAnnotator annotator) {
     myGraphAnnotators.add(annotator);
   }
 
@@ -344,8 +337,10 @@ public class RefManagerImpl extends RefManager {
 
   @NotNull
   public List<RefElement> getSortedElements() {
-    LOG.assertTrue(myRefTable != null);
-    List<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
+    List<RefElement> answer;
+    synchronized (myRefTable) {
+      answer = new ArrayList<RefElement>(myRefTable.values());
+    }
     ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
       @Override
       public int compare(RefElement o1, RefElement o2) {
@@ -365,36 +360,38 @@ public class RefManagerImpl extends RefManager {
     return myPsiManager;
   }
 
-  public void removeReference(@NotNull RefElement refElem) {
-    myLock.writeLock().lock();
-    try {
-      final Map<PsiAnchor, RefElement> refTable = myRefTable;
-      final PsiElement element = refElem.getElement();
-      final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
-      if (extension != null) {
-        extension.removeReference(refElem);
-      }
+  void removeReference(@NotNull RefElement refElem) {
+    final PsiElement element = refElem.getElement();
+    final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
+    if (extension != null) {
+      extension.removeReference(refElem);
+    }
 
-      if (element != null && refTable.remove(ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiAnchor>() {
-            @Override
-            public PsiAnchor compute() {
-              return PsiAnchor.create(element);
-            }
-          }
-      )) != null) return;
+    synchronized (myRefTable) {
+      if (element != null && myRefTable.remove(createAnchor(element)) != null) return;
 
       //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-      for (PsiAnchor psiElement : refTable.keySet()) {
-        if (refTable.get(psiElement) == refElem) {
-          refTable.remove(psiElement);
-          return;
+      for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
+        RefElement value = entry.getValue();
+        PsiAnchor anchor = entry.getKey();
+        if (value == refElem) {
+          myRefTable.remove(anchor);
+          break;
         }
       }
     }
-    finally {
-      myLock.writeLock().unlock();
-    }
+  }
+
+  @NotNull
+  private static PsiAnchor createAnchor(@NotNull final PsiElement element) {
+    return ApplicationManager.getApplication().runReadAction(
+      new Computable<PsiAnchor>() {
+        @Override
+        public PsiAnchor compute() {
+          return PsiAnchor.create(element);
+        }
+      }
+    );
   }
 
   public void initializeAnnotators() {
@@ -526,70 +523,36 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Nullable
-  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, 
-                                                            @NotNull NullableFactory<T> factory) {
+  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<T> factory) {
     return getFromRefTableOrCache(element, factory, null); 
   }
   
   @Nullable
-  protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, 
-                                                            @NotNull NullableFactory<T> factory,
-                                                            @Nullable Consumer<T> whenCached) {
+  private <T extends RefElement> T getFromRefTableOrCache(final PsiElement element,
+                                                          @NotNull NullableFactory<T> factory,
+                                                          @Nullable Consumer<T> whenCached) {
+
+    PsiAnchor psiAnchor = createAnchor(element);
     T result;
-
-    myLock.readLock().lock();
-    try {
+    synchronized (myRefTable) {
       //noinspection unchecked
-      result = (T)myRefTable.get(ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiAnchor>() {
-          @Override
-          public PsiAnchor compute() {
-            return PsiAnchor.create(element);
-          }
-        }
-      ));
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
+      result = (T)myRefTable.get(psiAnchor);
 
-    if (result != null) return result;
-
-    if (!isValidPointForReference()) {
-      //LOG.assertTrue(true, "References may become invalid after process is finished");
-      return null;
-    }
-
-    myLock.writeLock().lock();
-    try {
-      //noinspection unchecked
-      result = (T)myRefTable.get(ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiAnchor>() {
-          @Override
-          public PsiAnchor compute() {
-            return PsiAnchor.create(element);
-          }
-        }
-      ));
       if (result != null) return result;
+
+      if (!isValidPointForReference()) {
+        //LOG.assertTrue(true, "References may become invalid after process is finished");
+        return null;
+      }
 
       result = factory.create();
       if (result == null) return null;
 
-      myRefTable.put(ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiAnchor>() {
-          @Override
-          public PsiAnchor compute() {
-            return PsiAnchor.create(element);
-          }
-        }
-      ), result);
+      myRefTable.put(psiAnchor, result);
     }
-    finally {
-      myLock.writeLock().unlock();
+    if (whenCached != null) {
+      whenCached.consume(result);
     }
-    
-    if (whenCached != null) whenCached.consume(result);
 
     return result;
   }
@@ -599,31 +562,11 @@ public class RefManagerImpl extends RefManager {
     if (module == null) {
       return null;
     }
-    myLock.readLock().lock();
-    try {
-      if (myModules != null) {
-        RefModule refModule = myModules.get(module);
-        if (refModule != null) {
-          return refModule;
-        }
-      }
+    RefModule refModule = myModules.get(module);
+    if (refModule == null) {
+      refModule = ConcurrencyUtil.cacheOrGet(myModules, module, new RefModuleImpl(module, this));
     }
-    finally {
-      myLock.readLock().unlock();
-    }
-
-    myLock.writeLock().lock();
-    try {
-      if (myModules == null) {
-        myModules = new THashMap<Module, RefModule>();
-      }
-      final RefModule refModule = new RefModuleImpl(module, this);
-      myModules.put(module, refModule);
-      return refModule;
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
+    return refModule;
   }
 
   @Override

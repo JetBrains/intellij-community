@@ -19,7 +19,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
@@ -28,24 +27,20 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.actions.CleanupAllIntention;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.IntentionFilterOwner;
@@ -53,8 +48,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -63,7 +56,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -78,9 +70,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private volatile boolean myHasToRecreate;
 
   @NotNull
-  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor, @NotNull final PsiFile file, final int passId) {
-    final Integer expectedCaretOffset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
-    final int offset = expectedCaretOffset != null ? expectedCaretOffset : editor.getCaretModel().getOffset();
+  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor,
+                                                                                  @NotNull final PsiFile file,
+                                                                                  final int passId) {
+    final int offset = ((EditorEx)editor).getExpectedCaretOffset();
     final Project project = file.getProject();
 
     final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
@@ -140,7 +133,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    public void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
+    private void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
       filter(intentionsToShow, actionsFilter);
       filter(errorFixesToShow, actionsFilter);
       filter(inspectionFixesToShow, actionsFilter);
@@ -162,7 +155,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     @NonNls
     @Override
     public String toString() {
-      return "Intentions: " + intentionsToShow + "; Errors: " + errorFixesToShow + "; Inspection fixes: " + inspectionFixesToShow + "; Gutters: " + guttersToShow;
+      return
+        "Errors: " + errorFixesToShow + "; " +
+        "Inspection fixes: " + inspectionFixesToShow + "; " +
+        "Intentions: " + intentionsToShow + "; " +
+        "Gutters: " + guttersToShow;
     }
   }
 
@@ -230,7 +227,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       });
   }
 
-  private static boolean appendCleanupCode(final List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, PsiFile file) {
+  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
     for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
       if (descriptor.canCleanup(file)) {
         final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
@@ -245,14 +242,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {
     IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
-    if (!myShowBulb || hintComponent == null) {
+    if (!myShowBulb || hintComponent == null || !hintComponent.isForEditor(myEditor)) {
       return;
     }
-    Boolean result = hintComponent.updateActions(myIntentionsInfo);
-    if (result == null) {
+    IntentionHintComponent.PopupUpdateResult result = hintComponent.updateActions(myIntentionsInfo);
+    if (result == IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE) {
       // reshow all
     }
-    else if (result == Boolean.FALSE) {
+    else if (result == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
       myHasToRecreate = true;
     }
     else {
@@ -280,11 +277,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     else {
       final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
       for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
-        if (fix.notError() || !isError) {
-          intentions.inspectionFixesToShow.add(fix);
+        if (fix.isError() && isError) {
+          intentions.errorFixesToShow.add(fix);
         }
         else {
-          intentions.errorFixesToShow.add(fix);
+          intentions.inspectionFixesToShow.add(fix);
         }
       }
     }
@@ -310,43 +307,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     final int line = hostDocument.getLineNumber(offset);
-    DaemonCodeAnalyzerEx.processHighlights(hostDocument, project, null,
-                                           hostDocument.getLineStartOffset(line),
-                                           hostDocument.getLineEndOffset(line), new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        final GutterIconRenderer renderer = (GutterIconRenderer)info.getGutterIconRenderer();
-        if (renderer == null) {
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
+    model.processRangeHighlightersOverlappingWith(hostDocument.getLineStartOffset(line),
+                                                  hostDocument.getLineEndOffset(line), new Processor<RangeHighlighterEx>() {
+        @Override
+        public boolean process(RangeHighlighterEx highlighter) {
+          GutterIntentionAction.addActions(highlighter, intentions.guttersToShow);
           return true;
         }
-        final AnAction action = renderer.getClickAction();
-        if (action == null) {
-          return true;
-        }
-        final String text = renderer.getTooltipText();
-        if (text == null) {
-          return true;
-        }
-        final IntentionAction actionAdapter = new AbstractIntentionAction() {
-          @Override
-          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-            final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-            action.actionPerformed(
-              new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
-                                ActionManager.getInstance(), 0));
-          }
-
-          @Override
-          @NotNull
-          public String getText() {
-            return text;
-          }
-        };
-        intentions.guttersToShow.add(
-          new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
-        return true;
-      }
-    });
+      });
 
     boolean cleanup = appendCleanupCode(intentions.inspectionFixesToShow, hostFile);
     if (!cleanup) {

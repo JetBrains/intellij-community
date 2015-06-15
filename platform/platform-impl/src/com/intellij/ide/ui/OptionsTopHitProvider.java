@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,17 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     pattern = pattern.substring(1);
     final List<String> parts = StringUtil.split(pattern, " ");
 
-    if (parts.size() == 0) return;
+    if (parts.size() == 0) {
+      return;
+    }
 
     String id = parts.get(0);
-    if (getId().startsWith(id)) {
-      pattern = pattern.substring(id.length()).trim().toLowerCase();
+    if (getId().startsWith(id) || pattern.startsWith(" ")) {
+      if (pattern.startsWith(" ")) {
+        pattern = pattern.trim();
+      } else {
+        pattern = pattern.substring(id.length()).trim().toLowerCase();
+      }
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       for (BooleanOptionDescription option : getOptions(project)) {
         if (matcher.matches(option.getOption())) {

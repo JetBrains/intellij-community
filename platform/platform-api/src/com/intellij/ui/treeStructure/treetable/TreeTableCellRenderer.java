@@ -41,14 +41,15 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     int modelRow  = table.convertRowIndexToModel(row);
+    final boolean lineHasFocus = table.hasFocus();
 
     if (myTreeCellRenderer != null)
       myTree.setCellRenderer(myTreeCellRenderer);
     if (isSelected){
-      myTree.setBackground(table.getSelectionBackground());
+      myTree.setBackground(lineHasFocus ? table.getSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
       myTree.setForeground(table.getSelectionForeground());
     }
-    else{
+    else {
       myTree.setBackground(table.getBackground());
       myTree.setForeground(table.getForeground());
     }
@@ -60,7 +61,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
     final Object treeObject = myTree.getPathForRow(modelRow).getLastPathComponent();
     boolean leaf = myTree.getModel().isLeaf(treeObject);
     final boolean expanded = myTree.isExpanded(modelRow);
-    Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeObject, isSelected, expanded, leaf, modelRow, hasFocus);
+    Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeObject, isSelected, expanded, leaf, modelRow, lineHasFocus);
     if (component instanceof JComponent) {
       table.setToolTipText(((JComponent)component).getToolTipText());
     }

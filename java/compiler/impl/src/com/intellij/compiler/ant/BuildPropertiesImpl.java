@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -58,7 +58,7 @@ public class BuildPropertiesImpl extends BuildProperties {
     add(new Property(PROPERTY_COMPILER_GENERATE_NO_WARNINGS, javacSettings.GENERATE_NO_WARNINGS ? "on" : "off"));
     add(new Property(PROPERTY_COMPILER_ADDITIONAL_ARGS, javacSettings.ADDITIONAL_OPTIONS_STRING));
     //noinspection HardCodedStringLiteral
-    final int heapSize = CompilerWorkspaceConfiguration.getInstance(project).getProcessHeapSize(javacSettings.MAXIMUM_HEAP_SIZE);
+    final int heapSize = CompilerConfiguration.getInstance(project).getBuildProcessHeapSize(javacSettings.MAXIMUM_HEAP_SIZE);
     add(new Property(PROPERTY_COMPILER_MAX_MEMORY, Integer.toString(heapSize) + "m"));
 
     add(new IgnoredFiles());

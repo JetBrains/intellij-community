@@ -782,9 +782,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     private void initModule(@NotNull ModuleEx module) {
       String path = module.getModuleFilePath();
+      module.init();
       myModulesCache = null;
       myPathToModule.put(path, module);
-      module.init();
     }
 
     @Override

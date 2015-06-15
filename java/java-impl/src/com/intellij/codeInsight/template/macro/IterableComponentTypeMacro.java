@@ -70,7 +70,7 @@ public class IterableComponentTypeMacro extends Macro {
           if (substitutor != null) {
             PsiType parameterType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
             if (parameterType instanceof PsiCapturedWildcardType) {
-              parameterType = ((PsiCapturedWildcardType)parameterType).getWildcard();
+              return new PsiTypeResult(((PsiCapturedWildcardType)parameterType).getUpperBound(), project);
             }
             if (parameterType != null) {
               if (parameterType instanceof PsiWildcardType) {

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import com.intellij.util.AlarmFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +119,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
-    return new Alarm(thread, parent);
+    return AlarmFactory.getInstance().create(thread, parent);
   }
 
   public void setMergingTimeSpan(int timeSpan) {

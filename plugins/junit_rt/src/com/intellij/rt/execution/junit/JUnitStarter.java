@@ -51,8 +51,6 @@ public class JUnitStarter {
   }
 
   public static void main(String[] args) throws IOException {
-    SegmentedOutputStream out = new SegmentedOutputStream(System.out);
-    SegmentedOutputStream err = new SegmentedOutputStream(System.err);
     Vector argList = new Vector();
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
@@ -64,18 +62,16 @@ public class JUnitStarter {
 
     boolean isJUnit4 = processParameters(argList, listeners, name);
 
-    if (!canWorkWithJUnitVersion(err, isJUnit4)) {
-      err.flush();
+    if (!canWorkWithJUnitVersion(System.err, isJUnit4)) {
       System.exit(-3);
     }
-    if (!checkVersion(args, err)) {
-      err.flush();
+    if (!checkVersion(args, System.err)) {
       System.exit(-3);
     }
 
     String[] array = new String[argList.size()];
     argList.copyInto(array);
-    int exitCode = prepareStreamsAndStart(array, isJUnit4, listeners, name[0], out, err);
+    int exitCode = prepareStreamsAndStart(array, isJUnit4, listeners, name[0]);
     System.exit(exitCode);
   }
 
@@ -171,15 +167,14 @@ public class JUnitStarter {
     }
   }
 
-  public static boolean checkVersion(String[] args, SegmentedOutputStream notifications) {
+  public static boolean checkVersion(String[] args, PrintStream printStream) {
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith(IDE_VERSION)) {
         int ideVersion = Integer.parseInt(arg.substring(IDE_VERSION.length(), arg.length()));
         if (ideVersion != VERSION) {
-          PrintStream stream = new PrintStream(notifications);
-          stream.println("Wrong agent version: " + VERSION + ". IDE expects version: " + ideVersion);
-          stream.flush();
+          printStream.println("Wrong agent version: " + VERSION + ". IDE expects version: " + ideVersion);
+          printStream.flush();
           return false;
         } else
           return true;
@@ -188,18 +183,17 @@ public class JUnitStarter {
     return false;
   }
 
-  private static boolean canWorkWithJUnitVersion(OutputStream notifications, boolean isJUnit4) {
-    final PrintStream stream = new PrintStream(notifications);
+  private static boolean canWorkWithJUnitVersion(PrintStream printStream, boolean isJUnit4) {
     try {
       junitVersionChecks(isJUnit4);
     } catch (Throwable e) {
-      stream.println("!!! JUnit version 3.8 or later expected:");
-      stream.println();
-      e.printStackTrace(stream);
-      stream.flush();
+      printStream.println("!!! JUnit version 3.8 or later expected:");
+      printStream.println();
+      e.printStackTrace(printStream);
+      printStream.flush();
       return false;
     } finally {
-      stream.flush();
+      printStream.flush();
     }
     return true;
   }
@@ -214,22 +208,24 @@ public class JUnitStarter {
   private static int prepareStreamsAndStart(String[] args,
                                             final boolean isJUnit4,
                                             ArrayList listeners,
-                                            String name,
-                                            SegmentedOutputStream out,
-                                            SegmentedOutputStream err) {
+                                            String name) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     try {
-      System.setOut(new PrintStream(out));
-      System.setErr(new PrintStream(err));
+      IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
+      Object out = SM_RUNNER ? System.out : (Object)new SegmentedOutputStream(System.out);
+      Object err = SM_RUNNER ? System.err : (Object)new SegmentedOutputStream(System.err);
+      if (!SM_RUNNER) {
+        System.setOut(new PrintStream((OutputStream)out));
+        System.setErr(new PrintStream((OutputStream)err));
+      }
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
-          return JUnitForkedStarter.startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, name, out, err, ourForkMode, ourCommandFileName);
+          return new JUnitForkedStarter().startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, name, out, err, ourForkMode, ourCommandFileName);
         }
       }
-      IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
       testRunner.setStreams(out, err, 0);
-      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, !SM_RUNNER);
+      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, true);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

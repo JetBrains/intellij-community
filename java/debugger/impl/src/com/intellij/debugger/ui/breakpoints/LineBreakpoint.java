@@ -26,6 +26,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -61,12 +62,14 @@ import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
@@ -188,8 +191,38 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     updateUI();
   }
 
-  protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
-    return true;
+  private static Pattern ourAnonymousPattern = Pattern.compile(".*\\$\\d*$");
+  private static boolean isAnonymousClass(ReferenceType classType) {
+    if (classType instanceof ClassType) {
+      return ourAnonymousPattern.matcher(classType.name()).matches();
+    }
+    return false;
+  }
+
+  protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
+    Method method = loc.method();
+    if (DebuggerUtils.isSynthetic(method)) {
+      return false;
+    }
+    boolean res = !(method.isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
+    if (!res) return false;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        if (getProperties() instanceof JavaLineBreakpointProperties) {
+          Integer offset = ((JavaLineBreakpointProperties)getProperties()).getOffset();
+          if (offset == null) return true;
+          PsiFile file = getPsiFile();
+          if (file != null) {
+            SourcePosition exactPosition = SourcePosition.createFromOffset(file, offset);
+            SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+            if (position == null) return false;
+            return DebuggerUtilsEx.inTheSameMethod(exactPosition, position);
+          }
+        }
+        return true;
+      }
+    });
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {

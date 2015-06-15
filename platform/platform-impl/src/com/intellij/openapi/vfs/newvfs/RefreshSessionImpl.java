@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   @Override
-  public void addAllFiles(@NotNull Collection<VirtualFile> files) {
+  public void addAllFiles(@NotNull Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (file == null) {
         LOG.error("null passed among " + files);
@@ -110,9 +110,16 @@ public class RefreshSessionImpl extends RefreshSession {
     boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
-      LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
-      fs.markSuspiciousFilesDirty(workQueue);
-      FileWatcher watcher = fs.getFileWatcher();
+      final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+      final FileWatcher watcher;
+      if (fileSystem instanceof LocalFileSystemImpl) {
+        LocalFileSystemImpl fs = (LocalFileSystemImpl)fileSystem;
+        fs.markSuspiciousFilesDirty(workQueue);
+        watcher = fs.getFileWatcher();
+      }
+      else {
+        watcher = null;
+      }
 
       long t = 0;
       if (LOG.isDebugEnabled()) {
@@ -124,7 +131,7 @@ public class RefreshSessionImpl extends RefreshSession {
         if (myCancelled) break;
 
         NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) {
+        if (!myIsRecursive && (!myIsAsync || (watcher != null && !watcher.isWatched(nvf)))) {
           // we're unable to definitely refresh synchronously by means of file watcher.
           nvf.markDirty();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,10 @@ public class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, true, true, true, false, false);
   }
 
+  public static FileChooserDescriptor createSingleFileDescriptor() {
+    return createSingleLocalFileDescriptor();
+  }
+
   public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
     return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(new Condition<VirtualFile>() {
       @Override
@@ -92,33 +96,11 @@ public class FileChooserDescriptorFactory {
     });
   }
 
-  /** @deprecated use {@link #createSingleFileDescriptor(FileType)} or {@link #createSingleFileOrFolderDescriptor(FileType)} (to be removed in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType, final boolean supportDirectories) {
-    return supportDirectories ? createSingleFileOrFolderDescriptor(fileType) : createSingleFileDescriptor(fileType);
-  }
-
-  /** @deprecated not very useful (to be removed in IDEA 15) */
+  /**
+   * @deprecated not very useful (to be removed in IDEA 15)
+   */
   @SuppressWarnings("UnusedDeclaration")
   public static FileChooserDescriptor getDirectoryChooserDescriptor(String objectName) {
     return createSingleFolderDescriptor().withTitle("Select " + objectName);
-  }
-
-  /** @deprecated not very useful (to be removed in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static FileChooserDescriptor getFileChooserDescriptor(String objectName) {
-    return createSingleFileNoJarsDescriptor().withTitle("Select " + objectName);
-  }
-
-  /** @deprecated use {@link #createSingleFileNoJarsDescriptor()} (to be removed in IDEA 15) */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public static FileChooserDescriptorBuilder onlyFiles() {
-    return FileChooserDescriptorBuilder.onlyFiles();
-  }
-
-  /** @deprecated use {@link #createSingleFileOrFolderDescriptor()} ()} (to be removed in IDEA 15) */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public static FileChooserDescriptorBuilder filesAndFolders() {
-    return FileChooserDescriptorBuilder.filesAndFolders();
   }
 }

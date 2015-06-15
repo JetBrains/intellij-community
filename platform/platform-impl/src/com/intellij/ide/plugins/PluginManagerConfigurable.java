@@ -52,7 +52,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPluginManagerMain.getPluginTable();
+    return myPluginManagerMain == null ? null : myPluginManagerMain.getPluginTable();
   }
 
   @Override

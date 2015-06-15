@@ -48,10 +48,7 @@ import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.EditableModel;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import net.miginfocom.swing.MigLayout;
@@ -71,6 +68,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
+import static com.intellij.openapi.ui.LabeledComponent.create;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
@@ -570,8 +568,8 @@ class RunConfigurable extends BaseConfigurable {
     GridBag g = new GridBag();
 
     bottomPanel.add(myConfirmation, g.nextLine().coverLine());
-    bottomPanel.add(new JLabel("Temporary configurations limit:"), g.nextLine().next());
-    bottomPanel.add(myRecentsLimit, g.next().anchor(GridBagConstraints.WEST));
+    bottomPanel.add(create(myRecentsLimit, ExecutionBundle.message("temporary.configurations.limit"), BorderLayout.WEST),
+                    g.nextLine().insets(JBUI.insets(10, 0, 0, 0)).anchor(GridBagConstraints.WEST));
 
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -683,6 +681,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     manager.saveOrder();
+
     setModified(false);
     myTree.repaint();
   }

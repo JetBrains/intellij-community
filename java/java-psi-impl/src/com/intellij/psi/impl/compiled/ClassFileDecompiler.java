@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.project.DefaultProjectFactory;
@@ -23,19 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public class ClassFileDecompiler implements BinaryFileDecompiler {
   private static final Logger LOG = Logger.getInstance(ClassFileDecompiler.class);
-
-  /** @deprecated temporary solution, to remove in IDEA 14 */
-  public interface PlatformDecompiler {
-    @Nullable
-    CharSequence decompile(@NotNull VirtualFile file);
-  }
 
   @Override
   @NotNull
@@ -44,12 +36,6 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
     if (decompiler instanceof ClassFileDecompilers.Full) {
       PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
       return ((ClassFileDecompilers.Full)decompiler).createFileViewProvider(file, manager, true).getContents();
-    }
-
-    @SuppressWarnings("deprecation") PlatformDecompiler platformDecompiler = ServiceManager.getService(PlatformDecompiler.class);
-    if (platformDecompiler != null) {
-      CharSequence result = platformDecompiler.decompile(file);
-      if (result != null) return result;
     }
 
     if (decompiler instanceof ClassFileDecompilers.Light) {

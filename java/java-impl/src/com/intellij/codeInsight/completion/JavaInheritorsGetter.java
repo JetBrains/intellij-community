@@ -160,20 +160,23 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
                     (psiType instanceof PsiClassReferenceType ? ((PsiClassReferenceType)psiType).getReference().getClass() : ""));
           return null;
         }
-        final PsiStatement statement = elementFactory
-          .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getOriginalFile());
-        final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
-        final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
-        final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||
-                                                             !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
-        if (hasDefaultConstructorOrNoGenericsOne) {
-          final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(initializer);
-          if (inferenceResult.getErrorMessage() == null &&
-              !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-              areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getPosition())) {
-            psiType = initializer.getType();
+        try {
+          final PsiStatement statement = elementFactory
+            .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getOriginalFile());
+          final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
+          final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
+          final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||
+                                                               !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
+          if (hasDefaultConstructorOrNoGenericsOne) {
+            final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(initializer);
+            if (inferenceResult.getErrorMessage() == null &&
+                !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getPosition())) {
+              psiType = initializer.getType();
+            }
           }
         }
+        catch (IncorrectOperationException ignore) {}
       }
     }
     final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position);

@@ -505,6 +505,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-11541
+  public void testBaseStringCheck() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

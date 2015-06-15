@@ -33,7 +33,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
@@ -57,11 +56,6 @@ import java.util.Collection;
  */
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   protected CodeInsightTestFixture myTestFixture;
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected HighlightingTestBase() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -138,10 +132,14 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
 
   @Override
   protected void tearDown() throws Exception {
-    myTestFixture.tearDown();
-    myTestFixture = null;
+    try {
+      myTestFixture.tearDown();
+    }
+    finally {
+      myTestFixture = null;
 
-    super.tearDown();
+      super.tearDown();
+    }
   }
 
   protected void doHighlightingTest(String s) throws Throwable {

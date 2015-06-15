@@ -21,6 +21,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
@@ -79,6 +80,7 @@ public class GitRebaseAbort extends GitRepositoryAction {
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, getActionName(), h.printableCommandLine());
+      VfsUtil.markDirtyAndRefresh(true, true, false, root);
     }
     finally {
       DvcsUtil.workingTreeChangeFinished(project, token);

@@ -48,8 +48,6 @@ public class SubtypingConstraint implements ConstraintFormula {
 
     SubtypingConstraint that = (SubtypingConstraint)o;
 
-    if ( myS instanceof PsiCapturedWildcardType && myS != that.myS) return false;
-
     if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
     if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
 
@@ -72,9 +70,9 @@ public class SubtypingConstraint implements ConstraintFormula {
       }
 
       if (tBound instanceof PsiCapturedWildcardType) {
-        tBound = ((PsiWildcardType)myT).isExtends() ? ((PsiCapturedWildcardType)tBound).getUpperBound() 
-                                                    : ((PsiCapturedWildcardType)tBound).getLowerBound();
+        tBound = ((PsiCapturedWildcardType)tBound).getUpperBound();
       }
+
       if (myS instanceof PsiCapturedWildcardType) {
         myS = ((PsiCapturedWildcardType)myS).getWildcard();
       }
@@ -88,10 +86,7 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
 
           if (((PsiWildcardType)myS).isExtends()) {
-            if (sBound instanceof PsiCapturedWildcardType) {
-              return true;
-            }
-            constraints.add(new StrictSubtypingConstraint(tBound, sBound));
+            constraints.add(new StrictSubtypingConstraint(tBound, sBound instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)sBound).getUpperBound() : sBound));
             return true;
           }
           

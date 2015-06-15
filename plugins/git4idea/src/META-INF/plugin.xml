@@ -157,6 +157,7 @@
     <projectService
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"

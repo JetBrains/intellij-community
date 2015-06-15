@@ -20,10 +20,23 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
- * Tells to filter by some branch name.
+ * Tells to filter by branches with given names.
+ * <p/>
+ * There are two filters possible here:<ul>
+ * <li>accept only given branches: {@link #getBranchNames()};</li>
+ * <li>deny the given branches: {@link #getExcludedBranchNames()}</li></ul>
+ * Note though that accepted branch names have higher precedence over excluded ones:
+ * only those commits are excluded, which are contained <b>only</b> in excluded branches:
+ * i.e. if a commit contains in an excluded branch, and in a non-excluded branch, then it should be shown.
+ * <p/>
+ * That means, in particular, that a filter with one accepted branch will show all and only commits from that branch,
+ * and excluded branches will have no effect.
  */
 public interface VcsLogBranchFilter extends VcsLogFilter {
 
   @NotNull
   Collection<String> getBranchNames();
+
+  @NotNull
+  Collection<String> getExcludedBranchNames();
 }

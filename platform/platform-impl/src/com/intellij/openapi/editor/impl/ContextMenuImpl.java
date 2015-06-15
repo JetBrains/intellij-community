@@ -102,7 +102,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     final Rectangle r = viewport.getBounds();
     final Point viewPosition = viewport.getViewPosition();
 
-    final Rectangle activationArea = new Rectangle(0, 0, r.width, 150);
+    final Rectangle activationArea = new Rectangle(0, 0, r.width, r.height);
     return activationArea.contains(p.x, p.y - viewPosition.y);
   }
 

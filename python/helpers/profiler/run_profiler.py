@@ -4,16 +4,17 @@ from socket import socket
 import time
 import sys
 import traceback
-import StringIO
-
-import yappi
+import os
 
 from prof_io import ProfWriter, ProfReader
 from pydevd_utils import save_main_module
 import pydev_imports
-from prof_data import copy_fields
-from profiler_protocol_pb2 import ProfilerResponse, Stats
+from prof_util import generate_snapshot_filepath, statsToResponse
 
+from _prof_imports import ProfilerResponse
+
+base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
+remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))
 
 def StartClient(host, port):
     """ connects to a host/port """
@@ -39,7 +40,14 @@ def StartClient(host, port):
 
 class Profiler(object):
     def __init__(self):
-        pass
+        try:
+            import yappi_profiler
+            self.profiling_backend = yappi_profiler.YappiProfile()
+            print('Starting yappi profiler\n')
+        except ImportError:
+            import cProfile
+            self.profiling_backend = cProfile.Profile()
+            print('Starting cProfile profiler\n')
 
     def connect(self, host, port):
         s = StartClient(host, port)
@@ -53,18 +61,15 @@ class Profiler(object):
             pass
         self.writer = ProfWriter(sock)
         self.reader = ProfReader(sock, self)
-        self.writer.start()
         self.reader.start()
 
         time.sleep(0.1)  # give threads time to start
 
     def process(self, message):
-        if message.HasField('ystats_string'):
-            self.stats_string(message.id)
-        elif message.HasField('ystats'):
-            self.func_stats(message.id)
+        if hasattr(message, 'save_snapshot'):
+            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath, remote_run), remote_run)
         else:
-            raise AssertionError("malformed request")
+            raise AssertionError("Unknown request %s" % dir(message))
 
     def run(self, file):
         m = save_main_module(file, 'run_profiler')
@@ -76,34 +81,44 @@ class Profiler(object):
 
         self.start_profiling()
 
-        pydev_imports.execfile(file, globals, globals)  # execute the script
-
-        # self.stats_string()
-
-        time.sleep(10)
+        try:
+            pydev_imports.execfile(file, globals, globals)  # execute the script
+        finally:
+            self.stop_profiling()
+            self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run), remote_run)
 
     def start_profiling(self):
-        yappi.start(profile_threads=False)
+        self.profiling_backend.enable()
 
-    def stats_string(self, id):
-        output = StringIO.StringIO()
-        yappi.get_func_stats().print_all(out=output)
-        m = ProfilerResponse()
-        m.id = id
-        m.ystats_string = output.getvalue()
-        self.writer.addCommand(m)
+    def stop_profiling(self):
+        self.profiling_backend.disable()
 
-    def func_stats(self, id):
-        yfunc_stats = yappi.get_func_stats()
-        m = ProfilerResponse()
-        m.id = id
-        ystats = Stats()
+    def get_snapshot(self):
+        self.profiling_backend.create_stats()
+        return self.profiling_backend.stats
 
-        for fstat in yfunc_stats:
-            func_stat = ystats.func_stats.add()
-            copy_fields(func_stat, fstat)
-        m.ystats.CopyFrom(ystats)
-        self.writer.addCommand(m)
+    def dump_snapshot(self, filename):
+        dir = os.path.dirname(filename)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        self.profiling_backend.dump_stats(filename)
+        return filename
+
+    def save_snapshot(self, id, filename, send_stat=False):
+        self.stop_profiling()
+        if filename is not None:
+            filename = self.dump_snapshot(filename)
+            print('Snapshot saved to %s' % filename)
+
+        if not send_stat:
+            response = ProfilerResponse(id=id, snapshot_filepath=filename)
+        else:
+            response = ProfilerResponse(id=id)
+            statsToResponse(self.get_snapshot(), response)
+
+        self.writer.addCommand(response)
+        self.start_profiling()
 
 
 if __name__ == '__main__':
@@ -111,6 +126,10 @@ if __name__ == '__main__':
     host = sys.argv[1]
     port = int(sys.argv[2])
     file = sys.argv[3]
+
+    del sys.argv[0]
+    del sys.argv[0]
+    del sys.argv[0]
 
     profiler = Profiler()
 
@@ -121,8 +140,7 @@ if __name__ == '__main__':
         traceback.print_exc()
         sys.exit(1)
 
+    # add file path to sys.path
+    sys.path.insert(0, os.path.split(file)[0])
+
     profiler.run(file)
-
-
-
-

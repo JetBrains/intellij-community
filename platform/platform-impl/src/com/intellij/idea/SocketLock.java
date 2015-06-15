@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,27 +20,30 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author mike
  */
-public class SocketLock {
+public final class SocketLock {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.SocketLock");
   public static final int SOCKET_NUMBER_START = 6942;
   public static final int SOCKET_NUMBER_END = SOCKET_NUMBER_START + 50;
@@ -48,89 +51,131 @@ public class SocketLock {
   // IMPORTANT: Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
 
-  private ServerSocket mySocket;
-  private final List<String> myLockedPaths = new ArrayList<String>();
-  private boolean myIsDialogShown = false;
+  private final ServerSocket serverSocket;
+  private final String[] myLockedPaths = new String[2];
   @NonNls private static final String LOCK_THREAD_NAME = "Lock thread";
   @NonNls private static final String ACTIVATE_COMMAND = "activate ";
 
-  @Nullable
-  private Consumer<List<String>> myActivateListener;
+  public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
-  public static enum ActivateStatus { ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE }
+  private final int acquiredPort;
+  private volatile Consumer<List<String>> activateListener;
 
   public SocketLock() {
+    serverSocket = acquireSocket();
+    if (serverSocket == null) {
+      String productName = ApplicationNamesInfo.getInstance().getProductName();
+      if (Main.isHeadless()) { //team server inspections
+        throw new RuntimeException("Only one instance of " + productName + " can be run at a time.");
+      }
+      String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
+      JOptionPane.showMessageDialog(
+        JOptionPane.getRootFrame(),
+        CommonBundle.message("cannot.start.other.instance.is.running.error.message", productName, pathToLogFile),
+        CommonBundle.message("title.warning"),
+        JOptionPane.WARNING_MESSAGE
+      );
+      acquiredPort = -1;
+    }
+    else {
+      acquiredPort = serverSocket.getLocalPort();
+      Thread thread = new Thread(new MyRunnable(), LOCK_THREAD_NAME);
+      thread.setPriority(Thread.MIN_PRIORITY);
+      thread.start();
+    }
   }
 
-  public void setActivateListener(@Nullable Consumer<List<String>> consumer) {
-    myActivateListener = consumer;
+  public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
+    activateListener = consumer;
   }
 
-  public synchronized void dispose() {
+  @TestOnly
+  public void dispose() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: destroyProcess()");
     }
     try {
-      mySocket.close();
-      mySocket = null;
+      serverSocket.close();
     }
     catch (IOException e) {
       LOG.debug(e);
     }
   }
 
-  private volatile int acquiredPort = -1;
-
-  public synchronized int getAcquiredPort () {
+  public int getAcquiredPort() {
     return acquiredPort;
   }
 
-  public synchronized ActivateStatus lock(String path, boolean markPort, String... args) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: lock(path='" + path + "')");
-    }
+  private static void lockPortMarker(@NotNull File parent, @NotNull List<Closeable> list) throws IOException {
+    FileUtilRt.createDirectory(parent);
+    FileOutputStream stream = new FileOutputStream(new File(parent, "port.lock"), true);
+    list.add(stream);
+    stream.getChannel().lock();
+  }
 
-    ActivateStatus status = ActivateStatus.NO_INSTANCE;
-    int port = acquireSocket();
-    if (mySocket == null) {
-      if (!myIsDialogShown) {
-        final String productName = ApplicationNamesInfo.getInstance().getProductName();
-        if (Main.isHeadless()) { //team server inspections
-          throw new RuntimeException("Only one instance of " + productName + " can be run at a time.");
-        }
-        @NonNls final String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
-        JOptionPane.showMessageDialog(
-          JOptionPane.getRootFrame(),
-          CommonBundle.message("cannot.start.other.instance.is.running.error.message", productName, pathToLogFile),
-          CommonBundle.message("title.warning"),
-          JOptionPane.WARNING_MESSAGE
-        );
-        myIsDialogShown = true;
-      }
-      return status;
-    }
-
-    if (markPort && port != -1) {
-      File portMarker = new File(path, "port");
+  private static void addExistingPort(@NotNull File portMarker, @NotNull String path, @NotNull MultiMap<Integer, String> portToPath) {
+    if (portMarker.exists()) {
       try {
-        FileUtil.writeToFile(portMarker, Integer.toString(port).getBytes());
+        portToPath.putValue(Integer.parseInt(FileUtilRt.loadFile(portMarker)), path);
       }
-      catch (IOException ignored) {
-        FileUtil.asyncDelete(portMarker);
+      catch (Throwable e) {
+        LOG.debug(e);
+        // don't delete - we overwrite it on write in any case
+      }
+    }
+  }
+
+  @NotNull
+  public ActivateStatus lock(@NotNull String configPath, @NotNull String systemPath, String... args) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: lock(configPath='" + configPath + "', systemPath='" + systemPath + "')");
+    }
+
+    File config = new File(configPath);
+    File system = new File(systemPath);
+    File portMarkerC = new File(config, "port");
+    File portMarkerS = new File(system, "port");
+    List<Closeable> closeables = new ArrayList<Closeable>();
+    try {
+      lockPortMarker(config, closeables);
+      lockPortMarker(system, closeables);
+      MultiMap<Integer, String> portToPath = MultiMap.createSmart();
+      addExistingPort(portMarkerC, configPath, portToPath);
+      addExistingPort(portMarkerS, systemPath, portToPath);
+      if (!portToPath.isEmpty()) {
+        for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
+          ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
+          if (status != ActivateStatus.NO_INSTANCE) {
+            return status;
+          }
+        }
+      }
+
+      byte[] portBytes = Integer.toString(acquiredPort).getBytes(CharsetToolkit.UTF8_CHARSET);
+      FileUtil.writeToFile(portMarkerC, portBytes);
+      FileUtil.writeToFile(portMarkerS, portBytes);
+
+      myLockedPaths[0] = configPath;
+      myLockedPaths[1] = systemPath;
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    finally {
+      for (Closeable closeable : closeables) {
+        try {
+          closeable.close();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
 
-    for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
-      if (isPortForbidden(i) || i == mySocket.getLocalPort()) continue;
-      status = tryActivate(i, path, args);
-      if (status != ActivateStatus.NO_INSTANCE) {
-        return status;
-      }
-    }
+    portMarkerC.deleteOnExit();
+    portMarkerS.deleteOnExit();
 
-    myLockedPaths.add(path);
-
-    return status;
+    return ActivateStatus.NO_INSTANCE;
   }
 
   public static boolean isPortForbidden(int port) {
@@ -140,32 +185,30 @@ public class SocketLock {
     return false;
   }
 
-  private static ActivateStatus tryActivate(int portNumber, String path, String[] args) {
-    List<String> result = new ArrayList<String>();
-
+  @SuppressWarnings({"SocketOpenedButNotSafelyClosed", "IOResourceOpenedButNotSafelyClosed"})
+  @NotNull
+  private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
+    Socket socket = null;
     try {
-      try {
-        ServerSocket serverSocket = new ServerSocket(portNumber, 50, NetUtils.getLoopbackAddress());
-        serverSocket.close();
-        return ActivateStatus.NO_INSTANCE;
-      }
-      catch (IOException ignored) {
-      }
-
-      Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
+      socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       socket.setSoTimeout(300);
 
+      boolean result = false;
       DataInputStream in = new DataInputStream(socket.getInputStream());
-
       while (true) {
         try {
-          result.add(in.readUTF());
+          String path = in.readUTF();
+          if (paths.contains(path)) {
+            result = true;
+            // don't break - read all input
+          }
         }
         catch (IOException ignored) {
           break;
         }
       }
-      if (result.contains(path)) {
+
+      if (result) {
         try {
           DataOutputStream out = new DataOutputStream(socket.getOutputStream());
           out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
@@ -175,66 +218,68 @@ public class SocketLock {
             return ActivateStatus.ACTIVATED;
           }
         }
-        catch(IOException ignored) {
+        catch (IOException ignored) {
         }
         return ActivateStatus.CANNOT_ACTIVATE;
       }
-
-      in.close();
     }
     catch (IOException e) {
       LOG.debug(e);
+    }
+    finally {
+      if (socket != null) {
+        try {
+          socket.close();
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+        }
+      }
     }
 
     return ActivateStatus.NO_INSTANCE;
   }
 
-  private int acquireSocket() {
-    if (mySocket != null) return -1;
-
-    int port = -1;
-
+  @Nullable
+  private static ServerSocket acquireSocket() {
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
       try {
-        if (isPortForbidden(i)) continue;
+        if (isPortForbidden(i)) {
+          continue;
+        }
 
-        mySocket = new ServerSocket(i, 50, InetAddress.getByName("127.0.0.1"));
-        port = i;
-        acquiredPort = port;
-        break;
+        return new ServerSocket(i, 50, NetUtils.getLoopbackAddress());
       }
       catch (IOException e) {
         LOG.info(e);
       }
     }
-
-    final Thread thread = new Thread(new MyRunnable(), LOCK_THREAD_NAME);
-    thread.setPriority(Thread.MIN_PRIORITY);
-    thread.start();
-    return port;
+    return null;
   }
 
   private class MyRunnable implements Runnable {
-
     @Override
     public void run() {
       try {
         while (true) {
           try {
-            final Socket socket = mySocket.accept();
+            final Socket socket = serverSocket.accept();
             socket.setSoTimeout(800);
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             synchronized (SocketLock.this) {
               for (String path: myLockedPaths) {
-                out.writeUTF(path);
+                if (path != null) {
+                  out.writeUTF(path);
+                }
               }
             }
             DataInputStream stream = new DataInputStream(socket.getInputStream());
             final String command = stream.readUTF();
             if (command.startsWith(ACTIVATE_COMMAND)) {
               List<String> args = StringUtil.split(command.substring(ACTIVATE_COMMAND.length()), "\0");
-              if (myActivateListener != null) {
-                myActivateListener.consume(args);
+              Consumer<List<String>> listener = activateListener;
+              if (listener != null) {
+                listener.consume(args);
               }
               out.writeUTF("ok");
             }

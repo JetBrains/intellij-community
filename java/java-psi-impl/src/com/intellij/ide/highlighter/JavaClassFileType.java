@@ -26,7 +26,7 @@ import javax.swing.*;
 
 public class JavaClassFileType implements FileType {
 
-  public static JavaClassFileType INSTANCE = new JavaClassFileType();
+  public static final JavaClassFileType INSTANCE = new JavaClassFileType();
 
   private static final NotNullLazyValue<Icon> ICON = new NotNullLazyValue<Icon>() {
     @NotNull

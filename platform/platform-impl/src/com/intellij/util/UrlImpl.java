@@ -33,7 +33,7 @@ public final class UrlImpl implements Url {
   private String externalForm;
   private UrlImpl withoutParameters;
 
-  public UrlImpl(@Nullable String path) {
+  public UrlImpl(@NotNull String path) {
     this(null, null, path, null);
   }
 
@@ -43,8 +43,8 @@ public final class UrlImpl implements Url {
 
   public UrlImpl(@Nullable String scheme, @Nullable String authority, @Nullable String path, @Nullable String parameters) {
     this.scheme = scheme;
-    this.authority = StringUtil.nullize(authority);
-    this.path = StringUtil.isEmpty(path) ? "/" : path;
+    this.authority = authority;
+    this.path = StringUtil.notNullize(path);
     this.parameters = StringUtil.nullize(parameters);
   }
 
@@ -85,11 +85,11 @@ public final class UrlImpl implements Url {
     StringBuilder builder = new StringBuilder();
     if (scheme != null) {
       builder.append(scheme);
-      if (authority != null || isInLocalFileSystem()) {
-        builder.append(URLUtil.SCHEME_SEPARATOR);
+      if (authority == null) {
+        builder.append(':');
       }
       else {
-        builder.append(':');
+        builder.append(URLUtil.SCHEME_SEPARATOR);
       }
 
       if (authority != null) {
@@ -111,8 +111,8 @@ public final class UrlImpl implements Url {
     }
 
     // relative path - special url, encoding is not required
-    // authority is null in case of URI or file URL
-    if ((path.charAt(0) != '/' || authority == null) && !isInLocalFileSystem()) {
+    // authority is null in case of URI
+    if ((authority == null || (!path.isEmpty() && path.charAt(0) != '/')) && !isInLocalFileSystem()) {
       return toDecodedForm();
     }
 

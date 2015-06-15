@@ -43,12 +43,17 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    myFixture.tearDown();
-    myFixture = null;
-    myJava3Module = null;
-    myJava7Module = null;
-    myJava8Module = null;
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myJava3Module = null;
+      myJava7Module = null;
+      myJava8Module = null;
+
+      super.tearDown();
+    }
   }
   
   @Override
@@ -69,8 +74,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myJava3Module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        model.addModuleOrderEntry(myJava7Module);
-        model.setSdk(IdeaTestUtil.getMockJdk17());
+        model.setSdk(IdeaTestUtil.getMockJdk14());
         String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java3";
         model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
       }
@@ -79,7 +83,6 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myJava7Module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        model.addModuleOrderEntry(myJava8Module);
         model.setSdk(IdeaTestUtil.getMockJdk17());
         String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java7";
         model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
@@ -96,11 +99,18 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     });
   }
 
+  private void addDependencies_37_78() {
+    ModuleRootModificationUtil.addDependency(myJava7Module, myJava8Module);
+    ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
+  }
+
   public void testGetClass() throws Exception {
+    addDependencies_37_78();
     doTest();
   }
 
   public void testWrongSuperInLibrary() throws Exception {
+    addDependencies_37_78();
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
       ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
@@ -116,42 +126,61 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   }
 
   public void testWrongComparator() throws Exception {
+    addDependencies_37_78();
    doTestWithoutLibrary();
   }
 
   public void testGenericComparator() throws Exception {
+    addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
   public void testGenericCallableWithDifferentTypeArgs() throws Exception {
+    addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
   public void testSuperclassImplementsUnknownType() throws Exception {
+    addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
   public void testDeclaredTypeOfVariableImplementsUnknownType() throws Exception {
+    addDependencies_37_78();
     doTestWithoutLibrary();
   }
   
   public void testSuperclassImplementsGenericsOfUnknownType() throws Exception {
+    addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
   public void testSuperMethodNotExist() throws Exception {
+    addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
   public void testNoOverriding() throws Exception {
+    addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
   public void testStaticCallOnChildWithNotAccessibleParent() throws Exception {
+    addDependencies_37_78();
     doTest3Modules();
   }
 
+  public void testCloseableAutoCloseable() {
+    IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
+    ModuleRootModificationUtil.addDependency(myJava7Module, myJava3Module);
+    final String name = getTestName(false);
+    myFixture.copyFileToProject("java3/p/" + name + ".java");
+    myFixture.configureByFiles("java7/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testLanguageLevelInReturnTypeCheck() throws Exception {
+    addDependencies_37_78();
     final String name = getTestName(false);
     myFixture.configureByFiles("java3/p/" + name + ".java", "java7/p/" + name + ".java");
     myFixture.checkHighlighting();

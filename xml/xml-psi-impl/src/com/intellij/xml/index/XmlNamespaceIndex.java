@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -36,10 +37,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -50,15 +48,25 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   @Nullable
   public static String getNamespace(@NotNull VirtualFile file, final Project project, PsiFile context) {
     if (DumbService.isDumb(project) || (context != null && XmlUtil.isStubBuilding())) {
-      try {
-        return XsdNamespaceBuilder.computeNamespace(file.getInputStream());
-      }
-      catch (IOException e) {
-        return null;
-      }
+      return computeNamespace(file);
     }
     final List<XsdNamespaceBuilder> list = FileBasedIndex.getInstance().getValues(NAME, file.getUrl(), createFilter(project));
     return list.size() == 0 ? null : list.get(0).getNamespace();
+  }
+
+  @Nullable
+  public static String computeNamespace(@NotNull VirtualFile file) {
+    InputStream stream = null;
+    try {
+      stream = file.getInputStream();
+      return XsdNamespaceBuilder.computeNamespace(stream);
+    }
+    catch (IOException e) {
+      return null;
+    }
+    finally {
+      StreamUtil.closeStream(stream);
+    }
   }
 
   public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getResourcesByNamespace(String namespace,
@@ -93,7 +101,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       public Map<String, XsdNamespaceBuilder> map(@NotNull final FileContent inputData) {
         final XsdNamespaceBuilder builder;
         if ("dtd".equals(inputData.getFile().getExtension())) {
-          builder = new XsdNamespaceBuilder(inputData.getFileName(), "", Collections.<String>emptyList());
+          builder = new XsdNamespaceBuilder(inputData.getFileName(), "", Collections.<String>emptyList(), Collections.<String>emptyList());
         }
         else {
           builder = XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
@@ -118,29 +126,41 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       public void save(@NotNull DataOutput out, XsdNamespaceBuilder value) throws IOException {
         IOUtil.writeUTF(out, value.getNamespace() == null ? "" : value.getNamespace());
         IOUtil.writeUTF(out, value.getVersion() == null ? "" : value.getVersion());
-        DataInputOutputUtil.writeINT(out, value.getTags().size());
-        for (String s : value.getTags()) {
-          IOUtil.writeUTF(out, s);
-        }
+        writeList(out, value.getTags());
+        writeList(out, value.getRootTags());
       }
 
       @Override
       public XsdNamespaceBuilder read(@NotNull DataInput in) throws IOException {
 
-        int count;
-        XsdNamespaceBuilder builder = new XsdNamespaceBuilder(IOUtil.readUTF(in), IOUtil.readUTF(in),
-                                                              new ArrayList<String>(count = DataInputOutputUtil.readINT(in)));
-        for (int i = 0; i < count; i++) {
-          builder.getTags().add(IOUtil.readUTF(in));
-        }
-        return builder;
+        return new XsdNamespaceBuilder(IOUtil.readUTF(in),
+                                       IOUtil.readUTF(in),
+                                       readList(in),
+                                       readList(in));
       }
     };
   }
 
+  private static void writeList(@NotNull DataOutput out, List<String> tags) throws IOException {
+    DataInputOutputUtil.writeINT(out, tags.size());
+    for (String s : tags) {
+      IOUtil.writeUTF(out, s);
+    }
+  }
+
+  @NotNull
+  private static ArrayList<String> readList(@NotNull DataInput in) throws IOException {
+    int count;
+    ArrayList<String> tags = new ArrayList<String>(count = DataInputOutputUtil.readINT(in));
+    for (int i = 0; i < count; i++) {
+      tags.add(IOUtil.readUTF(in));
+    }
+    return tags;
+  }
+
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @Nullable

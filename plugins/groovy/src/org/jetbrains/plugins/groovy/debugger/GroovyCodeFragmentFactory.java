@@ -175,7 +175,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         "java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \""
       ).append(EVAL_NAME).append("\", |resVals);\n");
     }
-    javaText.append("if (|res instanceof java.lang.Boolean) ((java.lang.Boolean) |res).booleanValue() else |res");
+    javaText.append("|res");
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
 

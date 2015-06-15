@@ -29,6 +29,7 @@ import java.util.List;
 public class UsageViewPresentation {
   private String myTabText;
   private String myScopeText = ""; // Default value. to be overwritten in most cases.
+  private String myContextText = "";
   private String myUsagesString;
   private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
   private String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
@@ -64,6 +65,14 @@ public class UsageViewPresentation {
 
   public void setScopeText(@NotNull String scopeText) {
     myScopeText = scopeText;
+  }
+
+  public @NotNull String getContextText() {
+    return myContextText;
+  }
+
+  public void setContextText(@NotNull String contextText) {
+    myContextText = contextText;
   }
 
   public boolean isShowReadOnlyStatusAsRed() {

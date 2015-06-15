@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +44,6 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class ProjectSetTest extends LightPlatformTestCase {
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public ProjectSetTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   private static String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/platform/platform-tests/testData/projectSet/";

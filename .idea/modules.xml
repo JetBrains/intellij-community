@@ -20,6 +20,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/android/android/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/android/android/rt/android-rt.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" filepath="$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/annotations/java8/annotations-java8.iml" filepath="$PROJECT_DIR$/platform/annotations/java8/annotations-java8.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/ant.iml" filepath="$PROJECT_DIR$/plugins/ant/ant.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/ant-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/ant-jps-plugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/antlayout.iml" filepath="$PROJECT_DIR$/jps/antLayout/antlayout.iml" group="jps" />

@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -824,13 +825,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
 
       final Object o = unwrapValue(getValue());
-      long currentStamp;
-      if (o instanceof PsiElement &&
-            ((PsiElement)o).getNode() instanceof CompositeElement &&
-            childrenStamp != (currentStamp = ((CompositeElement)((PsiElement)o).getNode()).getModificationCount()) ||
-          o instanceof ModificationTracker &&
-            childrenStamp != (currentStamp = ((ModificationTracker)o).getModificationCount())
-        ) {
+      long currentStamp = -1;
+      if (o instanceof StubBasedPsiElement && ((StubBasedPsiElement)o).getStub() != null) {
+        currentStamp = ((StubBasedPsiElement)o).getContainingFile().getModificationStamp();
+      } else if (o instanceof PsiElement && ((PsiElement)o).getNode() instanceof CompositeElement) {
+        currentStamp = ((CompositeElement)((PsiElement)o).getNode()).getModificationCount();
+      } else if (o instanceof ModificationTracker) {
+        currentStamp = ((ModificationTracker)o).getModificationCount();
+      }
+      if (childrenStamp != currentStamp) {
         resetChildren();
         childrenStamp = currentStamp;
       }

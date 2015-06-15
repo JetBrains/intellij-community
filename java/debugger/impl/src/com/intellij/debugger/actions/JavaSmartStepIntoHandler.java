@@ -102,12 +102,26 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         public void visitLambdaExpression(PsiLambdaExpression expression) {
+          super.visitLambdaExpression(expression);
           targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, null));
         }
 
         @Override
+        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+          PsiElement element = expression.resolve();
+          if (element instanceof PsiMethod) {
+            PsiElement navMethod = element.getNavigationElement();
+            if (navMethod instanceof PsiMethod) {
+              targets.add(new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
+            }
+          }
+        }
+
+        @Override
         public void visitStatement(PsiStatement statement) {
-          if (lineRange.intersects(statement.getTextRange())) {
+          TextRange range = statement.getTextRange();
+          if (lineRange.intersects(range)) {
+            textRange.set(textRange.get().union(range));
             super.visitStatement(statement);
           }
         }

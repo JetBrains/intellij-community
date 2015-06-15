@@ -29,7 +29,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -97,15 +96,6 @@ public class ManifestParser implements PsiParser {
     assert headerName != null : "[" + builder.getOriginalText() + "]@" + builder.getCurrentOffset();
     builder.advanceLexer();
 
-    PsiBuilder.Marker errors = null;
-    if (builder.getTokenType() == TokenType.BAD_CHARACTER) {
-      errors = builder.mark();
-      while (builder.getTokenType() == TokenType.BAD_CHARACTER) {
-        builder.advanceLexer();
-      }
-      errors.error(ManifestBundle.message("manifest.unexpected.token"));
-    }
-
     if (builder.getTokenType() == ManifestTokenType.COLON) {
       builder.advanceLexer();
 
@@ -117,14 +107,7 @@ public class ManifestParser implements PsiParser {
       headerParser.parse(builder);
     }
     else {
-      PsiBuilder.Marker marker;
-      if (errors == null) {
-        marker = builder.mark();
-      }
-      else {
-        marker = errors.precede();
-        errors.drop();
-      }
+      PsiBuilder.Marker marker = builder.mark();
       consumeHeaderValue(builder);
       marker.error(ManifestBundle.message("manifest.colon.expected"));
     }

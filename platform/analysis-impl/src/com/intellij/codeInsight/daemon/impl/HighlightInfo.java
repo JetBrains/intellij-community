@@ -52,14 +52,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
 
-  public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   // optimisation: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
   JComponent fileLevelComponent;
@@ -196,8 +194,8 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public Color getErrorStripeMarkColor(@NotNull PsiElement element,
-                                       @Nullable final EditorColorsScheme colorsScheme) { // if null global scheme will be used
+  Color getErrorStripeMarkColor(@NotNull PsiElement element,
+                                @Nullable final EditorColorsScheme colorsScheme) { // if null global scheme will be used
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
@@ -251,7 +249,7 @@ public class HighlightInfo implements Segment {
   @NotNull
   private static final HighlightInfoFilter[] FILTERS = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
 
-  public boolean needUpdateOnTyping() {
+  boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
@@ -331,7 +329,7 @@ public class HighlightInfo implements Segment {
            Comparing.strEqual(info.getDescription(), getDescription());
   }
 
-  public boolean equalsByActualOffset(@NotNull HighlightInfo info) {
+  boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
     return info.getSeverity() == getSeverity() &&
@@ -445,13 +443,13 @@ public class HighlightInfo implements Segment {
 
     private boolean isAfterEndOfLine;
     private boolean isFileLevelAnnotation;
-    private int navigationShift = 0;
+    private int navigationShift;
 
     private GutterIconRenderer gutterIconRenderer;
     private ProblemGroup problemGroup;
     private PsiElement psiElement;
 
-    public B(@NotNull HighlightInfoType type) {
+    private B(@NotNull HighlightInfoType type) {
       this.type = type;
     }
 
@@ -635,7 +633,7 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  public static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange, boolean batchMode) {
+  static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange, boolean batchMode) {
     final TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
     final TextAttributesKey forcedAttributesKey = forcedAttributes == null ? annotation.getTextAttributes() : null;
 
@@ -649,7 +647,7 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
-  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
+  private static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
 
   private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
@@ -664,7 +662,7 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  public static HighlightInfoType convertType(@NotNull Annotation annotation) {
+  private static HighlightInfoType convertType(@NotNull Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
@@ -726,7 +724,7 @@ public class HighlightInfo implements Segment {
     private final Icon myIcon;
     private Boolean myCanCleanup;
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
+    IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
       this(action, options, displayName, null);
     }
 
@@ -734,20 +732,20 @@ public class HighlightInfo implements Segment {
       this(action, null, null, icon);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable final List<IntentionAction> options,
-                                     @Nullable final String displayName,
-                                     @Nullable Icon icon) {
+    IntentionActionDescriptor(@NotNull IntentionAction action,
+                              @Nullable final List<IntentionAction> options,
+                              @Nullable final String displayName,
+                              @Nullable Icon icon) {
       this(action, options, displayName, icon, null, null, null);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable final List<IntentionAction> options,
-                                     @Nullable final String displayName,
-                                     @Nullable Icon icon,
-                                     @Nullable HighlightDisplayKey key,
-                                     @Nullable ProblemGroup problemGroup, 
-                                     @Nullable HighlightSeverity severity) {
+    private IntentionActionDescriptor(@NotNull IntentionAction action,
+                                      @Nullable final List<IntentionAction> options,
+                                      @Nullable final String displayName,
+                                      @Nullable Icon icon,
+                                      @Nullable HighlightDisplayKey key,
+                                      @Nullable ProblemGroup problemGroup,
+                                      @Nullable HighlightSeverity severity) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
@@ -762,11 +760,11 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
-    public boolean notError() {
-      return mySeverity != null && mySeverity.compareTo(HighlightSeverity.ERROR) < 0; 
+    boolean isError() {
+      return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
     }
     
-    public boolean canCleanup(@NotNull PsiElement element) {
+    boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
         final HighlightDisplayKey key = myKey;
@@ -815,10 +813,20 @@ public class HighlightInfo implements Segment {
         InspectionProfileEntry wrappedTool = toolWrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)toolWrapper).getTool()
                                                                                                : ((GlobalInspectionToolWrapper)toolWrapper).getTool();
         if (wrappedTool instanceof DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection) {
-          if (fixAllIntention != null) {
-            return Collections.<IntentionAction>singletonList(fixAllIntention);
+          List<IntentionAction> actions = Collections.<IntentionAction>emptyList(); 
+          if (myProblemGroup instanceof SuppressableProblemGroup) {
+            actions = Arrays.<IntentionAction>asList(((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element));
           }
-          return Collections.<IntentionAction>emptyList();
+          if (fixAllIntention != null) {
+            if (actions.isEmpty()) {
+              return Collections.<IntentionAction>singletonList(fixAllIntention);
+            }
+            else {
+              actions = new ArrayList<IntentionAction>(actions);
+              actions.add(fixAllIntention);
+            }
+          }
+          return actions;
         }
         ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
@@ -826,7 +834,8 @@ public class HighlightInfo implements Segment {
           if (suppressActions != null) {
             ContainerUtil.addAll(newOptions, suppressActions);
           }
-        } else {
+        }
+        else {
           SuppressQuickFix[] suppressFixes = wrappedTool.getBatchSuppressActions(element);
           if (suppressFixes.length > 0) {
             ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressFixes, new Function<SuppressQuickFix, IntentionAction>() {

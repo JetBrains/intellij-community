@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 includeTool << JpsGantTool
@@ -64,12 +67,13 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m")
-binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=225m")
+binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=240m")
+binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
-                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true")
+                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-XX:+HeapDumpOnOutOfMemoryError")
 
-binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
+binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
@@ -128,13 +132,8 @@ binding.setVariable("guessHome", {
 })
 
 binding.setVariable("loadProject", {
-  requireProperty("jdkHome", guessJdk())
-  def mac = isMac()
-  jdk("IDEA jdk", jdkHome) {
-    if (!mac) {
-      classpath "$jdkHome/lib/tools.jar"
-    }
-  }
+  defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/1.6", "JDK_16_x64"))
+  defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
   projectBuilder.buildIncrementally = Boolean.parseBoolean(p("jps.build.incrementally", "false"))
   def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
   projectBuilder.dataStorageRoot = new File("$home/$dataDirName")
@@ -147,6 +146,68 @@ binding.setVariable("loadProject", {
   compilerOptions.DEPRECATION = false
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 })
+
+binding.setVariable("removeJdkJarFiles", { Collection<String> classpath ->
+  def jdkHomePaths = project.model.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE).collect {
+    def homeDir = new File(it.properties.homePath)
+    return SystemInfo.isMac && homeDir.name == "Home" ? homeDir.parent : homeDir.absolutePath
+  }
+  return classpath.findAll { jarPath -> jdkHomePaths.every { !FileUtil.isAncestor(it, jarPath, false) } }
+})
+
+private String setupJdkPath(String propertyName, String defaultDir, String envVarName) {
+  try {
+    this[propertyName]
+  }
+  catch (MissingPropertyException ignored) {
+    def jdk = SystemInfo.isMac ? "$defaultDir/Home" : defaultDir
+    if (new File(jdk).exists()) {
+      projectBuilder.info("$propertyName set to $jdk")
+    }
+    else {
+      jdk = System.getenv(envVarName)
+      if (jdk != null) {
+        projectBuilder.info("'$defaultDir' doesn't exist, $propertyName set to '$envVarName' environment variable: $jdk")
+      }
+      else {
+        jdk = guessJdk()
+        def version = JdkVersionDetector.instance.detectJdkVersion(jdk)
+        if (propertyName.contains("8") && !version.contains("1.8.")) {
+          projectBuilder.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable aren't defined and default JDK $jdk ($version) cannot be used as JDK 1.8")
+          return null
+        }
+        projectBuilder.info("'$envVarName' isn't defined and '$defaultDir' doesn't exist, $propertyName set to $jdk")
+      }
+    }
+    this[propertyName] = jdk
+    return jdk
+  }
+}
+
+private void defineJdk(String jdkName, jdkHomePath) {
+  jdk(jdkName, jdkHomePath) {
+    def toolsJar = "$jdkHomePath/lib/tools.jar"
+    if (new File(toolsJar).exists()) {
+      classpath toolsJar
+    }
+  }
+
+  if (SystemInfo.isMac) {
+    //temporary workaround for Mac: resolve symlinks manually. Previously ZipFileCache used FileUtil.toCanonicalPath method which doesn't resolve symlinks.
+    def jdk = global.libraryCollection.findLibrary(jdkName, JpsJavaSdkType.INSTANCE)
+    def jdkClasspath = jdk.getFiles(JpsOrderRootType.COMPILED)
+    def urls = jdk.getRootUrls(JpsOrderRootType.COMPILED)
+    urls.each { jdk.removeUrl(it, JpsOrderRootType.COMPILED) }
+    jdkClasspath.each {
+      try {
+        jdk.addRoot(it.getCanonicalFile(), JpsOrderRootType.COMPILED)
+      }
+      catch (IOException ignored) {
+      }
+    }
+    projectBuilder.info("JDK '$jdkName' classpath: ${jdk.getFiles(JpsOrderRootType.COMPILED)}")
+  }
+}
 
 binding.setVariable("prepareOutputFolder", {
   def targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
@@ -209,7 +270,7 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
 })
 
 def debugPort = System.getProperty("debug.port")
-def debugSuspend = System.getProperty("debug.suspend") ?: "n"
+def debugSuspend = System.getProperty("rи") ?: "n"
 if (debugSuspend == 'y') {
   println """
 
@@ -699,7 +760,7 @@ private Map readIdeaProperties(Map args) {
   ideaPropertiesFile.close();
 
   def defaultProperties = ["CVS_PASSFILE": "~/.cvspass",
-                           "JVMVersion": "1.6*",
+                           "JVMVersion": "1.6+",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
                            "idea.executable": args.executable,
@@ -754,19 +815,42 @@ private List<File> getChildren(File file) {
   return file.listFiles().sort { File f -> f.name.toLowerCase() }
 }
 
-binding.setVariable("getCustomJDK", { File customJdkDir ->
-  getChildren(customJdkDir).each {
-    if (it.getName().endsWith(".tar.gz")) {
-      def customJdkFileName = it.getAbsolutePath().substring(0, it.getAbsolutePath().length() - 3)
-      if (new File(customJdkFileName).exists()){ ant.delete(file: customJdkFileName) }
-      if (new File("${home}/build/jdk/custom_jdk_${buildNumber}.tar").exists()){
-        ant.delete(file: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+binding.setVariable("bundledJDKs"){
+  requireProperty("jdk16.mac", "true")
+  requireProperty("jdk.bundled.win", "1.8")
+  requireProperty("jdk.bundled.linux", "false")
+  requireProperty("jdk.bundled.mac", "1.8")
+  requireProperty("jdk.custom.mac", "true")
+
+  setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
+  if (p("jdk.bundled.linux") != "false"){
+    setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
+    extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk")
+  }
+  if (p("jdk.bundled.mac") != "false"){
+    setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
+  }
+  def customJdkDir = new File("${home}/build/jdk/custom")
+  if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())){
+    setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+  }
+}
+
+binding.setVariable("getPathToBundledJDK", { File jdkDir, String prefix, String ext ->
+  def JdkFileName = ""
+  getChildren(jdkDir).each {
+    if (it.getName().startsWith(prefix) && it.getName().endsWith(ext)) {
+      JdkFileName = it.getAbsolutePath()
+      if (ext == ".tar.gz") {
+        def OriginalJdkFileName = JdkFileName.substring(0, JdkFileName.length() - 3)
+        JdkFileName = JdkFileName.substring(0, JdkFileName.length() - 7) + "_${buildNumber}.tar"
+        if (new File(JdkFileName).exists()) { ant.delete(file: JdkFileName) }
+        ant.gunzip(src: it.getAbsolutePath())
+        ant.copy(file: OriginalJdkFileName, tofile: JdkFileName)
       }
-      ant.gunzip(src: it.getAbsolutePath())
-      projectBuilder.info("customJdkFileName: " + customJdkFileName)
-      ant.copy(file: customJdkFileName, tofile: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
     }
   }
+  return JdkFileName.replace('\\', '/')
 })
 
 binding.setVariable("buildWinZip", { String zipPath, List paths ->
@@ -777,6 +861,87 @@ binding.setVariable("buildWinZip", { String zipPath, List paths ->
   ant.zip(zipfile: zipPath) {
     paths.each {
       fileset(dir: it)
+    }
+  }
+
+  notifyArtifactBuilt(zipPath)
+})
+
+binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, List commonPaths, String distWin, String distUnix, String distMac ->
+  projectBuilder.stage("Building cross-platform zip")
+
+  def zipDir = "$sandbox/cross-platform-zip"
+  def ideaPropertiesFile = commonPaths.collect { new File(it, "bin/idea.properties") }.find { it.exists() }
+  ["win", "linux"].each {
+    ant.mkdir(dir: "$zipDir/bin/$it")
+    ant.copy(file: ideaPropertiesFile.absolutePath, todir: "$zipDir/bin/$it")
+  }
+  ant.fixcrlf(file: "$zipDir/bin/win/idea.properties", eol: "dos")
+  ant.copy(todir: "$zipDir/bin/linux") {
+    fileset(dir: "$distUnix/bin") {
+      include(name: "idea*.vmoptions")
+    }
+  }
+  ant.copy(todir: "$zipDir/bin/mac") {
+    fileset(dir: "$distMac/bin") {
+      include(name: "idea.vmoptions")
+      include(name: "idea.properties")
+    }
+  }
+  ant.copy(file: "$distMac/bin/idea.vmoptions", tofile: "$zipDir/bin/mac/idea64.vmoptions")
+  ant.copy(todir: "$zipDir/bin") {
+    fileset(dir: "$distMac/bin") {
+      include(name: "*.jnilib")
+    }
+    mapper(type: "glob", from: "*.jnilib", to: "*.dylib")
+  }
+
+  ant.zip(zipfile: zipPath, duplicate: "fail") {
+    commonPaths.each {
+      fileset(dir: it) {
+        exclude(name: "bin/idea.properties")
+      }
+    }
+    fileset(dir: zipDir)
+
+    fileset(dir: distWin) {
+      exclude(name: "bin/fsnotifier*.exe")
+      exclude(name: "bin/idea*.exe.vmoptions")
+      exclude(name: "bin/idea*.exe")
+    }
+    zipfileset(dir: "$distWin/bin", prefix: "bin/win") {
+      include(name: "fsnotifier*.exe")
+      include(name: "idea*.exe.vmoptions")
+    }
+
+    fileset(dir: distUnix) {
+      exclude(name: "bin/fsnotifier*")
+      exclude(name: "bin/idea*.vmoptions")
+      exclude(name: "bin/*.sh")
+      exclude(name: "help/**")
+    }
+    zipfileset(dir: "$distUnix/bin", filemode: "775", prefix: "bin") {
+      include(name: "*.sh")
+    }
+    zipfileset(dir: "$distUnix/bin", prefix: "bin/linux", filemode: "775") {
+      include(name: "fsnotifier*")
+    }
+
+    fileset(dir: distMac) {
+      exclude(name: "bin/fsnotifier*")
+      exclude(name: "bin/restarter*")
+      exclude(name: "bin/*.sh")
+      exclude(name: "bin/*.py")
+      exclude(name: "bin/*.jnilib")
+      exclude(name: "bin/idea.properties")
+      exclude(name: "bin/idea*.vmoptions")
+    }
+    zipfileset(dir: "$distMac/bin", filemode: "775", prefix: "bin") {
+      include(name: "restarter*")
+      include(name: "*.py")
+    }
+    zipfileset(dir: "$distMac/bin", prefix: "bin/mac", filemode: "775") {
+      include(name: "fsnotifier*")
     }
   }
 
@@ -861,6 +1026,17 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, 
   ant.gzip(src: tarPath, zipfile: gzPath)
   ant.delete(file: tarPath)
   notifyArtifactBuilt(gzPath)
+})
+
+binding.setVariable("extractRedistJre", { String jdk_file_name, String destination  ->
+  def jre_redist = "${destination}"
+  ant.mkdir(dir: jre_redist)
+  if (jdk_file_name.endsWith(".tar")) {
+    ant.untar(dest: jre_redist, src: "${jdk_file_name}")
+  }
+  else {
+    ant.unzip(dest: jre_redist, src: "${jdk_file_name}")
+  }
 })
 
 private void fixIdeaPropertiesEol(List paths, String eol) {

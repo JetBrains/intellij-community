@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.StringRef;
 
 /*
  * @author max
  */
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
-  private StringRef myPackageName;
+  private final StringRef myPackageName;
   private final boolean myCompiled;
   private StubPsiFactory myFactory;
 
@@ -62,8 +63,9 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     myFactory = factory;
   }
 
+  @Deprecated // use constructor
   public void setPackageName(final String packageName) {
-    myPackageName = StringRef.fromString(packageName);
+    throw new IncorrectOperationException();
   }
 
   @Override
@@ -71,7 +73,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     return JavaStubElementTypes.JAVA_FILE;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     return "PsiJavaFileStub [" + myPackageName + "]";
   }

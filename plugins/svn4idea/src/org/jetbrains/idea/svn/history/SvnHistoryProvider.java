@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
@@ -469,7 +471,9 @@ public class SvnHistoryProvider
 
   @Override
   public AnAction[] getAdditionalActions(final Runnable refresher) {
-    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new MergeSourceDetailsAction(), new SvnEditCommitMessageFromFileHistoryAction()};
+    return new AnAction[]{ShowAllAffectedGenericAction.getInstance(),
+      ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER), new MergeSourceDetailsAction(),
+      new SvnEditCommitMessageFromFileHistoryAction()};
   }
 
   @Override

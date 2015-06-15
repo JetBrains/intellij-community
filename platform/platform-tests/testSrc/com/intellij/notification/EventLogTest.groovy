@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.notification;
-
-
+package com.intellij.notification
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestCase
 
 /**
  * @author peter
  */
 class EventLogTest extends LightPlatformTestCase {
-
-  EventLogTest() {
-    PlatformTestCase.initPlatformLangPrefix()
-  }
 
   public void testHtmlEntities() {
     def entry = format("Title", "Hello&nbsp;world&laquo;&raquo;&lt;&gt;")

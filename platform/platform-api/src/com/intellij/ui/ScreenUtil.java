@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,10 @@ public class ScreenUtil {
   private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }
+
+  public static boolean isVisible(@NotNull Point location) {
+    return getScreenRectangle(location).contains(location);
+  }
 
   public static boolean isVisible(@NotNull Rectangle bounds) {
     if (bounds.isEmpty()) return false;
@@ -126,6 +131,10 @@ public class ScreenUtil {
     return getScreenRectangle(p.x, p.y);
   }
 
+  /**
+   * @param bounds a rectangle used to find corresponding graphics device
+   * @return a graphics device that contains the biggest part of the specified rectangle
+   */
   public static GraphicsDevice getScreenDevice(Rectangle bounds) {
     GraphicsDevice candidate = null;
     int maxIntersection = 0;
@@ -167,12 +176,9 @@ public class ScreenUtil {
   }
 
   private static Rectangle applyInsets(Rectangle rect, Insets i) {
-    return (i == null)
-           ? new Rectangle(rect)
-           : new Rectangle(rect.x + i.left,
-                           rect.y + i.top,
-                           rect.width - (i.left + i.right),
-                           rect.height - (i.top + i.bottom));
+    rect = new Rectangle(rect);
+    JBInsets.removeFrom(rect, i);
+    return rect;
   }
 
   public static Insets getScreenInsets(final GraphicsConfiguration gc) {
@@ -220,8 +226,7 @@ public class ScreenUtil {
   }
 
   /**
-   * Finds a device that is the closest to the specified point and
-   * returns its visible area.
+   * Returns a visible area for a graphics device that is the closest to the specified point.
    *
    * @param x the X coordinate of the specified point
    * @param y the Y coordinate of the specified point
@@ -303,10 +308,8 @@ public class ScreenUtil {
   }
 
   public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
-    Insets insets = padding != null ? padding : new Insets(0, 0, 0, 0);
-
-    Rectangle move = new Rectangle(rectangle.x - insets.left, rectangle.y - insets.top, rectangle.width + insets.left + insets.right,
-                                   rectangle.height + insets.top + insets.bottom);
+    Rectangle move = new Rectangle(rectangle);
+    JBInsets.addTo(move, padding);
 
     if (move.getMaxX() > container.getMaxX()) {
       move.x = (int)container.getMaxX() - move.width;
@@ -325,10 +328,8 @@ public class ScreenUtil {
       move.y = (int)container.getMinY();
     }
 
-    rectangle.x = move.x + insets.left;
-    rectangle.y = move.y + insets.right;
-    rectangle.width = move.width - insets.left - insets.right;
-    rectangle.height = move.height - insets.top - insets.bottom;
+    JBInsets.removeFrom(move, padding);
+    rectangle.setBounds(move);
   }
 
   /**

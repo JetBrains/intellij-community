@@ -249,6 +249,10 @@ class InProcessGroovyc implements GroovycFlavor {
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override
       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        if (name.startsWith("groovy.grape.")) {
+          // grape depends on Ivy which is not included in this class loader
+          throw new ClassNotFoundException(name);
+        }
         try {
           return checkWellFormed.loadDependencies(super.loadClass(name, resolve));
         }

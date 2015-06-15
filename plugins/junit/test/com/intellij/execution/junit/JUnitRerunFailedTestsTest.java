@@ -18,8 +18,9 @@ package com.intellij.execution.junit;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.execution.testframework.JavaTestLocationProvider;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -44,7 +45,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest.testMe");
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-    testProxy.setLocator(new JavaTestLocationProvider(searchScope));
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
 
     final Location location = testProxy.getLocation(project, searchScope);
     assertNotNull(location);
@@ -82,15 +83,15 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
 
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-    final JavaTestLocationProvider locationProvider = new JavaTestLocationProvider(searchScope);
+    final JavaTestLocator locationProvider = JavaTestLocator.INSTANCE;
 
     final SMTestProxy rootProxy = new SMTestProxy("MyTest", true, "java:suite://MyTest");
     rootProxy.setLocator(locationProvider);
 
-    final SMTestProxy proxyParam = new SMTestProxy("[0]", true, "java:suite://MyTest.[0]");
+    final SMTestProxy proxyParam = new SMTestProxy("[0.java]", true, "java:suite://MyTest.[0.java]");
     proxyParam.setLocator(locationProvider);
 
-    final SMTestProxy parameterizedTestProxy = new SMTestProxy("testName1[0]", false, "java:test://MyTest.testName1[0]");
+    final SMTestProxy parameterizedTestProxy = new SMTestProxy("testName1[0.java]", false, "java:test://MyTest.testName1[0.java]");
     parameterizedTestProxy.setLocator(locationProvider);
 
     final Location rootLocation = rootProxy.getLocation(project, searchScope);
@@ -100,15 +101,52 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     final Location proxyParamLocation = proxyParam.getLocation(project, searchScope);
     assertNotNull(proxyParamLocation);
     assertInstanceOf(proxyParamLocation, PsiMemberParameterizedLocation.class);
-    assertEquals("[0]", ((PsiMemberParameterizedLocation)proxyParamLocation).getParamSetName());
+    assertEquals("[0.java]", ((PsiMemberParameterizedLocation)proxyParamLocation).getParamSetName());
     assertEquals(testClass, proxyParamLocation.getPsiElement());
 
     final Location parameterizedTestProxyLocation = parameterizedTestProxy.getLocation(project, searchScope);
     assertNotNull(parameterizedTestProxyLocation);
     assertInstanceOf(parameterizedTestProxyLocation, PsiMemberParameterizedLocation.class);
-    assertEquals("[0]", ((PsiMemberParameterizedLocation)parameterizedTestProxyLocation).getParamSetName());
+    assertEquals("[0.java]", ((PsiMemberParameterizedLocation)parameterizedTestProxyLocation).getParamSetName());
     assertEquals(testClass.getMethods()[0], parameterizedTestProxyLocation.getPsiElement());
     assertEquals(testClass, ((PsiMemberParameterizedLocation)parameterizedTestProxyLocation).getContainingClass());
-    assertEquals("MyTest,testName1[0]", TestMethods.getTestPresentation(parameterizedTestProxy, project, searchScope));
+    assertEquals("MyTest,testName1[0.java]", TestMethods.getTestPresentation(parameterizedTestProxy, project, searchScope));
+  }
+
+  public void testIgnoreRenamedMethodInRerunFailed() throws Exception {
+    final PsiClass baseClass = myFixture.addClass("abstract class ATest extends junit.framework.TestCase {" +
+                                                 "  public void testMe() {}\n" +
+                                                 "}");
+    myFixture.addClass("public class ChildTest extends ATest {}");
+
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest.testMe");
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
+      public void run() {
+        baseClass.getMethods()[0].setName("testName2");
+      }
+    });
+    assertNull(TestMethods.getTestPresentation(testProxy, project, searchScope));
+  }
+
+  public void testInnerClass() throws Exception {
+    myFixture.addClass("public class TestClass {\n" +
+                       "    public static class Tests extends junit.framework.TestCase {\n" +
+                       "        public void testFoo() throws Exception {}\n" +
+                       "    }\n" +
+                       "}");
+
+    final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass$Tests.testFoo");
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+    Location location = testProxy.getLocation(project, searchScope);
+    assertNotNull(location);
+    PsiElement element = location.getPsiElement();
+    assertTrue(element instanceof PsiMethod);
+    String name = ((PsiMethod)element).getName();
+    assertEquals(name, "testFoo");
   }
 }

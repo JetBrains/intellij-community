@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -29,8 +28,7 @@ import java.io.Serializable;
  * @since Sep 5, 2006
  */
 public class RawText implements Cloneable, Serializable {
-  /** @deprecated use {@link #getDataFlavor()} (to make private in IDEA 14) */
-  public static @NonNls DataFlavor ourFlavor;
+  private static DataFlavor ourFlavor;
 
   public String rawText;
 
@@ -47,7 +45,6 @@ public class RawText implements Cloneable, Serializable {
     }
   }
 
-  @SuppressWarnings("deprecation")
   public static DataFlavor getDataFlavor() {
     if (ourFlavor != null) return ourFlavor;
 

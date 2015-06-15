@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion.scope;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.SuppressManager;
@@ -94,9 +93,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       scope = scope.getContext();
     }
     myScope = scope;
-    if (!(element.getContainingFile() instanceof PsiJavaFile)) {
-      myMembersFlag = true;
-    }
 
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
@@ -131,7 +127,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       myNonInitializedFields.addAll(getNonInitializedFields(element));
     }
 
-    myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE ||
+    myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance ||
                                          SuppressManager.getInstance()
                                            .isSuppressedFor(element, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE);
 
@@ -310,6 +306,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   public boolean isAccessible(@Nullable final PsiElement element) {
+    // if checkAccess is false, we only show inaccessible source elements because their access modifiers can be changed later by the user.
+    // compiled element can't be changed so we don't pollute the completion with them. In Javadoc, everything is allowed.
     if (!myOptions.checkAccess && myInJavaDoc) return true;
     if (!(element instanceof PsiMember)) return true;
 

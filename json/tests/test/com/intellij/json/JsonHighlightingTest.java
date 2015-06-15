@@ -1,5 +1,6 @@
 package com.intellij.json;
 
+import com.intellij.json.codeinsight.JsonDuplicatePropertyKeysInspection;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 
 /**
@@ -15,9 +16,10 @@ public class JsonHighlightingTest extends JsonTestCase {
     return myFixture.testHighlighting(checkWarning, checkInfo, checkWeakWarning, "/highlighting/" + getTestName(false) + ".json");
   }
 
-  private void enableStandardComplianceInspection(boolean checkComments) {
+  private void enableStandardComplianceInspection(boolean checkComments, boolean checkTopLevelValues) {
     final JsonStandardComplianceInspection inspection = new JsonStandardComplianceInspection();
     inspection.myWarnAboutComments = checkComments;
+    inspection.myWarnAboutMultipleTopLevelValues = checkTopLevelValues;
     myFixture.enableInspections(inspection);
   }
 
@@ -27,12 +29,22 @@ public class JsonHighlightingTest extends JsonTestCase {
 
   // IDEA-134372
   public void testComplianceProblemsLiteralTopLevelValueIsAllowed() {
-    enableStandardComplianceInspection(true);
+    enableStandardComplianceInspection(true, true);
     doTest();
   }
 
+  // WEB-16009
+  public void testComplianceProblemsMultipleTopLevelValuesAllowed() {
+    enableStandardComplianceInspection(true, false);
+  }
+
   public void testComplianceProblems() {
-    enableStandardComplianceInspection(true);
+    enableStandardComplianceInspection(true, true);
+    doTestHighlighting(false, true, true);
+  }
+
+  public void testDuplicatePropertyKeys() {
+    myFixture.enableInspections(JsonDuplicatePropertyKeysInspection.class);
     doTestHighlighting(false, true, true);
   }
 
@@ -44,12 +56,12 @@ public class JsonHighlightingTest extends JsonTestCase {
   // Moved from JavaScript
 
   public void testJSON_with_comment() throws Exception {
-    enableStandardComplianceInspection(false);
+    enableStandardComplianceInspection(false, true);
     doTestHighlighting(false, true, true);
   }
 
   public void testJSON() throws Exception {
-    enableStandardComplianceInspection(true);
+    enableStandardComplianceInspection(true, true);
     doTestHighlighting(false, true, true);
   }
 

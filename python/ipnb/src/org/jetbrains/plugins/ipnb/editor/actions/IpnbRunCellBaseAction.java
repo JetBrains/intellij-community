@@ -32,7 +32,9 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
           }
         }, "Ipnb.runCell", new Object());
       }
-      ipnbFilePanel.selectNext(cell);
+      else {
+        ipnbFilePanel.selectNext(cell);
+      }
     }
     ipnbFilePanel.revalidate();
     ipnbFilePanel.repaint();

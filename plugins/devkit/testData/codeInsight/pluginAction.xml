@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <idea-version since-build="3000"/>
     <actions>

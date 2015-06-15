@@ -22,7 +22,7 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ import static com.intellij.openapi.util.JDOMBuilder.tag;
 /**
  * @author mike
  */
-public class XmlElementStorageTest extends LightPlatformLangTestCase {
+public class XmlElementStorageTest extends LightPlatformTestCase {
   private Disposable myParentDisposable;
 
   @Override

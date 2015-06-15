@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public interface JavaDocElementType {
     }
 
     @Override
-    public ASTNode createNode(final CharSequence text) {
+    public ASTNode createNode(CharSequence text) {
       return new LazyParseablePsiElement(this, text);
     }
   }

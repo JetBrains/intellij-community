@@ -323,8 +323,8 @@ public class VcsUtil {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
   }
 
-  public static FilePath getFilePath(String path, boolean isDirectory) {
-    return getFilePath(new File(path), isDirectory);
+  public static FilePath getFilePath(@NotNull String path, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
   }
 
   public static FilePath getFilePathOnNonLocal(String path, boolean isDirectory) {
@@ -337,6 +337,16 @@ public class VcsUtil {
 
   public static FilePath getFilePathForDeletedFile(String path, boolean isDirectory) {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(path), isDirectory);
+  }
+
+  @NotNull
+  public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull String name) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(parent, name);
+  }
+
+  @NotNull
+  public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull String fileName, boolean isDirectory) {
+    return VcsContextFactory.SERVICE.getInstance().createFilePath(parent, fileName, isDirectory);
   }
 
   /**

@@ -93,6 +93,11 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
       return persistedTarget;
     }
 
+    GitPushTarget pushSpecTarget = GitPushTarget.getFromPushSpec(repository, currentBranch);
+    if (pushSpecTarget != null) {
+      return pushSpecTarget;
+    }
+
     GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
     if (trackInfo != null) {
       return new GitPushTarget(trackInfo.getRemoteBranch(), false);

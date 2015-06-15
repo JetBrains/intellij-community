@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
@@ -30,15 +29,14 @@ import java.awt.*;
 
 public abstract class DataManager {
   public static DataManager getInstance() {
-    Application application = ApplicationManager.getApplication();
-    return application != null ? application.getComponent(DataManager.class) : null;
+    return ApplicationManager.getApplication().getComponent(DataManager.class);
   }
 
   @NonNls public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
    * @return {@link DataContext} constructed by the current focused component
-   * @deprecated use either {@link #getDataContext(java.awt.Component)} or {@link #getDataContextFromFocus()}
+   * @deprecated use either {@link #getDataContext(Component)} or {@link #getDataContextFromFocus()}
    */
   @NotNull
   public abstract DataContext getDataContext();
@@ -55,7 +53,7 @@ public abstract class DataManager {
    * and the point specified by <code>x</code> and <code>y</code> coordinate inside the
    * component.
    *
-   * @exception java.lang.IllegalArgumentException if point <code>(x, y)</code> is not inside
+   * @exception IllegalArgumentException if point <code>(x, y)</code> is not inside
    * component's bounds
    */
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
@@ -70,7 +68,7 @@ public abstract class DataManager {
   /**
    * @param dataContext find by key if instance of {@link com.intellij.openapi.util.UserDataHolder}
    * @param dataKey key to find value by
-   * @return value stored by {@link #saveInDataContext(com.intellij.openapi.actionSystem.DataContext, com.intellij.openapi.util.Key, Object)}
+   * @return value stored by {@link #saveInDataContext(DataContext, Key, Object)}
    */
   @Nullable
   public abstract <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);

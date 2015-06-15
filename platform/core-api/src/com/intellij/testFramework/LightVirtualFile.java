@@ -39,30 +39,30 @@ public class LightVirtualFile extends LightVirtualFileBase {
     this("");
   }
 
-  public LightVirtualFile(@NonNls String name) {
+  public LightVirtualFile(@NonNls @NotNull String name) {
     this(name, "");
   }
 
-  public LightVirtualFile(@NonNls String name, CharSequence content) {
+  public LightVirtualFile(@NonNls @NotNull String name, @NotNull CharSequence content) {
     this(name, null, content, LocalTimeCounter.currentTime());
   }
 
-  public LightVirtualFile(final String name, final FileType fileType, final CharSequence text) {
+  public LightVirtualFile(@NotNull String name, final FileType fileType, @NotNull CharSequence text) {
     this(name, fileType, text, LocalTimeCounter.currentTime());
   }
 
-  public LightVirtualFile(VirtualFile original, final CharSequence text, long modificationStamp) {
+  public LightVirtualFile(VirtualFile original, @NotNull CharSequence text, long modificationStamp) {
     this(original.getName(), original.getFileType(), text, modificationStamp);
     setCharset(original.getCharset());
   }
 
-  public LightVirtualFile(final String name, final FileType fileType, final CharSequence text, final long modificationStamp) {
+  public LightVirtualFile(@NotNull String name, final FileType fileType, @NotNull CharSequence text, final long modificationStamp) {
     this(name, fileType, text, CharsetUtil.extractCharsetFromFileContent(null, null, fileType, text), modificationStamp);
   }
 
-  public LightVirtualFile(final String name,
+  public LightVirtualFile(@NotNull String name,
                           final FileType fileType,
-                          final CharSequence text,
+                          @NotNull CharSequence text,
                           Charset charset,
                           final long modificationStamp) {
     super(name, fileType, modificationStamp);
@@ -70,7 +70,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setCharset(charset);
   }
 
-  public LightVirtualFile(final String name, final Language language, final CharSequence text) {
+  public LightVirtualFile(@NotNull String name, final Language language, @NotNull CharSequence text) {
     super(name, null, LocalTimeCounter.currentTime());
     setContent(text);
     setLanguage(language);
@@ -121,16 +121,17 @@ public class LightVirtualFile extends LightVirtualFileBase {
     return s.getBytes(charset.name());
   }
 
-  public void setContent(Object requestor, CharSequence content, boolean fireEvent) {
+  public void setContent(Object requestor, @NotNull CharSequence content, boolean fireEvent) {
     setContent(content);
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
-  private void setContent(CharSequence content) {
+  private void setContent(@NotNull CharSequence content) {
     //StringUtil.assertValidSeparators(content);
     myContent = content;
   }
 
+  @NotNull
   public CharSequence getContent() {
     return myContent;
   }

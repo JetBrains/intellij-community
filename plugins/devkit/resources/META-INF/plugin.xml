@@ -17,12 +17,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="Groovy" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
+    <psi.referenceContributor language="JAVA" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
     <getDataRule key="Location" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
@@ -132,7 +131,7 @@
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>

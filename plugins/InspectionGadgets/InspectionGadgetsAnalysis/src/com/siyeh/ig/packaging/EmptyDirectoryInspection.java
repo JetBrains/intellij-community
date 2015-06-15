@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,11 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
       "empty.directories.only.under.source.roots.option"), this,
                                           "onlyReportDirectoriesUnderSourceRoots");
+  }
+
+  @Override
+  public boolean isGraphNeeded() {
+    return false;
   }
 
   @Override

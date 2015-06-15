@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.continuation.*;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
       @Override
       public FilePath getPath(FilePatch patch, String path) {
-        return PathMerger.getFile(new FilePathImpl(myBaseDirectory), path);
+        return PathMerger.getFile(VcsUtil.getFilePath(myBaseDirectory), path);
       }
     });
   }

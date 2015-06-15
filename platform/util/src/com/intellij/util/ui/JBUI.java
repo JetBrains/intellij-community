@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -178,6 +179,24 @@ public class JBUI {
 
     public static Border customLine(Color color, int top, int left, int bottom, int right) {
       return new CustomLineBorder(color, insets(top, left, bottom, right));
+    }
+
+    public static Border customLine(Color color, int thickness) {
+      return customLine(color, thickness, thickness, thickness, thickness);
+    }
+  }
+
+  public static class Panels {
+    public static BorderLayoutPanel simplePanel() {
+      return new BorderLayoutPanel();
+    }
+
+    public static BorderLayoutPanel simplePanel(Component comp) {
+      return simplePanel().addToCenter(comp);
+    }
+
+    public static BorderLayoutPanel simplePanel(int hgap, int vgap) {
+      return new BorderLayoutPanel(hgap, vgap);
     }
   }
 }

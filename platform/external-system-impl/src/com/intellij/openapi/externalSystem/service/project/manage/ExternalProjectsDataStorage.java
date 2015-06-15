@@ -31,7 +31,9 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -47,6 +49,7 @@ import java.io.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -61,7 +64,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
   @NotNull
   private final Project myProject;
   @NotNull
-  private final Map<Pair<ProjectSystemId, String>, InternalExternalProjectInfo> myExternalRootProjects = ContainerUtil.newConcurrentMap();
+  private final Map<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
+    ContainerUtil.newConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
 
   private final AtomicBoolean changed = new AtomicBoolean();
 
@@ -79,7 +83,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
       for (InternalExternalProjectInfo projectInfo : projectInfos) {
         if (validate(projectInfo)) {
-          myExternalRootProjects.put(Pair.create(projectInfo.getProjectSystemId(), projectInfo.getExternalProjectPath()), projectInfo);
+          myExternalRootProjects.put(
+            Pair.create(projectInfo.getProjectSystemId(), new File(projectInfo.getExternalProjectPath())), projectInfo);
         }
       }
     }
@@ -123,7 +128,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
     long lastSuccessfulImportTimestamp = externalProjectInfo.getLastSuccessfulImportTimestamp();
     long lastImportTimestamp = externalProjectInfo.getLastImportTimestamp();
 
-    final Pair<ProjectSystemId, String> key = Pair.create(projectSystemId, projectPath);
+    final Pair<ProjectSystemId, File> key = Pair.create(projectSystemId, new File(projectPath));
     final InternalExternalProjectInfo old = myExternalRootProjects.get(key);
     if (old != null) {
       lastImportTimestamp = externalProjectInfo.getLastImportTimestamp();
@@ -149,11 +154,11 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
 
   @Nullable
   synchronized ExternalProjectInfo get(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
-    return myExternalRootProjects.get(Pair.create(projectSystemId, externalProjectPath));
+    return myExternalRootProjects.get(Pair.create(projectSystemId, new File(externalProjectPath)));
   }
 
   synchronized void remove(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
-    final InternalExternalProjectInfo removed = myExternalRootProjects.remove(Pair.create(projectSystemId, externalProjectPath));
+    final InternalExternalProjectInfo removed = myExternalRootProjects.remove(Pair.create(projectSystemId, new File(externalProjectPath)));
     if(removed != null) {
       changed.set(true);
     }
@@ -180,7 +185,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
       for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : availableProjects.entrySet()) {
         final ExternalProjectPojo projectPojo = entry.getKey();
         final String externalProjectPath = projectPojo.getPath();
-        final Pair<ProjectSystemId, String> key = Pair.create(systemId, externalProjectPath);
+        final Pair<ProjectSystemId, File> key = Pair.create(systemId, new File(externalProjectPath));
         InternalExternalProjectInfo externalProjectInfo = myExternalRootProjects.get(key);
         if (externalProjectInfo == null) {
           final DataNode<ProjectData> dataNode = convert(systemId, projectPojo, entry.getValue(), availableTasks);
@@ -188,6 +193,22 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
           myExternalRootProjects.put(key, externalProjectInfo);
 
           changed.set(true);
+        }
+
+        // restore linked project sub-modules
+        ExternalProjectSettings linkedProjectSettings =
+          manager.getSettingsProvider().fun(myProject).getLinkedProjectSettings(externalProjectPath);
+        if (linkedProjectSettings != null && ContainerUtil.isEmpty(linkedProjectSettings.getModules())) {
+
+          final Set<String> modulePaths = ContainerUtil.map2Set(
+            ExternalSystemApiUtil.findAllRecursively(externalProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE),
+            new Function<DataNode<ModuleData>, String>() {
+              @Override
+              public String fun(DataNode<ModuleData> node) {
+                return node.getData().getLinkedExternalProjectPath();
+              }
+            });
+          linkedProjectSettings.setModules(modulePaths);
         }
       }
     }

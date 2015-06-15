@@ -27,6 +27,12 @@ public abstract class CompilerConfiguration {
   /** @deprecated to be removed in IDEA 16 */
   @SuppressWarnings("unused") public static final boolean MAKE_ENABLED = true;
 
+  public abstract int getBuildProcessHeapSize(final int javacPreferredHeapSize);
+  public abstract void setBuildProcessHeapSize(int size);
+
+  public abstract String getBuildProcessVMOptions();
+  public abstract void setBuildProcessVMOptions(String options);
+
   @Nullable
   public abstract String getProjectBytecodeTarget();
 

@@ -54,6 +54,7 @@ import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlUndefinedElementFixProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.AnchorReference;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -317,7 +318,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
-        if (tag.getAttributeValue(attrName) == null &&
+        if (!hasAttribute(tag, attrName) &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           IntentionAction insertRequiredAttributeIntention = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName);
@@ -341,6 +342,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
+  private static boolean hasAttribute(XmlTag tag, String attrName) {
+    final XmlAttribute attribute = tag.getAttribute(attrName);
+    if (attribute == null) return false;
+    if (attribute.getValueElement() != null) return true;
+    if (!(tag instanceof HtmlTag)) return false;
+    final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+    return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, tag);
+  }
+
   private void reportOneTagProblem(final XmlTag tag,
                                    final String name,
                                    @NotNull String localizedMessage,
@@ -360,7 +370,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       addElementsForTagWithManyQuickFixes(
         tag,
         localizedMessage,
-        isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag) ?
+        isInjectedHtmlTagWithoutValidation((HtmlTag)tag) ?
           HighlightInfoType.INFORMATION :
           SeverityRegistrar.getSeverityRegistrar(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
         addAttributeFix,
@@ -391,15 +401,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private static HighlightInfoType getTagProblemInfoType(XmlTag tag) {
     if (tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace())) {
-      if (isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag)) return HighlightInfoType.INFORMATION;
+      if (isInjectedHtmlTagWithoutValidation((HtmlTag)tag)) return HighlightInfoType.INFORMATION;
       return HighlightInfoType.WARNING;
     }
     return HighlightInfoType.WRONG_REF;
   }
 
-  private static boolean isInjectedHtmlTagForWhichNoProblemsReporting(HtmlTag tag) {
-    PsiElement context =
-      InjectedLanguageManager.getInstance(tag.getContainingFile().getProject()).getInjectionHost(tag.getContainingFile());
+  public static boolean isInjectedHtmlTagWithoutValidation(HtmlTag tag) {
+    PsiElement context = InjectedLanguageManager.getInstance(tag.getProject()).getInjectionHost(tag.getContainingFile());
     return context != null && skipValidation(context);
   }
 

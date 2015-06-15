@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger.sourcemap;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -32,6 +47,10 @@ public class SourceResolver {
   private String[] sourceIndexToAbsoluteLocalPath;
 
   public SourceResolver(@NotNull List<String> sourceUrls, boolean trimFileScheme, @Nullable Url baseFileUrl, @Nullable List<String> sourceContents) {
+    this(sourceUrls, trimFileScheme, baseFileUrl, true, sourceContents);
+  }
+
+  public SourceResolver(@NotNull List<String> sourceUrls, boolean trimFileScheme, @Nullable Url baseFileUrl, boolean baseUrlIsFile, @Nullable List<String> sourceContents) {
     rawSources = sourceUrls;
     this.sourceContents = sourceContents;
     canonicalizedSources = new Url[sourceUrls.size()];
@@ -40,7 +59,7 @@ public class SourceResolver {
                               : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
     for (int i = 0; i < sourceUrls.size(); i++) {
       String rawSource = sourceUrls.get(i);
-      Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i);
+      Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i, baseUrlIsFile);
       canonicalizedSources[i] = url;
       canonicalizedSourcesMap.put(url, i);
     }
@@ -51,7 +70,7 @@ public class SourceResolver {
   }
 
   // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
-  protected Url canonicalizeUrl(@NotNull String url, @Nullable Url baseUrl, boolean trimFileScheme, int sourceIndex) {
+  protected Url canonicalizeUrl(@NotNull String url, @Nullable Url baseUrl, boolean trimFileScheme, int sourceIndex, boolean baseUrlIsFile) {
     if (trimFileScheme && url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
       return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length()), '/'));
     }
@@ -59,21 +78,7 @@ public class SourceResolver {
       return Urls.parseEncoded(url);
     }
 
-    String path = url;
-    if (url.charAt(0) != '/') {
-      String basePath = baseUrl.getPath();
-      int lastSlashIndex = basePath.lastIndexOf('/');
-      StringBuilder pathBuilder = new StringBuilder();
-      if (lastSlashIndex == -1) {
-        pathBuilder.append(basePath).append('/');
-      }
-      else {
-        pathBuilder.append(basePath, 0, lastSlashIndex + 1);
-      }
-      path = pathBuilder.append(url).toString();
-    }
-    path = FileUtil.toCanonicalPath(path, '/');
-
+    String path = canonicalizePath(url, baseUrl, baseUrlIsFile);
     if (baseUrl.getScheme() == null && baseUrl.isInLocalFileSystem()) {
       return Urls.newLocalFileUrl(path);
     }
@@ -93,9 +98,33 @@ public class SourceResolver {
         if (canonicalPath != null && !canonicalPath.equals(path)) {
           absoluteLocalPathToSourceIndex.put(canonicalPath, sourceIndex);
         }
+        return Urls.newLocalFileUrl(path);
       }
     }
     return new UrlImpl(baseUrl.getScheme(), baseUrl.getAuthority(), path, null);
+  }
+
+  public static String canonicalizePath(@NotNull String url, @NotNull Url baseUrl, boolean baseUrlIsFile) {
+    String path = url;
+    if (url.charAt(0) != '/') {
+      String basePath = baseUrl.getPath();
+      if (baseUrlIsFile) {
+        int lastSlashIndex = basePath.lastIndexOf('/');
+        StringBuilder pathBuilder = new StringBuilder();
+        if (lastSlashIndex == -1) {
+          pathBuilder.append('/');
+        }
+        else {
+          pathBuilder.append(basePath, 0, lastSlashIndex + 1);
+        }
+        path = pathBuilder.append(url).toString();
+      }
+      else {
+        path = basePath + '/' + url;
+      }
+    }
+    path = FileUtil.toCanonicalPath(path, '/');
+    return path;
   }
 
   @NotNull
@@ -161,7 +190,7 @@ public class SourceResolver {
   @Nullable
   public MappingList findMappings(@NotNull List<Url> sourceUrls, @NotNull SourceMap sourceMap, @Nullable VirtualFile sourceFile) {
     for (Url sourceUrl : sourceUrls) {
-      int index = canonicalizedSourcesMap.get(sourceUrl.trimParameters());
+      int index = canonicalizedSourcesMap.get(sourceUrl);
       if (index != -1) {
         return sourceMap.sourceIndexToMappings[index];
       }

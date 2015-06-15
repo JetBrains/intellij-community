@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -66,7 +65,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public void load() throws IOException {
+  public void load() {
     super.load();
 
     String moduleTypeId = getMainStorageData().myOptions.get(Module.ELEMENT_TYPE);

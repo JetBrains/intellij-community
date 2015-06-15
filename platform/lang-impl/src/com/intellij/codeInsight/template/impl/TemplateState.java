@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -742,10 +743,21 @@ public class TemplateState implements Disposable {
 
     ExpressionContext context = createExpressionContext(start);
     Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
-    if (isQuick && isEmptyResult(result, element) && !oldValue.isEmpty()) {
+    if (isQuick && result == null) {
+      if (!oldValue.isEmpty()) {
+        return;
+      }
+    }
+    
+    final boolean resultIsNullOrEmpty = result == null || result.equalsToText("", element);
+    
+    // do not update default value of neighbour segment
+    if (resultIsNullOrEmpty && myCurrentSegmentNumber >= 0 && 
+        (mySegments.getSegmentStart(segmentNumber) == mySegments.getSegmentEnd(myCurrentSegmentNumber) ||
+        mySegments.getSegmentEnd(segmentNumber) == mySegments.getSegmentStart(myCurrentSegmentNumber))) {
       return;
     }
-    if (isEmptyResult(result, element) && defaultValue != null) {
+    if (defaultValue != null && resultIsNullOrEmpty) {
       result = defaultValue.calculateResult(context);
     }
     if (element != null) {
@@ -763,10 +775,6 @@ public class TemplateState implements Disposable {
         .handleRecalc(psiFile, myDocument, mySegments.getSegmentStart(segmentNumber), mySegments.getSegmentEnd(segmentNumber));
       restoreEmptyVariables(indices);
     }
-  }
-
-  private static boolean isEmptyResult(Result result, PsiElement context) {
-    return result == null || result.equalsToText("", context);
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
@@ -967,10 +975,10 @@ public class TemplateState implements Disposable {
   private void cleanupTemplateState(boolean brokenOff) {
     final Editor editor = myEditor;
     fireBeforeTemplateFinished();
-    int oldVar = myCurrentVariableNumber;
-    currentVariableChanged(oldVar);
     if (!isDisposed()) {
+      int oldVar = myCurrentVariableNumber;
       setCurrentVariableNumber(-1);
+      currentVariableChanged(oldVar);
       TemplateManagerImpl.clearTemplateState(editor);
       fireTemplateFinished(brokenOff);
     }
@@ -1253,7 +1261,7 @@ public class TemplateState implements Disposable {
     if (myFinished) return;
     myFinished = true;
     for (TemplateEditingListener listener : myListeners) {
-      listener.templateFinished(myTemplate, brokenOff);
+      listener.templateFinished(ObjectUtils.chooseNotNull(myTemplate, myPrevTemplate), brokenOff);
     }
   }
 

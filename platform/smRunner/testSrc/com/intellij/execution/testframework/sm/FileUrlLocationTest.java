@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class FileUrlLocationTest extends SMLightFixtureTestCase {
     return LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
   }
 
-  public void testSpecNavigation() throws Throwable {
+  public void testSpecNavigation() {
     createAndAddFile("my_example_spec.xml",
                      "\n" +
                      "<describe>\n" +
@@ -42,19 +42,15 @@ public class FileUrlLocationTest extends SMLightFixtureTestCase {
     doTest(16, "<", path, 3);
   }
 
-  private void doTest(final int expectedOffset, final String expectedStartsWith,
-                      final String filePath, final int lineNum) {
-    final SMTestProxy testProxy =
-        new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum);
-    testProxy.setLocator(new CompositeTestLocationProvider(null));
+  private void doTest(int expectedOffset, String expectedStartsWith, String filePath, int lineNum) {
+    final SMTestProxy testProxy = new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum);
+    testProxy.setLocator(FileUrlProvider.INSTANCE);
 
     final Location location = testProxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
     assertNotNull(location);
     assertNotNull(location.getPsiElement());
-
-    //System.out.println(location.getPsiElement().getText());
-    //System.out.println(location.getPsiElement().getTextOffset());
     assertEquals(expectedOffset, location.getPsiElement().getTextOffset());
+
     final String element = location.getPsiElement().getText();
     assertTrue(element, element.startsWith(expectedStartsWith));
   }

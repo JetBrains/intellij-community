@@ -19,9 +19,9 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
+import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,8 +33,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.*;
 
 import java.util.Collections;
@@ -48,7 +48,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
   @Nullable private Change myCurrentChange;
 
-  @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
+  @NotNull private final DiffTaskQueue myQueue = new DiffTaskQueue();
 
   public CacheChangeProcessor(@NotNull Project project) {
     super(project);
@@ -74,21 +74,25 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   // Update
   //
 
+  @CalledInAwt
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     final Change change = myCurrentChange;
+
     DiffRequest cachedRequest = loadRequestFast(change);
     if (cachedRequest != null) {
       applyRequest(cachedRequest, force, scrollToChangePolicy);
       return;
     }
 
-    myTaskExecutor.execute(
-      new Convertor<ProgressIndicator, Runnable>() {
+    // TODO: check if current loading change is the same as we want to load now? (and not interrupt loading)
+    myQueue.executeAndTryWait(
+      new Function<ProgressIndicator, Runnable>() {
         @Override
-        public Runnable convert(ProgressIndicator indicator) {
+        public Runnable fun(ProgressIndicator indicator) {
           final DiffRequest request = loadRequest(change, indicator);
           return new Runnable() {
             @Override
+            @CalledInAwt
             public void run() {
               myRequestCache.put(change, Pair.create(change, request));
               applyRequest(request, force, scrollToChangePolicy);
@@ -107,6 +111,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   }
 
   @Nullable
+  @CalledInAwt
   @Contract("null -> !null")
   protected DiffRequest loadRequestFast(@Nullable Change change) {
     if (change == null) return NoDiffRequest.INSTANCE;
@@ -152,9 +157,10 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   //
 
   @Override
+  @CalledInAwt
   protected void onDispose() {
     super.onDispose();
-    myTaskExecutor.abort();
+    myQueue.abort();
     myRequestCache.clear();
   }
 

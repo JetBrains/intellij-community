@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
@@ -184,7 +185,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
 
   @Override
   public Pair<CommittedChangeList, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException {
-    final FilePathImpl filePath = new FilePathImpl(file);
+    FilePath filePath = VcsUtil.getFilePath(file);
 
     final List<GitHeavyCommit> gitCommits =
       GitHistoryUtils.commitsDetails(myProject, filePath, new SymbolicRefs(), Collections.singletonList(number.asString()));

@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -37,6 +36,7 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +126,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     final VcsHistoryProvider vcsHistoryProvider = vcs.getVcsHistoryProvider();
 
     new VcsHistoryProviderBackgroundableProxy(vcs, vcsHistoryProvider, vcs.getDiffProvider()).
-      createSessionFor(vcs.getKeyInstanceMethod(), new FilePathImpl(file),
+      createSessionFor(vcs.getKeyInstanceMethod(), VcsUtil.getFilePath(file),
         new Consumer<VcsHistorySession>() {
           @Override
           public void consume(VcsHistorySession session) {

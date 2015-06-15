@@ -19,6 +19,8 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.util.IntPair;
+import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -26,6 +28,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 public interface DiffDataKeys {
   DataKey<Editor> CURRENT_EDITOR = DataKey.create("diff_current_editor");
   DataKey<DiffContent> CURRENT_CONTENT = DataKey.create("diff_current_content");
+  DataKey<LineRange> CURRENT_CHANGE_RANGE = DataKey.create("diff_current_change_range");
 
   DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("diff_request");
   DataKey<DiffContext> DIFF_CONTEXT = DataKey.create("diff_context");

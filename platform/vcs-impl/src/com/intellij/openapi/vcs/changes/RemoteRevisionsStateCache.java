@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -59,7 +60,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
   @Nullable
   private VirtualFile getRootForPath(final String s) {
-    return myVcsManager.getVcsRootFor(new FilePathImpl(new File(s), false));
+    return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
   }
   
   public boolean isUpToDate(final Change change) {

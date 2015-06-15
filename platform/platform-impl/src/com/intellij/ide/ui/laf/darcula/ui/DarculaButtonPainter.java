@@ -23,7 +23,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 

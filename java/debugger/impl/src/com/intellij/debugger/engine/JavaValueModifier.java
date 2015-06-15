@@ -22,28 +22,18 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.debugger.ui.EditorEvaluationCommand;
-import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -255,14 +245,14 @@ public class JavaValueModifier extends XValueModifier {
     }
   }
 
-  private Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
+  private static Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
-      String v = DebuggerUtilsEx.getValueAsString(context, value);
+      String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
         value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf(v);
       }
     }
-    if(value instanceof DoubleValue) {
+    if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue) value).doubleValue();
       if(varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE){
         value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
@@ -274,8 +264,7 @@ public class JavaValueModifier extends XValueModifier {
           value = (Value)new UnBoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
         }
       }
-      else if (UnBoxingEvaluator.isTypeUnboxable(varType.name())) {
-        // variable is not primitive and boxing/unboxing is applicable
+      else if (varType instanceof ReferenceType) {
         if (value instanceof PrimitiveValue) {
           value = (Value)new BoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
         }

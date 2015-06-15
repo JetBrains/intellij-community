@@ -20,6 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -37,6 +38,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.ParsedCommandLine;
@@ -60,6 +62,17 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
   protected boolean isVisible(AnActionEvent e) {
     if (!super.isVisible(e)) return false;
     return GradleConstants.SYSTEM_ID.equals(getSystemId(e));
+  }
+
+  protected boolean isEnabled(AnActionEvent e) {
+    return true;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Presentation p = e.getPresentation();
+    p.setVisible(isVisible(e));
+    p.setEnabled(isEnabled(e));
   }
 
   @Override
@@ -134,7 +147,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
 
     GradleCommandLineOptionsConverter commandLineConverter = new GradleCommandLineOptionsConverter();
     commandLineConverter.configure(gradleCmdParser);
-    ParsedCommandLine parsedCommandLine = gradleCmdParser.parse(StringUtil.split(fullCommandLine, " "));
+    ParsedCommandLine parsedCommandLine = gradleCmdParser.parse(ParametersListUtil.parse(fullCommandLine, true));
 
     final Map<String, List<String>> optionsMap =
       commandLineConverter.convert(parsedCommandLine, new HashMap<String, List<String>>());

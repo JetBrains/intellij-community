@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.svn16;
 
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.integrate.AlienDirtyScope;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,7 +51,7 @@ public class SvnDeleteTest extends Svn16TestCase {
     refreshVfs();
 
     final AlienDirtyScope dirtyScope = new AlienDirtyScope();
-    dirtyScope.addDir(new FilePathImpl(myWorkingCopyDir));
+    dirtyScope.addDir(VcsUtil.getFilePath(myWorkingCopyDir));
     final List<Change> changesManually = getChangesInScope(dirtyScope);
     Assert.assertEquals(2, changesManually.size());
 

@@ -37,8 +37,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable{
 
   @Override
   public void paint(Graphics g) {
-    super.paint(g);
-    IdeBackgroundUtil.paintEditorBackground(g, this);
+    super.paint(IdeBackgroundUtil.withEditorBackground(g, this));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,26 @@
 package com.jetbrains.python.testing.nosetest;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testIntegration.TestLocationProvider;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class PythonNoseTestUrlProvider implements TestLocationProvider {
-  @NonNls
-  private static final String PROTOCOL_ID = "python_nosetestid";
+public class PythonNoseTestUrlProvider implements SMTestLocator, DumbAware {
+  public static final String PROTOCOL_ID = "python_nosetestid";
+
+  public static final PythonNoseTestUrlProvider INSTANCE = new PythonNoseTestUrlProvider();
 
   @NotNull
-  public List<Location> getLocation(@NotNull final String protocolId, @NotNull final String path,
-                                    final Project project) {
-    if (!PROTOCOL_ID.equals(protocolId)) {
+  @Override
+  public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    if (!PROTOCOL_ID.equals(protocol)) {
       return Collections.emptyList();
     }
 

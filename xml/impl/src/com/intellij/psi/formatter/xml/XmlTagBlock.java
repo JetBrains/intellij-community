@@ -70,7 +70,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
 
         if (child.getElementType() == XmlTokenType.XML_TAG_END) {
-          child = processChild(localResult,child, wrap, alignment, null);
+          child = processChild(localResult,child, wrap, alignment, Indent.getNoneIndent());
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>(1);
           insideTag = true;
@@ -91,7 +91,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
           }
           child = processChild(localResult,child, wrap, alignment, null);
         } else if (child.getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-          child = processChild(localResult,child, wrap, alignment, null);
+          child = processChild(localResult,child, wrap, alignment, Indent.getNoneIndent());
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>(1);
         }

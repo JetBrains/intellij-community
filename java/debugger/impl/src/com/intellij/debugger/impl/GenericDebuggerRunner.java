@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DefaultDebugUIEnvironment;
+import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -30,12 +30,10 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
@@ -59,14 +57,9 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   }
 
   @Override
-  protected RunContentDescriptor doExecute(@NotNull Project project,
-                                           @NotNull RunProfileState state,
-                                           @Nullable RunContentDescriptor contentToReuse,
-                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return createContentDescriptor(state, contentToReuse == null || env.getContentToReuse() == contentToReuse
-                                          ? env
-                                          : new ExecutionEnvironmentBuilder(env).contentToReuse(contentToReuse).build());
+    return createContentDescriptor(state, env);
   }
 
   @Nullable
@@ -94,7 +87,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                       @NotNull ExecutionEnvironment env,
                                                       RemoteConnection connection,
                                                       boolean pollConnection) throws ExecutionException {
-    DebugEnvironment environment = new DefaultDebugUIEnvironment(env, state, connection, pollConnection).getEnvironment();
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollConnection);
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
     if (debuggerSession == null) {
       return null;

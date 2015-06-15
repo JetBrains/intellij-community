@@ -16,10 +16,13 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -28,9 +31,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.vcs.MockChangeListManager;
+import com.intellij.testFramework.vcs.MockVcsContextFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -49,6 +53,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   private ChangeListManager myRealChangeListManager;
   private CodeStyleManager myRealCodeStyleManger;
+  private VcsContextFactory myRealVcsContextFactory;
 
   private final static String COMMITTED =
     "class Test {\n" +
@@ -72,7 +77,6 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   @Override
   public void setUp() throws Exception {
-    PlatformTestCase.initPlatformLangPrefix();
     super.setUp();
     myWorkingDirectory = TestFileStructure.createDirectory(getProject(), getSourceRoot(), TEMP_DIR_NAME);
 
@@ -84,6 +88,9 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     myMockCodeStyleManager = new MockCodeStyleManager();
     registerCodeStyleManager(myMockCodeStyleManager);
 
+    myRealVcsContextFactory = ServiceManager.getService(VcsContextFactory.class);
+    registerVcsContextFactory(new MockVcsContextFactory(getSourceRoot().getFileSystem()));
+
     myMockPlainTextFormattingModelBuilder = new MockPlainTextFormattingModelBuilder();
     LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
   }
@@ -92,6 +99,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   public void tearDown() throws Exception {
     registerChangeListManager(myRealChangeListManager);
     registerCodeStyleManager(myRealCodeStyleManger);
+    registerVcsContextFactory(myRealVcsContextFactory);
     LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
 
     TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
@@ -282,6 +290,13 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     container.registerComponentInstance(componentKey, manager);
   }
 
+  private static void registerVcsContextFactory(@NotNull VcsContextFactory factory) {
+    String key = VcsContextFactory.class.getName();
+    MutablePicoContainer container = (MutablePicoContainer)ApplicationManager.getApplication().getPicoContainer();
+    container.unregisterComponent(key);
+    container.registerComponentInstance(key, factory);
+  }
+
   private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) throws IOException {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
     PsiFile file = fs.createFile("Test.java", committed, modified);
@@ -364,7 +379,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     @NotNull
     private Change createChange(@NotNull String committed, @NotNull PsiFile file) {
-      FilePathImpl filePath = new FilePathImpl(file.getVirtualFile());
+      FilePath filePath = VcsUtil.getFilePath(file.getVirtualFile());
       ContentRevision before = new SimpleContentRevision(committed, filePath, "");
       ContentRevision after = new SimpleContentRevision("", filePath, "");
       return new Change(before, after);

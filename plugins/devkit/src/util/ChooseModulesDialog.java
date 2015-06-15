@@ -31,6 +31,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -123,28 +124,25 @@ public class ChooseModulesDialog extends DialogWrapper {
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new BorderLayout(15, 10));
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(15, 10);
     if (myIcon != null) {
       JLabel iconLabel = new JLabel(myIcon);
-      Container container = new Container();
-      container.setLayout(new BorderLayout());
-      container.add(iconLabel, BorderLayout.NORTH);
-      panel.add(container, BorderLayout.WEST);
+      panel.addToLeft(JBUI.Panels.simplePanel().addToTop(iconLabel));
     }
 
-    JPanel messagePanel = new JPanel(new BorderLayout());
+    BorderLayoutPanel messagePanel = JBUI.Panels.simplePanel();
     if (myMessage != null) {
       JLabel textLabel = new JLabel(myMessage);
-      textLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      textLabel.setBorder(JBUI.Borders.emptyBottom(5));
       textLabel.setUI(new MultiLineLabelUI());
-      messagePanel.add(textLabel, BorderLayout.NORTH);
+      messagePanel.addToTop(textLabel);
     }
     panel.add(messagePanel, BorderLayout.CENTER);
 
     final JScrollPane jScrollPane = ScrollPaneFactory.createScrollPane();
     jScrollPane.setViewportView(myView);
     jScrollPane.setPreferredSize(JBUI.size(300, 80));
-    panel.add(jScrollPane, BorderLayout.SOUTH);
+    panel.addToBottom(jScrollPane);
     return panel;
   }
 

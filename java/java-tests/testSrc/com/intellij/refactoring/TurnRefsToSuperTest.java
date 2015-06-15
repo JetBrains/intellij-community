@@ -56,6 +56,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   public void testTypeArgumentsParam() throws Exception { doTest("Clazz", "IntF", false); }
   public void testTryWithResources1() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
   public void testTryWithResources2() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
+  public void testDifferentNumberOfParams() throws Exception { doTest("Bar", "SuperBar", false); }
 
   //todo[ann] fix and uncomment
   //public void testStaticCallArguments() throws Exception { doTest("Impl", "Int", false); }
@@ -66,11 +67,8 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   //public void testForEach2() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
 
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
-      }
+    doTest((rootDir, rootAfter) -> {
+      TurnRefsToSuperTest.this.performAction(className, superClassName, replaceInstanceOf);
     }, true);
   }
 

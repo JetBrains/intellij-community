@@ -507,6 +507,18 @@ class Foo {{
     assert ContractInference.inferContracts(method).collect { it as String } == [' -> null']
   }
 
+  public void "test anonymous class methods potentially used from outside"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  Runnable r = new Runnable() {
+    public void run() {
+      throw new RuntimeException();
+    }
+  };    
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == [' -> fail']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }

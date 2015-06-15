@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.ArrayList;
 
@@ -45,7 +46,7 @@ public interface ScopeInfo {
         if (actionInfo.getEnvironment(vcs) != null) {
           final VirtualFile[] files = vcsManager.getRootsUnderVcs(vcs);
           for(VirtualFile file: files) {
-            result.add(new FilePathImpl(file));
+            result.add(VcsUtil.getFilePath(file));
           }
         }
       }

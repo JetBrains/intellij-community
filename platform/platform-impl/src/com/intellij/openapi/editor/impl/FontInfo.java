@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
@@ -147,7 +148,7 @@ public class FontInfo {
       // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
       // width is not equal to the antialiased one (IDEA-81539).
       final Graphics graphics = UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
-      UISettings.setupAntialiasing(graphics);
+      EditorUIUtil.setupAntialiasing(graphics);
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();
       for (int i = 0; i < 128; i++) {

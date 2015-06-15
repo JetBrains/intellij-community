@@ -1,10 +1,18 @@
 package com.siyeh.ig.finalization;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class FinalizeCallsSuperFinalizeInspectionTest extends IGInspectionTestCase {
+public class FinalizeCallsSuperFinalizeInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/finalization/finalize_calls_super_finalize", new FinalizeCallsSuperFinalizeInspection());
+  public void testFinalizeCallsSuperFinalize() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new FinalizeCallsSuperFinalizeInspection();
   }
 }

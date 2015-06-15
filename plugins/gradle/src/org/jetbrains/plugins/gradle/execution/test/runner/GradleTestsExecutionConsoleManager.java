@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,7 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
   private static final Logger LOG = Logger.getInstance(GradleTestsExecutionConsoleManager.class);
 
   private Map<String, SMTestProxy> testsMap = ContainerUtil.newHashMap();
-
   private StringBuilder myBuffer = new StringBuilder();
-  private final GradleUrlProvider myUrlProvider = new GradleUrlProvider();
-
   private SMTRunnerConsoleView myExecutionConsole;
 
   @NotNull
@@ -75,7 +72,7 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
   }
 
   public GradleUrlProvider getUrlProvider() {
-    return myUrlProvider;
+    return GradleUrlProvider.INSTANCE;
   }
 
   public SMTRunnerConsoleView getExecutionConsole() {

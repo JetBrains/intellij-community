@@ -36,7 +36,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -52,7 +52,7 @@ import java.util.Locale;
  * @author yole
  */
 public class StartupUtil {
-  @NonNls public static final String NO_SPLASH = "nosplash";
+  public static final String NO_SPLASH = "nosplash";
 
   private static SocketLock ourLock;
 
@@ -62,14 +62,9 @@ public class StartupUtil {
     return !Arrays.asList(args).contains(NO_SPLASH);
   }
 
-  /** @deprecated use {@link Main#isHeadless()} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public static boolean isHeadless() {
-    return Main.isHeadless();
-  }
-
-  public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {
-    ourLock.setActivateListener(consumer);
+  public synchronized static void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
+    // method called by app after startup
+    ourLock.setExternalInstanceListener(consumer);
   }
 
   public synchronized static int getAcquiredPort() {
@@ -124,10 +119,16 @@ public class StartupUtil {
     if (!"true".equals(System.getProperty("idea.no.jre.check"))) {
       try {
         // try to find a class from tools.jar
-        Class.forName("com.sun.jdi.Field");
+        Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
       }
       catch (ClassNotFoundException e) {
         String message = "'tools.jar' seems to be not in " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
+                         "Please ensure JAVA_HOME points to JDK rather than JRE.";
+        Main.showMessage("JDK Required", message, true);
+        return false;
+      }
+      catch (LinkageError e) {
+        String message = "Cannot load a class from 'tools.jar': " + e.getMessage() + "\n" +
                          "Please ensure JAVA_HOME points to JDK rather than JRE.";
         Main.showMessage("JDK Required", message, true);
         return false;
@@ -242,15 +243,18 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
-    if (ourLock == null) {
-      ourLock = new SocketLock();
+    if (Main.isHeadless()) {
+      // fast fix, disable in tests
+      return true;
     }
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), true, args);
-    if (activateStatus == SocketLock.ActivateStatus.NO_INSTANCE) {
-      activateStatus = ourLock.lock(PathManager.getSystemPath(), false);
+    assert ourLock == null;
+    ourLock = new SocketLock();
+    if (ourLock.getAcquiredPort() == -1) {
+      return false;
     }
 
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), PathManager.getSystemPath(), args);
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
       if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
         String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";

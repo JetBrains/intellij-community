@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -9,7 +10,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  * @since 2/7/12 2:49 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ModuleDataService implements ProjectDataService<ModuleData, Module> {
+public class ModuleDataService implements ProjectDataServiceEx<ModuleData, Module> {
 
   public static final com.intellij.openapi.util.Key<ModuleData> MODULE_DATA_KEY = com.intellij.openapi.util.Key.create("MODULE_DATA_KEY");
 
@@ -52,12 +53,6 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  @NotNull private final ProjectStructureHelper       myProjectStructureHelper;
-
-  public ModuleDataService(@NotNull ProjectStructureHelper helper) {
-    myProjectStructureHelper = helper;
-  }
-
   @NotNull
   @Override
   public Key<ModuleData> getTargetDataKey() {
@@ -66,8 +61,16 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
 
   public void importData(@NotNull final Collection<DataNode<ModuleData>> toImport,
                          @NotNull final Project project,
-                         final boolean synchronous)
-  {
+                         final boolean synchronous) {
+    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    importData(toImport, project, platformFacade, synchronous);
+  }
+
+  @Override
+  public void importData(@NotNull final Collection<DataNode<ModuleData>> toImport,
+                         @NotNull final Project project,
+                         @NotNull final PlatformFacade platformFacade,
+                         final boolean synchronous) {
     if (toImport.isEmpty()) {
       return;
     }
@@ -78,40 +81,40 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
-        final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
+        final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project, platformFacade);
         if (!toCreate.isEmpty()) {
-          createModules(toCreate, project);
+          createModules(toCreate, project, platformFacade);
         }
         for (DataNode<ModuleData> node : toImport) {
-          Module module = myProjectStructureHelper.findIdeModule(node.getData(), project);
+          Module module = platformFacade.findIdeModule(node.getData(), project);
           if (module != null) {
-            syncPaths(module, node.getData());
+            syncPaths(module, platformFacade, node.getData());
           }
-        } 
+        }
       }
     });
   }
 
-  private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate, @NotNull final Project project) {
+  private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate,
+                             @NotNull final Project project,
+                             @NotNull final PlatformFacade platformFacade) {
     removeExistingModulesConfigs(toCreate, project);
     Application application = ApplicationManager.getApplication();
     final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
     application.runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final ModuleManager moduleManager = ModuleManager.getInstance(project);
         for (DataNode<ModuleData> module : toCreate) {
-          importModule(moduleManager, module);
+          importModule(module);
         }
       }
 
-      private void importModule(@NotNull ModuleManager moduleManager, @NotNull DataNode<ModuleData> module) {
+      private void importModule(@NotNull DataNode<ModuleData> module) {
         ModuleData data = module.getData();
-        final Module created = moduleManager.newModule(data.getModuleFilePath(), data.getModuleTypeId());
+        final Module created = platformFacade.newModule(project, data.getModuleFilePath(), data.getModuleTypeId());
 
         // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
-        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
-        final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+        final ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(created);
         moduleRootModel.inheritSdk();
         setModuleOptions(created, module);
 
@@ -142,13 +145,13 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
   }
 
   @NotNull
-  private Collection<DataNode<ModuleData>> filterExistingModules(@NotNull Collection<DataNode<ModuleData>> modules,
-                                                                 @NotNull Project project)
+  private static Collection<DataNode<ModuleData>> filterExistingModules(@NotNull Collection<DataNode<ModuleData>> modules,
+                                                                        @NotNull Project project, @NotNull PlatformFacade platformFacade)
   {
     Collection<DataNode<ModuleData>> result = ContainerUtilRt.newArrayList();
     for (DataNode<ModuleData> node : modules) {
       ModuleData moduleData = node.getData();
-      Module module = myProjectStructureHelper.findIdeModule(moduleData, project);
+      Module module = platformFacade.findIdeModule(moduleData, project);
       if (module == null) {
         result.add(node);
       }
@@ -184,8 +187,8 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     });
   }
 
-  private static void syncPaths(@NotNull Module module, @NotNull ModuleData data) {
-    ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+  private static void syncPaths(@NotNull Module module, @NotNull PlatformFacade platformFacade, @NotNull ModuleData data) {
+    ModifiableRootModel modifiableModel = platformFacade.getModuleModifiableModel(module);
     CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
       modifiableModel.dispose();
@@ -209,9 +212,21 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       modifiableModel.commit();
     }
   }
-  
+
   @Override
-  public void removeData(@NotNull final Collection<? extends Module> modules, @NotNull Project project, boolean synchronous) {
+  public void removeData(@NotNull Collection<? extends Module> toRemove,
+                         @NotNull Project project,
+                         boolean synchronous) {
+    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    removeData(toRemove, project, platformFacade, synchronous);
+  }
+
+
+  @Override
+  public void removeData(@NotNull final Collection<? extends Module> modules,
+                         @NotNull Project project,
+                         @NotNull PlatformFacade platformFacade,
+                         boolean synchronous) {
     if (modules.isEmpty()) {
       return;
     }
@@ -219,7 +234,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       @Override
       public void execute() {
         for (Module module : modules) {
-          if(module.isDisposed()) continue;
+          if (module.isDisposed()) continue;
 
           ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
           String path = module.getModuleFilePath();
@@ -241,7 +256,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
     module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
   }
-  
+
   private class ImportModulesTask implements Runnable {
 
     private final Project                          myProject;

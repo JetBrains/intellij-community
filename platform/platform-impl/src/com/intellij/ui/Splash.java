@@ -16,10 +16,12 @@
 package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -88,14 +90,9 @@ public class Splash extends JDialog implements StartupProgress {
   private void setLocationInTheCenterOfScreen() {
     Rectangle bounds = getGraphicsConfiguration().getBounds();
     if (SystemInfo.isWindows) {
-      Insets insets = ScreenUtil.getScreenInsets(getGraphicsConfiguration());
-      int x = insets.left + (bounds.width - insets.left - insets.right - getWidth()) / 2;
-      int y = insets.top + (bounds.height - insets.top - insets.bottom - getHeight()) / 2;
-      setLocation(x, y);
+      JBInsets.removeFrom(bounds, ScreenUtil.getScreenInsets(getGraphicsConfiguration()));
     }
-    else {
-      setLocation((bounds.width - getWidth()) / 2, (bounds.height - getHeight()) / 2);
-    }
+    setLocation(UIUtil.getCenterPoint(bounds, getSize()));
   }
 
   public Splash(ApplicationInfoEx info) {

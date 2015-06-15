@@ -29,11 +29,14 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -50,11 +53,12 @@ public class EditorTracker extends AbstractProjectComponent {
 
   private final WindowManager myWindowManager;
   private final EditorFactory myEditorFactory;
+  private final SmartPointerManagerImpl mySmartPointerManager;
 
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
   private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
-  private List<Editor> myActiveEditors = Collections.emptyList();
+  private List<Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
 
   private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
@@ -63,10 +67,12 @@ public class EditorTracker extends AbstractProjectComponent {
 
   public EditorTracker(Project project,
                        final WindowManager windowManager,
-                       final EditorFactory editorFactory) {
+                       final EditorFactory editorFactory,
+                       SmartPointerManager manager) {
     super(project);
     myWindowManager = windowManager;
     myEditorFactory = editorFactory;
+    mySmartPointerManager = (SmartPointerManagerImpl)manager;
   }
 
   @Override
@@ -85,7 +91,7 @@ public class EditorTracker extends AbstractProjectComponent {
     Disposer.register(myProject, new Disposable() {
       @Override
       public void dispose() {
-        myEditorFactoryListener.dispose(null);
+        myEditorFactoryListener.executeOnRelease(null);
       }
     });
   }
@@ -186,7 +192,8 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   @NotNull
-  public List<Editor> getActiveEditors() {
+  List<Editor> getActiveEditors() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myActiveEditors;
   }
 
@@ -210,6 +217,7 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   void setActiveEditors(@NotNull List<Editor> editors) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myActiveEditors = editors;
 
     if (LOG.isDebugEnabled()) {
@@ -223,7 +231,7 @@ public class EditorTracker extends AbstractProjectComponent {
     myDispatcher.getMulticaster().activeEditorsChanged(editors);
   }
 
-  public void addEditorTrackerListener(@NotNull EditorTrackerListener listener, @NotNull Disposable parentDisposable) {
+  void addEditorTrackerListener(@NotNull EditorTrackerListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener,parentDisposable);
   }
 
@@ -234,7 +242,7 @@ public class EditorTracker extends AbstractProjectComponent {
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile == null) return;
 
       final JComponent component = editor.getComponent();
@@ -242,7 +250,7 @@ public class EditorTracker extends AbstractProjectComponent {
 
       final HierarchyListener hierarchyListener = new HierarchyListener() {
         @Override
-        public void hierarchyChanged(HierarchyEvent e) {
+        public void hierarchyChanged(@NotNull HierarchyEvent e) {
           registerEditor(editor);
         }
       };
@@ -250,23 +258,32 @@ public class EditorTracker extends AbstractProjectComponent {
 
       final FocusListener focusListener = new FocusListener() {
         @Override
-        public void focusGained(FocusEvent e) {
+        public void focusGained(@NotNull FocusEvent e) {
           editorFocused(editor);
         }
 
         @Override
-        public void focusLost(FocusEvent e) {
+        public void focusLost(@NotNull FocusEvent e) {
         }
       };
       contentComponent.addFocusListener(focusListener);
 
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
       myExecuteOnEditorRelease.put(event.getEditor(), new Runnable() {
         @Override
         public void run() {
           component.removeHierarchyListener(hierarchyListener);
           contentComponent.removeFocusListener(focusListener);
+          // allow range markers in smart pointers to be collected
+          if (virtualFile != null) {
+            mySmartPointerManager.unfastenBelts(virtualFile, 0);
+          }
         }
       });
+      // materialize all range markers and do not let them to be collected to improve responsiveness
+      if (virtualFile != null) {
+        mySmartPointerManager.fastenBelts(virtualFile, 0, null);
+      }
     }
 
     @Override
@@ -274,10 +291,10 @@ public class EditorTracker extends AbstractProjectComponent {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       unregisterEditor(editor);
-      dispose(editor);
+      executeOnRelease(editor);
     }
 
-    private void dispose(Editor editor) {
+    private void executeOnRelease(Editor editor) {
       if (editor == null) {
         for (Runnable r : myExecuteOnEditorRelease.values()) {
           r.run();

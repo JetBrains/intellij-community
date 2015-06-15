@@ -33,9 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
-  private TreeElement myNextSibling = null;
-  private TreeElement myPrevSibling = null;
-  private CompositeElement myParent = null;
+  private TreeElement myNextSibling;
+  private TreeElement myPrevSibling;
+  private CompositeElement myParent;
 
   private final IElementType myType;
   private volatile int myStartOffsetInParent = -1;
@@ -163,7 +163,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   @NonNls
   public String toString() {
-    return "Element" + "(" + getElementType().toString() + ")";
+    return "Element" + "(" + getElementType() + ")";
   }
 
   @Override
@@ -209,7 +209,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public void clearCaches() {
   }
 
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   public final boolean equals(Object obj) {
     return obj == this;
   }

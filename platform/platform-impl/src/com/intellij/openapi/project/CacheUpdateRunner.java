@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -36,60 +34,17 @@ import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CacheUpdateRunner extends DumbModeTask {
+public class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
-  private final Project myProject;
-  private final Collection<CacheUpdater> myUpdaters;
-  private CacheUpdateSession mySession;
 
-  CacheUpdateRunner(@NotNull Project project, @NotNull Collection<CacheUpdater> updaters) {
-    myProject = project;
-    myUpdaters = updaters;
-  }
-
-  @Override
-  public String toString() {
-    return new ArrayList<CacheUpdater>(myUpdaters).toString();
-  }
-
-  private int queryNeededFiles(@NotNull ProgressIndicator indicator) {
-    // can be queried twice in DumbService
-    return getSession(indicator).getFilesToUpdate().size();
-  }
-
-  @NotNull
-  private CacheUpdateSession getSession(@NotNull ProgressIndicator indicator) {
-    CacheUpdateSession session = mySession;
-    if (session == null) {
-      mySession = session = new CacheUpdateSession(myUpdaters, indicator);
-    }
-    return session;
-  }
-
-  private void processFiles(@NotNull final ProgressIndicator indicator, boolean processInReadAction) {
-    try {
-      Collection<VirtualFile> files = mySession.getFilesToUpdate();
-
-      processFiles(indicator, processInReadAction, files, myProject, new Consumer<FileContent>() {
-        @Override
-        public void consume(FileContent content) {
-          mySession.processFile(content);
-        }
-      });
-    }
-    catch (ProcessCanceledException e) {
-      mySession.canceled();
-      throw e;
-    }
-  }
+  private static final int FILE_SIZE_TO_SHOW_THRESHOLD = 500 * 1024;
 
   public static void processFiles(final ProgressIndicator indicator,
                                   boolean processInReadAction,
@@ -104,7 +59,7 @@ public class CacheUpdateRunner extends DumbModeTask {
       // need set here to handle queue.pushbacks after checkCancelled() in order
       // not to count the same file several times
       final Set<VirtualFile> processed = new THashSet<VirtualFile>();
-      private boolean fileNameWasShownAfterRestart;
+      private boolean fileNameWasShown;
 
       @Override
       public void consume(VirtualFile virtualFile) {
@@ -112,12 +67,12 @@ public class CacheUpdateRunner extends DumbModeTask {
         synchronized (processed) {
           boolean added = processed.add(virtualFile);
           indicator.setFraction(processed.size() / total);
-          if (!added) {
+          if (!added || (virtualFile.isValid() && virtualFile.getLength() > FILE_SIZE_TO_SHOW_THRESHOLD)) {
             indicator.setText2(virtualFile.getPresentableUrl());
-            fileNameWasShownAfterRestart = true;
-          } else if (fileNameWasShownAfterRestart) {
+            fileNameWasShown = true;
+          } else if (fileNameWasShown) {
             indicator.setText2("");
-            fileNameWasShownAfterRestart = false;
+            fileNameWasShown = false;
           }
         }
       }
@@ -134,16 +89,6 @@ public class CacheUpdateRunner extends DumbModeTask {
     if (project.isDisposed()) {
       indicator.cancel();
       indicator.checkCanceled();
-    }
-  }
-
-  private void updatingDone() {
-    try {
-      mySession.updatingDone();
-    }
-    catch (ProcessCanceledException e) {
-      mySession.canceled();
-      throw e;
     }
   }
 
@@ -228,21 +173,6 @@ public class CacheUpdateRunner extends DumbModeTask {
       LOG.error(throwable);
     }
     return false;
-  }
-
-  @Override
-  public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-    indicator.checkCanceled();
-    indicator.setIndeterminate(true);
-    indicator.setText(IdeBundle.message("progress.indexing.scanning"));
-    int count = queryNeededFiles(indicator);
-
-    indicator.setIndeterminate(false);
-    indicator.setText(IdeBundle.message("progress.indexing.updating"));
-    if (count > 0) {
-      processFiles(indicator, true);
-    }
-    updatingDone();
   }
 
   private static class MyRunnable implements Runnable {

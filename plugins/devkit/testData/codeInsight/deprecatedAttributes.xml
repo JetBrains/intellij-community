@@ -1,11 +1,11 @@
 <idea-plugin>
   <id>com.intellij.myPlugin</id>
 
-  <vendor <error descr="Not used anymore">logo="deprecated"</error>/>
+  <vendor <error descr="Attribute 'logo' not used anymore">logo="deprecated"</error>/>
 
   <idea-version since-build="133"
-                <error descr="Not used anymore">min="deprecated"</error>
-                <error descr="Not used anymore">max="deprecated"</error>
+                <error descr="Attribute 'min' not used anymore">min="deprecated"</error>
+                <error descr="Attribute 'max' not used anymore">max="deprecated"</error>
                 />
 
   <extensions <error descr="Use defaultExtensionNs instead">xmlns="<error descr="URI is not registered (Settings | Project Settings | Schemas and DTDs)">com.intellij</error>"</error>/>

@@ -16,7 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
@@ -46,28 +46,22 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                         @Nullable final String[] parameters,
                         @Nullable final String[] exceptions,
                         boolean delegate) {
-    GenParams genParams = parameters == null ? new SimpleParameterGen() : new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
-        for (int i = 0; i < parameters.length; i++) {
-          PsiType type = myFactory.createTypeFromText(parameters[i], method);
-          parameterInfos[i] = new ParameterInfoImpl(-1, "p" + (i + 1), type);
-        }
-        return parameterInfos;
+    GenParams genParams = parameters == null ? new SimpleParameterGen() : method -> {
+      ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
+      for (int i = 0; i < parameters.length; i++) {
+        PsiType type = myFactory.createTypeFromText(parameters[i], method);
+        parameterInfos[i] = new ParameterInfoImpl(-1, "p" + (i + 1), type);
       }
+      return parameterInfos;
     };
 
-    GenExceptions genExceptions = exceptions == null ? new SimpleExceptionsGen() : new GenExceptions() {
-      @Override
-      public ThrownExceptionInfo[] genExceptions(PsiMethod method) throws IncorrectOperationException {
-        ThrownExceptionInfo[] exceptionInfos = new ThrownExceptionInfo[exceptions.length];
-        for (int i = 0; i < exceptions.length; i++) {
-          PsiType type = myFactory.createTypeFromText(exceptions[i], method);
-          exceptionInfos[i] = new JavaThrownExceptionInfo(-1, (PsiClassType)type);
-        }
-        return exceptionInfos;
+    GenExceptions genExceptions = exceptions == null ? new SimpleExceptionsGen() : method -> {
+      ThrownExceptionInfo[] exceptionInfos = new ThrownExceptionInfo[exceptions.length];
+      for (int i = 0; i < exceptions.length; i++) {
+        PsiType type = myFactory.createTypeFromText(exceptions[i], method);
+        exceptionInfos[i] = new JavaThrownExceptionInfo(-1, (PsiClassType)type);
       }
+      return exceptionInfos;
     };
 
     doTest(null, null, returnType, genParams, genExceptions, delegate);
@@ -104,7 +98,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                         boolean generateDelegate) {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
-    PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     PsiType newType = newReturnType != null ? myFactory.createTypeFromText(newReturnType, method) : method.getReturnType();

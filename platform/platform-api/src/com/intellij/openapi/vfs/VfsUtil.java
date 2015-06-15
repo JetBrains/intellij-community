@@ -47,9 +47,6 @@ import java.util.*;
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
-  /** @deprecated incorrect name, use {@link #VFS_SEPARATOR_CHAR} (to be removed in IDEA 15) */
-  public static final char VFS_PATH_SEPARATOR = VFS_SEPARATOR_CHAR;
-
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     file.setBinaryContent(text.getBytes(charset.name()));

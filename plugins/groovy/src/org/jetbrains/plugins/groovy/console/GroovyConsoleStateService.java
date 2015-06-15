@@ -33,8 +33,7 @@ import java.util.Map;
 @State(
   name = "GroovyConsoleState",
   storages = {
-    @Storage(file = StoragePathMacros.PROJECT_FILE),
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyConsole.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
   }
 )
 public class GroovyConsoleStateService implements PersistentStateComponent<GroovyConsoleStateService.MyState> {
@@ -71,7 +70,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
         final Entry e = new Entry();
         e.url = file.getUrl();
         e.moduleName = module == null ? "" : module.getName();
-        e.title = module == null ? "" : GroovyConsoleUtil.getTitle(module);
+        e.title = pair == null ? "" : pair.second;
         result.list.add(e);
       }
       return result;

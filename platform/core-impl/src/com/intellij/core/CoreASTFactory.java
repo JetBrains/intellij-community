@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class CoreASTFactory extends ASTFactory implements DefaultASTFactory {
 
   @Override
   @NotNull
-  public LeafElement createLeaf(@NotNull final IElementType type, final CharSequence text) {
+  public LeafElement createLeaf(@NotNull final IElementType type, @NotNull final CharSequence text) {
     final Language lang = type.getLanguage();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (parserDefinition != null) {
@@ -60,8 +60,9 @@ public class CoreASTFactory extends ASTFactory implements DefaultASTFactory {
     return new LeafPsiElement(type, text);
   }
 
+  @NotNull
   @Override
-  public LeafElement createComment(@NotNull IElementType type, CharSequence text) {
+  public LeafElement createComment(@NotNull IElementType type, @NotNull CharSequence text) {
     return new PsiCoreCommentImpl(type, text);
   }
 }

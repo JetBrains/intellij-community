@@ -22,15 +22,18 @@ import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @VisibleForTesting
 public class MacroParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.MacroParser");
-
-  //-----------------------------------------------------------------------------------
-  public static Expression parse(String expression) {
-    if (expression.length() == 0) {
+  
+  @NotNull
+  public static Expression parse(@Nullable String expression) {
+    if (StringUtil.isEmpty(expression)) {
       return new ConstantNode("");
     }
     Lexer lexer = new MacroLexer();

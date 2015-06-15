@@ -14,12 +14,12 @@
     <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="library" exported="" name="Log4J" level="project" />
     <orderEntry type="module" module-name="vcs-api" exported="" />
-    <orderEntry type="module" module-name="lvcs-impl" />
+    <orderEntry type="module" module-name="lvcs-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="tests_bootstrap" />
     <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
     <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="java-runtime" exported="" />
-    <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="vcs-impl" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="platform-resources" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="dom-impl" exported="" scope="RUNTIME" />
@@ -28,4 +28,3 @@
     <orderEntry type="module" module-name="RegExpSupport" exported="" scope="RUNTIME" />
   </component>
 </module>
-

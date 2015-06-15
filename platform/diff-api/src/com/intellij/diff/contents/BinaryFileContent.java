@@ -15,10 +15,13 @@
  */
 package com.intellij.diff.contents;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@Deprecated
+/** @deprecated Use {@link FileContent} and {@link VirtualFile#contentsToByteArray()} */
 public interface BinaryFileContent extends FileContent {
   /**
    * @return Binary representation of content.

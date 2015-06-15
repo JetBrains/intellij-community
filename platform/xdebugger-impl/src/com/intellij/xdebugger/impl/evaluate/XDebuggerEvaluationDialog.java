@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -101,10 +102,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     myTreePanel = new XDebuggerTreePanel(session.getProject(), editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP,
                                          ((XDebugSessionImpl)session).getValueMarkers());
-    myResultPanel = new JPanel(new BorderLayout());
-    myResultPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")), BorderLayout.NORTH);
-    myResultPanel.add(myTreePanel.getMainPanel(), BorderLayout.CENTER);
-    myMainPanel = new JPanel(new BorderLayout());
+    myResultPanel = JBUI.Panels.simplePanel()
+      .addToTop(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")))
+      .addToCenter(myTreePanel.getMainPanel());
+    myMainPanel = JBUI.Panels.simplePanel();
 
     mySwitchModeAction = new SwitchModeAction();
 

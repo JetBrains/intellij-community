@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,22 +115,28 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       if (!method.hasModifierProperty(PsiModifier.ABSTRACT) && !containingClass.isInterface()) {
         return;
       }
+      boolean overrideDefault = false;
+      boolean accept = false;
       final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
+        overrideDefault |= superMethod.hasModifierProperty(PsiModifier.DEFAULT);
         if (!isAbstract(superMethod)) {
           continue;
         }
-        if (!methodsHaveSameReturnTypes(method, superMethod) || !haveSameExceptionSignatures(method, superMethod)) {
-          continue;
+        if (overrideDefault) {
+          return;
         }
+        accept |= methodsHaveSameReturnTypes(method, superMethod) && haveSameExceptionSignatures(method, superMethod);
+
         if (ignoreJavaDoc && !haveSameJavaDoc(method, superMethod)) {
           return;
         }
         if (ignoreAnnotations && !methodsHaveSameAnnotations(method, superMethod)) {
           return;
         }
+      }
+      if (accept && !overrideDefault) {
         registerMethodError(method);
-        return;
       }
     }
 
@@ -142,6 +148,9 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       final PsiParameter[] superParameters = superParameterList.getParameters();
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
+      if (parameters.length != superParameters.length) {
+        return false;
+      }
       for (int i = 0, length = superParameters.length; i < length; i++) {
         final PsiParameter superParameter = superParameters[i];
         final PsiParameter parameter = parameters[i];
@@ -165,7 +174,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       final Set<PsiAnnotation> annotationsSet = new HashSet<PsiAnnotation>(Arrays.asList(superAnnotations));
       for (PsiAnnotation annotation : annotations) {
         final String qualifiedName = annotation.getQualifiedName();
-        if ("java.lang.Override".equals(qualifiedName)) {
+        if (CommonClassNames.JAVA_LANG_OVERRIDE.equals(qualifiedName)) {
           continue;
         }
         if (!annotationsSet.contains(annotation)) {

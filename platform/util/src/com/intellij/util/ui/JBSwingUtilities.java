@@ -16,7 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -66,24 +65,28 @@ public class JBSwingUtilities {
   @NotNull
   public static TreeTraverser<Component> uiTraverser() {
     return new TreeTraverser<Component>() {
+      @NotNull
       @Override
-      public Iterable<Component> children(Component c) {
-        Iterable<Component> result = ContainerUtil.emptyIterable();
+      public JBIterable<Component> children(@NotNull Component c) {
+        JBIterable<Component> result;
         if (c instanceof JMenu) {
-          result = Arrays.asList(((JMenu)c).getMenuComponents());
+          result = JBIterable.of(((JMenu)c).getMenuComponents());
         }
         else if (c instanceof Container) {
-          result = Arrays.asList(((Container)c).getComponents());
+          result = JBIterable.of(((Container)c).getComponents());
+        }
+        else {
+          result = JBIterable.empty();
         }
         if (c instanceof JComponent) {
           JComponent jc = (JComponent)c;
           Iterable<? extends Component> orphans = UIUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
           if (orphans != null) {
-            result = ContainerUtil.concat(result, orphans);
+            result = result.append(orphans);
           }
           JPopupMenu jpm = jc.getComponentPopupMenu();
           if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
-            result = ContainerUtil.concat(result, Collections.singletonList(jpm));
+            result = result.append(Collections.singletonList(jpm));
           }
         }
         return result;

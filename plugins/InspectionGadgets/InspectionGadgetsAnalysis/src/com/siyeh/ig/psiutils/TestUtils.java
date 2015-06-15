@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,15 @@ public class TestUtils {
 
   public static boolean isJUnitTestClass(@Nullable PsiClass targetClass) {
     return targetClass != null && InheritanceUtil.isInheritor(targetClass, "junit.framework.TestCase");
+  }
+
+  public static boolean isJUnit4TestClass(@Nullable PsiClass aClass, boolean runWithIsTestClass) {
+    if (aClass == null) return false;
+    if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return runWithIsTestClass;
+    for (final PsiMethod method : aClass.getAllMethods()) {
+      if (isJUnit4TestMethod(method)) return true;
+    }
+    return false;
   }
 
   public static boolean isInTestCode(PsiElement element) {

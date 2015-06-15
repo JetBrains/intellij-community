@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
-import com.jetbrains.python.psi.PyTargetExpression;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
     Custom(3),
     Other(0);
 
-    private int myIndex;
+    private final int myIndex;
 
     InitializerType(int index) {
       myIndex = index;

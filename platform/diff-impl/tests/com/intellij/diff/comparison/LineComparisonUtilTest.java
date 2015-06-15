@@ -187,4 +187,10 @@ public class LineComparisonUtilTest extends ComparisonUtilTestBase {
       ._Def_(mod(0, 0, 2, 2))
       .def();
   }
+
+  public void testTwoStepCanTrimRegression() {
+    TestData.lines("q__7_ 6_ 7", "_7")
+      ._Def_(del(0, 0, 1), del(3, 2, 2))
+      .def();
+  }
 }

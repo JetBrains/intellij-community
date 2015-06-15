@@ -164,7 +164,7 @@ public class SwingUpdaterUI implements UpdaterUI {
           });
         }
       }
-    }).start();
+    },"swing updater dispatch").start();
   }
 
   private void doCancel() {
@@ -210,7 +210,7 @@ public class SwingUpdaterUI implements UpdaterUI {
           }
         }
       }
-    }).start();
+    },"swing updater").start();
   }
 
   private void exit() {

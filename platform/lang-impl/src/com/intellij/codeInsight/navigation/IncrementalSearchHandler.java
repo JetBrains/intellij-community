@@ -92,7 +92,7 @@ public class IncrementalSearchHandler {
       EditorActionManager actionManager = EditorActionManager.getInstance();
 
       TypedAction typedAction = actionManager.getTypedAction();
-      typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
+      typedAction.setupRawHandler(new MyTypedHandler(typedAction.getRawHandler()));
 
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, new UpHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)));

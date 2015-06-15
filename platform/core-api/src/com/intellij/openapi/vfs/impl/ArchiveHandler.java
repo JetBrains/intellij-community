@@ -38,12 +38,21 @@ public abstract class ArchiveHandler {
 
   protected static class EntryInfo {
     public final EntryInfo parent;
-    public final String shortName;
+    @NotNull
+    public final CharSequence shortName;
     public final boolean isDirectory;
     public final long length;
     public final long timestamp;
 
+    @Deprecated
+    /**
+     * Please use the {@link EntryInfo#EntryInfo(ArchiveHandler.EntryInfo, CharSequence, boolean, long, long)} instead
+     */
     public EntryInfo(EntryInfo parent, @NotNull String shortName, boolean isDirectory, long length, long timestamp) {
+      this(parent, (CharSequence) shortName, isDirectory, length, timestamp);
+    }
+
+    public EntryInfo(EntryInfo parent, @NotNull CharSequence shortName, boolean isDirectory, long length, long timestamp) {
       this.parent = parent;
       this.shortName = shortName;
       this.isDirectory = isDirectory;
@@ -52,18 +61,19 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final String myPath;
+  @NotNull
+  private final File myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<Map<String, EntryInfo>>(null);
-  private boolean myCorrupted = false;
+  private boolean myCorrupted;
 
   protected ArchiveHandler(@NotNull String path) {
-    myPath = path;
+    myPath = new File(path);
   }
 
   @NotNull
   public File getFile() {
-    return new File(myPath);
+    return myPath;
   }
 
   @Nullable
@@ -86,10 +96,14 @@ public abstract class ArchiveHandler {
     Set<String> names = new HashSet<String>();
     for (EntryInfo info : getEntriesMap().values()) {
       if (info.parent == entry) {
-        names.add(info.shortName);
+        names.add(info.shortName.toString());
       }
     }
     return ArrayUtil.toStringArray(names);
+  }
+
+  public void dispose() {
+    myEntries.clear();
   }
 
   @Nullable
@@ -110,7 +124,7 @@ public abstract class ArchiveHandler {
           }
           else {
             try {
-              map = Collections.unmodifiableMap(createEntriesMap());
+              map = createEntriesMap();
             }
             catch (Exception e) {
               myCorrupted = true;

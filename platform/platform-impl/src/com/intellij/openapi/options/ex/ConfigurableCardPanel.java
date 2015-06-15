@@ -16,12 +16,14 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.BorderLayout;
@@ -30,9 +32,16 @@ import java.awt.BorderLayout;
  * @author Sergey.Malenkov
  */
 public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
+  private static final Logger LOG = Logger.getInstance(ConfigurableCardPanel.class);
+
   @Override
   protected Configurable prepare(Configurable key) {
-    ConfigurableWrapper.cast(Configurable.class, key); // create wrapped configurable on a pooled thread
+    try {
+      ConfigurableWrapper.cast(Configurable.class, key); // create wrapped configurable on a pooled thread
+    }
+    catch (Exception unexpected) {
+      LOG.error("cannot prepare configurable", unexpected);
+    }
     return key;
   }
 
@@ -51,9 +60,15 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     return configurable == null ? null : ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        JComponent component = configurable.createComponent();
+        JComponent component = null;
+        try {
+          component = configurable.createComponent();
+        }
+        catch (Exception unexpected) {
+          LOG.error("cannot create configurable component", unexpected);
+        }
         if (component != null) {
-          configurable.reset();
+          reset(configurable);
           if (ConfigurableWrapper.cast(MasterDetails.class, configurable) == null) {
             if (ConfigurableWrapper.cast(Configurable.NoMargin.class, configurable) == null) {
               if (!component.getClass().equals(JPanel.class)) {
@@ -62,12 +77,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
                 panel.add(BorderLayout.CENTER, component);
                 component = panel;
               }
-              component.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+              component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
             }
             if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
               JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
-              scroll.setViewport(new GradientViewport(component, 5, 0, 0, 0, true));
-              scroll.getVerticalScrollBar().setUnitIncrement(10);
+              scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
+              scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
               component = scroll;
             }
           }
@@ -80,7 +95,23 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   @Override
   protected void dispose(Configurable configurable) {
     if (configurable != null) {
-      configurable.disposeUIResources();
+      try {
+        configurable.disposeUIResources();
+      }
+      catch (Exception unexpected) {
+        LOG.error("cannot dispose configurable", unexpected);
+      }
+    }
+  }
+
+  public static void reset(Configurable configurable) {
+    if (configurable != null) {
+      try {
+        configurable.reset();
+      }
+      catch (Exception unexpected) {
+        LOG.error("cannot reset configurable", unexpected);
+      }
     }
   }
 }

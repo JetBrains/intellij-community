@@ -16,7 +16,7 @@
 
 package com.intellij.navigation;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,7 +35,7 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement element =
-      TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getAllAccepted());
+      TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
     assertTrue(element instanceof PsiClass);
     final String qualifiedName = ((PsiClass)element).getQualifiedName();
     assertEquals(CommonClassNames.JAVA_LANG_RUNNABLE, qualifiedName);

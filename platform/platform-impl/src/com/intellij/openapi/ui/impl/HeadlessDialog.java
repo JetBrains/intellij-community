@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.FocusTrackback;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,12 @@ import java.awt.event.MouseMotionListener;
 */
 @SuppressWarnings("ConstantConditions")
 class HeadlessDialog implements AbstractDialog {
+  @NotNull private final DialogWrapper myWrapper;
+
+  HeadlessDialog(@NotNull DialogWrapper wrapper) {
+    myWrapper = wrapper;
+  }
+
   @Override
   public void setUndecorated(boolean undecorated) {
   }
@@ -174,6 +181,7 @@ class HeadlessDialog implements AbstractDialog {
 
   @Override
   public void show() {
+    myWrapper.close(DialogWrapper.OK_EXIT_CODE);
   }
 
   @Override

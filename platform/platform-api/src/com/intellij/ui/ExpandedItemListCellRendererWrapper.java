@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,10 +34,20 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     Component result = myWrappee.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    if (myHandler.getExpandedItems().contains(index)) {
-      result = new ExpandedItemRendererComponentWrapper(result);
+    if (!myHandler.getExpandedItems().contains(index)) return result;
+    Rectangle bounds = result.getBounds();
+    ExpandedItemRendererComponentWrapper wrapper = new ExpandedItemRendererComponentWrapper(result);
+    if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
+      JComponent res = ObjectUtils.tryCast(result, JComponent.class);
+      if (res != null && UIUtil.getClientProperty(res, ExpandableItemsHandler.USE_RENDERER_BOUNDS) == Boolean.TRUE) {
+        Insets insets = wrapper.getInsets();
+        bounds.translate(-insets.left, -insets.top);
+        bounds.grow(insets.left + insets.right, insets.top + insets.bottom);
+        wrapper.setBounds(bounds);
+        UIUtil.putClientProperty(wrapper, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+      }
     }
-    return result;
+    return wrapper;
   }
 
   @NotNull

@@ -70,7 +70,7 @@
       <reference ref="Annotate"/>
       <separator/>
 
-      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction"/>
+      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" icon="AllIcons.Actions.CheckOut"/>
       <reference ref="Vcs.Push"/>
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
@@ -87,6 +87,8 @@
       <action id="hg4idea.Rebase.Continue" class="org.zmlx.hg4idea.action.HgContinueRebaseAction" text="Continue Rebasing"/>
 
       <separator/>
+      <action class="org.zmlx.hg4idea.action.mq.HgShowUnAppliedPatchesAction" id="hg4idea.mq.ShowUnAppliedPatches"
+              text="Show Mq Unapplied Patches..." icon="AllIcons.Debugger.Watches"/>
       <reference id="ChangesView.Browse"/>
       <separator/>
 
@@ -99,12 +101,55 @@
             description="Create new tag pointing to this commit"/>
     <action class="org.zmlx.hg4idea.action.HgCreateNewBranchFromLogAction" id="hg4idea.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
+    <group id="Hg.Mq" class="com.intellij.ide.actions.NonTrivialActionGroup" text="MQ" popup="true"
+           icon="AllIcons.Modules.Edit">
+      <action class="org.zmlx.hg4idea.action.mq.HgQImportFromLogAction" id="hg4idea.QImport" text="Import"
+              description="Import all revisions starting from selected commit" icon="AllIcons.Duplicates.SendToTheRight"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQGotoFromLogAction" id="hg4idea.QGoto" text="Goto patch"
+              description="Pop all revisions starting from selected commit" icon="AllIcons.Diff.ApplyNotConflicts"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQRenameFromLogAction" id="hg4idea.QRename" text="Rename Patch"
+              description="Rename mq patch"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQFinishFromLogAction" id="hg4idea.QFinish" text="Finish Patches"
+              description="Apply mq patches into repository history" icon="AllIcons.Duplicates.SendToTheLeft"/>
+    </group>
+
+    <group id="Hg.MQ.Unapplied">
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QRefresh" text="Reload from file"
+              description="Reload patch information from mq patch series file" icon="AllIcons.Actions.Refresh" use-shortcut-of="Refresh"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQGotoActionFromMqPatches" id="hg4idea.QGotoFromPatches" text="Goto"
+              description="Push all patches above selected one" icon="AllIcons.Diff.ApplyNotConflicts">
+        <keyboard-shortcut first-keystroke="alt shift G" keymap="$default"/>
+      </action>
+      <action class="org.zmlx.hg4idea.action.mq.HgQPushActionFromPatches" id="hg4idea.QPushAction" text="Move and Push"
+              description="Apply only selected patch" icon="AllIcons.Actions.MoveToAnotherChangelist">
+        <keyboard-shortcut first-keystroke="alt shift P" keymap="$default"/>
+      </action>
+      <action class="org.zmlx.hg4idea.action.mq.HgQFoldActionFromPatches" id="hg4idea.QFold" text="Fold"
+              description="Fold selected patch to the top one" icon="AllIcons.Modules.Merge">
+        <keyboard-shortcut first-keystroke="alt shift D" keymap="$default"/>
+      </action>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QDelete" text="Delete"
+              description="Delete selected patches" icon="AllIcons.Vcs.Remove" use-shortcut-of="$Delete"/>
+    </group>
+
 
     <group id="Hg.Log.ContextMenu">
       <reference id="hg4idea.UpdateToRevision"/>
       <reference id="hg4idea.CreateNewBranch"/>
       <reference id="hg4idea.CreateNewTag"/>
+      <separator/>
+      <reference id="Hg.Mq"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
+    </group>
+
+    <group id="Mq.Patches.Toolbar">
+      <reference id="Hg.MQ.Unapplied"/>
+    </group>
+
+    <group id="Mq.Patches.ContextMenu">
+      <reference id="Hg.MQ.Unapplied"/>
+      <separator/>
+      <reference id="ChangesView.ApplyPatch"/>
     </group>
 
   </actions>

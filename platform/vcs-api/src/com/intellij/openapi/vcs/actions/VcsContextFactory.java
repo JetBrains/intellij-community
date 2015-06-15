@@ -27,9 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public interface VcsContextFactory {
-  VcsContext createCachedContextOn(AnActionEvent event);
 
-  VcsContext createContextOn(final AnActionEvent event);
+  @NotNull
+  VcsContext createCachedContextOn(@NotNull AnActionEvent event);
+
+  @NotNull
+  VcsContext createContextOn(@NotNull AnActionEvent event);
 
   /**
    * Creates a FilePath corresponding to the specified virtual file.
@@ -37,7 +40,8 @@ public interface VcsContextFactory {
    * @param virtualFile the file for which the FilePath should be created.
    * @return the FilePath instance.
    */
-  FilePath createFilePathOn(VirtualFile virtualFile);
+  @NotNull
+  FilePath createFilePathOn(@NotNull VirtualFile virtualFile);
 
   /**
    * Creates a FilePath corresponding to the specified java.io.File.
@@ -45,7 +49,8 @@ public interface VcsContextFactory {
    * @param file the file for which the FilePath should be created.
    * @return the FilePath instance.
    */
-  FilePath createFilePathOn(File file);
+  @NotNull
+  FilePath createFilePathOn(@NotNull File file);
 
   /**
    * Creates a FilePath corresponding to the specified java.io.File. Assumes that the file does not exist in the filesystem
@@ -55,7 +60,8 @@ public interface VcsContextFactory {
    * @param isDirectory whether {@code file} specifies a file or a directory.
    * @return the FilePath instance.
    */
-  FilePath createFilePathOnDeleted(File file, boolean isDirectory);
+  @NotNull
+  FilePath createFilePathOnDeleted(@NotNull File file, boolean isDirectory);
 
   /**
    * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses the value
@@ -65,7 +71,8 @@ public interface VcsContextFactory {
    * @param isDirectory whether {@code file} specifies a file or a directory.
    * @return the FilePath instance.
    */
-  FilePath createFilePathOn(File file, boolean isDirectory);
+  @NotNull
+  FilePath createFilePathOn(@NotNull File file, boolean isDirectory);
 
   /**
    * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses
@@ -74,8 +81,12 @@ public interface VcsContextFactory {
    * @param file the file for which the FilePath should be created.
    * @param detector - called to get to know whether the file is directory, if local file is not found
    * @return the FilePath instance.
+   *
+   * @deprecated to remove in IDEA 16. Check the virtual file right away and pass to the right constructor.
    */
-  FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector);
+  @Deprecated
+  @NotNull
+  FilePath createFilePathOn(@NotNull File file, @NotNull NotNullFunction<File, Boolean> detector);
 
   /**
    * Creates a FilePath corresponding to the specified path in a VCS repository. Does not try to locate
@@ -86,7 +97,7 @@ public interface VcsContextFactory {
    * @return the FilePath instance.
    */
   @NotNull
-  FilePath createFilePathOnNonLocal(String path, boolean isDirectory);
+  FilePath createFilePathOnNonLocal(@NotNull String path, boolean isDirectory);
 
   /**
    * Creates a FilePath corresponding to a file with the specified name in the specified directory.
@@ -97,9 +108,17 @@ public interface VcsContextFactory {
    * @param name   the name of the file.
    * @return the FilePath instance.
    */
-  FilePath createFilePathOn(VirtualFile parent, String name);
+  @NotNull
+  FilePath createFilePathOn(@NotNull VirtualFile parent, @NotNull String name);
 
-  LocalChangeList createLocalChangeList(Project project, @NotNull final String name);
+  @NotNull
+  FilePath createFilePath(@NotNull VirtualFile parent, @NotNull String fileName, boolean isDirectory);
+
+  @NotNull
+  LocalChangeList createLocalChangeList(@NotNull Project project, @NotNull final String name);
+
+  @NotNull
+  FilePath createFilePath(@NotNull String path, boolean isDirectory);
 
   class SERVICE {
     private SERVICE() {

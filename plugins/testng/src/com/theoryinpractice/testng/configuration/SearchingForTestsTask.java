@@ -20,48 +20,35 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
-import com.theoryinpractice.testng.model.TestClassFilter;
 import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.xml.LaunchSuite;
-import org.testng.xml.Parser;
-import org.testng.xml.SuiteGenerator;
-import org.testng.xml.XmlSuite;
+import org.testng.xml.*;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class SearchingForTestsTask extends SearchForTestsTask {
   private static final Logger LOG = Logger.getInstance("#" + SearchingForTestsTask.class.getName());
-  private final Map<PsiClass, Collection<PsiMethod>> myClasses;
+  private final Map<PsiClass, Map<PsiMethod, List<String>>> myClasses;
   private final TestData myData;
   private final Project myProject;
   private final TestNGConfiguration myConfig;
@@ -78,7 +65,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     myProject = config.getProject();
     myConfig = config;
     myTempFile = tempFile;
-    myClasses = new LinkedHashMap<PsiClass, Collection<PsiMethod>>();
+    myClasses = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
   }
 
   @Override
@@ -112,7 +99,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
   @Override
   protected void startListening() {
-    if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
+    if (!Registry.is("testng_sm")) myClient.startListening(myConfig);
   }
 
   protected void logCantRunException(ExecutionException e) {
@@ -126,20 +113,20 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private void composeTestSuiteFromClasses() {
-    Map<String, Collection<String>> map = new LinkedHashMap<String, Collection<String>>();
+    Map<String, Map<String, List<String>>> map = new LinkedHashMap<String, Map<String, List<String>>>();
 
     final boolean findTestMethodsForClass = shouldSearchForTestMethods();
 
-    for (final Map.Entry<PsiClass, Collection<PsiMethod>> entry : myClasses.entrySet()) {
-      final Collection<PsiMethod> depMethods = entry.getValue();
-      Collection<String> methods = new LinkedHashSet<String>(depMethods.size());
-      for (PsiMethod method : depMethods) {
-        methods.add(method.getName());
+    for (final Map.Entry<PsiClass, Map<PsiMethod, List<String>>> entry : myClasses.entrySet()) {
+      final Map<PsiMethod, List<String>> depMethods = entry.getValue();
+      LinkedHashMap<String, List<String>> methods = new LinkedHashMap<String, List<String>>();
+      for (Map.Entry<PsiMethod, List<String>> method : depMethods.entrySet()) {
+        methods.put(method.getKey().getName(), method.getValue());
       }
       if (findTestMethodsForClass && depMethods.isEmpty()) {
         for (PsiMethod method : entry.getKey().getMethods()) {
           if (TestNGUtil.hasTest(method)) {
-            methods.add(method.getName());
+            methods.put(method.getName(), Collections.<String>emptyList());
           }
         }
       }
@@ -180,10 +167,53 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       logLevel = 1;
     }
 
-    LaunchSuite suite =
-      SuiteGenerator.createSuite(myProject.getName(), null, map, groupNames, testParams, "jdk", logLevel);
-
-    File xmlFile = suite.save(new File(PathManager.getSystemPath()));
+    File xmlFile;
+    if (groupNames != null) {
+      final LinkedHashMap<String, Collection<String>> methodNames = new LinkedHashMap<String, Collection<String>>();
+      for (Map.Entry<String, Map<String, List<String>>> entry : map.entrySet()) {
+        methodNames.put(entry.getKey(), entry.getValue().keySet());
+      }
+      LaunchSuite suite =
+        SuiteGenerator.createSuite(myProject.getName(), null, methodNames, groupNames, testParams, "jdk", logLevel);
+      xmlFile = suite.save(new File(PathManager.getSystemPath()));
+    }
+    else {
+      final XmlSuite xmlSuite = new XmlSuite();
+      XmlTest xmlTest = new XmlTest(xmlSuite);
+      xmlTest.setName(myProject.getName());
+      xmlTest.setParameters(testParams);
+      List<XmlClass> xmlClasses = new ArrayList<XmlClass>();
+      int idx = 0;
+      for (String className : map.keySet()) {
+        final XmlClass xmlClass = new XmlClass(className, idx++, false);
+        final ArrayList<XmlInclude> includedMethods = new ArrayList<XmlInclude>();
+        final Map<String, List<String>> collection = map.get(className);
+        int mIdx = 0;
+        for (String methodName : collection.keySet()) {
+          final List<Integer> includes = new ArrayList<Integer>();
+          for (String include : collection.get(methodName)) {
+            try {
+              includes.add(Integer.parseInt(include));
+            }
+            catch (NumberFormatException e) {
+              LOG.error(e);
+            }
+          }
+          includedMethods.add(new XmlInclude(methodName, includes, mIdx++));
+        }
+        xmlClass.setIncludedMethods(includedMethods);
+        xmlClasses.add(xmlClass);
+      }
+      xmlTest.setXmlClasses(xmlClasses);
+      xmlFile = new File(PathManager.getSystemPath(), "temp-testng-customsuite.xml");
+      final String toXml = xmlSuite.toXml();
+      try {
+        FileUtil.writeToFile(xmlFile, toXml);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
     String path = xmlFile.getAbsolutePath() + "\n";
     try {
       FileUtil.writeToFile(myTempFile, path.getBytes(CharsetToolkit.UTF8_CHARSET), true);
@@ -194,14 +224,12 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private boolean shouldSearchForTestMethods() {
-    boolean dependantMethods = false;
-    for (Collection<PsiMethod> methods : myClasses.values()) {
+    for (Map<PsiMethod, List<String>> methods : myClasses.values()) {
       if (!methods.isEmpty()) {
-        dependantMethods = true;
-        break;
+        return true;
       }
     }
-    return dependantMethods;
+    return false;
   }
 
   private void composeTestSuiteFromXml() throws CantRunException {
@@ -239,207 +267,27 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     }
   }
 
-  protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes)
+  protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes)
     throws CantRunException {
-    final TestData data = myConfig.getPersistantData();
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
-      final String packageName = data.getPackageName();
-      PsiPackage psiPackage = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiPackage>() {
-          @Nullable
-          public PsiPackage compute() {
-            return JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
-          }
-        }
-      );
-      if (psiPackage == null) {
-        throw CantRunException.packageNotFound(packageName);
-      }
-      else {
-        TestSearchScope scope = myConfig.getPersistantData().getScope();
-        //TODO we should narrow this down by module really, if that's what's specified
-        TestClassFilter projectFilter =
-          new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true);
-        TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-        calculateDependencies(null, classes, TestNGUtil.getAllTestClasses(filter, false));
-        if (classes.size() == 0) {
-          throw new CantRunException("No tests found in the package \"" + packageName + '\"');
-        }
-      }
+    final TestNGTestObject testObject = TestNGTestObject.fromConfig(myConfig);
+    if (testObject != null) {
+      testObject.fillTestObjects(classes);
     }
-    else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
-      //it's a class
-      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiClass>() {
-          @Nullable
-          public PsiClass compute() {
-            return ClassUtil.findPsiClass(psiManager, data.getMainClassName().replace('/', '.'), null, true, getSearchScope());
-          }
-        }
-      );
-      if (psiClass == null) {
-        throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
-      }
-      if (null == ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Nullable
-        public String compute() {
-          return psiClass.getQualifiedName();
-        }
-      })) {
-        throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
-      }
-      calculateDependencies(null, classes, psiClass);
-    }
-    else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
-      //it's a method
-      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiClass>() {
-          @Nullable
-          public PsiClass compute() {
-            return ClassUtil.findPsiClass(psiManager, data.getMainClassName().replace('/', '.'), null, true, getSearchScope());
-          }
-        }
-      );
-      if (psiClass == null) {
-        throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
-      }
-      if (null == ApplicationManager.getApplication().runReadAction(
-        new Computable<String>() {
-          @Nullable
-          public String compute() {
-            return psiClass.getQualifiedName();
-          }
-        }
-      )) {
-        throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
-      }
-      collectTestMethods(classes, psiClass, data.getMethodName());
-    }
-    else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
-      //for a group, we include all classes
-      PsiClass[] testClasses = TestNGUtil
-        .getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true), false);
-      if (testClasses != null) {
-        for (PsiClass c : testClasses) {
-          classes.put(c, new HashSet<PsiMethod>());
-        }
-      }
-    }
-    else if (data.TEST_OBJECT.equals(TestType.PATTERN.getType())) {
-      for (final String pattern : data.getPatterns()) {
-        final String className;
-        final String methodName;
-        if (pattern.contains(",")) {
-          methodName = StringUtil.getShortName(pattern, ',');
-          className = StringUtil.getPackageName(pattern, ',');
-        } else {
-          className = pattern;
-          methodName = null;
-        }
-        
-        final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Nullable
-          @Override
-          public PsiClass compute() {
-            return ClassUtil.findPsiClass(psiManager, className.replace('/', '.'), null, true, getSearchScope());
-          }
-        });
-        if (psiClass != null) {
-          final Boolean hasTest = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              return TestNGUtil.hasTest(psiClass);
-            }
-          });
-          if (hasTest) {
-            if (StringUtil.isEmpty(methodName)) {
-              calculateDependencies(null, classes, psiClass);
-            }
-            else {
-              collectTestMethods(classes, psiClass, methodName);
-            }
-          } else {
-            throw new CantRunException("No tests found in class " + className);
-          }
-        }
-      }
-      if (classes.size() != data.getPatterns().size()) {
-        TestSearchScope scope = myConfig.getPersistantData().getScope();
-        final List<Pattern> compilePatterns = new ArrayList<Pattern>();
-        for (String p : data.getPatterns()) {
-          final Pattern compilePattern;
-          try {
-            compilePattern = Pattern.compile(p);
-          }
-          catch (PatternSyntaxException e) {
-            continue;
-          }
-          if (compilePattern != null) {
-            compilePatterns.add(compilePattern);
-          }
-        }
-        TestClassFilter projectFilter =
-          new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true){
-            @Override
-            public boolean isAccepted(PsiClass psiClass) {
-              if (super.isAccepted(psiClass)) {
-                final String qualifiedName = psiClass.getQualifiedName();
-                LOG.assertTrue(qualifiedName != null);
-                for (Pattern pattern : compilePatterns) {
-                  if (pattern.matcher(qualifiedName).matches()) return true;
-                }
-              }
-              return false;
-            }
-          };
-        calculateDependencies(null, classes, TestNGUtil.getAllTestClasses(projectFilter, false));
-        if (classes.size() == 0) {
-          throw new CantRunException("No tests found in for patterns \"" + StringUtil.join(data.getPatterns(), " || ") + '\"');
-        }
-      }
-    }
-  }
-
-  private void collectTestMethods(Map<PsiClass, Collection<PsiMethod>> classes, final PsiClass psiClass, final String methodName) {
-    final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
-      new Computable<PsiMethod[]>() {
-        public PsiMethod[] compute() {
-          return psiClass.findMethodsByName(methodName, true);
-        }
-      }
-    );
-    calculateDependencies(methods, classes, psiClass);
-    Collection<PsiMethod> psiMethods = classes.get(psiClass);
-    if (psiMethods == null) {
-      psiMethods = new LinkedHashSet<PsiMethod>();
-      classes.put(psiClass, psiMethods);
-    }
-    ContainerUtil.addAll(psiMethods, methods);
   }
 
   private Map<String, String> buildTestParameters() {
     Map<String, String> testParams = new HashMap<String, String>();
 
     // Override with those from the test runner configuration
-    testParams.putAll(convertPropertiesFileToMap(myData.PROPERTIES_FILE));
-    testParams.putAll(myData.TEST_PROPERTIES);
-
-    return testParams;
-  }
-
-  private static Map<String, String> convertPropertiesFileToMap(String properties_file) {
-    Map<String, String> params = new HashMap<String, String>();
-
-    if (properties_file != null) {
-      File propertiesFile = new File(properties_file);
+    if (myData.PROPERTIES_FILE != null) {
+      File propertiesFile = new File(myData.PROPERTIES_FILE);
       if (propertiesFile.exists()) {
 
         Properties properties = new Properties();
         try {
           properties.load(new FileInputStream(propertiesFile));
           for (Map.Entry entry : properties.entrySet()) {
-            params.put((String)entry.getKey(), (String)entry.getValue());
+            testParams.put((String)entry.getKey(), (String)entry.getValue());
           }
 
         }
@@ -448,155 +296,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         }
       }
     }
-    return params;
+    testParams.putAll(myData.TEST_PROPERTIES);
+    return testParams;
   }
-
-  private void calculateDependencies(PsiMethod[] methods,
-                                     final Map<PsiClass, Collection<PsiMethod>> results,
-                                     @Nullable final PsiClass... classes) {
-    calculateDependencies(methods, results, new LinkedHashSet<PsiMember>(), classes);
-  }
-
-  private void calculateDependencies(final PsiMethod[] methods,
-                                     final Map<PsiClass, Collection<PsiMethod>> results,
-                                     final Set<PsiMember> alreadyMarkedToBeChecked,
-                                     @Nullable final PsiClass... classes) {
-    if (classes != null && classes.length > 0) {
-      final Set<String> groupDependencies = new LinkedHashSet<String>();
-      TestNGUtil.collectAnnotationValues(groupDependencies, "dependsOnGroups", methods, classes);
-      final Set<PsiMember> membersToCheckNow = new LinkedHashSet<PsiMember>();
-      if (!groupDependencies.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final Project project = classes[0].getProject();
-            final PsiClass testAnnotation =
-              JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
-            LOG.assertTrue(testAnnotation != null);
-            for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
-              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN);
-              if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groupDependencies)) {
-                if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {
-                  membersToCheckNow.add(psiMember);
-                }
-              }
-            }
-          }
-        });
-      }
-
-      collectDependsOnMethods(results, alreadyMarkedToBeChecked, membersToCheckNow, methods, classes);
-
-      if (methods == null) {
-        for (PsiClass c : classes) {
-          results.put(c, new LinkedHashSet<PsiMethod>());
-        }
-      } else {
-        for (PsiMember psiMember : membersToCheckNow) {
-          PsiClass psiClass;
-          PsiMethod[] meths = null;
-          if (psiMember instanceof PsiMethod) {
-            psiClass = psiMember.getContainingClass();
-            meths = new PsiMethod[] {(PsiMethod)psiMember};
-          } else {
-            psiClass = (PsiClass)psiMember;
-          }
-          calculateDependencies(meths, results, alreadyMarkedToBeChecked, psiClass);
-        }
-      }
-    }
-  }
-
-  private static void collectDependsOnMethods(final Map<PsiClass, Collection<PsiMethod>> results,
-                                              final Set<PsiMember> alreadyMarkedToBeChecked,
-                                              final Set<PsiMember> membersToCheckNow,
-                                              final PsiMethod[] methods,
-                                              final PsiClass... classes) {
-    final PsiClass[] psiClasses;
-    if (methods != null && methods.length > 0) {
-      final Set<PsiClass> containingClasses = new LinkedHashSet<PsiClass>();
-      for (final PsiMethod method : methods) {
-        containingClasses.add(ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            return method.getContainingClass();
-          }
-        }));
-      }
-      psiClasses = containingClasses.toArray(new PsiClass[containingClasses.size()]);
-    } else {
-      psiClasses = classes;
-    }
-    for (final PsiClass containingClass : psiClasses) {
-      final Set<String> testMethodDependencies = new LinkedHashSet<String>();
-      TestNGUtil.collectAnnotationValues(testMethodDependencies, "dependsOnMethods", methods, containingClass);
-      if (!testMethodDependencies.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final Project project = containingClass.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            for (String dependency : testMethodDependencies) {
-              final String className = StringUtil.getPackageName(dependency);
-              final String methodName = StringUtil.getShortName(dependency);
-              if (StringUtil.isEmpty(className)) {
-                checkClassMethods(methodName, containingClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
-              }
-              else {
-                final PsiClass aClass = psiFacade.findClass(className, containingClass.getResolveScope());
-                if (aClass != null) {
-                  checkClassMethods(methodName, aClass, alreadyMarkedToBeChecked, membersToCheckNow, results);
-                }
-              }
-            }
-          }
-        });
-      }
-    }
-  }
-
-  private static void checkClassMethods(String methodName,
-                                        PsiClass containingClass,
-                                        Set<PsiMember> alreadyMarkedToBeChecked,
-                                        Set<PsiMember> membersToCheckNow, 
-                                        Map<PsiClass, Collection<PsiMethod>> results) {
-    final PsiMethod[] psiMethods = containingClass.findMethodsByName(methodName, true);
-    for (PsiMethod method : psiMethods) {
-      if (AnnotationUtil.isAnnotated(method, TestNGUtil.TEST_ANNOTATION_FQN, false) &&
-          appendMember(method, alreadyMarkedToBeChecked, results)) {
-        membersToCheckNow.add(method);
-      }
-    }
-  }
-
-  private static boolean appendMember(final PsiMember psiMember,
-                                      final Set<PsiMember> underConsideration,
-                                      final Map<PsiClass, Collection<PsiMethod>> results) {
-    boolean result = false;
-    final PsiClass psiClass = psiMember instanceof PsiClass ? ((PsiClass)psiMember) : psiMember.getContainingClass();
-    Collection<PsiMethod> psiMethods = results.get(psiClass);
-    if (psiMethods == null) {
-      psiMethods = new LinkedHashSet<PsiMethod>();
-      results.put(psiClass, psiMethods);
-      if (psiMember instanceof PsiClass) {
-        result = underConsideration.add(psiMember);
-      }
-    }
-    if (psiMember instanceof PsiMethod) {
-      final boolean add = psiMethods.add((PsiMethod)psiMember);
-      if (add) {
-        return underConsideration.add(psiMember);
-      }
-      return false;
-    }
-    return result;
-  }
-
-  @NotNull
-  private GlobalSearchScope getSearchScope() {
-    final TestData data = myConfig.getPersistantData();
-    final Module module = myConfig.getConfigurationModule().getModule();
-    return data.TEST_OBJECT.equals(TestType.PACKAGE.getType())
-           ? myConfig.getPersistantData().getScope().getSourceScope(myConfig).getGlobalSearchScope()
-           : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(myConfig.getProject());
-  }
-
 }

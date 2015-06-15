@@ -26,6 +26,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author max
@@ -49,29 +50,30 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   }
 
   void paintBackground(Graphics g, Dimension size, Color background, int state) {
-    Color bg = background == null ? JBColor.background() : background;
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      if (state == ActionButtonComponent.PUSHED) {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, size.width, size.height, ALPHA_20));
-        g.fillRect(0, 0, size.width - 1, size.height - 1);
-
-        g.setColor(ALPHA_120);
-        g.drawLine(0, 0, 0, size.height - 2);
-        g.drawLine(1, 0, size.width - 2, 0);
-
-        g.setColor(ALPHA_30);
-        g.drawRect(1, 1, size.width - 3, size.height - 3);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    try {
+      Color bg = background == null ? JBColor.background() : background;
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        if (state == ActionButtonComponent.PUSHED) {
+          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, size.width, size.height, ALPHA_20));
+          ((Graphics2D)g).fill(getShape(size));
+          g.setColor(ALPHA_30);
+          ((Graphics2D)g).draw(getShape(size));
+        }
+        else if (state == ActionButtonComponent.POPPED) {
+          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, bg, 0, size.height, ColorUtil.darker(bg, 2)));
+          ((Graphics2D)g).fill(getShape(size));
+        }
       }
-      else if (state == ActionButtonComponent.POPPED) {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, bg, 0, size.height, ColorUtil.darker(bg, 2)));
-        g.fillRect(1, 1, size.width - 3, size.height - 3);
+      else {
+        final boolean dark = UIUtil.isUnderDarcula();
+        g.setColor(
+          state == ActionButtonComponent.PUSHED ? ColorUtil.shift(bg, dark ? 1d / 0.7d : 0.7d) : dark ? Gray._255.withAlpha(40) : ALPHA_40);
+        ((Graphics2D)g).fill(getShape(size));
       }
     }
-    else {
-      //final Color bg = UIUtil.getPanelBackground();
-      final boolean dark = UIUtil.isUnderDarcula();
-      g.setColor( state == ActionButtonComponent.PUSHED ? ColorUtil.shift(bg, dark ? 1d / 0.7d : 0.7d) : dark ? Gray._255.withAlpha(40) : ALPHA_40);
-      g.fillRect(1, 1, size.width - 2, size.height - 2);
+    finally {
+      config.restore();
     }
   }
 
@@ -82,20 +84,27 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   }
 
   protected void paintBorder(Graphics g, Dimension size, int state) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      if (state == ActionButtonComponent.POPPED) {
-        g.setColor(ALPHA_30);
-        g.drawRoundRect(0, 0, size.width - 2, size.height - 2, 4, 4);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    try {
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        if (state == ActionButtonComponent.POPPED) {
+          g.setColor(JBColor.GRAY);
+          ((Graphics2D)g).draw(getShape(size));
+        }
+      }
+      else {
+        final double shift = UIUtil.isUnderDarcula() ? 1 / 0.49 : 0.49;
+        g.setColor(ColorUtil.shift(UIUtil.getPanelBackground(), shift));
+        ((Graphics2D)g).setStroke(BASIC_STROKE);
+        ((Graphics2D)g).draw(getShape(size));
       }
     }
-    else {
-      final double shift = UIUtil.isUnderDarcula() ? 1 / 0.49 : 0.49;
-      g.setColor(ColorUtil.shift(UIUtil.getPanelBackground(), shift));
-      ((Graphics2D)g).setStroke(BASIC_STROKE);
-      final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.drawRoundRect(0, 0, size.width - 2, size.height - 2, 4, 4);
+    finally {
       config.restore();
     }
+  }
+  private static Shape getShape(Dimension size) {
+    return new RoundRectangle2D.Double(1, 1, size.width - 3, size.height - 3, 4, 4);
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {

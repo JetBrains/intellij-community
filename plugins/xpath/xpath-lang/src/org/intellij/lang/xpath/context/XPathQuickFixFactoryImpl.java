@@ -24,7 +24,6 @@ package org.intellij.lang.xpath.context;
 
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.psi.PsiElement;
-
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -33,6 +32,7 @@ import org.intellij.lang.xpath.validation.inspections.quickfix.MakeTypeExplicitF
 import org.intellij.lang.xpath.validation.inspections.quickfix.RemoveExplicitConversionFix;
 import org.intellij.lang.xpath.validation.inspections.quickfix.RemoveRedundantConversionFix;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.jetbrains.annotations.NotNull;
 
 public class XPathQuickFixFactoryImpl implements XPathQuickFixFactory {
     public static final XPathQuickFixFactory INSTANCE = new XPathQuickFixFactoryImpl();
@@ -62,6 +62,7 @@ public class XPathQuickFixFactoryImpl implements XPathQuickFixFactory {
         return new Fix[0];
     }
 
+    @NotNull
     public SuppressIntentionAction[] getSuppressActions(XPathInspection inspection) {
         return new SuppressIntentionAction[0];
     }

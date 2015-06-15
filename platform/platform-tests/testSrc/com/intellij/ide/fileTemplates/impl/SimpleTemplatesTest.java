@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.Properties;
 
@@ -24,11 +23,6 @@ import java.util.Properties;
  * @author Dmitry Avdeev
  */
 public class SimpleTemplatesTest extends LightPlatformTestCase {
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public SimpleTemplatesTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   public void testConditional() throws Exception {
     CustomFileTemplate template = new CustomFileTemplate("foo", "bar");

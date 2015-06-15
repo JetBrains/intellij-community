@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -74,7 +73,6 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
 
     @NotNull
     private Builder init(@NotNull FilePath path) {
-      path.refresh();
       myHighlightFile = path.getVirtualFile();
       myFileType = path.getFileType();
       myCharset = path.getCharset(myProject);
@@ -100,10 +98,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     @NotNull
     private Builder create(@NotNull byte[] content) {
       assert myCharset != null;
-      // TODO: detect charset like in LoadTextUtil (Native2Ascii, etc) ?
-      Pair<String, Charset> pair = CharsetToolkit.bytesToStringWithCharset(content, myCharset);
-      myCharset = pair.second;
-      return create(pair.first);
+      return create(CharsetToolkit.decodeString(content, myCharset));
     }
 
     @NotNull

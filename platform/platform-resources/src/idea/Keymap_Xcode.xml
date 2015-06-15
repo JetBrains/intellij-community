@@ -323,6 +323,7 @@
     <action id="ParameterInfo">
       <keyboard-shortcut first-keystroke="shift meta P" />
     </action>
+    <action id="ExpressionTypeInfo"/>
     <action id="PreviousEditorTab" />
     <action id="PreviousProjectWindow" />
     <action id="Print">

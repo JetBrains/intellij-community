@@ -15,12 +15,18 @@
  */
 package com.jetbrains.commandInterface.console;
 
+import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.process.ConsoleHighlighter;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorImpl.CaretRectangle;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -31,6 +37,7 @@ import com.jetbrains.commandInterface.command.Argument;
 import com.jetbrains.commandInterface.commandLine.ValidationResult;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,22 +66,6 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
   @NotNull
   private static final Pair<String, String> OPTIONAL_ARG_BRACES = Pair.create("[", "]");
 
-  /**
-   * Number of places after end of line before argument place
-   */
-  private static final int SPACES_BEFORE_ARG = 1;
-  /**
-   * Width of one char (hopefully monospace)
-   */
-  private final int myCharWidthPx;
-  /**
-   * Width of prompt
-   */
-  private final int myPromptWidthPx;
-  /**
-   * Height of line (actually, one character height)
-   */
-  private final int myLineHeightPx;
   @NotNull
   private final LanguageConsoleImpl myConsole;
   /**
@@ -88,10 +79,6 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
   @NotNull
   private final Color myOptionalColor;
   /**
-   * Number of chars in current document
-   */
-  private volatile int myDocumentLengthInChars;
-  /**
    * Next argument to display (or null if nothing to display)
    */
   @Nullable
@@ -101,22 +88,20 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
    */
   @NotNull
   private volatile String myLastText = "";
+  /**
+   * Current position of caret in {@link CommandConsole#getConsoleEditor()}
+   */
+  private int myCaretPositionPx;
 
   /**
    * @param console console to wrap
    */
   private ArgumentHintLayer(@NotNull final LanguageConsoleImpl console) {
-    final FontMetrics metrics = console.getFontMetrics(console.getFont());
-    myCharWidthPx = metrics.charWidth('A'); // Should be monospace
-    myLineHeightPx = metrics.getHeight();
-    final String prompt = console.getPrompt();
-    myPromptWidthPx = (prompt != null ? prompt.length() * myCharWidthPx : 0);
     myConsole = console;
-    myDocumentLengthInChars = console.getEditorDocument().getTextLength();
     myLastText = console.getFile().getText();
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    myRequiredColor = scheme.getAttributes(ConsoleViewContentType.ERROR_OUTPUT_KEY).getForegroundColor();
-    myOptionalColor = scheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES).getForegroundColor();
+    myOptionalColor = scheme.getAttributes(ConsoleHighlighter.GRAY).getForegroundColor();
+    myRequiredColor = scheme.getAttributes(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES).getForegroundColor();
   }
 
 
@@ -133,15 +118,12 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     myNextArg = null; // Reset current argument
 
 
-    myDocumentLengthInChars = newText.length();
     final PsiFile consoleFile = myConsole.getFile();
     // Get next arg from file
     if (consoleFile instanceof CommandLineFile) {
       final ValidationResult result = ((CommandLineFile)consoleFile).getValidationResult();
-      if (result != null) {
-        myNextArg = result.getNextArg();
-        repaint(); // We need to repaint us if argument changed
-      }
+      myNextArg = result != null ? result.getNextArg() : null;
+      repaint(); // We need to repaint us if argument changed
     }
   }
 
@@ -149,27 +131,75 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
   @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
-    // TODO: Move out this logic to prevent recalculation each swing call
-
 
     final Pair<Boolean, Argument> nextArg = myNextArg;
     if (nextArg == null) {
       return; // Nothing to show
     }
+    /**
+     *
+     * We should display argument right after trimmed (spaces removed) document end or cursor position what ever comes first.
+     *
+     * We also need to add prompt length.
+     */
 
+    final EditorImpl consoleEditor = PyUtil.as(myConsole.getConsoleEditor(), EditorImpl.class);
+    if (consoleEditor == null) {
+      /**
+       * We can't calculate anything if editor is not {@link EditorImpl})
+       */
+      Logger.getInstance(ArgumentHintLayer.class).warn("Bad editor: " + myConsole.getConsoleEditor());
+      return;
+    }
+    final int consoleFontType = consoleEditor.getCaretModel().getTextAttributes().getFontType();
+    final FontMetrics consoleFontMetrics = consoleEditor.getFontMetrics(consoleFontType);
+    final Font consoleFont = consoleFontMetrics.getFont();
 
-    @SuppressWarnings("NumericCastThatLosesPrecision") // Y will never be > Integer.MAX_VALUE
-    final int y = ((int)Math.round(myConsole.getCurrentEditor().getComponent().getLocation().getY())) + myLineHeightPx;
-    final int spaceToRight = myCharWidthPx * SPACES_BEFORE_ARG; // Space after line end to placeholder
-    final int x = (myPromptWidthPx + (myCharWidthPx * myDocumentLengthInChars)) + spaceToRight;
+    // Copy rendering hints
+    final Graphics2D sourceGraphics2 = PyUtil.as(consoleEditor.getComponent().getGraphics(), Graphics2D.class);
+    if (sourceGraphics2 != null && g instanceof Graphics2D) {
+      ((Graphics2D)g).setRenderingHints(sourceGraphics2.getRenderingHints());
+    }
 
-    final boolean required = nextArg.first;
+    final boolean argumentRequired = nextArg.first;
     final String argumentText = nextArg.second.getHelp().getHelpString();
 
+    g.setFont(consoleFont);
+    g.setColor(argumentRequired ? myRequiredColor : myOptionalColor);
 
-    g.setColor(required ? myRequiredColor : myOptionalColor);
-    final String textToShow = StringUtil.isEmpty(argumentText) ? PyBundle.message("commandLine.argumentHint.defaultName") : argumentText;
-    g.drawString(wrapBracesIfNeeded(required, textToShow), x, y);
+    final String textToShow = wrapBracesIfNeeded(argumentRequired, StringUtil.isEmpty(argumentText)
+                                                                   ? PyBundle.message("commandLine.argumentHint.defaultName")
+                                                                   : argumentText);
+
+    // Update caret position (if known)
+    final CaretRectangle[] locations = consoleEditor.getCaretLocations(true);
+    if (locations != null) {
+      final CaretRectangle rectangle = locations[0];
+      myCaretPositionPx = rectangle.myPoint.x;
+    }
+
+
+    final int consoleEditorTop = consoleEditor.getComponent().getLocation().y;
+    final double textHeight = Math.floor(consoleFont.getStringBounds(textToShow, consoleFontMetrics.getFontRenderContext()).getY());
+
+    @SuppressWarnings("NumericCastThatLosesPrecision") // pixels in position should be integer, anyway
+    final int y = (int)(consoleEditorTop - textHeight);
+    // We should take scrolling into account to prevent argument "flying" over text when user scrolls it, like "position:fixed" in css
+    final Point scrollLocation = consoleEditor.getContentComponent().getLocation();
+    final int spaceWidth = EditorUtil.getSpaceWidth(consoleFontType, consoleEditor);
+
+
+    // Remove whitespaces on the end of document
+    /**
+     * TODO: This is actually copy/paste with {@link com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineEnd}.
+     * Need to merge somehow.
+     */
+    final String trimmedDocument = StringUtil.trimTrailing(consoleEditor.getDocument().getText());
+    final double trimmedDocumentWidth = consoleFont.getStringBounds(trimmedDocument, consoleFontMetrics.getFontRenderContext()).getWidth();
+    @SuppressWarnings("NumericCastThatLosesPrecision") // pixels in position should be integer, anyway
+    final int contentWidth = (int)Math.ceil(trimmedDocumentWidth + consoleEditor.getPrefixTextWidthInPixels());
+
+    g.drawString(textToShow, Math.max(myCaretPositionPx, contentWidth) + scrollLocation.x + spaceWidth, y + scrollLocation.y);
   }
 
   /**
@@ -202,6 +232,7 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
    * @param console console to attach
    * @throws IllegalArgumentException is passed argument is not {@link CommandLineFile}
    */
+
   static void attach(@NotNull final CommandConsole console) {
     final PsiFile consoleFile = console.getFile();
     if (!(consoleFile instanceof CommandLineFile)) {
@@ -213,5 +244,27 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     final MessageBusConnection connection = console.getProject().getMessageBus().connect();
     connection.subscribe(PsiModificationTracker.TOPIC, argumentHintLayer);
     console.addLayerToPane(argumentHintLayer);
+    Disposer.register(console, new Disconnector(connection)); // Registered to disconnect on disposal
+  }
+
+  /**
+   * Disconnects connect on {@link #dispose()}
+   */
+  private static final class Disconnector implements Disposable {
+    @NotNull
+    private final MessageBusConnection myConnection;
+
+
+    /**
+     * @param connection connection to disconnect on {@link #dispose()}
+     */
+    private Disconnector(@NotNull final MessageBusConnection connection) {
+      myConnection = connection;
+    }
+
+    @Override
+    public void dispose() {
+      myConnection.disconnect();
+    }
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.BaseRevision;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.PlusMinusModify;
 

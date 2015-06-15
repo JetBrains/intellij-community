@@ -80,73 +80,44 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                                                CommonClassNames.JAVA_LANG_THROWABLE)) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
       final PsiElement parent = getParent(expression.getParent());
-      if (parent instanceof PsiThrowStatement ||
-          parent instanceof PsiReturnStatement) {
+      if (canBeThrown(parent)) {
         return;
       }
-      if (PsiTreeUtil.getParentOfType(parent, PsiCallExpression.class) !=
-          null) {
+      if (PsiTreeUtil.getParentOfType(parent, PsiCallExpression.class) != null) {
         return;
       }
-      final PsiElement typedParent =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiAssignmentExpression.class,
-                                    PsiVariable.class);
-      final PsiLocalVariable variable;
-      if (typedParent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)typedParent;
-        final PsiExpression rhs = assignmentExpression.getRExpression();
-        if (!PsiTreeUtil.isAncestor(rhs, expression, false)) {
-          return;
-        }
-        final PsiExpression lhs = assignmentExpression.getLExpression();
-        if (!(lhs instanceof PsiReferenceExpression)) {
-          return;
-        }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)lhs;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiLocalVariable)) {
-          return;
-        }
-        variable = (PsiLocalVariable)target;
+      final PsiElement typedParent = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, PsiVariable.class);
+      final PsiElement variable = ThrowableResultOfMethodCallIgnoredInspection.getVariable(typedParent, expression);
+      if (typedParent != null && variable == null) {
+        return;
       }
-      else if (typedParent instanceof PsiVariable) {
-        if (!(typedParent instanceof PsiLocalVariable)) {
-          return;
-        }
-        variable = (PsiLocalVariable)typedParent;
-      }
-      else {
-        variable = null;
-      }
-      if (variable != null) {
-        final Query<PsiReference> query =
-          ReferencesSearch.search(variable,
-                                  variable.getUseScope());
+      if (variable instanceof PsiLocalVariable) {
+        final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
         for (PsiReference reference : query) {
           final PsiElement usage = reference.getElement();
           PsiElement usageParent = usage.getParent();
           while (usageParent instanceof PsiParenthesizedExpression) {
             usageParent = usageParent.getParent();
           }
-          if (usageParent instanceof PsiThrowStatement ||
-              usageParent instanceof PsiReturnStatement) {
+          if (canBeThrown(usageParent)) {
             return;
           }
-          if (PsiTreeUtil.getParentOfType(usageParent,
-                                          PsiCallExpression.class) != null) {
+          if (PsiTreeUtil.getParentOfType(usageParent, PsiCallExpression.class) != null) {
             return;
           }
         }
       }
       registerError(expression, expression);
+    }
+
+    private static boolean canBeThrown(PsiElement parent) {
+      return parent instanceof PsiThrowStatement ||
+             parent instanceof PsiReturnStatement ||
+             parent instanceof PsiLambdaExpression;
     }
 
     public static PsiElement getParent(PsiElement element) {
@@ -171,12 +142,9 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return null;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"initCause".equals(methodName)) {
         return null;
       }
@@ -185,13 +153,11 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
       if (method == null) {
         return null;
       }
-      final PsiParameterList parameterList =
-        method.getParameterList();
+      final PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() != 1) {
         return null;
       }
-      final PsiParameter[] parameters =
-        parameterList.getParameters();
+      final PsiParameter[] parameters = parameterList.getParameters();
       final PsiType type = parameters[0].getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE)) {
         return null;

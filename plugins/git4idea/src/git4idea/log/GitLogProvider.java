@@ -407,7 +407,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    if (filterCollection.getBranchFilter() != null) {
+    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
       GitRepository repository = getRepository(root);
       assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
 
@@ -429,8 +429,8 @@ public class GitLogProvider implements VcsLogProvider {
     if (filterCollection.getUserFilter() != null) {
       String authorFilter =
         StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.INSTANCE), "|");
-      filterParameters
-        .add(prepareParameter("author", StringUtil.escapeChars(StringUtil.escapeBackSlashes(authorFilter), '|', '(', ')', '?')));
+      filterParameters.add(prepareParameter("author", StringUtil.escapeBackSlashes(authorFilter)));
+      filterParameters.add("--extended-regexp"); // extended regexp required for correctly filtering user names
     }
 
     if (filterCollection.getDateFilter() != null) {
@@ -483,6 +483,18 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return GitBranchUtil.getBranches(myProject, root, true, true, commitHash.asString());
+  }
+
+  @Nullable
+  @Override
+  public String getCurrentBranch(@NotNull VirtualFile root) {
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) return null;
+    String currentBranchName = repository.getCurrentBranchName();
+    if (currentBranchName == null && repository.getCurrentRevision() != null) {
+      return "HEAD";
+    }
+    return currentBranchName;
   }
 
   @Nullable

@@ -17,7 +17,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -68,7 +68,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
         return isEmptyClass(project, (PsiClass)parent) && DirectClassInheritorsSearch.search((PsiClass)parent).findFirst() != null;
       }
     }
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return false;
 
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);

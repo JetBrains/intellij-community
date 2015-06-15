@@ -372,9 +372,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   public void apply() throws ConfigurationException {
-    final Set<MyNode> roots = new HashSet<MyNode>();
-    roots.add(myRoot);
-    checkApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"));
+    checkForEmptyAndDuplicatedNames(ProjectBundle.message("rename.message.prefix.module"),
+                                    ProjectBundle.message("rename.module.title"), ModuleConfigurable.class);
 
     // let's apply extensions first, since they can write to/commit modifiable models
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {

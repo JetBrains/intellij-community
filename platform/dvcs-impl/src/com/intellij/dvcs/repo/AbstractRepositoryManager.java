@@ -29,9 +29,12 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Override
   @Nullable
   public T getRepositoryForRoot(@Nullable VirtualFile root) {
-    Repository repository = myGlobalRepositoryManager.getRepositoryForRoot(root);
-    //noinspection unchecked
-    return isRootValid(repository) ? (T)repository : null;
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRoot(root));
+  }
+
+  @Nullable
+  public T getRepositoryForRootQuick(@Nullable VirtualFile root) {
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRootQuick(root));
   }
 
   @Override
@@ -52,9 +55,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Override
   @Nullable
   public T getRepositoryForFile(@NotNull VirtualFile file) {
-    Repository repository = myGlobalRepositoryManager.getRepositoryForFile(file);
-    //noinspection unchecked
-    return repository != null && myVcs.equals(repository.getVcs()) ? (T)repository : null;
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
 
   @Override
@@ -97,9 +98,11 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     });
   }
 
-  private boolean isRootValid(@Nullable Repository repository) {
-    if (repository == null || !myVcs.equals(repository.getVcs())) return false;
+  @Nullable
+  private T validateAndGetRepository(@Nullable Repository repository) {
+    if (repository == null || !myVcs.equals(repository.getVcs())) return null;
     VirtualFile vcsDir = repository.getRoot().findChild(myRepoDirName);
-    return vcsDir != null && vcsDir.exists();
+    //noinspection unchecked
+    return vcsDir != null && vcsDir.exists() ? (T)repository : null;
   }
 }

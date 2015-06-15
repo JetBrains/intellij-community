@@ -29,7 +29,7 @@ import java.io.IOException;
 // It is possible to directly associate nonnegative int or long with Data instances when Data is integral value and represent it's own hash code
 // e.g. Data are integers and hash code for them are values themselves
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
-  private static final int PAGE_SIZE;
+  public static final int PAGE_SIZE;
   private static final int DEFAULT_PAGE_SIZE = 32768;
 
   static {

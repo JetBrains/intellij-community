@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.util.SequentialTask;
 
 class AnnotateTask implements SequentialTask {
   private final Project myProject;
-  private UsageInfo[] myInfos;
+  private final UsageInfo[] myInfos;
   private final SequentialModalProgressTask myTask;
-  private int myCount = 0;
+  private int myCount;
   private final int myTotal;
   private final NullableNotNullManager myNotNullManager;
 

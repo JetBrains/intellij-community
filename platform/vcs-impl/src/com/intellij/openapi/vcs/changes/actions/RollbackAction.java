@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
@@ -84,7 +85,7 @@ public class RollbackAction extends AnAction implements DumbAware {
       ChangeListManager clManager = ChangeListManager.getInstance(project);
       Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(clManager.getModifiedWithoutEditing());
       for (VirtualFile file : files) {
-        if (!clManager.getChangesIn(file).isEmpty() || modifiedWithoutEditing.contains(file)) {
+        if (clManager.haveChangesUnder(file) != ThreeState.NO || clManager.isFileAffected(file)  || modifiedWithoutEditing.contains(file)) {
           return true;
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,13 +46,13 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   public FormattingModel createModel(@NotNull PsiElement element,
                                      @NotNull CodeStyleSettings settings,
                                      @NotNull FormattingMode mode) {
-    final ASTNode fileNode = element.getContainingFile().getNode();
     if (DUMP_FORMATTING_AST) {
+      ASTNode fileNode = element.getContainingFile().getNode();
       System.out.println("AST tree for " + element.getContainingFile().getName() + ":");
       printAST(fileNode, 0);
     }
     final PyBlockContext context = new PyBlockContext(settings, createSpacingBuilder(settings), mode);
-    final PyBlock block = new PyBlock(null, fileNode, null, Indent.getNoneIndent(), null, context);
+    final PyBlock block = new PyBlock(null, element.getNode(), null, Indent.getNoneIndent(), null, context);
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }
@@ -99,6 +99,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .betweenInside(MINUS, GT, ANNOTATION).none()
       .beforeInside(ANNOTATION, FUNCTION_DECLARATION).spaces(1)
       .beforeInside(ANNOTATION, NAMED_PARAMETER).none()
+      .afterInside(COLON, ANNOTATION).spaces(1)
+      .afterInside(RARROW, ANNOTATION).spaces(1)
 
       .between(allButLambda(), PARAMETER_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_PARENTHESES)
 
@@ -117,6 +119,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .withinPairInside(LPAR, RPAR, PARENTHESIZED_EXPRESSION).spaces(0)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
 
+      .afterInside(LBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_AFTER_LEFT_BRACE)
+      .beforeInside(RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)
       .withinPair(LBRACKET, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
 
@@ -151,7 +155,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
     return TokenSet.create(IElementType.enumerate(new IElementType.Predicate() {
       @Override
-      public boolean matches(IElementType type) {
+      public boolean matches(@NotNull IElementType type) {
         return type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage);
       }
     }));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -55,7 +56,7 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   public ApplicationLevelNumberConnectionsGuardImpl() {
     myDelay = DELAY;
     mySet = new HashSet<CachingSvnRepositoryPool>();
-    myService = Executors.newSingleThreadScheduledExecutor();
+    myService = Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("SVN connection"));
     myLock = new Object();
     myDisposed = false;
     myRecheck = new Runnable() {

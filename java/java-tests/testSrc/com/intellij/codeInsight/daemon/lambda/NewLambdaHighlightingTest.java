@@ -20,8 +20,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.jetbrains.annotations.NonNls;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -186,6 +184,18 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testInfiniteLoopAndValueCompatibility() throws Exception {
+    doTest();
+  }
+
+  public void testAcceptInferredVariablesBeforeAdditionalConstraintsLeadToFail() throws Exception {
+    doTest(false);
+  }
+
+  public void testEnsureNoCaptureIsPerformedOverTargetTypeOfCastExpressionWhichMarksFunctionalExpression() throws Exception {
+    doTest();
+  }
+
+  public void testCaptureInReturnStatementOfLambdaExpression() throws Exception {
     doTest();
   }
 

@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -46,11 +46,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   @Nullable
   public GotoData getSourceAndTargetElements(@NotNull Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
+    PsiElement source = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
     final GotoData gotoData;
-    final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
-    final TargetElementUtilBase instance = TargetElementUtilBase.getInstance();
+    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
+    final TargetElementUtil instance = TargetElementUtil.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       gotoData = new GotoData(source, new ImplementationSearcher.FirstImplementationsSearcher(){
         @Override
@@ -63,7 +63,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
           return false;
         }
       }.searchImplementations(editor, source, offset), Collections.<AdditionalAction>emptyList());
-      
+
       gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
     } else {
       gotoData = new GotoData(source, new ImplementationSearcher(){
@@ -128,7 +128,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         @Override
         protected void processElement(PsiElement element) {
           indicator.checkCanceled();
-          if (!TargetElementUtilBase.getInstance().acceptImplementationForReference(myReference, element)) return;
+          if (!TargetElementUtil.getInstance().acceptImplementationForReference(myReference, element)) return;
           if (myGotoData.addTarget(element)) {
             if (!updateComponent(element, createComparator(renderers, myGotoData))) {
               indicator.cancel();

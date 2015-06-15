@@ -37,25 +37,19 @@ public class OnesideDiffPanel extends DiffPanelBase {
   private static final String OPERATION_CANCELED_CONTENT = "OperationCanceledContent";
   private static final String ERROR_CONTENT = "ErrorContent";
 
-  @NotNull private final Editor myEditor;
-
-  @NotNull private final JPanel myEditorPanel;
   @NotNull private final AsyncProcessIcon.Big myBusyIcon;
 
   public OnesideDiffPanel(@Nullable Project project,
                           @NotNull OnesideContentPanel content,
-                          @NotNull Editor editor,
                           @NotNull DataProvider provider,
                           @NotNull DiffContext context) {
     super(project, provider, context);
-    myEditor = editor;
 
-    myEditorPanel = content;
     myBusyIcon = new AsyncProcessIcon.Big("OnesideDiff");
 
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(myNotificationsPanel, BorderLayout.NORTH);
-    centerPanel.add(myEditorPanel, BorderLayout.CENTER);
+    centerPanel.add(content, BorderLayout.CENTER);
 
     myContentPanel.add(centerPanel, GOOD_CONTENT);
     myContentPanel.add(myBusyIcon, LOADING_CONTENT);
@@ -106,8 +100,7 @@ public class OnesideDiffPanel extends DiffPanelBase {
   // Misc
   //
 
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
-    return myCurrentCard == GOOD_CONTENT ? myEditor.getContentComponent() : null;
+  public boolean isGoodContent() {
+    return myCurrentCard == GOOD_CONTENT;
   }
 }

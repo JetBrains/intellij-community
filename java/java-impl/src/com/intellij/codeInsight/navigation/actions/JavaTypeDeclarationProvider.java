@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.navigation.actions;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -46,7 +46,7 @@ public class JavaTypeDeclarationProvider implements TypeDeclarationPlaceAwarePro
     }
     if (type == null) return null;
     if (editor != null) {
-      final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
+      final PsiReference reference = TargetElementUtil.findReference(editor, offset);
       if (reference instanceof PsiJavaReference) {
         final JavaResolveResult resolveResult = ((PsiJavaReference)reference).advancedResolve(true);
         type = resolveResult.getSubstitutor().substitute(type);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,8 +114,8 @@ public class CyclicDependenciesAction extends AnAction{
       return null;
     }
 
-    Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    if (modulesArray != null) {
+    final Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    if (modulesArray != null && modulesArray.length > 0) {
       return new AnalysisScope(modulesArray);
     }
 
@@ -155,7 +155,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {
     private final String myModuleName;
-    private AnalysisScope mySelectedScope;
+    private final AnalysisScope mySelectedScope;
     private JRadioButton myProjectButton;
     private JRadioButton myModuleButton;
     private JRadioButton mySelectedScopeButton;

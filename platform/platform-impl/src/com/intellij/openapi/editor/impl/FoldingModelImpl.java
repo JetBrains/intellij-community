@@ -68,7 +68,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
-    myIsFoldingEnabled = !editor.myUseNewRendering;
+    myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
     myFoldTree = new FoldRegionsTree() {
@@ -146,7 +146,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   @Override
   public void setFoldingEnabled(boolean isEnabled) {
     assertIsDispatchThreadForEditor();
-    myIsFoldingEnabled = isEnabled && !myEditor.myUseNewRendering;
+    myIsFoldingEnabled = isEnabled;
   }
 
   @Override

@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -31,12 +31,31 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testNestedLambdaAdditionalConstraints() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
+  public void testAvoidClassRefCachingDuringInference() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
+  public void testInfinitiveParameterBoundsCheck() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
   private void doTestAllMethodCallExpressions() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    final Collection<PsiMethodCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class);
-    for (PsiMethodCallExpression expression : methodCallExpressions) {
+    final Collection<PsiCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
+    for (PsiCallExpression expression : methodCallExpressions) {
       getPsiManager().dropResolveCaches();
       assertNotNull("Failed inference for: " + expression.getText(), expression.getType());
+    }
+
+    final Collection<PsiReferenceParameterList> parameterLists = PsiTreeUtil.findChildrenOfType(getFile(), PsiReferenceParameterList.class);
+    for (PsiReferenceParameterList list : parameterLists) {
+      getPsiManager().dropResolveCaches();
+      final PsiType[] arguments = list.getTypeArguments();
+      assertNotNull("Failed inference for: " + list.getParent().getText(), arguments);
     }
   }
 

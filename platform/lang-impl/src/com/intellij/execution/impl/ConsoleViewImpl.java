@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -709,7 +709,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
         try {
           myInDocumentUpdate = true;
-          String[] strings = addedText.split("\\r");
+          String[] strings = addedText.split("\\r", -1); // limit must be any negative number to avoid discarding of trailing empty strings
           for (int i = 0; i < strings.length - 1; i++) {
             document.insertString(document.getTextLength(), strings[i]);
             int lastLine = document.getLineCount() - 1;
@@ -1193,23 +1193,34 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
 
   public static class ClearAllAction extends DumbAwareAction {
+    private final ConsoleView myConsoleView;
+
+    @SuppressWarnings("unused")
     public ClearAllAction() {
+      this(null);
+    }
+
+    public ClearAllAction(final ConsoleView consoleView) {
       super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+      myConsoleView = consoleView;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null && editor.getDocument().getTextLength() == 0) {
-        enabled = false;
+      boolean enabled = myConsoleView != null && myConsoleView.getContentSize() > 0;
+      if (!enabled) {
+        enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
+        Editor editor = e.getData(CommonDataKeys.EDITOR);
+        if (editor != null && editor.getDocument().getTextLength() == 0) {
+          enabled = false;
+        }
       }
       e.getPresentation().setEnabled(enabled);
     }
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
+      final ConsoleView consoleView = myConsoleView != null ? myConsoleView : e.getData(LangDataKeys.CONSOLE_VIEW);
       if (consoleView != null) {
         consoleView.clear();
       }
@@ -1575,7 +1586,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     consoleActions[2] = switchSoftWrapsAction;
     consoleActions[3] = autoScrollToTheEndAction;
     consoleActions[4] = ActionManager.getInstance().getAction("Print");
-    consoleActions[5] = new ClearAllAction();
+    consoleActions[5] = new ClearAllAction(this);
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 6] = customActions.get(i);
     }
@@ -1834,16 +1845,21 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (text.length() < 1000) {
         return null;
       }
-      boolean nonWhiteSpaceFound = false;
       int index = 0;
-      for (; index < text.length(); index++) {
-        char c = text.charAt(index);
-        if (c != ' ' && c != '\t') {
-          nonWhiteSpaceFound = true;
-          continue;
-        }
-        if (nonWhiteSpaceFound) {
-          break;
+      if (text.charAt(0) == '"') {
+        index = text.indexOf('"', 1) + 1;
+      }
+      if (index == 0) {
+        boolean nonWhiteSpaceFound = false;
+        for (; index < text.length(); index++) {
+          char c = text.charAt(index);
+          if (c != ' ' && c != '\t') {
+            nonWhiteSpaceFound = true;
+            continue;
+          }
+          if (nonWhiteSpaceFound) {
+            break;
+          }
         }
       }
       assert index <= text.length();

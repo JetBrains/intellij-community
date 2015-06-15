@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -169,6 +170,14 @@ public class ITNProxy {
     params.put("app.build.date", format(appInfo.getBuildDate()));
     params.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
     params.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
+
+    BuildNumber build = appInfo.getBuild();
+    String buildNumberWithAllDetails = build.asStringWithAllDetails();
+    params.put("app.product.code", build.getProductCode());
+    if (StringUtil.startsWith(buildNumberWithAllDetails, build.getProductCode() + "-")) {
+      buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.getProductCode().length() + 1);
+    }
+    params.put("app.build.number", buildNumberWithAllDetails);
 
     UpdateSettings updateSettings = UpdateSettings.getInstance();
     params.put("update.channel.status", updateSettings.getSelectedChannelStatus().getCode());

@@ -61,7 +61,7 @@ public class Diff {
       return builder.getFirstChange();
     }
 
-    Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, ContainerUtil.<T>canonicalStrategy());
+    Enumerator<T> enumerator = new Enumerator<T>(trimmedLength1 + trimmedLength2, ContainerUtil.<T>canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     Reindexer reindexer = new Reindexer(); // discard unique elements, that have no chance to be matched
@@ -80,9 +80,18 @@ public class Diff {
       changes = patienceIntLCS.getChanges();
     }
     else {
-      IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
-      intLCS.execute();
-      changes = intLCS.getChanges();
+      try {
+        IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
+        intLCS.execute();
+        changes = intLCS.getChanges();
+      }
+      catch (FilesTooBigForDiffException e) {
+        PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
+        patienceIntLCS.failOnSmallSizeReduction();
+        patienceIntLCS.execute();
+        changes = patienceIntLCS.getChanges();
+        LOG.info("Successful fallback to patience diff");
+      }
     }
 
     reindexer.reindex(changes, builder);

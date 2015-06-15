@@ -17,6 +17,7 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -53,10 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.text.ParseException;
 import java.util.Comparator;
 import java.util.List;
@@ -130,6 +128,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         }
       }
     });
+    //record undo only in active edit mode and set to ignore by default
+    myTargetEditor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -390,12 +390,30 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetEditor.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        //fire only about user's changes
-        if (myTargetEditor.isShowing()) {
-          listener.onTargetInEditModeChanged(myTargetEditor.getText());
+        processActiveUserChanges(listener);
+      }
+    });
+    myTargetEditor.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        processActiveUserChanges(listener);
+      }
+    });
+    myTargetEditor.addHierarchyListener(new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+          myTargetEditor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, !myTargetEditor.isShowing());
         }
       }
     });
+  }
+
+  private void processActiveUserChanges(@NotNull PushTargetEditorListener listener) {
+    //fire only about user's changes
+    if (myTargetEditor.isShowing()) {
+      listener.onTargetInEditModeChanged(myTargetEditor.getText());
+    }
   }
 
   @Override

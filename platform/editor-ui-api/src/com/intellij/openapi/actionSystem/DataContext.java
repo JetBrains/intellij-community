@@ -21,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Allows an action to retrieve information about the context in which it was invoked.
  *
- * @see com.intellij.openapi.actionSystem.AnActionEvent#getDataContext()
+ * @see AnActionEvent#getDataContext()
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
- * @see com.intellij.openapi.actionSystem.DataKey
+ * @see DataKey
  * @see com.intellij.ide.DataManager
  * @see DataProvider
  */

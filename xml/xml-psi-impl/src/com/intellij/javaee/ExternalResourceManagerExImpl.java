@@ -26,13 +26,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -57,7 +62,9 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
   @NonNls public static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
+
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
+  private static final String XSD_1_1 = new Resource("/standardSchemas/XMLSchema-1_1/XMLSchema.xsd", ExternalResourceManagerExImpl.class, null).getResourceUrl();
 
   private final Map<String, Map<String, String>> myResources = new THashMap<String, Map<String, String>>();
   private final Set<String> myResourceLocations = new THashSet<String>();
@@ -73,7 +80,33 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   };
 
+  private final CachedValueProvider<MultiMap<String, String>> myUrlByNamespaceProvider = new CachedValueProvider<MultiMap<String, String>>() {
+    @Nullable
+    @Override
+    public CachedValueProvider.Result<MultiMap<String, String>> compute() {
+      MultiMap<String, String> result = new MultiMap<String, String>();
+
+      Collection<Map<String, Resource>> values = myStandardResources.getValue().values();
+      for (Map<String, Resource> map : values) {
+        for (Map.Entry<String, Resource> entry : map.entrySet()) {
+          String url = entry.getValue().getResourceUrl();
+          if (url != null) {
+            VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
+            if (file != null) {
+              String namespace = XmlNamespaceIndex.computeNamespace(file);
+              if (namespace != null) {
+                result.putValue(namespace, entry.getKey());
+              }
+            }
+          }
+        }
+      }
+      return CachedValueProvider.Result.create(result, ExternalResourceManagerExImpl.this);
+    }
+  };
+
   private String myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
+  private XMLSchemaVersion myXMLSchemaVersion = XMLSchemaVersion.XMLSchema_1_0;
 
   private String myCatalogPropertiesFile;
   private XMLCatalogManager myCatalogManager;
@@ -98,6 +131,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @NonNls private static final String LOCATION_ATTR = "location";
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
   @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
+  @NonNls private static final String XML_SCHEMA_VERSION = "xml-schema-version";
 
   private static final String DEFAULT_VERSION = "";
 
@@ -180,13 +214,22 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String getResourceLocation(@NotNull @NonNls String url, @NotNull Project project) {
-    String location = getProjectResources(project).getResourceLocation(url);
-    return location == null || location.equals(url) ? getResourceLocation(url) : location;
+    return getResourceLocation(url, null, project);
   }
 
-  public String getResourceLocation(@NonNls String url, String version, @NotNull Project project) {
-    String location = getProjectResources(project).getResourceLocation(url, version);
-    return location == null || location.equals(url) ? getResourceLocation(url, version) : location;
+  private String getResourceLocation(@NonNls String url, String version, @NotNull Project project) {
+    ExternalResourceManagerExImpl projectResources = getProjectResources(project);
+    String location = projectResources.getResourceLocation(url, version);
+    if (location == null || location.equals(url)) {
+      if (projectResources.myXMLSchemaVersion == XMLSchemaVersion.XMLSchema_1_1) {
+        if (XmlUtil.XML_SCHEMA_URI.equals(url)) return XSD_1_1;
+        if ((XmlUtil.XML_SCHEMA_URI + ".xsd").equals(url)) return XSD_1_1;
+      }
+      return getResourceLocation(url, version);
+    }
+    else {
+      return location;
+    }
   }
 
   @Override
@@ -432,6 +475,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       e.setText(myDefaultHtmlDoctype);
       element.addContent(e);
     }
+    if (myXMLSchemaVersion != XMLSchemaVersion.XMLSchema_1_0) {
+      Element e = new Element(XML_SCHEMA_VERSION);
+      e.setText(myXMLSchemaVersion.toString());
+      element.addContent(e);
+    }
     if (myCatalogPropertiesFile != null) {
       Element properties = new Element(CATALOG_PROPERTIES_ELEMENT);
       properties.setText(myCatalogPropertiesFile);
@@ -471,6 +519,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       }
       myDefaultHtmlDoctype = text;
     }
+    Element schemaElement = state.getChild(XML_SCHEMA_VERSION);
+    if (schemaElement != null) {
+      String text = schemaElement.getText();
+      myXMLSchemaVersion = XMLSchemaVersion.XMLSchema_1_1.toString().equals(text) ? XMLSchemaVersion.XMLSchema_1_1 : XMLSchemaVersion.XMLSchema_1_0;
+    }
     Element catalogElement = state.getChild(CATALOG_PROPERTIES_ELEMENT);
     if (catalogElement != null) {
       myCatalogPropertiesFile = catalogElement.getTextTrim();
@@ -491,6 +544,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     for (ExternalResourceListener listener : myListeners) {
       listener.externalResourceChanged();
     }
+    incModificationCount();
   }
 
   Collection<Map<String, Resource>> getStandardResources() {
@@ -524,6 +578,17 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   @Override
+  public XMLSchemaVersion getXmlSchemaVersion(@NotNull Project project) {
+    return getProjectResources(project).myXMLSchemaVersion;
+  }
+
+  @Override
+  public void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project) {
+    getProjectResources(project).myXMLSchemaVersion = version;
+    fireExternalResourceChanged();
+  }
+
+  @Override
   public String getCatalogPropertiesFile() {
     return myCatalogPropertiesFile;
   }
@@ -533,6 +598,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     myCatalogManager = null;
     myCatalogPropertiesFile = filePath;
     incModificationCount();
+  }
+
+  @Override
+  public MultiMap<String, String> getUrlsByNamespace(Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, myUrlByNamespaceProvider);
   }
 
   @Nullable

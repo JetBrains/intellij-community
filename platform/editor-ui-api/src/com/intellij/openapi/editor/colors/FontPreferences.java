@@ -221,7 +221,7 @@ public class FontPreferences {
   @Nullable
   public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
     Font plainFont = new Font(fontName, Font.PLAIN, fontSize);
-    if (plainFont.getFamily().equals("Dialog") && !"Dialog".equals(fontName)) {
+    if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
       return fallbackScheme == null ? DEFAULT_FONT_NAME : fallbackScheme.getEditorFontName();
     }
     return null;

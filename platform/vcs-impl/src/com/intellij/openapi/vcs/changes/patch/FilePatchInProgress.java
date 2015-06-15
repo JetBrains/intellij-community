@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -163,15 +162,15 @@ public class FilePatchInProgress implements Strippable {
     if (myNewContentRevision == null) {
       myConflicts = null;
       if (FilePatchStatus.ADDED.equals(myStatus)) {
-        final FilePath newFilePath = FilePathImpl.createNonLocal(myIoCurrentBase.getAbsolutePath(), false);
+        final FilePath newFilePath = VcsUtil.getFilePathOnNonLocal(myIoCurrentBase.getAbsolutePath(), false);
         final String content = myPatch.getNewFileText();
         myNewContentRevision = new SimpleContentRevision(content, newFilePath, myPatch.getAfterVersionId());
       } else {
         final FilePath newFilePath;
         if (FilePatchStatus.MOVED_OR_RENAMED.equals(myStatus)) {
-          newFilePath = new FilePathImpl(PathMerger.getFile(new File(myBase.getPath()), myPatch.getAfterName()), false);
+          newFilePath = VcsUtil.getFilePath(PathMerger.getFile(new File(myBase.getPath()), myPatch.getAfterName()), false);
         } else {
-          newFilePath = (myCurrentBase != null) ? new FilePathImpl(myCurrentBase) : new FilePathImpl(myIoCurrentBase, false);
+          newFilePath = (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
         }
         myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
         if (myCurrentBase != null) {
@@ -201,7 +200,7 @@ public class FilePatchInProgress implements Strippable {
   public ContentRevision getCurrentRevision() {
     if (FilePatchStatus.ADDED.equals(myStatus)) return null; 
     if (myCurrentRevision == null) {
-      final FilePathImpl filePath = (myCurrentBase != null) ? new FilePathImpl(myCurrentBase) : new FilePathImpl(myIoCurrentBase, false);
+      FilePath filePath = (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
       myCurrentRevision = new CurrentContentRevision(filePath);
     }
     return myCurrentRevision;
@@ -231,7 +230,8 @@ public class FilePatchInProgress implements Strippable {
               @Override
               public ApplyPatchForBaseRevisionTexts get() {
                 return ApplyPatchForBaseRevisionTexts.create(project, myPatchInProgress.getCurrentBase(),
-                          new FilePathImpl(myPatchInProgress.getCurrentBase()), myPatchInProgress.getPatch(), baseContents);
+                                                             VcsUtil.getFilePath(myPatchInProgress.getCurrentBase()),
+                                                             myPatchInProgress.getPatch(), baseContents);
               }
             };
             return new MergedDiffRequestPresentable(project, revisionTextsGetter,

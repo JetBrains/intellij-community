@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,36 +20,40 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.LiteralExpressionTokenizer;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
-import org.junit.Test;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.Consumer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
-
 /**
  * @author yole
  */
-public class LiteralExpressionTokenizerTest {
-  private static class TokenCollector extends TokenConsumer {
-    private List<String> myTokenTexts = new ArrayList<String>();
+public class LiteralExpressionTokenizerTest extends LightPlatformCodeInsightFixtureTestCase {
+  private static class TokenCollector extends TokenConsumer implements Consumer<TextRange> {
+    private final List<String> myTokenTexts = new ArrayList<String>();
+    private String myText;
 
     @Override
     public void consumeToken(PsiElement element, String text, boolean useRename, int offset, TextRange rangeToCheck, Splitter splitter) {
-      myTokenTexts.add(text);
+      myText = text;
+      splitter.split(myText, rangeToCheck, this);
     }
 
     public List<String> getTokenTexts() {
       return myTokenTexts;
     }
+
+    @Override
+    public void consume(TextRange range) {
+      myTokenTexts.add(myText.substring(range.getStartOffset(), range.getEndOffset()));
+    }
   }
 
-  @Test
   public void testEscapeSequences() {
     doTest("hello\\nworld", "hello", "world");
   }
 
-  @Test
   public void testEscapeSequences2() {
     doTest("\\nhello\\nworld\\n", "hello", "world");
   }

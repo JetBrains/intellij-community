@@ -16,9 +16,14 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,9 +43,44 @@ public abstract class StubTreeLoader {
   
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 
-  public abstract long getStubTreeTimestamp(VirtualFile vFile);
-
   public abstract boolean canHaveStub(VirtualFile file);
 
-  public abstract String getIndexingStampDebugInfo(VirtualFile file);
+  public String getStubAstMismatchDiagnostics(@NotNull VirtualFile file,
+                                              @NotNull PsiFile psiFile,
+                                              @NotNull ObjectStubTree stubTree,
+                                              @Nullable Document prevCachedDocument) {
+    String msg = "";
+    msg += "\n file=" + psiFile;
+    msg += ", file.class=" + psiFile.getClass();
+    msg += ", file.lang=" + psiFile.getLanguage();
+    msg += ", modStamp=" + psiFile.getModificationStamp();
+    msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
+    msg += "\n document before=" + prevCachedDocument;
+
+    ObjectStubTree latestIndexedStub = readFromVFile(psiFile.getProject(), file);
+    msg += "\nlatestIndexedStub=" + latestIndexedStub;
+    if (latestIndexedStub != null) {
+      msg += "\n   same size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
+      msg += "\n   debugInfo=" + latestIndexedStub.getDebugInfo();
+    }
+
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    msg += "\n viewProvider=" + viewProvider;
+    msg += "\n viewProvider stamp: " + viewProvider.getModificationStamp();
+
+    msg += "; file stamp: " + file.getModificationStamp();
+    msg += "; file modCount: " + file.getModificationCount();
+    msg += "; file length: " + file.getLength();
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) {
+      msg += "\n doc saved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
+      msg += "; doc stamp: " + document.getModificationStamp();
+      msg += "; doc size: " + document.getTextLength();
+      msg += "; committed: " + PsiDocumentManager.getInstance(psiFile.getProject()).isCommitted(document);
+    }
+    return msg;
+  }
+  
+  
 }

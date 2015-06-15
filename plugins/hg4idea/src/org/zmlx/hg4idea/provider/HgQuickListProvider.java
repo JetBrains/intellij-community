@@ -12,44 +12,36 @@
  */
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Kirill Likhodedov
- */
-public class HgQuickListProvider implements VcsQuickListContentProvider {
+public class HgQuickListProvider extends DvcsQuickListContentProvider {
 
   private static final Logger LOG = Logger.getInstance(HgQuickListProvider.class.getName());
 
-  public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs, @Nullable DataContext dataContext) {
-    if (activeVcs == null || !HgVcs.VCS_NAME.equals(activeVcs.getName())) {
-      return null;
-    }
-    final ActionManager manager = ActionManager.getInstance();
-    final List<AnAction> actions = new ArrayList<AnAction>();
+  @NotNull
+  @Override
+  protected String getVcsName() {
+    return HgVcs.VCS_NAME;
+  }
 
-    actions.add(new Separator(activeVcs.getDisplayName()));
-    actions.add(new Separator());
+  @Override
+  protected void addVcsSpecificActions(@NotNull ActionManager manager, @NotNull List<AnAction> actions) {
     add("hg4idea.branches", manager, actions);
     add("hg4idea.pull", manager, actions);
     add("Vcs.Push", manager, actions);
     add("hg4idea.updateTo", manager, actions);
-
-    return actions;
+    add("ChangesView.AddUnversioned", manager, actions);
   }
 
   public List<AnAction> getNotInVcsActions(@Nullable Project project, @Nullable DataContext dataContext) {
@@ -61,18 +53,4 @@ public class HgQuickListProvider implements VcsQuickListContentProvider {
     }
     return Collections.singletonList(action);
   }
-
-  public boolean replaceVcsActionsFor(@NotNull AbstractVcs activeVcs, @Nullable DataContext dataContext) {
-    return false;
-  }
-
-  private static void add(String actionName, ActionManager manager, List<AnAction> actions) {
-    final AnAction action = manager.getAction(actionName);
-    if (action == null) {
-      LOG.info("Couldn't find action for name " + actionName);
-    } else {
-      actions.add(action);
-    }
-  }
-
 }

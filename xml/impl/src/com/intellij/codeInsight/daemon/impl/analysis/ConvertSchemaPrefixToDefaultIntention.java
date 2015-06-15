@@ -38,7 +38,7 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntentionAction {
-  public static final String NAME = "Set Namespace Prefix to Empty";
+  public static final String NAME = "Reset to default namespace";
 
   public ConvertSchemaPrefixToDefaultIntention() {
     setText(NAME);
@@ -81,9 +81,9 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
         }
       }
     });
-    new WriteCommandAction(project, "Convert namespace prefix to default", xmlns.getContainingFile()) {
+    new WriteCommandAction(project, NAME, xmlns.getContainingFile()) {
       @Override
-      protected void run(Result result) throws Throwable {
+      protected void run(@NotNull Result result) throws Throwable {
         final int index = ns.length() + 1;
         for (XmlTag tag : tags) {
           final String s = tag.getName().substring(index);

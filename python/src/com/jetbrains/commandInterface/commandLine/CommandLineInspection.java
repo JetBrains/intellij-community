@@ -15,12 +15,16 @@
  */
 package com.jetbrains.commandInterface.commandLine;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.commandInterface.commandLine.psi.*;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.command.CommandExecutor;
+import com.jetbrains.commandInterface.commandLine.psi.*;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

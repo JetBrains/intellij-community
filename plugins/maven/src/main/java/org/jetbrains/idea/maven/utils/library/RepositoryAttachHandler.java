@@ -52,6 +52,7 @@ import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
@@ -330,7 +331,10 @@ public class RepositoryAttachHandler {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     try {
-      embedder.customizeForResolve(new SoutMavenConsole(), new MavenProgressIndicator(indicator));
+      final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
+      embedder.customizeForResolve(
+        new SoutMavenConsole(mavenGeneralSettings.getOutputLevel(), mavenGeneralSettings.isPrintErrorStackTraces()),
+        new MavenProgressIndicator(indicator));
       List<MavenRemoteRepository> remoteRepositories = convertRepositories(repositories);
       List<MavenArtifactInfo> artifacts = new ArrayList<MavenArtifactInfo>(mavenIds.size());
       for (MavenId id : mavenIds) {

@@ -47,14 +47,6 @@ public class LineFragmentCache {
     myFragments = new HashMap<ComparisonPolicy, PolicyData>(3);
   }
 
-  public long getStamp1() {
-    return myModificationStamp1;
-  }
-
-  public long getStamp2() {
-    return myModificationStamp2;
-  }
-
   public boolean checkStamps(long stamp1, long stamp2) {
     return myModificationStamp1 == stamp1 && myModificationStamp2 == stamp2;
   }

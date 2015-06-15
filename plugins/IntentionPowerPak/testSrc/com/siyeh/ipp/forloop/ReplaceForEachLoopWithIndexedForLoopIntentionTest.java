@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,16 @@ package com.siyeh.ipp.forloop;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
+/**
+ * @see ReplaceForEachLoopWithIndexedForLoopIntention
+ */
 public class ReplaceForEachLoopWithIndexedForLoopIntentionTest extends IPPTestCase {
   public void testLabeledForLoop() { doTest(); }
   public void testNormalForeachLoop() { doTest(); }
   public void testThisExpr() { doTest(); }
   public void testNewArray() { doTest(); }
   public void testNoNPE() { doTest(); }
+  public void testFQList() { doTest(); }
 
   @Override
   protected String getIntentionName() {

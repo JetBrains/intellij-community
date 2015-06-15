@@ -16,7 +16,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -46,7 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
@@ -150,16 +148,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myRunWhenSmartQueue.addLast(runnable);
       }
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  public void queueCacheUpdate(@NotNull Collection<CacheUpdater> updaters) {
-    scheduleCacheUpdate(new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters)), false);
-  }
-
-  @SuppressWarnings("deprecation")
-  public void queueCacheUpdateInDumbMode(@NotNull Collection<CacheUpdater> updaters) {
-    scheduleCacheUpdate(new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters)), true);
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
@@ -269,7 +257,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           runnable.run();
         }
         catch (Throwable e) {
-          LOG.error(e);
+          LOG.error("Error executing task " + runnable, e);
         }
       }
     }
@@ -426,7 +414,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Nullable private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable final DumbModeTask prevTask) {
     final Ref<Pair<DumbModeTask, ProgressIndicatorEx>> result = Ref.create();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
@@ -453,6 +441,22 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
     });
     return result.get();
+  }
+
+  private static void invokeAndWaitIfNeeded(Runnable runnable) {
+    if (SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      try {
+        SwingUtilities.invokeAndWait(runnable);
+      }
+      catch (InterruptedException ignore) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override

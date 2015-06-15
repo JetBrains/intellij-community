@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -72,8 +71,10 @@ public class PresentationModeProgressPanel {
   }
 
   private void updateImpl() {
-    myText.setForeground(getTextForeground());
-    myText2.setForeground(getTextForeground());
+    Color color = getTextForeground();
+    myText.setForeground(color);
+    myText2.setForeground(color);
+    myProgressBar.setForeground(color);
 
     if (!StringUtil.equals(myText.getText(), myProgress.getText())) {
       myText.setText(myProgress.getText());

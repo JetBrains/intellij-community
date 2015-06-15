@@ -95,6 +95,16 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     setComponent(tab.second);
   }
 
+  public boolean findAndSelectContent(@NotNull JComponent contentComponent) {
+    String tabName = findTabNameByComponent(contentComponent);
+    if (tabName != null) {
+      setDisplayName(tabName);
+      setComponent(contentComponent);
+      return true;
+    }
+    return false;
+  }
+
   @Override
   public String getTabName() {
     String selected = findTabNameByComponent(getComponent());

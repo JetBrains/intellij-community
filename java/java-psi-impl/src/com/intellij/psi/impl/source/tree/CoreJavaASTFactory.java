@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class CoreJavaASTFactory extends ASTFactory implements Constants {
   private final DefaultASTFactory myDefaultASTFactory = ServiceManager.getService(DefaultASTFactory.class);
 
   @Override
-  public LeafElement createLeaf(@NotNull final IElementType type, final CharSequence text) {
+  public LeafElement createLeaf(@NotNull final IElementType type, @NotNull final CharSequence text) {
     if (type == C_STYLE_COMMENT || type == END_OF_LINE_COMMENT) {
       return myDefaultASTFactory.createComment(type, text);
     }

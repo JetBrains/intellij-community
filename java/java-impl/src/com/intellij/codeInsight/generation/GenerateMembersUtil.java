@@ -276,13 +276,15 @@ public class GenerateMembersUtil {
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
       copyDocComment(sourceMethod, resultMethod, factory);
-      final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes());
+      GlobalSearchScope scope = sourceMethod.getResolveScope();
+      final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes(),
+                                                                              scope);
       if (target instanceof PsiClass) {
         final PsiClass[] supers = ((PsiClass)target).getSupers();
         for (PsiClass aSuper : supers) {
           final PsiMethod psiMethod = aSuper.findMethodBySignature(sourceMethod, true);
           if (psiMethod != null && psiMethod != sourceMethod) {
-            ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY), psiMethod.getThrowsList().getReferencedTypes()));
+            ExceptionUtil.retainExceptions(thrownTypes, ExceptionUtil.collectSubstituted(TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY), psiMethod.getThrowsList().getReferencedTypes(), scope));
           }
         }
       }

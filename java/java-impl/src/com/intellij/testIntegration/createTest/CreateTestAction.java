@@ -129,20 +129,15 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   protected static void checkForTestRoots(Module srcModule, Set<VirtualFile> testFolders) {
-    checkForTestRoots(srcModule, testFolders, new HashSet<Module>());
-  }
-
-  private static void checkForTestRoots(final Module srcModule, final Set<VirtualFile> testFolders, final Set<Module> processed) {
-    final boolean isFirst = processed.isEmpty();
-    if (!processed.add(srcModule)) return;
-
     testFolders.addAll(ModuleRootManager.getInstance(srcModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE));
-    if (isFirst && !testFolders.isEmpty()) return;
+    //create test in the same module
+    if (!testFolders.isEmpty()) return;
 
+    //suggest to choose from all dependencies modules
     final HashSet<Module> modules = new HashSet<Module>();
     ModuleUtilCore.collectModulesDependsOn(srcModule, modules);
     for (Module module : modules) {
-      checkForTestRoots(module, testFolders, processed);
+      testFolders.addAll(ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE));
     }
   }
 

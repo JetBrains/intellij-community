@@ -43,9 +43,18 @@ public interface LibraryEx extends Library {
 
   LibraryProperties getProperties();
 
+  /**
+   * Returns URLs of directories under the library roots which are excluded from the library. Files under these directories
+   * won't be counted as belonging to this library so they won't be indexed.
+   * @return URLs of excluded directories
+   */
   @NotNull
   String[] getExcludedRootUrls();
 
+  /**
+   * @see #getExcludedRootUrls()
+   * @return excluded directories
+   */
   @NotNull
   VirtualFile[] getExcludedRoots();
 
@@ -58,6 +67,12 @@ public interface LibraryEx extends Library {
 
     PersistentLibraryKind<?> getKind();
 
+    /**
+     * Add a URL to list of directories excluded from the library. The directory specified by {@code url} must be located under some
+     * of the library roots.
+     * @see LibraryEx#getExcludedRootUrls()
+     * @param url URL of a directory to be excluded
+     */
     void addExcludedRoot(@NotNull String url);
 
     boolean removeExcludedRoot(@NotNull String url);

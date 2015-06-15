@@ -39,7 +39,7 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ import java.util.jar.JarFile;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
-public class JarFileSystemTest extends PlatformLangTestCase {
+public class JarFileSystemTest extends PlatformTestCase {
   public void testFindFile() throws IOException {
     String rtJarPath = PlatformTestUtil.getRtJarPath();
 

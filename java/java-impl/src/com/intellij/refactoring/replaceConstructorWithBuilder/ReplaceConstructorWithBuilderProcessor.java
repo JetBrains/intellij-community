@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   private final String myPackageName;
   private final boolean myCreateNewBuilderClass;
   private final PsiElementFactory myElementFactory;
-  private MoveDestination myMoveDestination;
+  private final MoveDestination myMoveDestination;
 
 
   public ReplaceConstructorWithBuilderProcessor(Project project,

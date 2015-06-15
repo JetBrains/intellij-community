@@ -746,6 +746,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCastToIntersection() throws Exception {
+    doTest();
+  }
+
   public void testIDEA122401() throws Exception {
     doTest();
   }
@@ -810,4 +814,51 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA139069() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA67745() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA57313() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA57387() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA57314() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA57322() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA57362() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA57320() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA139090() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA57502() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA67746() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA67592() throws Exception {
+    doTest();
+  }
 }

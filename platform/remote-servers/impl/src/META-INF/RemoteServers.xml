@@ -6,6 +6,9 @@
 
     <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
                     interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
+
+    <extensionPoint name="remoteServer.CloudTerminalProvider"
+                    interface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -21,6 +24,7 @@
                              displayName="Clouds"
                              id="RemoteServers"
                              provider="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider"/>
+    <search.optionContributor implementation="com.intellij.remoteServer.impl.configuration.RemoteServerSearchableOptionContributor"/>
     <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
                     serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewImpl"/>

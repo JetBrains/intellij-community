@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
@@ -33,7 +32,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -58,55 +56,38 @@ import java.util.List;
  */
 public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, Disposable {
 
-  private static final Key<MyPanel> MY_PANEL_PROPERTY = Key.create("EditorTextFieldCellRenderer.MyEditorPanel");
+  private static final Key<RendererComponent> MY_PANEL_PROPERTY = Key.create("EditorTextFieldCellRenderer.MyEditorPanel");
 
   private final Project myProject;
+  private final FileType myFileType;
   private final boolean myInheritFontFromLaF;
 
-  protected EditorTextFieldCellRenderer(@Nullable Project project, @NotNull Disposable parent) {
-    this(project, true, parent);
+  protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
+    this(project, fileType, true, parent);
   }
 
-  protected EditorTextFieldCellRenderer(@Nullable Project project, boolean inheritFontFromLaF, @NotNull Disposable parent) {
+  protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType,
+                                        boolean inheritFontFromLaF, @NotNull Disposable parent) {
     myProject = project;
+    myFileType = fileType;
     myInheritFontFromLaF = inheritFontFromLaF;
     Disposer.register(parent, this);
   }
 
   protected abstract String getText(JTable table, Object value, int row, int column);
 
-  @Nullable
-  protected TextAttributes getTextAttributes(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
-    return null;
-  }
-
-  protected Color getCellBackground(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
-    return UIUtil.getTableBackground(selected);
-  }
-
-  @Nullable
-  protected FileType getFileType() {
-    return null;
-  }
-
-  @NotNull
-  protected EditorColorsScheme getColorScheme() {
-    return EditorColorsManager.getInstance().getGlobalScheme();
-  }
-
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
-    MyPanel panel = getEditorPanel(table);
-    EditorEx editor = panel.myEditor;
+    RendererComponent panel = getEditorPanel(table);
+    EditorEx editor = panel.getEditor();
     editor.getColorsScheme().setEditorFontSize(table.getFont().getSize());
     String text = getText(table, value, row, column);
-    TextAttributes textAttributes = getTextAttributes(table, value, selected, focused, row, column);
-    panel.setText(text, textAttributes, selected);
+    panel.setText(text, null, selected);
 
     editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, table.getSelectionBackground());
     editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, table.getSelectionForeground());
-    editor.setBackgroundColor(getCellBackground(table, value, selected, focused, row, column));
-    panel.setOpaque(!Comparing.equal(editor.getBackgroundColor(), table.getBackground()));
+    editor.setBackgroundColor(selected ? table.getSelectionBackground() : table.getBackground());
+    panel.setSelected(!Comparing.equal(editor.getBackgroundColor(), table.getBackground()));
 
     panel.setBorder(null); // prevents double border painting when ExtendedItemRendererComponentWrapper is used
 
@@ -114,29 +95,15 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   }
 
   @NotNull
-  private MyPanel getEditorPanel(final JTable table) {
-    MyPanel panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
+  private RendererComponent getEditorPanel(final JTable table) {
+    RendererComponent panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       DelegateColorScheme scheme = (DelegateColorScheme)panel.myEditor.getColorsScheme();
-      scheme.setDelegate(getColorScheme());
+      scheme.setDelegate(EditorColorsManager.getInstance().getGlobalScheme());
       return panel;
     }
 
-    FileType fileType = ObjectUtils.notNull(getFileType(), FileTypes.PLAIN_TEXT);
-    EditorTextField field = new EditorTextField(new MyDocument(), myProject, fileType, false, false);
-    field.setSupplementary(true);
-    field.setFontInheritedFromLAF(myInheritFontFromLaF);
-    field.addNotify(); // creates editor
-
-    EditorEx editor = (EditorEx)ObjectUtils.assertNotNull(field.getEditor());
-    editor.setRendererMode(true);
-
-    editor.setColorsScheme(editor.createBoundColorSchemeDelegate(null));
-    editor.getSettings().setCaretRowShown(false);
-
-    editor.getScrollPane().setBorder(null);
-
-    panel = new MyPanel(editor);
+    panel = new RendererComponent(myProject, myFileType, myInheritFontFromLaF);
     Disposer.register(this, panel);
     Disposer.register(this, new Disposable() {
       @Override
@@ -153,7 +120,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   public void dispose() {
   }
 
-  private static class MyPanel extends CellRendererPanel implements Disposable {
+  public static class RendererComponent extends CellRendererPanel implements Disposable {
     private static final char ABBREVIATION_SUFFIX = '\u2026'; // 2026 '...'
     private static final char RETURN_SYMBOL = '\u23ce';
 
@@ -165,23 +132,20 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private TextAttributes myTextAttributes;
     private boolean mySelected;
 
-    public MyPanel(EditorEx editor) {
-      add(editor.getContentComponent());
-      this.myEditor = editor;
+    public RendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+      myEditor = createEditor(project, fileType, inheritFontFromLaF);
+      add(myEditor.getContentComponent());
     }
 
-    @Override
-    public void setOpaque(boolean isOpaque) {
-      if (myEditor != null) {
-        myEditor.getContentComponent().setOpaque(isOpaque);
-      }
+    public EditorEx getEditor() {
+      return myEditor;
     }
 
     public void setText(String text, @Nullable TextAttributes textAttributes, boolean selected) {
       myRawText = text;
       myTextAttributes = textAttributes;
       mySelected = selected;
-      recalculatePreferredSize();
+      myPreferredSize = null;
     }
 
     @Override
@@ -195,68 +159,72 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public Dimension getPreferredSize() {
+      if (myPreferredSize == null) {
+        int maxLineLength = 0;
+        int linesCount = 0;
+
+        for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd(); lt.advance()) {
+          maxLineLength = Math.max(maxLineLength, lt.getLength());
+          linesCount++;
+        }
+
+        FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
+        int preferredHeight = myEditor.getLineHeight() * Math.max(1, linesCount);
+        int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+
+        Insets insets = getInsets();
+        if (insets != null) {
+          preferredHeight += insets.top + insets.bottom;
+          preferredWidth += insets.left + insets.right;
+        }
+
+        myPreferredSize = new Dimension(preferredWidth, preferredHeight);
+      }
       return myPreferredSize;
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      if (getBorder() == null || !myEditor.getContentComponent().isOpaque()) return;
-
-      Color oldColor = g.getColor();
-      g.setColor(myEditor.getBackgroundColor());
-      Insets insets = getInsets();
-      g.fillRect(0, 0, insets.left, getHeight());
-      g.fillRect(getWidth() - insets.left - insets.right, 0, getWidth(), getHeight());
-      g.setColor(oldColor);
     }
 
     @Override
     protected void paintChildren(Graphics g) {
-      updateText();
+      updateText(g.getClipBounds());
       super.paintChildren(g);
     }
 
     @Override
     public void dispose() {
+      myEditor.getComponent().removeNotify();
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
 
-    private void recalculatePreferredSize() {
-      int maxLineLength = 0;
-      int linesCount = 0;
-
-      for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd(); lt.advance()) {
-        maxLineLength = Math.max(maxLineLength, lt.getLength());
-        linesCount++;
-      }
-
-      FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
-      int preferredHeight = myEditor.getLineHeight() * Math.max(1, linesCount);
-      int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
-
-      Insets insets = getInsets();
-      if (insets != null) {
-        preferredHeight += insets.top + insets.bottom;
-        preferredWidth += insets.left + insets.right;
-      }
-
-      myPreferredSize = new Dimension(preferredWidth, preferredHeight);
-    }
-
-    private void updateText() {
+    private void updateText(Rectangle clip) {
       FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
       Insets insets = getInsets();
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
 
       myDocumentTextBuilder.setLength(0);
-      float visibleLinesCountFractional = getHeight() / (float)myEditor.getLineHeight();
-      if (visibleLinesCountFractional < 1.1f) {
+
+      boolean singleLineMode = getHeight() / (float)myEditor.getLineHeight() < 1.1f;
+      if (singleLineMode) {
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true);
       }
       else {
-        int linesToAppend = (int)Math.floor(visibleLinesCountFractional + 0.5);
-        for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd() && linesToAppend > 0; lt.advance(), linesToAppend--) {
-          appendAbbreviated(myDocumentTextBuilder, myRawText, lt.getOffset(), lt.getOffset() + lt.getLength(), fontMetrics, maxLineWidth, false);
+        int lineHeight = myEditor.getLineHeight();
+        int firstVisibleLine = clip.y / lineHeight;
+        float visibleLinesCountFractional = clip.height / (float)lineHeight;
+        int linesToAppend = 1 + (int)visibleLinesCountFractional;
+
+        LineTokenizer lt = new LineTokenizer(myRawText);
+        for (int line = 0; !lt.atEnd() && line < firstVisibleLine; lt.advance(), line++) {
+          myDocumentTextBuilder.append('\n');
+        }
+
+        for (int line = 0; !lt.atEnd() && line < linesToAppend; lt.advance(), line++) {
+          int start = lt.getOffset();
+          int end = start + lt.getLength();
+          appendAbbreviated(myDocumentTextBuilder, myRawText, start, end, fontMetrics, maxLineWidth, false);
           if (lt.getLineSeparatorLength() > 0) {
             myDocumentTextBuilder.append('\n');
           }
@@ -324,6 +292,24 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       }
 
       return abbrLength;
+    }
+
+    @NotNull
+    private static EditorEx createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+      EditorTextField field = new EditorTextField(new MyDocument(), project, fileType, false, false);
+      field.setSupplementary(true);
+      field.setFontInheritedFromLAF(inheritFontFromLaF);
+      field.addNotify(); // creates editor
+
+      EditorEx editor = (EditorEx)ObjectUtils.assertNotNull(field.getEditor());
+      editor.setRendererMode(true);
+
+      editor.setColorsScheme(editor.createBoundColorSchemeDelegate(null));
+      editor.getSettings().setCaretRowShown(false);
+
+      editor.getScrollPane().setBorder(null);
+
+      return editor;
     }
   }
 

@@ -40,8 +40,8 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
 
   private final PsiMethod myMethodPrototype;
-  private String myText;
   private final List<String> myExceptions = new ArrayList<String>();
+  private String myText;
 
   public AddMethodFix(@NotNull PsiMethod methodPrototype, @NotNull PsiClass implClass) {
     super(implClass);
@@ -73,14 +73,14 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return result;
   }
 
-  protected void setText(@NotNull String text) {
-    myText = text;
-  }
-
   @NotNull
   @Override
   public String getText() {
     return myText;
+  }
+
+  protected void setText(@NotNull String text) {
+    myText = text;
   }
 
   @Override
@@ -119,8 +119,14 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     }
     PsiMethod method = (PsiMethod)myClass.add(myMethodPrototype);
     method = (PsiMethod)method.replace(reformat(project, method));
-    if (editor != null && method.getContainingFile() == file) {
-      GenerateMembersUtil.positionCaret(editor, method, true);
+    postAddAction(file, editor, method);
+  }
+
+  protected void postAddAction(@NotNull PsiFile file,
+                               @Nullable("is null when called from inspection") Editor editor,
+                               PsiMethod newMethod) {
+    if (editor != null && newMethod.getContainingFile() == file) {
+      GenerateMembersUtil.positionCaret(editor, newMethod, true);
     }
   }
 }

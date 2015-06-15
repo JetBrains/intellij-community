@@ -32,6 +32,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -129,6 +131,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
+    final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
          resolverExtension = resolverExtension.getNext()) {
@@ -138,8 +141,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverExtension.preImportCheck();
       // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
       projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
-      // collect extra JVM arguments provided by gradle project resolver extensions
-      extraJvmArgs.addAll(resolverExtension.getExtraJvmArgs());
+
+      if (importCustomizer == null || importCustomizer.useExtraJvmArgs()) {
+        // collect extra JVM arguments provided by gradle project resolver extensions
+        extraJvmArgs.addAll(resolverExtension.getExtraJvmArgs());
+      }
       // collect extra command-line arguments
       commandLineArgs.addAll(resolverExtension.getExtraCommandLineArgs());
       // collect tooling extensions classes
@@ -251,6 +257,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
       DataNode<ModuleData> moduleDataNode = projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
       moduleMap.put(moduleName, Pair.create(moduleDataNode, gradleModule));
+      if(StringUtil.equals(moduleData.getLinkedExternalProjectPath(), projectData.getLinkedExternalProjectPath())) {
+        projectData.setGroup(moduleData.getGroup());
+        projectData.setVersion(moduleData.getVersion());
+      }
     }
 
     // populate modules nodes

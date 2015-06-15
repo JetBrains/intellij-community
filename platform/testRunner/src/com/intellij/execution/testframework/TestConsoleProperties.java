@@ -24,7 +24,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
@@ -37,9 +36,11 @@ import com.intellij.util.config.ToggleBooleanProperty;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +51,7 @@ import java.util.Map;
 public abstract class TestConsoleProperties extends StoringPropertyContainer implements Disposable {
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
   public static final BooleanProperty SORT_ALPHABETICALLY = new BooleanProperty("sortTestsAlphabetically", false);
+  public static final BooleanProperty SORT_BY_DURATION = new BooleanProperty("sortTestsByDuration", false);
   public static final BooleanProperty SELECT_FIRST_DEFECT = new BooleanProperty("selectFirtsDefect", false);
   public static final BooleanProperty TRACK_RUNNING_TEST = new BooleanProperty("trackRunningTest", true);
   public static final BooleanProperty HIDE_IGNORED_TEST = new BooleanProperty("hideIgnoredTests", false);
@@ -58,6 +60,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty OPEN_FAILURE_LINE = new BooleanProperty("openFailureLine", true);
   public static final BooleanProperty TRACK_CODE_COVERAGE = new BooleanProperty("trackCodeCoverage", false);
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
+  public static final BooleanProperty SHOW_INLINE_STATISTICS = new BooleanProperty("showInlineStatistics", true);
   public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
 
   private final Project myProject;
@@ -68,7 +71,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   protected final Map<AbstractProperty, List<TestFrameworkPropertyListener>> myListeners = ContainerUtil.newHashMap();
 
-  public TestConsoleProperties(Storage storage, Project project, Executor executor) {
+  public TestConsoleProperties(@NotNull Storage storage, Project project, Executor executor) {
     super(storage);
     myProject = project;
     myExecutor = executor;
@@ -78,6 +81,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myProject;
   }
 
+  @NotNull
   public GlobalSearchScope getScope() {
     if (myScope == null) {
       myScope = initScope();
@@ -85,6 +89,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myScope;
   }
 
+  @NotNull
   protected GlobalSearchScope initScope() {
     RunConfiguration configuration = getConfiguration();
     if (!(configuration instanceof ModuleRunProfile)) {
@@ -192,7 +197,11 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   protected ToggleBooleanProperty createIncludeNonStartedInRerun() {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
-    Icon icon = AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun;
-    return new ToggleBooleanProperty(text, null, icon, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+    return new ToggleBooleanProperty(text, null, null, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+  }
+
+  @JdkConstants.TreeSelectionMode
+  protected int getSelectionMode() {
+    return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
 }

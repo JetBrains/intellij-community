@@ -396,16 +396,12 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         descriptor.setTitle(getTitle());
         final VirtualFile selectedFile = FileChooser.chooseFile(descriptor, project, project.getBaseDir());
         if (selectedFile != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              try {
-                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(selectedFile.getPath()), project, unknownLibraries);
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
-            }
-          });
+          try {
+            EclipseUserLibrariesHelper.readProjectLibrariesContent(selectedFile, project, unknownLibraries);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
       }
     }

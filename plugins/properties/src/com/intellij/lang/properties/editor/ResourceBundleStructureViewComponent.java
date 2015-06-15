@@ -26,11 +26,9 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
@@ -53,8 +51,10 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
 
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleStructureViewComponent(final ResourceBundle resourceBundle, final ResourceBundleEditor editor) {
-    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle));
+  public ResourceBundleStructureViewComponent(final ResourceBundle resourceBundle,
+                                              final ResourceBundleEditor editor,
+                                              final PropertiesAnchorizer anchorizer) {
+    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle, anchorizer));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
   }
@@ -147,10 +147,10 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   private class PsiElementsDeleteProvider implements DeleteProvider {
-    private final ResourceBundlePropertiesInsertManager myInsertDeleteManager;
+    private final ResourceBundlePropertiesUpdateManager myInsertDeleteManager;
     private final PsiElement[] myElements;
 
-    private PsiElementsDeleteProvider(ResourceBundlePropertiesInsertManager insertDeleteManager, final PsiElement[] elements) {
+    private PsiElementsDeleteProvider(ResourceBundlePropertiesUpdateManager insertDeleteManager, final PsiElement[] elements) {
       myInsertDeleteManager = insertDeleteManager;
       myElements = elements;
     }

@@ -77,7 +77,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RefResolveServiceImpl extends RefResolveService implements Runnable, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.RefResolveService");
+  private static final Logger LOG = Logger.getInstance(RefResolveServiceImpl.class);
   private final AtomicInteger fileCount = new AtomicInteger();
   private final AtomicLong bytesSize = new AtomicLong();
   private final AtomicLong refCount = new AtomicLong();
@@ -104,8 +104,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
     if (ENABLED) {
+      log = new FileWriter(new File(getStorageDirectory(), "log.txt"));
+
       File dataFile = new File(getStorageDirectory(), "data");
       fileIsResolved = ConcurrentBitSet.readFrom(new File(getStorageDirectory(), "bitSet"));
+      log("Read resolved file bitset: " + fileIsResolved);
 
       int maxId = FSRecords.getMaxId();
       PersistentIntList list = new PersistentIntList(dataFile, dataFile.exists() ? 0 : maxId);
@@ -116,6 +119,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         // just to be safe, re-resolve all if VFS files count changes since last restart
         list.dispose();
         storage = new PersistentIntList(dataFile, maxId);
+        log("VFS maxId changed: was "+list.getSize()+"; now: "+maxId+"; re-resolving everything");
         fileIsResolved.clear();
       }
       Disposer.register(this, storage);
@@ -128,7 +132,6 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
           }
         });
       }
-      log = new FileWriter(new File(getStorageDirectory(), "log.txt"));
       Disposer.register(this, new Disposable() {
         @Override
         public void dispose() {
@@ -278,7 +281,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     if (virtualFile != null &&
         virtualFile.isValid() &&
         project.isInitialized() &&
-        myProjectFileIndex.isInContent(virtualFile) &&
+        myProjectFileIndex.isInSourceContent(virtualFile) &&
         isSupportedFileType(virtualFile)) {
       return true;
     }
@@ -317,7 +320,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private void logf(String m) {
     if (LOG.isDebugEnabled()) {
       try {
-        log.write(DateFormat.getDateTimeInstance().format(new Date()) + " "+m+"    ; gap="+storage.gap+"\n");
+        log.write(DateFormat.getDateTimeInstance().format(new Date()) + " "+m+/*"    ; gap="+storage.gap+*/"\n");
       }
       catch (IOException e) {
         LOG.error(e);
@@ -339,7 +342,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     synchronized (filesToResolve) {
       if (!(file instanceof VirtualFileWithId)) return false;
       int fileId = getAbsId(file);
-      countAndMarkUnresolved(file, new THashSet<VirtualFile>(), true);
+      countAndMarkUnresolved(file, new LinkedHashSet<VirtualFile>(), true);
       boolean alreadyAdded = fileIsInQueue.set(fileId);
       if (!alreadyAdded) {
         filesToResolve.add(file);
@@ -384,6 +387,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         if (queueIfNeeded(virtualFile, myProject)) {
           list.add(id);
         }
+        else {
+          fileIsResolved.set(id);
+        }
       }
       while (++id < endOfRun);
     }
@@ -396,7 +402,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private void save() throws IOException {
+    log("Saving resolved file bitset: "+fileIsResolved);
     fileIsResolved.writeTo(new File(getStorageDirectory(), "bitSet"));
+    log("list.size = " + storage.getSize());
   }
 
   private volatile Future<?> resolveProcess = new FutureTask<Object>(EmptyRunnable.getInstance(), null); // write from EDT only
@@ -477,19 +485,19 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         double fraction = 1 - toProcess.size() * 1.0 / totalSize;
         indicator.setFraction(fraction);
         try {
-          if (file.isDirectory() || !toResolve(file, myProject)) {
-            return true;
-          }
-          int fileId = getAbsId(file);
-          int i = totalSize - toProcess.size();
-          indicator.setText(i + "/" + totalSize + ": Resolving " + file.getPresentableUrl());
-          int[] forwardIds = processFile(file, fileId, indicator);
-          if (forwardIds == null) {
-            //queueUpdate(file);
-            return false;
+          if (!file.isDirectory() && toResolve(file, myProject)) {
+            int fileId = getAbsId(file);
+            int i = totalSize - toProcess.size();
+            indicator.setText(i + "/" + totalSize + ": Resolving " + file.getPresentableUrl());
+            int[] forwardIds = processFile(file, fileId, indicator);
+            if (forwardIds == null) {
+              //queueUpdate(file);
+              return false;
+            }
+            fileToForwardIds.put(fileId, forwardIds);
           }
           toProcess.remove(file);
-          fileToForwardIds.put(fileId, forwardIds);
+          return true;
         }
         catch (RuntimeException e) {
           indicator.checkCanceled();
@@ -520,7 +528,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     }
   }
 
-  private boolean processFilesConcurrently(Set<VirtualFile> files, final ProgressIndicator indicator, final Processor<VirtualFile> processor) {
+  private boolean processFilesConcurrently(@NotNull Set<VirtualFile> files,
+                                           @NotNull final ProgressIndicator indicator,
+                                           @NotNull final Processor<VirtualFile> processor) {
     final List<VirtualFile> fileList = new ArrayList<VirtualFile>(files);
     // fine but grabs all CPUs
     //return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(fileList, indicator, false, false, processor);
@@ -585,7 +595,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     Set<VirtualFile> set;
     synchronized (filesToResolve) {
       int queuedSize = filesToResolve.size();
-      set = new THashSet<VirtualFile>(queuedSize);
+      set = new LinkedHashSet<VirtualFile>(queuedSize);
       // someone might have cleared this bit to mark file as processed
       for (VirtualFile file : filesToResolve) {
         if (fileIsInQueue.clear(getAbsId(file))) {
@@ -603,7 +613,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   @NotNull
   private Set<VirtualFile> countAndMarkUnresolved(@NotNull Collection<VirtualFile> files, boolean inDbOnly) {
-    Set<VirtualFile> result = new THashSet<VirtualFile>();
+    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
     for (VirtualFile file : files) {
       countAndMarkUnresolved(file, result, inDbOnly);
     }
@@ -615,8 +625,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
-          doCountAndMarkUnresolved(file, result);
-          return true;
+          return doCountAndMarkUnresolved(file, result);
         }
 
         @Nullable
@@ -631,14 +640,17 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     }
   }
 
-  private void doCountAndMarkUnresolved(@NotNull VirtualFile file, @NotNull Set<VirtualFile> result) {
+  // return true if continue to process sub-directories of the {@code file}, false if the file is already processed
+  private boolean doCountAndMarkUnresolved(@NotNull VirtualFile file, @NotNull Set<VirtualFile> result) {
     if (file.isDirectory()) {
       fileIsResolved.set(getAbsId(file));
+      return result.add(file);
     }
-    else if (toResolve(file, myProject)) {
+    if (toResolve(file, myProject)) {
       result.add(file);
       fileIsResolved.clear(getAbsId(file));
     }
+    return true;
   }
 
   private void enable() {
@@ -714,13 +726,15 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     myApplication.runReadAction(new Runnable() {
       @Override
       public void run() {
-        fileToBackwardIds.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
-          @Override
-          public boolean execute(int fileId, TIntArrayList backIds) {
-            storage.addAll(fileId, backIds.toNativeArray());
-            return true;
-          }
-        });
+        if (!myApplication.isDisposed()) {
+          fileToBackwardIds.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
+            @Override
+            public boolean execute(int fileId, TIntArrayList backIds) {
+              storage.addAll(fileId, backIds.toNativeArray());
+              return true;
+            }
+          });
+        }
       }
     });
   }
@@ -729,23 +743,24 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   @NotNull
   private TIntHashSet calcForwardRefs(@NotNull final VirtualFile virtualFile, @NotNull final ProgressIndicator indicator)
     throws IndexNotReadyException, ApplicationUtil.CannotRunReadActionException {
-    if (myProject.isDisposed()) throw new ProcessCanceledException();
-    if (fileCount.incrementAndGet() % 100 == 0) {
-      PsiManager.getInstance(myProject).dropResolveCaches();
-      try {
-        storage.flush();
-        log.flush();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
 
     final TIntHashSet forward = new TIntHashSet();
 
     final PsiFile psiFile = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
+        if (myProject.isDisposed()) throw new ProcessCanceledException();
+        if (fileCount.incrementAndGet() % 100 == 0) {
+          PsiManager.getInstance(myProject).dropResolveCaches();
+          try {
+            storage.flush();
+            log.flush();
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+
         return PsiManager.getInstance(myProject).findFile(virtualFile);
       }
     });

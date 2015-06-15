@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
 
     <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
-    <lang.syntaxHighlighterFactory key="ReST"
+    <lang.syntaxHighlighterFactory language="ReST"
                                    implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
     <lang.parserDefinition language="ReST" implementationClass="com.jetbrains.rest.parsing.RestParserDefinition"/>
     <colorSettingsPage implementation="com.jetbrains.rest.RestColorsPage"/>

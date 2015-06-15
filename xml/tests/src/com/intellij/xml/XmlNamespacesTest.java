@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,16 +30,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public XmlNamespacesTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   public void testUnusedNamespaces() throws Exception {
     doUnusedDeclarationTest(
       "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" <warning descr=\"Namespace declaration is never used\">xmlns:xsi=\"http://www.w3.org/2001/XMLSc<caret>hema-instance\"</warning>/>",
-      "<all xmlns=\"http://www.w3.org/2001/XMLSchema\"/>", XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME);
+      "<all xmlns=\"http://www.w3.org/2001/XMLSchema\"/>", XmlBundle.message("xml.inspections.unused.schema.remove"));
   }
 
   public void testUnusedDefaultNamespace() throws Exception {
@@ -54,13 +47,13 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "<schema:schema\n" +
                             "        xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                            "        >\n" +
-                            "</schema:schema>", XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME, false);
+                            ">\n" +
+                            "</schema:schema>", XmlBundle.message("xml.inspections.unused.schema.remove"), false);
 
     doOptimizeImportsTest("<schema:schema \n" +
                           "            xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
                           "            xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                          "        >\n" +
+                          ">\n" +
                           "</schema:schema>");
   }
 
@@ -73,11 +66,11 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
       "<x:all\n" +
       "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
       "        xmlns:y=\"http://www.w3.org/2001/XMLSchema\"/>",
-      XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME, false);
+      XmlBundle.message("xml.inspections.unused.schema.remove"), false);
 
     doOptimizeImportsTest("<x:all\n" +
                           "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
-                          "        />");
+                          "/>");
   }
 
   public void testUnusedLocation() throws Exception {
@@ -89,7 +82,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "<x:all\n" +
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                            "        />",
+                            "/>",
                             XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
   }
 
@@ -104,7 +97,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                             "        xsi:schemaLocation=\"http://www.w3.org/2001/XMLSchema http://www.w3.org/2001/XMLSchema.xsd\"/>",
-                            XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME);
+                            XmlBundle.message("xml.inspections.unused.schema.remove"));
   }
 
   public void testUnusedDefaultLocation() throws Exception {
@@ -115,7 +108,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "<x:all\n" +
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                            "        />",
+                            "/>",
                             XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
   }
 
@@ -139,7 +132,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "\n" +
                             "  </xs:complexType>\n" +
                             "</xs:schema>",
-                            XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME);
+                            XmlBundle.message("xml.inspections.unused.schema.remove"));
   }
 
   public void testImplicitPrefixUsage() throws Exception {
@@ -227,7 +220,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
 
   public void testUsedInXmlns() throws Exception {
     myFixture.testHighlighting("spring.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
-    IntentionAction action = myFixture.getAvailableIntention(XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME);
+    IntentionAction action = myFixture.getAvailableIntention(XmlBundle.message("xml.inspections.unused.schema.remove"));
     assertNotNull(action);
     myFixture.launchAction(action);
     myFixture.checkResultByFile("spring_after.xml");

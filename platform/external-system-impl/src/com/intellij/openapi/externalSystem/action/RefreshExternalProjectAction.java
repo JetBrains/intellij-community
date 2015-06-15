@@ -1,8 +1,6 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
@@ -10,23 +8,15 @@ import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
-import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -70,31 +60,7 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
     // We save all documents because there is a possible case that there is an external system config file changed inside the ide.
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
     ExternalSystemUtil.refreshProject(
-      project, projectSystemId, externalConfigPathAware.getLinkedExternalProjectPath(),
-      new ExternalProjectRefreshCallback() {
-        @Override
-        public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-          if (externalProject == null) {
-            return;
-          }
-          ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
-            @Override
-            public void execute() {
-              ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-                @Override
-                public void run() {
-                  projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
-                }
-              });
-            }
-          });
-        }
-
-        @Override
-        public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        }
-      }, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+      project, projectSystemId, externalConfigPathAware.getLinkedExternalProjectPath(), false, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.process.ProcessAdapter;
@@ -29,11 +30,20 @@ import com.intellij.execution.testframework.sm.runner.ui.*;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
@@ -80,6 +90,7 @@ public class SMTestRunnerConnectionUtil {
    * @throws ExecutionException If IDEA cannot execute process this exception will
    *                            be caught and shown in error message box
    */
+  @NotNull
   public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                                   @NotNull ProcessHandler processHandler,
                                                                   @NotNull TestConsoleProperties consoleProperties,
@@ -89,29 +100,13 @@ public class SMTestRunnerConnectionUtil {
     return console;
   }
 
+  @NotNull
   public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
                                                          @NotNull TestConsoleProperties consoleProperties,
                                                          ExecutionEnvironment environment) {
-    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, null);
-  }
-
-  public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
-                                                                          @NotNull TestConsoleProperties consoleProperties,
-                                                                          ExecutionEnvironment environment,
-                                                                          @Nullable TestLocationProvider locator) {
-    CompositeTestLocationProvider provider = new CompositeTestLocationProvider(locator);
-    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, provider, false, null);
-  }
-
-  public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
-                                                                    @NotNull TestConsoleProperties consoleProperties,
-                                                                    ExecutionEnvironment environment,
-                                                                    @Nullable TestLocationProvider locator,
-                                                                    boolean idBasedTreeConstruction,
-                                                                    @Nullable TestProxyFilterProvider filterProvider) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
     SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, environment, splitterPropertyName);
-    initConsoleView(consoleView, testFrameworkName, locator, idBasedTreeConstruction, filterProvider);
+    initConsoleView(consoleView, testFrameworkName);
     return consoleView;
   }
 
@@ -120,26 +115,41 @@ public class SMTestRunnerConnectionUtil {
     return testFrameworkName + ".Splitter.Proportion";
   }
 
-  public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
-                                     @NotNull final String testFrameworkName,
-                                     @Nullable final TestLocationProvider locator,
-                                     final boolean idBasedTreeConstruction,
-                                     @Nullable final TestProxyFilterProvider filterProvider) {
+  public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView, @NotNull final String testFrameworkName) {
     consoleView.addAttachToProcessListener(new AttachToProcessListener() {
       @Override
       public void onAttachToProcess(@NotNull ProcessHandler processHandler) {
+        TestConsoleProperties properties = consoleView.getProperties();
+
         TestProxyPrinterProvider printerProvider = null;
-        if (filterProvider != null) {
-          printerProvider = new TestProxyPrinterProvider(consoleView, filterProvider);
+        if (properties instanceof SMTRunnerConsoleProperties) {
+          TestProxyFilterProvider filterProvider = ((SMTRunnerConsoleProperties)properties).getFilterProvider();
+          if (filterProvider != null) {
+            printerProvider = new TestProxyPrinterProvider(consoleView, filterProvider);
+          }
         }
+
+        SMTestLocator testLocator = FileUrlProvider.INSTANCE;
+        if (properties instanceof SMTRunnerConsoleProperties) {
+          SMTestLocator customLocator = ((SMTRunnerConsoleProperties)properties).getTestLocator();
+          if (customLocator != null) {
+            testLocator = new CombinedTestLocator(customLocator);
+          }
+        }
+
+        boolean idBasedTestTree = false;
+        if (properties instanceof SMTRunnerConsoleProperties) {
+          idBasedTestTree = ((SMTRunnerConsoleProperties)properties).isIdBasedTestTree();
+        }
+
         SMTestRunnerResultsForm resultsForm = consoleView.getResultsViewer();
-        attachEventsProcessors(consoleView.getProperties(),
+        attachEventsProcessors(properties,
                                resultsForm,
                                resultsForm.getStatisticsPane(),
                                processHandler,
                                testFrameworkName,
-                               locator,
-                               idBasedTreeConstruction,
+                               testLocator,
+                               idBasedTestTree,
                                printerProvider);
       }
     });
@@ -158,13 +168,13 @@ public class SMTestRunnerConnectionUtil {
     return Boolean.valueOf(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
   }
 
-  private static ProcessHandler attachEventsProcessors(@NotNull TestConsoleProperties consoleProperties,
+  private static ProcessHandler attachEventsProcessors(TestConsoleProperties consoleProperties,
                                                        SMTestRunnerResultsForm resultsViewer,
                                                        StatisticsPanel statisticsPane,
                                                        ProcessHandler processHandler,
-                                                       @NotNull String testFrameworkName,
-                                                       @Nullable TestLocationProvider locator,
-                                                       boolean idBasedTreeConstruction,
+                                                       String testFrameworkName,
+                                                       @Nullable SMTestLocator locator,
+                                                       boolean idBasedTestTree,
                                                        @Nullable TestProxyPrinterProvider printerProvider) {
     // build messages consumer
     final OutputToGeneralTestEventsConverter outputConsumer;
@@ -177,23 +187,23 @@ public class SMTestRunnerConnectionUtil {
 
     // events processor
     final GeneralTestEventsProcessor eventsProcessor;
-    if (idBasedTreeConstruction) {
+    if (idBasedTestTree) {
       eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
     }
     else {
       eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
     }
+
     if (locator != null) {
       eventsProcessor.setLocator(locator);
     }
+
     if (printerProvider != null) {
       eventsProcessor.setPrinterProvider(printerProvider);
     }
 
     // UI actions
     final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
-    // notifications
-    final SMTRunnerNotificationsHandler notifierHandler = new SMTRunnerNotificationsHandler(consoleProperties);
 
     // subscribe to events
 
@@ -204,9 +214,9 @@ public class SMTestRunnerConnectionUtil {
     // subscribes test runner's actions on results viewer events
     resultsViewer.addEventsListener(uiActionsHandler);
     // subscribes statistics tab viewer on event processor
-    eventsProcessor.addEventsListener(statisticsPane.createTestEventsListener());
-    // subscribes test runner's notification balloons on results viewer events
-    eventsProcessor.addEventsListener(notifierHandler);
+    if (Registry.is("tests.view.old.statistics.panel")) {
+      eventsProcessor.addEventsListener(statisticsPane.createTestEventsListener());
+    }
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -230,6 +240,85 @@ public class SMTestRunnerConnectionUtil {
     });
 
     return processHandler;
+  }
+
+  private static class CombinedTestLocator implements SMTestLocator, DumbAware {
+    private final SMTestLocator myLocator;
+
+    public CombinedTestLocator(SMTestLocator locator) {
+      myLocator = locator;
+    }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
+        return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
+      }
+      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+        return myLocator.getLocation(protocol, path, project, scope);
+      }
+      else {
+        return Collections.emptyList();
+      }
+    }
+  }
+
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"unused", "deprecation"})
+  public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
+                                                                          @NotNull TestConsoleProperties consoleProperties,
+                                                                          ExecutionEnvironment environment,
+                                                                          @Nullable TestLocationProvider locator) {
+    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, locator, false, null);
+  }
+
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"unused", "deprecation"})
+  public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
+                                                                    @NotNull TestConsoleProperties consoleProperties,
+                                                                    ExecutionEnvironment environment,
+                                                                    @Nullable TestLocationProvider locator,
+                                                                    boolean idBasedTreeConstruction,
+                                                                    @Nullable TestProxyFilterProvider filterProvider) {
+    String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
+    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, environment, splitterPropertyName);
+    initConsoleView(consoleView, testFrameworkName, locator, idBasedTreeConstruction, filterProvider);
+    return consoleView;
+  }
+
+  /** @deprecated use {@link #initConsoleView(SMTRunnerConsoleView, String)} (to be removed in IDEA 16) */
+  @SuppressWarnings({"unused", "deprecation"})
+  public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
+                                     @NotNull final String testFrameworkName,
+                                     @Nullable final TestLocationProvider locator,
+                                     final boolean idBasedTreeConstruction,
+                                     @Nullable final TestProxyFilterProvider filterProvider) {
+    consoleView.addAttachToProcessListener(new AttachToProcessListener() {
+      @Override
+      public void onAttachToProcess(@NotNull ProcessHandler processHandler) {
+        TestConsoleProperties properties = consoleView.getProperties();
+
+        SMTestLocator testLocator = new CompositeTestLocationProvider(locator);
+
+        TestProxyPrinterProvider printerProvider = null;
+        if (filterProvider != null) {
+          printerProvider = new TestProxyPrinterProvider(consoleView, filterProvider);
+        }
+
+        SMTestRunnerResultsForm resultsForm = consoleView.getResultsViewer();
+        attachEventsProcessors(properties,
+                               resultsForm,
+                               resultsForm.getStatisticsPane(),
+                               processHandler,
+                               testFrameworkName,
+                               testLocator,
+                               idBasedTreeConstruction,
+                               printerProvider);
+      }
+    });
+    consoleView.setHelpId("reference.runToolWindow.testResultsTab");
+    consoleView.initUI();
   }
 
   /** @deprecated use {@link #createAndAttachConsole(String, ProcessHandler, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */

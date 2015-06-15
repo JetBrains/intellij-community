@@ -6,8 +6,9 @@ import java.lang.Runnable;
 public class TestSynchronizedMapping {
   public int test(int a) {
     synchronized (this) {
-      return a++;
+      a++;
     }
+    return a++;
   }
 
   public void test2(String a) {

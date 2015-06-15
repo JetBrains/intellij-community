@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.model.DomainObjectSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
@@ -86,4 +87,12 @@ public interface ModuleExtendedModel extends Serializable {
    * @return a mapping between the name of a configuration and the files associated with it.
    */
   Map<String, Set<File>> getArtifactsByConfiguration();
+
+  /**
+   * Java source compatibility for the module. It may be {@code null}.
+   *
+   * @return the Java source compatibility for the module, or {@code null} if none was found.
+   */
+  @Nullable
+  String getJavaSourceCompatibility();
 }

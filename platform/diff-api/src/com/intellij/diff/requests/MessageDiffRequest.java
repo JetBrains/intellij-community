@@ -49,4 +49,8 @@ public abstract class MessageDiffRequest extends DiffRequest {
   public void setMessage(@NotNull String message) {
     myMessage = message;
   }
+
+  @Override
+  public final void onAssigned(boolean isAssigned) {
+  }
 }

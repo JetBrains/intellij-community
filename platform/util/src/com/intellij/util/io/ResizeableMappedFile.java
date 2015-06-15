@@ -91,16 +91,30 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   void ensureSize(final long pos) {
-    if (pos + 16 > Integer.MAX_VALUE) throw new RuntimeException("FATAL ERROR: Can't get over 2^32 address space");
     myLogicalSize = Math.max(pos, myLogicalSize);
-    while (pos >= realSize()) {
-      expand();
-    }
+    expand(pos);
   }
 
-  private void expand() {
-    final long newSize = Math.min(Integer.MAX_VALUE, ((realSize() + 1) * 13) >> 3);
-    resize((int)newSize);
+  private void expand(final long max) {
+    long realSize = realSize();
+    if (max <= realSize) return;
+    long suggestedSize = realSize + 1;
+
+    while (max > suggestedSize) {
+      long newSuggestedSize = (suggestedSize * 13) >> 3;
+      if (newSuggestedSize >= Integer.MAX_VALUE) {
+        suggestedSize += suggestedSize / 5;
+      } else {
+        suggestedSize = newSuggestedSize;
+      }
+    }
+
+    int roundFactor = PersistentBTreeEnumerator.PAGE_SIZE;
+    if (suggestedSize % roundFactor != 0) {
+      suggestedSize = ((suggestedSize / roundFactor) + 1) * roundFactor;
+    }
+
+    resize(suggestedSize);
   }
 
   private File getLengthFile() {

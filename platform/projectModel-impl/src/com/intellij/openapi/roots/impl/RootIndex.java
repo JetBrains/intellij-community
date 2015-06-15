@@ -25,14 +25,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.CollectionQuery;
-import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -54,28 +52,14 @@ public class RootIndex {
   };
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
 
-  private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMap<String, VirtualFile>() {
-    @NotNull
-    @Override
-    protected Collection<VirtualFile> createCollection() {
-      return ContainerUtil.newLinkedHashSet();
-    }
-  };
+  private final Map<VirtualFile, String> myPackagePrefixByRoot = ContainerUtil.newHashMap();
 
-  private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
-  private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
   private final InfoCache myInfoCache;
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
   @NotNull private final Project myProject;
+  private final PackageDirectoryCache myPackageDirectoryCache;
   private volatile Map<VirtualFile, OrderEntry[]> myOrderEntries;
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      myNonExistentPackages.clear();
-    }
-  });
 
   // made public for Upsource
   public RootIndex(@NotNull Project project, @NotNull InfoCache cache) {
@@ -83,6 +67,7 @@ public class RootIndex {
     myInfoCache = cache;
     final RootInfo info = buildRootInfo(project);
 
+    MultiMap<String, VirtualFile> rootsByPackagePrefix = MultiMap.create();
     Set<VirtualFile> allRoots = info.getAllRoots();
     for (VirtualFile root : allRoots) {
       List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
@@ -90,8 +75,15 @@ public class RootIndex {
                                          ? calcDirectoryInfo(root, hierarchy, info)
                                          : new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.IGNORED, null);
       cacheInfos(root, root, pair.first);
-      myPackagePrefixRoots.putValue(pair.second, root);
+      rootsByPackagePrefix.putValue(pair.second, root);
+      myPackagePrefixByRoot.put(root, pair.second);
     }
+    myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
+      @Override
+      protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
+        return getInfoForFile(dir).isInProject() && packageName.equals(getPackageName(dir));
+      }
+    };
   }
 
   @NotNull
@@ -245,13 +237,6 @@ public class RootIndex {
     return array;
   }
 
-
-  public void checkConsistency() {
-    for (VirtualFile file : myPackagePrefixRoots.values()) {
-      assert file.exists() : file.getPath() + " does not exist";
-    }
-  }
-
   private int getRootTypeId(@NotNull JpsModuleSourceRootType<?> rootType) {
     if (myRootTypeId.containsKey(rootType)) {
       return myRootTypeId.get(rootType);
@@ -321,42 +306,8 @@ public class RootIndex {
 
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
-    List<VirtualFile> result = myDirectoriesByPackageNameCache.get(packageName);
-    if (result == null) {
-      if (myNonExistentPackages.contains(packageName)) return EmptyQuery.getEmptyQuery();
-
-      result = ContainerUtil.newSmartList();
-
-      if (StringUtil.isNotEmpty(packageName) && !StringUtil.startsWithChar(packageName, '.')) {
-        int i = packageName.lastIndexOf('.');
-        while (true) {
-          String shortName = packageName.substring(i + 1);
-          String parentPackage = i > 0 ? packageName.substring(0, i) : "";
-          for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, true)) {
-            VirtualFile child = parentDir.findChild(shortName);
-            if (child != null && child.isDirectory() && getInfoForFile(child).isInProject()
-                && packageName.equals(getPackageName(child))) {
-              result.add(child);
-            }
-          }
-          if (i < 0) break;
-          i = packageName.lastIndexOf('.', i - 1);
-        }
-      }
-
-      for (VirtualFile file : myPackagePrefixRoots.get(packageName)) {
-        if (file.isDirectory()) {
-          result.add(file);
-        }
-      }
-
-      if (!result.isEmpty()) {
-        myDirectoriesByPackageNameCache.put(packageName, result);
-      } else {
-        myNonExistentPackages.add(packageName);
-      }
-    }
-
+    // Note that this method is used in upsource as well, hence, don't reduce this method's visibility.
+    List<VirtualFile> result = myPackageDirectoryCache.getDirectoriesByPackageName(packageName);
     if (!includeLibrarySources) {
       result = ContainerUtil.filter(result, new Condition<VirtualFile>() {
         @Override
@@ -376,10 +327,8 @@ public class RootIndex {
         return null;
       }
 
-      for (final Map.Entry<String, Collection<VirtualFile>> entry : myPackagePrefixRoots.entrySet()) {
-        if (entry.getValue().contains(dir)) {
-          return entry.getKey();
-        }
+      if (myPackagePrefixByRoot.containsKey(dir)) {
+        return myPackagePrefixByRoot.get(dir);
       }
 
       final VirtualFile parent = dir.getParent();
@@ -392,7 +341,7 @@ public class RootIndex {
   }
 
   @Nullable
-  protected static String getPackageNameForSubdir(String parentPackageName, @NotNull String subdirName) {
+  protected static String getPackageNameForSubdir(@Nullable String parentPackageName, @NotNull String subdirName) {
     if (parentPackageName == null) return null;
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }

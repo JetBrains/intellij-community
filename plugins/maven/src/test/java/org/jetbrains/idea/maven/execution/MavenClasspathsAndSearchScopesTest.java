@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,22 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathsList;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase;
@@ -156,6 +158,44 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m2/target/classes",
                             getProjectPath() + "/m3/target/classes",
                             getProjectPath() + "/m4/target/classes");
+  }
+
+  public void testDoNotIncludeTargetDirectoriesOfModuleDependenciesToLibraryClassesRoots() throws Exception {
+    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
+                                          "<artifactId>m</artifactId>" +
+                                          "<version>1</version>" +
+                                          "<dependencies>" +
+                                          "  <dependency>" +
+                                          "    <groupId>test</groupId>" +
+                                          "    <artifactId>dep</artifactId>" +
+                                          "    <version>1</version>" +
+                                          "  </dependency>" +
+                                          "</dependencies>");
+
+    VirtualFile dep = createModulePom("dep", "<groupId>test</groupId>" +
+                                           "<artifactId>dep</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.0</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+
+    importProjects(m, dep);
+    assertModules("m", "dep");
+
+    assertModuleModuleDeps("m", "dep");
+
+    setupJdkForModules("m", "dep");
+
+    createOutputDirectories();
+    Module module = getModule("m");
+    VirtualFile[] jdkRoots = ModuleRootManager.getInstance(module).getSdk().getRootProvider().getFiles(OrderRootType.CLASSES);
+    VirtualFile[] junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName("Maven: junit:junit:4.0")
+      .getFiles(OrderRootType.CLASSES);
+    assertOrderedEquals(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots(), ArrayUtil.mergeArrays(jdkRoots, junitRoots));
   }
 
   public void testDoNotIncludeTestClassesWhenConfiguringModuleDependenciesForProductionCode() throws Exception {
@@ -743,15 +783,27 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     importProjects(m1, m2);
     assertModules("m1", "m2");
 
-    List<Module> modules = Arrays.asList(getModule("m1"), getModule("m2"));
-    GlobalSearchScope scope = LibraryScopeCache.getInstance(myProject).getScopeForLibraryUsedIn(modules);
-    String libraryPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar";
-    assertSearchScope(scope,
+    Module m1m = ModuleManager.getInstance(myProject).findModuleByName("m1");
+    List<OrderEntry> modules1 = new ArrayList<OrderEntry>();
+    ModuleRootManager.getInstance(m1m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(new CommonProcessors.CollectProcessor<OrderEntry>(modules1));
+    GlobalSearchScope scope1 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules1);
+    assertSearchScope(scope1,
                       getProjectPath() + "/m1/src/main/java",
                       getProjectPath() + "/m1/src/test/java",
                       getProjectPath() + "/m2/src/main/java",
+                      getProjectPath() + "/m2/src/test/java"
+                      );
+
+    String libraryPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar";
+    Module m2m = ModuleManager.getInstance(myProject).findModuleByName("m2");
+    List<OrderEntry> modules2 = new ArrayList<OrderEntry>();
+    ModuleRootManager.getInstance(m2m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(new CommonProcessors.CollectProcessor<OrderEntry>(modules2));
+    GlobalSearchScope scope2 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules2);
+    assertSearchScope(scope2,
+                      getProjectPath() + "/m2/src/main/java",
                       getProjectPath() + "/m2/src/test/java",
-                      libraryPath);
+                      libraryPath
+    );
   }
 
   public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {
@@ -1095,6 +1147,9 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
 
   private void assertSearchScope(GlobalSearchScope searchScope, String... expectedPaths) {
     Collection<VirtualFile> roots;
+    if (searchScope instanceof DelegatingGlobalSearchScope) {
+      searchScope = ReflectionUtil.getField(DelegatingGlobalSearchScope.class, searchScope, GlobalSearchScope.class, "myBaseScope");
+    }
     if (searchScope instanceof ModuleWithDependenciesScope) {
       roots = ((ModuleWithDependenciesScope)searchScope).getRoots();
     }

@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -38,13 +39,25 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public int getColumnCount(float startX) {
+  public int getLogicalColumnCount(int startColumn) {
+    int tabSize = myView.getTabSize();
+    return tabSize - startColumn % tabSize;
+  }
+
+  @Override
+  public int getVisualColumnCount(float startX) {
     float x = getNextTabStop(startX);
     return EditorUtil.columnsNumber((int)(x - startX), myView.getPlainSpaceWidth());
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
+  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+  }
+
+  @NotNull
+  @Override
+  public LineFragment subFragment(int startOffset, int endOffset) {
+    return this;
   }
 
   @Override
@@ -53,34 +66,42 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public int offsetToColumn(float startX, int offset) {
-    return offset <= 0 ? 0 : getColumnCount(startX);
+  public int logicalToVisualColumn(float startX, int startColumn, int column) {
+    int visualColumnCount = getVisualColumnCount(startX);
+    int logicalColumnCount = getLogicalColumnCount(startColumn);
+    return column == logicalColumnCount ? visualColumnCount : Math.min(column, visualColumnCount - 1);
   }
 
   @Override
-  public int columnToOffset(float startX, int column) {
-    return column < getColumnCount(startX) ? 0 : 1;
+  public int visualToLogicalColumn(float startX, int startColumn, int column) {
+    int visualColumnCount = getVisualColumnCount(startX);
+    int logicalColumnCount = getLogicalColumnCount(startColumn);
+    return column == visualColumnCount ? logicalColumnCount : Math.min(column, logicalColumnCount - 1);
   }
 
   @Override
-  public int xToColumn(float startX, float x) {
-    if (x <= startX) return 0;
+  public int[] xToVisualColumn(float startX, float x) {
+    if (x <= startX) return new int[] {0, 0};
     float nextTabStop = getNextTabStop(startX);
-    if (x >= nextTabStop) return getColumnCount(startX);
+    if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};
+    int column, columnWithoutRounding;
     if (myEditor.getSettings().isCaretInsideTabs()) {
       int plainSpaceWidth = myView.getPlainSpaceWidth();
-      return ((int)(x - startX) + plainSpaceWidth / 2) / plainSpaceWidth;
+      column = ((int)(x - startX) + plainSpaceWidth / 2) / plainSpaceWidth;
+      columnWithoutRounding = ((int)(x - startX - 1)) / plainSpaceWidth;
     }
     else {
-      return x > (startX + nextTabStop) / 2 ? getColumnCount(startX) : 0;
+      column = x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
+      columnWithoutRounding = 0;
     }
+    return new int[] {column, column == columnWithoutRounding ? 1 : 0};
   }
 
   @Override
-  public float columnToX(float startX, int column) {
+  public float visualColumnToX(float startX, int column) {
     if (column <= 0) return startX;
-    if (column >= getColumnCount(startX)) return getNextTabStop(startX); 
-    return myView.getPlainSpaceWidth() * column;
+    if (column >= getVisualColumnCount(startX)) return getNextTabStop(startX); 
+    return startX + myView.getPlainSpaceWidth() * column;
   }
 
   private static int trimOffset(int offset) {

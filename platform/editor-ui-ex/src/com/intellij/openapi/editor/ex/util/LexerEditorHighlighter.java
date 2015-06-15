@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,9 +78,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public final synchronized boolean checkContentIsEqualTo(CharSequence sequence) {
     final Document document = getDocument();
-    return document instanceof DocumentEx &&
-           Comparing.equal(document.getImmutableCharSequence(), sequence) &&
-           !((DocumentEx)document).isInBulkUpdate();
+    return document != null && isInSyncWithDocument() && Comparing.equal(document.getImmutableCharSequence(), sequence);
   }
 
   public EditorColorsScheme getScheme() {
@@ -107,13 +105,12 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   @Override
   public HighlighterIterator createIterator(int startOffset) {
     synchronized (this) {
-      final Document document = getDocument();
-      if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
-        ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
-      }
-
-      if (mySegments.getSegmentCount() == 0 && document != null && document.getTextLength() > 0) {
-        // bulk mode was reset
+      if (!isInSyncWithDocument()) {
+        final Document document = getDocument();
+        assert document != null;
+        if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
+          ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
+        }
         doSetText(document.getCharsSequence());
       }
 
@@ -130,6 +127,11 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public boolean isValid() {
     Project project = myEditor.getProject();
     return project != null && !project.isDisposed();
+  }
+  
+  private boolean isInSyncWithDocument() {
+    Document document = getDocument();
+    return document == null || document.getTextLength() == 0 || mySegments.getSegmentCount() > 0;
   }
 
   private static boolean isInitialState(int data) {

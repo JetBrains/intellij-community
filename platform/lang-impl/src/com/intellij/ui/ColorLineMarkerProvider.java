@@ -16,10 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,6 +41,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class ColorLineMarkerProvider implements LineMarkerProvider {
+
   private final ElementColorProvider[] myExtensions = ElementColorProvider.EP_NAME.getExtensions();
 
   @Override
@@ -51,7 +49,9 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
     for (ElementColorProvider colorProvider : myExtensions) {
       final Color color = colorProvider.getColorFrom(element);
       if (color != null) {
-        return new MyInfo(element, color, colorProvider);
+        MyInfo info = new MyInfo(element, color, colorProvider);
+        NavigateAction.setNavigateAction(info, "Choose color", null);
+        return info;
       }
     }
     return null;
@@ -78,7 +78,7 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
 
                 final Editor editor = PsiUtilBase.findEditor(element);
                 assert editor != null;
-                final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose color", color, true);
+                final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose Color", color, true);
                 if (c != null) {
                   AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(ColorLineMarkerProvider.class);
                   try {

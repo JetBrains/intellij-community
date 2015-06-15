@@ -23,13 +23,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.EditorTextField;
+import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ArrayUtil;
@@ -54,14 +53,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.xml.namespace.QName;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
-import java.util.List;
 
+@SuppressWarnings("unchecked")
 public abstract class InputExpressionDialog<FormType extends InputForm> extends ModeSwitchableDialog {
     protected final Project myProject;
     protected final FormType myForm;
@@ -72,8 +69,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     private final Document myDocument;
     private final MultilineEditor myEditor;
 
-    private final EditorTextField myComboboxEditor;
-    private final ComboBox myComboBox = new ComboBox(300);
+    private final EditorComboBox myComboBox;
     private JComponent myEditorComponent;
 
     @Nullable private Set<Namespace> myNamespaceCache;
@@ -97,7 +93,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         myModel = new HistoryModel(_history, myDocument);
         myEditor = new MultilineEditor(myDocument, project, XPathFileType.XPATH, myModel);
         myModel.addListDataListener(new ListDataListener() {
-            final PsiDocumentManager docMgr = PsiDocumentManager.getInstance(project);
             final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
 
             public void intervalAdded(ListDataEvent e) {
@@ -116,17 +111,15 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 }
             }
         });
-
-        myComboboxEditor = new EditorTextField(myDocument, project, XPathFileType.XPATH);
+        myComboBox = new EditorComboBox(myDocument, project, XPathFileType.XPATH);
         myComboBox.setRenderer(new ListCellRendererWrapper<HistoryElement>() {
-          @Override
-          public void customize(JList list, HistoryElement value, int index, boolean selected, boolean hasFocus) {
-            setText(value != null ? value.expression : "");
-          }
+            @Override
+            public void customize(JList list, HistoryElement value, int index, boolean selected, boolean hasFocus) {
+                setText(value != null ? value.expression : "");
+            }
         });
         myComboBox.setModel(myModel);
 
-        myComboBox.setEditor(new EditorAdapter(myComboboxEditor));
         myComboBox.setEditable(true);
 
         myDocument.addDocumentListener(new DocumentAdapter() {
@@ -254,7 +247,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         if (getMode() == Mode.ADVANCED) {
             return myEditor.getField().getEditor();
         } else {
-            return myComboboxEditor.getEditor();
+            return myComboBox.getEditorEx();
         }
     }
 
@@ -410,35 +403,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
     }
 
-    protected class EditorAdapter extends BasicComboBoxEditor {
-        private final EditorTextField myTf;
-
-        public EditorAdapter(EditorTextField tf) {
-            myTf = tf;
-        }
-
-        public Component getEditorComponent() {
-            return myTf.getComponent();
-        }
-
-        @Nullable
-        public Object getItem() {
-            return myModel.getSelectedItem();
-        }
-
-        public void selectAll() {
-            myTf.selectAll();
-        }
-
-        public void setItem(Object object) {
-            if (object == null) {
-                myEditor.getField().setText("");
-            } else {
-                myEditor.getField().setText(((HistoryElement)object).expression);
-            }
-        }
-    }
-
     private static class MyVariableResolver extends SimpleVariableContext {
         private final HistoryModel myModel;
 
@@ -568,7 +532,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         @NotNull
         public String getText() {
-            return "Register Namespace Prefix";
+            return "Register namespace prefix";
         }
 
         @NotNull

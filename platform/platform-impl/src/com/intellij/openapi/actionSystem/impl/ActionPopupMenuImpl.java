@@ -42,7 +42,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
+public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
 
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
@@ -128,12 +128,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       }
 
       // Determine real client area of target graphics configuration
-      Insets insets = ScreenUtil.getScreenInsets(targetGraphicsConfiguration);
-      Rectangle targetRectangle = targetGraphicsConfiguration.getBounds();
-      targetRectangle.x += insets.left;
-      targetRectangle.y += insets.top;
-      targetRectangle.width -= insets.left + insets.right;
-      targetRectangle.height -= insets.top + insets.bottom;
+      Rectangle targetRectangle = ScreenUtil.getScreenRectangle(targetGraphicsConfiguration);
 
       // Fit popup into targetRectangle.
       // The algorithm is the following:

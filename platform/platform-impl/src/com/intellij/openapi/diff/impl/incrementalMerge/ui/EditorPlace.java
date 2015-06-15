@@ -68,7 +68,7 @@ public class EditorPlace extends JComponent implements Disposable, ButtonlessScr
 
     int offset = DiffDivider.MERGE_SCROLL_DIVIDER_POLYGONS_OFFSET;
     ArrayList<DividerPolygon> polygons =
-      DividerPolygon.createVisiblePolygons(myMergePanel.getSecondEditingSide(true), FragmentSide.SIDE1, offset);
+      DividerPolygon.createVisiblePolygons(myMergePanel.getSecondEditingSide(), FragmentSide.SIDE1, offset);
     for (DividerPolygon polygon : polygons) {
       int startY = polygon.getTopLeftY();
       int endY = polygon.getBottomLeftY();

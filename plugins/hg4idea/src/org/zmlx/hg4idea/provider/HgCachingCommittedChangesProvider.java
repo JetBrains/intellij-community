@@ -103,7 +103,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
 
     if (!StringUtil.isEmpty(revisionPath)) {
       VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
-      return new HgContentRevision(project, new HgFile(root, new File(revisionPath)), revisionNumber);
+      return HgContentRevision.create(project, new HgFile(root, new File(revisionPath)), revisionNumber);
     }
     else {
       return null;
@@ -267,9 +267,9 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
                               FileStatus aStatus) {
 
     HgContentRevision beforeRevision =
-      fileBefore == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
+      fileBefore == null ? null : HgContentRevision.create(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
     HgContentRevision afterRevision =
-      fileAfter == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
+      fileAfter == null ? null : HgContentRevision.create(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 
@@ -310,7 +310,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     if (localVirtualFile == null) {
       return null;
     }
-    final FilePathImpl filePath = new FilePathImpl(localVirtualFile);
+    final FilePath filePath = VcsUtil.getFilePath(localVirtualFile);
     final CommittedChangeList list = getCommittedChangesForRevision(getLocationFor(filePath), number.asString());
     if (list != null) {
       return new Pair<CommittedChangeList, FilePath>(list, filePath);

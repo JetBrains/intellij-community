@@ -47,10 +47,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.ChildFocusWatcher;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1126,7 +1123,9 @@ public class AbstractPopup implements JBPopup {
     mySpeedSearchPatternField = new JTextField();
     if (SystemInfo.isMac) {
       Font f = mySpeedSearchPatternField.getFont();
-      mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+      if (f != null) {
+        mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+      }
     }
   }
 
@@ -1597,11 +1596,7 @@ public class AbstractPopup implements JBPopup {
   public static Window setSize(JComponent content, final Dimension size) {
     final Window popupWindow = getContentWindow(content);
     if (popupWindow == null) return null;
-    Insets insets = content.getInsets();
-    if (insets != null) {
-      size.width += insets.left + insets.right;
-      size.height += insets.top + insets.bottom;
-    }
+    JBInsets.addTo(size, content.getInsets());
     content.setPreferredSize(size);
     popupWindow.pack();
     return popupWindow;

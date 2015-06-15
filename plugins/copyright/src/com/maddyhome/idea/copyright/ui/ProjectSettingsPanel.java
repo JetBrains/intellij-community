@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,12 +127,11 @@ public class ProjectSettingsPanel {
   }
 
   public JComponent getMainComponent() {
-    final JPanel panel = new JPanel(new BorderLayout(0, 10));
+
     final LabeledComponent<JComboBox> component = new LabeledComponent<JComboBox>();
     component.setText("Default &project copyright:");
     component.setLabelLocation(BorderLayout.WEST);
     component.setComponent(myProfilesComboBox);
-    panel.add(component, BorderLayout.NORTH);
     ElementProducer<ScopeSetting> producer = new ElementProducer<ScopeSetting>() {
       @Override
       public ScopeSetting createElement() {
@@ -145,9 +144,10 @@ public class ProjectSettingsPanel {
       }
     };
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myScopeMappingTable, producer);
-    panel.add(decorator.createPanel(), BorderLayout.CENTER);
-    panel.add(myScopesLink, BorderLayout.SOUTH);
-    return panel;
+    return JBUI.Panels.simplePanel(0, 10)
+      .addToTop(component)
+      .addToCenter(decorator.createPanel())
+      .addToBottom(myScopesLink);
   }
 
   public boolean isModified() {

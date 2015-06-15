@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.scope.conflictResolvers;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -54,7 +55,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver");
 
   private final PsiElement myArgumentsList;
-  private PsiType[] myActualParameterTypes;
+  private final PsiType[] myActualParameterTypes;
   protected LanguageLevel myLanguageLevel;
 
   public JavaMethodsConflictResolver(@NotNull PsiExpressionList list, @NotNull LanguageLevel languageLevel) {
@@ -71,15 +72,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   @Override
   public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
+    /*
+    //non-default policies
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(myArgumentsList);
     if (properties != null) {
       final PsiMethod method = properties.getMethod();
-      for (CandidateInfo conflict : conflicts) {
-        if (conflict.getElement() == method) {
-          return conflict;
-        }
-      }
-    }
+      LOG.error("Recursive conflict resolution for:" + method + "; " + myArgumentsList.getText() + "; file="
+                + (method == null ? "<unknown>" : method.getContainingFile()));
+    }*/
     return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, true, new Computable<CandidateInfo>() {
       @Override
       public CandidateInfo compute() {
@@ -351,9 +351,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return ((MethodCandidateInfo)info).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }
 
-  public static boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
-                                              final int argumentsCount,
-                                              boolean ignoreIfStaticsProblem) {
+  public boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
+                                       final int argumentsCount,
+                                       boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
     TIntArrayList unmatchedIndices = null;
     for (int i = 0; i < conflicts.size(); i++) {
@@ -362,7 +362,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (ignoreIfStaticsProblem && !info.isStaticsScopeCorrect()) return true;
       if (!(info instanceof MethodCandidateInfo)) continue;
       PsiMethod method = ((MethodCandidateInfo)info).getElement();
-      if (method.isVarArgs() || method.getParameterList().getParametersCount() == argumentsCount) {
+      final int parametersCount = method.getParameterList().getParametersCount();
+      if (((myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? ((MethodCandidateInfo)info).isVarargs() : method.isVarArgs()) && parametersCount - 1 <= argumentsCount) || 
+          parametersCount == argumentsCount) {
         // remove all unmatched before
         if (unmatchedIndices != null) {
           for (int u=unmatchedIndices.size()-1; u>=0; u--) {
@@ -446,12 +448,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static boolean isBoxingHappened(PsiType argType, PsiType parameterType, @NotNull LanguageLevel languageLevel) {
-    if (argType == null) return parameterType instanceof PsiPrimitiveType;
     if (parameterType instanceof PsiClassType) {
       parameterType = ((PsiClassType)parameterType).setLanguageLevel(languageLevel);
     }
 
-    return TypeConversionUtil.boxingConversionApplicable(parameterType, argType);
+    return argType != null && TypeConversionUtil.boxingConversionApplicable(parameterType, argType);
   }
 
   private Specifics isMoreSpecific(@NotNull MethodCandidateInfo info1,

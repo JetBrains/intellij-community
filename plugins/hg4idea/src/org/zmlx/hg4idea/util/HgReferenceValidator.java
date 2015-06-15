@@ -21,27 +21,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-import java.util.Collection;
-import java.util.regex.Pattern;
-
 import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
 
-public class HgReferenceValidator implements InputValidatorEx {
+public abstract class HgReferenceValidator implements InputValidatorEx {
 
-  private final HgRepository myRepository;
-  private String myErrorText;
+  protected final HgRepository myRepository;
+  protected String myErrorText;
 
-  private static final Pattern ILLEGAL = Pattern.compile(
-    ".*:.*|" + // colon character is not allowed
-    "[0-9]*" // reference name couldn't contain only digits
-  );
-
-  private HgReferenceValidator(@NotNull HgRepository repository) {
+  protected HgReferenceValidator(@NotNull HgRepository repository) {
     myRepository = repository;
-  }
-
-  public static HgReferenceValidator newInstance(@NotNull HgRepository repository) {
-    return new HgReferenceValidator(repository);
   }
 
   @Override
@@ -49,11 +37,11 @@ public class HgReferenceValidator implements InputValidatorEx {
     if (StringUtil.isEmptyOrSpaces(name)) {
       return false;
     }
-    if (ILLEGAL.matcher(name).matches()) {
-      myErrorText = "Invalid name for branch/tag";
+    if (name.contains(":")) {
+      myErrorText = "Name could not contain colons";
       return false;
     }
-    return !isReservedWord(name) && !hasConflictsWithAnotherBranch(name);
+    return !isReservedWord(name) && !hasConflictsWithAnotherNames(name);
   }
 
   @Override
@@ -61,18 +49,12 @@ public class HgReferenceValidator implements InputValidatorEx {
     return checkInput(name);
   }
 
-  boolean isReservedWord(@Nullable String name) {
+  private boolean isReservedWord(@Nullable String name) {
     myErrorText = TIP_REFERENCE.equals(name) ? String.format("The name \'%s\' is reserved.", name) : null;
     return myErrorText != null;
   }
 
-  boolean hasConflictsWithAnotherBranch(@Nullable String name) {
-    Collection<String> branches = myRepository.getBranches().keySet();
-    String currentBranch = myRepository.getCurrentBranch(); //  branches set doesn't contain uncommitted branch -> need an addition check
-    myErrorText = currentBranch.equals(name) || branches.contains(name)
-                  ? String.format("A branch with the \'%s\' name already exists", name) : null;
-    return myErrorText != null;
-  }
+  protected abstract boolean hasConflictsWithAnotherNames(@Nullable String name);
 
   @Nullable
   @Override

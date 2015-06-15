@@ -107,8 +107,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
         else {
           SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(directoryFile, project);
           if (sourceRoot != null) {
-            String rootTypeName = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType()).getRootTypeName();
-            data.addText(" (" + rootTypeName.toLowerCase(Locale.getDefault()) + " root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
+            ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType());
+            if (handler != null) {
+              String rootTypeName = handler.getRootTypeName();
+              data.addText(" (" + rootTypeName.toLowerCase(Locale.getDefault()) + " root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
+            }
           }
         }
 

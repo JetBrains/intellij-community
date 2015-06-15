@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class HtmlLexer extends BaseHtmlLexer {
   private static IElementType ourStyleElementType;
   private static IElementType ourInlineStyleElementType;
-  private static IElementType ourInlineScriptElementType;
+  private static final IElementType ourInlineScriptElementType;
 
   static {
     HtmlEmbeddedTokenTypesProvider[] extensions = Extensions.getExtensions(HtmlEmbeddedTokenTypesProvider.EXTENSION_POINT_NAME);

@@ -8,9 +8,8 @@ You may also need "get_what_to_run_by_env" that gets folder (current or passed a
 import os
 import time
 import abc
-
 import tcmessages
-
+from _jb_utils import VersionAgnosticUtils
 
 __author__ = 'Ilya.Kazakevich'
 
@@ -139,11 +138,11 @@ class BddRunner(object):
         :param name: test name
         :type name str
         :param message: failure message
-        :type message str
+        :type message basestring
         :param details: failure details (probably stacktrace)
         :type details str
         """
-        self.tc_messages.testFailed(name, message=message, details=details)
+        self.tc_messages.testFailed(name, message=VersionAgnosticUtils().to_unicode(message), details=details)
         self.__last_test_name = None
 
     def _test_passed(self, name, duration=None):
@@ -227,5 +226,3 @@ class BddRunner(object):
         Implement it! It should launch tests using your BDD. Use "self._" functions to report results.
         """
         pass
-
-

@@ -124,6 +124,26 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     }
   }
 
+  @Override
+  public boolean isKeywordOnly() {
+    final PyParameterList parameters = getStubOrPsiParentOfType(PyParameterList.class);
+    if (parameters == null) {
+      return false;
+    }
+    boolean varargSeen = false;
+    for (PyParameter param : parameters.getParameters()) {
+      if (param == this) {
+        break;
+      }
+      final PyNamedParameter named = param.getAsNamed();
+      if ((named != null && named.isPositionalContainer()) || param instanceof PySingleStarParameter) {
+        varargSeen = true;
+        break;
+      }
+    }
+    return varargSeen;
+  }
+
   @Nullable
   public PyExpression getDefaultValue() {
     final PyNamedParameterStub stub = getStub();
@@ -349,11 +369,29 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @Nullable
-  private static PyNamedParameter getParameterByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
-    if (call != null) {
-      final PyArgumentList argumentList = call.getArgumentList();
-      if (argumentList != null) {
+  private PyNamedParameter getParameterByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    final PyArgumentList argumentList = PsiTreeUtil.getParentOfType(element, PyArgumentList.class);
+    if (argumentList != null) {
+      boolean elementIsArgument = false;
+      for (PyExpression argument : argumentList.getArgumentExpressions()) {
+        if (PyPsiUtils.flattenParens(argument) == element) {
+          elementIsArgument = true;
+          break;
+        }
+      }
+      final PyCallExpression callExpression = argumentList.getCallExpression();
+      if (elementIsArgument && callExpression != null) {
+        final PyExpression callee = callExpression.getCallee();
+        if (callee instanceof PyReferenceExpression) {
+          final PyReferenceExpression calleeReferenceExpr = (PyReferenceExpression)callee;
+          final PyExpression firstQualifier = PyPsiUtils.getFirstQualifier(calleeReferenceExpr);
+          if (firstQualifier != null) {
+            final PsiReference ref = firstQualifier.getReference();
+            if (ref != null && ref.isReferenceTo(this)) {
+              return null;
+            }
+          }
+        }
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
         final CallArgumentsMapping mapping = argumentList.analyzeCall(resolveContext);
         for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {

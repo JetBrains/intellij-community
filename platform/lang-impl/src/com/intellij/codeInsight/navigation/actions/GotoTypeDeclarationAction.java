@@ -18,7 +18,7 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -110,10 +110,10 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
 
   @Nullable
   public static PsiElement[] findSymbolTypes(@NotNull Editor editor, int offset) {
-    PsiElement targetElement = TargetElementUtilBase.getInstance().findTargetElement(editor,
-                                                                                     TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-                                                                                     TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-                                                                                     TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
+    PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor,
+                                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                     TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                                                                     TargetElementUtil.LOOKUP_ITEM_ACCEPTED,
                                                                                      offset);
 
     if (targetElement != null) {
@@ -121,7 +121,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       return symbolType == null ? PsiElement.EMPTY_ARRAY : symbolType;
     }
 
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor, offset);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor, offset);
     if (psiReference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
       Set<PsiElement> types = new THashSet<PsiElement>();

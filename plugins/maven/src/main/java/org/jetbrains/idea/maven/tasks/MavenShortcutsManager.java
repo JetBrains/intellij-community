@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.maven.tasks;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MavenShortcutsManager extends MavenSimpleProjectComponent {
+public class MavenShortcutsManager extends MavenSimpleProjectComponent implements Disposable {
   private static final String ACTION_ID_PREFIX = "Maven_";
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
@@ -67,6 +67,11 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
   public MavenShortcutsManager(Project project, MavenProjectsManager projectsManager, MavenRunner runner) {
     super(project);
     myProjectsManager = projectsManager;
+  }
+
+  @Override
+  public void dispose() {
+
   }
 
   @Override
@@ -147,7 +152,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
     public MyKeymapListener() {
       KeymapManager keymapManager = KeymapManager.getInstance();
       listenTo(keymapManager.getActiveKeymap());
-      keymapManager.addKeymapManagerListener(this);
+      keymapManager.addKeymapManagerListener(this, MavenShortcutsManager.this);
     }
 
     @Override
@@ -173,7 +178,6 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
 
     public void stopListen() {
       listenTo(null);
-      KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(this);
     }
   }
 

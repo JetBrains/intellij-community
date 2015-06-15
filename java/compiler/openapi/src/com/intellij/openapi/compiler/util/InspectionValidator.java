@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -38,23 +39,51 @@ import java.util.Map;
  * @author peter
  */
 public abstract class InspectionValidator {
-  public static final ExtensionPointName<InspectionValidator> EP_NAME = ExtensionPointName.create("com.intellij.compiler.inspectionValidator");
+  public static final ExtensionPointName<InspectionValidator> EP_NAME =
+    ExtensionPointName.create("com.intellij.compiler.inspectionValidator");
   private final String myDescription;
   private final String myProgressIndicatorText;
+
+  @Nullable
   private final Class<? extends LocalInspectionTool>[] myInspectionToolClasses;
 
-  protected InspectionValidator(@NotNull final String description, @NotNull final String progressIndicatorText, final Class<? extends LocalInspectionTool>... inspectionToolClasses) {
+  @Nullable
+  private final InspectionToolProvider myInspectionToolProvider;
+
+  /**
+   * @since 15
+   */
+  protected InspectionValidator(@NotNull final String description, @NotNull final String progressIndicatorText) {
+    myDescription = description;
+    myProgressIndicatorText = progressIndicatorText;
+    myInspectionToolClasses = null;
+    myInspectionToolProvider = null;
+  }
+
+  /**
+   * @deprecated Provide inspection classes via {@link #getInspectionToolClasses(CompileContext)} instead.
+   */
+  protected InspectionValidator(@NotNull final String description,
+                                @NotNull final String progressIndicatorText,
+                                final Class<? extends LocalInspectionTool>... inspectionToolClasses) {
     myDescription = description;
     myProgressIndicatorText = progressIndicatorText;
     myInspectionToolClasses = inspectionToolClasses;
+    myInspectionToolProvider = null;
   }
 
-  protected InspectionValidator(@NotNull final String description, @NotNull final String progressIndicatorText, final InspectionToolProvider provider) {
-    //noinspection unchecked
-    this(description, progressIndicatorText, provider.getInspectionClasses());
+  protected InspectionValidator(@NotNull final String description,
+                                @NotNull final String progressIndicatorText,
+                                final InspectionToolProvider provider) {
+    myDescription = description;
+    myProgressIndicatorText = progressIndicatorText;
+    myInspectionToolClasses = null;
+    myInspectionToolProvider = provider;
   }
 
-  protected InspectionValidator(@NotNull final String description, @NotNull final String progressIndicatorText, final Class<? extends InspectionToolProvider> providerClass)
+  protected InspectionValidator(@NotNull final String description,
+                                @NotNull final String progressIndicatorText,
+                                final Class<? extends InspectionToolProvider> providerClass)
     throws IllegalAccessException, InstantiationException {
     this(description, progressIndicatorText, providerClass.newInstance());
   }
@@ -69,9 +98,15 @@ public abstract class InspectionValidator {
     return Collections.emptyList();
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   public Class<? extends LocalInspectionTool>[] getInspectionToolClasses(final CompileContext context) {
-    return myInspectionToolClasses;
+    if (myInspectionToolClasses != null) {
+      return myInspectionToolClasses;
+    }
+
+    assert myInspectionToolProvider != null : "getInspectionToolClasses() must be overridden";
+    return myInspectionToolProvider.getInspectionClasses();
   }
 
   public final String getDescription() {
@@ -82,7 +117,9 @@ public abstract class InspectionValidator {
     return myProgressIndicatorText;
   }
 
-  public CompilerMessageCategory getCategoryByHighlightDisplayLevel(@NotNull final HighlightDisplayLevel severity, @NotNull final VirtualFile virtualFile, @NotNull final CompileContext context) {
+  public CompilerMessageCategory getCategoryByHighlightDisplayLevel(@NotNull final HighlightDisplayLevel severity,
+                                                                    @NotNull final VirtualFile virtualFile,
+                                                                    @NotNull final CompileContext context) {
     if (severity == HighlightDisplayLevel.ERROR) return CompilerMessageCategory.ERROR;
     if (severity == HighlightDisplayLevel.WARNING) return CompilerMessageCategory.WARNING;
     return CompilerMessageCategory.INFORMATION;

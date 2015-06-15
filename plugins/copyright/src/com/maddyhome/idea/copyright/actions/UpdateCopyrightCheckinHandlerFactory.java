@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -51,9 +51,7 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
         final JCheckBox updateCopyrightCb = new JCheckBox("Update copyright");
         return new RefreshableOnComponent() {
           public JComponent getComponent() {
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.add(updateCopyrightCb, BorderLayout.WEST);
-            return panel;
+            return JBUI.Panels.simplePanel().addToLeft(updateCopyrightCb);
           }
 
           public void refresh() {

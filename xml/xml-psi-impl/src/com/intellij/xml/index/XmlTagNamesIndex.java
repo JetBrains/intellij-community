@@ -16,11 +16,13 @@
 package com.intellij.xml.index;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -55,17 +57,14 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
       @Override
       @NotNull
       public Map<String, Void> map(@NotNull final FileContent inputData) {
-        final Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
-        if (tags != null && !tags.isEmpty()) {
-          final HashMap<String, Void> map = new HashMap<String, Void>(tags.size());
-          for (String tag : tags) {
-            map.put(tag, null);
-          }
-          return map;
+        CharSequence text = inputData.getContentAsText();
+        if (StringUtil.indexOf(text, XmlUtil.XML_SCHEMA_URI) == -1) return Collections.emptyMap();
+        Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(text));
+        Map<String, Void> map = new HashMap<String, Void>(tags.size());
+        for (String tag : tags) {
+          map.put(tag, null);
         }
-        else {
-          return Collections.emptyMap();
-        }
+        return map;
       }
     };
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -70,7 +69,7 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
           EditorNotifications notifications = EditorNotifications.getInstance(myProject);
           for (VFileEvent event : events) {
             VirtualFile file = event.getFile();
-            if (openFiles.contains(file)) {
+            if (file != null && openFiles.contains(file)) {
               notifications.updateNotifications(file);
             }
           }
@@ -109,7 +108,7 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
       @Override
       public void run() {
         if (!myProject.isDisposed()) {
-          RefreshQueue.getInstance().refresh(false, false, null, file);
+          file.refresh(false, false);
           EditorNotifications.getInstance(myProject).updateNotifications(file);
         }
       }

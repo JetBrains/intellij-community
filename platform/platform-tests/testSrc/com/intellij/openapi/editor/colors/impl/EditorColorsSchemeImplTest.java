@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -30,13 +29,10 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
+import static java.util.Collections.singletonList;
 
 public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase {
   EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
-
-  static {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),
@@ -88,15 +84,15 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontName(fontName2);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(fontName1),
-               Arrays.asList(fontName1),
+               singletonList(fontName1),
+               singletonList(fontName1),
                fontName1,
                fontName1, FontPreferences.DEFAULT_FONT_SIZE);
     assertEquals(fontName1, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(fontName2),
-               Arrays.asList(fontName2),
+               singletonList(fontName2),
+               singletonList(fontName2),
                fontName2,
                fontName2, FontPreferences.DEFAULT_FONT_SIZE);
     assertEquals(fontName2, myScheme.getConsoleFontName());
@@ -108,15 +104,15 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontSize(21);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, 25);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
     assertEquals(25, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, 21);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getConsoleFontName());
@@ -132,15 +128,15 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontSize(21);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(fontName1),
-               Arrays.asList(fontName1),
+               singletonList(fontName1),
+               singletonList(fontName1),
                fontName1,
                fontName1, 25);
     assertEquals(fontName1, myScheme.getEditorFontName());
     assertEquals(25, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(fontName2),
-               Arrays.asList(fontName2),
+               singletonList(fontName2),
+               singletonList(fontName2),
                fontName2,
                fontName2, 21);
     assertEquals(fontName2, myScheme.getConsoleFontName());
@@ -156,15 +152,15 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontName(fontName2);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(fontName1),
-               Arrays.asList(fontName1),
+               singletonList(fontName1),
+               singletonList(fontName1),
                fontName1,
                fontName1, 25);
     assertEquals(fontName1, myScheme.getEditorFontName());
     assertEquals(25, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(fontName2),
-               Arrays.asList(fontName2),
+               singletonList(fontName2),
+               singletonList(fontName2),
                fontName2,
                fontName2, 21);
     assertEquals(fontName2, myScheme.getConsoleFontName());

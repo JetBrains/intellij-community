@@ -28,7 +28,7 @@ public class GitCheckoutRevisionAction extends GitLogSingleCommitAction {
   @Override
   protected void actionPerformed(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
     GitBrancher brancher = ServiceManager.getService(repository.getProject(), GitBrancher.class);
-    brancher.checkout(commit.getId().asString(), Collections.singletonList(repository), null);
+    brancher.checkout(commit.getId().asString(), false, Collections.singletonList(repository), null);
   }
 
 }

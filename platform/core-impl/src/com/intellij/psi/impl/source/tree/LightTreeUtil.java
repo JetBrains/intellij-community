@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,9 @@ public class LightTreeUtil {
   }
 
   public static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
-    if (skipTypes != null && skipTypes.contains(node.getTokenType())) return;
+    if (skipTypes != null && skipTypes.contains(node.getTokenType())) {
+      return;
+    }
 
     if (node instanceof LighterASTTokenNode) {
       buffer.append(((LighterASTTokenNode)node).getText());
@@ -130,5 +132,6 @@ public class LightTreeUtil {
     for (int i = 0, size = children.size(); i < size; ++i) {
       toBuffer(tree, children.get(i), buffer, skipTypes);
     }
+    tree.disposeChildren(children);
   }
 }

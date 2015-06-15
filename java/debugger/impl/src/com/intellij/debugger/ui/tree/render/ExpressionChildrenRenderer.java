@@ -33,6 +33,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Value;
@@ -148,7 +149,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
       expressionValue, context);
   }
 
-  private NodeRenderer getChildrenRenderer(Value childrenValue, ValueDescriptor parentDescriptor) {
+  private static NodeRenderer getChildrenRenderer(Value childrenValue, ValueDescriptor parentDescriptor) {
     NodeRenderer renderer = getLastChildrenRenderer(parentDescriptor);
     if (renderer == null || childrenValue == null || !renderer.isApplicable(childrenValue.type())) {
       renderer = DebugProcessImpl.getDefaultRenderer(childrenValue != null ? childrenValue.type() : null);
@@ -160,7 +161,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
   public boolean isExpandable(Value value, final EvaluationContext context, NodeDescriptor parentDescriptor) {
     final EvaluationContext evaluationContext = context.createEvaluationContext(value);
 
-    if(!"".equals(myChildrenExpandable.getReferenceExpression().getText())) {
+    if(!StringUtil.isEmpty(myChildrenExpandable.getReferenceExpression().getText())) {
       try {
         Value expanded = myChildrenExpandable.getEvaluator(evaluationContext.getProject()).evaluate(evaluationContext);
         if(expanded instanceof BooleanValue) {
@@ -174,9 +175,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
 
     try {
       Value children = evaluateChildren(evaluationContext, parentDescriptor);
-
-      ChildrenRenderer defaultChildrenRenderer = ((DebugProcessImpl)evaluationContext.getDebugProcess()).getDefaultRenderer(value.type());
-
+      ChildrenRenderer defaultChildrenRenderer = DebugProcessImpl.getDefaultRenderer(value.type());
       return defaultChildrenRenderer.isExpandable(children, evaluationContext, parentDescriptor);
     }
     catch (EvaluateException e) {

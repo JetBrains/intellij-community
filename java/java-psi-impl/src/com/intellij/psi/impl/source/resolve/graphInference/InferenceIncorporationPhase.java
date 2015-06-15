@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.*;
 public class InferenceIncorporationPhase {
   private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
   private final InferenceSession mySession;
-  private List<Pair<PsiTypeParameter[], PsiClassType>> myCaptures = new ArrayList<Pair<PsiTypeParameter[], PsiClassType>>();
+  private final List<Pair<PsiTypeParameter[], PsiClassType>> myCaptures = new ArrayList<Pair<PsiTypeParameter[], PsiClassType>>();
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;
@@ -280,7 +280,7 @@ public class InferenceIncorporationPhase {
    * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
    */
   private boolean upUp(List<PsiType> upperBounds) {
-    return mySession.findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
+    return InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, new Processor<Pair<PsiType, PsiType>>() {
       @Override
       public boolean process(Pair<PsiType, PsiType> pair) {
         final PsiType sType = pair.first;
@@ -290,7 +290,7 @@ public class InferenceIncorporationPhase {
         }
         return true;
       }
-    });
+    }) != null;
   }
 
   private void addConstraint(ConstraintFormula constraint) {

@@ -389,7 +389,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
    checkResult()
   }
 
-  public void testFieldType() throws Throwable { doTest('\n'); }
+  public void testFieldType() { doTest(); }
 
   public void testPackageInAnnoParam() throws Throwable {
     doTest();
@@ -676,6 +676,8 @@ public class ListUtils {
 
   public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
   public void testNothingAfterTypeParameterQualifier() { doAntiTest(); }
+  public void testExcludeVariableBeingDeclared() { doAntiTest(); }
+  public void testExcludeVariableBeingDeclared2() { doAntiTest(); }
 
   public void testSpacesAroundEq() throws Throwable { doTest('='); }
 
@@ -901,7 +903,7 @@ public class ListUtils {
     checkResult();
   }
 
-  public void testSecondAnonymousClassParameter() throws Throwable { doTest('\n'); }
+  public void testSecondAnonymousClassParameter() { doTest(); }
 
   public void testSpaceAfterReturn() throws Throwable {
     configure()
@@ -1099,24 +1101,17 @@ public class ListUtils {
   }
 
   public void testSuggestMembersOfStaticallyImportedClassesUnqualifiedOnly() throws Exception {
-    def old = CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE
-    CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE = true
-
-    try {
-      myFixture.addClass("""package foo;
-      public class Foo {
-        public static void foo() {}
-        public static void bar() {}
-      }
-      """)
-      configure()
-      assertOneElement(myFixture.getLookupElements())
-      myFixture.type '\t'
-      checkResult()
+    myFixture.addClass("""package foo;
+    public class Foo {
+      public static void foo() {}
+      public static void bar() {}
     }
-    finally {
-      CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE = old
-    }
+    """)
+    configure()
+    complete()
+    assertOneElement(myFixture.getLookupElements())
+    myFixture.type '\t'
+    checkResult()
   }
 
   public void testInstanceMagicMethod() throws Exception { doTest() }
@@ -1272,6 +1267,12 @@ class XInternalError {}
     def items = myFixture.lookupElements.findAll { it.lookupString == 'String' }
     assert items.size() == 1
     assert LookupElementPresentation.renderElement(items[0]).tailText == ' (java.lang)'
+  }
+
+  public void testDuplicateInnerClass() {
+    configure()
+    def items = myFixture.lookupElements.findAll { it.lookupString == 'Inner' }
+    assert items.size() == 1
   }
 
   public void testSameSignature() {

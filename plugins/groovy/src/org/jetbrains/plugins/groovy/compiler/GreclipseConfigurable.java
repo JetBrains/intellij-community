@@ -20,9 +20,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
 
@@ -65,21 +67,26 @@ public class GreclipseConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(myJarPath.getText(), mySettings.greclipsePath) ||
+    return !Comparing.equal(getExternalizableJarPath(), mySettings.greclipsePath) ||
            !Comparing.equal(myCmdLineParams.getText(), mySettings.cmdLineParams) ||
            !Comparing.equal(myGenerateDebugInfo.isSelected(), mySettings.debugInfo);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    mySettings.greclipsePath = myJarPath.getText();
+    mySettings.greclipsePath = getExternalizableJarPath();
     mySettings.cmdLineParams = myCmdLineParams.getText();
     mySettings.debugInfo = myGenerateDebugInfo.isSelected();
   }
 
+  @NotNull
+  private String getExternalizableJarPath() {
+    return FileUtil.toSystemIndependentName(myJarPath.getText());
+  }
+
   @Override
   public void reset() {
-    myJarPath.setText(mySettings.greclipsePath);
+    myJarPath.setText(FileUtil.toSystemDependentName(mySettings.greclipsePath));
     myCmdLineParams.setText(mySettings.cmdLineParams);
     myGenerateDebugInfo.setSelected(mySettings.debugInfo);
   }

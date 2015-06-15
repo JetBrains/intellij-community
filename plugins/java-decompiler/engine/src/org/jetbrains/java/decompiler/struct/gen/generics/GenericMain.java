@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.jetbrains.java.decompiler.struct.StructClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,57 +192,68 @@ public class GenericMain {
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
       StringBuilder buffer = new StringBuilder();
-      buffer.append(DecompilerContext.getImportCollector().getShortName(buildJavaClassName(type)));
-
-      if (!type.getArguments().isEmpty()) {
-        buffer.append("<");
-        for (int i = 0; i < type.getArguments().size(); i++) {
-          if (i > 0) {
-            buffer.append(", ");
-          }
-          int wildcard = type.getWildcards().get(i);
-          if (wildcard != GenericType.WILDCARD_NO) {
-            buffer.append("?");
-
-            switch (wildcard) {
-              case GenericType.WILDCARD_EXTENDS:
-                buffer.append(" extends ");
-                break;
-              case GenericType.WILDCARD_SUPER:
-                buffer.append(" super ");
-            }
-          }
-
-          GenericType genPar = type.getArguments().get(i);
-          if (genPar != null) {
-            buffer.append(getGenericCastTypeName(genPar));
-          }
-        }
-        buffer.append(">");
-      }
-
+      appendClassName(type, buffer);
       return buffer.toString();
     }
 
     throw new RuntimeException("Invalid type: " + type);
   }
 
-  private static String buildJavaClassName(GenericType type) {
-    String name = "";
-    for (GenericType tp : type.getEnclosingClasses()) {
-      name += tp.value + "$";
+  private static void appendClassName(GenericType type, StringBuilder buffer) {
+    List<GenericType> enclosingClasses = type.getEnclosingClasses();
+
+    if (enclosingClasses.isEmpty()) {
+      String name = type.value.replace('/', '.');
+      buffer.append(DecompilerContext.getImportCollector().getShortName(name));
     }
-    name += type.value;
+    else {
+      for (GenericType tp : enclosingClasses) {
+        if (buffer.length() == 0) {
+          buffer.append(DecompilerContext.getImportCollector().getShortName(tp.value));
+        }
+        else {
+          buffer.append(tp.value);
+        }
 
-    String res = name.replace('/', '.');
-
-    if (res.contains("$")) {
-      StructClass cl = DecompilerContext.getStructContext().getClass(name);
-      if (cl == null || !cl.isOwn()) {
-        res = res.replace('$', '.');
+        appendTypeArguments(tp, buffer);
+        buffer.append('.');
       }
+
+      buffer.append(type.value);
     }
 
-    return res;
+    appendTypeArguments(type, buffer);
+  }
+
+  private static void appendTypeArguments(GenericType type, StringBuilder buffer) {
+    if (!type.getArguments().isEmpty()) {
+      buffer.append('<');
+
+      for (int i = 0; i < type.getArguments().size(); i++) {
+        if (i > 0) {
+          buffer.append(", ");
+        }
+
+        int wildcard = type.getWildcards().get(i);
+        switch (wildcard) {
+          case GenericType.WILDCARD_UNBOUND:
+            buffer.append('?');
+            break;
+          case GenericType.WILDCARD_EXTENDS:
+            buffer.append("? extends ");
+            break;
+          case GenericType.WILDCARD_SUPER:
+            buffer.append("? super ");
+            break;
+        }
+
+        GenericType genPar = type.getArguments().get(i);
+        if (genPar != null) {
+          buffer.append(getGenericCastTypeName(genPar));
+        }
+      }
+
+      buffer.append(">");
+    }
   }
 }

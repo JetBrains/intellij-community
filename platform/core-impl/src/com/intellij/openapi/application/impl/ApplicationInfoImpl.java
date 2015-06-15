@@ -67,7 +67,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl = null;
-  private String myOpaqueIconUrl = "/icon.png";
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl = null;
   private String myEditorBackgroundImageUrl = null;
@@ -76,8 +75,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private Calendar myMajorReleaseBuildDate = null;
   private String myPackageCode = null;
   private boolean myShowLicensee = true;
-  private String myWelcomeScreenCaptionUrl;
-  private String myWelcomeScreenDeveloperSloganUrl;
   private String myCustomizeIDEWizardStepsProvider;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
@@ -103,6 +100,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
+  private String myEvalLicenseUrl = "https://www.jetbrains.com/company/useterms.html";
 
   private Rectangle myAboutLogoRect;
 
@@ -136,15 +134,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String ATTRIBUTE_SIZE128 = "size128";
   private static final String ATTRIBUTE_SIZE16 = "size16";
   private static final String ATTRIBUTE_SIZE12 = "size12";
-  private static final String ATTRIBUTE_SIZE32OPAQUE = "size32opaque";
   private static final String ELEMENT_PACKAGE = "package";
   private static final String ATTRIBUTE_CODE = "code";
   private static final String ELEMENT_LICENSEE = "licensee";
   private static final String ATTRIBUTE_SHOW = "show";
   private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
-  private static final String CAPTION_URL_ATTR = "caption-url";
   private static final String LOGO_URL_ATTR = "logo-url";
-  private static final String SLOGAN_URL_ATTR = "slogan-url";
   private static final String ELEMENT_EDITOR = "editor";
   private static final String BACKGROUND_URL_ATTR = "background-url";
   private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
@@ -178,6 +173,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   private static final String STEPS_PROVIDER = "provider";
+  private static final String ELEMENT_EVALUATION = "evaluation";
+  private static final String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
 
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
@@ -210,7 +207,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getApiVersion() {
     if (myApiVersion != null) {
-      return BuildNumber.fromString(myApiVersion, getProductPrefix()).asString();
+      return BuildNumber.fromString(myApiVersion, getBuild().getProductCode()).asString();
     }
     return getBuild().asString();
   }
@@ -339,23 +336,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   @Override
-  public String getOpaqueIconUrl() {
-    return myOpaqueIconUrl;
-  }
-
-  @Override
   public String getToolWindowIconUrl() {
     return myToolWindowIconUrl;
-  }
-
-  @Override
-  public String getWelcomeScreenCaptionUrl() {
-    return myWelcomeScreenCaptionUrl;
-  }
-
-  @Override
-  public String getWelcomeScreenDeveloperSloganUrl() {
-    return myWelcomeScreenDeveloperSloganUrl;
   }
 
   @Override
@@ -510,6 +492,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   @Override
+  public String getEvalLicenseUrl() {
+    return myEvalLicenseUrl;
+  }
+
+  @Override
   public Rectangle getAboutLogoRect() {
     return myAboutLogoRect;
   }
@@ -566,7 +553,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (buildElement != null) {
       myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
       myApiVersion = buildElement.getAttributeValue(ATTRIBUTE_API_VERSION);
-      PluginManagerCore.BUILD_NUMBER = myApiVersion != null ? myApiVersion : myBuildNumber;
+      setBuildNumber(myApiVersion, myBuildNumber);
+
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();
@@ -651,7 +639,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
-      myOpaqueIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32OPAQUE);
       myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
@@ -672,8 +659,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element welcomeScreen = parentNode.getChild(WELCOME_SCREEN_ELEMENT_NAME);
     if (welcomeScreen != null) {
       myWelcomeScreenLogoUrl = welcomeScreen.getAttributeValue(LOGO_URL_ATTR);
-      myWelcomeScreenCaptionUrl = welcomeScreen.getAttributeValue(CAPTION_URL_ATTR);
-      myWelcomeScreenDeveloperSloganUrl = welcomeScreen.getAttributeValue(SLOGAN_URL_ATTR);
     }
 
     Element wizardSteps = parentNode.getChild(CUSTOMIZE_IDE_WIZARD_STEPS);
@@ -787,6 +772,19 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (tvElement != null) {
       myJetbrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
     }
+
+    Element evaluationElement = parentNode.getChild(ELEMENT_EVALUATION);
+    if (evaluationElement != null) {
+      final String url = evaluationElement.getAttributeValue(ATTRIBUTE_EVAL_LICENSE_URL);
+      if (url != null && !url.isEmpty()) {
+        myEvalLicenseUrl = url;
+      }
+    }
+
+  }
+
+  private static void setBuildNumber(String apiVersion, String buildNumber) {
+    PluginManagerCore.BUILD_NUMBER = apiVersion != null ? apiVersion : buildNumber;
   }
 
   private static GregorianCalendar parseDate(final String dateString) {
@@ -806,6 +804,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return new GregorianCalendar(year, month, day, hour, minute);
   }
 
+  @SuppressWarnings("UseJBColor")
   private static Color parseColor(final String colorString) {
     final long rgb = Long.parseLong(colorString, 16);
     return new Color((int)rgb, rgb > 0xffffff);

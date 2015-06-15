@@ -42,6 +42,17 @@ public class ContinuationIndentDetectorTest extends TestCase {
     doCheckLinesWithContinuationIndents(1, 2);
   }
 
+  public void testContinuationIndent_IfBracesWithinStringLiteral() {
+    configure(
+      "tester(\"{\",\n" +
+      "       \"welcome\",\n" +
+      "       \"my own\",\n" +
+      "       \"string literal\")\n"
+    );
+
+    doCheckLinesWithContinuationIndents(1, 2, 3);
+  }
+
   public void testNoContinuationIndent_OnLineStartingWithRightParenth() {
     configure(
       "test(\n" +

@@ -1,5 +1,6 @@
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.Boolean;
 import java.util.List;
 
 class Foo {
@@ -20,4 +21,12 @@ class Foo {
     }
 
   }
+  public static void main3(Boolean b) {
+    if (b == Boolean.FALSE) {
+      System.out.println();
+    } else if (b == Boolean.TRUE) {
+      System.out.println();
+    }
+  }
+
 }

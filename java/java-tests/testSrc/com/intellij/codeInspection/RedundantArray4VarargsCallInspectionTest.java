@@ -26,7 +26,7 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
  * Date: 11/13/10
  */
 public class RedundantArray4VarargsCallInspectionTest extends UsefulTestCase {
-   protected CodeInsightTestFixture myFixture;
+  protected CodeInsightTestFixture myFixture;
   private RedundantArrayForVarargsCallInspection myInspection;
 
   @Override
@@ -45,10 +45,14 @@ public class RedundantArray4VarargsCallInspectionTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    myInspection = null;
-    super.tearDown();
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myInspection = null;
+      super.tearDown();
+    }
   }
 
   public void testPreserveComments() {

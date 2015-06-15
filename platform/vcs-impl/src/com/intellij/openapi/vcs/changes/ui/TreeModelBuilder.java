@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -315,7 +314,7 @@ public class TreeModelBuilder {
     
     for (VirtualFile vf : files) {
       final ChangesGroupingPolicy policy = createGroupingPolicy();
-      final ContentRevision cr = new CurrentContentRevision(new FilePathImpl(vf));
+      final ContentRevision cr = new CurrentContentRevision(VcsUtil.getFilePath(vf));
       final Change change = new Change(cr, cr, FileStatus.NOT_CHANGED);
       final String branchName = switchedRoots.get(vf);
       insertChangeNode(vf, policy, rootsHeadNode, new Computable<ChangesBrowserNode>() {
@@ -472,12 +471,12 @@ public class TreeModelBuilder {
       return ChangesUtil.getFilePath((Change)o);
     }
     else if (o instanceof VirtualFile) {
-      return new FilePathImpl((VirtualFile) o);
+      return VcsUtil.getFilePath((VirtualFile) o);
     }
     else if (o instanceof FilePath) {
       return (FilePath)o;
     } else if (o instanceof ChangesBrowserLogicallyLockedFile) {
-      return new FilePathImpl(((ChangesBrowserLogicallyLockedFile) o).getUserObject());
+      return VcsUtil.getFilePath(((ChangesBrowserLogicallyLockedFile) o).getUserObject());
     } else if (o instanceof LocallyDeletedChange) {
       return ((LocallyDeletedChange) o).getPath();
     }
@@ -504,7 +503,7 @@ public class TreeModelBuilder {
 
     ChangesBrowserNode parentNode = myFoldersCache.get(parentPath.getKey());
     if (parentNode == null) {
-      FilePathImpl filePath = parentPath.getVf() == null ? new FilePathImpl(new File(parentPath.getPath()), true) : new FilePathImpl(parentPath.getVf());
+      FilePath filePath = parentPath.getVf() == null ? VcsUtil.getFilePath(parentPath.getPath(), true) : VcsUtil.getFilePath(parentPath.getVf());
       parentNode = ChangesBrowserNode.create(myProject, filePath);
       ChangesBrowserNode grandPa = getParentNodeFor(parentPath, policy, rootNode);
       model.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());

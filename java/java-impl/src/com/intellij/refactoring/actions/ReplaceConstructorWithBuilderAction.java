@@ -39,7 +39,7 @@ public class ReplaceConstructorWithBuilderAction extends BaseRefactoringAction{
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement elementAt = file.findElementAt(offset);
     final PsiClass psiClass = ReplaceConstructorWithBuilderHandler.getParentNamedClass(elementAt);
-    return psiClass != null && psiClass.getConstructors().length > 0;
+    return psiClass != null && psiClass.getConstructors().length > 0 && !psiClass.isEnum();
   }
 
   protected boolean isEnabledOnElements(@NotNull final PsiElement[] elements) {

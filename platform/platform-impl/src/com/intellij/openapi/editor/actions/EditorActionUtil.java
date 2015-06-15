@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -47,6 +46,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -54,21 +54,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class EditorActionUtil {
-
-  /**
-   * Editor actions may be invoked multiple ways - programmatically, via keyboard/mouse shortcut, main/context menu etc.
-   * Action processing may also interfere with standard editor behavior (caret position change, selection change etc).
-   * <p/>
-   * E.g. consider a situation when context menu is shown on right mouse click -
-   * {@link EditorMouseListener#mousePressed(EditorMouseEvent) the contract says} that no common actions have been performed yet.
-   * However, some actions may operate on an 'active element' (an element under caret), hence, they would incorrectly because the
-   * caret position has not been changed yet.
-   * <p/>
-   * We address that problem by providing a special key that is intended to hold 'expected caret offset', i.e. offset where we
-   * expect the caret to be located at the near future.
-   */
-  public static final Key<Integer> EXPECTED_CARET_OFFSET = Key.create("expectedEditorOffset");
-  
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
@@ -259,6 +244,7 @@ public class EditorActionUtil {
    */
   public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
     if (!(editor instanceof EditorEx) || offset <= 0 || offset >= editor.getDocument().getTextLength()) return false;
+    if (CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(), offset - 1, offset + 1)) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
     if (it.getStart() != offset) {
@@ -582,7 +568,7 @@ public class EditorActionUtil {
     }
     VisualPosition currentVisualCaret = editor.getCaretModel().getVisualPosition();
     VisualPosition visualEndOfLineWithCaret
-      = new VisualPosition(currentVisualCaret.line, EditorUtil.getLastVisualLineColumnNumber(editor, currentVisualCaret.line));
+      = new VisualPosition(currentVisualCaret.line, EditorUtil.getLastVisualLineColumnNumber(editor, currentVisualCaret.line), true);
 
     // There is a possible case that the caret is already located at the visual end of line and the line is soft wrapped.
     // We want to move the caret to the end of the next visual line then.
@@ -604,7 +590,7 @@ public class EditorActionUtil {
           line++;
           column = EditorUtil.getLastVisualLineColumnNumber(editor, line);
         }
-        visualEndOfLineWithCaret = new VisualPosition(line, column);
+        visualEndOfLineWithCaret = new VisualPosition(line, column, true);
       }
     }
 
@@ -631,7 +617,12 @@ public class EditorActionUtil {
       caretModel.moveToVisualPosition(visualEndOfLineWithCaret);
     }
     else {
-      caretModel.moveToOffset(newOffset);
+      if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+        caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(newOffset).leanForward(true));
+      }
+      else {
+        caretModel.moveToOffset(newOffset);
+      }
     }
 
     EditorModificationUtil.scrollToCaret(editor);
@@ -676,6 +667,12 @@ public class EditorActionUtil {
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
       if (foldRegion != null) {
         newOffset = foldRegion.getStartOffset();
+      }
+    }
+    if (editor instanceof EditorImpl) {
+      int boundaryOffset = ((EditorImpl)editor).findNearestDirectionBoundary(offset, true);
+      if (boundaryOffset >= 0) {
+        newOffset = Math.min(boundaryOffset, newOffset);
       }
     }
     caretModel.moveToOffset(newOffset);
@@ -760,7 +757,16 @@ public class EditorActionUtil {
       }
     }
 
-    editor.getCaretModel().moveToOffset(newOffset);
+    if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+      int boundaryOffset = ((EditorImpl)editor).findNearestDirectionBoundary(offset, false);
+      if (boundaryOffset >= 0) {
+        newOffset = Math.max(boundaryOffset, newOffset);
+      }
+      caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(newOffset).leanForward(true));
+    }
+    else {
+      editor.getCaretModel().moveToOffset(newOffset);
+    }
     EditorModificationUtil.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);

@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -158,9 +159,15 @@ public class DaemonListeners implements Disposable {
 
     MessageBus messageBus = myProject.getMessageBus();
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
-    final MessageBusConnection connection = messageBus.connect();
-
     if (project.isDefault()) return;
+    MessageBusConnection connection = messageBus.connect();
+
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      @Override
+      public void appClosing() {
+        stopDaemon(false, "App closing");
+      }
+    });
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
     eventMulticaster.addDocumentListener(new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
@@ -338,7 +345,7 @@ public class DaemonListeners implements Disposable {
       public void beforeModalityStateChanged(boolean entering) {
         // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
         boolean inModalContext = LaterInvocator.isInModalContext();
-        stopDaemon(inModalContext, "Modality change");
+        stopDaemon(inModalContext, "Modality change. Was modal: "+inModalContext);
         myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
       }
     };
@@ -503,7 +510,7 @@ public class DaemonListeners implements Disposable {
 
   private class MyTodoListener implements PropertyChangeListener {
     @Override
-    public void propertyChange(PropertyChangeEvent evt) {
+    public void propertyChange(@NotNull PropertyChangeEvent evt) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
         stopDaemonAndRestartAllFiles("Todo patterns changed");
       }

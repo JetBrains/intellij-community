@@ -17,9 +17,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -28,14 +30,14 @@ public class Java18CompletionData extends Java15CompletionData {
     .afterLeaf(psiElement(JavaTokenType.DOUBLE_COLON));
 
   @Override
-  public void fillCompletions(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletions(final CompletionParameters parameters, final Consumer<LookupElement> result) {
     PsiElement position = parameters.getPosition();
 
     if (!inComment(position)) {
       if (AFTER_DOUBLE_COLON.accepts(position)) {
         PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiMethodReferenceExpression.class);
         TailType tail = parent != null && !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
-        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), tail));
+        result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), tail));
         return;
       }
 
@@ -43,7 +45,7 @@ public class Java18CompletionData extends Java15CompletionData {
         PsiElement scope = position.getParent();
         while (scope != null && !(scope instanceof PsiFile)) {
           if (scope instanceof PsiClass && ((PsiClass)scope).isInterface()) {
-            result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.HUMBLE_SPACE_BEFORE_WORD));
+            result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.HUMBLE_SPACE_BEFORE_WORD));
             break;
           }
           scope = scope.getParent();

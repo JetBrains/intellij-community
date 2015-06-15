@@ -27,7 +27,7 @@ public class TestClassVar {
 
       while(var1 < 10) {// 47
          int var2;
-         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {// 49
+         for(var2 = var1; var1 < 10 && var1 == 0; ++var1) {// 49 51
             ;
          }
 
@@ -44,6 +44,7 @@ class 'pkg/TestClassVar' {
       0      7
       1      7
       3      7
+      5      7
       8      9
       b      9
       1f      11
@@ -65,8 +66,11 @@ class 'pkg/TestClassVar' {
       0      25
       1      25
       3      27
+      5      27
       9      29
       b      29
+      d      29
+      11      29
       14      29
       1c      33
       1f      34

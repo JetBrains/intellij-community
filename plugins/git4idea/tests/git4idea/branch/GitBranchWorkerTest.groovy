@@ -646,7 +646,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
   def checkoutBranch(String name, def uiHandler) {
     GitBranchWorker brancher = new GitBranchWorker(myProject, myPlatformFacade, myGit, uiHandler as GitBranchUiHandler)
-    brancher.checkout(name, myRepositories)
+    brancher.checkout(name, false, myRepositories)
   }
 
   def mergeBranch(String name, def uiHandler) {

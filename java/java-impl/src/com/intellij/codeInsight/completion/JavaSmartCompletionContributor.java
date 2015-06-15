@@ -359,7 +359,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, LAMBDA, new LambdaCompletionProvider());
+    extend(CompletionType.SMART, LAMBDA, new FunctionalExpressionCompletionProvider());
     extend(CompletionType.SMART, METHOD_REFERENCE, new MethodReferenceCompletionProvider());
   }
 

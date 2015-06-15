@@ -49,15 +49,15 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @Override
-  public long doStatus(File path,
-                       SVNRevision revision,
-                       Depth depth,
+  public long doStatus(@NotNull File path,
+                       @Nullable SVNRevision revision,
+                       @NotNull Depth depth,
                        boolean remote,
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       final StatusConsumer handler,
-                       Collection changeLists) throws SvnBindException {
+                       @NotNull final StatusConsumer handler,
+                       @Nullable Collection changeLists) throws SvnBindException {
     try {
       return getStatusClient()
         .doStatus(path, revision, toDepth(depth), remote, reportAll, includeIgnored, collectParentExternals, new ISVNStatusHandler() {
@@ -74,7 +74,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
   @Nullable
-  public Status doStatus(File path, boolean remote) throws SvnBindException {
+  public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
     try {
       return Status.create(getStatusClient().doStatus(path, remote));
     }

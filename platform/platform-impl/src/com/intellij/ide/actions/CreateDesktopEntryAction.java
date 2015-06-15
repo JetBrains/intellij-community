@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   }
 
   private static void check() throws ExecutionException, InterruptedException {
-    final int result = ExecUtil.execAndGetResult("which", "xdg-desktop-menu");
+    int result = new GeneralCommandLine("which", "xdg-desktop-menu").createProcess().waitFor();
     if (result != 0) throw new RuntimeException(ApplicationBundle.message("desktop.entry.xdg.missing"));
   }
 
@@ -196,9 +196,9 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
       if (result != 0) throw new RuntimeException("'" + script.getAbsolutePath() + "' : " + result);
     }
     else {
-      int result = ExecUtil.execAndGetResult("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath());
+      int result = new GeneralCommandLine("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath()).createProcess().waitFor();
       if (result != 0) throw new RuntimeException("'" + entryFile.getAbsolutePath() + "' : " + result);
-      ExecUtil.execAndGetResult("xdg-desktop-menu", "forceupdate", "--mode", "user");
+      new GeneralCommandLine("xdg-desktop-menu", "forceupdate", "--mode", "user").createProcess().waitFor();
     }
   }
 

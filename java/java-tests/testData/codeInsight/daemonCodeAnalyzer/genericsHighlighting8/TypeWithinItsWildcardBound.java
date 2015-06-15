@@ -311,7 +311,7 @@ class WithingBounds {
     A<A<<error descr="Type parameter 'A' is not within its bound; should extend 'A<A>'">A</error>>> a3;
 
     A<? extends A> a4;
-    A<<error descr="Type parameter '? super A' is not within its bound; should extend 'A<A<? super A>>'">? super A</error>> a5;
+    A<<error descr="Type parameter '? super A' is not within its bound; should extend 'A<? super A>'">? super A</error>> a5;
     A<<error descr="Type parameter 'A[]' is not within its bound; should extend 'A<A[]>'">A[]</error>> a7;
   }
 }

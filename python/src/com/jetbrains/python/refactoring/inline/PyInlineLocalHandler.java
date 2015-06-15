@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
@@ -88,7 +88,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     if (editor == null) {
       return;
     }
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor);
     PyReferenceExpression refExpr = null;
     if (psiReference != null) {
       final PsiElement refElement = psiReference.getElement();

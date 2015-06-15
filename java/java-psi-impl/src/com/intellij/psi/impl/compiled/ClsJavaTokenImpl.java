@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,28 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsJavaTokenImpl extends ClsElementImpl implements PsiJavaToken {
-  private ClsElementImpl myParent;
-  private final IElementType myTokenType;
+class ClsJavaTokenImpl extends ClsElementImpl implements PsiJavaToken {
+  private final ClsElementImpl myParent;
+  private final short myTokenTypeIndex;
   private final String myTokenText;
 
-  public ClsJavaTokenImpl(ClsElementImpl parent, IElementType tokenType, String tokenText) {
+  ClsJavaTokenImpl(ClsElementImpl parent, @NotNull IElementType tokenType, @NotNull String tokenText) {
     myParent = parent;
-    myTokenType = tokenType;
+    myTokenTypeIndex = tokenType.getIndex();
     myTokenText = tokenText;
-  }
-
-  void setParent(ClsElementImpl parent) {
-    myParent = parent;
   }
 
   @Override
   public IElementType getTokenType() {
-    return myTokenType;
+    return IElementType.find(myTokenTypeIndex);
   }
 
   @Override
@@ -63,7 +62,7 @@ public class ClsJavaTokenImpl extends ClsElementImpl implements PsiJavaToken {
 
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
-    setMirrorCheckingType(element, myTokenType);
+    setMirrorCheckingType(element, getTokenType());
   }
 
   @Override

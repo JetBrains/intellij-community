@@ -4,6 +4,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -33,6 +35,8 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 
 public class VcsLogUiImpl implements VcsLogUi, Disposable {
+  public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
+    ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
@@ -69,27 +73,18 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myLog = new VcsLogImpl(logDataHolder, this);
     myVisiblePack = VisiblePack.EMPTY;
     myMainFrame = new MainFrame(logDataHolder, this, project, settings, uiProperties, myLog, myVisiblePack);
-    addHighlighter(new MyCommitsHighlighter(myLogDataHolder, myUiProperties));
+
+    for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
+      addHighlighter(factory.createHighlighter(myLogDataHolder, myUiProperties));
+    }
   }
 
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    PermanentGraph<Integer> previousPermGraph = myVisiblePack.getPermanentGraph();
-    VcsLogGraphTable.Selection previousSelection = getTable().getSelection();
+    boolean permGraphChanged = myVisiblePack.getPermanentGraph() != pack.getPermanentGraph();
 
     myVisiblePack = pack;
-    boolean permGraphChanged = previousPermGraph != myVisiblePack.getPermanentGraph();
-
-    GraphTableModel currentModel = getModel();
-    if (currentModel == null) {
-      getTable().setModel(new GraphTableModel(myVisiblePack, myLogDataHolder, this));
-    }
-    else {
-      currentModel.setVisiblePack(myVisiblePack);
-      previousSelection.restore(myVisiblePack.getVisibleGraph(), true);
-    }
-    getTable().setPaintBusy(false);
 
     myMainFrame.updateDataPack(myVisiblePack);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
@@ -166,13 +161,13 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @Override
-  public boolean isHighlightMyCommits() {
-    return myUiProperties.isHighlightMyCommits();
+  public boolean isHighlighterEnabled(@NotNull String id) {
+    return myUiProperties.isHighlighterEnabled(id);
   }
 
   @Override
-  public void setHighlightMyCommits(boolean state) {
-    myUiProperties.setHighlightMyCommits(state);
+  public void setHighlighterEnabled(@NotNull String id, boolean enabled) {
+    myUiProperties.enableHighlighter(id, enabled);
     repaintUI();
   }
 
@@ -374,5 +369,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     getTable().removeAllHighlighters();
+    myVisiblePack = VisiblePack.EMPTY;
   }
 }

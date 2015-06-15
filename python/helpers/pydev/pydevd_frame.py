@@ -6,7 +6,7 @@ import traceback  # @Reimport
 import pydev_log
 from pydevd_breakpoints import get_exception_breakpoint, get_exception_name
 from pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
-    CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT
+    CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 
@@ -434,6 +434,10 @@ class PyDBFrame:
                         result = plugin_manager.cmd_step_into(main_debugger, frame, event, self._args, stop_info, stop)
                         if result:
                             stop, plugin_stop = result
+
+                elif step_cmd == CMD_STEP_INTO_MY_CODE:
+                    if not main_debugger.not_in_scope(frame.f_code.co_filename):
+                        stop = event == 'line'
 
                 elif step_cmd == CMD_STEP_OVER:
                     stop = stop_frame is frame and event in ('line', 'return')

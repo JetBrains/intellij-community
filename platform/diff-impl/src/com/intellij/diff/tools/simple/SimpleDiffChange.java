@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,6 +179,10 @@ public class SimpleDiffChange {
     return DiffUtil.getLineDiffType(myFragment);
   }
 
+  public boolean isValid() {
+    return myIsValid;
+  }
+
   //
   // Shift
   //
@@ -220,41 +223,6 @@ public class SimpleDiffChange {
     int line2 = getEndLine(side);
 
     return DiffUtil.isSelectedByLine(line, line1, line2);
-  }
-
-  @CalledWithWriteLock
-  public void replaceChange(@NotNull final Side sourceSide) {
-    assert myEditor1 != null && myEditor2 != null;
-
-    if (!myIsValid) return;
-
-    final Document document1 = myEditor1.getDocument();
-    final Document document2 = myEditor2.getDocument();
-
-    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
-                               getStartLine(sourceSide.other()), getEndLine(sourceSide.other()),
-                               sourceSide.select(document1, document2),
-                               getStartLine(sourceSide), getEndLine(sourceSide));
-
-    destroyHighlighter();
-  }
-
-  @CalledWithWriteLock
-  public void appendChange(@NotNull final Side sourceSide) {
-    assert myEditor1 != null && myEditor2 != null;
-
-    if (!myIsValid) return;
-    if (getStartLine(sourceSide) == getEndLine(sourceSide)) return;
-
-    final Document document1 = myEditor1.getDocument();
-    final Document document2 = myEditor2.getDocument();
-
-    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
-                               getEndLine(sourceSide.other()), getEndLine(sourceSide.other()),
-                               sourceSide.select(document1, document2),
-                               getStartLine(sourceSide), getEndLine(sourceSide));
-
-    destroyHighlighter();
   }
 
   //
@@ -330,7 +298,7 @@ public class SimpleDiffChange {
     return createIconRenderer(side, "Replace", AllIcons.Diff.Arrow, new Runnable() {
       @Override
       public void run() {
-        replaceChange(side);
+        myViewer.replaceChange(SimpleDiffChange.this, side);
       }
     });
   }
@@ -340,7 +308,7 @@ public class SimpleDiffChange {
     return createIconRenderer(side, "Insert", AllIcons.Diff.ArrowLeftDown, new Runnable() {
       @Override
       public void run() {
-        appendChange(side);
+        myViewer.appendChange(SimpleDiffChange.this, side);
       }
     });
   }
@@ -350,7 +318,7 @@ public class SimpleDiffChange {
     return createIconRenderer(side.other(), "Revert", AllIcons.Diff.Remove, new Runnable() {
       @Override
       public void run() {
-        replaceChange(side.other());
+        myViewer.replaceChange(SimpleDiffChange.this, side.other());
       }
     });
   }

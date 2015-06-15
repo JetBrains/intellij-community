@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -119,11 +118,10 @@ final class DiffHttpService extends RestService {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"),
-                                                                               contents, titles));
         if (finalFocused) {
           ProjectUtil.focusProjectWindow(finalProject, true);
         }
+        DiffManager.getInstance().showDiff(finalProject, new SimpleDiffRequest(StringUtil.notNullize(finalWindowTitle, "Diff Service"), contents, titles));
       }
     }, project.getDisposed());
 

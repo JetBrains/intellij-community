@@ -115,10 +115,12 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     int descMaxWidth = availableWidth - dateCommitterSize - 8;
     boolean partial = (changeList instanceof ReceivedChangeList) && ((ReceivedChangeList)changeList).isPartial();
     int descWidth = 0;
+    int partialMarkerWidth = 0;
     if (partial) {
       final String partialMarker = VcsBundle.message("committed.changes.partial.list") + " ";
       append(partialMarker, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      descWidth += boldMetrics.stringWidth(partialMarker);
+      partialMarkerWidth = boldMetrics.stringWidth(partialMarker);
+      descWidth += partialMarkerWidth;
     }
 
     descWidth += fontMetrics.stringWidth(description);
@@ -158,7 +160,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
       int moreWidth = fontMetrics.stringWidth(moreMarker);
-      int remainingWidth = descMaxWidth - moreWidth - numberWidth - branchWidth;
+      int remainingWidth = descMaxWidth - moreWidth - numberWidth - branchWidth - partialMarkerWidth;
       description = truncateDescription(description, fontMetrics, remainingWidth);
       myRenderer.appendTextWithLinks(description);
       if (!StringUtil.isEmpty(description)) {

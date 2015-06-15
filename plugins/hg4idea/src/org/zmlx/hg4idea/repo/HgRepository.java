@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,6 +76,15 @@ public interface HgRepository extends Repository {
 
   @NotNull
   Collection<HgNameWithHashInfo> getSubrepos();
+
+  @NotNull
+  List<HgNameWithHashInfo> getMQAppliedPatches();
+
+  @NotNull
+  List<String> getAllPatchNames();
+
+  @NotNull
+  List<String> getUnappliedPatchNames();
 
   void updateConfig();
 }

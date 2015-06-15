@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -98,7 +98,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Override
   public boolean canInlineElementInEditor(PsiElement element, Editor editor) {
     if (canInlineElement(element)) {
-      PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
+      PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
       if (!InlineMethodHandler.isThisReference(reference)) {
         if (element instanceof PsiMethod && reference != null) {
           final PsiElement referenceElement = reference.getElement();
@@ -191,7 +191,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Nullable
   public static PsiCall findCallToInline(final Editor editor) {
     PsiCall callToInline = null;
-    PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor) : null;
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor) : null;
     if (reference != null) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiJavaCodeReferenceElement) {
@@ -203,6 +203,9 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
   @Nullable
   public static String getCannotInlineMessage(final PsiClass psiClass) {
+    if (psiClass instanceof PsiTypeParameter) {
+      return "Type parameters cannot be inlined";
+    }
     if (psiClass.isAnnotationType()) {
       return "Annotation types cannot be inlined";
     }

@@ -40,6 +40,39 @@ public class TestClassLoop {
          System.out.println("4");// 58
       }
    }
+
+   public static int testWhileCombined(String var0) {
+      int var1 = var0.length();// 63
+      int var2 = 0;// 64
+      boolean var3 = false;// 65
+      boolean var4 = false;// 66
+      int var5 = 0;// 67
+      int var7 = 0;// 69
+
+      for(boolean var8 = false; var2 < var1; ++var2) {// 70 73 90
+         char var6 = var0.charAt(var2);// 74
+         if(var6 == 48) {// 75
+            ++var7;// 76
+         } else {
+            if(var6 != 46) {// 77
+               break;
+            }
+
+            if(var3) {// 78
+               throw new NumberFormatException("multiple points");// 80
+            }
+
+            var5 = var2;// 82
+            if(var4) {// 83
+               var5 = var2 - 1;// 84
+            }
+
+            var3 = true;// 86
+         }
+      }
+
+      return var5;// 92
+   }
 }
 
 class 'pkg/TestClassLoop' {
@@ -77,6 +110,41 @@ class 'pkg/TestClassLoop' {
       3a      39
       3c      39
    }
+
+   method 'testWhileCombined (Ljava/lang/String;)I' {
+      1      44
+      4      44
+      5      45
+      6      45
+      7      46
+      8      46
+      9      47
+      a      47
+      c      48
+      d      48
+      f      49
+      10      49
+      12      51
+      13      51
+      17      51
+      1c      52
+      1f      52
+      23      53
+      25      53
+      28      54
+      30      56
+      32      56
+      36      60
+      3d      61
+      42      61
+      44      64
+      48      65
+      4b      66
+      4e      69
+      4f      69
+      50      51
+      58      73
+   }
 }
 
 Lines mapping:
@@ -91,5 +159,25 @@ Lines mapping:
 53 <-> 34
 54 <-> 35
 58 <-> 40
+63 <-> 45
+64 <-> 46
+65 <-> 47
+66 <-> 48
+67 <-> 49
+69 <-> 50
+70 <-> 52
+73 <-> 52
+74 <-> 53
+75 <-> 54
+76 <-> 55
+77 <-> 57
+78 <-> 61
+80 <-> 62
+82 <-> 65
+83 <-> 66
+84 <-> 67
+86 <-> 70
+90 <-> 52
+92 <-> 74
 Not mapped:
 39

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -38,8 +37,7 @@ public abstract class EditorFactory {
    * @return the editor factory instance.
    */
   public static EditorFactory getInstance() {
-    final Application application = ApplicationManager.getApplication();
-    return application == null ? null : application.getComponent(EditorFactory.class);
+    return ApplicationManager.getApplication().getComponent(EditorFactory.class);
   }
 
   /**

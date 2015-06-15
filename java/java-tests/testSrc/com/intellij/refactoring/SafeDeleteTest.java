@@ -16,7 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -112,6 +112,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteParameterAndUpdateJavadocRef() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
     doSingleFileTest();
   }
@@ -147,6 +151,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testSafeDeleteStaticImports() throws Exception {
     doTest("A");
+  }
+
+  public void testSafeDeleteImports() throws Exception {
+    doTest("B");
   }
 
   public void testRemoveOverridersInspiteOfUnsafeUsages() throws Exception {
@@ -270,11 +278,8 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
   
   private void doTest(@NonNls final String qClassName) throws Exception {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        SafeDeleteTest.this.performAction(qClassName);
-      }
+    doTest((rootDir, rootAfter) -> {
+      SafeDeleteTest.this.performAction(qClassName);
     });
   }
 
@@ -309,8 +314,8 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   private void performAction() {
-    final PsiElement psiElement = TargetElementUtilBase
-      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiElement psiElement = TargetElementUtil
+      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull("No element found in text:\n" + getFile().getText(), psiElement);
     SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
   }

@@ -1,5 +1,5 @@
- /*
- * Copyright 2000-2009 JetBrains s.r.o.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * User: anna
- * Date: Mar 2, 2005
+ * @author anna
+ * @since Mar 2, 2005
  */
 public abstract class DependencyValidationManager extends NamedScopesHolder {
-  public DependencyValidationManager(final Project project) {
-    super(project);
+  public static DependencyValidationManager getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, DependencyValidationManager.class);
   }
 
-  public static DependencyValidationManager getInstance(Project project) {
-    return ServiceManager.getService(project, DependencyValidationManager.class);
+  public DependencyValidationManager(@NotNull Project project) {
+    super(project);
   }
 
   public abstract boolean hasRules();
@@ -61,7 +61,7 @@ public abstract class DependencyValidationManager extends NamedScopesHolder {
   public abstract void setSkipImportStatements(boolean skip);
 
   @NotNull
-  public abstract Map<String,PackageSet> getUnnamedScopes();
+  public abstract Map<String, PackageSet> getUnnamedScopes();
 
   public abstract void reloadRules();
 }

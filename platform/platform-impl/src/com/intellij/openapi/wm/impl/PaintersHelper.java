@@ -187,22 +187,38 @@ final class PaintersHelper implements Painter.Listener {
       int w = image.getWidth(null);
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
-
-      if (fillType == FillType.SCALE) {
+      // performance: pre-compute scaled image or tiles
+      if (fillType == FillType.SCALE || fillType == FillType.TILE) {
         int sw0 = scaled == null ? -1 : scaled.getWidth(null);
         int sh0 = scaled == null ? -1 : scaled.getHeight(null);
-        boolean useWidth = cw * h > ch * w;
-        int sw = useWidth ? cw : w * ch / h;
-        int sh = useWidth ? h * cw / w : ch;
+        int sw, sh;
+        if (fillType == FillType.SCALE) {
+          boolean useWidth = cw * h > ch * w;
+          sw = useWidth ? cw : w * ch / h;
+          sh = useWidth ? h * cw / w : ch;
+        }
+        else {
+          sw = cw < w ? w : (cw + w) / w * w;
+          sh = ch < h ? h : (ch + h) / h * h;
+        }
         if (sw0 != sw || sh0 != sh || scaled != null && scaled.contentsLost()) {
           if (sw0 != sw || sh0 != sh || scaled == null) {
             scaled = createImage(g, sw, sh);
           }
           Graphics2D gg = scaled.createGraphics();
-          gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                              RenderingHints.VALUE_INTERPOLATION_BILINEAR);
           gg.setComposite(AlphaComposite.Src);
-          gg.drawImage(image, 0, 0, sw, sh, null);
+          if (fillType == FillType.SCALE) {
+            gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            gg.drawImage(image, 0, 0, sw, sh, null);
+          }
+          else {
+            for (int x = 0; x < sw; x += w) {
+              for (int y = 0; y < sh; y += h) {
+                UIUtil.drawImage(gg, image, x, y, null);
+              }
+            }
+          }
           gg.dispose();
         }
         w = sw;
@@ -218,41 +234,35 @@ final class PaintersHelper implements Painter.Listener {
         gg.dispose();
       }
 
-      GraphicsConfig cfg = new GraphicsConfig(g).setAlpha(alpha);
-      g.setColor(g.getBackground());
-      if (fillType == FillType.CENTER || fillType == FillType.BG_CENTER || fillType == FillType.SCALE ||
+      int x, y;
+      if (fillType == FillType.CENTER || fillType == FillType.BG_CENTER ||
+          fillType == FillType.SCALE || fillType == FillType.TILE ||
           fillType == FillType.TOP_CENTER || fillType == FillType.BOTTOM_CENTER) {
-        int x = i.left + (cw - w) / 2;
-        int y = fillType == FillType.TOP_CENTER? i.top :
-                fillType == FillType.BOTTOM_CENTER? ch0 - i.bottom - h :
-                i.top + (ch - h) / 2;
-        UIUtil.drawImage(g, scaled, x, y, null);
-        if (fillType == FillType.BG_CENTER) {
-          g.setColor(component.getBackground());
-          g.fillRect(0, 0, x, ch0);
-          g.fillRect(x, 0, w, h);
-          g.fillRect(x + w, 0, x, ch0);
-          g.fillRect(x, y + h, w, y);
-        }
+        x = i.left + (cw - w) / 2;
+        y = fillType == FillType.TOP_CENTER ? i.top :
+            fillType == FillType.BOTTOM_CENTER ? ch0 - i.bottom - h :
+            i.top + (ch - h) / 2;
       }
       else if (fillType == FillType.TOP_LEFT || fillType == FillType.TOP_RIGHT ||
                fillType == FillType.BOTTOM_LEFT || fillType == FillType.BOTTOM_RIGHT) {
-        int x = fillType == FillType.TOP_LEFT || fillType == FillType.BOTTOM_LEFT ? i.left : cw0 - i.right - w;
-        int y = fillType == FillType.TOP_LEFT || fillType == FillType.TOP_RIGHT ? i.top : ch0 - i.bottom - h;
-        UIUtil.drawImage(g, scaled, x, y, null);
+        x = fillType == FillType.TOP_LEFT || fillType == FillType.BOTTOM_LEFT ? i.left : cw0 - i.right - w;
+        y = fillType == FillType.TOP_LEFT || fillType == FillType.TOP_RIGHT ? i.top : ch0 - i.bottom - h;
       }
-      else if (fillType == FillType.TILE) {
-        int x = i.left;
-        int y = i.top;
-        while (w > 0 && x < cw) {
-          while (h > 0 && y < ch) {
-            UIUtil.drawImage(g, scaled, x, y, null);
-            y += h;
-          }
-          y = 0;
-          x += w;
-        }
+      else {
+        return;
       }
+
+      GraphicsConfig cfg = new GraphicsConfig(g).setAlpha(alpha);
+
+      UIUtil.drawImage(g, scaled, x, y, null);
+      if (fillType == FillType.BG_CENTER) {
+        g.setColor(component.getBackground());
+        g.fillRect(0, 0, x, ch0);
+        g.fillRect(x, 0, w, h);
+        g.fillRect(x + w, 0, x, ch0);
+        g.fillRect(x, y + h, w, y);
+      }
+
       cfg.restore();
     }
 

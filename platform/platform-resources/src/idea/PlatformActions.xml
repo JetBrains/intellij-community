@@ -158,7 +158,8 @@
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
     <group id="Diff.KeymapGroup" text="Diff">
-      <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction"/>
+      <action id="Diff.ShowDiff" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->
+      <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
       <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
       <action id="CompareClipboardWithSelection" class="com.intellij.diff.actions.CompareClipboardWithSelectionAction"/>
 
@@ -178,6 +179,7 @@
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
+    <group id="Diff.EditorPopupMenu"/>
 
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
@@ -536,9 +538,9 @@
     </group>
 
     <group id="WelcomeScreen.Documentation">
-      <action id="WelcomeScreen.ReadHelp" class="com.intellij.ide.actions.HelpTopicsAction"/>
-      <action id="WelcomeScreen.ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
-      <action id="WelcomeScreen.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
+      <reference ref="HelpTopics"/>
+      <reference ref="ShowTips"/>
+      <reference ref="Help.JetBrainsTV"/>
       <reference ref="Help.KeymapReference"/>
     </group>
 
@@ -555,9 +557,13 @@
     </group>
 
     <group id="WelcomeScreenRecentProjectActionGroup">
-      <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
+      <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction" text="Open Selected"/>
       <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction" text="New Project Group"/>
+      <action id="WelcomeScreen.EditGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.EditProjectGroupAction" text="Edit..."/>
       <group id="WelcomeScreen.MoveToGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.MoveProjectToGroupActionGroup" text="Move To Group" popup="true"/>
+      <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.ChangeProjectIconAction" text="Change Icon" />
+      <separator/>
+      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction" text="Remove Selected from Welcome Screen"/>
     </group>
 
     <group id="FileChooser">
@@ -612,6 +618,7 @@
 
     <group id="MaintenanceGroup">
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
+      <action id="SwitchBootJdk" class="com.intellij.openapi.util.SwitchBootJdkAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
     </group>
 

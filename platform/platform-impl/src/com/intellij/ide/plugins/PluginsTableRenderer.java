@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -58,7 +56,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   private JLabel myLastUpdated;
   private JPanel myPanel;
 
-  private JLabel myCategory;
+  private SimpleColoredComponent myCategory;
   private JPanel myRightPanel;
   private JPanel myBottomPanel;
   private JPanel myInfoPanel;
@@ -82,7 +80,6 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);
     myStatus.setText("");
-    myCategory.setText("");
     myLastUpdated.setFont(smallFont);
 
     if (myPluginsView || pluginDescriptor.getDownloads() == null || !(pluginDescriptor instanceof PluginNode)) {
@@ -116,31 +113,38 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
       myName.clear();
       myName.setOpaque(false);
+      myCategory.clear();
+      myCategory.setOpaque(false);
       String pluginName = myPluginDescriptor.getName() + "  ";
       Object query = table.getClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY);
+      SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected),
+                                                           UIUtil.getListForeground(isSelected),
+                                                           JBColor.RED,
+                                                           SimpleTextAttributes.STYLE_PLAIN);
+      Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
       if (query instanceof String) {
-        Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
-        SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected),
-                                                             UIUtil.getListForeground(isSelected),
-                                                             JBColor.RED,
-                                                             SimpleTextAttributes.STYLE_PLAIN);
         SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher, UIUtil.getTableBackground(isSelected), true);
       }
       else {
         myName.append(pluginName);
       }
 
-      String category = myPluginDescriptor.getCategory();
+      String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory());
       if (category != null) {
-        myCategory.setText(category.toUpperCase(Locale.getDefault()));
+        if (query instanceof String) {
+          SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected), true);
+        }
+        else {
+          myCategory.append(category);
+        }
       }
       else if (!myPluginsView) {
-        myCategory.setText(AvailablePluginsManagerMain.N_A);
+        myCategory.append(AvailablePluginsManagerMain.N_A);
       }
 
       myStatus.setIcon(AllIcons.Nodes.Plugin);
       if (myPluginDescriptor.isBundled()) {
-        myCategory.setText(StringUtil.join(Arrays.asList(myCategory.getText(), "[Bundled]"), " "));
+        myCategory.append(" [Bundled]");
         myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
       String vendor = myPluginDescriptor.getVendor();

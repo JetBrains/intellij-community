@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,14 +98,35 @@ public class Patches {
   public static final boolean SUN_BUG_ID_7179799 = SystemInfo.isWindows && !SystemInfo.isJavaVersionAtLeast("1.8");
 
   /**
+   * Frame size reverts meaning of maximized attribute if frame size close to display.
+   * See http://bugs.openjdk.java.net/browse/JDK-8007219
+   * Fixed in JDK 8.
+   */
+  public static final boolean JDK_BUG_ID_8007219 = SystemInfo.isMac
+                                                   && SystemInfo.isJavaVersionAtLeast("1.7")
+                                                   && !SystemInfo.isJavaVersionAtLeast("1.8");
+
+  /**
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
    * which need to be changed when migrated to JDK 7
    */
   public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
 
   /**
+   * Marker field to find all usages of the reflective access to JDK 7-specific methods
+   * which need to be changed when migrated to JDK 8
+   */
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = true;
+
+  /**
    * AtomicIntegerFieldUpdater does not work when SecurityManager is installed
    * fixed in JDK8
    */
   public static final boolean JDK_BUG_ID_7103570 = true;
+
+  /**
+   * Support default methods in JDI
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
+   */
+  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
 }

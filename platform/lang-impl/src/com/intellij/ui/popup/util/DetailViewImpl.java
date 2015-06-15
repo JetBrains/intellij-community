@@ -188,6 +188,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       add(myLabel, BorderLayout.CENTER);
     }
     else if (panel != myDetailPanel) {
+      remove(myLabel);
       if (myDetailPanelWrapper == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
         myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -201,6 +202,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
     myDetailPanel = panel;
     revalidate();
+    repaint();
   }
 
   public void setEmptyLabel(String text) {

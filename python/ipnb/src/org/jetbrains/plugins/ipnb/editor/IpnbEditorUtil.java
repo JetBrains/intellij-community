@@ -29,6 +29,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodeSourcePanel;
 import org.jetbrains.plugins.ipnb.psi.IpnbPyFragment;
 
@@ -99,7 +100,7 @@ public class IpnbEditorUtil {
     }
   }
 
-  public static JComponent createPromptComponent(Integer promptNumber, @NotNull final PromptType type) {
+  public static JComponent createPromptComponent(@Nullable Integer promptNumber, @NotNull final PromptType type) {
     final String promptText = prompt(promptNumber, type);
     JLabel promptLabel = new JLabel(promptText);
     promptLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -114,7 +115,7 @@ public class IpnbEditorUtil {
     return promptLabel;
   }
 
-  protected static String prompt(Integer promptNumber, @NotNull final PromptType type) {
+  protected static String prompt(@Nullable Integer promptNumber, @NotNull final PromptType type) {
     if (type == PromptType.In)
       return promptNumber == null ? type + " [ ]:" : promptNumber > 0 ? String.format(type + " [%d]:", promptNumber) : type + " [*]:";
     else if (type == PromptType.Out)

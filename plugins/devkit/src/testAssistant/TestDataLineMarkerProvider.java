@@ -15,47 +15,36 @@
  */
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author yole
  */
-public class TestDataLineMarkerProvider implements LineMarkerProvider {
+public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
   public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataPath";
   public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
   public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
 
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return null;
-    }
+  public AnAction getAdditionalAction(@NotNull PsiElement e) {
 
-    if (!(element instanceof PsiMethod) &&
+    PsiElement element = e.getParent();
+    if (!(e instanceof PsiIdentifier) ||
+        !(element instanceof PsiMethod) &&
         !(element instanceof PsiClass)) {
       return null;
     }
@@ -69,58 +58,15 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
       return null;
     }
     if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      if (isTestMethod(method)) {
-        return new LineMarkerInfo<PsiMethod>(
-          method, method.getModifierList().getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler(),
-          GutterIconRenderer.Alignment.LEFT);
-      }                                                                                         
+      return ActionManager.getInstance().getAction("TestData.Navigate");
     } else {
       final PsiClass psiClass = (PsiClass)element;
       final String basePath = getTestDataBasePath(psiClass);
       if (basePath != null) {
-        PsiModifierList modifierList = psiClass.getModifierList();
-        assert modifierList != null;
-        return new LineMarkerInfo<PsiClass>(
-          psiClass, modifierList.getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL,
-          new TooltipProvider(basePath), new GutterIconNavigationHandler<PsiClass>() {
-          @Override
-          public void navigate(MouseEvent e, PsiClass elt) {
-            final VirtualFile baseDir = VfsUtil.findFileByIoFile(new File(basePath), true);
-            if (baseDir != null) {
-              new OpenFileDescriptor(psiClass.getProject(), baseDir).navigate(true);
-            }
-          }
-        },
-          GutterIconRenderer.Alignment.LEFT);
+        return new GotoTestDataAction(basePath, psiClass.getProject(), AllIcons.Nodes.Folder);
       }
     }
     return null;
-  }
-
-  private static boolean isTestMethod(@NotNull PsiMethod method) {
-    if (isTestMethodWithAnnotation(method)) {
-      return true;
-    }
-
-    final List<String> files = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
-    return files != null && !files.isEmpty();
-  }
-
-  private static boolean isTestMethodWithAnnotation(@NotNull PsiMethod method) {
-    String name = method.getName();
-    if (!name.startsWith("test")) {
-      return false;
-    }
-    String testDataPath = getTestDataBasePath(method.getContainingClass());
-    if (testDataPath == null) {
-      return false;
-    }
-    List<String> fileNames = new TestDataReferenceCollector(testDataPath, TestDataGuessByExistingFilesUtil.getTestName(name)).collectTestDataReferences(method);
-    return fileNames != null && !fileNames.isEmpty();
-  }
-
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
 
   @Nullable
@@ -159,35 +105,5 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
       }
     }
     return null;
-  }
-
-  private static class TooltipProvider implements Function<PsiClass, String> {
-    @NotNull private final String myBasePath;
-
-    public TooltipProvider(@NotNull String basePath) {
-      myBasePath = basePath;
-    }
-
-    @Override
-    public String fun(PsiClass aClass) {
-      return myBasePath;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof TooltipProvider)) return false;
-
-      TooltipProvider provider = (TooltipProvider)o;
-
-      if (!myBasePath.equals(provider.myBasePath)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myBasePath.hashCode();
-    }
   }
 }

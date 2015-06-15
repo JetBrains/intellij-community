@@ -79,7 +79,7 @@ public class PackageChooserDialog extends PackageChooser {
   private Module myModule;
   private EditorTextField myPathEditor;
 
-  private Alarm myAlarm = new Alarm(getDisposable()); 
+  private final Alarm myAlarm = new Alarm(getDisposable());
 
   public PackageChooserDialog(String title, @NotNull Module module) {
     super(module.getProject(), true);

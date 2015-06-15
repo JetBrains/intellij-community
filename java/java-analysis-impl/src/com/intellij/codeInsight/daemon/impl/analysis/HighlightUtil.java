@@ -36,15 +36,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -55,11 +53,9 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -296,6 +292,13 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
 
+  /**
+   * 15.16 Cast Expressions
+   * ( ReferenceType {AdditionalBound} ) expression, where AdditionalBound: & InterfaceType then all must be true
+   *  • ReferenceType must denote a class or interface type.
+   *  • The erasures of all the listed types must be pairwise different.
+   *  • No two listed types may be subtypes of different parameterizations of the same generic interface.
+   */
   @Nullable
   static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression, @NotNull LanguageLevel languageLevel) {
     final PsiTypeElement castTypeElement = expression.getCastType();
@@ -305,6 +308,8 @@ public class HighlightUtil extends HighlightUtilBase {
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
         if (conjuncts != null) {
+          final Set<PsiType> erasures = new HashSet<PsiType>(conjuncts.length);
+          erasures.add(TypeConversionUtil.erasure(conjuncts[0].getType()));
           final List<PsiTypeElement> conjList = new ArrayList<PsiTypeElement>(Arrays.asList(conjuncts));
           for (int i = 1; i < conjuncts.length; i++) {
             final PsiTypeElement conjunct = conjuncts[i];
@@ -319,6 +324,44 @@ public class HighlightUtil extends HighlightUtilBase {
                 return errorResult;
               }
             }
+            else {
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(conjunct)
+                .descriptionAndTooltip("Unexpected type: class is expected").create();
+            }
+            if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
+              final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(conjunct)
+                .descriptionAndTooltip("Repeated interface").create();
+              QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
+              return highlightInfo;
+            }
+          }
+
+          final List<PsiType> typeList = ContainerUtil.map(conjList, new Function<PsiTypeElement, PsiType>() {
+            @Override
+            public PsiType fun(PsiTypeElement element) {
+              return element.getType();
+            }
+          });
+          final Ref<String> differentArgumentsMessage = new Ref<String>();
+          final PsiClass sameGenericParameterization =
+            InferenceSession.findParameterizationOfTheSameGenericClass(typeList, new Processor<Pair<PsiType, PsiType>>() {
+              @Override
+              public boolean process(Pair<PsiType, PsiType> pair) {
+                if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
+                  return true;
+                }
+                differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
+                return false;
+              }
+            });
+          if (sameGenericParameterization != null) {
+            final String message = formatClass(sameGenericParameterization) + " cannot be inherited with different arguments: " +
+                                   differentArgumentsMessage.get();
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(expression)
+              .descriptionAndTooltip(message).create();
           }
         }
       } else {
@@ -898,6 +941,10 @@ public class HighlightUtil extends HighlightUtilBase {
         isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
       }
 
+      if (containingClass != null && containingClass.isInterface()) {
+        isAllowed &= !PsiModifier.NATIVE.equals(modifier);
+      }
+
       if (containingClass != null && containingClass.isAnnotationType()) {
         isAllowed &= !PsiModifier.STATIC.equals(modifier);
         isAllowed &= !PsiModifier.DEFAULT.equals(modifier);
@@ -1474,6 +1521,12 @@ public class HighlightUtil extends HighlightUtilBase {
               .range(qualifier)
               .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", format(aClass), formatClass(superClass))).create();
           }
+        }
+
+        if (expr instanceof PsiSuperExpression && !classT.isInheritor(aClass, false)) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(qualifier)
+            .descriptionAndTooltip(JavaErrorMessages.message("no.enclosing.instance.in.scope", format(aClass))).create();
         }
       }
     }

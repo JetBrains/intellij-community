@@ -41,6 +41,10 @@ public class LineReader {
     return result;
   }
 
+  public byte[] readLine() throws IOException {
+    return readLineInternal();
+  }
+
   private int read() throws IOException {
     if (myPos >= 0) {
       int result = myBuffer[myPos];

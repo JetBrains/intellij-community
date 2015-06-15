@@ -34,6 +34,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -69,6 +71,19 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
+
+    myComponent.myAntialiasingCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_IDE);
+    myComponent.myLCDRenderingScopeCombo.setEnabled(UISettings.getInstance().ANTIALIASING_IN_IDE);
+
+    myComponent.myAntialiasingCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myComponent.myLCDRenderingScopeCombo.setEnabled(myComponent.myAntialiasingCheckBox.isSelected());
+      }
+    });
+
+    myComponent.myLCDRenderingScopeCombo.setModel(new DefaultComboBoxModel(LCDRenderingScope.values()));
+    myComponent.myLCDRenderingScopeCombo.setSelectedItem(UISettings.getInstance().LCD_RENDERING_SCOPE);
 
     Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
     delayDictionary.put(new Integer(0), new JLabel("0"));
@@ -132,6 +147,16 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     if (_presentationFontSize != settings.PRESENTATION_MODE_FONT_SIZE) {
       settings.PRESENTATION_MODE_FONT_SIZE = _presentationFontSize;
+      shouldUpdateUI = true;
+    }
+
+    if (myComponent.myAntialiasingCheckBox.isSelected() != settings.ANTIALIASING_IN_IDE) {
+      settings.ANTIALIASING_IN_IDE = myComponent.myAntialiasingCheckBox.isSelected();
+      shouldUpdateUI = true;
+    }
+
+    if (!myComponent.myLCDRenderingScopeCombo.getSelectedItem().equals(settings.LCD_RENDERING_SCOPE)) {
+      settings.LCD_RENDERING_SCOPE = (LCDRenderingScope)myComponent.myLCDRenderingScopeCombo.getSelectedItem();
       shouldUpdateUI = true;
     }
 
@@ -258,6 +283,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
+    myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
+    myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.ANIMATE_WINDOWS);
@@ -308,6 +335,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     boolean isModified = false;
     isModified |= !Comparing.equal(myComponent.myFontCombo.getSelectedItem(), settings.FONT_FACE);
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
+    isModified |= myComponent.myAntialiasingCheckBox.isSelected() != settings.ANTIALIASING_IN_IDE;
+    isModified |= !myComponent.myLCDRenderingScopeCombo.getSelectedItem().equals(settings.LCD_RENDERING_SCOPE);
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_TOOL_WINDOW_NUMBERS;
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.HIDE_TOOL_STRIPES;
@@ -374,6 +403,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myShowMemoryIndicatorCheckBox;
     private JComboBox myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
+    private JBCheckBox myAntialiasingCheckBox;
+    private ComboBox myLCDRenderingScopeCombo;
 
     private JCheckBox myMoveMouseOnDefaultButtonCheckBox;
     private JCheckBox myEnableAlphaModeCheckBox;

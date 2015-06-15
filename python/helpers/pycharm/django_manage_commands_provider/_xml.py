@@ -2,6 +2,12 @@
 """
 This module exports information about manage commands and options from django to PyCharm.
 Information is provided in XML (to prevent encoding troubles and simplify deserialization on java side).
+
+Right after xml declaration, before root tag it contains following comment:
+<!--jb pycharm data start-->
+
+Use it to make sure you found correct XML
+
 It does not have schema (yet!) but here is XML format it uses.
 
 <commandInfo-array> -- root
@@ -24,6 +30,7 @@ TODO: Since Django 1.8 we can fetch much more info from argparse like positional
 """
 from xml.dom import minidom
 from xml.dom.minidom import Element
+from _jb_utils import VersionAgnosticUtils
 
 __author__ = 'Ilya.Kazakevich'
 
@@ -44,6 +51,7 @@ class XmlDumper(object):
     def __init__(self):
         self.__document = minidom.Document()
         self.__root = self.__document.createElement("{0}-array".format(XmlDumper.__command_info_tag))
+        self.__document.appendChild(self.__document.createComment("jb pycharm data start"))
         self.__document.appendChild(self.__root)
         self.__command_element = None
 
@@ -91,7 +99,7 @@ class XmlDumper(object):
         :type command_args_text str
         """
         assert bool(self.__command_element), "Not in a a command"
-        self.__command_element.setAttribute("args", command_args_text)
+        self.__command_element.setAttribute("args", VersionAgnosticUtils().to_unicode(command_args_text))
 
     def add_command_option(self, long_opt_names, short_opt_names, help_text, argument_info):
         """
@@ -152,4 +160,5 @@ class XmlDumper(object):
         :return: current commands as XML as described in package
         :rtype str
         """
-        return self.__document.toprettyxml()
+        document = self.__document.toxml(encoding="utf-8")
+        return VersionAgnosticUtils().to_unicode(document.decode("utf-8") if isinstance(document, bytes) else document)

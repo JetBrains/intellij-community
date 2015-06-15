@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1295,7 +1295,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     mySideStack.remove(id);
     // Destroy stripe button
     final StripeButton button = getStripeButton(id);
-    button.dispose();
+    Disposer.dispose(button);
     myId2StripeButton.remove(id);
     //
     ToolWindowFocusWatcher watcher = (ToolWindowFocusWatcher)myId2FocusWatcher.remove(id);

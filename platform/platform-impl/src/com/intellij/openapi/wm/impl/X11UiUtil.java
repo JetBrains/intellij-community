@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -306,7 +307,7 @@ public class X11UiUtil {
   @Nullable
   private static String getAwesomeWMVersion() {
     try {
-      String version = ExecUtil.execAndReadLine("awesome", "--version");
+      String version = ExecUtil.execAndReadLine(new GeneralCommandLine("awesome", "--version"));
       if (version != null) {
         Matcher m = Pattern.compile("awesome v([0-9.]+)").matcher(version);
         if (m.find()) {

@@ -29,10 +29,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.NonPhysicalFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -132,6 +129,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public PsiDirectory getParentDirectory() {
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) return null;
+    if (!parentFile.isValid()) {
+      LOG.error("Invalid parent: " + parentFile + " of dir " + myFile + ", dir.valid=" + myFile.isValid());
+      return null;
+    }
     return myManager.findDirectory(parentFile);
   }
 
@@ -175,6 +176,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public PsiFile findFile(@NotNull String name) {
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
+    if (!childVFile.isValid()) {
+      LOG.error("Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid());
+      return null;
+    }
     return myManager.findFile(childVFile);
   }
 
@@ -185,23 +190,16 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
     for (VirtualFile vFile : myFile.getChildren()) {
       boolean isDir = vFile.isDirectory();
-      if (processor instanceof PsiFileSystemItemProcessor &&
-          !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), isDir)) {
+      if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), isDir)) {
         continue;
       }
-      if (isDir) {
-        PsiDirectory dir = myManager.findDirectory(vFile);
-        if (dir != null) {
-          if (!processor.execute(dir)) return false;
-        }
-      }
-      else {
-        PsiFile file = myManager.findFile(vFile);
-        if (file != null) {
-          if (!processor.execute(file)) return false;
-        }
+
+      PsiFileSystemItem item = isDir ? myManager.findDirectory(vFile) : myManager.findFile(vFile);
+      if (item != null && !processor.execute(item)) {
+        return false;
       }
     }
+
     return true;
   }
 

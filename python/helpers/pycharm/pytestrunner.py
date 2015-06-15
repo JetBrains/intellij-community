@@ -20,10 +20,13 @@ def get_plugin_manager():
     from _pytest.core import PluginManager
     return PluginManager(load=True)
 
+# "-s" is always required: no test output provided otherwise
+args = sys.argv[1:]
+args.append("-s") if "-s" not in args else None
+
 if has_pytest:
   _preinit = []
   def main():
-    args = sys.argv[1:]
     _pluginmanager = get_plugin_manager()
     hook = _pluginmanager.hook
     try:
@@ -38,7 +41,6 @@ if has_pytest:
 
 else:
   def main():
-    args = sys.argv[1:]
     config = py.test.config
     try:
       config.parse(args)

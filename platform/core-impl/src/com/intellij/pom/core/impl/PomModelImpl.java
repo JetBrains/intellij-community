@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -137,8 +138,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
-    List<Throwable> throwables = new ArrayList<Throwable>(0);
     synchronized(PsiLock.LOCK){
+      List<Throwable> throwables = new ArrayList<Throwable>(0);
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
@@ -149,6 +150,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         try{
           transaction.run();
           event = transaction.getAccumulatedEvent();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch(Exception e){
           LOG.error(e);
@@ -186,6 +190,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           }
         }
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable t) {
         throwables.add(t);
       }
@@ -193,16 +200,18 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         try {
           commitTransaction(transaction);
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
         catch (Throwable t) {
           throwables.add(t);
         }
         finally {
           DebugUtil.finishPsiModification();
         }
+        if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
       }
     }
-
-    if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
   }
 
   @Nullable
@@ -230,10 +239,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
     Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
+    boolean docSynced = false;
     if (document != null) {
       final int oldLength = containingFileByTree.getTextLength();
-      boolean success = synchronizer.commitTransaction(document);
-      if (success) {
+      docSynced = synchronizer.commitTransaction(document);
+      if (docSynced) {
         BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
       }
     }
@@ -242,6 +252,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
                              ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class);
       if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) {
         reparseParallelTrees(containingFileByTree);
+        if (docSynced) {
+          containingFileByTree.getViewProvider().contentsSynchronized();
+        }
       }
     }
 

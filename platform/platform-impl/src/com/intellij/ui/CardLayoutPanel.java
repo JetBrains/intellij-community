@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.ui.JBInsets;
 
 import javax.swing.JComponent;
 import java.awt.*;
@@ -125,13 +126,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
   @Override
   public void doLayout() {
     Rectangle bounds = new Rectangle(getWidth(), getHeight());
-    Insets insets = getInsets();
-    if (insets != null) {
-      bounds.x += insets.left;
-      bounds.y += insets.top;
-      bounds.width -= insets.left + insets.right;
-      bounds.height -= insets.top + insets.bottom;
-    }
+    JBInsets.removeFrom(bounds, getInsets());
     for (Component component : getComponents()) {
       component.setBounds(bounds);
     }

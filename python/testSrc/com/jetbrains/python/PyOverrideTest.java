@@ -24,7 +24,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
 import java.util.Collections;
@@ -42,13 +41,12 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   private void doTest3k() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON32);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
   }
 
   private PyClass getTopLevelClass(int index) {
@@ -133,6 +131,21 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testPy3k() {
     doTest3k();
+  }
+
+  // PY-15629
+  public void testStaticMethodPy3k() {
+    doTest3k();
+  }
+
+  // PY-15629
+  public void testDunderNewPy3k() {
+    doTest3k();
+  }
+
+  // PY-15629
+  public void testDunderNew() {
+    doTest();
   }
 
   public void testTypeAnnotations() {  // PY-2547

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,20 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class FormatProcessor {
+public class FormatProcessor {
 
   private static final Map<Alignment.Anchor, BlockAlignmentProcessor> ALIGNMENT_PROCESSORS =
     new EnumMap<Alignment.Anchor, BlockAlignmentProcessor>(Alignment.Anchor.class);
@@ -55,6 +59,8 @@ class FormatProcessor {
   private static final int BULK_REPLACE_OPTIMIZATION_CRITERIA = 3000;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
+  private Set<Alignment> myAlignmentsInsideRangesToModify = null;
+  private boolean myReformatContext;
 
   private LeafBlockWrapper myCurrentBlock;
 
@@ -125,7 +131,7 @@ class FormatProcessor {
    * region' and value is dependent spacing object.
    * <p/>
    * Every time we detect that formatter changes 'has line feeds' status of such dependent region, we
-   * {@link DependantSpacingImpl#setDependentRegionChanged() mark} the dependent spacing as changed and schedule one more
+   * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged() mark} the dependent spacing as changed and schedule one more
    * formatting iteration.
    */
   private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
@@ -160,23 +166,21 @@ class FormatProcessor {
                          @Nullable FormatTextRanges affectedRanges,
                          @NotNull FormattingProgressCallback progressCallback)
   {
-    this(docModel, rootBlock, settings, indentOptions, affectedRanges, -1, progressCallback);
+    this(docModel, rootBlock, new FormatOptions(settings, indentOptions, affectedRanges, false), progressCallback);
   }
 
-  public FormatProcessor(final FormattingDocumentModel docModel,
-                         Block rootBlock,
-                         CodeStyleSettings settings,
-                         CommonCodeStyleSettings.IndentOptions indentOptions,
-                         @Nullable FormatTextRanges affectedRanges,
-                         int interestingOffset,
-                         @NotNull FormattingProgressCallback progressCallback)
+  public FormatProcessor(FormattingDocumentModel model,
+                         Block block,
+                         FormatOptions options,
+                         @NotNull FormattingProgressCallback callback)
   {
-    myProgressCallback = progressCallback;
-    myDefaultIndentOption = indentOptions;
-    mySettings = settings;
-    myDocument = docModel.getDocument();
-    myCurrentState = new WrapBlocksState(rootBlock, docModel, affectedRanges, interestingOffset);
-    myRightMargin = getRightMargin(rootBlock);
+    myProgressCallback = callback;
+    myDefaultIndentOption = options.myIndentOptions;
+    mySettings = options.mySettings;
+    myDocument = model.getDocument();
+    myReformatContext = options.myReformatContext;
+    myCurrentState = new WrapBlocksState(block, model, options.myAffectedRanges, options.myInterestingOffset);
+    myRightMargin = getRightMargin(block);
   }
 
   private int getRightMargin(Block rootBlock) {
@@ -349,9 +353,7 @@ class FormatProcessor {
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
-    if (document == null) {
-      return false;
-    }
+    CaretOffsetUpdater caretOffsetUpdater = new CaretOffsetUpdater(document);
 
     List<TextChange> changes = new ArrayList<TextChange>();
     int shift = 0;
@@ -363,6 +365,7 @@ class FormatProcessor {
         whiteSpace.getEndOffset(), block.getNode(), false
       );
       if (changes.size() > 10000) {
+        caretOffsetUpdater.update(changes);
         CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
         document.replaceString(0, document.getTextLength(), mergeResult);
         shift += currentIterationShift;
@@ -373,8 +376,10 @@ class FormatProcessor {
       currentIterationShift += change.getDiff();
       changes.add(change);
     }
+    caretOffsetUpdater.update(changes);
     CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
     document.replaceString(0, document.getTextLength(), mergeResult);
+    caretOffsetUpdater.restoreCaretLocations();
     cleanupBlocks(blocksToModify);
     return true;
   }
@@ -422,7 +427,7 @@ class FormatProcessor {
       final int shiftInside = calcShift(oldBlockIndent, whiteSpaceIndent, options);
 
       if (shiftInside != 0 || !oldBlockIndent.equals(whiteSpaceIndent)) {
-        final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
+        final TextRange newBlockRange = model.shiftIndentInsideRange(block.getNode(), currentBlockRange, shiftInside);
         shift += newBlockRange.getLength() - block.getLength();
       }
     }
@@ -469,6 +474,12 @@ class FormatProcessor {
     final SpacingImpl spaceProperty = myCurrentBlock.getSpaceProperty();
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
+    if (isReformatSelectedRangesContext()) {
+      if (isCurrentBlockAlignmentUsedInRangesToModify() && whiteSpace.isReadOnly()) {
+        whiteSpace.setReadOnly(false);
+      }
+    }
+
     whiteSpace.arrangeLineFeeds(spaceProperty, this);
 
     if (!whiteSpace.containsLineFeeds()) {
@@ -496,11 +507,13 @@ class FormatProcessor {
       onCurrentLineChanged();
     }
 
-    if (shouldSaveDependency(spaceProperty, whiteSpace)) {
-      saveDependency(spaceProperty);
+
+    final List<TextRange> ranges = getDependentRegionRangesAfterCurrentWhiteSpace(spaceProperty, whiteSpace);
+    if (!ranges.isEmpty()) {
+      registerUnresolvedDependentSpacingRanges(spaceProperty, ranges);
     }
 
-    if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependency(whiteSpace.getTextRange())) {
+    if (!whiteSpace.isIsReadOnly() && shouldReformatPreviouslyLocatedDependentSpacing(whiteSpace)) {
       myAlignAgain.add(whiteSpace);
     }
     else if (!myAlignAgain.isEmpty()) {
@@ -510,43 +523,76 @@ class FormatProcessor {
     myCurrentBlock = myCurrentBlock.getNextBlock();
   }
 
-  private boolean shouldReformatBecauseOfBackwardDependency(TextRange changed) {
+  private boolean isReformatSelectedRangesContext() {
+    return myReformatContext && !ContainerUtil.isEmpty(myAlignmentsInsideRangesToModify);
+  }
+
+  private boolean isCurrentBlockAlignmentUsedInRangesToModify() {
+    AbstractBlockWrapper block = myCurrentBlock;
+    AlignmentImpl alignment = myCurrentBlock.getAlignment();
+
+    while (alignment == null
+           && block != null
+           && block.getStartOffset() == myCurrentBlock.getStartOffset())
+    {
+      block = block.getParent();
+      if (block != null) {
+        alignment = block.getAlignment();
+      }
+    }
+
+    return myAlignmentsInsideRangesToModify.contains(alignment);
+  }
+
+  private boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
+    final TextRange changed = space.getTextRange();
     final SortedMap<TextRange, DependantSpacingImpl> sortedHeadMap = myPreviousDependencies.tailMap(changed);
 
-    boolean result = false;
     for (final Map.Entry<TextRange, DependantSpacingImpl> entry : sortedHeadMap.entrySet()) {
       final TextRange textRange = entry.getKey();
 
       if (textRange.contains(changed)) {
-        final DependantSpacingImpl dependentSpacing = entry.getValue();
-        final boolean containedLineFeeds = dependentSpacing.getMinLineFeeds() > 0;
+        final DependantSpacingImpl spacing = entry.getValue();
+        if (spacing.isDependentRegionLinefeedStatusChanged()) {
+          continue;
+        }
+
+        final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
         final boolean containsLineFeeds = containsLineFeeds(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
-          dependentSpacing.setDependentRegionChanged();
-          result = true;
+          spacing.setDependentRegionLinefeedStatusChanged();
+          return true;
         }
       }
     }
-    return result;
+
+    return false;
   }
 
-  private void saveDependency(final SpacingImpl spaceProperty) {
+  private void registerUnresolvedDependentSpacingRanges(final SpacingImpl spaceProperty, List<TextRange> unprocessedRanges) {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
-    final TextRange dependency = dependantSpaceProperty.getDependency();
-    if (dependantSpaceProperty.isDependentRegionChanged()) {
-      return;
+    if (dependantSpaceProperty.isDependentRegionLinefeedStatusChanged()) return;
+
+    for (TextRange range: unprocessedRanges) {
+      myPreviousDependencies.put(range, dependantSpaceProperty);
     }
-    myPreviousDependencies.put(dependency, dependantSpaceProperty);
   }
 
-  private static boolean shouldSaveDependency(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
-    if (!(spaceProperty instanceof DependantSpacingImpl)) return false;
+  private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
+                                                                                final WhiteSpace whiteSpace)
+  {
+    if (!(spaceProperty instanceof DependantSpacingImpl)) return ContainerUtil.emptyList();
 
-    if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return false;
+    if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return ContainerUtil.emptyList();
 
-    final TextRange dependency = ((DependantSpacingImpl)spaceProperty).getDependency();
-    return whiteSpace.getStartOffset() < dependency.getEndOffset();
+    DependantSpacingImpl spacing = (DependantSpacingImpl)spaceProperty;
+    return ContainerUtil.filter(spacing.getDependentRegionRanges(), new Condition<TextRange>() {
+      @Override
+      public boolean value(TextRange dependencyRange) {
+        return whiteSpace.getStartOffset() < dependencyRange.getEndOffset();
+      }
+    });
   }
 
   /**
@@ -1228,12 +1274,7 @@ class FormatProcessor {
                                @NotNull final CommonCodeStyleSettings.IndentOptions options)
   {
     if (oldIndent.equals(newIndent)) return 0;
-    if (options.USE_TAB_CHARACTER) {
-      return (newIndent.tabs - oldIndent.getTabsCount(options)) * options.TAB_SIZE;
-    }
-    else {
-      return newIndent.whiteSpaces - oldIndent.getSpacesCount(options);
-    }
+    return newIndent.getSpacesCount(options) - oldIndent.getSpacesCount(options);
   }
 
   /**
@@ -1320,6 +1361,7 @@ class FormatProcessor {
       myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
         root, model, affectedRanges, mySettings, myDefaultIndentOption, interestingOffset, myProgressCallback
       );
+      myWrapper.setCollectAlignmentsInsideFormattingRange(myReformatContext);
     }
 
     @Override
@@ -1343,8 +1385,10 @@ class FormatProcessor {
       myLastTokenBlock = myWrapper.getLastTokenBlock();
       myCurrentBlock = myFirstTokenBlock;
       myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-      myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
-      myLastWhiteSpace.append(myModel.getTextLength(), myModel, myDefaultIndentOption);
+      int lastBlockOffset = getLastBlock().getEndOffset();
+      myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
+      myLastWhiteSpace.append(Math.max(lastBlockOffset, myWrapper.getEndOffset()), myModel, myDefaultIndentOption);
+      myAlignmentsInsideRangesToModify = myWrapper.getAlignmentsInsideRangeToModify();
     }
   }
 
@@ -1485,6 +1529,60 @@ class FormatProcessor {
           }
         });
       }
+    }
+  }
+  
+  private static class CaretOffsetUpdater {
+    private final Map<Editor, Integer> myCaretOffsets = new HashMap<Editor, Integer>();
+    
+    private CaretOffsetUpdater(@NotNull Document document) {
+      Editor[] editors = EditorFactory.getInstance().getEditors(document);
+      for (Editor editor : editors) {
+        myCaretOffsets.put(editor, editor.getCaretModel().getOffset());
+      }
+    }
+    
+    private void update(@NotNull List<? extends TextChange> changes) {
+      BulkChangesMerger merger = BulkChangesMerger.INSTANCE;
+      for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
+        entry.setValue(merger.updateOffset(entry.getValue(), changes));
+      }
+    }
+    
+    private void restoreCaretLocations() {
+      for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
+        entry.getKey().getCaretModel().moveToOffset(entry.getValue());
+      }
+    }
+  }
+
+
+  public static class FormatOptions {
+    private CodeStyleSettings mySettings;
+    private CommonCodeStyleSettings.IndentOptions myIndentOptions;
+
+    private FormatTextRanges myAffectedRanges;
+    private boolean myReformatContext;
+
+    private int myInterestingOffset;
+
+    public FormatOptions(CodeStyleSettings settings,
+                         CommonCodeStyleSettings.IndentOptions options,
+                         FormatTextRanges ranges,
+                         boolean reformatContext) {
+      this(settings, options, ranges, reformatContext, -1);
+    }
+
+    public FormatOptions(CodeStyleSettings settings,
+                         CommonCodeStyleSettings.IndentOptions options,
+                         FormatTextRanges ranges,
+                         boolean reformatContext,
+                         int interestingOffset) {
+      mySettings = settings;
+      myIndentOptions = options;
+      myAffectedRanges = ranges;
+      myReformatContext = reformatContext;
+      myInterestingOffset = interestingOffset;
     }
   }
 }

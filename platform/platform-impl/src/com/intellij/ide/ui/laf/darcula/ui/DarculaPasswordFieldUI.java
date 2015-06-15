@@ -59,7 +59,9 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     }
     final Border border = c.getBorder();
     if (border instanceof DarculaTextBorder) {
-      g.setColor(c.getBackground());
+      if (c.isEnabled() && c.isEditable()) {
+        g.setColor(c.getBackground());
+      }
       final int width = c.getWidth();
       final int height = c.getHeight();
       final Insets i = border.getBorderInsets(c);

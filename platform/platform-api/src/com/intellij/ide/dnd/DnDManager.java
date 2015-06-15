@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,14 @@
  */
 package com.intellij.ide.dnd;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 import javax.swing.*;
 import java.awt.*;
 
 public abstract class DnDManager {
   public static DnDManager getInstance() {
-    Application application = ApplicationManager.getApplication();
-    return application != null ? (DnDManager)application.getPicoContainer().getComponentInstance(DnDManager.class.getName()) : null;
+    return ServiceManager.getService(DnDManager.class);
   }
 
   public abstract void registerSource(DnDSource source, JComponent component);

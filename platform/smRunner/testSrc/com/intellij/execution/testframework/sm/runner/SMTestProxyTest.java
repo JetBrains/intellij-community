@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.easymock.classextension.EasyMock;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 
@@ -602,15 +604,13 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   public void testNavigatable() {
-    //noinspection NullableProblems
-    assertNull(mySuite.getDescriptor(null, null));
+    TestConsoleProperties properties = EasyMock.createMock(TestConsoleProperties.class);
+
+    assertNull(mySuite.getDescriptor(null, properties));
 
     mySuite.addChild(mySimpleTest);
-
-    //noinspection NullableProblems
-    assertNull(mySuite.getDescriptor(null, null));
-    //noinspection NullableProblems
-    assertNull(mySimpleTest.getDescriptor(null, null));
+    assertNull(mySuite.getDescriptor(null, properties));
+    assertNull(mySimpleTest.getDescriptor(null, properties));
   }
 
   public void testShouldRun_Test() {

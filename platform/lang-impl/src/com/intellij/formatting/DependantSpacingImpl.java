@@ -17,7 +17,11 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Extends {@link SpacingImpl} in order to add notion of dependency range.
@@ -28,9 +32,8 @@ public class DependantSpacingImpl extends SpacingImpl {
   private static final int DEPENDENCE_CONTAINS_LF_MASK      = 0x10;
   private static final int DEPENDENT_REGION_LF_CHANGED_MASK = 0x20;
 
-  @NotNull private final TextRange myDependency;
+  @NotNull private final List<TextRange> myDependentRegionRanges;
   @NotNull private final DependentSpacingRule myRule;
-
 
   public DependantSpacingImpl(final int minSpaces,
                               final int maxSpaces,
@@ -40,7 +43,19 @@ public class DependantSpacingImpl extends SpacingImpl {
                               @NotNull DependentSpacingRule rule)
   {
     super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines, false, 0);
-    myDependency = dependency;
+    myDependentRegionRanges = ContainerUtil.newSmartList(dependency);
+    myRule = rule;
+  }
+
+  public DependantSpacingImpl(final int minSpaces,
+                              final int maxSpaces,
+                              @NotNull List<TextRange> dependencyRanges,
+                              final boolean keepLineBreaks,
+                              final int keepBlankLines,
+                              @NotNull DependentSpacingRule rule)
+  {
+    super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines, false, 0);
+    myDependentRegionRanges = dependencyRanges;
     myRule = rule;
   }
 
@@ -74,17 +89,22 @@ public class DependantSpacingImpl extends SpacingImpl {
 
   @Override
   public void refresh(FormatProcessor formatter) {
-    if (isDependentRegionChanged()) {
+    if (isDependentRegionLinefeedStatusChanged()) {
       return;
     }
-    final boolean value = formatter.containsLineFeeds(myDependency);
-    if (value) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
+
+    boolean atLeastOneDependencyRangeContainsLf = false;
+    for (TextRange dependency : myDependentRegionRanges) {
+      atLeastOneDependencyRangeContainsLf |= formatter.containsLineFeeds(dependency);
+    }
+
+    if (atLeastOneDependencyRangeContainsLf) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
     else myFlags &= ~DEPENDENCE_CONTAINS_LF_MASK;
   }
 
   @NotNull
-  public TextRange getDependency() {
-    return myDependency;
+  public List<TextRange> getDependentRegionRanges() {
+    return myDependentRegionRanges;
   }
 
   /**
@@ -93,14 +113,14 @@ public class DependantSpacingImpl extends SpacingImpl {
    * @return    <code>true</code> if target 'contains line feed' status has been changed for the target dependent region during formatting;
    *            <code>false</code> otherwise
    */
-  public final boolean isDependentRegionChanged() {
+  public final boolean isDependentRegionLinefeedStatusChanged() {
     return (myFlags & DEPENDENT_REGION_LF_CHANGED_MASK) != 0;
   }
 
   /**
-   * Allows to set {@link #isDependentRegionChanged() 'dependent region changed'} property.
+   * Allows to set {@link #isDependentRegionLinefeedStatusChanged() 'dependent region changed'} property.
    */
-  public final void setDependentRegionChanged() {
+  public final void setDependentRegionLinefeedStatusChanged() {
     myFlags |= DEPENDENT_REGION_LF_CHANGED_MASK;
     if (getMinLineFeeds() <= 0) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
     else myFlags &=~DEPENDENCE_CONTAINS_LF_MASK;
@@ -108,8 +128,9 @@ public class DependantSpacingImpl extends SpacingImpl {
 
   @Override
   public String toString() {
+    String dependencies = StringUtil.join(myDependentRegionRanges, StringUtil.createToStringFunction(TextRange.class), ", ");
     return "<DependantSpacing: minSpaces=" + getMinSpaces() + " maxSpaces=" + getMaxSpaces() + " minLineFeeds=" + getMinLineFeeds() + " dep=" +
-           myDependency + ">";
+           dependencies + ">";
   }
 
   private boolean isTriggered() {

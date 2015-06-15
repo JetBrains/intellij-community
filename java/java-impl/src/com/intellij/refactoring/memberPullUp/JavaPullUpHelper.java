@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private final boolean myIsTargetInterface;
   private final DocCommentPolicy myJavaDocPolicy;
   private Set<PsiMember> myMembersAfterMove = null;
-  private Set<PsiMember> myMembersToMove;
-  private Project myProject;
+  private final Set<PsiMember> myMembersToMove;
+  private final Project myProject;
 
   private final QualifiedThisSuperAdjuster myThisSuperAdjuster;
   private final ExplicitSuperDeleter myExplicitSuperDeleter;
@@ -219,6 +219,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
     }
     PsiMethod methodCopy = (PsiMethod)method.copy();
+    RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
+
     Language language = myTargetSuperClass.getLanguage();
     final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
     if (superClassMethod != null && superClassMethod.findDeepestSuperMethods().length == 0 ||
@@ -236,8 +238,6 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       } else {
         RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
       }
-
-      RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
       myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 
@@ -716,9 +716,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private class StaticReferencesCollector extends ClassMemberReferencesVisitor {
-    private ArrayList<PsiJavaCodeReferenceElement> myReferences;
-    private ArrayList<PsiElement> myReferees;
-    private ArrayList<PsiClass> myRefereeClasses;
+    private final ArrayList<PsiJavaCodeReferenceElement> myReferences;
+    private final ArrayList<PsiElement> myReferees;
+    private final ArrayList<PsiClass> myRefereeClasses;
 
     private StaticReferencesCollector() {
       super(mySourceClass);

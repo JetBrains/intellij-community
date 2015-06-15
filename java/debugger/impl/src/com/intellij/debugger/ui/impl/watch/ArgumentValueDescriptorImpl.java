@@ -41,11 +41,13 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private String myName;
   private boolean myParameterNameCalcutated;
   private final String myDefaultName;
+  private final boolean myIsParam;
 
   public ArgumentValueDescriptorImpl(Project project, int index, Value value, String name) {
     super(project);
     myIndex = index;
     myValue = value;
+    myIsParam = name == null;
     myDefaultName = name != null ? name : "arg" + String.valueOf(index);
     myName = myDefaultName;
     setLvalue(true);
@@ -125,6 +127,10 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
 
   public String getName() {
     return myName;
+  }
+
+  public boolean isParameter() {
+    return myIsParam;
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {

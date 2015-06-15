@@ -140,9 +140,9 @@ public class LinkLabel<T> extends JLabel {
     if (icon != null) {
       point.x += getIconTextGap();
       point.x += icon.getIconWidth();
-      point.x += insets.left;
-      point.y += insets.top;
     }
+    point.x += insets.left;
+    point.y += insets.top;
     size.width -= point.x;
     size.width -= insets.right;
     size.height -= insets.bottom;

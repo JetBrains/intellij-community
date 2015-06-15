@@ -25,6 +25,7 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -37,6 +38,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +52,6 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -163,7 +164,6 @@ public class DiffUtil {
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
 
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
-    editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.VCS_DIFF);
 
     editor.getSettings().setLineNumbersShown(true);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
@@ -187,46 +187,51 @@ public class DiffUtil {
     editor.reinitSettings();
   }
 
+  public static boolean isMirrored(@NotNull Editor editor) {
+    if (editor instanceof EditorEx) {
+      return ((EditorEx)editor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT;
+    }
+    return false;
+  }
+
   //
   // Scrolling
   //
 
-  public static void scrollEditor(@Nullable final Editor editor, int line) {
-    scrollEditor(editor, line, 0);
-  }
-
-  public static void scrollEditor(@Nullable final Editor editor, int line, int column) {
-    scrollEditor(editor, new LogicalPosition(line, column));
-  }
-
-  public static void scrollEditor(@Nullable final Editor editor, @NotNull LogicalPosition position) {
-    if (editor == null) return;
-    editor.getCaretModel().removeSecondaryCarets();
-    editor.getCaretModel().moveToLogicalPosition(position);
-    scrollToCaret(editor);
-  }
-
-  public static void scrollToLineAnimated(@Nullable final Editor editor, int line) {
+  public static void moveCaret(@Nullable final Editor editor, int line) {
     if (editor == null) return;
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
-    ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.scrollToCaret(ScrollType.CENTER);
+  }
+
+  public static void scrollEditor(@Nullable final Editor editor, int line, boolean animated) {
+    scrollEditor(editor, line, 0, animated);
+  }
+
+  public static void scrollEditor(@Nullable final Editor editor, int line, int column, boolean animated) {
+    if (editor == null) return;
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
+    scrollToCaret(editor, animated);
   }
 
   public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
-    if (editor == null) return;
-    editor.getScrollingModel().disableAnimation();
-    editor.getScrollingModel().scrollHorizontally(point.x);
-    editor.getScrollingModel().scrollVertically(point.y);
-    editor.getScrollingModel().enableAnimation();
+    scrollToPoint(editor, point, false);
   }
 
-  public static void scrollToCaret(@Nullable Editor editor) {
+  public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point, boolean animated) {
     if (editor == null) return;
-    editor.getScrollingModel().disableAnimation();
+    if (!animated) editor.getScrollingModel().disableAnimation();
+    editor.getScrollingModel().scrollHorizontally(point.x);
+    editor.getScrollingModel().scrollVertically(point.y);
+    if (!animated) editor.getScrollingModel().enableAnimation();
+  }
+
+  public static void scrollToCaret(@Nullable Editor editor, boolean animated) {
+    if (editor == null) return;
+    if (!animated) editor.getScrollingModel().disableAnimation();
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-    editor.getScrollingModel().enableAnimation();
+    if (!animated) editor.getScrollingModel().enableAnimation();
   }
 
   @NotNull
@@ -239,61 +244,6 @@ public class DiffUtil {
   @NotNull
   public static LogicalPosition getCaretPosition(@Nullable Editor editor) {
     return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
-  }
-
-  @NotNull
-  public static Point[] getScrollingPositions(@NotNull List<? extends Editor> editors) {
-    Point[] carets = new Point[editors.size()];
-    for (int i = 0; i < editors.size(); i++) {
-      carets[i] = getScrollingPosition(editors.get(i));
-    }
-    return carets;
-  }
-
-  @NotNull
-  public static LogicalPosition[] getCaretPositions(@NotNull List<? extends Editor> editors) {
-    LogicalPosition[] carets = new LogicalPosition[editors.size()];
-    for (int i = 0; i < editors.size(); i++) {
-      carets[i] = getCaretPosition(editors.get(i));
-    }
-    return carets;
-  }
-
-  public static boolean wasScrolled(@NotNull List<? extends Editor> editors) {
-    for (Editor editor : editors) {
-      if (editor == null) continue;
-      if (editor.getCaretModel().getOffset() != 0) return true;
-      if (editor.getScrollingModel().getVerticalScrollOffset() != 0) return true;
-      if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) return true;
-    }
-    return false;
-  }
-
-  public static class EditorsVisiblePositions {
-    public static final Key<EditorsVisiblePositions> KEY = Key.create("Diff.EditorsVisiblePositions");
-
-    @NotNull public final LogicalPosition[] myCaretPosition;
-    @NotNull public final Point[] myPoints;
-
-    public EditorsVisiblePositions(@NotNull LogicalPosition caretPosition, @NotNull Point points) {
-      myCaretPosition = new LogicalPosition[]{caretPosition};
-      myPoints = new Point[]{points};
-    }
-
-    public EditorsVisiblePositions(@NotNull LogicalPosition[] caretPosition, @NotNull Point[] points) {
-      myCaretPosition = caretPosition;
-      myPoints = points;
-    }
-
-    public boolean isSame(@Nullable LogicalPosition... caretPosition) {
-      // TODO: allow small fluctuations ?
-      if (caretPosition == null) return true;
-      if (myCaretPosition.length != caretPosition.length) return false;
-      for (int i = 0; i < caretPosition.length; i++) {
-        if (!caretPosition[i].equals(myCaretPosition[i])) return false;
-      }
-      return true;
-    }
   }
 
   //
@@ -701,9 +651,15 @@ public class DiffUtil {
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
     TextRange otherRange = getLinesRange(document, line1, line2);
-    return document.getCharsSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
+    return document.getImmutableCharSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
   }
 
+  /**
+   * Return affected range, without non-internal newlines
+   * <p/>
+   * we consider '\n' not as a part of line, but a separator between lines
+   * ex: if last line is not empty, the last symbol will not be '\n'
+   */
   @NotNull
   public static TextRange getLinesRange(@NotNull Document document, int line1, int line2) {
     if (line1 == line2) {
@@ -824,7 +780,7 @@ public class DiffUtil {
   public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {
     WindowWrapper.Mode mode = hints.getMode();
     if (mode == null) {
-      boolean isUnderDialog = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
+      boolean isUnderDialog = LaterInvocator.isInModalContext();
       mode = isUnderDialog ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
     }
     return mode;
@@ -908,6 +864,28 @@ public class DiffUtil {
   //
   // DataProvider
   //
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull ContentDiffRequest request, @NotNull Side currentSide) {
+    List<DiffContent> contents = request.getContents();
+    DiffContent content1 = currentSide.select(contents);
+    DiffContent content2 = currentSide.other().select(contents);
+
+    if (content1 instanceof FileContent) return ((FileContent)content1).getFile();
+    if (content2 instanceof FileContent) return ((FileContent)content2).getFile();
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull ContentDiffRequest request, @NotNull ThreeSide currentSide) {
+    List<DiffContent> contents = request.getContents();
+    DiffContent content1 = currentSide.select(contents);
+    DiffContent content2 = ThreeSide.BASE.select(contents);
+
+    if (content1 instanceof FileContent) return ((FileContent)content1).getFile();
+    if (content2 instanceof FileContent) return ((FileContent)content2).getFile();
+    return null;
+  }
 
   @Nullable
   public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NonNls String dataId) {

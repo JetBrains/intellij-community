@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,9 +129,18 @@ public final class NameResolverTools {
   private static class QualifiedAndClassNameObtainer implements Function<PyElement, Pair<String, String>> {
     @Override
     @NotNull
-    public Pair<String, String> fun(@NotNull final PyElement element) {
-      PyElement elementToCheck = element;
-      final PsiReference reference = element.getReference();
+    public Pair<String, String> fun(@NotNull final PyElement param) {
+      PyElement elementToCheck = param;
+
+      // Trying to use no implicit context if possible...
+      final PsiReference reference;
+      if (param instanceof PyReferenceOwner) {
+        reference = ((PyReferenceOwner)param).getReference(PyResolveContext.noImplicits());
+      }
+      else {
+        reference = param.getReference();
+      }
+
       if (reference != null) {
         final PsiElement resolvedElement = reference.resolve();
         if (resolvedElement instanceof PyElement) {

@@ -40,6 +40,7 @@ public interface StreamApiConstants {
 
   String FAKE_FIND_MATCHED = "#findMatched";
   String FAKE_FIND_MATCHED_PATTERN = "filter(%s).findFirst().get()";
+  String FAKE_FIND_MATCHED_WITH_DEFAULT_PATTERN = "filter(%s).findFirst().orElseGet(() -> %s)";
 
   String JAVA_UTIL_STREAM_COLLECTORS = "java.util.stream.Collectors";
 
@@ -48,16 +49,6 @@ public interface StreamApiConstants {
     @Override
     protected Set<String> compute() {
       return ContainerUtil.newLinkedHashSet(MAP, FILTER, FOR_EACH, ANY_MATCH, ALL_MATCH, FIND_FIRST, LIMIT, FLAT_MAP);
-    }
-  };
-
-  SoftLazyValue<Map<String, String>> FAKE_STREAM_API_METHODS_TO_PATTERN = new SoftLazyValue<Map<String, String>>() {
-    @NotNull
-    @Override
-    protected Map<String, String> compute() {
-      final HashMap<String, String> map = new HashMap<String, String>();
-      map.put(FAKE_FIND_MATCHED, FAKE_FIND_MATCHED_PATTERN);
-      return map;
     }
   };
 

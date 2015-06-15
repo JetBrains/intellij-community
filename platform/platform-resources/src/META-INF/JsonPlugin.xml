@@ -17,7 +17,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
 
     <!-- Code style and formatting -->
@@ -50,10 +50,14 @@
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
-    <localInspection language="JSON" shortName="JsonStandardCompliance" key="name.standard.compliance.inspection"
-                     groupKey="name.json.inspection.group" enabledByDefault="true" level="ERROR"
-                     bundle="com.intellij.json.JsonBundle"
+    <localInspection language="JSON" shortName="JsonStandardCompliance"
+                     bundle="com.intellij.json.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
+    <localInspection language="JSON" shortName="JsonDuplicatePropertyKeys"
+                     bundle="com.intellij.json.JsonBundle" key="inspection.duplicate.keys.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.json.codeinsight.JsonDuplicatePropertyKeysInspection"/>
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>

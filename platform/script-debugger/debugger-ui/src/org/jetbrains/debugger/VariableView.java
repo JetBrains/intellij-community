@@ -431,7 +431,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
   }
 
   private void computeArrayRanges(@NotNull List<Variable> properties, @NotNull XCompositeNode node) {
-    final List<Variable> variables = Variables.filterAndSort(properties, memberFilter, false);
+    final List<Variable> variables = Variables.filterAndSort(properties, memberFilter);
     int count = variables.size();
     int bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW;
     if (count <= bucketSize) {
@@ -468,7 +468,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     for (int i = notGroupedVariablesOffset; i < variables.size(); i++) {
       Variable variable = variables.get(i);
-      groupList.add(new VariableView(memberFilter.getName(variable), variable, this));
+      groupList.add(new VariableView(memberFilter.rawNameToSource(variable), variable, this));
     }
 
     node.addChildren(groupList, true);

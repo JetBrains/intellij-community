@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.psi.PsiLock;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -53,19 +52,19 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
-  private static volatile int ourLockedCheckCounter = 0;
-  private static final boolean DISABLED = "disabled".equals(System.getProperty("idea.ProcessCanceledException"));
+  private static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
   private final ScheduledFuture<?> myCheckCancelledFuture;
 
-  // indicator -> threads which are running under this indicator. guarded by this.
+  // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
   private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new THashMap<ProgressIndicator, Set<Thread>>();
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
   static final Set<Thread> threadsUnderCanceledIndicator = ContainerUtil.newConcurrentSet();
+  private static volatile boolean thereIsProcessUnderCanceledIndicator;
 
   // active (i.e. which have executeProcessUnderProgress() method running) indicators which are not inherited from StandardProgressIndicator.
-  // for them an extra processing thread (see myCheckCancelledFuture) has to be run to call their non-standard checkCanceled() method
+  // for them an extra processing thread (see myCheckCancelledFuture) has to be run to call their non-standard checkCanceled() method periodically.
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   public CoreProgressManager() {
@@ -91,28 +90,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    boolean thereIsCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
-    if (thereIsCanceledIndicator) {
+    if (thereIsProcessUnderCanceledIndicator) {
       final ProgressIndicator progress = getProgressIndicator();
-      if (progress != null) {
-        try {
-          progress.checkCanceled();
-        }
-        catch (ProcessCanceledException e) {
-          if (DISABLED) {
-            return;
-          }
-          if (Thread.holdsLock(PsiLock.LOCK)) {
-            ourLockedCheckCounter++;
-            if (ourLockedCheckCounter > 10) {
-              ourLockedCheckCounter = 0;
-            }
-          }
-          else {
-            ourLockedCheckCounter = 0;
-            throw e;
-          }
-        }
+      if (progress != null && ENABLED) {
+        progress.checkCanceled();
       }
     }
   }
@@ -326,7 +307,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
     final Runnable process = new TaskRunnable(task, progressIndicator, continuation);
 
-    TaskContainer action = new TaskContainer(task) {
+    Runnable action = new TaskContainer(task) {
       @Override
       public void run() {
         boolean canceled = false;
@@ -440,6 +421,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       else {
         threadsUnderCanceledIndicator.remove(currentThread);
       }
+      thereIsProcessUnderCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
     }
 
     try {
@@ -468,6 +450,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         else {
           threadsUnderCanceledIndicator.remove(currentThread);
         }
+        thereIsProcessUnderCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
       }
     }
   }
@@ -492,6 +475,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
           if (underCancelledIndicator) {
             threadsUnderCanceledIndicator.add(thread);
+            thereIsProcessUnderCanceledIndicator = true;
           }
         }
       }

@@ -1,6 +1,6 @@
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -14,7 +14,7 @@ import com.intellij.testFramework.TestDataPath;
 public class InvertBooleanTest extends LightRefactoringParameterizedTestCase {
   @Override
   protected void perform() {
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiNamedElement);
 
     final PsiNamedElement namedElement = (PsiNamedElement)element;

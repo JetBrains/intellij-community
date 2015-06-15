@@ -1,91 +1,124 @@
-    text/html                             html htm shtml
-    text/css                              css
-    text/xml                              xml
-    image/gif                             gif
-    image/jpeg                            jpeg jpg
-    application/javascript                js
-    application/atom+xml                  atom
-    application/rss+xml                   rss
+# https://github.com/h5bp/server-configs-nginx/blob/master/mime.types
 
-    text/mathml                           mml
-    text/plain                            txt
-    text/vnd.sun.j2me.app-descriptor      jad
-    text/vnd.wap.wml                      wml
-    text/x-component                      htc
+# Data interchange
 
-    image/png                             png
-    image/tiff                            tif tiff
-    image/vnd.wap.wbmp                    wbmp
-    image/x-icon                          ico
-    image/x-jng                           jng
-    image/x-ms-bmp                        bmp
-    image/svg+xml                         svg svgz
-    image/webp                            webp
+  application/atom+xml                  atom
+  application/json                      json map topojson
+  application/ld+json                   jsonld
+  application/rss+xml                   rss
+  application/vnd.geo+json              geojson
+  application/xml                       rdf xml
 
-    application/font-woff                 woff
-    application/java-archive              jar war ear
-    application/json                      json
-    application/mac-binhex40              hqx
-    application/msword                    doc
-    application/pdf                       pdf
-    application/postscript                ps eps ai
-    application/rtf                       rtf
-    application/vnd.apple.mpegurl         m3u8
-    application/vnd.ms-excel              xls
-    application/vnd.ms-fontobject         eot
-    application/vnd.ms-powerpoint         ppt
-    application/vnd.wap.wmlc              wmlc
-    application/vnd.google-earth.kml+xml  kml
-    application/vnd.google-earth.kmz      kmz
-    application/x-7z-compressed           7z
-    application/x-cocoa                   cco
-    application/x-java-archive-diff       jardiff
-    application/x-java-jnlp-file          jnlp
-    application/x-makeself                run
-    application/x-perl                    pl pm
-    application/x-pilot                   prc pdb
-    application/x-rar-compressed          rar
-    application/x-redhat-package-manager  rpm
-    application/x-sea                     sea
-    application/x-shockwave-flash         swf
-    application/x-stuffit                 sit
-    application/x-tcl                     tcl tk
-    application/x-x509-ca-cert            der pem crt
-    application/x-xpinstall               xpi
-    application/xhtml+xml                 xhtml
-    application/xspf+xml                  xspf
-    application/zip                       zip
+# JavaScript
 
-    application/octet-stream              bin exe dll
-    application/octet-stream              deb
-    application/octet-stream              dmg
-    application/octet-stream              iso img
-    application/octet-stream              msi msp msm
+  application/javascript                js
 
-    application/vnd.openxmlformats-officedocument.wordprocessingml.document    docx
-    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet          xlsx
-    application/vnd.openxmlformats-officedocument.presentationml.presentation  pptx
+# Manifest files
 
-    audio/midi                            mid midi kar
-    audio/mpeg                            mp3
-    audio/ogg                             ogg
-    audio/x-m4a                           m4a
-    audio/x-realaudio                     ra
+  application/manifest+json             webmanifest
+  application/x-web-app-manifest+json   webapp
+  text/cache-manifest                   appcache
 
-    video/3gpp                            3gpp 3gp
-    video/mp2t                            ts
-    video/mp4                             mp4
-    video/mpeg                            mpeg mpg
-    video/quicktime                       mov
-    video/webm                            webm
-    video/x-flv                           flv
-    video/x-m4v                           m4v
-    video/x-mng                           mng
-    video/x-ms-asf                        asx asf
-    video/x-ms-wmv                        wmv
-    video/x-msvideo                       avi
+# Media files
 
-application/x-chrome-extension crx
-application/dart dart
+  audio/midi                            mid midi kar
+  audio/mp4                             aac f4a f4b m4a
+  audio/mpeg                            mp3
+  audio/ogg                             oga ogg opus
+  audio/x-realaudio                     ra
+  audio/x-wav                           wav
+  image/bmp                             bmp
+  image/gif                             gif
+  image/jpeg                            jpeg jpg
+  image/png                             png
+  image/svg+xml                         svg svgz
+  image/tiff                            tif tiff
+  image/vnd.wap.wbmp                    wbmp
+  image/webp                            webp
+  image/x-jng                           jng
+  video/3gpp                            3gpp 3gp
+  video/mp4                             f4v f4p m4v mp4
+  video/mpeg                            mpeg mpg
+  video/ogg                             ogv
+  video/quicktime                       mov
+  video/webm                            webm
+  video/x-flv                           flv
+  video/x-mng                           mng;
+  video/x-ms-asf                        asx asf
+  video/x-ms-wmv                        wmv
+  video/x-msvideo                       avi
+  image/x-icon                          cur ico;
 
+# Microsoft Office
+
+  application/msword                                                         doc
+  application/vnd.ms-excel                                                   xls
+  application/vnd.ms-powerpoint                                              ppt
+  application/vnd.openxmlformats-officedocument.wordprocessingml.document    docx
+  application/vnd.openxmlformats-officedocument.spreadsheetml.sheet          xlsx
+  application/vnd.openxmlformats-officedocument.presentationml.presentation  pptx
+
+# Web fonts
+
+  application/font-woff                 woff
+  application/font-woff2                woff2
+  application/vnd.ms-fontobject         eot
+
+  application/x-font-ttf                ttc ttf
+  font/opentype                         otf
+
+ # Other
+
+  application/java-archive              jar war ear
+  application/mac-binhex40              hqx
+  application/octet-stream              bin deb dll dmg exe img iso msi msm msp safariextz
+  application/pdf                       pdf
+  application/postscript                ps eps ai
+  application/rtf                       rtf
+  application/vnd.google-earth.kml+xml  kml
+  application/vnd.google-earth.kmz      kmz
+  application/vnd.wap.wmlc              wmlc
+  application/x-7z-compressed           7z
+  application/x-bb-appworld             bbaw
+  application/x-bittorrent              torrent
+  application/x-chrome-extension        crx
+  application/x-cocoa                   cco
+  application/x-java-archive-diff       jardiff
+  application/x-java-jnlp-file          jnlp
+  application/x-makeself                run
+  application/x-opera-extension         oex
+  application/x-perl                    pl pm
+  application/x-pilot                   prc pdb
+  application/x-rar-compressed          rar
+  application/x-redhat-package-manager  rpm
+  application/x-sea                     sea
+  application/x-shockwave-flash         swf
+  application/x-stuffit                 sit
+  application/x-tcl                     tcl tk
+  application/x-x509-ca-cert            der pem crt
+  application/x-xpinstall               xpi
+  application/xhtml+xml                 xhtml
+  application/xslt+xml                  xsl
+  application/zip                       zip
+  text/css                              css
+  text/html                             html htm shtml
+  text/mathml                           mml;
+  text/plain                            txt
+  text/vcard                            vcard vcf
+  text/vnd.rim.location.xloc            xloc
+  text/vnd.sun.j2me.app-descriptor      jad
+  text/vnd.wap.wml                      wml
+  text/vtt                              vtt
+  text/x-component                      htc
+
+# http://www.freeformatter.com/mime-types-list.html
+application/relax-ng-compact-syntax rnc
+
+# jb
 text/xml rng
+application/dart dart
+application/java-vm class
+text/x-patch patch
+text/x-iml iml
+text/x-ipr ipr
+text/x-iws iws

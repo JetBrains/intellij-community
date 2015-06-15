@@ -20,16 +20,20 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import git4idea.GitVcs;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +41,8 @@ import java.util.Set;
 
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
+import static git4idea.test.GitTestUtil.setupUsername;
+import static java.util.Collections.singleton;
 
 public class GitLogProviderTest extends GitSingleRepoTest {
 
@@ -142,7 +148,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("tag build");
 
     VcsLogProvider.DetailedLogData data = myLogProvider.readFirstBlock(myProjectRoot,
-                                                                        new RequirementsImpl(1000, true, Collections.<VcsRef>emptySet()));
+                                                                       new RequirementsImpl(1000, true, Collections.<VcsRef>emptySet()));
     List<VcsCommitMetadata> expectedLog = log();
     assertOrderedEquals(data.getCommits(), expectedLog);
     assertTrue(ContainerUtil.exists(data.getRefs(), new Condition<VcsRef>() {
@@ -159,15 +165,73 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     }));
   }
 
+  public void test_filter_by_branch() throws Exception {
+    List<String> hashes = generateHistoryForFilters(true);
+    VcsLogBranchFilter branchFilter = new VcsLogBranchFilterImpl(singleton("feature"), Collections.<String>emptySet());
+    List<String> actualHashes = getFilteredHashes(branchFilter, null);
+    assertEquals(hashes, actualHashes);
+  }
+
+  public void test_filter_by_branch_and_user() throws Exception {
+    List<String> hashes = generateHistoryForFilters(false);
+    VcsLogBranchFilter branchFilter = new VcsLogBranchFilterImpl(singleton("feature"), Collections.<String>emptySet());
+    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME), Collections.<VirtualFile, VcsUser>emptyMap(),
+                                                           Collections.<VcsUser>emptySet());
+    List<String> actualHashes = getFilteredHashes(branchFilter, userFilter);
+    assertEquals(hashes, actualHashes);
+  }
+
+  /**
+   * Generates some history with two branches: master and feature, and made by two users.
+   * Returns hashes of this history filtered by the given parameters:
+   * @param takeAllUsers     if true, don't filter by users, otherwise filter by default user.
+   */
+  private List<String> generateHistoryForFilters(boolean takeAllUsers) {
+    List<String> hashes = ContainerUtil.newArrayList();
+    hashes.add(last());
+
+    git("config user.name 'bob.smith'");
+    git("config user.name 'bob.smith@example.com'");
+    if (takeAllUsers) {
+      String commitByBob = tac("file.txt");
+      hashes.add(commitByBob);
+    }
+    setupUsername();
+
+    hashes.add(tac("file1.txt"));
+    git("checkout -b feature");
+    String commitOnlyInFeature = tac("file2.txt");
+    hashes.add(commitOnlyInFeature);
+    git("checkout master");
+    String commitOnlyInMaster = tac("master.txt");
+
+    Collections.reverse(hashes);
+    refresh();
+    return hashes;
+  }
+
+  @NotNull
+  private List<String> getFilteredHashes(@Nullable VcsLogBranchFilter branchFilter,
+                                         @Nullable VcsLogUserFilter userFilter) throws VcsException {
+    VcsLogFilterCollectionImpl filters = new VcsLogFilterCollectionImpl(branchFilter, userFilter, null, null, null, null, null);
+    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProjectRoot, filters, -1);
+    return ContainerUtil.map(commits, new Function<TimedVcsCommit, String>() {
+      @Override
+      public String fun(TimedVcsCommit commit) {
+        return commit.getId().asString();
+      }
+    });
+  }
+
   private static void prepareSomeHistory() {
     tac("a.txt");
     git("tag ATAG");
     tac("b.txt");
   }
 
-  private static void tac(@NotNull String file) {
+  private static String tac(@NotNull String file) {
     touch(file, "content" + Math.random());
-    addCommit("touched " + file);
+    return addCommit("touched " + file);
   }
 
   private static void createTaggedBranch() {

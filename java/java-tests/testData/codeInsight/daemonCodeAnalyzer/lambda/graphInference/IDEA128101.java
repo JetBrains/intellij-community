@@ -20,7 +20,7 @@ class TestIDEA128101 {
 
   public static void test() {
     construct(String.class, createPath(integerAttribute), createPath(stringAttribute));
-    construct1<error descr="Cannot resolve method 'construct1(java.lang.Class<java.lang.String>, TestIDEA128101.Path<java.lang.Integer>, TestIDEA128101.Path<java.lang.String>)'">(String.class, createPath(integerAttribute), createPath(stringAttribute))</error>;
+    construct1(String.class, createPath<error descr="'createPath(TestIDEA128101.Attribute<Y>)' in 'TestIDEA128101' cannot be applied to '(TestIDEA128101.Attribute<java.lang.Integer>)'">(integerAttribute)</error>, createPath<error descr="'createPath(TestIDEA128101.Attribute<Y>)' in 'TestIDEA128101' cannot be applied to '(TestIDEA128101.Attribute<java.lang.String>)'">(stringAttribute)</error>);
     construct2(String.class, createPath(integerAttribute), createPath(stringAttribute));
     <error descr="Type parameter K has incompatible upper bounds: Integer and String">construct3(String.class, createPath(integerAttribute), createPath(stringAttribute));</error>
     <error descr="Type parameter K has incompatible upper bounds: Integer and String">construct4(String.class, createPath(integerAttribute), createPath(stringAttribute));</error>

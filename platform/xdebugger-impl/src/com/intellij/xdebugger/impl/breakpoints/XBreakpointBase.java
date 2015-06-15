@@ -25,6 +25,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -40,6 +42,8 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
+import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +58,7 @@ import java.util.List;
  */
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
-  @NonNls private static final String BR_NBSP = "<br>&nbsp;";
+  @NonNls private static final String BR_NBSP = "<br>" + CommonXmlStrings.NBSP;
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
   protected final S myState;
@@ -321,42 +325,51 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public String getDescription() {
     @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append("<html><body>");
+      builder.append(CommonXmlStrings.HTML_START).append(CommonXmlStrings.BODY_START);
       builder.append(XBreakpointUtil.getDisplayText(this));
 
       String errorMessage = getErrorMessage();
-      if (errorMessage != null) {
+      if (!StringUtil.isEmpty(errorMessage)) {
         builder.append(BR_NBSP);
-        builder.append("<font color=\"red\">");
+        builder.append("<font color='#").append(ColorUtil.toHex(JBColor.RED)).append("'>");
         builder.append(errorMessage);
         builder.append("</font>");
       }
 
-      SuspendPolicy suspendPolicy = getSuspendPolicy();
-      if (suspendPolicy == SuspendPolicy.THREAD) {
-        builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
-      }
-      else if (suspendPolicy == SuspendPolicy.NONE) {
+      if (getSuspendPolicy() == SuspendPolicy.NONE) {
         builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.none"));
+      }
+      else if (getType().isSuspendThreadSupported()) {
+        builder.append(BR_NBSP);
+        //noinspection EnumSwitchStatementWhichMissesCases
+        switch (getSuspendPolicy()) {
+          case ALL:
+            builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.all"));
+            break;
+          case THREAD:
+            builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
+            break;
+        }
       }
 
       String condition = getCondition();
-      if (condition != null) {
+      if (!StringUtil.isEmpty(condition)) {
         builder.append(BR_NBSP);
         builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.condition"));
-        builder.append("&nbsp;");
-        builder.append(condition);
+        builder.append(CommonXmlStrings.NBSP);
+        builder.append(XmlStringUtil.escapeString(condition));
       }
 
       if (isLogMessage()) {
         builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.message"));
       }
+
       String logExpression = getLogExpression();
-      if (logExpression != null) {
+      if (!StringUtil.isEmpty(logExpression)) {
         builder.append(BR_NBSP);
         builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.log.expression"));
-        builder.append("&nbsp;");
-        builder.append(logExpression);
+        builder.append(CommonXmlStrings.NBSP);
+        builder.append(XmlStringUtil.escapeString(logExpression));
       }
 
       XBreakpoint<?> masterBreakpoint = getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this);
@@ -364,11 +377,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
         builder.append(BR_NBSP);
         String str = XDebuggerBundle.message("xbreakpoint.tooltip.depends.on");
         builder.append(str);
-        builder.append("&nbsp;");
-        builder.append(XBreakpointUtil.getDisplayText(masterBreakpoint));
+        builder.append(CommonXmlStrings.NBSP);
+        builder.append(XBreakpointUtil.getShortText(masterBreakpoint));
       }
 
-      builder.append("</body><html");
+      builder.append(CommonXmlStrings.BODY_END).append(CommonXmlStrings.HTML_END);
       return builder.toString();
     }
     finally {

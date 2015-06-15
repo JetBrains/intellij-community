@@ -140,7 +140,7 @@ public interface Configurable extends UnnamedConfigurable {
    *
    * @return the visible name of the configurable component
    */
-  @Nls
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayName();
 
   /**

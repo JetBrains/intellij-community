@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
@@ -348,7 +348,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
 
-    final Change change = changeListManager.getChange(new FilePathImpl(new File(myWorkingCopyDir.getPath(), conflictFile), true));
+    final Change change = changeListManager.getChange(VcsUtil.getFilePath(new File(myWorkingCopyDir.getPath(), conflictFile), true));
     Assert.assertTrue(change instanceof ConflictedSvnChange);
     TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
@@ -435,7 +435,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
 
-    final Change change = changeListManager.getChange(new FilePathImpl(new File(myWorkingCopyDir.getPath(), conflictFile), true));
+    final Change change = changeListManager.getChange(VcsUtil.getFilePath(new File(myWorkingCopyDir.getPath(), conflictFile), true));
     Assert.assertTrue(change instanceof ConflictedSvnChange);
     TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
@@ -463,7 +463,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
 
-    final Change change = changeListManager.getChange(new FilePathImpl(new File(myWorkingCopyDir.getPath(), conflictFile), true));
+    final Change change = changeListManager.getChange(VcsUtil.getFilePath(new File(myWorkingCopyDir.getPath(), conflictFile), true));
     Assert.assertTrue(change instanceof ConflictedSvnChange);
     TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);

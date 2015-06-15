@@ -1,10 +1,18 @@
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class DuplicateConditionInspectionTest extends IGInspectionTestCase {
+public class DuplicateConditionInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/controlflow/duplicate_condition", new DuplicateConditionInspection());
+  public void testDuplicateCondition() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new DuplicateConditionInspection();
   }
 }

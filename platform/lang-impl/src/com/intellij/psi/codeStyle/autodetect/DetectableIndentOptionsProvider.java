@@ -35,7 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.EditorNotificationInfo.*;
+import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 
 /**
  * @author Rustam Vishnyakov
@@ -171,8 +171,9 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   @Override
-  public boolean isAcceptedWithoutWarning(@NotNull VirtualFile file) {
-    return myAcceptedFiles.contains(file);
+  public boolean isAcceptedWithoutWarning(@Nullable Project project, @NotNull VirtualFile file) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    return !settings.SHOW_DETECTED_INDENT_NOTIFICATION || myAcceptedFiles.contains(file);
   }
 
   private static class NotificationLabels {

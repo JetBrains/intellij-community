@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
@@ -76,9 +77,16 @@ public class ValidateXmlActionHandler {
     myErrorReporter = errorReporter;
   }
 
-  public VirtualFile getFile(String publicId, String systemId) {
+  public VirtualFile getProblemFile(SAXParseException ex) {
+    String publicId = ex.getPublicId();
+    String systemId = ex.getSystemId();
     if (publicId == null) {
       if (systemId != null) {
+        if (systemId.startsWith("file:/")) {
+          VirtualFile file = VirtualFileManager.getInstance()
+            .findFileByUrl(systemId.startsWith("file://") ? systemId : systemId.replace("file:/", "file://"));
+          if (file != null) return file;
+        }
         final String path = myXmlResourceResolver.getPathByPublicId(systemId);
         if (path != null) return UriUtil.findRelativeFile(path,null);
         final PsiFile file = myXmlResourceResolver.resolve(null, systemId);
@@ -95,7 +103,7 @@ public class ValidateXmlActionHandler {
 
   public String buildMessageString(SAXParseException ex) {
     String msg = "(" + ex.getLineNumber() + ":" + ex.getColumnNumber() + ") " + ex.getMessage();
-    final VirtualFile file = getFile(ex.getPublicId(), ex.getSystemId());
+    final VirtualFile file = getProblemFile(ex);
 
     if ( file != null && !file.equals(myFile.getVirtualFile())) {
       msg = file.getName() + ":" + msg;

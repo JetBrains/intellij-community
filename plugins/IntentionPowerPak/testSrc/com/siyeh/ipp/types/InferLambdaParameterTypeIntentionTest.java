@@ -47,6 +47,10 @@ public class InferLambdaParameterTypeIntentionTest extends IPPTestCase {
     assertIntentionNotAvailable("Expand lambda to () -> {...}");
   }
 
+  public void testCapturedWildcardParams() throws Exception {
+    assertIntentionNotAvailable("Expand lambda to (capture of ?) -> {...}");
+  }
+
   @Override
   protected String getIntentionName() {
     return "";

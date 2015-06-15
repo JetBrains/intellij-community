@@ -16,12 +16,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
@@ -29,7 +23,10 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
@@ -38,22 +35,22 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
+import org.zmlx.hg4idea.log.HgHistoryUtil;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -284,36 +281,9 @@ public abstract class HgUtil {
     return getHgRootOrThrow(project, VcsUtil.getFilePath(file.getPath()));
   }
 
-  /**
-   * Returns the currently selected file, based on which HgBranch components will identify the current repository root.
-   */
-  @Nullable
-  public static VirtualFile getSelectedFile(@NotNull Project project) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, statusBar);
-    VirtualFile result = null;
-    if (fileEditor != null) {
-      if (fileEditor instanceof TextEditor) {
-        Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-        result = FileDocumentManager.getInstance().getFile(document);
-      }
-    }
-
-    if (result == null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      if (manager != null) {
-        Editor editor = manager.getSelectedTextEditor();
-        if (editor != null) {
-          result = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        }
-      }
-    }
-    return result;
-  }
-
   @Nullable
   public static VirtualFile getRootForSelectedFile(@NotNull Project project) {
-    VirtualFile selectedFile = getSelectedFile(project);
+    VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
     if (selectedFile != null) {
       return getHgRootOrNull(project, selectedFile);
     }
@@ -329,7 +299,7 @@ public abstract class HgUtil {
   public static String getNewBranchNameFromUser(@NotNull HgRepository repository,
                                                 @NotNull String dialogTitle) {
     return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
-                                    HgReferenceValidator.newInstance(repository));
+                                    new HgBranchReferenceValidator(repository));
   }
 
   /**
@@ -509,35 +479,13 @@ public abstract class HgUtil {
     //convert output changes to standart Change class
     for (HgChange hgChange : hgChanges) {
       FileStatus status = convertHgDiffStatus(hgChange.getStatus());
-     if (status != FileStatus.UNKNOWN) {
-        changes.add(createChange(project, root, hgChange.beforeFile().getRelativePath(), revNumber1,
-                                 hgChange.afterFile().getRelativePath(),
-                                 rev2 != null ? rev2.getRevisionNumber() : null, status));
-     }
+      if (status != FileStatus.UNKNOWN) {
+        changes.add(HgHistoryUtil.createChange(project, root, hgChange.beforeFile().getRelativePath(), revNumber1,
+                                               hgChange.afterFile().getRelativePath(),
+                                               rev2 != null ? rev2.getRevisionNumber() : null, status));
+      }
     }
     return changes;
-  }
-
-  @NotNull
-  public static Change createChange(@NotNull final Project project, VirtualFile root,
-                                    @NotNull String fileBefore,
-                                    @Nullable HgRevisionNumber revisionBefore,
-                                    @NotNull String fileAfter,
-                                    @Nullable HgRevisionNumber revisionAfter,
-                                    @NotNull FileStatus aStatus) {
-    HgContentRevision beforeRevision = revisionBefore == null
-                                       ? null
-                                       : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)),
-                                                               revisionBefore);
-    if (revisionAfter == null) {
-      ContentRevision currentRevision =
-        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
-      return new Change(beforeRevision, currentRevision, aStatus);
-    }
-    HgContentRevision afterRevision = new HgContentRevision(project,
-                                                            new HgFile(root, new File(root.getPath(), fileAfter)),
-                                                            revisionAfter);
-    return new Change(beforeRevision, afterRevision, aStatus);
   }
 
   @NotNull
@@ -563,6 +511,12 @@ public abstract class HgUtil {
     else {
       return FileStatus.UNKNOWN;
     }
+  }
+
+  @NotNull
+  public static byte[] loadContent(@NotNull Project project, @Nullable HgRevisionNumber revisionNumber, @NotNull HgFile fileToCat) {
+    HgCommandResult result = new HgCatCommand(project).execute(fileToCat, revisionNumber, fileToCat.toFilePath().getCharset());
+    return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   public static String removePasswordIfNeeded(@NotNull String path) {
@@ -662,7 +616,7 @@ public abstract class HgUtil {
     cmdArgs.add("version");
     cmdArgs.add("-q");
     ShellCommand shellCommand = new ShellCommand(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
-    return shellCommand.execute(false);
+    return shellCommand.execute(false, false);
   }
 
   public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
@@ -673,6 +627,11 @@ public abstract class HgUtil {
         names.add(hash.getName());
       }
     }
+    return names;
+  }
+
+  public static List<String> getSortedNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+    List<String> names = getNamesWithoutHashes(namesWithHashes);
     Collections.sort(names);
     return names;
   }

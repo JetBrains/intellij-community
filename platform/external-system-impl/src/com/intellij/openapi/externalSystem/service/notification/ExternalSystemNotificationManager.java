@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -153,7 +154,8 @@ public class ExternalSystemNotificationManager {
         NotificationGroup group;
         if (notificationData.getBalloonGroup() == null) {
           ExternalProjectsView externalProjectsView = ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
-          group = externalProjectsView != null ? externalProjectsView.getNotificationGroup() : null;
+          group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+                  ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
         }
         else {
           final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());

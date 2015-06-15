@@ -37,3 +37,13 @@ if(this == $paramName) return true;
   if($paramName == null || getClass() != ${paramName}.getClass()) return false;
   #end
 #end
+#macro(addPrimitiveFieldComparisonCondition $field)
+  $field.accessor != ${classInstanceName}.$field.accessor ##
+#end
+#macro(addDoubleFieldComparisonCondition $field)
+  #if ($field.double)
+  Double.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0 ##
+  #else
+  Float.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0 ##
+  #end
+#end

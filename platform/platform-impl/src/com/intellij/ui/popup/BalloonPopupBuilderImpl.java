@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,11 +74,6 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
     myContent = content;
   }
 
-  @Override
-  public boolean isHideOnAction() {
-    return myHideOnAction;
-  }
-
   @NotNull
   @Override
   public BalloonBuilder setHideOnAction(boolean hideOnAction) {
@@ -95,17 +90,12 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   @Override
-  public BalloonBuilder setPreferredPosition(final Balloon.Position position) {
-    return this;
-  }
-
-  @NotNull
-  @Override
   public BalloonBuilder setBorderColor(@NotNull final Color color) {
     myBorder = color;
     return this;
   }
 
+  @NotNull
   @Override
   public BalloonBuilder setBorderInsets(@Nullable Insets insets) {
     myBorderInsets = insets;

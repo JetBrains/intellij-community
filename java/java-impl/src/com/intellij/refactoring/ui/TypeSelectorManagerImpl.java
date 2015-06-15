@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private final PsiType[] myTypesForMain;
   private final PsiType[] myTypesForAll;
   private final boolean myIsOneSuggestion;
-  private TypeSelector myTypeSelector;
+  private final TypeSelector myTypeSelector;
   private final PsiElementFactory myFactory;
   private final SmartTypePointerManager mySmartTypePointerManager;
-  private ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
+  private final ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
     this(project, type, occurrences, true);

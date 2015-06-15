@@ -4,13 +4,11 @@ public class Test {
     }
 
     public static void main(String[] args) {
-        run(
-                123, new Runnable() {
-                    @Override
-                    public void run() {
-                        <caret>
-                    }
-                }
-        );
+        run(123, new Runnable() {
+            @Override
+            public void run() {
+                <caret>
+            }
+        });
     }
 }

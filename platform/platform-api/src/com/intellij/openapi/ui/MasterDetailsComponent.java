@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
@@ -192,7 +191,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         decorator.setActionGroup(group);
       }
       //left.add(myNorthPanel, BorderLayout.NORTH);
-      myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
+      myMaster = decorator.setAsUsualTopToolbar().setPanelBorder(JBUI.Borders.empty()).createPanel();
       myNorthPanel.setVisible(false);
     } else {
       left.add(myNorthPanel, BorderLayout.NORTH);
@@ -734,12 +733,31 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myInitializedConfigurables.add(configurable);
   }
 
+  /**
+   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class} instead
+   */
   protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
     for (MyNode rootNode : rootNodes) {
-      final Set<String> names = new HashSet<String>();
-      for (int i = 0; i < rootNode.getChildCount(); i++) {
-        final MyNode node = (MyNode)rootNode.getChildAt(i);
-        final NamedConfigurable scopeConfigurable = node.getConfigurable();
+      checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);
+    }
+  }
+
+  protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,
+                                                       Class<? extends NamedConfigurable> configurableClass) throws ConfigurationException {
+    checkForEmptyAndDuplicatedNames(myRoot, prefix, title, configurableClass, true);
+  }
+
+  private void checkForEmptyAndDuplicatedNames(MyNode rootNode,
+                                               String prefix,
+                                               String title,
+                                               Class<? extends NamedConfigurable> configurableClass,
+                                               boolean recursively) throws ConfigurationException {
+    final Set<String> names = new HashSet<String>();
+    for (int i = 0; i < rootNode.getChildCount(); i++) {
+      final MyNode node = (MyNode)rootNode.getChildAt(i);
+      final NamedConfigurable scopeConfigurable = node.getConfigurable();
+
+      if (configurableClass.isInstance(scopeConfigurable)) {
         final String name = scopeConfigurable.getDisplayName();
         if (name.trim().length() == 0) {
           selectNodeInTree(node);
@@ -753,6 +771,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           throw new ConfigurationException(CommonBundle.message("smth.already.exist.error.message", prefix, name), title);
         }
         names.add(name);
+      }
+
+      if (recursively) {
+        checkForEmptyAndDuplicatedNames(node, prefix, title, configurableClass, true);
       }
     }
   }

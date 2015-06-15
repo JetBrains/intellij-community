@@ -34,6 +34,7 @@
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>

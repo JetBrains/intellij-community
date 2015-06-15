@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testNested() { doTest(); }
   public void testDeprecated() { doTest(); }
   public void testAnnotations() { doTest(); }
+  public void testMoreAnnotations() { doTest(); }
   public void testParameterNames() { doTest(); }
   public void testEmptyEnum() { doTest(); }
   public void test$BuckClass() { doTest(); }
@@ -79,6 +80,13 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     String testDir = JavaTestUtil.getJavaTestDataPath();
     String clsPath = testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class";
     String txtPath = testDir + "/psi/cls/mirror/Class.txt";
+    doTest(clsPath, txtPath);
+  }
+
+  public void testStaticMethodInInterface() {
+    String testDir = JavaTestUtil.getJavaTestDataPath();
+    String clsPath = testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/util/function/Function.class";
+    String txtPath = testDir + "/psi/cls/mirror/Function.txt";
     doTest(clsPath, txtPath);
   }
 

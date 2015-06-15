@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,7 @@ public abstract class HighlightUsagesHandlerFactoryBase implements HighlightUsag
   @Nullable
   @Override
   public final HighlightUsagesHandlerBase createHighlightUsagesHandler(Editor editor, PsiFile file) {
-    int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     PsiElement target = file.findElementAt(offset);
     if (target == null) return null;
     return createHighlightUsagesHandler(editor, file, target);

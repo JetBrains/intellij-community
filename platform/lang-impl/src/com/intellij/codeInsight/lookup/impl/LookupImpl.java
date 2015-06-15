@@ -654,8 +654,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myUi = new LookupUi(this, myAdComponent, myList, myProject);
     myUi.setCalculating(myCalculating);
     Point p = myUi.calculatePosition().getLocation();
-    HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
-                                                     HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
+    try {
+      HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
+                                                       HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
 
     if (!isVisible() || !myList.isShowing()) {
       hide();
@@ -1022,7 +1027,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void restorePrefix() {
-    myOffsets.restorePrefix(getLookupStart());
+    myOffsets.restorePrefix();
   }
 
   private static String staticDisposeTrace = null;

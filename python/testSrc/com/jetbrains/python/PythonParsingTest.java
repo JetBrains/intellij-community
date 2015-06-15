@@ -473,6 +473,21 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  // PY-15653
+  public void testMissingFunctionNameAndThenParametersList() {
+    doTest();
+  }
+
+  // PY-15653
+  public void testMissingClassNameAndThenListOfBaseClasses() {
+    doTest();
+  }
+
+  // PY-15653
+  public void testMissingClassNameAndThenColon() {
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

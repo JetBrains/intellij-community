@@ -398,25 +398,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
 
       @Override
-      public void visitVariable(PsiVariable field) {
-        super.visitVariable(field);
-
-        final PsiExpression initializer = field.getInitializer();
-
-        if (initializer != null) {
-          final String initText = initializer.getText();
-
-          if (StructuralSearchUtil.isTypedVariable(initText)) {
-            final ParameterInfo initInfo = builder.findParameterization(Replacer.stripTypedVariableDecoration(initText));
-
-            if (initInfo != null) {
-              initInfo.setVariableInitializerContext(true);
-            }
-          }
-        }
-      }
-
-      @Override
       public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
 
@@ -487,7 +468,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
           if (buf.length() > 0) {
             final PsiElement parent = currentElement.getParent();
-            if (info.isStatementContext()) {
+            if (parent instanceof PsiVariable) {
+              final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class);
+              if (prevSibling instanceof PsiJavaToken && JavaTokenType.COMMA.equals(((PsiJavaToken)prevSibling).getTokenType())) {
+                buf.append(',');
+              }
+            }
+            else if (info.isStatementContext()) {
               final PsiElement previousElement = previous.getMatchRef().getElement();
 
               if (!(previousElement instanceof PsiComment) &&
@@ -525,6 +512,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
             else if (parent instanceof PsiReferenceList) {
               buf.append(',');
             }
+            else if (parent instanceof PsiPolyadicExpression) {
+              final PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
+              final PsiJavaToken token = expression.getTokenBeforeOperand(expression.getOperands()[1]);
+              if (token != null) {
+                buf.append(token.getText());
+              }
+            }
             else {
               buf.append(' ');
             }
@@ -537,11 +531,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
         replacementString = buf.toString();
       } else {
-        StringBuilder buf = new StringBuilder();
         if (info.isStatementContext()) {
           forceAddingNewLine = match.getMatch() instanceof PsiComment;
         }
-        buf.append(replacementString);
+        StringBuilder buf = new StringBuilder(replacementString);
         removeExtraSemicolonForSingleVarInstanceInMultipleMatch(info, match, buf);
         replacementString = buf.toString();
       }
@@ -557,11 +550,59 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public int processAdditionalOptions(ParameterInfo info, int offset, StringBuilder result, MatchResult r) {
-    if (info.isStatementContext()) {
-      return removeExtraSemicolon(info, offset, result, r);
+  public int handleNoSubstitution(ParameterInfo info, int offset, StringBuilder result) {
+    final PsiElement element = info.getElement();
+    final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+    if (prevSibling instanceof PsiJavaToken && isRemovableToken(prevSibling)) {
+      final int start = info.getBeforeDelimiterPos() + offset - (prevSibling.getTextLength() - 1);
+      final int end = info.getStartIndex() + offset;
+      result.delete(start, end);
+      return offset - (end - start);
+    }
+    final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+    if (nextSibling instanceof PsiJavaToken && isRemovableToken(nextSibling)) {
+      final int start = info.getStartIndex() + offset;
+      final int end = info.getAfterDelimiterPos() + nextSibling.getTextLength() + offset;
+      result.delete(start, end);
+      return offset - 1;
+    }
+    if (element == null || !(element.getParent() instanceof PsiForStatement)) {
+      return removeExtraSemicolon(info, offset, result, null);
     }
     return offset;
+  }
+
+  private static boolean isRemovableToken(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiAnnotationParameterList || // ',' between annotation parameters
+          parent instanceof PsiAssertStatement || // ':' before assertion message
+          parent instanceof PsiExpressionList || // ',' between expressions
+          parent instanceof PsiParameterList || // ',' between parameters
+          parent instanceof PsiPolyadicExpression || // '+', '*', '&&' etcetera
+          parent instanceof PsiReferenceList || // ','
+          parent instanceof PsiReferenceParameterList || // ','
+          parent instanceof PsiResourceList || // ';'
+          parent instanceof PsiTypeParameterList || // ','
+          parent instanceof PsiVariable)) { // '=' before initializer
+      return false;
+    }
+    final String text = element.getText();
+    if (text.length() != 1) {
+      return true;
+    }
+    switch(text.charAt(0)) {
+      case '<':
+      case '>':
+      case '(':
+      case ')':
+      case '{':
+      case '}':
+      case '[':
+      case ']':
+        return false;
+      default:
+        return true;
+    }
   }
 
   @Override
@@ -580,7 +621,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, HashMap<String, MatchResult> matchMap) {
-    if(info.getElement() ==null) {
+    if(!(info.getElement() instanceof PsiTypeElement)) {
       // no specific handling for name of method parameter since it is handled with type
       return;
     }

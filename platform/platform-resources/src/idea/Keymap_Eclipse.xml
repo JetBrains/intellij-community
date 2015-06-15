@@ -258,6 +258,7 @@
     </action>
     <action id="OverrideMethods" />
     <action id="ParameterInfo" />
+    <action id="ExpressionTypeInfo"/>
     <action id="PreviousOccurence" />
     <action id="PreviousTab">
       <keyboard-shortcut first-keystroke="shift control F6" />

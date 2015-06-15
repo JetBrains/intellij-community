@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.hint.HintManager;
@@ -113,7 +113,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   @Nullable private Point myPrevMouseLocation;
   private LightweightHint myHint;
 
-  private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
+  public enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     @Override
@@ -307,6 +307,17 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return generateInfo(element, atPointer).text;
   }
 
+  @Nullable
+  @TestOnly
+  public static String getInfo(@NotNull Editor editor, BrowseMode browseMode) {
+    Project project = editor.getProject();
+    if (project == null) return null; 
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return null;
+    Info info = getInfoAt(project, editor, file, editor.getCaretModel().getOffset(), browseMode);
+    return info == null ? null : info.getInfo().text;
+  }
+
   @NotNull
   private static DocInfo generateInfo(PsiElement element, PsiElement atPointer) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
@@ -479,6 +490,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   @Nullable
   private Info getInfoAt(@NotNull final Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
+    return getInfoAt(myProject, editor, file, offset, browseMode);
+  }
+  
+  @Nullable
+  private static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset, 
+                                @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -486,16 +503,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
       }
       catch (IndexNotReadyException e) {
-        showDumbModeNotification(myProject);
+        showDumbModeNotification(project);
       }
     }
     else if (browseMode == BrowseMode.Declaration) {
-      final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+      final PsiReference ref = TargetElementUtil.findReference(editor, offset);
       final List<PsiElement> resolvedElements = ref == null ? Collections.<PsiElement>emptyList() : resolve(ref);
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
-      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset, false);
-      final PsiElement elementAtPointer = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
+      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(project, editor, offset, false);
+      final PsiElement elementAtPointer = file.findElementAt(TargetElementUtil.adjustOffset(file, editor.getDocument(), offset));
 
       if (targetElements != null) {
         if (targetElements.length == 0) {
@@ -519,7 +536,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
-      final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
+      final PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
         @Override
         @NotNull
@@ -558,26 +575,28 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, file, offset);
+    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
     if (element != null) {
       PsiElement identifier = element.getNameIdentifier();
-      return new Info(identifier){
-        @Override
-        public void showDocInfo(@NotNull DocumentationManager docManager) {
-        }
-
-        @NotNull
-        @Override
-        public DocInfo getInfo() {
-          String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
-          return new DocInfo("Show usages of "+name, null, element);
-        }
-
-        @Override
-        public boolean isValid(@NotNull Document document) {
-          return element.isValid();
-        }
-      };
+      if (identifier != null && identifier.isValid()) {
+        return new Info(identifier){
+          @Override
+          public void showDocInfo(@NotNull DocumentationManager docManager) {
+          }
+  
+          @NotNull
+          @Override
+          public DocInfo getInfo() {
+            String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
+            return new DocInfo("Show usages of "+name, null, element);
+          }
+  
+          @Override
+          public boolean isValid(@NotNull Document document) {
+            return element.isValid();
+          }
+        };
+      }
     }
     return null;
   }
@@ -624,14 +643,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            try {
-              fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
-            }
-            catch (IndexNotReadyException e) {
-              fullTextRef.set("Documentation is not available while indexing is in progress");
-            }
-            if (anchorElement instanceof PsiQualifiedNamedElement) {
-              qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
+            if (anchorElement.isValid() && originalElement.isValid()) {
+              try {
+                fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
+              }
+              catch (IndexNotReadyException e) {
+                fullTextRef.set("Documentation is not available while indexing is in progress");
+              }
+              if (anchorElement instanceof PsiQualifiedNamedElement) {
+                qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
+              }
             }
           }
         });
@@ -774,6 +795,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
       if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
+        disposeHighlighter();
         return;
       }
 

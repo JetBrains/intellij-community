@@ -1,11 +1,20 @@
 package com.intellij.openapi.externalSystem.service.project;
 
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -47,4 +56,35 @@ public interface PlatformFacade {
    */
   @NotNull
   String getLocalFileSystemPath(@NotNull VirtualFile file);
+
+  /**
+   * Creates a module of the specified type at the specified path and adds it to the project
+   * to which the module manager is related. {@link #commit()} must be called to
+   * bring the changes in effect.
+   *
+   *
+   * @param project
+   * @param filePath the path at which the module is created.
+   * @param moduleTypeId the ID of the module type to create.
+   * @return the module instance.
+   */
+  Module newModule(Project project, @NotNull @NonNls String filePath, final String moduleTypeId);
+
+  ModifiableRootModel getModuleModifiableModel(Module module);
+
+  @Nullable
+  Module findIdeModule(@NotNull ModuleData module, @NotNull Project ideProject);
+
+  @Nullable
+  Module findIdeModule(@NotNull String ideModuleName, @NotNull Project ideProject);
+
+  @Nullable
+  Library findIdeLibrary(@NotNull LibraryData libraryData, @NotNull Project ideProject);
+
+  @SuppressWarnings("MethodMayBeStatic")
+  @Nullable
+  ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull ModifiableRootModel model);
+
+  @Nullable
+  OrderEntry findIdeModuleOrderEntry(LibraryDependencyData data, Project project);
 }

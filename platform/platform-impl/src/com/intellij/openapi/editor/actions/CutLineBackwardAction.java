@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Stands for emacs 'reverse-kill-line' action, i.e.
@@ -30,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 4/18/11 1:22 PM
  */
-public class CutLineBackwardAction extends EditorAction {
+public class CutLineBackwardAction extends TextComponentEditorAction {
 
   public CutLineBackwardAction() {
     super(new Handler());

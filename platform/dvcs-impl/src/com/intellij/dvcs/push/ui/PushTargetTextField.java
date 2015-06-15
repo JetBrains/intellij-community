@@ -15,9 +15,10 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +50,10 @@ public class PushTargetTextField extends TextFieldWithAutoCompletion<String> {
   protected EditorEx createEditor() {
     // editor created lazy, so we need to update editor customization after initialization
     EditorEx editorEx = super.createEditor();
-    SpellCheckingEditorCustomization.DISABLED.customize(editorEx);
+    EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+    if (customization != null) {
+      customization.customize(editorEx);
+    }
     return editorEx;
   }
 

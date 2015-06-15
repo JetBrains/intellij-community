@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +113,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   
   private void addAllFilePath(final Collection<VirtualFile> files, final Collection<FilePath> paths) {
     for (VirtualFile file : files) {
-      paths.add(new FilePathImpl(file));
+      paths.add(VcsUtil.getFilePath(file));
     }
   }
 
@@ -207,7 +208,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
         return false;
       }
       addPatch(myPatch, beforeFile);
-      final FilePathImpl filePath = new FilePathImpl(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory());
+      FilePath filePath = VcsUtil.getFilePath(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory());
       if (myPatch.isDeletedFile() || myPatch.getAfterName() == null) {
         myDeletedPaths.add(filePath);
       }
@@ -223,7 +224,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
     protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, DelayedPrecheckContext context) {
       if (afterFile != null) {
-        context.addOverrideExisting(myPatch, new FilePathImpl(afterFile));
+        context.addOverrideExisting(myPatch, VcsUtil.getFilePath(afterFile));
       }
       return true;
     }
@@ -236,7 +237,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
         return false;
       }
       final VirtualFile file = createFile(parent, pieces[pieces.length - 1]);
-      myAddedPaths.add(new FilePathImpl(file));
+      myAddedPaths.add(VcsUtil.getFilePath(file));
       if (! checkExistsAndValid(file, myAfterName)) {
         return false;
       }
@@ -476,7 +477,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   public void doMoveIfNeeded(final VirtualFile file) throws IOException {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
-      myBeforePaths.add(new FilePathImpl(file.getParent(), file.getName(), file.isDirectory()));
+      myBeforePaths.add(VcsUtil.getFilePath(file));
       ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
         @Override
         public VirtualFile compute() throws IOException {

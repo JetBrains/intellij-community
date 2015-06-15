@@ -5,7 +5,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
@@ -29,7 +29,7 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
   private void doTest(final boolean createInnerClass) throws Exception {
     final String testName = getTestName(false);
     configureByFile("/refactoring/extractMethodObject/" + testName + ".java");
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     final PsiMethod method = (PsiMethod) element;
 
@@ -41,10 +41,8 @@ public class ExtractMethodObjectTest extends LightRefactoringTestCase {
     extractProcessor.prepare();
     extractProcessor.testPrepare();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ExtractMethodObjectHandler.run(getProject(), getEditor(), processor, extractProcessor);
     });
 
 

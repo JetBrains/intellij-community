@@ -25,7 +25,6 @@ import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -63,6 +62,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected T myWizard;
   @Nullable
   private Project myCreatedProject;
+  private Sdk myOldDefaultProjectSdk;
 
   protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
@@ -155,7 +155,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
+    myOldDefaultProjectSdk = ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).getProjectSdk();
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
     for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectSdk != jdk) {
@@ -171,19 +171,14 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected void configureJdk() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @SuppressWarnings("UseOfSystemOutOrSystemErr")
       @Override
       public void run() {
         addSdk(new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
         addSdk(new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome()));
 
-        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("ProjectWizardTestCase.configureJdk:");
         System.out.println(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
-
-        if (getName().contains("DefaultSdk")) {
-          Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-          ProjectRootManager.getInstance(defaultProject).setProjectSdk(
-            new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome()));
-        }
       }
     });
   }
@@ -212,6 +207,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
+        ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
         for (Sdk sdk : mySdks) {
           ProjectJdkTable.getInstance().removeJdk(sdk);
         }

@@ -11,7 +11,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="testFramework" />
-    <orderEntry type="library" scope="TEST" name="EasyMock" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="vcs-impl" />

@@ -17,9 +17,10 @@ package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +46,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Nullable
   @Override
   public PsiElement findTargetMember(PsiFile file, Editor editor) {
-    PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     return findTargetMember(element);
   }
 
@@ -70,8 +71,10 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
-    if (elements.length != 1) return;
-    Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
+    if (elements.length != 1) {
+      return;
+    }
+    final Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     invokeOnElement(project, elements[0], editor);
   }
 
@@ -83,58 +86,57 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static void invokeOnElement(Project project, PsiElement element, Editor editor) {
     if (element instanceof PyLambdaExpression) {
-      String message =
-        RefactoringBundle.getCannotRefactorMessage("Caret is positioned on lambda call.");
-      CommonRefactoringUtil.showErrorHint(project, editor, message,
-                                          REFACTORING_NAME, REFACTORING_NAME);
+      showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.lambda.call"));
       return;
     }
     if (!(element instanceof PyFunction)) {
-      String message =
-        RefactoringBundle.getCannotRefactorMessage(
-          PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message,
-                                          REFACTORING_NAME, REFACTORING_NAME);
+      showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name"));
       return;
     }
 
-    if (isNotUnderSourceRoot(project, element.getContainingFile(), editor)) return;
+    if (isNotUnderSourceRoot(project, element.getContainingFile())) {
+      showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.not.under.source.root"));
+      return;
+    }
 
     final PyFunction superMethod = getSuperMethod((PyFunction)element);
-    if (superMethod == null) return;
+    if (superMethod == null) {
+      return;
+    }
     if (!superMethod.equals(element)) {
       element = superMethod;
-      if (isNotUnderSourceRoot(project, superMethod.getContainingFile(), editor)) return;
+      if (isNotUnderSourceRoot(project, superMethod.getContainingFile())) {
+        return;
+      }
     }
 
     final PyFunction function = (PyFunction)element;
     final PyParameter[] parameters = function.getParameterList().getParameters();
     for (PyParameter p : parameters) {
       if (p instanceof PyTupleParameter) {
-        String message =
-          RefactoringBundle.getCannotRefactorMessage("Function contains tuple parameters");
-        CommonRefactoringUtil.showErrorHint(project, editor, message,
-                                            REFACTORING_NAME, REFACTORING_NAME);
+        showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.tuple.parameters"));
         return;
       }
     }
 
     final PyMethodDescriptor method = new PyMethodDescriptor((PyFunction)element);
-    PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, method);
+    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, method);
     dialog.show();
   }
 
-  private static boolean isNotUnderSourceRoot(@NotNull final Project project,
-                                              @Nullable final PsiFile psiFile,
-                                              @Nullable final Editor editor) {
-    if (psiFile == null) return true;
+  private static void showCannotRefactorErrorHint(@NotNull Project project, @Nullable Editor editor, @NotNull String details) {
+    final String message = RefactoringBundle.getCannotRefactorMessage(details);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, REFACTORING_NAME);
+  }
+
+  private static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {
+    if (psiFile == null) {
+      return true;
+    }
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
-        String message =
-            RefactoringBundle.getCannotRefactorMessage("Function is not under the source root");
-          CommonRefactoringUtil.showErrorHint(project, editor, message,
-                                              REFACTORING_NAME, REFACTORING_NAME);
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      if (fileIndex.isExcluded(virtualFile) || (fileIndex.isInLibraryClasses(virtualFile) && !fileIndex.isInContent(virtualFile))) {
         return true;
       }
     }
@@ -143,7 +145,9 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   @Nullable
   protected static PyFunction getSuperMethod(@Nullable PyFunction function) {
-    if (function == null) return null;
+    if (function == null) {
+      return null;
+    }
     final PyClass containingClass = function.getContainingClass();
     if (containingClass == null) {
       return function;
@@ -152,21 +156,20 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (!deepestSuperMethod.equals(function)) {
       final PyClass baseClass = deepestSuperMethod.getContainingClass();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(baseClass);
-      String baseClassName = baseClass == null? "" : baseClass.getName();
-      if (cache.isBuiltin(baseClass))
+      final String baseClassName = baseClass == null ? "" : baseClass.getName();
+      if (cache.isBuiltin(baseClass)) {
         return function;
-      final String message = PyBundle.message(
-        "refactoring.change.signature.find.usages.of.base.class",
-        function.getName(),
-        containingClass.getName(),
-        baseClassName);
-      int choice;
-      if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
-        choice = 0;
+      }
+      final String message = PyBundle.message("refactoring.change.signature.find.usages.of.base.class",
+                                              function.getName(),
+                                              containingClass.getName(),
+                                              baseClassName);
+      final int choice;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        choice = Messages.YES;
       }
       else {
-        choice = Messages.showYesNoCancelDialog(function.getProject(), message,
-                                                REFACTORING_NAME, Messages.getQuestionIcon());
+        choice = Messages.showYesNoCancelDialog(function.getProject(), message, REFACTORING_NAME, Messages.getQuestionIcon());
       }
       switch (choice) {
         case Messages.YES:
@@ -176,7 +179,6 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
         default:
           return null;
       }
-
     }
     return function;
   }

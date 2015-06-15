@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,13 +66,13 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     //range highlighters are strongly referenced
     @Override
     protected Getter<RangeHighlighterEx> createGetter(@NotNull RangeHighlighterEx interval) {
+      //noinspection unchecked
       return (Getter<RangeHighlighterEx>)interval;
     }
   }
 
   @Override
-  void reportInvalidation(RangeHighlighterEx markerEx, Object reason) {
-    super.reportInvalidation(markerEx, reason);
+  void fireBeforeRemoved(@NotNull RangeHighlighterEx markerEx, @NotNull Object reason) {
     myMarkupModel.fireBeforeRemoved(markerEx);
   }
 }

@@ -16,11 +16,9 @@
 package org.jetbrains.java.generate.element;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
 
 import java.util.List;
 
@@ -59,6 +57,6 @@ public class GenerationHelper {
   public static String getPropertyName(FieldElement fieldElement, Project project) {
     String name = fieldElement.getName();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    return codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
+    return codeStyleManager.variableNameToPropertyName(name, fieldElement.isModifierStatic() ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
   }
 }

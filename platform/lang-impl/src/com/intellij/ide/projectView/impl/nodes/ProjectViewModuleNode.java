@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -35,21 +34,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class ProjectViewModuleNode extends AbstractModuleNode {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode");
 
   public ProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public ProjectViewModuleNode(Project project, Object value, ViewSettings viewSettings) {
-    this(project, (Module)value, viewSettings);
   }
 
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     Module module = getValue();
-    if (module == null) {  // module has been disposed
+    if (module == null || module.isDisposed()) {  // module has been disposed
       return Collections.emptyList();
     }
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
@@ -57,22 +51,22 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
 
     final VirtualFile[] contentRoots = rootManager.getContentRoots();
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(contentRoots.length + 1);
-    final PsiManager psiManager = PsiManager.getInstance(getProject());
+    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     for (final VirtualFile contentRoot : contentRoots) {
       if (!moduleFileIndex.isInContent(contentRoot)) continue;
 
-      AbstractTreeNode child;
       if (contentRoot.isDirectory()) {
         PsiDirectory directory = psiManager.findDirectory(contentRoot);
-        LOG.assertTrue(directory != null);
-        child = new PsiDirectoryNode(getProject(), directory, getSettings());
+        if (directory != null) {
+          children.add(new PsiDirectoryNode(getProject(), directory, getSettings()));
+        }
       }
       else {
         PsiFile file = psiManager.findFile(contentRoot);
-        LOG.assertTrue(file != null);
-        child = new PsiFileNode(getProject(), file, getSettings());
+        if (file != null) {
+          children.add(new PsiFileNode(getProject(), file, getSettings()));
+        }
       }
-      children.add(child);
     }
 
     /*

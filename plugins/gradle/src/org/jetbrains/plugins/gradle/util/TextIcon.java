@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.util;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class TextIcon implements Icon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    GraphicsUtil.setupAntialiasing(g, true, false);
+    UISettings.setupAntialiasing(g);
     if (myTextHeight <= 0) {
       myTextHeight = g.getFont().createGlyphVector(((Graphics2D)g).getFontRenderContext(), myText).getPixelBounds(null, 0, 0).height;
     }

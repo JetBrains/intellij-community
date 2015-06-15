@@ -19,7 +19,6 @@ package com.intellij.codeInspection;
 import com.intellij.BundleBase;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -54,14 +53,16 @@ public class ProblemsHolder {
     myOnTheFly = onTheFly;
   }
 
-  public void registerProblem(@NotNull PsiElement psiElement, @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, LocalQuickFix... fixes) {
+  public void registerProblem(@NotNull PsiElement psiElement,
+                              @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                              @Nullable LocalQuickFix... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                              ProblemHighlightType highlightType,
-                              LocalQuickFix... fixes) {
+                              @NotNull ProblemHighlightType highlightType,
+                              @Nullable LocalQuickFix... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
@@ -76,14 +77,6 @@ public class ProblemsHolder {
           return;
         }
       }
-
-      PsiFile containingFile = element.getContainingFile();
-      PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      PsiElement myContext = InjectedLanguageManager.getInstance(myFile.getProject()).getInjectionHost(myFile);
-      LOG.error("Reported element " + element + " is not from the file '" + myFile + "' the inspection was invoked for. Message: '" + problemDescriptor.getDescriptionTemplate()+"'.\n" +
-                "Element' containing file: "+ containingFile +"; context: "+(context == null ? null : context.getContainingFile())+"\n"
-                +"Inspection invoked for file: "+ myFile +"; context: "+(myContext == null ? null : myContext.getContainingFile())+"\n"
-                );
     }
 
     myProblems.add(problemDescriptor);
@@ -122,11 +115,11 @@ public class ProblemsHolder {
   }
 
   public void registerProblemForReference(@NotNull PsiReference reference,
-                              ProblemHighlightType highlightType,
-                              String descriptionTemplate,
-                              LocalQuickFix... fixes) {
-    ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType,
-                                        myOnTheFly, fixes);
+                                          @NotNull ProblemHighlightType highlightType,
+                                          @NotNull String descriptionTemplate,
+                                          @Nullable LocalQuickFix... fixes) {
+    ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(),
+                                                                     descriptionTemplate, highlightType, myOnTheFly, fixes);
     registerProblem(descriptor);
   }
 
@@ -134,7 +127,8 @@ public class ProblemsHolder {
     registerProblem(reference, unresolvedReferenceMessage(reference), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
-  public static String unresolvedReferenceMessage(PsiReference reference) {
+  @NotNull
+  public static String unresolvedReferenceMessage(@NotNull PsiReference reference) {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
@@ -164,19 +158,18 @@ public class ProblemsHolder {
    */
   public void registerProblem(@NotNull final PsiElement psiElement,
                               @NotNull final String message,
-                              final ProblemHighlightType highlightType,
+                              @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
-                              final LocalQuickFix... fixes) {
+                              @Nullable LocalQuickFix... fixes) {
 
-    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly,
-                                                                           fixes);
+    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly, fixes);
     registerProblem(descriptor);
   }
 
   public void registerProblem(@NotNull final PsiElement psiElement,
-                              final TextRange rangeInElement,
+                              @Nullable TextRange rangeInElement,
                               @NotNull final String message,
-                              final LocalQuickFix... fixes) {
+                              @Nullable LocalQuickFix... fixes) {
     final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, fixes);
     registerProblem(descriptor);
   }

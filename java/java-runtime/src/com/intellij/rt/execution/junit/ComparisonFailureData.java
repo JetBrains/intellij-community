@@ -22,6 +22,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ComparisonFailureData {
+  private static final String ASSERTION_CLASS_NAME = "java.lang.AssertionError";
+  private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
+
   private final String myExpected;
   private final String myActual;
   private final String myFilePath;
@@ -56,6 +59,55 @@ public class ComparisonFailureData {
     myExpected = expected;
     myActual = actual;
     myFilePath = filePath;
+  }
+
+  public static void registerSMAttributes(ComparisonFailureData notification,
+                                          String trace,
+                                          String failureMessage,
+                                          Map attrs, 
+                                          Throwable throwable) {
+
+    if (notification != null) {
+      attrs.put("expected", notification.getExpected());
+      attrs.put("actual", notification.getActual());
+
+      final int failureIdx = trace.indexOf(failureMessage);
+      attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessage.length()) : trace);
+      final String filePath = notification.getFilePath();
+      if (filePath != null) {
+        attrs.put("expectedFile", filePath);
+      }
+      final int expectedIdx = trace.indexOf("expected");
+      final String comparisonFailureMessage;
+      if (expectedIdx > 0) {
+        comparisonFailureMessage = trace.substring(0, expectedIdx);
+      }
+      else {
+        comparisonFailureMessage = "Comparison Failure: ";
+      }
+      attrs.put("message", comparisonFailureMessage);
+    }
+    else {
+      attrs.put("details", trace);
+
+      Throwable throwableCause = null;
+      try {
+        throwableCause = throwable.getCause();
+      }
+      catch (Throwable ignored) {}
+
+      if (!isAssertionError(throwable.getClass()) && !isAssertionError(throwableCause != null ? throwableCause.getClass() : null)) {
+        attrs.put("error", "true");
+      }
+      attrs.put("message", failureMessage != null ? failureMessage : "");
+    }
+  }
+
+  public static boolean isAssertionError(Class throwableClass) {
+    if (throwableClass == null) return false;
+    final String throwableClassName = throwableClass.getName();
+    if (throwableClassName.equals(ASSERTION_CLASS_NAME) || throwableClassName.equals(ASSERTION_FAILED_CLASS_NAME)) return true;
+    return isAssertionError(throwableClass.getSuperclass());
   }
 
   public String getFilePath() {

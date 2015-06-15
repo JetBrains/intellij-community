@@ -27,7 +27,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,15 +45,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @SuppressWarnings({"unchecked"})
 public class SemServiceImpl extends SemService{
-  private static final Comparator<SemKey> KEY_COMPARATOR = new Comparator<SemKey>() {
-    @Override
-    public int compare(SemKey o1, SemKey o2) {
-      return o2.getUniqueId() - o1.getUniqueId();
-    }
-  };
   private final ConcurrentMap<PsiElement, SemCacheChunk> myCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private volatile MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
-  private volatile MultiMap<SemKey, SemKey> myInheritors;
   private final Project myProject;
 
   private boolean myBulkChange = false;
@@ -91,27 +83,6 @@ public class SemServiceImpl extends SemService{
         //System.out.println("SemService cache flushed");
       }
     }, project);
-  }
-
-  private static MultiMap<SemKey, SemKey> cacheKeyHierarchy(Collection<SemKey> allKeys) {
-    final MultiMap<SemKey, SemKey> result = MultiMap.createSmart();
-    ContainerUtil.process(allKeys, new Processor<SemKey>() {
-      @Override
-      public boolean process(SemKey key) {
-        result.putValue(key, key);
-        for (SemKey parent : key.getSupers()) {
-          result.putValue(parent, key);
-          process(parent);
-        }
-        return true;
-      }
-    });
-    for (final SemKey each : result.keySet()) {
-      final List<SemKey> inheritors = new ArrayList<SemKey>(new HashSet<SemKey>(result.get(each)));
-      Collections.sort(inheritors, KEY_COMPARATOR);
-      result.put(each, inheritors);
-    }
-    return result;
   }
 
   private MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> collectProducers() {
@@ -182,7 +153,7 @@ public class SemServiceImpl extends SemService{
 
     LinkedHashSet<T> result = new LinkedHashSet<T>();
     final Map<SemKey, List<SemElement>> map = new THashMap<SemKey, List<SemElement>>();
-    for (final SemKey each : myInheritors.get(key)) {
+    for (final SemKey each : key.getInheritors()) {
       List<SemElement> list = createSemElements(each, psi);
       map.put(each, list);
       result.addAll((List<T>)list);
@@ -199,9 +170,8 @@ public class SemServiceImpl extends SemService{
   }
 
   private void ensureInitialized() {
-    if (myInheritors == null) {
+    if (myProducers == null) {
       myProducers = collectProducers();
-      myInheritors = cacheKeyHierarchy(myProducers.keySet());
     }
   }
 
@@ -240,7 +210,7 @@ public class SemServiceImpl extends SemService{
 
     List<T> singleList = null;
     LinkedHashSet<T> result = null;
-    final List<SemKey> inheritors = (List<SemKey>)myInheritors.get(key);
+    final List<SemKey> inheritors = key.getInheritors();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < inheritors.size(); i++) {
       List<T> cached = (List<T>)chunk.getSemElements(inheritors.get(i));
@@ -308,6 +278,10 @@ public class SemServiceImpl extends SemService{
       map.put(key.getUniqueId(), elements);
     }
 
+    @Override
+    public int hashCode() {
+      return 0; // ConcurrentWeakKeySoftValueHashMap.SoftValue requires hashCode, and this is faster than identityHashCode
+    }
   }
 
 }

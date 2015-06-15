@@ -110,6 +110,22 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testIDEA139875() throws Exception {
+    doTest();
+  }
+
+  public void testMethodReferenceWithTypeArgs() throws Exception {
+    doTest();
+  }
+
+  public void testPrimitiveVarargsAreNoMoreSpecificThanNonPrimitiveWhenNoArgIsActuallyProvided() throws Exception {
+    doTest();
+  }
+
+  public void testProperUnrelatedFunctionalInterfacesTypesComparison() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

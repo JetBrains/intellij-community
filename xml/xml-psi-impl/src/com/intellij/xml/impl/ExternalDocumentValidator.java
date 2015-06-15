@@ -146,7 +146,7 @@ public class ExternalDocumentValidator {
                 return;
               }
 
-              final VirtualFile errorFile = myHandler.getFile(e.getPublicId(), e.getSystemId());
+              final VirtualFile errorFile = myHandler.getProblemFile(e);
               if (!Comparing.equal(errorFile, file.getVirtualFile()) && errorFile != null) {
                 return; // error in attached schema
               }
@@ -349,7 +349,7 @@ public class ExternalDocumentValidator {
       return;
     }
 
-    final FileType fileType = containingFile.getViewProvider().getVirtualFile().getFileType();
+    final FileType fileType = containingFile.getViewProvider().getFileType();
     if (fileType != XmlFileType.INSTANCE && fileType != XHtmlFileType.INSTANCE) {
       return;
     }

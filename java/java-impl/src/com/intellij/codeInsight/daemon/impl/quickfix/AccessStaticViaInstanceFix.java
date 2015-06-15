@@ -97,9 +97,11 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         if (!checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
         PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
         PsiElement qualifiedWithClassName = myExpression.copy();
-        newQualifier.delete();
-        if (myExpression.resolve() != myMember) {
-          myExpression.replace(qualifiedWithClassName);
+        if (myExpression.getTypeParameters().length == 0) {
+          newQualifier.delete();
+          if (myExpression.resolve() != myMember) {
+            myExpression.replace(qualifiedWithClassName);
+          }
         }
       }
     }

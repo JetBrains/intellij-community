@@ -16,31 +16,51 @@
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 /**
  * User: Vassiliy.Kudryashov
  */
 public class TwoColorsIcon extends EmptyIcon {
-  @NotNull private final Color myColor1;
-  @NotNull private final Color myColor2;
+  @NotNull private final Paint myColor1;
+  @NotNull private final Paint myColor2;
+  private static final int SQUARE_SIZE = 6;
+  private static final BufferedImage CHESS_IMAGE = UIUtil.createImage(SQUARE_SIZE, SQUARE_SIZE, BufferedImage.TYPE_INT_RGB);
+  static {
+    Graphics2D graphics = CHESS_IMAGE.createGraphics();
+    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    graphics.setColor(Color.LIGHT_GRAY);
+    graphics.fillRect(0, 0, SQUARE_SIZE + 1, SQUARE_SIZE + 1);
+    graphics.setColor(Color.GRAY);
+    graphics.fillRect(0, 0, SQUARE_SIZE / 2, SQUARE_SIZE / 2);
+    graphics.fillRect(SQUARE_SIZE / 2, SQUARE_SIZE / 2, SQUARE_SIZE / 2, SQUARE_SIZE / 2);
+  }
+  private TexturePaint CHESS = new TexturePaint(CHESS_IMAGE, new Rectangle(0, 0, SQUARE_SIZE, SQUARE_SIZE));
 
-  public TwoColorsIcon(int size, @NotNull Color color1, @NotNull Color color2) {
+  public TwoColorsIcon(int size, @Nullable Color color1, @Nullable Color color2) {
     super(size, size);
-    myColor1 = color1;
-    myColor2 = color2;
+    myColor1 = color1 != null ? color1 : CHESS;
+    myColor2 = color2 != null ? color2 : CHESS;
   }
 
   @Override
   public void paintIcon(final Component component, final Graphics g, final int x, final int y) {
-    final int w = getIconWidth();
-    final int h = getIconHeight();
-    GraphicsUtil.setupAAPainting(g);
-    g.setColor(myColor1);
-    g.fillPolygon(new int[]{x, x + w, x}, new int[]{y, y, y + h}, 3);
-    g.setColor(myColor2);
-    g.fillPolygon(new int[]{x + w, x + w, x}, new int[]{y, y + h, y + h}, 3);
+    Graphics2D g2d = (Graphics2D)g.create();
+    try {
+      final int w = getIconWidth();
+      final int h = getIconHeight();
+      GraphicsUtil.setupAAPainting(g2d);
+      g2d.setPaint(myColor1);
+      g2d.fillPolygon(new int[]{x, x + w, x}, new int[]{y, y, y + h}, 3);
+      g2d.setPaint(myColor2);
+      g2d.fillPolygon(new int[]{x + w, x + w, x}, new int[]{y, y + h, y + h}, 3);
+    }
+    catch (Exception e) {
+      g2d.dispose();
+    }
   }
 
   @Override

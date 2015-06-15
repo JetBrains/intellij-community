@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,20 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static final String SNAPSHOT = "SNAPSHOT";
   private static final String FALLBACK_VERSION = "999.SNAPSHOT";
 
-  private static final int TOP_BASELINE_VERSION = fromFile().getBaselineVersion();
+  private static class Holder {
+    private static final int TOP_BASELINE_VERSION = fromFile().getBaselineVersion();
+  }
 
   private final String myProductCode;
   private final int myBaselineVersion;
   private final int myBuildNumber;
   private final String myAttemptInfo;
 
-  public BuildNumber(String productCode, int baselineVersion, int buildNumber) {
+  public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber) {
     this(productCode, baselineVersion, buildNumber, null);
   }
 
-  public BuildNumber(String productCode, int baselineVersion, int buildNumber, String attemptInfo) {
+  public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber, @Nullable String attemptInfo) {
     myProductCode = productCode;
     myBaselineVersion = baselineVersion;
     myBuildNumber = buildNumber;
@@ -91,7 +93,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
     if (BUILD_NUMBER.equals(version)) {
       final String productCode = name != null ? name : "";
-      return new BuildNumber(productCode, TOP_BASELINE_VERSION, Integer.MAX_VALUE);
+      return new BuildNumber(productCode, Holder.TOP_BASELINE_VERSION, Integer.MAX_VALUE);
     }
 
     String code = version;
@@ -183,6 +185,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return myBaselineVersion - o.myBaselineVersion;
   }
 
+  @NotNull
   public String getProductCode() {
     return myProductCode;
   }
@@ -222,7 +225,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
   private static int getBaseLineForHistoricBuilds(int bn) {
     if (bn == Integer.MAX_VALUE) {
-      return TOP_BASELINE_VERSION; // SNAPSHOTS
+      return Holder.TOP_BASELINE_VERSION; // SNAPSHOTS
     }
 
     if (bn >= 10000) {

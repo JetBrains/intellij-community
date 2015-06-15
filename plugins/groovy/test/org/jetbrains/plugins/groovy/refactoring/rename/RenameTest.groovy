@@ -450,9 +450,9 @@ foo = 4"""
   }
 
   public void testExtensionOnClassRename() {
-    myFixture.configureByText "Foo.gpp", "class Foo {}"
+    myFixture.configureByText "Foo.gy", "class Foo {}"
     myFixture.renameElement myFixture.findClass("Foo"), "Bar"
-    assert "gpp", myFixture.file.virtualFile.extension
+    assert "gy", myFixture.file.virtualFile.extension
   }
 
   public void testRenameJavaUsageFail() {

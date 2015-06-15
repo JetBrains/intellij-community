@@ -18,8 +18,10 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -84,8 +86,8 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     if (rootForUrl != null) {
       String relativePath = SvnUtil.getRelativeUrl(rootForUrl.getUrl(), fullPath);
       File file = new File(rootForUrl.getPath(), relativePath);
-
-      result = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, detector);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      result = virtualFile != null ? VcsUtil.getFilePath(virtualFile) : VcsUtil.getFilePath(file, detector.fun(file).booleanValue());
     }
 
     return result;

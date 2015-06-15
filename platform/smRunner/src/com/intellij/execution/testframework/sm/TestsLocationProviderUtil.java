@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.StringTokenizer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,19 +40,15 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class TestsLocationProviderUtil {
-  @NonNls private static final String PROTOCOL_SEPARATOR = "://";
   private static final int MIN_PROXIMITY_THRESHOLD = 1;
 
-  private TestsLocationProviderUtil() {
-  }
+  private TestsLocationProviderUtil() { }
 
-  @Nullable
-  public static String extractPath(@NotNull final String locationUrl) {
-    final int index = locationUrl.indexOf(PROTOCOL_SEPARATOR);
-    if (index >= 0) {
-      return locationUrl.substring(index + PROTOCOL_SEPARATOR.length());
-    }
-    return null;
+  /** @deprecated to be removed in IDEA 16 */
+  @SuppressWarnings("unused")
+  public static String extractPath(@NotNull String locationUrl) {
+    int index = locationUrl.indexOf(URLUtil.SCHEME_SEPARATOR);
+    return index >= 0 ? locationUrl.substring(index + URLUtil.SCHEME_SEPARATOR.length()) : null;
   }
 
   public static List<VirtualFile> findSuitableFilesFor(final String filePath, final Project project) {

@@ -20,6 +20,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -74,7 +75,7 @@ public class I18nUtil {
     }
   }
 
-  public static List<String> defaultGetPropertyFiles(Project project) {
+  public static List<String> defaultSuggestPropertiesFiles(Project project) {
     final List<String> paths = new ArrayList<String>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
@@ -82,6 +83,9 @@ public class I18nUtil {
 
       @Override
       public boolean process(String baseName, PropertiesFile propertiesFile) {
+        if (propertiesFile instanceof XmlPropertiesFile) {
+          return true;
+        }
         VirtualFile virtualFile = propertiesFile.getVirtualFile();
         if (projectFileIndex.isInContent(virtualFile)) {
           String path = FileUtil.toSystemDependentName(virtualFile.getPath());

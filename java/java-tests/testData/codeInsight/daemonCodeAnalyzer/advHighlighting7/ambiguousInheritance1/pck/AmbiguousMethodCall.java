@@ -15,14 +15,14 @@
  */
 package pck;
 
-interface A<T> 
+interface A<T>
 {
     T foo();
 }
 
 interface B<T extends Cloneable> extends A<T> { }
 
-class C<T extends A<?> & B<?>>
+class C<T extends A<? extends Cloneable> & B<?>>
 {
     void bar(T x)
     {

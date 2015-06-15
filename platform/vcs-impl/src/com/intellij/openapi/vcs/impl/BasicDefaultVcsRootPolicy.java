@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
 import com.intellij.openapi.vcs.changes.VcsGuess;
@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   public void markDefaultRootsDirty(final DirtBuilder builder, final VcsGuess vcsGuess) {
-    final FilePathImpl fp = new FilePathImpl(ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir));
+    FilePath fp = VcsUtil.getFilePath(ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir));
     final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
     if (vcs != null) {
       builder.addDirtyDirRecursively(new FilePathUnderVcs(fp, vcs));

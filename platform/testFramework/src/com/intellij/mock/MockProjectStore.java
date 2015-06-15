@@ -27,7 +27,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -126,7 +125,7 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void load() throws IOException {
+  public void load() {
     throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
   }
 

@@ -24,8 +24,8 @@ import com.intellij.diff.actions.impl.*;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
-import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -34,6 +34,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineRange;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -41,6 +42,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -53,6 +55,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -85,9 +88,9 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
-  @NotNull private final ModifiablePanel myContentPanel;
-  @NotNull private final ModifiablePanel myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
-  @NotNull private final ModifiablePanel myToolbarStatusPanel;
+  @NotNull private final Wrapper myContentPanel;
+  @NotNull private final Wrapper myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
+  @NotNull private final Wrapper myToolbarStatusPanel;
 
   @NotNull private DiffRequest myActiveRequest;
 
@@ -104,21 +107,22 @@ public abstract class DiffRequestProcessor implements Disposable {
   public DiffRequestProcessor(@Nullable Project project, @NotNull UserDataHolder context) {
     myProject = project;
 
-    myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
-    myToolOrder = new LinkedList<DiffTool>();
-
     myContext = new MyDiffContext(context);
-    myActiveRequest = NoDiffRequest.INSTANCE;
+    myActiveRequest = new LoadingDiffRequest();
 
     mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeysEx.PLACE));
+
+    myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
+    myToolOrder = new LinkedList<DiffTool>(getToolOrderFromSettings(myAvailableTools));
 
     // UI
 
     myPanel = new JPanel(new BorderLayout());
     myMainPanel = new MyPanel();
-    myContentPanel = new ModifiablePanel();
-    myToolbarPanel = new ModifiablePanel();
-    myToolbarStatusPanel = new ModifiablePanel();
+    myContentPanel = new Wrapper();
+    myToolbarPanel = new Wrapper();
+    myToolbarPanel.setFocusable(true);
+    myToolbarStatusPanel = new Wrapper();
 
     myPanel.add(myMainPanel, BorderLayout.CENTER);
 
@@ -137,6 +141,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     if (bottomPanel != null) myMainPanel.add(bottomPanel, BorderLayout.SOUTH);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 
+    myState = new EmptyState();
+    myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
 
     myOpenInEditorAction = new OpenInEditorAction(new Runnable() {
       @Override
@@ -144,14 +150,6 @@ public abstract class DiffRequestProcessor implements Disposable {
         onAfterNavigate();
       }
     });
-  }
-
-  public void init() {
-    myToolOrder.addAll(getToolOrderFromSettings(myAvailableTools));
-
-    myActiveRequest.onAssigned(true);
-    myState = new ErrorState((MessageDiffRequest)myActiveRequest);
-    myState.init();
   }
 
   //
@@ -240,19 +238,20 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Abstract
   //
 
-  @Nullable private ApplyData myApplyData;
+  @Nullable private ApplyData myQueuedApplyRequest;
 
   @CalledInAwt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     myIterationState = IterationState.NONE;
 
-    myApplyData = new ApplyData(request, force || (myApplyData != null && myApplyData.force), scrollToChangePolicy);
-    IdRunnable task = new IdRunnable(this) {
+    force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
+    myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
+    Runnable task = new Runnable() {
       @Override
       public void run() {
-        if (myApplyData == null || myDisposed) return;
-        doApplyRequest(myApplyData.request, myApplyData.force, myApplyData.scrollToChangePolicy);
-        myApplyData = null;
+        if (myQueuedApplyRequest == null || myDisposed) return;
+        doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
+        myQueuedApplyRequest = null;
       }
     };
 
@@ -296,6 +295,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void onAfterNavigate() {
   }
 
+  @CalledInAwt
   protected void onDispose() {
   }
 
@@ -471,7 +471,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
-    return component != null ? component : myToolbarPanel.getContent();
+    return component != null ? component : myToolbarPanel.getTargetComponent();
   }
 
   @Nullable
@@ -636,18 +636,12 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
-      if (iterable == null && !isNavigationEnabled()) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-
-      e.getPresentation().setVisible(true);
       if (iterable != null && iterable.canGoNext()) {
         e.getPresentation().setEnabled(true);
         return;
       }
 
-      if (isNavigationEnabled() && hasNextChange() && getSettings().isGoToNextFileOnNextDifference()) {
+      if (getSettings().isGoToNextFileOnNextDifference() && isNavigationEnabled() && hasNextChange()) {
         e.getPresentation().setEnabled(true);
         return;
       }
@@ -667,8 +661,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (!isNavigationEnabled() || !hasNextChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.NEXT) {
-        // TODO: provide "change" word in chain UserData - for tests/etc
-        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), "Press again to go to the next file", true);
+        notifyMessage(e, true);
         myIterationState = IterationState.NEXT;
         return;
       }
@@ -686,18 +679,12 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       PrevNextDifferenceIterable iterable = DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(e.getDataContext());
-      if (iterable == null && !isNavigationEnabled()) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-
-      e.getPresentation().setVisible(true);
       if (iterable != null && iterable.canGoPrev()) {
         e.getPresentation().setEnabled(true);
         return;
       }
 
-      if (isNavigationEnabled() && hasPrevChange() && getSettings().isGoToNextFileOnNextDifference()) {
+      if (getSettings().isGoToNextFileOnNextDifference() && isNavigationEnabled() && hasPrevChange()) {
         e.getPresentation().setEnabled(true);
         return;
       }
@@ -717,7 +704,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (!isNavigationEnabled() || !hasPrevChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.PREV) {
-        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), "Press again to go to the previous file", false);
+        notifyMessage(e, false);
         myIterationState = IterationState.PREV;
         return;
       }
@@ -726,27 +713,52 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private void notifyMessage(@Nullable Editor editor, @NotNull String message, boolean next) {
+  private void notifyMessage(@NotNull AnActionEvent e, boolean next) {
+    Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
+
+    // TODO: provide "change" word in chain UserData - for tests/etc
+    String message = next ? "Press again to go to the next file" : "Press again to go to the previous file";
+
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUI.scale(40) : JBUI.scale(40));
 
-    final HintHint hintHint = new HintHint(myContentPanel, point)
-      .setPreferredPosition(next ? Balloon.Position.above : Balloon.Position.below)
-      .setAwtTooltip(true)
-      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
-      .setTextBg(HintUtil.INFORMATION_COLOR)
-      .setShowImmediately(true);
-
     if (editor == null) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      final HintHint hintHint = createNotifyHint(myContentPanel, point, next);
       hint.show(myContentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
     }
     else {
-      Point editorPoint = SwingUtilities.convertPoint(myContentPanel, point, editor.getComponent());
+      int x = SwingUtilities.convertPoint(myContentPanel, point, editor.getComponent()).x;
+
+      JComponent header = editor.getHeaderComponent();
+      int shift = editor.getScrollingModel().getVerticalScrollOffset() - (header != null ? header.getHeight() : 0);
+
+      LogicalPosition position;
+      LineRange changeRange = e.getData(DiffDataKeys.CURRENT_CHANGE_RANGE);
+      if (changeRange == null) {
+        position = new LogicalPosition(editor.getCaretModel().getLogicalPosition().line + (next ? 1 : 0), 0);
+      }
+      else {
+        position = new LogicalPosition(next ? changeRange.end : changeRange.start, 0);
+      }
+      int y = editor.logicalPositionToXY(position).y - shift;
+
+      Point editorPoint = new Point(x, y);
+      final HintHint hintHint = createNotifyHint(editor.getComponent(), editorPoint, !next);
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, editorPoint, HintManager.HIDE_BY_ANY_KEY |
                                                                                   HintManager.HIDE_BY_TEXT_CHANGE |
                                                                                   HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     }
+  }
+
+  @NotNull
+  private static HintHint createNotifyHint(@NotNull JComponent component, @NotNull Point point, boolean above) {
+    return new HintHint(component, point)
+      .setPreferredPosition(above ? Balloon.Position.above : Balloon.Position.below)
+      .setAwtTooltip(true)
+      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setTextBg(HintUtil.INFORMATION_COLOR)
+      .setShowImmediately(true);
   }
 
   // Iterate requests
@@ -822,7 +834,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public Object getData(@NonNls String dataId) {
       Object data;
 
-      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getContent());
+      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());
       if (contentProvider != null) {
         data = contentProvider.getData(dataId);
         if (data != null) return data;
@@ -938,8 +950,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   private interface ViewerState {
+    @CalledInAwt
     void init();
 
+    @CalledInAwt
     void destroy();
 
     @Nullable
@@ -950,6 +964,34 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @NotNull
     DiffTool getActiveTool();
+  }
+
+  private static class EmptyState implements ViewerState {
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public void destroy() {
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return ErrorDiffTool.INSTANCE;
+    }
   }
 
   private class ErrorState implements ViewerState {
@@ -970,16 +1012,16 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
 
       FrameDiffTool.ToolbarComponents init = myViewer.init();
       buildToolbar(init.toolbarActions);
-
-      myPanel.validate();
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1013,11 +1055,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
-
-      myPanel.validate();
 
       FrameDiffTool.ToolbarComponents toolbarComponents = myViewer.init();
 
@@ -1025,11 +1066,10 @@ public abstract class DiffRequestProcessor implements Disposable {
       buildActionPopup(toolbarComponents.popupActions);
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
-
-      myPanel.validate();
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1069,11 +1109,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void init() {
       myContentPanel.setContent(myWrapperViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
-
-      myPanel.validate();
 
 
       FrameDiffTool.ToolbarComponents toolbarComponents1 = myViewer.init();
@@ -1097,11 +1136,10 @@ public abstract class DiffRequestProcessor implements Disposable {
 
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
-
-      myPanel.validate();
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
       Disposer.dispose(myWrapperViewer);

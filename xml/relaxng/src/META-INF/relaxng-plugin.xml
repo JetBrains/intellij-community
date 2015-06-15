@@ -19,7 +19,7 @@
     <lang.foldingBuilder language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.folding.RncFoldingBuilder" />
     <lang.formatter language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.formatting.RncFormattingModelBuilder" />
     <lang.namesValidator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MyNamesValidator" />
-    <lang.syntaxHighlighterFactory key="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MySyntaxHighlighterFactory" />
+    <lang.syntaxHighlighterFactory language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MySyntaxHighlighterFactory" />
 
     <lang.elementManipulator forClass="org.intellij.plugins.relaxNG.compact.psi.RncFileReference" implementationClass="org.intellij.plugins.relaxNG.RncFileReferenceManipulator" />
 
@@ -30,7 +30,7 @@
 
     <externalAnnotator language="XML" implementationClass="org.intellij.plugins.relaxNG.validation.RngSchemaValidator" />
     <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" />
-    <psi.referenceContributor implementation="org.intellij.plugins.relaxNG.RelaxNGReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.intellij.plugins.relaxNG.RelaxNGReferenceContributor"/>
 
     <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngChoiceDescription"/>
     <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngElementDescription"/>

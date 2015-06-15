@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,37 +22,26 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpression {
+abstract class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpression {
   private final ClsElementImpl myParent;
   private final PsiExpression myLOperand;
   private final PsiJavaToken myOperation;
   private final PsiExpression myROperand;
 
-  public ClsBinaryExpressionImpl(ClsElementImpl parent,
-                                 ClsLiteralExpressionImpl lOperand,
-                                 ClsJavaTokenImpl operation,
-                                 ClsLiteralExpressionImpl rOperand) {
+  ClsBinaryExpressionImpl(@NotNull ClsElementImpl parent) {
     myParent = parent;
-    myLOperand = lOperand;
-    myOperation = operation;
-    myROperand = rOperand;
-    lOperand.setParent(this);
-    operation.setParent(this);
-    rOperand.setParent(this);
+    myLOperand = createLOperand();
+    myOperation = createOperation();
+    myROperand = createROperand();
   }
 
-  public ClsBinaryExpressionImpl(ClsElementImpl parent,
-                                 ClsPrefixExpressionImpl lOperand,
-                                 ClsJavaTokenImpl operation,
-                                 ClsLiteralExpressionImpl rOperand) {
-    myParent = parent;
-    myLOperand = lOperand;
-    myOperation = operation;
-    myROperand = rOperand;
-    lOperand.setParent(this);
-    operation.setParent(this);
-    rOperand.setParent(this);
-  }
+  @NotNull
+  protected abstract PsiJavaToken createOperation();
+  @NotNull
+  protected abstract PsiExpression createLOperand();
+  @NotNull
+  protected abstract ClsLiteralExpressionImpl createROperand();
+
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {

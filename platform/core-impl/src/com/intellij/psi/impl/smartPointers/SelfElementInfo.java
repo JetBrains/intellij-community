@@ -35,16 +35,16 @@ import java.lang.ref.SoftReference;
 * User: cdr
 */
 public class SelfElementInfo implements SmartPointerElementInfo {
-  protected final VirtualFile myVirtualFile;
+  private final VirtualFile myVirtualFile;
   private Reference<RangeMarker> myMarkerRef; // create marker only in case of live document
   private volatile int mySyncStartOffset;
   private volatile int mySyncEndOffset;
-  protected volatile boolean mySyncMarkerIsValid;
+  volatile boolean mySyncMarkerIsValid;
   private final Class myType;
-  protected final Project myProject;
-  @SuppressWarnings({"UnusedDeclaration"})
+  private final Project myProject;
+  @SuppressWarnings("UnusedDeclaration")
   private volatile RangeMarker myRangeMarker; //maintains hard reference during modification
-  protected final Language myLanguage;
+  private final Language myLanguage;
 
   SelfElementInfo(@NotNull Project project,
                   @NotNull ProperTextRange range,
@@ -68,7 +68,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     }
   }
 
-  protected void setRange(@NotNull Segment range) {
+  void setRange(@NotNull Segment range) {
     mySyncStartOffset = range.getStartOffset();
     mySyncEndOffset = range.getEndOffset();
   }
@@ -145,7 +145,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         mySyncMarkerIsValid = false;
       }
     }
-    myRangeMarker = null;  // clear hard ref to avoid leak, hold soft ref for not recreating marker later
+    myRangeMarker = null;  // clear hard ref to avoid leak, but hold soft ref (in myMarkerRef) for not recreating marker too often
   }
 
   @Override
@@ -157,7 +157,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return restoreFromFile(file);
   }
 
-  protected PsiElement restoreFromFile(@NotNull PsiFile file) {
+  private PsiElement restoreFromFile(@NotNull PsiFile file) {
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 
@@ -169,11 +169,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
   }
 
-  protected static PsiElement findElementInside(@NotNull PsiFile file,
-                                                int syncStartOffset,
-                                                int syncEndOffset,
-                                                @NotNull Class type,
-                                                @NotNull Language language) {
+  static PsiElement findElementInside(@NotNull PsiFile file,
+                                      int syncStartOffset,
+                                      int syncEndOffset,
+                                      @NotNull Class type,
+                                      @NotNull Language language) {
     PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
     if (anchor == null) return null;
 
@@ -266,12 +266,14 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     });
   }
 
-  protected int getSyncEndOffset() {
-    return mySyncEndOffset;
+  int getSyncEndOffset() {
+    RangeMarker marker = myRangeMarker;
+    return marker == null || !marker.isValid() ? mySyncEndOffset : marker.getEndOffset();
   }
 
-  protected int getSyncStartOffset() {
-    return mySyncStartOffset;
+  int getSyncStartOffset() {
+    RangeMarker marker = myRangeMarker;
+    return marker == null || !marker.isValid() ? mySyncStartOffset : marker.getStartOffset();
   }
 
   @Override
@@ -288,8 +290,8 @@ public class SelfElementInfo implements SmartPointerElementInfo {
              && myType == otherInfo.myType
              && mySyncMarkerIsValid
              && otherInfo.mySyncMarkerIsValid
-             && mySyncStartOffset == otherInfo.mySyncStartOffset
-             && mySyncEndOffset == otherInfo.mySyncEndOffset
+             && getSyncStartOffset() == otherInfo.getSyncStartOffset()
+             && getSyncEndOffset() == otherInfo.getSyncEndOffset()
         ;
     }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {

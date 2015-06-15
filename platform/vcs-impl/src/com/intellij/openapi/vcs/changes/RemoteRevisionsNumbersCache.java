@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +203,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
 
   @Nullable
   private VirtualFile getRootForPath(final String s) {
-    return myVcsManager.getVcsRootFor(new FilePathImpl(new File(s), false));
+    return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
   }
 
   public void minus(Pair<String, AbstractVcs> pair) {
@@ -253,7 +254,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       final DiffProvider diffProvider = myVcsRoot.getVcs().getDiffProvider();
       if (vf == null) {
         // doesnt matter if directory or not
-        state = diffProvider.getLastRevision(FilePathImpl.createForDeletedFile(new File(s), false));
+        state = diffProvider.getLastRevision(VcsUtil.getFilePath(s, false));
       } else {
         state = diffProvider.getLastRevision(vf);
       }

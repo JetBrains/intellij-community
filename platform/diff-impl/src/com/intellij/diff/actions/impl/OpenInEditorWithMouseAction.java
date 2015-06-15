@@ -42,6 +42,7 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
   public void register(@NotNull List<? extends Editor> editors) {
     myEditors = editors;
     for (Editor editor : editors) {
+      if (editor == null) continue;
       registerCustomShortcutSet(getShortcutSet(), (EditorGutterComponentEx)editor.getGutter());
     }
   }
@@ -118,7 +119,7 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
   @Nullable
   private Editor getEditor(@NotNull Component component) {
     for (Editor editor : myEditors) {
-      if (editor.getGutter() == component) {
+      if (editor != null && editor.getGutter() == component) {
         return editor;
       }
     }

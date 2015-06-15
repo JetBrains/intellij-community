@@ -6,21 +6,28 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
  * @author nik
  */
-public class LoggingHandlerImpl implements LoggingHandler, Disposable {
+public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHandler {
   private final ConsoleView myConsole;
 
-  public LoggingHandlerImpl(@NotNull Project project) {
+  public LoggingHandlerImpl(String presentableName, @NotNull Project project) {
+    super(presentableName);
     myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     Disposer.register(this, myConsole);
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return myConsole.getComponent();
   }
 
   @NotNull
@@ -58,7 +65,7 @@ public class LoggingHandlerImpl implements LoggingHandler, Disposable {
   }
 
   @Override
-  public void dispose() {
-
+  public boolean isClosed() {
+    return false;
   }
 }

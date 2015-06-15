@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +36,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement element = file.findElementAt(offset);
     PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
     while (typeElement != null) {

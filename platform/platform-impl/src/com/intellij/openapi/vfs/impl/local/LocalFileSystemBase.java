@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,12 +151,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public boolean isSpecialFile(@NotNull final VirtualFile file) {
-    final FileAttributes attributes = getAttributes(file);
-    return attributes != null && attributes.isSpecial();
-  }
-
-  @Override
   @NotNull
   public String[] list(@NotNull final VirtualFile file) {
     if (file.getParent() == null) {
@@ -230,7 +224,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return FileUtil.normalize(path);
   }
 
-  private static boolean isAbsoluteFileOrDriveLetter(File file) {
+  private static boolean isAbsoluteFileOrDriveLetter(@NotNull File file) {
     String path = file.getPath();
     if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
       // just drive letter.

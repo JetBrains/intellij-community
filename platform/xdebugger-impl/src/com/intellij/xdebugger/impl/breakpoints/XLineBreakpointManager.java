@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -53,6 +55,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -297,20 +300,25 @@ public class XLineBreakpointManager {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
                   ActionManagerEx.getInstanceEx().fireBeforeActionPerformed("ToggleLineBreakpoint", e.getMouseEvent());
 
-                  XLineBreakpoint breakpoint =
-                      XBreakpointUtil.toggleLineBreakpoint(myProject, file, editor, line, mouseEvent.isAltDown(), false);
-                  if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
-                    breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
-                    String selection = editor.getSelectionModel().getSelectedText();
-                    if (selection != null) {
-                      breakpoint.setLogExpression(selection);
+                  AsyncResult<XLineBreakpoint> result = XBreakpointUtil.toggleLineBreakpoint(
+                    myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false);
+                  result.doWhenDone(new Consumer<XLineBreakpoint>() {
+                    @Override
+                    public void consume(XLineBreakpoint breakpoint) {
+                      if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
+                        breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
+                        String selection = editor.getSelectionModel().getSelectedText();
+                        if (selection != null) {
+                          breakpoint.setLogExpression(selection);
+                        }
+                        else {
+                          breakpoint.setLogMessage(true);
+                        }
+                        // edit breakpoint
+                        DebuggerUIUtil.showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(), false, breakpoint);
+                      }
                     }
-                    else {
-                      breakpoint.setLogMessage(true);
-                    }
-                    // edit breakpoint
-                    DebuggerUIUtil.showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(), false, breakpoint);
-                  }
+                  });
                 }
               }
             });

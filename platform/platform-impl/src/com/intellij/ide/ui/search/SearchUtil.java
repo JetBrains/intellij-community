@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -345,6 +345,7 @@ public class SearchUtil {
       }
     }
     for (String stripped : quoted) {
+      if (registrar.isStopWord(stripped)) continue;
       textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped);
     }
     return head + textToMarkup + foot;
@@ -365,15 +366,12 @@ public class SearchUtil {
   }
 
   private static String markup(@NonNls String textToMarkup, final Pattern insideHtmlTagPattern, final String option) {
-    @NonNls String result = "";
     final int styleIdx = textToMarkup.indexOf("<style");
     final int styleEndIdx = textToMarkup.indexOf("</style>");
     if (styleIdx < 0 || styleEndIdx < 0) {
-      result = markupInText(textToMarkup, insideHtmlTagPattern, option);
-    } else {
-      result = markup(textToMarkup.substring(0, styleIdx), insideHtmlTagPattern, option) + markup(textToMarkup.substring(styleEndIdx + STYLE_END.length()), insideHtmlTagPattern, option);
+      return markupInText(textToMarkup, insideHtmlTagPattern, option);
     }
-    return result;
+    return  markup(textToMarkup.substring(0, styleIdx), insideHtmlTagPattern, option) + markup(textToMarkup.substring(styleEndIdx + STYLE_END.length()), insideHtmlTagPattern, option);
   }
 
   private static String markupInText(String textToMarkup, Pattern insideHtmlTagPattern, String option) {

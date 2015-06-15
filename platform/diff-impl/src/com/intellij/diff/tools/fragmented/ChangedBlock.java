@@ -15,11 +15,9 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.LineFragmentImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class ChangedBlock {
   private final int myStartOffset1;
@@ -29,7 +27,8 @@ public class ChangedBlock {
 
   private final int myLine1;
   private final int myLine2;
-  @Nullable private final List<DiffFragment> myInnerFragments;
+
+  @NotNull private final LineFragment myLineFragment;
 
   public ChangedBlock(int startOffset1,
                       int endOffset1,
@@ -37,24 +36,26 @@ public class ChangedBlock {
                       int endOffset2,
                       int line1,
                       int line2,
-                      @Nullable List<DiffFragment> innerFragments) {
+                      @NotNull LineFragment lineFragment) {
     myStartOffset1 = startOffset1;
     myEndOffset1 = endOffset1;
     myStartOffset2 = startOffset2;
     myEndOffset2 = endOffset2;
     myLine1 = line1;
     myLine2 = line2;
-    myInnerFragments = innerFragments;
+    myLineFragment = lineFragment;
   }
 
   @NotNull
   public static ChangedBlock createInserted(int length, int lines) {
-    return new ChangedBlock(0, 0, 0, length, 0, lines, null);
+    LineFragmentImpl lineFragment = new LineFragmentImpl(0, 0, 0, lines, 0, 0, 0, length);
+    return new ChangedBlock(0, 0, 0, length, 0, lines, lineFragment);
   }
 
   @NotNull
   public static ChangedBlock createDeleted(int length, int lines) {
-    return new ChangedBlock(0, length, 0, 0, 0, lines, null);
+    LineFragmentImpl lineFragment = new LineFragmentImpl(0, lines, 0, 0, 0, length, 0, 0);
+    return new ChangedBlock(0, length, 0, 0, 0, lines, lineFragment);
   }
 
   public int getStartOffset1() {
@@ -81,16 +82,8 @@ public class ChangedBlock {
     return myLine2;
   }
 
-  public boolean hasInsertion() {
-    return myStartOffset2 != myEndOffset2;
-  }
-
-  public boolean hasDeletion() {
-    return myStartOffset1 != myEndOffset1;
-  }
-
-  @Nullable
-  public List<DiffFragment> getInnerFragments() {
-    return myInnerFragments;
+  @NotNull
+  public LineFragment getLineFragment() {
+    return myLineFragment;
   }
 }

@@ -30,8 +30,10 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -98,8 +100,18 @@ class TreeToolbarDecorator extends ToolbarDecorator {
       @Override
       public void run(AnActionButton button) {
         myTree.stopEditing();
-        final TreePath path = myTree.getSelectionPath();
-        model.removeNode(path);
+        if (myTree.getSelectionModel().getSelectionMode() == TreeSelectionModel.SINGLE_TREE_SELECTION) {
+          final TreePath path = myTree.getSelectionPath();
+          if (path != null) {
+            model.removeNode(path);
+          }
+        }
+        else {
+          final TreePath[] paths = myTree.getSelectionPaths();
+          if (paths != null && paths.length > 0) {
+            model.removeNodes(Arrays.asList(paths));
+          }
+        }
       }
     };
   }

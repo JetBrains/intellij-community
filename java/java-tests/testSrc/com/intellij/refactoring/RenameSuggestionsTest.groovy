@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.refactoring
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -133,7 +133,7 @@ class Car {}
     def oldPreselectSetting = myEditor.settings.preselectRename
     try {
       TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-      final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.getInstance().getAllAccepted())
+      final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
 
       assertNotNull(element)
 

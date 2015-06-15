@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.MultiMap;
@@ -614,7 +613,7 @@ public class PluginManagerCore {
       String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
       URL jarURL = new URL("jar:" + fileURL + "!/META-INF/" + fileName);
 
-      ZipFile zipFile = ZipFileCache.acquire(file.getPath());
+      ZipFile zipFile = new ZipFile(file);
       try {
         ZipEntry entry = zipFile.getEntry("META-INF/" + fileName);
         if (entry != null) {
@@ -625,7 +624,7 @@ public class PluginManagerCore {
         }
       }
       finally {
-        ZipFileCache.release(zipFile);
+        zipFile.close();
       }
     }
     catch (XmlSerializationException e) {

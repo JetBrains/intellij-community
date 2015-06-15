@@ -48,10 +48,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -153,17 +150,30 @@ public class JavaCompletionUtil {
     }
 
     T result = new PsiTypeMapper() {
+      private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
+      
       @Override
       public PsiType visitClassType(final PsiClassType classType) {
+        if (!myVisited.add(classType)) return classType;
+        
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
         if (psiClass == null) return classType;
 
-        LOG.assertTrue(psiClass.isValid());
-
-        return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalize(substitutor));
+        return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalizeSubstitutor(substitutor));
       }
+
+      private PsiSubstitutor originalizeSubstitutor(final PsiSubstitutor substitutor) {
+        PsiSubstitutor originalSubstitutor = PsiSubstitutor.EMPTY;
+        for (final Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+          final PsiType value = entry.getValue();
+          originalSubstitutor = originalSubstitutor.put(CompletionUtil.getOriginalOrSelf(entry.getKey()), 
+                                                        value == null ? null : mapType(value));
+        }
+        return originalSubstitutor;
+      }
+
 
       @Override
       public PsiType visitType(PsiType type) {
@@ -174,17 +184,6 @@ public class JavaCompletionUtil {
       throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
     }
     return result;
-  }
-
-  private static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
-    if (substitutor == null) return null;
-
-    PsiSubstitutor originalSubstitutor = PsiSubstitutor.EMPTY;
-    for (final Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
-      final PsiType value = entry.getValue();
-      originalSubstitutor = originalSubstitutor.put(CompletionUtil.getOriginalOrSelf(entry.getKey()), value == null ? null : originalize(value));
-    }
-    return originalSubstitutor;
   }
 
   public static void initOffsets(final PsiFile file, final OffsetMap offsetMap) {
@@ -836,6 +835,12 @@ public class JavaCompletionUtil {
     Project project = file.getProject();
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document document = manager.getDocument(file);
+    if (document == null) {
+      PsiUtilCore.ensureValid(file);
+      LOG.error("No document for " + file);
+      return;
+    }
+
     manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref != null) {

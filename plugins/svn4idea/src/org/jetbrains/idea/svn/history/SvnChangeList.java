@@ -27,10 +27,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
@@ -57,13 +58,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class SvnChangeList implements CommittedChangeList {
+public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history");
 
   private final SvnVcs myVcs;
   private final SvnRepositoryLocation myLocation;
   private String myRepositoryRoot;
   private long myRevision;
+  private VcsRevisionNumber myRevisionNumber;
   private String myAuthor;
   private Date myDate;
   private String myMessage;
@@ -89,7 +91,7 @@ public class SvnChangeList implements CommittedChangeList {
     final SvnChangeList sample = (SvnChangeList) lists.get(0);
     myVcs = sample.myVcs;
     myLocation = location;
-    myRevision = sample.myRevision;
+    setRevision(sample.myRevision);
     myAuthor = sample.myAuthor;
     myDate = sample.myDate;
     myMessage = sample.myMessage;
@@ -109,7 +111,7 @@ public class SvnChangeList implements CommittedChangeList {
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final LogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
-    myRevision = logEntry.getRevision();
+    setRevision(logEntry.getRevision());
     myAuthor = StringUtil.notNullize(logEntry.getAuthor());
     myDate = logEntry.getDate();
     myMessage = StringUtil.notNullize(logEntry.getMessage());
@@ -172,6 +174,16 @@ public class SvnChangeList implements CommittedChangeList {
     return myDate;
   }
 
+  @Nullable
+  @Override
+  public VcsRevisionNumber getRevisionNumber() {
+    return myRevisionNumber;
+  }
+
+  private void setRevision(long revision) {
+    myRevision = revision;
+    myRevisionNumber = new SvnRevisionNumber(SVNRevision.create(revision));
+  }
 
   public Collection<Change> getChanges() {
     if (myListsHolder == null) {
@@ -356,12 +368,10 @@ public class SvnChangeList implements CommittedChangeList {
           return Boolean.FALSE;
         }
       });
-      final SvnRepositoryContentRevision contentRevision =
-        SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localPath, getRevision(isBeforeRevision));
-      if (knownAsDirectory) {
-        ((FilePathImpl) contentRevision.getFile()).setIsDirectory(true);
-      }
-      return contentRevision;
+      long revision = getRevision(isBeforeRevision);
+      return localPath == null
+             ? SvnRepositoryContentRevision.createForRemotePath(myVcs, myRepositoryRoot, path, knownAsDirectory, revision)
+             : SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localPath, revision);
     }
 
     public List<Change> getList() {
@@ -413,7 +423,7 @@ public class SvnChangeList implements CommittedChangeList {
     private SvnRepositoryContentRevision createRevision(final SvnRepositoryContentRevision previousRevision, final boolean isDir) {
       return previousRevision == null ? null :
              SvnRepositoryContentRevision.create(myVcs, previousRevision.getFullPath(),
-                                                 new FilePathImpl(previousRevision.getFile().getIOFile(), isDir),
+                                                 VcsUtil.getFilePath(previousRevision.getFile().getPath(), isDir),
                                                  previousRevision.getRevisionNumber().getRevision().getNumber());
     }
 
@@ -661,7 +671,7 @@ public class SvnChangeList implements CommittedChangeList {
   private void readFromStream(@NotNull DataInput stream, final boolean supportsCopyFromInfo, final boolean supportsReplaced)
     throws IOException {
     myRepositoryRoot = stream.readUTF();
-    myRevision = stream.readLong();
+    setRevision(stream.readLong());
     myAuthor = stream.readUTF();
     myDate = new Date(stream.readLong());
     myMessage = stream.readUTF();

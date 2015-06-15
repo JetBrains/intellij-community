@@ -89,12 +89,17 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    myFixture.tearDown();
-    myFixture = null;
-    myModule = null;
-    myProject = null;
-    assertNull(myBusConnection);
+    try {
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+      myModule = null;
+      myProject = null;
+
+      super.tearDown();
+      assertNull(myBusConnection);
+    }
   }
 
   private void addDefaultLibrary() {

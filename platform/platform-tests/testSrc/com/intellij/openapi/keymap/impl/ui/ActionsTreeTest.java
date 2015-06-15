@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -66,10 +66,6 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   private ActionsTree myActionsTree;
 
   private ActionShortcutRestrictions mySavedRestrictions;
-
-  static {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   public void setUp() throws Exception {
     super.setUp();
@@ -208,6 +204,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
 
   public void testPresentation() {
     ActionManager manager = ActionManager.getInstance();
+
+    List<String> failures = new SmartList<String>();
     for (String id : manager.getActionIds("")) {
       if (!ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         try {
@@ -224,8 +222,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
           if (action instanceof ActionGroup) {
             System.out.println("ignored action group: " + message);
           }
-          else {
-            assertFalse("no text: " + message, StringUtil.isEmpty(action.getTemplatePresentation().getText()));
+          else if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
+            failures.add("no text: " + message);
           }
         }
         catch (PluginException exception) {
@@ -233,6 +231,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
         }
       }
     }
+
+    assertEmpty(failures);
   }
 
   private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {

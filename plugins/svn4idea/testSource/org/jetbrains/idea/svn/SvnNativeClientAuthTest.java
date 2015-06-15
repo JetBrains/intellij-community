@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
+import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
@@ -532,7 +533,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final List<VcsException> exceptions = myVcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
     Assert.assertTrue(exceptions.isEmpty());
 
-    final Change change = new Change(null, new CurrentContentRevision(new FilePathImpl(vf)));
+    final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
     final List<VcsException> commit = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
     Assert.assertTrue(commit.isEmpty());
     ++ myExpectedCreds;
@@ -579,7 +580,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{new FilePathImpl(vf)}, files, new EmptyProgressIndicator(),
+      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
                                                      new Ref<SequentialUpdatesContext>());
     Assert.assertTrue(session.getExceptions() != null && ! session.getExceptions().isEmpty());
     Assert.assertTrue(!session.isCanceled());
@@ -596,7 +597,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{new FilePathImpl(vf)}, files, new EmptyProgressIndicator(),
+      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
                                                      new Ref<SequentialUpdatesContext>());
     Assert.assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
     Assert.assertTrue(!session.isCanceled());

@@ -100,6 +100,23 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertTrue(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
+  public void testConditionalInAssignment() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {" +
+                                          "    public static void main(String[] args) {\n" +
+                                          "        Object obj = new Object();\n" +
+                                          "        String str = \"\";\n" +
+                                          "        str += args.length == 0 <caret>? obj : args[0];\n" +
+                                          "    }" +
+                                          "}");
+    final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(elementAtCaret);
+    final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+    assertInstanceOf(psiExpression, PsiConditionalExpression.class);
+    assertFalse(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
+  }
+
+
+
   private PsiExpression findExpression(String textWithExpression) {
     myFixture.configureByText("Foo.java", "import java.util.*;" +
                                           "class Foo {" +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -46,7 +45,7 @@ import static com.intellij.psi.CommonClassNames.*;
  * @author max
  */
 public class StubBuildingVisitor<T> extends ClassVisitor {
-  private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$\\.])\\${1}(?=[^\\$])"); // disallow .$ or $$
+  private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$\\.])\\$(?=[^\\$])"); // disallow .$ or $$
 
   public static final String DOUBLE_POSITIVE_INF = "1.0 / 0.0";
   public static final String DOUBLE_NEGATIVE_INF = "-1.0 / 0.0";
@@ -58,8 +57,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private static final int ASM_API = Opcodes.ASM5;
 
-  @NonNls private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
-  @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
+  private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
+  private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
   private final T mySource;
   private final InnerClassSourceStrategy<T> myInnersStrategy;
@@ -84,17 +83,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    String fqn;
-    String shortName;
-    if (myShortName != null && name.endsWith(myShortName)) {
-      shortName = myShortName;
-      fqn = name.length() == shortName.length()
-            ? shortName : getClassName(name.substring(0, name.length() - shortName.length() - 1)) + "." + shortName;
-    }
-    else {
-      fqn = getClassName(name);
-      shortName = PsiNameHelper.getShortClassName(fqn);
-    }
+    String fqn = getFqn(name, myShortName);
+    String shortName = myShortName != null && name.endsWith(myShortName) ? myShortName : PsiNameHelper.getShortClassName(fqn);
 
     int flags = myAccess | access;
     boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
@@ -106,6 +96,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     LanguageLevel languageLevel = ClsParsingUtil.getLanguageLevelByVersion(version);
+    if (languageLevel == null) languageLevel = LanguageLevel.HIGHEST;
     ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -118,7 +109,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       catch (ClsFormatException e) {
         signatureIterator = null;
       }
-    } else {
+    }
+    else {
       new PsiTypeParameterListStubImpl(myResult);
     }
 
@@ -126,7 +118,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     List<String> convertedInterfaces = new ArrayList<String>();
     if (signatureIterator == null) {
       convertedSuper = parseClassDescription(superName, interfaces, convertedInterfaces);
-    } else {
+    }
+    else {
       try {
         convertedSuper = parseClassSignature(signatureIterator, convertedInterfaces);
       }
@@ -156,8 +149,21 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
+  public static String getFqn(@NotNull String internalName, @Nullable String shortName) {
+    if (shortName == null || !internalName.endsWith(shortName)) {
+      return getClassName(internalName);
+    }
+    else if (internalName.length() == shortName.length()) {
+      return shortName;
+    }
+    else {
+      return getClassName(internalName.substring(0, internalName.length() - shortName.length() - 1)) + "." + shortName;
+    }
+  }
+
   public static void newReferenceList(JavaClassReferenceListElementType type, StubElement parent, String... types) {
     PsiReferenceList.Role role;
+
     if (type == JavaStubElementTypes.EXTENDS_LIST) role = PsiReferenceList.Role.EXTENDS_LIST;
     else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) role = PsiReferenceList.Role.IMPLEMENTS_LIST;
     else if (type == JavaStubElementTypes.THROWS_LIST) role = PsiReferenceList.Role.THROWS_LIST;
@@ -250,7 +256,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if ((access & Opcodes.ACC_ABSTRACT) != 0) {
       flags |= ModifierFlags.ABSTRACT_MASK;
     }
-    else if (isInterface) {
+    else if (isInterface && (access & Opcodes.ACC_STATIC) == 0) {
       flags |= ModifierFlags.DEFENDER_MASK;
     }
     if ((access & Opcodes.ACC_STRICT) != 0) {
@@ -403,10 +409,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     List<String> args = new ArrayList<String>();
     List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
 
+    StringRef stringRef = StringRef.fromString(canonicalMethodName);
     int modifiersMask = packMethodFlags(access, myResult.isInterface());
-    final PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, signature, args, throwables, desc, modifiersMask);
+    PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, stringRef, flags, signature, args, throwables, desc, modifiersMask);
 
     PsiModifierListStub modList = (PsiModifierListStub)stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    assert modList != null : stub;
 
     if (isEnum && isConstructor && signature == null && args.size() >= 2 && JAVA_LANG_STRING.equals(args.get(0)) && "int".equals(args.get(1))) {
       // exclude synthetic enum constructor parameters
@@ -430,7 +438,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
       String paramName = i < parameterNames.length ? parameterNames[i] : "p" + (i + 1);
       PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, paramName, typeInfo, isEllipsisParam);
-      paramStubs [i] = parameterStub;
+      paramStubs[i] = parameterStub;
       new PsiModifierListStubImpl(parameterStub, 0);
     }
 
@@ -477,9 +485,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @NotNull
   public static String parseMethodViaGenericSignature(@NotNull String signature,
-                                                       @NotNull PsiMethodStubImpl stub,
-                                                       @NotNull List<String> args,
-                                                       @Nullable List<String> throwables) throws ClsFormatException {
+                                                      @NotNull PsiMethodStubImpl stub,
+                                                      @NotNull List<String> args,
+                                                      @Nullable List<String> throwables) throws ClsFormatException {
     StringCharacterIterator iterator = new StringCharacterIterator(signature);
     SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
 
@@ -501,15 +509,15 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     while (iterator.current() == '^') {
       iterator.next();
-      throwables.add(SignatureParsing.parseTypeString(iterator));
+      String exType = SignatureParsing.parseTypeString(iterator);
+      if (throwables != null) {
+        throwables.add(exType);
+      }
     }
 
     return returnType;
   }
 
-  @Override
-  public void visitEnd() {
-  }
 
   private static class AnnotationTextCollector extends AnnotationVisitor {
     private final StringBuilder myBuilder = new StringBuilder();
@@ -545,7 +553,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         if (myDesc != null) {
           myBuilder.append('(');
         }
-      } else {
+      }
+      else {
         myBuilder.append(',');
       }
 
@@ -664,7 +673,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
           }
         }
 
-        myUsedParamCount = paramIndex+1;
+        myUsedParamCount = paramIndex + 1;
         if ("D".equals(desc) || "J".equals(desc)) {
           myUsedParamSize += 2;
         }
@@ -751,7 +760,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       buffer.append('{');
       for (int i = 0, length = Array.getLength(value); i < length; i++) {
         if (i > 0) buffer.append(", ");
-        buffer.append(Array.get(value, i));
+        buffer.append(constToString(Array.get(value, i), type, anno));
       }
       buffer.append('}');
       return buffer.toString();

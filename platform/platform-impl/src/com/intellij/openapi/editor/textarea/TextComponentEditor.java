@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,6 +198,12 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     int line = myDocument.getLineNumber(offset);
     final int lineStartOffset = myDocument.getLineStartOffset(line);
     return new VisualPosition(line, offset - lineStartOffset);
+  }
+
+  @NotNull
+  @Override
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward) {
+    return offsetToVisualPosition(offset);
   }
 
   @Override

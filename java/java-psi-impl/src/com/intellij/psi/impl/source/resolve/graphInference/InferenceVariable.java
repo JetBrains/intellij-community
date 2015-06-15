@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +26,7 @@ import java.util.*;
  * User: anna
  */
 public class InferenceVariable extends LightTypeParameter {
-  private PsiElement myContext;
+  private final PsiElement myContext;
 
   public PsiTypeParameter getParameter() {
     return getDelegate();
@@ -131,6 +128,19 @@ public class InferenceVariable extends LightTypeParameter {
 
   public void setThrownBound() {
     myThrownBound = true;
+  }
+
+  @Override
+  public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
+    for (PsiType type : getBounds(InferenceBound.UPPER)) {
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (psiClass != null) {
+        if (getManager().areElementsEquivalent(baseClass, psiClass)) return true;
+        if (checkDeep && psiClass.isInheritor(baseClass, true)) return true;
+      }
+    }
+    
+    return super.isInheritor(baseClass, checkDeep);
   }
 
   @Override

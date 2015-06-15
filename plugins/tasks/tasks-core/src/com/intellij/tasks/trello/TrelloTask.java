@@ -120,4 +120,10 @@ public class TrelloTask extends Task {
   public TaskRepository getRepository() {
     return myRepository;
   }
+
+  @NotNull
+  @Override
+  public String getNumber() {
+    return myCard.getIdShort();
+  }
 }

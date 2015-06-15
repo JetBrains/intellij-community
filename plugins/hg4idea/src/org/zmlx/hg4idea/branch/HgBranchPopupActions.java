@@ -57,8 +57,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
 
-import static org.zmlx.hg4idea.util.HgUtil.getNamesWithoutHashes;
 import static org.zmlx.hg4idea.util.HgUtil.getNewBranchNameFromUser;
+import static org.zmlx.hg4idea.util.HgUtil.getSortedNamesWithoutHashes;
 
 public class HgBranchPopupActions {
 
@@ -81,7 +81,7 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Bookmarks");
-    List<String> bookmarkNames = getNamesWithoutHashes(myRepository.getBookmarks());
+    List<String> bookmarkNames = getSortedNamesWithoutHashes(myRepository.getBookmarks());
     String currentBookmark = myRepository.getCurrentBookmark();
     for (String bookmark : bookmarkNames) {
       AnAction bookmarkAction = new BookmarkActions(myProject, Collections.singletonList(myRepository), bookmark);

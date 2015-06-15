@@ -49,6 +49,7 @@ public class OpenFileDescriptor implements Navigatable {
   private final RangeMarker myRangeMarker;
 
   private boolean myUseCurrentWindow = false;
+  private ScrollType myScrollType = ScrollType.CENTER;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
     this(project, file, -1, -1, offset, false);
@@ -108,7 +109,7 @@ public class OpenFileDescriptor implements Navigatable {
   @Override
   public void navigate(boolean requestFocus) {
     if (!canNavigate()) {
-      throw new IllegalStateException("Navigation is not possible with null project");
+      throw new IllegalStateException("target not valid");
     }
 
     if (!myFile.isDirectory() && navigateInEditorOrNativeApp(myProject, requestFocus)) return;
@@ -239,8 +240,8 @@ public class OpenFileDescriptor implements Navigatable {
     return new TextRange(start, end);
   }
 
-  private static void scrollToCaret(@NotNull Editor e) {
-    e.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+  private void scrollToCaret(@NotNull Editor e) {
+    e.getScrollingModel().scrollToCaret(myScrollType);
   }
 
   @Override
@@ -265,6 +266,10 @@ public class OpenFileDescriptor implements Navigatable {
 
   public boolean isUseCurrentWindow() {
     return myUseCurrentWindow;
+  }
+
+  public void setScrollType(@NotNull ScrollType scrollType) {
+    myScrollType = scrollType;
   }
 
   public void dispose() {

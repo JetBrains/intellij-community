@@ -130,7 +130,8 @@ public class CompositeException extends Exception {
       sb.append(line);
 
       line = exceptionProcessor.fun(exception);
-      if (!line.endsWith("\n")) line += '\n';
+      if (line == null) line = "null\n";
+      else if (!line.endsWith("\n")) line += '\n';
       stringProcessor.process(line);
       sb.append(line);
     }

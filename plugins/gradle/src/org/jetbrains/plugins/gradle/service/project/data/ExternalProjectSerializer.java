@@ -28,6 +28,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import gnu.trove.THashMap;
@@ -171,15 +172,15 @@ public class ExternalProjectSerializer {
   public void save(@NotNull ExternalProject externalProject) {
     Output output = null;
     try {
-      final String externalProjectPath = externalProject.getProjectDir().getPath();
+      final File externalProjectDir = externalProject.getProjectDir();
       final File configurationFile =
-        getProjectConfigurationFile(new ProjectSystemId(externalProject.getExternalSystemId()), externalProjectPath);
+        getProjectConfigurationFile(new ProjectSystemId(externalProject.getExternalSystemId()), externalProjectDir);
       if (!FileUtil.createParentDirs(configurationFile)) return;
 
       output = new Output(new FileOutputStream(configurationFile));
       myKryo.writeObject(output, externalProject);
 
-      LOG.debug("Data saved for imported project from: " + externalProjectPath);
+      LOG.debug("Data saved for imported project from: " + externalProjectDir.getPath());
     }
     catch (FileNotFoundException e) {
       LOG.error(e);
@@ -195,7 +196,7 @@ public class ExternalProjectSerializer {
     ExternalProject externalProject = null;
     Input input = null;
     try {
-      final File configurationFile = getProjectConfigurationFile(externalSystemId, externalProjectPath.getPath());
+      final File configurationFile = getProjectConfigurationFile(externalSystemId, externalProjectPath);
       if (configurationFile.isFile()) {
         input = new Input(new FileInputStream(configurationFile));
         externalProject = myKryo.readObject(input, DefaultExternalProject.class);
@@ -214,8 +215,9 @@ public class ExternalProjectSerializer {
     return externalProject;
   }
 
-  private static File getProjectConfigurationFile(ProjectSystemId externalSystemId, String externalProjectPath) {
-    return new File(getProjectConfigurationDir(externalSystemId), Integer.toHexString(externalProjectPath.hashCode()) + "/project.dat");
+  private static File getProjectConfigurationFile(ProjectSystemId externalSystemId, File externalProjectPath) {
+    return new File(getProjectConfigurationDir(externalSystemId),
+                    Integer.toHexString(ExternalSystemUtil.fileHashCode(externalProjectPath)) + "/project.dat");
   }
 
   private static File getProjectConfigurationDir(ProjectSystemId externalSystemId) {
@@ -244,26 +246,6 @@ public class ExternalProjectSerializer {
     public File read(Kryo kryo, Input input, Class<File> type) {
       File file = myStdKryo.readObject(input, File.class);
       return new File(file.getPath());
-    }
-  }
-
-  private static class StdSerializer<T> extends Serializer<T> {
-    private final Kryo myStdKryo;
-
-    public StdSerializer(Class<T> clazz) {
-      myStdKryo = new Kryo();
-      myStdKryo.register(clazz);
-      myStdKryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output, T object) {
-      myStdKryo.writeObject(output, object);
-    }
-
-    @Override
-    public T read(Kryo kryo, Input input, Class<T> type) {
-      return myStdKryo.readObject(input, type);
     }
   }
 }

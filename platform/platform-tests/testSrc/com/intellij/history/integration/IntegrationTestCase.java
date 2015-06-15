@@ -50,11 +50,6 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   protected VirtualFile myRoot;
   protected IdeaGateway myGateway;
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public IntegrationTestCase() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   // let it be as if someone (e.g. dumb mode indexing) has loaded the content so it's available to local history
   protected static void loadContent(VirtualFile f) throws IOException {
     f.contentsToByteArray();

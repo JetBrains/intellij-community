@@ -7,8 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.sourcemap.SourceMap;
 
 public interface Script extends UserDataHolderEx, HasUrl {
-  void setSourceMap(SourceMap sourceMap);
-
   enum Type {
     /** A native, internal JavaScript VM script */
     NATIVE,
@@ -24,6 +22,8 @@ public interface Script extends UserDataHolderEx, HasUrl {
 
   @Nullable
   SourceMap getSourceMap();
+
+  void setSourceMap(@Nullable SourceMap sourceMap);
 
   @Override
   @NotNull

@@ -18,10 +18,13 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -31,6 +34,8 @@ import java.io.IOException;
  * @author yole
  */
 public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
+  private boolean myUseJava8Sdk;
+  
   public void testSimpleField() throws Exception {
     doTestField();
   }
@@ -74,6 +79,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   public void testClassTypeParameter() throws Exception {
+    verifyJavaDoc(getTestClass());
+  }
+  
+  public void testUnicodeEscapes() throws Exception {
     verifyJavaDoc(getTestClass());
   }
   
@@ -122,6 +131,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   public void testCode() throws Exception {
+    useJava8();
     doTestField();
   }
 
@@ -154,6 +164,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     String docInfo = new JavaDocumentationProvider().generateDoc(innermostComponentReferenceElement.resolve(), element);
     assertNotNull(docInfo);
     assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+  }
+  
+  public void testNoSpaceAfterTagName() throws Exception {
+    verifyJavaDoc(getTestClass());
   }
 
   private static String exampleHtmlFileText(String name) throws IOException {
@@ -226,12 +240,60 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiParameter parameter = innerClass.getMethods()[0].getParameterList().getParameters()[0];
     verifyJavaDoc(parameter);
   }
+  
+  public void testHtmlLink() throws Exception {
+    PsiTestUtil.createTestProjectStructure(myProject, myModule, 
+                                           getTestDataPath() + "/codeInsight/javadocIG/htmlLinkProject", myFilesToDelete);
+    verifyJavadocFor("htmlLink");
+    verifyJavadocFor("pack.htmlLinkDeep");
+  }
+
+  private void verifyJavadocFor(String className) throws IOException {
+    PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+    String doc = new JavaDocInfoGenerator(myProject, psiClass).generateDocInfo(null);
+    assertNotNull(doc);
+    PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
+    PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
+    assertNotNull(htmlFile);
+    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray()).trim()), 
+                 replaceEnvironmentDependentContent(doc));
+  }
+  
+  public void testHtmlLinkWithRef() throws Exception {
+    verifyJavaDoc(getTestClass());
+  }
+  
+  public void testMultipleSpacesInLiteral() throws Exception {
+    useJava8();
+    verifyJavaDoc(getTestClass());
+  }
+
+  public void testLegacySpacesInLiteral() throws Exception {
+    useJava7();
+    verifyJavaDoc(getTestClass());
+  }
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return myUseJava8Sdk ? IdeaTestUtil.getMockJdk18() : IdeaTestUtil.getMockJdk17();
+  }
   
+  private void useJava8() {
+    myUseJava8Sdk = true;
+    setUpJdk();
+  }
+  
+  private void useJava7() {
+    myUseJava8Sdk = false;
+    setUpJdk();
+  }
+
   private static String replaceEnvironmentDependentContent(String html) {
     return StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", "<base href=\"placeholder\">");
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ public class JavaLanguage extends Language {
   public static final JavaLanguage INSTANCE = new JavaLanguage();
 
   private JavaLanguage() {
-    super("JAVA", "text/java", "application/x-java", "text/x-java");
+    super("JAVA", "text/x-java-source", "text/java", "application/x-java", "text/x-java");
   }
 
   @NotNull

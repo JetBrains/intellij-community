@@ -366,6 +366,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   protected ClassLoader getDefaultClassLoader() {
     int maxIndex = -1;
     ClassLoader bestLoader = null;
+    ClassLoader nonPluginLoader = null;
     if (interfaces != null && interfaces.length > 0) {
       for (final Class anInterface : interfaces) {
         final ClassLoader loader = anInterface.getClassLoader();
@@ -375,6 +376,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
             maxIndex = order;
             bestLoader = loader;
           }
+        }
+        else if (nonPluginLoader == null) {
+          nonPluginLoader = loader;
         }
       }
     }
@@ -387,7 +391,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       }
     }
     if (bestLoader != null) return bestLoader;
-    return superLoader;
+    return superLoader == null ? nonPluginLoader : superLoader;
   }
 
   private static Signature rename(Signature sig, int index) {

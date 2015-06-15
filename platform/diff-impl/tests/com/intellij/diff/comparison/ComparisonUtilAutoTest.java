@@ -17,13 +17,18 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -196,6 +201,7 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     }
 
     checkUnchanged(text1.getCharsSequence(), text2.getCharsSequence(), fragments, policy, true);
+    checkCantTrimLines(text1, text2, fragments, policy, allowNonSquashed);
   }
 
   private static void checkResultWord(@NotNull CharSequence text1, @NotNull CharSequence text2,
@@ -325,6 +331,49 @@ public class ComparisonUtilAutoTest extends AutoTestCase {
     CharSequence chunk1 = text1.subSequence(last1, text1.length());
     CharSequence chunk2 = text2.subSequence(last2, text2.length());
     assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline);
+  }
+
+  private static void checkCantTrimLines(@NotNull Document text1, @NotNull Document text2,
+                                         @NotNull List<? extends LineFragment> fragments,
+                                         @NotNull ComparisonPolicy policy, boolean allowNonSquashed) {
+    for (LineFragment fragment : fragments) {
+      Couple<CharSequence> sequence1 = getFirstLastLines(text1, fragment.getStartLine1(), fragment.getEndLine1());
+      Couple<CharSequence> sequence2 = getFirstLastLines(text2, fragment.getStartLine2(), fragment.getEndLine2());
+      if (sequence1 == null || sequence2 == null) continue;
+
+      checkNonEqualsIfLongEnough(sequence1.first, sequence2.first, policy, allowNonSquashed);
+      checkNonEqualsIfLongEnough(sequence1.second, sequence2.second, policy, allowNonSquashed);
+    }
+  }
+
+  private static void checkNonEqualsIfLongEnough(@NotNull CharSequence line1, @NotNull CharSequence line2,
+                                                 @NotNull ComparisonPolicy policy, boolean allowNonSquashed) {
+    // in non-squashed blocks non-trimmed elements are possible, if it's 'unimportant' lines
+    if (allowNonSquashed && countNonWhitespaceCharacters(line1) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return;
+    if (allowNonSquashed && countNonWhitespaceCharacters(line2) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return;
+
+    assertFalse(myComparisonManager.isEquals(line1, line2, policy));
+  }
+
+  private static int countNonWhitespaceCharacters(@NotNull CharSequence line) {
+    int count = 0;
+    for (int i = 0; i < line.length(); i++) {
+      if (!StringUtil.isWhiteSpace(line.charAt(i))) count++;
+    }
+    return count;
+  }
+
+  @Nullable
+  private static Couple<CharSequence> getFirstLastLines(@NotNull Document text, int start, int end) {
+    if (start == end) return null;
+
+    TextRange firstLineRange = DiffUtil.getLinesRange(text, start, start + 1);
+    TextRange lastLineRange = DiffUtil.getLinesRange(text, end - 1, end);
+
+    CharSequence firstLine = firstLineRange.subSequence(text.getCharsSequence());
+    CharSequence lastLine = lastLineRange.subSequence(text.getCharsSequence());
+
+    return Couple.of(firstLine, lastLine);
   }
 
   @NotNull

@@ -128,14 +128,14 @@ public class PsiPolyExpressionUtil {
     final PsiElement context = PsiUtil.skipParenthesizedExprUp(expr.getParent());
     return context instanceof PsiExpressionList || 
            context instanceof PsiArrayInitializerExpression || 
-           context instanceof PsiConditionalExpression || 
+           context instanceof PsiConditionalExpression && (expr instanceof PsiCallExpression || isPolyExpression((PsiExpression)context)) || 
            isAssignmentContext(expr, context);
   }
 
   private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {
     return PsiUtil.isCondition(expr, context) ||
            context instanceof PsiReturnStatement ||
-           context instanceof PsiAssignmentExpression ||
+           context instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)context).getOperationTokenType() == JavaTokenType.EQ ||
            context instanceof PsiVariable ||
            context instanceof PsiLambdaExpression;
   }

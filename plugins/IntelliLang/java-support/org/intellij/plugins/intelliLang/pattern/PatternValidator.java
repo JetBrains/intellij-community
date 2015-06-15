@@ -35,6 +35,7 @@ import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
@@ -45,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.MessageFormat;
@@ -90,10 +90,8 @@ public class PatternValidator extends LocalInspectionTool {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final JPanel jPanel = new JPanel(new BorderLayout());
     final JCheckBox jCheckBox = new JCheckBox("Flag non compile-time constant expressions");
-    jCheckBox.setToolTipText(
-        "If checked, the inspection will flag expressions with unknown values " + "and offer to add a substitution (@Subst) annotation");
+    jCheckBox.setToolTipText("If checked, the inspection will flag expressions with unknown values and offer to add a substitution (@Subst) annotation");
     jCheckBox.setSelected(CHECK_NON_CONSTANT_VALUES);
     jCheckBox.addItemListener(new ItemListener() {
       @Override
@@ -101,8 +99,7 @@ public class PatternValidator extends LocalInspectionTool {
         CHECK_NON_CONSTANT_VALUES = jCheckBox.isSelected();
       }
     });
-    jPanel.add(jCheckBox, BorderLayout.NORTH);
-    return jPanel;
+    return JBUI.Panels.simplePanel().addToTop(jCheckBox);
   }
 
   @Override

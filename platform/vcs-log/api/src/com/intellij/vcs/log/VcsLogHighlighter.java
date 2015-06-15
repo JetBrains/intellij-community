@@ -41,7 +41,7 @@ public interface VcsLogHighlighter {
     /**
      * Default commit entry style.
      */
-    VcsCommitStyle DEFAULT = VcsCommitStyleFactory.createStyle(null, null);
+    VcsCommitStyle DEFAULT = VcsCommitStyleFactory.createStyle(null, null, null);
 
     /**
      * Text color for commit entry or null if unspecified.
@@ -55,6 +55,19 @@ public interface VcsLogHighlighter {
     @Nullable
     Color getBackground();
 
+    /**
+     * Text style for commit entry or null if unspecified.
+     */
+    @Nullable
+    TextStyle getTextStyle();
   }
 
+  /**
+   * Text style.
+   */
+  enum TextStyle {
+    NORMAL,
+    BOLD,
+    ITALIC
+  }
 }

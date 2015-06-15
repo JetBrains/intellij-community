@@ -267,6 +267,7 @@
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
 
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
 
@@ -320,8 +321,6 @@
     <statistics.usagesCollector implementation="com.intellij.compiler.CompilerSettingsUsageCollector"/>
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
-
-    <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>

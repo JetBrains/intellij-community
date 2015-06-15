@@ -19,18 +19,21 @@ import com.intellij.dvcs.push.PushTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitStandardRemoteBranch;
+import git4idea.*;
+import git4idea.branch.GitBranchUtil;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.List;
 
+import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 import static git4idea.GitUtil.findRemoteBranch;
 
 public class GitPushTarget implements PushTarget {
@@ -39,10 +42,16 @@ public class GitPushTarget implements PushTarget {
 
   @NotNull private final GitRemoteBranch myRemoteBranch;
   private final boolean myIsNewBranchCreated;
+  private final boolean myPushingToSpecialRef;
 
   public GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated) {
+    this(remoteBranch, isNewBranchCreated, false);
+  }
+
+  public GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated, boolean isPushingToSpecialRef) {
     myRemoteBranch = remoteBranch;
     myIsNewBranchCreated = isNewBranchCreated;
+    myPushingToSpecialRef = isPushingToSpecialRef;
   }
 
   @NotNull
@@ -58,11 +67,16 @@ public class GitPushTarget implements PushTarget {
   @NotNull
   @Override
   public String getPresentation() {
-    return myRemoteBranch.getNameForRemoteOperations();
+    return myPushingToSpecialRef ? myRemoteBranch.getFullName() : myRemoteBranch.getNameForRemoteOperations();
   }
 
   public boolean isNewBranchCreated() {
     return myIsNewBranchCreated;
+  }
+
+  @TestOnly
+  boolean isSpecialRef() {
+    return myPushingToSpecialRef;
   }
 
   @NotNull
@@ -98,6 +112,37 @@ public class GitPushTarget implements PushTarget {
         return remote.getName().equals(candidate);
       }
     });
+  }
+
+  @Nullable
+  public static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitLocalBranch sourceBranch) {
+    final GitRemote remote = getRemoteToPush(repository, GitBranchUtil.getTrackInfoForBranch(repository, sourceBranch));
+    if (remote == null) return null;
+    List<String> specs = remote.getPushRefSpecs();
+    if (specs.isEmpty()) return null;
+
+    String targetRef = GitPushSpecParser.getTargetRef(repository, sourceBranch.getName(), specs);
+    if (targetRef == null) return null;
+
+    String remotePrefix = REFS_REMOTES_PREFIX + remote.getName() + "/";
+    if (targetRef.startsWith(remotePrefix)) {
+      targetRef = targetRef.substring(remotePrefix.length());
+      GitRemoteBranch remoteBranch = GitUtil.findOrCreateRemoteBranch(repository, remote, targetRef);
+      boolean existingBranch = repository.getBranches().getRemoteBranches().contains(remoteBranch);
+      return new GitPushTarget(remoteBranch, !existingBranch, false);
+    }
+    else {
+      GitRemoteBranch remoteBranch = new GitSpecialRefRemoteBranch(targetRef, remote);
+      return new GitPushTarget(remoteBranch, true, true);
+    }
+  }
+
+  @Nullable
+  private static GitRemote getRemoteToPush(@NotNull GitRepository repository, @Nullable GitBranchTrackInfo trackInfo) {
+    if (trackInfo != null) {
+      return trackInfo.getRemote();
+    }
+    return GitUtil.findOrigin(repository.getRemotes());
   }
 
   @Override

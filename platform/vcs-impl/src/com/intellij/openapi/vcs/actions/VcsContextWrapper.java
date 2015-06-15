@@ -21,13 +21,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +62,13 @@ public class VcsContextWrapper implements VcsContext {
     return myActionName;
   }
 
-  public static VcsContext createCachedInstanceOn(AnActionEvent event) {
+  @NotNull
+  public static VcsContext createCachedInstanceOn(@NotNull AnActionEvent event) {
     return new CachedVcsContext(createInstanceOn(event));
   }
 
-  public static VcsContextWrapper createInstanceOn(final AnActionEvent event) {
+  @NotNull
+  public static VcsContextWrapper createInstanceOn(@NotNull AnActionEvent event) {
     return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace(), event.getPresentation().getText());
   }
 
@@ -170,14 +172,14 @@ public class VcsContextWrapper implements VcsContext {
 
     VirtualFile[] selectedFiles = getSelectedFiles();
     for (VirtualFile selectedFile : selectedFiles) {
-      FilePathImpl filePath = new FilePathImpl(selectedFile);
+      FilePath filePath = VcsUtil.getFilePath(selectedFile);
       result.add(filePath);
     }
 
     File[] selectedIOFiles = getSelectedIOFiles();
     if (selectedIOFiles != null){
       for (File selectedFile : selectedIOFiles) {
-        FilePathImpl filePath = FilePathImpl.create(selectedFile);
+        FilePath filePath = VcsUtil.getFilePath(selectedFile);
         if (filePath != null) {
           result.add(filePath);
         }

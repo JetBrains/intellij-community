@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Base64;
@@ -419,33 +420,55 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
+  public boolean isHttpProxyEnabledForUrl(@Nullable String url) {
+    if (!USE_HTTP_PROXY) return false;
+    URI uri = url != null ? VfsUtil.toUri(url) : null;
+    return uri == null || !mySelector.isProxyException(uri.getHost());
+  }
+
+  /**
+   * @deprecated To be removed in IDEA 16. Use corresponding method of IdeHttpClientHelpers.
+   */
+  @Deprecated
   @NotNull
   public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder) {
-    return setProxy(builder, USE_HTTP_PROXY);
-  }
-
-  @NotNull
-  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider) {
-    return setProxyCredentials(provider, USE_HTTP_PROXY);
-  }
-
-  @NotNull
-  public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder, boolean useProxy) {
-    if (useProxy) {
+    if (USE_HTTP_PROXY) {
       builder.setProxy(new HttpHost(PROXY_HOST, PROXY_PORT));
     }
-
     return builder;
   }
 
+  /**
+   * @deprecated To be removed in IDEA 16. Use corresponding method of IdeHttpClientHelpers.
+   */
+  @Deprecated
   @NotNull
-  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider, boolean useProxy) {
-    if (useProxy && PROXY_AUTHENTICATION) {
+  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider) {
+    if (USE_HTTP_PROXY && PROXY_AUTHENTICATION) {
       String ntlmUserPassword = PROXY_LOGIN.replace('\\', '/') + ":" + getPlainProxyPassword();
       provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT, AuthScope.ANY_REALM, AuthSchemes.NTLM), new NTCredentials(ntlmUserPassword));
       provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT), new UsernamePasswordCredentials(PROXY_LOGIN, getPlainProxyPassword()));
     }
+    return provider;
+  }
 
+  /**
+   * @deprecated To be removed in IDEA 15. This method was not supposed to be here. Use corresponding methods of IdeHttpClientHelpers.
+   */
+  @Deprecated
+  @NotNull
+  public RequestConfig.Builder setProxy(@NotNull RequestConfig.Builder builder, boolean useProxy) {
+    if (useProxy) setProxy(builder);
+    return builder;
+  }
+
+  /**
+   * @deprecated To be removed in IDEA 15. This method was not supposed to be here. Use corresponding methods of IdeHttpClientHelpers.
+   */
+  @Deprecated
+  @NotNull
+  public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider, boolean useProxy) {
+    if (useProxy) setProxyCredentials(provider);
     return provider;
   }
 

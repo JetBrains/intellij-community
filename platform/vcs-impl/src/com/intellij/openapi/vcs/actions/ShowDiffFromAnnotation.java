@@ -43,9 +43,9 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CacheOneStepIterator;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -114,7 +114,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
               VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
               return;
             }
-            targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
+            targetPath[0] = pair.getSecond() == null ? VcsUtil.getFilePath(myFile) : pair.getSecond();
             final CommittedChangeList cl = pair.getFirst();
             changes.addAll(cl.getChanges());
             Collections.sort(changes, ChangesComparator.getInstance(true));
@@ -146,10 +146,9 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
 
   private static int findSelfInList(List<Change> changes, final FilePath filePath) {
     int idx = -1;
-    final File ioFile = filePath.getIOFile();
     for (int i = 0; i < changes.size(); i++) {
       final Change change = changes.get(i);
-      if ((change.getAfterRevision() != null) && (change.getAfterRevision().getFile().getIOFile().equals(ioFile))) {
+      if ((change.getAfterRevision() != null) && (change.getAfterRevision().getFile().equals(filePath))) {
         idx = i;
         break;
       }
@@ -157,7 +156,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
     if (idx >= 0) return idx;
     idx = 0;
     // try to use name only
-    final String name = ioFile.getName();
+    final String name = filePath.getName();
     for (int i = 0; i < changes.size(); i++) {
       final Change change = changes.get(i);
       if ((change.getAfterRevision() != null) && (change.getAfterRevision().getFile().getName().equals(name))) {

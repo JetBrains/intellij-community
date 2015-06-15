@@ -83,7 +83,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
-    myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
+    myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     setDefaultEmptyText(myChangesBrowser);
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project);
@@ -156,6 +156,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       @Override
       public void run() {
         myDetailsPanel.valueChanged(null);
+        myGraphTable.repaint(); // we may need to repaint highlighters
       }
     });
   }
@@ -195,7 +196,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          if (!myFilterUi.getFilters().isEmpty()) {
+          if (!myFilterUi.getFilters().getDetailsFilters().isEmpty()) {
             e.getPresentation().setEnabled(false);
           }
           if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
@@ -220,7 +221,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        if (!myFilterUi.getFilters().isEmpty()) {
+        if (!myFilterUi.getFilters().getDetailsFilters().isEmpty()) {
           e.getPresentation().setEnabled(false);
         }
         if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {

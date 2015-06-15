@@ -650,10 +650,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
+    // track "x" property state only inside "if (getX() != null) ..."
+    if (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls() && (!isNull(dfaRight) || !isNegated)) {
+      return true;
+    }
+    
     if (dfaLeft == dfaRight) {
-      if (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls()) {
-        return true;
-      }
       return !isNegated;
     }
 
@@ -702,16 +704,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!TypeConversionUtil.isPrimitiveWrapper(type)) {
       return true;
     }
-    if (negated && !(unwrap(dfaRight) instanceof DfaConstValue)) {
-      // from the fact (wrappers are not the same) does not follow (unboxed values are not equals)
+    if (negated) {
+      // from the fact "wrappers are not the same" it does not follow that "unboxed values are not equal"
       return true;
     }
 
     DfaBoxedValue.Factory boxedFactory = myFactory.getBoxedFactory();
     DfaValue unboxedLeft = boxedFactory.createUnboxed(dfaLeft);
     DfaValue unboxedRight = boxedFactory.createUnboxed(dfaRight);
-    return applyRelation(unboxedLeft, unboxedRight, negated) &&
-           checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, negated);
+    return applyRelation(unboxedLeft, unboxedRight, false) &&
+           checkCompareWithBooleanLiteral(unboxedLeft, unboxedRight, false);
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {

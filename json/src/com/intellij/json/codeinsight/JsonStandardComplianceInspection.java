@@ -8,11 +8,11 @@ import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +27,7 @@ import javax.swing.*;
  * <li>Usage of single quoted strings</li>
  * <li>Usage of identifiers (unqouted words)</li>
  * <li>Not double quoted string literal is used as property key</li>
+ * <li>Multiple top-level values</li>
  * </ul>
  *
  * @author Mikhail Golubev
@@ -35,10 +36,11 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(JsonStandardComplianceInspection.class);
 
   public boolean myWarnAboutComments = true;
+  public boolean myWarnAboutMultipleTopLevelValues = true;
 
   @NotNull
   public String getDisplayName() {
-    return JsonBundle.message("name.standard.compliance.inspection");
+    return JsonBundle.message("inspection.compliance.name");
   }
 
   @NotNull
@@ -55,7 +57,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       public void visitComment(PsiComment comment) {
         if (myWarnAboutComments) {
           if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment)) {
-            holder.registerProblem(comment, JsonBundle.message("msg.compliance.problem.comments"), ProblemHighlightType.WEAK_WARNING);
+            holder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"), ProblemHighlightType.WEAK_WARNING);
           }
         }
       }
@@ -63,7 +65,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       @Override
       public void visitStringLiteral(@NotNull JsonStringLiteral stringLiteral) {
         if (JsonPsiUtil.getElementTextWithoutHostEscaping(stringLiteral).startsWith("'")) {
-          holder.registerProblem(stringLiteral, JsonBundle.message("msg.compliance.problem.single.quoted.strings"),
+          holder.registerProblem(stringLiteral, JsonBundle.message("inspection.compliance.msg.single.quoted.strings"),
                                  new AddDoubleQuotesFix());
         }
         // May be illegal property key as well
@@ -73,13 +75,14 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       @Override
       public void visitLiteral(@NotNull JsonLiteral literal) {
         if (JsonPsiUtil.isPropertyKey(literal) && !JsonPsiUtil.getElementTextWithoutHostEscaping(literal).startsWith("\"")) {
-          holder.registerProblem(literal, JsonBundle.message("msg.compliance.problem.illegal.property.key"), new AddDoubleQuotesFix());
+          holder.registerProblem(literal, JsonBundle.message("inspection.compliance.msg.illegal.property.key"), new AddDoubleQuotesFix());
         }
+        super.visitLiteral(literal);
       }
 
       @Override
       public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
-        holder.registerProblem(reference, JsonBundle.message("msg.compliance.problem.identifier"), new AddDoubleQuotesFix());
+        holder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.identifier"), new AddDoubleQuotesFix());
         // May be illegal property key as well
         super.visitReferenceExpression(reference);
       }
@@ -88,15 +91,27 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       public void visitArray(@NotNull JsonArray array) {
         final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
         if (trailingComma != null) {
-          holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
+          holder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
         }
+        super.visitArray(array);
       }
 
       @Override
       public void visitObject(@NotNull JsonObject object) {
         final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
         if (trailingComma != null) {
-          holder.registerProblem(trailingComma, JsonBundle.message("msg.compliance.problem.trailing.comma"));
+          holder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
+        }
+        super.visitObject(object);
+      }
+
+      @Override
+      public void visitValue(@NotNull JsonValue value) {
+        if (value.getContainingFile() instanceof JsonFile) {
+          final JsonFile jsonFile = (JsonFile)value.getContainingFile();
+          if (myWarnAboutMultipleTopLevelValues && value.getParent() == jsonFile && value != jsonFile.getTopLevelValue()) {
+            holder.registerProblem(value, JsonBundle.message("inspection.compliance.msg.multiple.top.level.values"));
+          }
         }
       }
     };
@@ -119,7 +134,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JsonBundle.message("option.warn.about.comments.name"), "myWarnAboutComments");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.comments"), "myWarnAboutComments");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.multiple.top.level.values"), "myWarnAboutMultipleTopLevelValues");
     return optionsPanel;
   }
 
@@ -127,7 +143,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return JsonBundle.message("name.add.double.quotes.quickfix");
+      return JsonBundle.message("quickfix.add.double.quotes.desc");
     }
 
     @NotNull
@@ -139,13 +155,46 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
+      final String rawText = element.getText();
       if (element instanceof JsonLiteral || element instanceof JsonReferenceExpression) {
-        final String content = StringUtil.stripQuotesAroundValue(element.getText());
-        element.replace(new JsonElementGenerator(project).createStringLiteral(content));
+        String content = JsonPsiUtil.stripQuotes(rawText);
+        if (element instanceof JsonStringLiteral && rawText.startsWith("'")) {
+          content = escapeSingleQuotedStringContent(content);
+        }
+        final PsiElement replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"");
+        CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
+          @Override
+          public void run() {
+            element.replace(replacement);
+          }
+        });
       }
-      else if (element != null) {
-        LOG.error("Quick fix was applied to unexpected element", element.getText(), element.getParent().getText());
+      else {
+        LOG.error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
       }
+    }
+
+    @NotNull
+    private static String escapeSingleQuotedStringContent(@NotNull String content) {
+      final StringBuilder result = new StringBuilder();
+      boolean nextCharEscaped = false;
+      for (int i = 0; i < content.length(); i++) {
+        final char c = content.charAt(i);
+        if ((nextCharEscaped && c != '\'') || (!nextCharEscaped && c == '"')) {
+          result.append('\\');
+        }
+        if (c != '\\' || nextCharEscaped) {
+          result.append(c);
+          nextCharEscaped = false;
+        }
+        else {
+          nextCharEscaped = true;
+        }
+      }
+      if (nextCharEscaped) {
+        result.append('\\');
+      }
+      return result.toString();
     }
   }
 }

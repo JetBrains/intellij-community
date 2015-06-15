@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Collects incoming requests into a list, and provides them to an underlying background task via {@link #popRequests()}. <br/>
+ * Collects incoming requests into a list, and provides them to the underlying background task via {@link #popRequests()}. <br/>
  * Such task is started immediately after the first request arrives, if no other task is currently running. <br/>
- * A task indicates its completion by calling {@link #taskCompleted(Object)} and providing a result which is immediately passed to the
- * result handler.
+ * A task reports its completion by calling {@link #taskCompleted(Object)} and providing a result which is immediately passed to the
+ * result handler (unless it is null in which case the task is stopped but the result is not passed to the handler).
  * <p/>
  * The purpose of this class is to provide a single thread, which processes incoming requests in the background and continues to process
  * new ones if they arrive while the previous ones were processed. An alternative would be a long living thread which always checks some
@@ -35,6 +36,8 @@ import java.util.List;
  * The class is thread-safe: all operations are synchronized.
  */
 public abstract class SingleTaskController<Request, Result> {
+
+  private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
   @NotNull private final Consumer<Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
@@ -55,8 +58,10 @@ public abstract class SingleTaskController<Request, Result> {
   public final void request(@NotNull Request requests) {
     synchronized (LOCK) {
       myAwaitingRequests.add(requests);
+      LOG.debug("Added requests: " + requests);
       if (!myActive) {
         startNewBackgroundTask();
+        LOG.debug("Started a new bg task");
         myActive = true;
       }
     }
@@ -77,6 +82,7 @@ public abstract class SingleTaskController<Request, Result> {
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
       myAwaitingRequests = ContainerUtil.newArrayList();
+      LOG.debug("Popped requests: " + requests);
       return requests;
     }
   }
@@ -89,13 +95,16 @@ public abstract class SingleTaskController<Request, Result> {
   protected final void taskCompleted(@Nullable Result result) {
     if (result != null) {
       myResultHandler.consume(result);
+      LOG.debug("Handled result: " + result);
     }
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) {
         myActive = false;
+        LOG.debug("No more requests");
       }
       else {
         startNewBackgroundTask();
+        LOG.debug("Restarted a bg task");
       }
     }
   }

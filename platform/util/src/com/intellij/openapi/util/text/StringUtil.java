@@ -281,6 +281,18 @@ public class StringUtil extends StringUtilRt {
     return getPackageName(fqName, '.');
   }
 
+  /**
+   * Given a fqName returns the package name for the type or the containing type.
+   * <p/>
+   * <ul>
+   * <li><code>java.lang.String</code> -> <code>java.lang</code></li>
+   * <li><code>java.util.Map.Entry</code> -> <code>java.util.Map</code></li>
+   * </ul>
+   *
+   * @param fqName    a fully qualified type name. Not supposed to contain any type arguments
+   * @param separator the separator to use. Typically '.'
+   * @return the package name of the type or the declarator of the type. The empty string if the given fqName is unqualified
+   */
   @NotNull
   @Contract(pure = true)
   public static String getPackageName(@NotNull String fqName, char separator) {
@@ -565,7 +577,7 @@ public class StringUtil extends StringUtilRt {
             buffer.append("\\").append(ch);
           }
           else if (!isPrintableUnicode(ch)) {
-            String hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
+            CharSequence hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
             while (paddingCount-- > 0) {
@@ -824,7 +836,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String capitalize(@NotNull String s) {
     if (s.isEmpty()) return s;
-    if (s.length() == 1) return StringUtilRt.toUpperCase(s);
+    if (s.length() == 1) return StringUtilRt.toUpperCase(s).toString();
 
     // Optimization
     if (Character.isUpperCase(s.charAt(0))) return s;
@@ -938,27 +950,6 @@ public class StringUtil extends StringUtilRt {
       offset += prefixLen;
     }
     return true;
-  }
-
-  /**
-   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Contract(pure = true)
-  public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
-    return startsWithConcatenation(string, firstPrefix, secondPrefix);
-  }
-
-  /**
-   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Contract(pure = true)
-  public static boolean startsWithConcatenationOf(@NotNull String string,
-                                                  @NotNull String firstPrefix,
-                                                  @NotNull String secondPrefix,
-                                                  @NotNull String thirdPrefix) {
-    return startsWithConcatenation(string, firstPrefix, secondPrefix, thirdPrefix);
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
@@ -1503,14 +1494,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Strips quotes around the value.
-   * Quotes are removed even if leading and trailing quotes are different or if there is only one quote (leading or trailing).
-   * @deprecated use {@link com.intellij.openapi.util.text.StringUtil#unquoteString(String)} instead
-   * To be removed in IDEA 17
+   * Consider using {@link StringUtil#unquoteString(String)} instead.
+   * Note: this method has an odd behavior:
+   *   Quotes are removed even if leading and trailing quotes are different or
+   *                           if there is only one quote (leading or trailing).
    */
   @NotNull
   @Contract(pure = true)
-  @Deprecated
   public static String stripQuotesAroundValue(@NotNull String text) {
     final int len = text.length();
     if (len > 0) {
@@ -2106,6 +2096,15 @@ public class StringUtil extends StringUtilRt {
   public static String escapeXml(@Nullable final String text) {
     if (text == null) return null;
     return replace(text, REPLACES_DISP, REPLACES_REFS);
+  }
+
+  @NonNls private static final String[] MN_QUOTED = {"&&", "__"};
+  @NonNls private static final String[] MN_CHARS = {"&", "_"};
+
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static String escapeMnemonics(@Nullable String text) {
+    if (text == null) return null;
+    return replace(text, MN_CHARS, MN_QUOTED);
   }
 
   @NotNull
@@ -2968,7 +2967,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String toUpperCase(@NotNull String a) {
-    return StringUtilRt.toUpperCase(a);
+    return StringUtilRt.toUpperCase(a).toString();
   }
 
   @Contract(pure = true)
@@ -3170,6 +3169,28 @@ public class StringUtil extends StringUtilRt {
         return false;
     }
 
+
+  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-eA-E]{4}");
+
+  public static String replaceUnicodeEscapeSequences(String text) {
+    if (text == null) return null;
+    
+    final Matcher matcher = UNICODE_CHAR.matcher(text);
+    if (!matcher.find()) return text; // fast path
+
+    matcher.reset();
+    int lastEnd = 0;
+    final StringBuilder sb = new StringBuilder(text.length());
+    while (matcher.find()) {
+      sb.append(text.substring(lastEnd, matcher.start()));
+      final char c = (char)Integer.parseInt(matcher.group().substring(2), 16);
+      sb.append(c);
+      lastEnd = matcher.end();
+    }
+    sb.append(text.substring(lastEnd, text.length()));
+    return sb.toString();
+  }
+  
   /**
    * Expirable CharSequence. Very useful to control external library execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.
@@ -3214,5 +3235,11 @@ public class StringUtil extends StringUtilRt {
       check();
       return delegate.subSequence(i, i1);
     }
+  }
+
+  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
+  @SuppressWarnings("unused")
+  public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
+    return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }
 }

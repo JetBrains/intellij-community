@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -57,6 +58,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.slf4j.Logger;
+import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -103,6 +106,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     public String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
     @Attribute
     public String mavenHome;
+    @Attribute
+    public MavenExecutionOptions.LoggingLevel loggingLevel = MavenExecutionOptions.LoggingLevel.INFO;
   }
 
   public static MavenServerManager getInstance() {
@@ -283,6 +288,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
 
         final String currentMavenVersion = forceMaven2 ? "2.2.1" : getCurrentMavenVersion();
+        params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, currentMavenVersion);
         String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
         if (StringUtil.compareVersionNumbers(currentMavenVersion, "3.3.1") >= 0
             && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
@@ -293,6 +299,12 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
 
         final List<String> classPath = new ArrayList<String>();
+        classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
+        if (currentMavenVersion == null || StringUtil.compareVersionNumbers(currentMavenVersion, "3.1") < 0) {
+          classPath.add(PathUtil.getJarPathForClass(Logger.class));
+          classPath.add(PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
+        }
+
         classPath.addAll(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
@@ -643,6 +655,19 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   public void setEmbedderJdk(@NotNull String embedderJdk) {
     if (!myState.embedderJdk.equals(embedderJdk)) {
       myState.embedderJdk = embedderJdk;
+      shutdown(false);
+    }
+  }
+
+
+  @NotNull
+  public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
+    return myState.loggingLevel;
+  }
+
+  public void setLoggingLevel(MavenExecutionOptions.LoggingLevel loggingLevel) {
+    if (myState.loggingLevel != loggingLevel) {
+      myState.loggingLevel = loggingLevel;
       shutdown(false);
     }
   }

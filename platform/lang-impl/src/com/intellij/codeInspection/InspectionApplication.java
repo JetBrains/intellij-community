@@ -135,14 +135,14 @@ public class InspectionApplication {
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
       final ConversionService conversionService = ConversionService.getInstance();
       if (conversionService.convertSilently(myProjectPath, createConversionListener()).openingIsCanceled()) {
-        if (myErrorCodeRequired) System.exit(1);
+        gracefulExit();
         return;
       }
       myProject = ProjectUtil.openOrImport(myProjectPath, null, false);
 
       if (myProject == null) {
         logError("Unable to open project");
-        if (myErrorCodeRequired) System.exit(1);
+        gracefulExit();
         return;
       }
 
@@ -222,7 +222,7 @@ public class InspectionApplication {
         @Override
         public void run() {
           if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
-            if (myErrorCodeRequired) System.exit(1);
+            gracefulExit();
             return;
           }
           inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
@@ -288,13 +288,22 @@ public class InspectionApplication {
     catch (Throwable e) {
       LOG.error(e);
       logError(e.getMessage());
-      if (myErrorCodeRequired) System.exit(1);
+      gracefulExit();
     }
     finally {
       // delete tmp dir
       if (tmpDir != null) {
         FileUtil.delete(tmpDir);
       }
+    }
+  }
+
+  private void gracefulExit() {
+    if (myErrorCodeRequired) {
+      System.exit(1);
+    }
+    else {
+      throw new RuntimeException("Failed to proceed");
     }
   }
 
@@ -307,7 +316,7 @@ public class InspectionApplication {
       inspectionProfile = loadProfileByName(myProfileName);
       if (inspectionProfile == null) {
         logError("Profile with configured name (" + myProfileName + ") was not found (neither in project nor in config directory)");
-        if (myErrorCodeRequired) System.exit(1);
+        gracefulExit();
         return null;
       }
       return inspectionProfile;
@@ -317,7 +326,7 @@ public class InspectionApplication {
       inspectionProfile = loadProfileByPath(myProfilePath);
       if (inspectionProfile == null) {
         logError("Failed to load profile from \'" + myProfilePath + "\'");
-        if (myErrorCodeRequired) System.exit(1);
+        gracefulExit();
         return null;
       }
       return inspectionProfile;

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
@@ -55,17 +55,15 @@ public class LanguageMismatch extends LocalInspectionTool {
 
   @Nullable
   public JComponent createOptionsPanel() {
-    final JPanel jPanel = new JPanel(new BorderLayout());
     final JCheckBox jCheckBox =
-        new JCheckBox("Flag usages of non-annotated elements where the usage context " + "implies a certain language");
+        new JCheckBox("Flag usages of non-annotated elements where the usage context implies a certain language");
     jCheckBox.setSelected(CHECK_NON_ANNOTATED_REFERENCES);
     jCheckBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         CHECK_NON_ANNOTATED_REFERENCES = jCheckBox.isSelected();
       }
     });
-    jPanel.add(jCheckBox, BorderLayout.NORTH);
-    return jPanel;
+    return JBUI.Panels.simplePanel().addToTop(jCheckBox);
   }
 
   @NotNull

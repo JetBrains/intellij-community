@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.Extensions;
-import junit.framework.TestCase;
+import org.junit.Test;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author mike
  */
-public class ExtensionsAreaTest extends TestCase {
-
+public class ExtensionsAreaTest {
+  @Test
   public void testGetComponentAdapterDoesntDuplicateAdapters() throws Exception {
     MutablePicoContainer picoContainer =
       new ExtensionsAreaImpl("foo", null, new DefaultPicoContainer(), new Extensions.SimpleLogProvider()).getPicoContainer();
     picoContainer.registerComponentImplementation("runnable", ExtensionsAreaTest.class);
 
-    final List adapters = picoContainer.getComponentAdaptersOfType(ExtensionsAreaTest.class);
+    List adapters = picoContainer.getComponentAdaptersOfType(ExtensionsAreaTest.class);
     assertEquals(1, adapters.size());
   }
-
 }

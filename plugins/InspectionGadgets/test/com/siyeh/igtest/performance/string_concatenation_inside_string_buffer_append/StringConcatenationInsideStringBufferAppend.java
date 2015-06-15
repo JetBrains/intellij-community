@@ -5,14 +5,14 @@ public class StringConcatenationInsideStringBufferAppend {
   private String s;
 
   void foo(StringBuffer buffer) {
-    buffer.append("asdf" + s + "asdf");
-    buffer.append("asdf" + s);
+    buffer.<warning descr="String concatenation as argument to 'StringBuffer.append()' call">append</warning>("asdf" + s + "asdf");
+    buffer.<warning descr="String concatenation as argument to 'StringBuffer.append()' call">append</warning>("asdf" + s);
     buffer.append("asdf" + "asdf");
   }
 
   void bar(StringBuilder builder) {
-    builder.append("asdf" + s + "asdf");
-    builder.append("asdf" + s);
+    builder.<warning descr="String concatenation as argument to 'StringBuilder.append()' call">append</warning>("asdf" + s + "asdf");
+    builder.<warning descr="String concatenation as argument to 'StringBuilder.append()' call">append</warning>("asdf" + s);
     builder.append("asdf" + "asdf");
   }
 

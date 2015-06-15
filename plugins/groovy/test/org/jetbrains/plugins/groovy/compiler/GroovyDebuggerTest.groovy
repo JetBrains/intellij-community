@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.compiler
-
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.ContextUtil
@@ -38,6 +37,7 @@ import com.intellij.execution.process.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Computable
@@ -47,23 +47,24 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
-import org.jetbrains.annotations.NotNull
-
 /**
  * @author peter
  */
 class GroovyDebuggerTest extends GroovyCompilerTestCase {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest");
   private static final int ourTimeout = 60000
 
   @Override
   protected void setUp() {
     super.setUp()
     addGroovyLibrary(myModule);
+    enableDebugLogging()
   }
 
   @Override
@@ -71,9 +72,27 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     return false
   }
 
+  private void enableDebugLogging() {
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable,
+                                         "#com.intellij.debugger.engine.DebugProcessImpl",
+                                         "#com.intellij.debugger.engine.DebugProcessEvents",
+                                         "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest");
+    LOG.info(getTestStartedLogMessage());
+  }
+
+  private String getTestStartedLogMessage() {
+    return "Starting " + getClass().getName() + "." + getTestName(false);
+  }
+
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    runnable.run()
+  protected void runTest() throws Throwable {
+    try {
+      super.runTest()
+    }
+    catch (Throwable e) {
+      TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage());
+      throw e
+    }
   }
 
   @Override
@@ -98,6 +117,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
       }] as ProcessAdapter
       runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
     }
+    LOG.debug("after start")
     try {
       cl.call()
     }
@@ -438,6 +458,7 @@ new FooT().whoAmI()
   }
 
   private SuspendContextImpl waitForBreakpoint() {
+    LOG.debug("waitForBreakpoint")
     Semaphore semaphore = new Semaphore()
     semaphore.down()
     def process = debugProcess

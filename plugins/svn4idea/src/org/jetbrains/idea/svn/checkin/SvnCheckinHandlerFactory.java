@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -36,6 +35,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -111,7 +111,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
               }
             }
             if (take) {
-              paths.add(new FilePathImpl(root));
+              paths.add(VcsUtil.getFilePath(root));
             }
           }
           if (paths.isEmpty()) return;

@@ -1,7 +1,7 @@
 import java.util.List;
 
 <error descr="'@SafeVarargs' not applicable to type">@SafeVarargs</error>
-public class SafeVarargsTests {
+class SafeVarargsTests {
     //fixed arity
     <error descr="@SafeVarargs is not allowed on methods with fixed arity">@SafeVarargs</error>
     public void testNonVarargs1(){}
@@ -43,6 +43,8 @@ public class SafeVarargsTests {
     public static <T> void foo1(List<T>... <warning descr="Parameter 't' is never used">t</warning>){}
     @SafeVarargs
     public static <T> void foo2(List<? extends T>... <warning descr="Parameter 't' is never used">t</warning>){}
+    @SafeVarargs
+    public static <T> void foo2(java.util.Map<?, T>... <warning descr="Parameter 't' is never used">t</warning>){}
 
 }
 

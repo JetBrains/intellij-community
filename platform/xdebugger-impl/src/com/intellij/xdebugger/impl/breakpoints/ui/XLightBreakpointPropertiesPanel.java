@@ -108,18 +108,34 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, B breakpoint, boolean showAllOptions) {
     myBreakpoint = breakpoint;
     myShowAllOptions = showAllOptions;
-    XBreakpointType<B, ?> breakpointType = XBreakpointUtil.getType(breakpoint);
+    final XBreakpointType<B, ?> breakpointType = XBreakpointUtil.getType(breakpoint);
 
-    mySuspendPolicyPanel.init(project, breakpointManager, breakpoint);
-    mySuspendPolicyPanel.setDelegate(this);
+    if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.SUSPEND_POLICY)) {
+      mySuspendPolicyPanel.init(project, breakpointManager, breakpoint);
+      mySuspendPolicyPanel.setDelegate(this);
+      mySubPanels.add(mySuspendPolicyPanel);
+    }
+    else {
+      mySuspendPolicyPanel.hide();
+    }
 
-    mySubPanels.add(mySuspendPolicyPanel);
-    myMasterBreakpointPanel.init(project, breakpointManager, breakpoint);
-    mySubPanels.add(myMasterBreakpointPanel);
+    if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.DEPENDENCY)) {
+      myMasterBreakpointPanel.init(project, breakpointManager, breakpoint);
+      mySubPanels.add(myMasterBreakpointPanel);
+    }
+    else {
+      myMasterBreakpointPanel.hide();
+    }
+
     XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider(breakpoint, project);
 
-    myActionsPanel.init(project, breakpointManager, breakpoint, debuggerEditorsProvider);
-    mySubPanels.add(myActionsPanel);
+    if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS)) {
+      myActionsPanel.init(project, breakpointManager, breakpoint, debuggerEditorsProvider);
+      mySubPanels.add(myActionsPanel);
+    }
+    else {
+      myActionsPanel.hide();
+    }
 
     myCustomPanels = new ArrayList<XBreakpointCustomPropertiesPanel<B>>();
     if (debuggerEditorsProvider != null) {
@@ -180,11 +196,11 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
     myMainPanel.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent event) {
-        JComponent compToFocus;
+        JComponent compToFocus = null;
         if (myConditionComboBox != null && myConditionComboBox.getComboBox().isEnabled()) {
           compToFocus = myConditionComboBox.getEditorComponent();
         }
-        else {
+        else if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS)) {
           compToFocus = myActionsPanel.getDefaultFocusComponent();
         }
         if (compToFocus != null) {

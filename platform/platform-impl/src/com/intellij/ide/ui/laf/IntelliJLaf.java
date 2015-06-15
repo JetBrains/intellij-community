@@ -16,8 +16,13 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.openapi.util.SystemInfo;
 
+import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
+import java.awt.*;
+import java.util.HashSet;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,5 +41,39 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   protected DefaultMetalTheme createMetalTheme() {
     return new IdeaBlueMetalTheme();
+  }
+
+  @Override
+  public UIDefaults getDefaults() {
+    UIDefaults defaults = super.getDefaults();
+    if (SystemInfo.isMacOSYosemite) {
+      installMacOSXFonts(defaults);
+    }
+    return defaults;
+  }
+
+  private static void installMacOSXFonts(UIDefaults defaults) {
+    String face = "HelveticaNeue-CondensedBlack";
+    LafManagerImpl.initFontDefaults(defaults, face, 13);
+    for (Object key : new HashSet<Object>(defaults.keySet())) {
+      Object value = defaults.get(key);
+      if (value instanceof FontUIResource) {
+        FontUIResource font = (FontUIResource)value;
+        if (font.getFamily().equals("Lucida Grande") || font.getFamily().equals("Serif")) {
+          if (!key.toString().contains("Menu")) {
+            defaults.put(key, new FontUIResource(face, font.getStyle(), font.getSize()));
+          }
+        }
+      }
+    }
+    Font menuFont = new Font("Lucida Grande", Font.PLAIN, 14);
+    defaults.put("Menu.font", menuFont);
+    defaults.put("MenuItem.font", menuFont);
+    defaults.put("MenuItem.acceleratorFont", menuFont);
+  }
+
+  public static boolean isGraphite() {
+    Color c = UIManager.getColor("controlHighlight");
+    return c != null && c.getBlue() < 150;
   }
 }

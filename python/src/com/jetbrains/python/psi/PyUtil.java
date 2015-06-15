@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -38,6 +39,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,6 +68,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -825,14 +828,22 @@ public class PyUtil {
     return guessLanguageLevel(project);
   }
 
-  private static LanguageLevel guessLanguageLevel(@NotNull Project project) {
+  @NotNull
+  public static LanguageLevel guessLanguageLevel(@NotNull Project project) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     if (moduleManager != null) {
+      LanguageLevel maxLevel = null;
       for (Module projectModule : moduleManager.getModules()) {
         final Sdk sdk = PythonSdkType.findPythonSdk(projectModule);
         if (sdk != null) {
-          return PythonSdkType.getLanguageLevelForSdk(sdk);
+          final LanguageLevel level = PythonSdkType.getLanguageLevelForSdk(sdk);
+          if (maxLevel == null || maxLevel.isOlderThan(level)) {
+            maxLevel = level;
+          }
         }
+      }
+      if (maxLevel != null) {
+        return maxLevel;
       }
     }
     return LanguageLevel.getDefault();
@@ -1799,5 +1810,140 @@ public class PyUtil {
   public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
     return type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType();
+  }
+
+  public static boolean isInScratchFile(@NotNull PsiElement element) {
+    final ScratchFileService service = ScratchFileService.getInstance();
+    final PsiFile file = element.getContainingFile();
+    if (file != null) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      return service != null && virtualFile != null && service.getRootType(virtualFile) != null;
+    }
+    return false;
+  }
+
+  /**
+   * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
+   */
+  public static final class StringNodeInfo {
+    private final ASTNode myNode;
+    private final String myPrefix;
+    private final String myQuote;
+    private final TextRange myContentRange;
+
+    public StringNodeInfo(@NotNull ASTNode node) {
+      if (!PyTokenTypes.STRING_NODES.contains(node.getElementType())) {
+        throw new IllegalArgumentException("Node must be valid Python string literal token, but " + node.getElementType() + " was given");
+      }
+      myNode = node;
+      final String nodeText = node.getText();
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      myPrefix = nodeText.substring(0, prefixLength);
+      myContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
+      myQuote = nodeText.substring(prefixLength, myContentRange.getStartOffset());
+    }
+
+    public StringNodeInfo(@NotNull PsiElement element) {
+      this(element.getNode());
+    }
+
+    @NotNull
+    public ASTNode getNode() {
+      return myNode;
+    }
+
+    /**
+     * @return string prefix, e.g. "UR", "b" etc.
+     */
+    @NotNull
+    public String getPrefix() {
+      return myPrefix;
+    }
+
+    /**
+     * @return content of the string node between quotes
+     */
+    @NotNull
+    public String getContent() {
+      return myContentRange.substring(myNode.getText());
+    }
+
+    /**
+     * @return <em>relative</em> range of the content (excluding prefix and quotes)
+     * @see #getAbsoluteContentRange()
+     */
+    @NotNull
+    public TextRange getContentRange() {
+      return myContentRange;
+    }
+
+    /**
+     * @return <em>absolute</em> content range that accounts offset of the {@link #getNode() node} in the document
+     */
+    @NotNull
+    public TextRange getAbsoluteContentRange() {
+      return getContentRange().shiftRight(myNode.getStartOffset());
+    }
+
+    /**
+     * @return the first character of {@link #getQuote()}
+     */
+    public char getSingleQuote() {
+      return myQuote.charAt(0);
+    }
+
+    @NotNull
+    public String getQuote() {
+      return myQuote;
+    }
+
+    public boolean isTripleQuoted() {
+      return myQuote.length() == 3;
+    }
+
+    /**
+     * @return true if string literal ends with starting quote
+     */
+    public boolean isTerminated() {
+      final String text = myNode.getText();
+      return text.length() - myPrefix.length() >= myQuote.length() * 2 && text.endsWith(myQuote);
+    }
+
+    /**
+     * @return true if given string node contains "u" or "U" prefix
+     */
+    public boolean isUnicode() {
+      return StringUtil.containsIgnoreCase(myPrefix, "u");
+    }
+
+    /**
+     * @return true if given string node contains "r" or "R" prefix
+     */
+    public boolean isRaw() {
+      return StringUtil.containsIgnoreCase(myPrefix, "r");
+    }
+
+    /**
+     * @return true if given string node contains "b" or "B" prefix
+     */
+    public boolean isBytes() {
+      return StringUtil.containsIgnoreCase(myPrefix, "b");
+    }
+
+    /**
+     * @return true if other string node has the same decorations, i.e. quotes and prefix
+     */
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      StringNodeInfo info = (StringNodeInfo)o;
+
+      return getQuote().equals(info.getQuote()) &&
+             isRaw() == info.isRaw() &&
+             isUnicode() == info.isUnicode() &&
+             isBytes() == info.isBytes();
+    }
   }
 }

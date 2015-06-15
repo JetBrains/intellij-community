@@ -64,10 +64,12 @@ public class AuthDialog extends DialogWrapper {
     return authPanel.getPreferredFocusedComponent();
   }
 
+  @NotNull
   public String getUsername() {
     return authPanel.getLogin();
   }
 
+  @NotNull
   public String getPassword() {
     return String.valueOf(authPanel.getPassword());
   }

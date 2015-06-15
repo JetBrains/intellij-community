@@ -21,7 +21,6 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -41,6 +40,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
@@ -60,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
@@ -322,13 +323,14 @@ public abstract class AbstractLayoutCodeProcessor {
       return;
     }
 
-    final Runnable[] resultRunnable = new Runnable[1];
+    final Ref<FutureTask<Boolean>> writeActionRunnable = new Ref<FutureTask<Boolean>>();
     Runnable readAction = new Runnable() {
       @Override
       public void run() {
         if (!checkFileWritable(file)) return;
         try{
-          resultRunnable[0] = preprocessFile(file, myProcessChangedTextOnly);
+          FutureTask<Boolean> writeTask = preprocessFile(file, myProcessChangedTextOnly);
+          writeActionRunnable.set(writeTask);
         }
         catch(IncorrectOperationException e){
           LOG.error(e);
@@ -338,8 +340,16 @@ public abstract class AbstractLayoutCodeProcessor {
     Runnable writeAction = new Runnable() {
       @Override
       public void run() {
-        if (resultRunnable[0] != null) {
-          resultRunnable[0].run();
+        if (writeActionRunnable.isNull()) return;
+        FutureTask<Boolean> task = writeActionRunnable.get();
+        task.run();
+        try {
+          task.get();
+        }
+        catch (CancellationException ignored) {
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     };

@@ -15,13 +15,11 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.formatting.WrapType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
@@ -39,7 +37,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testBlankLineAroundClasses() {
-    getCommonSettings().BLANK_LINES_AROUND_CLASS = 2;
+    getCommonCodeStyleSettings().BLANK_LINES_AROUND_CLASS = 2;
     doTest();
   }
 
@@ -150,17 +148,17 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceInMethodDeclaration() {  // PY-4241
-    getCommonSettings().SPACE_BEFORE_METHOD_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_BEFORE_METHOD_PARENTHESES = true;
     doTest();
   }
 
   public void testOptionalAlignForMethodParameters() {  // PY-3995
-    getCommonSettings().ALIGN_MULTILINE_PARAMETERS = false;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = false;
     doTest();
   }
 
   public void testNoAlignForMethodArguments() {  // PY-3995
-    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
     doTest();
   }
 
@@ -185,7 +183,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSetLiteralInArgList() {  // PY-6672
-    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -194,7 +192,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testTupleInArgList() {
-    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -235,7 +233,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceWithinBraces() {  // PY-8069
-    getCustomSettings().SPACE_WITHIN_BRACES = true;
+    getPythonCodeStyle().SPACE_WITHIN_BRACES = true;
     doTest();
   }
 
@@ -276,25 +274,25 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapDefinitionWithLongLine() { // IDEA-92081
-    settings().setRightMargin(PythonLanguage.getInstance(), 30);
-    getCommonSettings().WRAP_LONG_LINES = true;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 30);
+    getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
     doTest();
   }
 
   public void testWrapAssignment() {  // PY-8572
-    settings().setRightMargin(PythonLanguage.getInstance(), 120);
-    getCommonSettings().WRAP_LONG_LINES = false;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 120);
+    getCommonCodeStyleSettings().WRAP_LONG_LINES = false;
     doTest();
   }
 
   public void testIndentInSlice() {  // PY-8572
-    settings().setRightMargin(PythonLanguage.getInstance(), 120);
-    getCommonSettings().WRAP_LONG_LINES = false;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 120);
+    getCommonCodeStyleSettings().WRAP_LONG_LINES = false;
     doTest();
   }
 
   public void testIndentInComprehensions() {  // PY-8516
-    getCustomSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    getPythonCodeStyle().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
     doTest();
   }
 
@@ -327,12 +325,12 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceBeforeBackslash() {
-    getCustomSettings().SPACE_BEFORE_BACKSLASH = false;
+    getPythonCodeStyle().SPACE_BEFORE_BACKSLASH = false;
     doTest();
   }
 
   public void testNewLineAfterColon() {
-    getCustomSettings().NEW_LINE_AFTER_COLON = true;
+    getPythonCodeStyle().NEW_LINE_AFTER_COLON = true;
     doTest();
   }
 
@@ -350,17 +348,18 @@ public class PyFormatterTest extends PyTestCase {
     }
   }
 
-  public void testSpaceInAnnotations() {  // PY-8961
+  // PY-8961, PY-16050
+  public void testSpaceInAnnotations() {
     doTestPy3();
   }
 
   public void testWrapInBinaryExpression() {  // PY-9032
-    settings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
     doTest(true);
   }
 
   public void testSpaceWithinDeclarationParentheses() {  // PY-8818
-    getCommonSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
     doTest();
   }
 
@@ -373,7 +372,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testWrapImports() {  // PY-9163
-    settings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
     doTest();
   }
 
@@ -434,13 +433,13 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-14838
   public void testNoAlignmentAfterDictHangingIndentInFunctionCall() {
-    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
   // PY-13955
   public void testNoAlignmentAfterDictHangingIndentInFunctionCallOnTyping() {
-    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     final String testName = "formatter/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
@@ -464,7 +463,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-14408
   public void testIndentsWithTabsInsideDictLiteral() {
-    getCommonSettings().getIndentOptions().USE_TAB_CHARACTER = true;
+    getCommonCodeStyleSettings().getIndentOptions().USE_TAB_CHARACTER = true;
     doTest();
   }
 
@@ -536,15 +535,96 @@ public class PyFormatterTest extends PyTestCase {
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
   }
 
-  private CommonCodeStyleSettings getCommonSettings() {
-    return settings().getCommonSettings(PythonLanguage.getInstance());
+  // PY-11552
+  public void testExtraBlankLinesBetweenMethodsAndAtTheEnd() {
+    getCommonCodeStyleSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    doTest();
   }
 
-  private PyCodeStyleSettings getCustomSettings() {
-    return settings().getCustomSettings(PyCodeStyleSettings.class);
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFileEnd() {
+    doTest();
   }
 
-  private CodeStyleSettings settings() {
-    return CodeStyleSettingsManager.getSettings(myFixture.getProject());
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFunctionEnd() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFunctionEndNoNewLine() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesMixed() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesInEmptyFile() {
+    doTest();
+  }
+
+  // PY-14962
+  public void testAlignDictLiteralOnValue() {
+    getPythonCodeStyle().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
+    doTest();
+  }
+
+  // PY-14962
+  public void testAlignDictLiteralOnColon() {
+    getPythonCodeStyle().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
+    doTest();
+  }
+
+  // PY-14962
+  public void testDictWrappingChopDownIfLong() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getPythonCodeStyle().DICT_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    doTest();
+  }
+
+  // PY-14962
+  public void testForceNewLineAfterLeftBraceInDict() {
+    getPythonCodeStyle().DICT_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-14962
+  public void testForceNewLineBeforeRightBraceInDict() {
+    getPythonCodeStyle().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    doTest();
+  }
+
+  // PY-15530
+  public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
+    doTest();
+  }
+
+  public void testAlignmentInListLiteralWhereFirstItemIsEmptyTuple() {
+    doTest();
+  }
+
+  public void testHangingIndentInNamedArgumentValue() {
+    doTest();
+  }
+
+  public void testHangingIndentInParameterDefaultValue() {
+    doTest();
+  }
+
+  // PY-15171
+  public void testHangingIndentInKeyValuePair() {
+    doTest();
+  }
+
+  public void testDoNotDestroyAlignment_OnPostponedFormatting() throws Exception {
+    getPythonCodeStyle().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
+    doTest();
+  }
+
+  public void testAlignmentOfEmptyCollectionLiterals() {
+    doTest();
   }
 }

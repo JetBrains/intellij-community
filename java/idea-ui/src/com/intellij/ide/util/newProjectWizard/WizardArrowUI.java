@@ -18,6 +18,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
@@ -62,11 +63,8 @@ class WizardArrowUI extends BasicButtonUI {
 
   private String layout(AbstractButton b, FontMetrics fm,
                         int width, int height) {
-    Insets i = b.getInsets();
-    viewRect.x = i.left;
-    viewRect.y = i.top;
-    viewRect.width = width - (i.right + viewRect.x);
-    viewRect.height = height - (i.bottom + viewRect.y);
+    viewRect.setBounds(0, 0, width, height);
+    JBInsets.removeFrom(viewRect, b.getInsets());
 
     textRect.x = textRect.y = textRect.width = textRect.height = 0;
     iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;

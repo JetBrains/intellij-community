@@ -15,6 +15,7 @@
  */
 
 
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.gant.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -56,7 +57,7 @@ setProperty("maySkipAndroidPlugin", true)
 
 target(compile: "Compile project") {
   loadProject()
-
+  bundledJDKs()
   projectBuilder.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
 
@@ -127,6 +128,10 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   def layouts = includeFile("$home/build/scripts/layouts.gant")
   LayoutInfo info = layouts.layoutFull(home, paths.distAll, null)
   layouts.layout_core(home, paths.artifacts_core)
+  ant.zip(destfile: "${paths.artifacts}/intellij-core-${StringUtil.trimStart(args.buildNumber, "IC-")}.zip") {
+    fileset(dir: paths.artifacts_core)
+  }
+
   notifyArtifactBuilt(paths.artifacts_core)
   if (buildJps) {
     layouts.layoutJps(home, paths.artifacts_jps, args.buildNumber, {})
@@ -139,8 +144,11 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
         include(name: "*.*")
       }
     }
+
     dir("license") {
-      fileset(dir: "${home}/license")
+      fileset(dir: "${home}/license") {
+        exclude(name: "placeholder.txt")
+      }
     }
     fileset(file: "${home}/LICENSE.txt")
     fileset(file: "${home}/NOTICE.txt")
@@ -152,6 +160,8 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   layoutUnix(args, home, paths)
 
   buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin])
+  buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
+                        paths.distWin, paths.distUnix, paths.distMac)
 
   def macAppRoot = isEap() ?
                    "IntelliJ IDEA ${p("component.version.major")} CE EAP.app/Contents" :
@@ -161,6 +171,9 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
 
   buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
+  if (p("jdk.bundled.linux") != "false") {
+    buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/bin/*"])
+  }
   return info
 }
 

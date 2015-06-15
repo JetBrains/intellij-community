@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.util.PlusMinusModify;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -426,10 +427,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public List<File> getAffectedPaths() {
-    final SortedSet<String> set = myIdx.getAffectedPaths();
+    final SortedSet<FilePath> set = myIdx.getAffectedPaths();
     final List<File> result = new ArrayList<File>(set.size());
-    for (String path : set) {
-      result.add(new File(path));
+    for (FilePath path : set) {
+      result.add(path.getIOFile());
     }
     return result;
   }
@@ -495,7 +496,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myIdx.getStatus(file);
   }
 
-  public FileStatus getStatus(final File file) {
+  public FileStatus getStatus(final FilePath file) {
     return myIdx.getStatus(file);
   }
 
@@ -692,14 +693,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
-  @NotNull
   public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
-    final String absolutePath = new File(virtualFile.getPath()).getAbsolutePath();
-    final SortedSet<String> tailSet = myIdx.getAffectedPaths().tailSet(absolutePath);
-    for (String path : tailSet) {
-      return FileUtil.isAncestorThreeState(absolutePath, path, false);
+    FilePath dir = VcsUtil.getFilePath(virtualFile);
+    FilePath changeCandidate = myIdx.getAffectedPaths().ceiling(dir);
+    if (changeCandidate == null) {
+      return ThreeState.NO;
     }
-    return ThreeState.NO;
+    return FileUtil.isAncestorThreeState(changeCandidate.getPath(), dir.getPath(), false);
   }
 
   @NotNull
@@ -737,19 +737,23 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myWorker = worker;
     }
 
+    @Override
     public List<LocalChangeList> getListsCopy() {
       return myWorker.getListsCopy();
     }
 
     @Nullable
+    @Override
     public LocalChangeList findChangeList(final String name) {
       return myWorker.getCopyByName(name);
     }
 
+    @Override
     public LocalChangeList addChangeList(final String name, final String comment) {
       return myWorker.addChangeList(null, name, comment, true, null);
     }
 
+    @Override
     public LocalChangeList findOrCreateList(final String name, final String comment) {
       LocalChangeList list = myWorker.getCopyByName(name);
       if (list == null) {
@@ -758,19 +762,17 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       return list;
     }
 
+    @Override
     public void editComment(final String name, final String comment) {
       myWorker.editComment(name, comment);
     }
 
+    @Override
     public void editName(String oldName, String newName) {
       myWorker.editName(oldName, newName);
     }
 
-    // todo usage allowed only when..
-    public void moveChanges(String toList, Collection<Change> changes) {
-      myWorker.moveChangesTo(toList, changes.toArray(new Change[changes.size()]));
-    }
-
+    @Override
     public void setListsToDisappear(final Collection<String> names) {
       myWorker.setListsToDisappear(names);
     }
@@ -780,9 +782,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       return myWorker.getStatus(file);
     }
 
+    @Deprecated
     @Override
     public FileStatus getStatus(File file) {
-      return myWorker.getStatus(file);
+      return myWorker.getStatus(VcsUtil.getFilePath(file));
+    }
+
+    @Override
+    public FileStatus getStatus(@NotNull FilePath filePath) {
+      return myWorker.getStatus(filePath);
     }
 
     @Override
@@ -795,16 +803,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myIdx.remove(path);
 
     for (LocalChangeList list : myMap.values()) {
-      for (Iterator<Change> iterator = list.getChanges().iterator(); iterator.hasNext(); ) {
-        final Change change = iterator.next();
+      for (Change change : list.getChanges()) {
         final ContentRevision afterRevision = change.getAfterRevision();
         if (afterRevision != null && afterRevision.getFile().equals(path)) {
-          ((LocalChangeListImpl) list).removeChange(change);
+          ((LocalChangeListImpl)list).removeChange(change);
           return;
         }
         final ContentRevision beforeRevision = change.getBeforeRevision();
         if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
-          ((LocalChangeListImpl) list).removeChange(change);
+          ((LocalChangeListImpl)list).removeChange(change);
           return;
         }
       }

@@ -50,7 +50,8 @@ public class ByWord {
     FairDiffIterable wordChanges = diff(words1, words2, indicator);
     FairDiffIterable correctedWordChanges = preferBigChunks(words1, words2, wordChanges, indicator);
 
-    DiffIterable iterable = matchAdjustmentDelimiters(text1, text2, words1, words2, correctedWordChanges, 0, 0, policy, indicator);
+    FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(text1, text2, words1, words2, correctedWordChanges, indicator);
+    DiffIterable iterable = matchAdjustmentWhitespaces(text1, text2, delimitersIterable, policy, indicator);
 
     return convertIntoFragments(iterable);
   }
@@ -100,8 +101,9 @@ public class ByWord {
 
       FairDiffIterable subiterable = fair(trim(correctedWordChanges, words.start1, words.end1, words.start2, words.end2));
 
-      DiffIterable iterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable,
-                                                        offsets.start1, offsets.start2, policy, indicator);
+      FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable,
+                                                                      offsets.start1, offsets.start2, indicator);
+      DiffIterable iterable = matchAdjustmentWhitespaces(subtext1, subtext2, delimitersIterable, policy, indicator);
 
       List<DiffFragment> fragments = convertIntoFragments(iterable);
 
@@ -179,19 +181,33 @@ public class ByWord {
   }
 
   @NotNull
-  private static DiffIterable matchAdjustmentDelimiters(@NotNull final CharSequence text1,
-                                                        @NotNull final CharSequence text2,
-                                                        @NotNull final List<InlineChunk> words1,
-                                                        @NotNull final List<InlineChunk> words2,
-                                                        @NotNull final FairDiffIterable changes,
-                                                        int startShift1,
-                                                        int startShift2,
-                                                        @NotNull final ComparisonPolicy policy,
-                                                        @NotNull final ProgressIndicator indicator) {
-    FairDiffIterable iterable =
-      new AdjustmentPunctuationMatcher(text1, text2, words1, words2, startShift1, startShift2, changes, indicator).build();
+  private static FairDiffIterable matchAdjustmentDelimiters(@NotNull CharSequence text1,
+                                                            @NotNull CharSequence text2,
+                                                            @NotNull List<InlineChunk> words1,
+                                                            @NotNull List<InlineChunk> words2,
+                                                            @NotNull FairDiffIterable changes,
+                                                            @NotNull ProgressIndicator indicator) {
+    return matchAdjustmentDelimiters(text1, text2, words1, words2, changes, 0, 0, indicator);
+  }
 
-    // match whitespaces
+  @NotNull
+  private static FairDiffIterable matchAdjustmentDelimiters(@NotNull CharSequence text1,
+                                                            @NotNull CharSequence text2,
+                                                            @NotNull List<InlineChunk> words1,
+                                                            @NotNull List<InlineChunk> words2,
+                                                            @NotNull FairDiffIterable changes,
+                                                            int startShift1,
+                                                            int startShift2,
+                                                            @NotNull ProgressIndicator indicator) {
+    return new AdjustmentPunctuationMatcher(text1, text2, words1, words2, startShift1, startShift2, changes, indicator).build();
+  }
+
+  @NotNull
+  private static DiffIterable matchAdjustmentWhitespaces(@NotNull CharSequence text1,
+                                                         @NotNull CharSequence text2,
+                                                         @NotNull FairDiffIterable iterable,
+                                                         @NotNull ComparisonPolicy policy,
+                                                         @NotNull ProgressIndicator indicator) {
     switch (policy) {
       case DEFAULT:
         return new DefaultCorrector(iterable, text1, text2, indicator).build();
@@ -494,7 +510,7 @@ public class ByWord {
 
         Range expand = new Range(range.start1 + startCut, range.end1 - endCut, range.start2 + startCut, range.end2 - endCut);
 
-        if (!isEmpty(expand)) {
+        if (!expand.isEmpty()) {
           myChanges.add(expand);
         }
       }
@@ -528,7 +544,7 @@ public class ByWord {
       for (Range range : myIterable.iterateChanges()) {
         Range trimmed = trim(myText1, myText2, range);
 
-        if (!isEmpty(trimmed)) {
+        if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);
         }
       }
@@ -580,7 +596,7 @@ public class ByWord {
 
         Range trimmed = new Range(start1, end1, start2, end2);
 
-        if (!isEmpty(trimmed)) {
+        if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);
         }
       }

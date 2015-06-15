@@ -856,7 +856,7 @@ public class IncProjectBuilder {
   private boolean runBuildersForChunk(final CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException, IOException {
     Set<? extends BuildTarget<?>> targets = chunk.getTargets();
     if (targets.size() > 1) {
-      Set<ModuleBuildTarget> moduleTargets = new HashSet<ModuleBuildTarget>();
+      Set<ModuleBuildTarget> moduleTargets = new LinkedHashSet<ModuleBuildTarget>();
       for (BuildTarget<?> target : targets) {
         if (target instanceof ModuleBuildTarget) {
           moduleTargets.add((ModuleBuildTarget)target);

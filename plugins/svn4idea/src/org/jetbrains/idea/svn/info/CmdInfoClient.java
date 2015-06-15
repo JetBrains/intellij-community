@@ -29,7 +29,6 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
@@ -144,37 +143,29 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @NotNull
-  private static List<String> buildParameters(@NotNull String path,
-                                              @Nullable SVNRevision pegRevision,
-                                              @Nullable SVNRevision revision,
-                                              @Nullable Depth depth) {
+  private static List<String> buildParameters(@NotNull SvnTarget target, @Nullable SVNRevision revision, @Nullable Depth depth) {
     List<String> parameters = ContainerUtil.newArrayList();
 
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, revision);
-    CommandUtil.put(parameters, path, pegRevision);
+    CommandUtil.put(parameters, target);
     parameters.add("--xml");
 
     return parameters;
   }
 
   @Override
-  public Info doInfo(File path, SVNRevision revision) throws SvnBindException {
-    File base = path.isDirectory() ? path : path.getParentFile();
-    base = CommandUtil.correctUpToExistingParent(base);
-    if (base == null) {
-      // very unrealistic
-      throw new SvnBindException("Can not find existing parent file");
-    }
+  public Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException {
+    File base = CommandUtil.requireExistingParent(path);
 
-    return parseResult(base, execute(buildParameters(path.getAbsolutePath(), SVNRevision.UNDEFINED, revision, Depth.EMPTY), path));
+    return parseResult(base, execute(buildParameters(SvnTarget.fromFile(path), revision, Depth.EMPTY), path));
   }
 
   @Override
-  public Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
-    CommandExecutor command =
-      execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, buildParameters(url.toString(), pegRevision, revision, Depth.EMPTY),
-              null);
+  public Info doInfo(@NotNull SvnTarget target, @Nullable SVNRevision revision) throws SvnBindException {
+    assertUrl(target);
+
+    CommandExecutor command = execute(myVcs, target, SvnCommandName.info, buildParameters(target, revision, Depth.EMPTY), null);
 
     return parseResult(null, command.getOutput());
   }
@@ -184,7 +175,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     File base = ContainerUtil.getFirstItem(paths);
 
     if (base != null) {
-      base = CommandUtil.correctUpToExistingParent(base);
+      base = CommandUtil.requireExistingParent(base);
 
       List<String> parameters = ContainerUtil.newArrayList();
       for (File file : paths) {

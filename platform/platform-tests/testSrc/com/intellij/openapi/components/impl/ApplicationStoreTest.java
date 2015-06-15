@@ -23,7 +23,7 @@ import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import gnu.trove.THashMap;
@@ -40,7 +40,7 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ApplicationStoreTest extends LightPlatformLangTestCase {
+public class ApplicationStoreTest extends LightPlatformTestCase {
   private File testAppConfig;
   private MyComponentStore componentStore;
 
@@ -86,11 +86,13 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     component.foo = "newValue";
     StoreUtil.save(componentStore, null);
 
-    assertThat(streamProvider.data.get(RoamingType.PER_USER).get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"), equalTo("<application>\n" +
-                                                                                                                                "  <component name=\"HttpConfigurable\">\n" +
-                                                                                                                                "    <option name=\"foo\" value=\"newValue\" />\n" +
-                                                                                                                                "  </component>\n" +
-                                                                                                                                "</application>"));
+    assertThat(
+      streamProvider.data.get(RoamingType.PER_USER).get(StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"),
+      equalTo("<application>\n" +
+              "  <component name=\"HttpConfigurable\">\n" +
+              "    <option name=\"foo\" value=\"newValue\" />\n" +
+              "  </component>\n" +
+              "</application>"));
   }
 
   public void testLoadFromStreamProvider() throws Exception {
@@ -215,7 +217,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    public void load() throws IOException {
+    public void load() {
     }
 
     @NotNull

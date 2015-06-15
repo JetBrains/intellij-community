@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,93 +24,80 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestCase;
 
-import java.io.File;
 import java.util.Arrays;
 
 /**
  * @author dsl
  */
 public class ProjectLibrariesTest extends IdeaTestCase {
-  public void test() {
-    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(myProject);
-    Library lib = WriteCommandAction.runWriteCommandAction(null, new Computable<Library>() {
+  private VirtualFile myRoot;
+  private Library myLib;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    myRoot = LocalFileSystem.getInstance().findFileByPath(PathManagerEx.getTestDataPath() + "/psi/cls/repo");
+    assertNotNull(myRoot);
+
+    myLib = WriteCommandAction.runWriteCommandAction(null, new Computable<Library>() {
       @Override
       public Library compute() {
-        return libraryTable.createLibrary("LIB");
+        return ProjectLibraryTable.getInstance(myProject).createLibrary("LIB");
       }
     });
-    ModuleRootModificationUtil.addDependency(myModule, lib);
-    final JavaPsiFacade manager = getJavaFacade();
-    assertNull(manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
-    final File file = new File(PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls");
-    final VirtualFile root = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      }
-    });
-    assertNotNull(root);
-    final Library.ModifiableModel modifyableModel = lib.getModifiableModel();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        modifyableModel.addRoot(root, OrderRootType.CLASSES);
-        modifyableModel.commit();
-      }
-    });
-    final PsiClass aClass = manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
-    assertNotNull(aClass);
+    ModuleRootModificationUtil.addDependency(myModule, myLib);
   }
 
-  public void test1() {
-    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(myProject);
-    Library lib = WriteCommandAction.runWriteCommandAction(null, new Computable<Library>() {
-      @Override
-      public Library compute() {
-        return libraryTable.createLibrary("LIB");
-      }
-    });
-    ModuleRootModificationUtil.addDependency(myModule, lib);
-    final JavaPsiFacade manager = getJavaFacade();
-    assertNull(manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
+  public void test() {
+    assertNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
 
-    final ModifiableRootModel rootModel2 = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    assertNotNull(rootModel2.findLibraryOrderEntry(lib));
-    final File file = new File(PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls");
-    final VirtualFile root = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      }
-    });
-    assertNotNull(root);
-    final Library.ModifiableModel modifyableModel = lib.getModifiableModel();
+    final Library.ModifiableModel model = myLib.getModifiableModel();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        modifyableModel.addRoot(root, OrderRootType.CLASSES);
-        modifyableModel.commit();
+        model.addRoot(myRoot, OrderRootType.CLASSES);
+        model.commit();
       }
     });
-    final PsiClass aClass = manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
-    assertNotNull(aClass);
-    assertTrue(Arrays.asList(rootModel2.orderEntries().librariesOnly().classes().getRoots()).contains(root));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel2.commit();
-      }
-    });
-    final PsiClass aClass1 = manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
-    assertNotNull(aClass1);
+
+    assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
+  }
+
+  public void testNestedModelUpdate() {
+    assertNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
+
+    final ModifiableRootModel moduleModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    try {
+      assertNotNull(moduleModel.findLibraryOrderEntry(myLib));
+
+      final Library.ModifiableModel libModel = myLib.getModifiableModel();
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          libModel.addRoot(myRoot, OrderRootType.CLASSES);
+          libModel.commit();
+        }
+      });
+
+      assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
+      assertTrue(Arrays.asList(moduleModel.orderEntries().librariesOnly().classes().getRoots()).contains(myRoot));
+    }
+    finally {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          moduleModel.commit();
+        }
+      });
+    }
+
+    assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
   }
 }

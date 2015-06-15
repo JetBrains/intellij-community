@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SingletonIterator;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +29,9 @@ import java.util.Set;
  */
 public class SingletonSet<E> implements Set<E> {
   private final E theElement;
-  @NotNull private final TObjectHashingStrategy<E> strategy;
 
   public SingletonSet(E e) {
-    this(e, ContainerUtil.<E>canonicalStrategy());
-  }
-
-  public SingletonSet(E e, @NotNull final TObjectHashingStrategy<E> strategy) {
     theElement = e;
-    this.strategy = strategy;
   }
 
   @Override
@@ -48,7 +41,8 @@ public class SingletonSet<E> implements Set<E> {
 
   @Override
   public boolean contains(Object elem) {
-    return strategy.equals(theElement, (E)elem);
+    //noinspection unchecked
+    return getStrategy().equals(theElement, (E)elem);
   }
 
   @NotNull
@@ -67,8 +61,10 @@ public class SingletonSet<E> implements Set<E> {
   @Override
   public <T> T[] toArray(@NotNull T[] a) {
     if (a.length == 0) {
+      //noinspection unchecked
       a = (T[]) Array.newInstance(a.getClass().getComponentType(), 1);
     }
+    //noinspection unchecked
     a[0] = (T)theElement;
     if (a.length > 1) {
         a[1] = null;
@@ -119,5 +115,32 @@ public class SingletonSet<E> implements Set<E> {
   @Override
   public boolean isEmpty() {
     return false;
+  }
+
+  @NotNull
+  protected TObjectHashingStrategy<E> getStrategy() {
+    //noinspection unchecked
+    return TObjectHashingStrategy.CANONICAL;
+  }
+
+  @NotNull
+  public static <T> Set<T> withCustomStrategy(T o, @NotNull TObjectHashingStrategy<T> strategy) {
+    return new CustomStrategySingletonSet<T>(o, strategy);
+  }
+
+  private static class CustomStrategySingletonSet<E> extends SingletonSet<E> {
+    @NotNull private final TObjectHashingStrategy<E> strategy;
+
+    private CustomStrategySingletonSet(E e, @NotNull final TObjectHashingStrategy<E> strategy) {
+      super(e);
+      this.strategy = strategy;
+    }
+
+
+    @Override
+    @NotNull
+    protected TObjectHashingStrategy<E> getStrategy() {
+      return strategy;
+    }
   }
 }

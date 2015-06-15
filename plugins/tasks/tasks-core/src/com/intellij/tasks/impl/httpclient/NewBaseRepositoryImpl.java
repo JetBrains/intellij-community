@@ -6,7 +6,7 @@ import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IdeHttpClientHelpers;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
@@ -91,7 +91,9 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
       provider.setCredentials(BASIC_AUTH_SCOPE, new UsernamePasswordCredentials(getUsername(), getPassword()));
     }
     // Proxy authentication
-    HttpConfigurable.getInstance().setProxyCredentials(provider, isUseProxy());
+    if (isUseProxy()) {
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyCredentialsForUrlIfEnabled(provider, getUrl());
+    }
 
     return provider;
   }
@@ -102,7 +104,9 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
     RequestConfig.Builder builder = RequestConfig.custom()
       .setConnectTimeout(3000)
       .setSocketTimeout(tasksSettings.CONNECTION_TIMEOUT);
-    HttpConfigurable.getInstance().setProxy(builder, isUseProxy());
+    if (isUseProxy()) {
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(builder, getUrl());
+    }
 
     return builder.build();
   }

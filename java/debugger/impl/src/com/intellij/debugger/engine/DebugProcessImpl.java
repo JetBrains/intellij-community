@@ -50,7 +50,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -61,8 +60,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
@@ -74,6 +73,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
@@ -137,11 +138,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
-  private volatile DebuggerManagerThreadImpl myDebuggerManagerThread;
+  private final DebuggerManagerThreadImpl myDebuggerManagerThread;
   private static final int LOCAL_START_TIMEOUT = 30000;
 
   private final Semaphore myWaitFor = new Semaphore();
-  private boolean myIsFailed = false;
+  private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   private final Disposable myDisposable = Disposer.newDisposable();
@@ -149,6 +150,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
+    myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
@@ -260,6 +262,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return classRenderer;
   }
 
+  private static final String ourTrace = System.getProperty("idea.debugger.trace");
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void commitVM(VirtualMachine vm) {
@@ -275,10 +278,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
 
-    String trace = System.getProperty("idea.debugger.trace");
-    if (trace != null) {
+    if (!StringUtil.isEmpty(ourTrace)) {
       int mask = 0;
-      StringTokenizer tokenizer = new StringTokenizer(trace);
+      StringTokenizer tokenizer = new StringTokenizer(ourTrace);
       while (tokenizer.hasMoreTokens()) {
         String token = tokenizer.nextToken();
         if ("SENDS".compareToIgnoreCase(token) == 0) {
@@ -363,7 +365,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public ProcessHandler getProcessHandler() {
-    return myExecutionResult.getProcessHandler();
+    return myExecutionResult != null ? myExecutionResult.getProcessHandler() : null;
   }
 
   /**
@@ -887,13 +889,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public DebuggerManagerThreadImpl getManagerThread() {
-    if (myDebuggerManagerThread == null) {
-      synchronized (this) {
-        if (myDebuggerManagerThread == null) {
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, getProject());
-        }
-      }
-    }
     return myDebuggerManagerThread;
   }
 
@@ -1086,6 +1081,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   }
                 }
               }
+
+              // workaround for jdi hang in trace mode
+              if (!StringUtil.isEmpty(ourTrace)) {
+                for (Object arg : myArgs) {
+                  //noinspection ResultOfMethodCallIgnored
+                  arg.toString();
+                }
+              }
+
               result[0] = invokeMethod(invokePolicy, myMethod, myArgs);
             }
             finally {
@@ -1565,11 +1569,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final RunToCursorBreakpoint myRunToCursorBreakpoint;
     private final boolean myIgnoreBreakpoints;
 
-    private RunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex, final boolean ignoreBreakpoints) {
+    private RunToCursorCommand(SuspendContextImpl suspendContext, @NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
       super(suspendContext);
       myIgnoreBreakpoints = ignoreBreakpoints;
-      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-      myRunToCursorBreakpoint = breakpointManager.addRunToCursorBreakpoint(document, lineIndex, ignoreBreakpoints);
+      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+      myRunToCursorBreakpoint = breakpointManager.addRunToCursorBreakpoint(position, ignoreBreakpoints);
     }
 
     @Override
@@ -1770,6 +1774,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySession.getSearchScope();
   }
 
+  public void reattach(final DebugEnvironment environment) throws ExecutionException {
+    ApplicationManager.getApplication().assertIsDispatchThread(); //TODO: remove this requirement
+    ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
+    myState.set(STATE_INITIAL);
+    getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        myRequestManager.processDetached(DebugProcessImpl.this, false);
+      }
+    });
+    myConnection = environment.getRemoteConnection();
+    getManagerThread().restartIfNeeded();
+    createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
+  }
+
   @Nullable
   public ExecutionResult attachVirtualMachine(final DebugEnvironment environment,
                                               final DebuggerSession session) throws ExecutionException {
@@ -1838,14 +1857,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void fail() {
-    synchronized (this) {
-      if (myIsFailed) {
-        // need this in order to prevent calling stop() twice
-        return;
-      }
-      myIsFailed = true;
+    // need this in order to prevent calling stop() twice
+    if (myIsFailed.compareAndSet(false, true)) {
+      stop(false);
     }
-    stop(false);
   }
 
   private void createVirtualMachine(final String sessionName, final boolean pollConnection) {
@@ -2020,13 +2035,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
   }
 
-  public ResumeCommand createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,
-                                                            final boolean ignoreBreakpoints)
+  public ResumeCommand createRunToCursorCommand(SuspendContextImpl suspendContext,
+                                                @NotNull XSourcePosition position,
+                                                boolean ignoreBreakpoints)
     throws EvaluateException {
-    RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, document, lineIndex, ignoreBreakpoints);
-    if(runToCursorCommand.myRunToCursorBreakpoint == null) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      throw new EvaluateException(DebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile != null? psiFile.getName() : "<No File>", lineIndex), null);
+    RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, position, ignoreBreakpoints);
+    if (runToCursorCommand.myRunToCursorBreakpoint == null) {
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(position.getFile());
+      throw new EvaluateException(DebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile != null? psiFile.getName() : "<No File>",
+                                                         position.getLine()), null);
     }
     return runToCursorCommand;
   }

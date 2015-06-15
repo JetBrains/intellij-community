@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,6 @@ import java.util.List;
  */
 public interface PathChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_EXPLICIT = DataKey.create("prefer.last.over.explicit");
-
-  /** @deprecated use {@link FileChooserDescriptor#withShowHiddenFiles(boolean)} (to be removed in IDEA 15) */
-  DataKey<Boolean> NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES = DataKey.create("native.mac.chooser.show.hidden.files");
 
   void choose(@Nullable VirtualFile toSelect, @NotNull final Consumer<List<VirtualFile>> callback);
 }

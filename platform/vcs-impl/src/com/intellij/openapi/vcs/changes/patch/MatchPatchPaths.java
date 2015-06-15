@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -53,11 +53,10 @@ public class MatchPatchPaths {
 
   public List<FilePatchInProgress> execute(final List<TextFilePatch> list) {
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
-    final Application application = ApplicationManager.getApplication();
 
     final List<PatchAndVariants> candidates = new ArrayList<PatchAndVariants>(list.size());
     final List<TextFilePatch> newOrWithoutMatches = new ArrayList<TextFilePatch>();
-    findCandidates(list, directoryDetector, application, candidates, newOrWithoutMatches);
+    findCandidates(list, directoryDetector, candidates, newOrWithoutMatches);
 
     final MultiMap<VirtualFile, FilePatchInProgress> result = new MultiMap<VirtualFile, FilePatchInProgress>();
     // process exact matches: if one, leave and extract. if several - leave only them
@@ -78,7 +77,7 @@ public class MatchPatchPaths {
       Pair<VirtualFile, Integer> best = null;
       for (int i = strings.length - 2; i >= 0; -- i) {
         final String name = strings[i];
-        final Collection<VirtualFile> files = directoryDetector.findFiles(name);
+        final Collection<VirtualFile> files = findFilesFromIndex(directoryDetector, name);
         if (! files.isEmpty()) {
           // check all candidates
           for (VirtualFile file : files) {
@@ -149,7 +148,6 @@ public class MatchPatchPaths {
 
   private void findCandidates(List<TextFilePatch> list,
                               final PatchBaseDirectoryDetector directoryDetector,
-                              Application application,
                               List<PatchAndVariants> candidates, List<TextFilePatch> newOrWithoutMatches) {
     for (final TextFilePatch patch : list) {
       final String fileName = patch.getBeforeFileName();
@@ -157,11 +155,7 @@ public class MatchPatchPaths {
         newOrWithoutMatches.add(patch);
         continue;
       }
-      final Collection<VirtualFile> files = application.runReadAction(new Computable<Collection<VirtualFile>>() {
-        public Collection<VirtualFile> compute() {
-          return directoryDetector.findFiles(fileName);
-        }
-      });
+      final Collection<VirtualFile> files = findFilesFromIndex(directoryDetector, fileName);
       // for directories outside the project scope but under version control
       if (patch.getBeforeName() != null && patch.getBeforeName().startsWith("..")) {
         final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, patch.getBeforeName().replace('\\', '/').split("/"));
@@ -185,6 +179,15 @@ public class MatchPatchPaths {
         }
       }
     }
+  }
+
+  private static Collection<VirtualFile> findFilesFromIndex(@NotNull final PatchBaseDirectoryDetector directoryDetector,
+                                                            @NotNull final String fileName) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+      public Collection<VirtualFile> compute() {
+        return directoryDetector.findFiles(fileName);
+      }
+    });
   }
 
   private void putSelected(MultiMap<VirtualFile, FilePatchInProgress> result,

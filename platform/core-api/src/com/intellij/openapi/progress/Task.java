@@ -195,6 +195,10 @@ public abstract class Task implements TaskInfo, Progressive {
       return false;
     }
 
+    /**
+     * to remove in IDEA 16
+     */
+    @Deprecated
     @NotNull
     public DumbModeAction getDumbModeAction() {
       return DumbModeAction.NOTHING;

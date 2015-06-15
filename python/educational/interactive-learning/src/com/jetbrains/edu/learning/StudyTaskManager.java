@@ -1,12 +1,6 @@
 package com.jetbrains.edu.learning;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
@@ -31,9 +25,9 @@ import java.util.Map;
 @State(
   name = "StudySettings",
   storages = {
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage(
-      id = "others",
-      file = "$PROJECT_CONFIG_DIR$/study_project.xml",
+      file = StoragePathMacros.PROJECT_CONFIG_DIR + "/study_project.xml",
       scheme = StorageScheme.DIRECTORY_BASED
     )}
 )
@@ -176,8 +170,6 @@ public class StudyTaskManager implements PersistentStateComponent<StudyTaskManag
   }
 
   public static StudyTaskManager getInstance(@NotNull final Project project) {
-    final Module module = ModuleManager.getInstance(project).getModules()[0];
-    return ModuleServiceManager.getService(module, StudyTaskManager.class);
+    return ServiceManager.getService(project, StudyTaskManager.class);
   }
-
 }

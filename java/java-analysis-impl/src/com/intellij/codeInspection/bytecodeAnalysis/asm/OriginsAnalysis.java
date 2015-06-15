@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.LinkedList;
  */
 public class OriginsAnalysis {
 
-  private static SourceInterpreter ourInterpreter = new SourceInterpreter() {
+  private static final SourceInterpreter ourInterpreter = new SourceInterpreter() {
     @Override
     public SourceValue copyOperation(AbstractInsnNode insn, SourceValue value) {
       return value;

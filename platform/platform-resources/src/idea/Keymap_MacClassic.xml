@@ -56,6 +56,9 @@
       <keyboard-shortcut first-keystroke="control J"/>
       <mouse-shortcut keystroke="control button2"/>
     </action>
+    <action id="ExpressionTypeInfo">
+      <keyboard-shortcut first-keystroke="control shift P"/>
+    </action>
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
     </action>
@@ -151,7 +154,6 @@
     <action id="ToggleBookmark9">
       <keyboard-shortcut first-keystroke="control shift 9"/>
     </action>
-
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="control UP"/>
     </action>

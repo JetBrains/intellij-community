@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2011-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class ArrayEqualityInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with implicit equals";
+      return InspectionGadgetsBundle.message("replace.with.arrays.equals");
     }
 
     @Override

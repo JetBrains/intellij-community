@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -38,10 +39,14 @@ public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAct
     presentation.setIcon(ourIcon);
     presentation.setText(ourText);
     super.update(e);
-    presentation.setEnabled(allSelectedChangeListsAreRevertable(e));
   }
 
-  private static boolean allSelectedChangeListsAreRevertable(AnActionEvent e) {
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
+    return super.isEnabled(e) && allSelectedChangeListsAreRevertable(e);
+  }
+
+  private static boolean allSelectedChangeListsAreRevertable(@NotNull AnActionEvent e) {
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
     if (changeLists == null) {
       return true;

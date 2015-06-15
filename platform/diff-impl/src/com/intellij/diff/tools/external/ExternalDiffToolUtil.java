@@ -47,7 +47,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static String createFile(@NotNull DiffContent content, @NotNull String title, @Nullable String windowTitle)
+  public static String createFile(@NotNull DiffContent content, @Nullable String title, @Nullable String windowTitle)
     throws IOException {
 
     if (content instanceof EmptyContent) {
@@ -98,11 +98,18 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  public static String getFileName(@NotNull String title, @Nullable String windowTitle, @Nullable FileType fileType) {
+  public static String getFileName(@Nullable String title, @Nullable String windowTitle, @Nullable FileType fileType) {
+    String prefix = "";
+    if (title != null && windowTitle != null) {
+      prefix = title + "_" + windowTitle;
+    }
+    else if (title != null || windowTitle != null) {
+      prefix = title != null ? title : windowTitle;
+    }
     // TODO: keep file name in DiffContent ?
-    String ext = fileType != null ? fileType.getDefaultExtension() : ".tmp";
-    if (title.length() > 50) title = title.substring(0, 50);
-    return PathUtil.suggestFileName(title + "." + ext, true, false);
+    String ext = fileType != null ? fileType.getDefaultExtension() : "tmp";
+    if (prefix.length() > 50) prefix = prefix.substring(0, 50);
+    return PathUtil.suggestFileName(prefix + "." + ext, true, false);
   }
 
   @NotNull

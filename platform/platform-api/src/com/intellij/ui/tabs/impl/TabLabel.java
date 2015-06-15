@@ -126,16 +126,12 @@ public class TabLabel extends JPanel {
 
       @Override
       protected void doPaint(Graphics2D g) {
-        if (UISettings.getInstance().HIDE_TABS_IF_NEED || tabs.getTabsPosition() == JBTabsPosition.left || tabs.getTabsPosition() == JBTabsPosition.right) {
-          super.doPaint(g);
-          return;
-        }
         Rectangle clip = getVisibleRect();
-        if (getPreferredSize().width <= clip.width) {
+        if (getPreferredSize().width <= clip.width + 2) {
           super.doPaint(g);
           return;
         }
-        int dimSize = 30;
+        int dimSize = 10;
         int dimStep = 2;
         Composite oldComposite = g.getComposite();
         Shape oldClip = g.getClip();
@@ -156,9 +152,7 @@ public class TabLabel extends JPanel {
 
       @Override
       protected void applyAdditionalHints(@NotNull Graphics2D g) {
-        if (!SystemInfo.isJavaVersionAtLeast("1.7") && g.getComposite() instanceof AlphaComposite && (((AlphaComposite)g.getComposite()).getAlpha() < 1)) {
-          g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
-        }
+        UISettings.setupAntialiasing(g);
       }
     };
     label.setOpaque(false);

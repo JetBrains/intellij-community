@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 
 /**
  * @author nik
  */
-public class ModulePointerTest extends PlatformLangTestCase {
+public class ModulePointerTest extends PlatformTestCase {
   public void testCreateByName() throws Exception {
     final ModulePointer pointer = getPointerManager().create("m");
     assertSame(pointer, getPointerManager().create("m"));

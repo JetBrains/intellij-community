@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase {
+public class JavaFXCollapseSubtagToAttributeTest extends JavaFXDaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();

@@ -91,7 +91,9 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
             @Override
             public void consume(CompletionResult completionResult) {
               finalResult.passResult(completionResult);
-              ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
+              if (completionResult.isStartMatch()) {
+                ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
+              }
             }
           });
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.NonFocusableCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -80,7 +81,7 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
   }
 
   @Override
-  public void runCheckinHandlers(final Runnable finishAction) {
+  public void runCheckinHandlers(@NotNull final Runnable finishAction) {
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     final Collection<VirtualFile> files = myPanel.getVirtualFiles();
 

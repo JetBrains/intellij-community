@@ -17,11 +17,15 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * If class doesn't provide "equals" implementation, will be compared by serializable members.
+ */
 public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializationFilters {
   boolean equal(@NotNull Binding binding, @NotNull Object bean) {
     Accessor accessor = binding.getAccessor();
@@ -44,20 +48,11 @@ public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSeri
         Binding referencedBinding = ((BasePrimitiveBinding)binding).myBinding;
         if (referencedBinding instanceof BeanBinding) {
           BeanBinding classBinding = (BeanBinding)referencedBinding;
-          ThreeState compareByFields = classBinding.hasEqualMethod;
+          ThreeState compareByFields = classBinding.compareByFields;
           if (compareByFields == ThreeState.UNSURE) {
-            try {
-              classBinding.myBeanClass.getDeclaredMethod("equals", Object.class);
-              compareByFields = ThreeState.NO;
-            }
-            catch (NoSuchMethodException ignored) {
-              compareByFields = ThreeState.YES;
-            }
-            catch (Exception e) {
-              Binding.LOG.warn(e);
-            }
+            compareByFields = ReflectionUtil.getDeclaredMethod(classBinding.myBeanClass, "equals", Object.class) == null ? ThreeState.YES : ThreeState.NO;
 
-            classBinding.hasEqualMethod = compareByFields;
+            classBinding.compareByFields = compareByFields;
           }
 
           if (compareByFields == ThreeState.YES) {

@@ -79,7 +79,8 @@ import java.util.*;
 )
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
-  @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
+  public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
+  public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
 
   private BackendCompiler myDefaultJavaCompiler;
   private State myState = new State();
@@ -133,6 +134,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private static class State {
     public String DEFAULT_COMPILER = JavaCompilers.JAVAC_ID;
+    public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
+    public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
 
     private boolean compilerWasSpecified;
   }
@@ -201,6 +204,27 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @Override
   public void loadState(Element state) {
     readExternal(state);
+  }
+
+  public int getBuildProcessHeapSize(final int javacPreferredHeapSize) {
+    final int heapSize = myState.BUILD_PROCESS_HEAP_SIZE;
+    if (heapSize != DEFAULT_BUILD_PROCESS_HEAP_SIZE) {
+      return heapSize;
+    }
+    // compatibility with older builds: if javac is set to use larger heap, and if so, use it.
+    return Math.max(heapSize, javacPreferredHeapSize);
+  }
+
+  public void setBuildProcessHeapSize(int size) {
+    myState.BUILD_PROCESS_HEAP_SIZE = size > 0? size : DEFAULT_BUILD_PROCESS_HEAP_SIZE;
+  }
+
+  public String getBuildProcessVMOptions() {
+    return myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS;
+  }
+
+  public void setBuildProcessVMOptions(String options) {
+    myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = options == null? "" : options.trim();
   }
 
   @Override
@@ -281,11 +305,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public static String getTestsExternalCompilerHome() {
     String compilerHome = System.getProperty(TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME, null);
     if (compilerHome == null) {
-      if (SystemInfo.isMac) {
-        compilerHome = new File(System.getProperty("java.home")).getAbsolutePath();
+      File javaHome = new File(System.getProperty("java.home"));
+      if (SystemInfo.isMac || !new File(javaHome.getParentFile(), "bin").exists()) {
+        compilerHome = javaHome.getAbsolutePath();
       }
       else {
-        compilerHome = new File(System.getProperty("java.home")).getParentFile().getAbsolutePath();        
+        compilerHome = javaHome.getParentFile().getAbsolutePath();
       }
     }
     return compilerHome;
@@ -653,9 +678,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public void readExternal(Element parentNode)  {
     myState = XmlSerializer.deserialize(parentNode, State.class);
-    Element option = parentNode.getChild("option");
     if (!myProject.isDefault()) {
-      myState.compilerWasSpecified = option != null && "DEFAULT_COMPILER".equals(option.getAttributeValue("name"));
+      for (Element option : parentNode.getChildren("option")) {
+        if ("DEFAULT_COMPILER".equals(option.getAttributeValue("name"))) {
+          myState.compilerWasSpecified = true;
+          break;
+        }
+      }
     }
 
     final Element notNullAssertions = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS);

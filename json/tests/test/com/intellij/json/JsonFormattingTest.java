@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterTestCase;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.ThrowableRunnable;
@@ -23,7 +22,6 @@ public class JsonFormattingTest extends FormatterTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    IdeaTestCase.initPlatformPrefix();
     super.setUp();
   }
 
@@ -61,12 +59,9 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   public void testWrapping() throws Exception {
-    withPreservedSettings(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        getSettings().setRightMargin(JsonLanguage.INSTANCE, 20);
-        doTest();
-      }
+    withPreservedSettings(() -> {
+      getSettings().setRightMargin(JsonLanguage.INSTANCE, 20);
+      doTest();
     });
   }
 
@@ -81,58 +76,48 @@ public class JsonFormattingTest extends FormatterTestCase {
   }
 
   private void checkPropertyAlignment(@NotNull final PropertyAlignment alignmentType) throws Exception {
-    withPreservedSettings(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        getCustomSettings().PROPERTY_ALIGNMENT = alignmentType.getId();
-        doTest();
-      }
+    withPreservedSettings(() -> {
+      getCustomSettings().PROPERTY_ALIGNMENT = alignmentType.getId();
+      doTest();
     });
   }
 
   public void testChopDownArrays() throws Exception {
-    withPreservedSettings(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        getCustomSettings().ARRAY_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
-        getSettings().setRightMargin(JsonLanguage.INSTANCE, 40);
-        doTest();
-      }
+    withPreservedSettings(() -> {
+      getCustomSettings().ARRAY_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+      getSettings().setRightMargin(JsonLanguage.INSTANCE, 40);
+      doTest();
     });
+  }
+
+  // IDEA-138902
+  public void testObjectsWithSingleProperty() throws Exception {
+    withPreservedSettings(this::doTest);
   }
 
   // Moved from JavaScript
 
   public void testWeb3830() throws Exception {
-    withPreservedSettings(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
-        options.INDENT_SIZE = 8;
-        options.USE_TAB_CHARACTER = true;
-        options.TAB_SIZE = 8;
-        doTest();
-      }
+    withPreservedSettings(() -> {
+      CommonCodeStyleSettings.IndentOptions options = getIndentOptions();
+      options.INDENT_SIZE = 8;
+      options.USE_TAB_CHARACTER = true;
+      options.TAB_SIZE = 8;
+      doTest();
     });
   }
 
   public void testReformatJSon() throws Exception {
-    withPreservedSettings(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        getIndentOptions().INDENT_SIZE = 4;
-        doTest();
-      }
+    withPreservedSettings(() -> {
+      getIndentOptions().INDENT_SIZE = 4;
+      doTest();
     });
   }
 
   public void testReformatJSon2() throws Exception {
-    withPreservedSettings(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        getIndentOptions().INDENT_SIZE = 4;
-        doTest();
-      }
+    withPreservedSettings(() -> {
+      getIndentOptions().INDENT_SIZE = 4;
+      doTest();
     });
   }
 

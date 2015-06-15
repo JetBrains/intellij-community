@@ -55,7 +55,12 @@
     <stacktrace.fold substring="at org.junit.Assert.assert"/>
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
+    <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.run"/>
+    <stacktrace.fold substring="at junit.framework.TestResult"/>
 
+    <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.execution.junit.JUnitRunLineMarkerProvider"/>
   </extensions>
 
   <extensionPoints>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,39 +29,58 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class DomExtenderEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.reflect.DomExtenderEP");
+
   public static final ExtensionPointName<DomExtenderEP> EP_NAME = ExtensionPointName.create("com.intellij.dom.extender");
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.reflect.DomExtenderEP");
 
   @Attribute("domClass")
   public String domClassName;
   @Attribute("extenderClass")
   public String extenderClassName;
 
-  private Class<?> myDomClass;
-  private DomExtender myExtender;
-
+  private volatile Class<?> myDomClass;
+  private volatile DomExtender myExtender;
 
   @Nullable
-  public DomExtensionsRegistrarImpl extend(@NotNull final Project project, @NotNull final DomInvocationHandler handler, @Nullable DomExtensionsRegistrarImpl registrar) {
-    if (myExtender == null) {
+  public DomExtensionsRegistrarImpl extend(@NotNull final Project project,
+                                           @NotNull final DomInvocationHandler handler,
+                                           @Nullable DomExtensionsRegistrarImpl registrar) {
+    if (myDomClass == null) {
       try {
         myDomClass = findClass(domClassName);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return registrar;
+      }
+    }
+
+    if (!myDomClass.isAssignableFrom(handler.getRawType())) {
+      return registrar;
+    }
+
+
+    if (myExtender == null) {
+      try {
         myExtender = instantiate(extenderClassName, project.getPicoContainer());
       }
-      catch(Exception e) {
+      catch (Exception e) {
         LOG.error(e);
-        return null;
+        return registrar;
       }
     }
-    if (myDomClass.isAssignableFrom(handler.getRawType())) {
-      if (!myExtender.supportsStubs() && XmlUtil.isStubBuilding()) return registrar;
-      if (registrar == null) {
-        registrar = new DomExtensionsRegistrarImpl();
-      }
-      //noinspection unchecked
-      myExtender.registerExtensions(handler.getProxy(), registrar);
+
+    if (!myExtender.supportsStubs() && XmlUtil.isStubBuilding()) {
+      return registrar;
     }
+
+    if (registrar == null) {
+      registrar = new DomExtensionsRegistrarImpl();
+    }
+    //noinspection unchecked
+    myExtender.registerExtensions(handler.getProxy(), registrar);
+
     return registrar;
   }
-
 }

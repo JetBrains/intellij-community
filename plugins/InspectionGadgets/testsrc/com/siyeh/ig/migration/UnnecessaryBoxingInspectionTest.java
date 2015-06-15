@@ -1,16 +1,25 @@
 package com.siyeh.ig.migration;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryBoxingInspectionTest extends IGInspectionTestCase {
+public class UnnecessaryBoxingInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/migration/unnecessary_boxing", new UnnecessaryBoxingInspection());
+  public void testUnnecessaryBoxing() {
+    doTest();
   }
 
-  public void testSuperfluous() throws Exception {
-    final UnnecessaryBoxingInspection tool = new UnnecessaryBoxingInspection();
-    tool.onlyReportSuperfluouslyBoxed = true;
-    doTest("com/siyeh/igtest/migration/unnecessary_superfluous_boxing", tool);
+  public void testUnnecessarySuperfluousBoxing() {
+    final UnnecessaryBoxingInspection inspection = new UnnecessaryBoxingInspection();
+    inspection.onlyReportSuperfluouslyBoxed = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new UnnecessaryBoxingInspection();
   }
 }

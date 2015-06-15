@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.Convertor;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -139,7 +140,7 @@ public class GitChangeProvider implements ChangeProvider {
                                public boolean process(VirtualFile parent, VirtualFile child) {
                                  if (! existingInScope.contains(child) && existingInScope.contains(parent)) {
                                    debug("adding git root for check: " + child.getPath());
-                                   ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(new FilePathImpl(child));
+                                   ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
                                  }
                                  return true;
                                }
@@ -200,7 +201,7 @@ public class GitChangeProvider implements ChangeProvider {
       // Populating myUnversioned in the ChangeCollector makes nulls not possible in myUnversioned,
       // so proposing that the exception was fixed.
       // More detailed analysis will be needed in case the exception appears again. 2010-12-09.
-      myDirty.remove(new FilePathImpl(vf));
+      myDirty.remove(VcsUtil.getFilePath(vf));
     }
 
     public void feedBuilder(final ChangelistBuilder builder) throws VcsException {

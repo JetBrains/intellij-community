@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
@@ -67,7 +68,13 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.internal.impl.DefaultArtifactResolver;
+import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.spi.log.LoggerFactory;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,6 +124,8 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
   private boolean myAlwaysUpdateSnapshots;
 
   public Maven32ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
+    super(settings);
+
     File mavenHome = settings.getMavenHome();
     if (mavenHome != null) {
       System.setProperty("maven.home", mavenHome.getPath());
@@ -157,16 +166,24 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     Object cliRequest;
     try {
-      String[] commandLineOptions = new String[settings.getUserProperties().size()];
-      int idx = 0;
+      List<String> commandLineOptions = new ArrayList<String>(settings.getUserProperties().size());
       for (Map.Entry<Object, Object> each : settings.getUserProperties().entrySet()) {
-        commandLineOptions[idx++] = "-D" + each.getKey() + "=" + each.getValue();
+        commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
+      }
+
+      if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DEBUG) {
+        commandLineOptions.add("-X");
+        commandLineOptions.add("-e");
+      }
+      else if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DISABLED) {
+        commandLineOptions.add("-q");
       }
 
       //noinspection unchecked
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
-      cliRequest = constructor.newInstance(commandLineOptions, classWorld);
+      //noinspection SSBasedInspection
+      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[commandLineOptions.size()]), classWorld);
 
       for (String each : new String[]{"initialize", "cli", "logging", "properties", "container"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
@@ -874,8 +891,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
     try {
-      resolve(artifact, remoteRepositories);
-      return artifact;
+      return resolve(artifact, remoteRepositories);
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
@@ -883,20 +899,59 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     return artifact;
   }
 
-  public void resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
-    throws ArtifactResolutionException, ArtifactNotFoundException {
+  private Artifact resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
+    throws
+    ArtifactResolutionException,
+    ArtifactNotFoundException,
+    RemoteException,
+    org.eclipse.aether.resolution.ArtifactResolutionException {
 
-    MavenExecutionRequest request = new DefaultMavenExecutionRequest();
-    request.setRemoteRepositories(repos);
-    try {
-      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(request, myMavenSettings);
-      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(request);
-    }
-    catch (MavenExecutionRequestPopulationException e) {
-      throw new RuntimeException(e);
-    }
+    final String mavenVersion = getMavenVersion();
+    // org.eclipse.aether.RepositorySystem.newResolutionRepositories() method doesn't exist in aether-api-0.9.0.M2.jar used before maven 3.2.5
+    // see https://youtrack.jetbrains.com/issue/IDEA-140208 for details
+    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING || StringUtil.compareVersionNumbers(mavenVersion, "3.2.5") < 0) {
+      MavenExecutionRequest request = new DefaultMavenExecutionRequest();
+      request.setRemoteRepositories(repos);
+      try {
+        getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(request, myMavenSettings);
+        getComponent(MavenExecutionRequestPopulator.class).populateDefaults(request);
+      }
+      catch (MavenExecutionRequestPopulationException e) {
+        throw new RuntimeException(e);
+      }
 
-    getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
+      getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
+      return artifact;
+    }
+    else {
+      final MavenExecutionRequest request =
+        createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+      for (ArtifactRepository artifactRepository : repos) {
+        request.addRemoteRepository(artifactRepository);
+      }
+
+      DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+      RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
+
+      final org.eclipse.aether.impl.ArtifactResolver artifactResolver = getComponent(org.eclipse.aether.impl.ArtifactResolver.class);
+      final MyLoggerFactory loggerFactory = new MyLoggerFactory();
+      if (artifactResolver instanceof DefaultArtifactResolver) {
+        ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
+      }
+
+      final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
+      if (repositorySystem instanceof DefaultRepositorySystem) {
+        ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
+      }
+
+      List<RemoteRepository> repositories = RepositoryUtils.toRepos(request.getRemoteRepositories());
+      repositories = repositorySystem.newResolutionRepositories(repositorySystemSession, repositories);
+
+      final ArtifactResult artifactResult = repositorySystem.resolveArtifact(
+        repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact), repositories, null));
+
+      return RepositoryUtils.toArtifact(artifactResult.getArtifact());
+    }
   }
 
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
@@ -1143,6 +1198,43 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   public interface Computable<T> {
     T compute();
+  }
+
+  private class MyLoggerFactory implements LoggerFactory {
+    @Override
+    public org.eclipse.aether.spi.log.Logger getLogger(String s) {
+      return new org.eclipse.aether.spi.log.Logger() {
+        @Override
+        public boolean isDebugEnabled() {
+          return myConsoleWrapper.isDebugEnabled();
+        }
+
+        @Override
+        public void debug(String s) {
+          myConsoleWrapper.debug(s);
+        }
+
+        @Override
+        public void debug(String s, Throwable throwable) {
+          myConsoleWrapper.debug(s, throwable);
+        }
+
+        @Override
+        public boolean isWarnEnabled() {
+          return myConsoleWrapper.isWarnEnabled();
+        }
+
+        @Override
+        public void warn(String s) {
+          myConsoleWrapper.warn(s);
+        }
+
+        @Override
+        public void warn(String s, Throwable throwable) {
+          myConsoleWrapper.debug(s, throwable);
+        }
+      };
+    }
   }
 }
 

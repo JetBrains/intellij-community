@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 Bas Leijdekkers
+ * Copyright 2013-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,11 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       final Object value = ExpressionUtils.computeConstantExpression(logStringArgument);
       final int placeholderCount = countPlaceholders(value);
       if (placeholderCount < 0 || argumentCount < 0 || placeholderCount == argumentCount) {
+        return;
+      }
+      if (placeholderCount > 1 && placeholderCount == argumentCount + 1 && hasThrowableType(arguments[arguments.length - 1])) {
+        // if there is more than one argument and the last argument is an exception, but there is a placeholder for
+        // the exception, then the stack trace won't be logged.
         return;
       }
       registerError(logStringArgument, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount), value);

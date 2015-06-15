@@ -26,12 +26,11 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -49,6 +48,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author yole
  */
 public class ProgressIndicatorTest extends LightPlatformTestCase {
+  public ProgressIndicatorTest() {
+    PlatformTestCase.autodetectPlatformPrefix();
+  }
+
   public void testCheckCanceledHasStackFrame() {
     ProgressIndicator pib = new ProgressIndicatorBase();
     pib.cancel();
@@ -173,7 +176,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
                 }
               }, indicator);
             }
-          }){{start();}};
+          },"indicator test"){{start();}};
         }
       });
       ContainerUtil.process(threads, new Processor<Thread>() {
@@ -404,6 +407,30 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     catch (ProcessCanceledException ignored) {
 
     }
+  }
+
+  public void testBombedIndicator() {
+    final int count = 10;
+    new BombedProgressIndicator(count).runBombed(new Runnable() {
+      @Override
+      public void run() {
+        for (int i = 0; i < count * 2; i++) {
+          TimeoutUtil.sleep(10);
+          try {
+            ProgressManager.checkCanceled();
+            if (i >= count) {
+              ProgressManager.checkCanceled();
+              fail("PCE expected on " + i + "th check");
+            }
+          }
+          catch (ProcessCanceledException e) {
+            if (i < count) {
+              fail("Too early PCE");
+            }
+          }
+        }
+      }
+    });
   }
 
   private static class ProgressIndicatorStub implements ProgressIndicatorEx {

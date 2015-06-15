@@ -297,7 +297,7 @@ public class GenericsUtil {
       }
       else if (substituted instanceof PsiCapturedWildcardType) {
         final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
-        if (acceptExtendsBound(extendsType, extendsBound) || extendsType.equals(substitutor.substitute(extendsBound))) {
+        if (acceptExtendsBound(extendsType, extendsBound) || extendsType.equals(extendsBound)) {
           return null;
         }
       }
@@ -509,7 +509,7 @@ public class GenericsUtil {
       final PsiType bound = ((PsiWildcardType)type).getBound();
       return eliminateWildcards(bound != null ? bound : ((PsiWildcardType)type).getExtendsBound(), false);//object
     } else if (type instanceof PsiCapturedWildcardType && !eliminateInTypeArguments) {
-      return eliminateWildcards(((PsiCapturedWildcardType)type).getWildcard(), eliminateInTypeArguments);
+      return eliminateWildcards(((PsiCapturedWildcardType)type).getUpperBound(), false);
     }
     return type;
   }

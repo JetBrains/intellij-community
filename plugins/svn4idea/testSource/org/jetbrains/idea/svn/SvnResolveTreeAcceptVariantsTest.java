@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
@@ -129,7 +130,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       final String conflictFile = data.getConflictFile();
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
-      final FilePathImpl filePath = new FilePathImpl(conflictIoFile, conflictIoFile.isDirectory());
+      final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
       final Change change = myChangeListManager.getChange(filePath);
       Assert.assertNotNull(change);
       Assert.assertTrue(change instanceof ConflictedSvnChange);
@@ -239,7 +240,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       final String conflictFile = data.getConflictFile();
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
-      final FilePathImpl filePath = new FilePathImpl(conflictIoFile, conflictIoFile.isDirectory());
+      final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
       final Change change = myChangeListManager.getChange(filePath);
       Assert.assertNotNull(change);
       Assert.assertTrue(change instanceof ConflictedSvnChange);

@@ -51,6 +51,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +186,7 @@ public abstract class UsefulTestCase extends TestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    Set<String> files = ReflectionUtil.getField(aClass, null, Set.class, "files");
+    Set<String> files = ReflectionUtil.getStaticFieldValue(aClass, Set.class, "files");
     DELETE_ON_EXIT_HOOK_CLASS = aClass;
     DELETE_ON_EXIT_HOOK_DOT_FILES = files;
   }
@@ -479,6 +480,17 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public static void assertOrderedEquals(@NotNull int[] actual, @NotNull int[] expected) {
+    if (actual.length != expected.length) {
+      fail("Expected size: "+expected.length+"; actual: "+actual.length+"\nexpected: "+Arrays.toString(expected)+"\nactual  : "+Arrays.toString(actual));
+    }
+    for (int i = 0; i < actual.length; i++) {
+      int a = actual[i];
+      int e = expected[i];
+      assertEquals("not equals at index: "+i, e, a);
+    }
+  }
+
   public static <T> void assertOrderedEquals(final String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
     Assert.assertNotNull(actual);
     Assert.assertNotNull(expected);
@@ -645,6 +657,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  @Contract("null, _ -> fail")
   public static <T> T assertInstanceOf(Object o, Class<T> aClass) {
     Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
     Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));

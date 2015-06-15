@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.List;
 public class ComplementaryFontsRegistry {
   private static final Object lock = new String("common lock");
   private static final List<String> ourFontNames;
-  private static final Set<String> ourStyledFontNames;
+  private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<String, Pair<String, Integer>[]>();
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
   private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0);
   private static FontInfo ourSharedDefaultFont;
@@ -100,23 +100,14 @@ public class ComplementaryFontsRegistry {
   @NonNls private static final String ITALIC_SUFFIX = ".italic";
 
   static {
-    ourStyledFontNames = new HashSet<String>();
     ourFontNames = new ArrayList<String>();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourFontNames.add("Monospaced");
     } else {
-      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
       if (SystemInfo.isMac) {
-        Font[] allFonts = graphicsEnvironment.getAllFonts();
-        for (Font font : allFonts) {
-          String name = font.getName();
-          if (name.endsWith("-Italic") || name.endsWith("-Bold") || name.endsWith("-BoldItalic")) {
-            ourStyledFontNames.add(font.getName());
-          }
-        }
+        fillStyledFontMap();
       }
-
-      String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
+      String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
       for (final String fontName : fontNames) {
         if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX)) {
           ourFontNames.add(fontName);
@@ -126,21 +117,48 @@ public class ComplementaryFontsRegistry {
     ourUsedFonts = new LinkedHashMap<FontKey, FontInfo>();
   }
 
-  private static Pair<String, Integer> fontFamily(String familyName, int style) {
-    if (!SystemInfo.isMac || style == 0) return Pair.create(familyName, style);
+  private static void fillStyledFontMap() {
+    Font[] allFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+    for (Font font : allFonts) {
+      String name = font.getName();
+      int style;
+      if (name.endsWith("-Italic")) {
+        style = Font.ITALIC;
+      }
+      else if (name.endsWith("-Bold")) {
+        style = Font.BOLD;
+      }
+      else if (name.endsWith("-BoldItalic")) {
+        style = Font.BOLD | Font.ITALIC;
+      }
+      else {
+        style = Font.PLAIN;
+      }
+      if (style != Font.PLAIN) {
+        String baseName = name.substring(0, name.lastIndexOf('-'));
+        Pair<String, Integer>[] entry = ourStyledFontMap.get(baseName);
+        if (entry == null) {
+          //noinspection unchecked
+          entry = new Pair[4];
+          for (int i = 1; i < 4; i++) {
+            entry[i] = Pair.create(baseName, i);
+          }
+          ourStyledFontMap.put(baseName, entry);
+        }
+        entry[style] = Pair.create(name, Font.PLAIN);
+      }
+    }
+  }
 
-    StringBuilder st = new StringBuilder(familyName).append('-');
-    if ((style & Font.BOLD) != 0) {
-      st.append("Bold");
+  private static Pair<String, Integer> fontFamily(String familyName, int style) {
+    if (SystemInfo.isMac && style > 0 && style < 4) {
+      Pair<String, Integer>[] replacement = ourStyledFontMap.get(familyName);
+      if (replacement != null) {
+        familyName = replacement[style].first;
+        style = replacement[style].second;
+      }
     }
-    
-    if ((style & Font.ITALIC) != 0) {
-      st.append("Italic");
-    }
-    
-    String styledFamilyName = st.toString();
-    boolean found = ourStyledFontNames.contains(styledFamilyName);
-    return Pair.create(found ? styledFamilyName : familyName, found ? Font.PLAIN : style);
+    return Pair.create(familyName, style);
   }
 
   @NotNull

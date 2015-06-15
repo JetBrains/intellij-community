@@ -17,18 +17,23 @@ package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
-import com.intellij.diff.contents.BinaryFileContent;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.FocusTrackerSupport;
+import com.intellij.diff.tools.util.SimpleDiffPanel;
+import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -44,21 +49,18 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.ui.AnimatedIcon;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -66,7 +68,7 @@ import java.util.List;
 public class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(BinaryDiffViewer.class);
 
-  @NotNull private final BinaryDiffPanel myPanel;
+  @NotNull private final SimpleDiffPanel myPanel;
   @NotNull private final BinaryContentPanel myContentPanel;
   @NotNull private final MyStatusPanel myStatusPanel;
 
@@ -75,10 +77,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   @Nullable private final FileEditorProvider myEditorProvider1;
   @Nullable private final FileEditorProvider myEditorProvider2;
 
-  @Nullable private final MyEditorFocusListener myEditorFocusListener1;
-  @Nullable private final MyEditorFocusListener myEditorFocusListener2;
-
-  @NotNull private Side myCurrentSide = Side.LEFT;
+  @NotNull private final FocusTrackerSupport.TwosideFocusTrackerSupport myFocusTrackerSupport;
 
   public BinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -90,61 +89,36 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     myEditorProvider1 = editors.first.second;
     myEditor2 = editors.second.first;
     myEditorProvider2 = editors.second.second;
+    assert myEditor1 != null || myEditor2 != null;
 
-    if (myEditor1 != null && myEditor2 != null) {
-      myEditorFocusListener1 = new MyEditorFocusListener(Side.LEFT);
-      myEditorFocusListener2 = new MyEditorFocusListener(Side.RIGHT);
-    }
-    else {
-      myEditorFocusListener1 = null;
-      myEditorFocusListener2 = null;
-    }
+    myFocusTrackerSupport = new FocusTrackerSupport.TwosideFocusTrackerSupport(getEditor1(), getEditor2());
+    myContentPanel = new BinaryContentPanel(titlePanel, getEditor1(), getEditor2());
 
-
-    myContentPanel = new BinaryContentPanel(titlePanel, myEditor1, myEditor2);
-
-    myPanel = new BinaryDiffPanel(this, myContentPanel, this, context);
-    if (myEditor1 == null && myEditor2 == null) myPanel.setErrorContent();
+    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
     myStatusPanel = new MyStatusPanel();
 
     new MyFocusOppositePaneAction().setupAction(myPanel);
-
-
-    installEditorListeners();
   }
 
-  @Override
-  protected void onInit() {
-    super.onInit();
-    processContextHints();
-  }
-
-  @Override
+  @CalledInAwt
   public void onDispose() {
-    updateContextHints();
-    destroyEditorListeners();
     destroyEditors();
     super.onDispose();
   }
 
-  private void processContextHints() {
-    if (myEditor1 == null) {
-      myCurrentSide = Side.RIGHT;
-    }
-    else if (myEditor2 == null) {
-      myCurrentSide = Side.LEFT;
-    }
-    else {
-      Side side = myContext.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE);
-      if (side != null) myCurrentSide = side;
-    }
+  @Override
+  @CalledInAwt
+  protected void processContextHints() {
+    super.processContextHints();
+    myFocusTrackerSupport.processContextHints(myRequest, myContext);
   }
 
-  private void updateContextHints() {
-    if (myEditor1 != null && myEditor2 != null) {
-      myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, myCurrentSide);
-    }
+  @Override
+  @CalledInAwt
+  protected void updateContextHints() {
+    super.updateContextHints();
+    myFocusTrackerSupport.updateContextHints(myRequest, myContext);
   }
 
   //
@@ -173,9 +147,9 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   private Pair<FileEditor, FileEditorProvider> createEditor(@NotNull final DiffContent content) throws IOException {
     if (content instanceof EmptyContent) return Pair.empty();
-    if (content instanceof BinaryFileContent) {
+    if (content instanceof FileContent) {
       Project project = myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((BinaryFileContent)content).getFile();
+      VirtualFile file = ((FileContent)content).getFile();
 
       FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
       if (providers.length == 0) throw new IOException("Can't find FileEditorProvider");
@@ -208,27 +182,13 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
 
   private void destroyEditors() {
-    if (myEditor1 != null) {
+    if (getEditor1() != null) {
       assert myEditorProvider1 != null;
-      myEditorProvider1.disposeEditor(myEditor1);
+      myEditorProvider1.disposeEditor(getEditor1());
     }
-    if (myEditor2 != null) {
+    if (getEditor2() != null) {
       assert myEditorProvider2 != null;
-      myEditorProvider2.disposeEditor(myEditor2);
-    }
-  }
-
-  private void installEditorListeners() {
-    if (myEditor1 != null && myEditor2 != null) {
-      myEditor1.getComponent().addFocusListener(myEditorFocusListener1);
-      myEditor2.getComponent().addFocusListener(myEditorFocusListener2);
-    }
-  }
-
-  private void destroyEditorListeners() {
-    if (myEditor1 != null && myEditor2 != null) {
-      myEditor1.getComponent().removeFocusListener(myEditorFocusListener1);
-      myEditor2.getComponent().removeFocusListener(myEditorFocusListener2);
+      myEditorProvider2.disposeEditor(getEditor2());
     }
   }
 
@@ -251,69 +211,61 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
       List<DiffContent> contents = myRequest.getContents();
 
       if (contents.get(0) instanceof EmptyContent) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            clearDiffPresentation();
-            myPanel.addInsertedContentNotification();
-          }
-        };
+        return applyNotification(DiffNotifications.INSERTED_CONTENT);
       }
 
       if (contents.get(1) instanceof EmptyContent) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            clearDiffPresentation();
-            myPanel.addRemovedContentNotification();
-          }
-        };
+        return applyNotification(DiffNotifications.REMOVED_CONTENT);
       }
 
-      // TODO: compare text with image by-byte?
-      if (!(contents.get(0) instanceof BinaryFileContent) || !(contents.get(1) instanceof BinaryFileContent)) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            clearDiffPresentation();
-          }
-        };
+      if (!(contents.get(0) instanceof FileContent) || !(contents.get(1) instanceof FileContent)) {
+        return applyNotification(null);
       }
 
-      final BinaryFileContent content1 = (BinaryFileContent)contents.get(0);
-      final BinaryFileContent content2 = (BinaryFileContent)contents.get(1);
-      byte[] bytes1 = content1.getBytes();
-      byte[] bytes2 = content2.getBytes();
+      final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
+      final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
+      if (!file1.isValid() || !file2.isValid()) {
+        return applyNotification(DiffNotifications.ERROR);
+      }
 
-      final boolean equal = Arrays.equals(bytes1, bytes2);
-
-      return new Runnable() {
+      final boolean equal = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
-        public void run() {
-          clearDiffPresentation();
-          if (equal) myPanel.addContentsEqualNotification();
+        public Boolean compute() {
+          try {
+            // we can't use getInputStream() here because we can't restore BOM marker
+            // (getBom() can return null for binary files, while getInputStream() strips BOM for all files).
+            // It can be made for files from VFS that implements FileSystemInterface though.
+            byte[] bytes1 = file1.contentsToByteArray();
+            byte[] bytes2 = file2.contentsToByteArray();
+            return Arrays.equals(bytes1, bytes2);
+          }
+          catch (IOException e) {
+            LOG.warn(e);
+            return false;
+          }
         }
-      };
+      });
+
+      return applyNotification(equal ? DiffNotifications.EQUAL_CONTENTS : null);
     }
     catch (ProcessCanceledException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addOperationCanceledNotification();
-        }
-      };
+      return applyNotification(DiffNotifications.OPERATION_CANCELED);
     }
     catch (Throwable e) {
       LOG.error(e);
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
-        }
-      };
+      return applyNotification(DiffNotifications.ERROR);
     }
+  }
+
+  @NotNull
+  private Runnable applyNotification(@Nullable final JComponent notification) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        clearDiffPresentation();
+        if (notification != null) myPanel.addNotification(notification);
+      }
+    };
   }
 
   private void clearDiffPresentation() {
@@ -334,12 +286,16 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myPanel.getPreferredFocusedComponent();
+    return getCurrentEditor().getPreferredFocusedComponent();
   }
 
   @NotNull
-  Side getCurrentSide() {
-    return myCurrentSide;
+  public Side getCurrentSide() {
+    return myFocusTrackerSupport.getCurrentSide();
+  }
+
+  public void setCurrentSide(@NotNull Side side) {
+    myFocusTrackerSupport.setCurrentSide(side);
   }
 
   @Nullable
@@ -352,9 +308,10 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     return myEditor1;
   }
 
-  @Nullable
+  @NotNull
   FileEditor getCurrentEditor() {
-    return getCurrentSide().select(myEditor1, myEditor2);
+    //noinspection ConstantConditions
+    return getCurrentSide().select(getEditor1(), getEditor2());
   }
 
   @NotNull
@@ -367,21 +324,10 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   // Misc
   //
 
-  @Override
-  protected boolean tryRediffSynchronously() {
-    return myPanel.isWindowFocused();
-  }
-
   @Nullable
   @Override
   protected OpenFileDescriptor getOpenFileDescriptor() {
-    ContentDiffRequest request = getRequest();
-    FileEditor editor = getCurrentEditor();
-    if (editor == null) return null;
-
-    DiffContent content = getCurrentSide().selectNotNull(request.getContents());
-
-    return content.getOpenFileDescriptor();
+    return getCurrentSide().selectNotNull(getRequest().getContents()).getOpenFileDescriptor();
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -402,10 +348,10 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
     if (content instanceof EmptyContent) return true;
     if (content instanceof DocumentContent) return true;
-    if (content instanceof BinaryFileContent) {
+    if (content instanceof FileContent) {
       Project project = context.getProject();
       if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((BinaryFileContent)content).getFile();
+      VirtualFile file = ((FileContent)content).getFile();
 
       return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
     }
@@ -414,8 +360,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
   public static boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
     if (content instanceof EmptyContent) return false;
-    if (content instanceof DocumentContent) return false;
-    if (content instanceof BinaryFileContent) {
+    if (content instanceof FileContent) {
       if (content.getContentType() == null) return false;
       if (content.getContentType().isBinary()) return true;
       if (content.getContentType() instanceof UIBasedFileType) return true;
@@ -431,14 +376,14 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      assert myEditor1 != null && myEditor2 != null;
-      myCurrentSide = myCurrentSide.other();
-      myPanel.requestFocus();
+      assert getEditor1() != null && getEditor2() != null;
+      setCurrentSide(getCurrentSide().other());
+      myContext.requestFocus();
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myEditor1 != null && myEditor2 != null);
+      e.getPresentation().setEnabled(getEditor1() != null && getEditor2() != null);
     }
   }
 
@@ -446,40 +391,19 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   // Helpers
   //
 
-  private static class MyStatusPanel extends JPanel {
-    private final AnimatedIcon myBusySpinner;
-
-    public MyStatusPanel() {
-      super(new BorderLayout());
-      myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
-      myBusySpinner.setVisible(false);
-
-      add(myBusySpinner, BorderLayout.WEST);
-      setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return DiffUtil.getVirtualFile(myRequest, getCurrentSide());
     }
-
-    public void setBusy(boolean busy) {
-      if (busy) {
-        myBusySpinner.setVisible(true);
-        myBusySpinner.resume();
-      }
-      else {
-        myBusySpinner.setVisible(false);
-        myBusySpinner.suspend();
-      }
-    }
+    return super.getData(dataId);
   }
 
-  private class MyEditorFocusListener extends FocusAdapter {
-    @NotNull private final Side mySide;
-
-    private MyEditorFocusListener(@NotNull Side side) {
-      mySide = side;
-    }
-
-    public void focusGained(FocusEvent e) {
-      if (myEditor1 == null || myEditor2 == null) return;
-      myCurrentSide = mySide;
+  private static class MyStatusPanel extends StatusPanel {
+    @Override
+    protected int getChangesCount() {
+      return -1;
     }
   }
 }

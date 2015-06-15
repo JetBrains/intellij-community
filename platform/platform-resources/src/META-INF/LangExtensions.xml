@@ -355,6 +355,7 @@
                     serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
     <!-- Editor -->
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="preferences.editor" key="title.editor"
                              bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
@@ -370,9 +371,11 @@
     <applicationConfigurable groupId="editor" groupWeight="120" instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable" id="preferences.fileTypes"
                              key="filetype.settings.title" bundle="messages.FileTypesBundle"/>
 
+    <search.topHitProvider implementation="com.intellij.codeInsight.intention.impl.config.IntentionsOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle" instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="preferences.intentionPowerPack"/>
 
     <!-- Live Templates -->
+    <search.topHitProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplatesOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" groupWeight="130" instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable" id="editing.templates"
                              key="templates.settings.page.title" bundle="messages.CodeInsightBundle"/>
     <search.optionContributor implementation="com.intellij.codeInsight.template.impl.TemplateSearchableOptionContributor"/>
@@ -398,7 +401,7 @@
                     serviceImplementation="com.intellij.tools.ToolsProjectConfig"/>
 
     <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory"/>
     <lang.braceMatcher language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher"/>
     <lang.quoteHandler language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeQuoteHandler"/>
     <lang.ast.factory language="TEXT" implementationClass="com.intellij.psi.impl.source.tree.PlainTextASTFactory"/>
@@ -559,6 +562,7 @@
     <!-- execution -->
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
+    <projectService serviceImplementation="com.intellij.execution.RunConfigurationProducerService" />
 
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
@@ -598,26 +602,25 @@
     <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
 
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorSmartKeysOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable" id="editor.preferences.smartKeys"
                            displayName="Smart Keys"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"
                            id="editor.preferences.appearance"
                            key="tab.editor.settings.appearance" bundle="messages.ApplicationBundle"/>
-    <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.OneLineEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.RightMarginEditorCustomization"/>
 
     <!-- Colors & Fonts-->
     <applicationConfigurable groupId="editor" groupWeight="180" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"
                            id="reference.settingsdialog.IDE.editor.colors" key="title.colors.and.fonts" bundle="messages.ApplicationBundle"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorTabsOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable" id="editor.preferences.tabs"
                            displayName="Editor Tabs"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.CodeFoldingOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable" id="editor.preferences.folding"
                            key="group.code.folding" bundle="messages.ApplicationBundle"/>
     <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions" id="editor.preferences.completion"
                            key="title.code.completion" bundle="messages.ApplicationBundle"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.AutoImportOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable" id="editor.preferences.import"
                            key="auto.import" bundle="messages.ApplicationBundle"/>
 
@@ -714,9 +717,6 @@
     <projectService serviceInterface="com.intellij.openapi.graph.impl.builder.GraphEditModeFactory"
                     serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphEditModeFactoryImpl"/>
 
-    <!-- SM Test runner tests locations -->
-    <testSrcLocator implementation="com.intellij.execution.testframework.sm.FileUrlProvider"/>
-
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
@@ -807,6 +807,7 @@
     <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
 
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>
+    <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
 
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.FrameworkUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.facet.impl.statistics.ModuleTypeUsagesCollector"/>

@@ -19,6 +19,7 @@ import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public class HgTagDialog extends DialogWrapper {
   private JTextField tagTxt;
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
 
-  public HgTagDialog(@NotNull Project project, @NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
+  public HgTagDialog(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
     super(project, false);
     hgRepositorySelectorComponent.setTitle("Select repository to tag");
     DocumentListener documentListener = new DocumentAdapter() {
@@ -47,7 +48,7 @@ public class HgTagDialog extends DialogWrapper {
     setTitle("Tag");
     init();
 
-    setRoots(repos, selectedRepo);
+    setRoots(repositories, selectedRepo);
   }
 
   public String getTagName() {
@@ -58,8 +59,8 @@ public class HgTagDialog extends DialogWrapper {
     return hgRepositorySelectorComponent.getRepository().getRoot();
   }
 
-  private void setRoots(@NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
-    hgRepositorySelectorComponent.setRoots(repos);
+  private void setRoots(@NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+    hgRepositorySelectorComponent.setRoots(repositories);
     hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
   }
 
@@ -68,7 +69,7 @@ public class HgTagDialog extends DialogWrapper {
   }
 
   private void validateFields() {
-    HgReferenceValidator validator = HgReferenceValidator.newInstance(hgRepositorySelectorComponent.getRepository());
+    HgReferenceValidator validator = new HgBranchReferenceValidator(hgRepositorySelectorComponent.getRepository());
     String name = getTagName();
     if (!validator.checkInput(name)) {
       String message = validator.getErrorText(name);

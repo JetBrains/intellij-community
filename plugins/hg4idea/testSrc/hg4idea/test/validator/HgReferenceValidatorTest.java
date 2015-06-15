@@ -18,7 +18,6 @@ package hg4idea.test.validator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import hg4idea.test.HgPlatformTest;
-import hg4idea.test.HgTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -27,7 +26,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryImpl;
-import org.zmlx.hg4idea.util.HgReferenceValidator;
+import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 
 import java.util.Collection;
 
@@ -38,22 +37,20 @@ import static hg4idea.test.HgExecutor.hg;
 @RunWith(Parameterized.class)
 public class HgReferenceValidatorTest extends HgPlatformTest {
 
-  private HgReferenceValidator myValidator;
-  private static final String BRANCH_NAME = "Abranch";
+  private HgBranchReferenceValidator myValidator;
+  private static final String BRANCH_NAME = "ABranch";
   private static final String UNCOMMITTED_BRANCH = "uncommitted new branch";
 
   @NotNull private final String myBranchName;
   private final boolean myExpected;
 
-
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    HgTestUtil.updateDirectoryMappings(myProject, myRepository);
     HgRepository hgRepository = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     assertNotNull(hgRepository);
-    myValidator = HgReferenceValidator.newInstance(hgRepository);
+    myValidator = new HgBranchReferenceValidator(hgRepository);
     cd(myRepository);
     hg("branch '" + BRANCH_NAME + "'");
     String firstFile = "file.txt";

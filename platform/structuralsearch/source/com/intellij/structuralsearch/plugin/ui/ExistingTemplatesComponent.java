@@ -1,12 +1,15 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
@@ -71,7 +74,7 @@ public class ExistingTemplatesComponent {
       parent.add(node);
     }
 
-    final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(this.project).getConfigurationManager();
+    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
     userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category"));
     root.add(userTemplatesNode);
     setUserTemplates(configurationManager);
@@ -80,6 +83,8 @@ public class ExistingTemplatesComponent {
       patternTree.expandPath(new TreePath(new Object[]{root, nodeToExpand}));
     }
 
+    final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
+    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
@@ -117,9 +122,12 @@ public class ExistingTemplatesComponent {
           }
           return false;
         }
-      }).createPanel();
+      })
+      .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
+      .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
+      .createPanel();
 
-      new JPanel(new BorderLayout());
+    new JPanel(new BorderLayout());
 
     configureSelectTemplateAction(patternTree);
 
@@ -207,13 +215,7 @@ public class ExistingTemplatesComponent {
   }
 
   public static ExistingTemplatesComponent getInstance(Project project) {
-    StructuralSearchPlugin plugin = StructuralSearchPlugin.getInstance(project);
-
-    if (plugin.getExistingTemplatesComponent() == null) {
-      plugin.setExistingTemplatesComponent(new ExistingTemplatesComponent(project));
-    }
-
-    return plugin.getExistingTemplatesComponent();
+    return ServiceManager.getService(project, ExistingTemplatesComponent.class);
   }
 
   private static class ExistingTemplatesListCellRenderer extends ColoredListCellRenderer {
@@ -223,6 +225,7 @@ public class ExistingTemplatesComponent {
     public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
       mySpeedSearch = speedSearch;
     }
+
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean focus) {
       if (!(value instanceof Configuration)) {
@@ -238,7 +241,8 @@ public class ExistingTemplatesComponent {
       final long created = configuration.getCreated();
       if (created > 0) {
         final String createdString = DateFormatUtil.formatPrettyDateTime(created);
-        append(" (" + createdString + ')', selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(" (" + createdString + ')',
+               selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
   }
@@ -283,7 +287,7 @@ public class ExistingTemplatesComponent {
   void addConfigurationToHistory(Configuration configuration) {
     historyModel.remove(configuration);
     historyModel.add(0, configuration);
-    final ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
+    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
     configurationManager.addHistoryConfigurationToFront(configuration);
     historyList.setSelectedIndex(0);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.LevenshteinDistance;
+import com.intellij.util.text.EditDistance;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -38,15 +38,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 public class BaseSpellChecker implements SpellCheckerEngine {
   static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
 
   private final Transformation transform = new Transformation();
-
   private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final LevenshteinDistance metrics = new LevenshteinDistance();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
   private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -55,7 +52,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public BaseSpellChecker(final Project project) {
     myProject = project;
   }
-
 
   @Override
   public void loadDictionary(@NotNull Loader loader) {
@@ -139,7 +135,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       }
     };
 
-
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(runnable);
   }
 
@@ -161,37 +156,26 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     return transform;
   }
 
-  @NotNull
-  private static List<String> restore(char startFrom, int i, int j, @NotNull Collection<? extends Dictionary> dictionaries) {
-    List<String> results = new ArrayList<String>();
-
+  private static void restore(char startFrom, int i, int j, Collection<? extends Dictionary> dictionaries, Collection<String> result) {
     for (Dictionary o : dictionaries) {
-      results.addAll(restore(startFrom, i, j, o));
+      restore(startFrom, i, j, o, result);
     }
-    return results;
   }
 
-  @NotNull
-  private static List<String> restore(final char first, final int i, final int j, @NotNull Dictionary dictionary) {
-    final List<String> result = new ArrayList<String>();
+  private static void restore(final char first, final int i, final int j, Dictionary dictionary, final Collection<String> result) {
     if (dictionary instanceof CompressedDictionary) {
-      result.addAll(((CompressedDictionary)dictionary).getWords(first, i, j));
+      ((CompressedDictionary)dictionary).getWords(first, i, j, result);
     }
     else {
       dictionary.traverse(new Consumer<String>() {
         @Override
         public void consume(String s) {
-          if (StringUtil.isEmpty(s)) {
-            return;
-          }
-          if (s.charAt(0) == first && s.length() >= i && s.length() <= j) {
+          if (!StringUtil.isEmpty(s) && s.charAt(0) == first && s.length() >= i && s.length() <= j) {
             result.add(s);
           }
         }
       });
     }
-
-    return result;
   }
 
   /**
@@ -204,13 +188,10 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       return -1;
     }
 
-    //System.out.println("dictionaries = " + dictionaries);
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
       if (dictionary == null) continue;
-      //System.out.print("\tBSC.isCorrect " + transformed + " " + dictionary);
       Boolean contains = dictionary.contains(transformed);
-      //System.out.println("\tcontains = " + contains);
       if (contains==null) ++errors;
       else if (contains) return 0;
     }
@@ -220,57 +201,50 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   @Override
   public boolean isCorrect(@NotNull String word) {
-    //System.out.println("---\n"+word);
     final String transformed = transform.transform(word);
     if (myLoadingDictionaries.get() || transformed == null) {
       return true;
     }
     int bundled = isCorrect(transformed, bundledDictionaries);
     int user = isCorrect(transformed, dictionaries);
-    //System.out.println("bundled = " + bundled);
-    //System.out.println("user = " + user);
     return bundled == 0 || user == 0 || bundled > 0 && user > 0;
   }
 
-
   @Override
   @NotNull
-  public List<String> getSuggestions(@NotNull final String word, int threshold, int quality) {
-    final String transformed = transform.transform(word);
-    if (transformed == null) {
-      return Collections.emptyList();
-    }
-    final List<Suggestion> suggestions = new ArrayList<Suggestion>();
-    List<String> rawSuggestions = restore(transformed.charAt(0), 0, Integer.MAX_VALUE, bundledDictionaries);
-    rawSuggestions.addAll(restore(word.charAt(0), 0, Integer.MAX_VALUE, dictionaries));
+  public List<String> getSuggestions(@NotNull String word, int maxSuggestions, int quality) {
+    String transformed = transform.transform(word);
+    if (transformed == null) return Collections.emptyList();
+
+    List<String> rawSuggestions = new ArrayList<String>();
+    restore(transformed.charAt(0), 0, Integer.MAX_VALUE, bundledDictionaries, rawSuggestions);
+    restore(word.charAt(0), 0, Integer.MAX_VALUE, dictionaries, rawSuggestions);
+    if (rawSuggestions.isEmpty()) return Collections.emptyList();
+
+    List<Suggestion> suggestions = new ArrayList<Suggestion>(rawSuggestions.size());
     for (String rawSuggestion : rawSuggestions) {
-      final int distance = metrics.calculateMetrics(transformed, rawSuggestion);
+      int distance = EditDistance.levenshtein(transformed, rawSuggestion, true);
       suggestions.add(new Suggestion(rawSuggestion, distance));
     }
-    List<String> result = new ArrayList<String>();
-    if (suggestions.isEmpty()) {
-      return result;
-    }
-    Collections.sort(suggestions);
-    int bestMetrics = suggestions.get(0).getMetrics();
-    for (int i = 0; i < threshold; i++) {
 
-      if (suggestions.size() <= i || bestMetrics - suggestions.get(i).getMetrics() > quality) {
+    Collections.sort(suggestions);
+    int limit = Math.min(maxSuggestions, suggestions.size());
+    List<String> result = new ArrayList<String>(limit);
+    int bestMetrics = suggestions.get(0).getMetrics();
+    for (int i = 0; i < limit; i++) {
+      Suggestion suggestion = suggestions.get(i);
+      if (bestMetrics - suggestion.getMetrics() > quality) {
         break;
       }
-      result.add(i, suggestions.get(i).getWord());
+      result.add(i, suggestion.getWord());
     }
     return result;
   }
 
-
   @Override
   @NotNull
   public List<String> getVariants(@NotNull String prefix) {
-    //if (StringUtil.isEmpty(prefix)) {
     return Collections.emptyList();
-    //}
-
   }
 
   @Override

@@ -229,6 +229,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
           apply = true;
         }
         else if (showOnlyFilteredItems) {
+          Disposer.dispose(child);
           continue;
         }
       }

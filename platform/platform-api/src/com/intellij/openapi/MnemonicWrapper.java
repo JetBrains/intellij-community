@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi;
 
+import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -202,6 +203,8 @@ abstract class MnemonicWrapper<T extends Component> implements Runnable, Propert
   // TODO: HACK because of Java7 required:
   // replace later with KeyEvent.getExtendedKeyCodeForChar(ch)
   private static int getExtendedKeyCodeForChar(int ch) {
+    //noinspection ConstantConditions
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
     try {
       Method method = KeyEvent.class.getMethod("getExtendedKeyCodeForChar", int.class);
       if (!method.isAccessible()) {

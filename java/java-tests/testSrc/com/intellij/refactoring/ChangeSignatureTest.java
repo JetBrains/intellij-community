@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -54,38 +54,23 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testGenericTypes() {
-    doTest(null, null, "T", new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        return new ParameterInfoImpl[]{
-          new ParameterInfoImpl(-1, "x", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
-          new ParameterInfoImpl(-1, "y", myFactory.createTypeFromText("C<T>", method.getParameterList()), "null")
-        };
-      }
+    doTest(null, null, "T", method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(-1, "x", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
+      new ParameterInfoImpl(-1, "y", myFactory.createTypeFromText("C<T>", method.getParameterList()), "null")
     }, false);
   }
 
   public void testGenericTypesInOldParameters() {
-    doTest(null, null, null, new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        return new ParameterInfoImpl[]{
-          new ParameterInfoImpl(0, "t", myFactory.createTypeFromText("T", method), null)
-        };
-      }
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "t", myFactory.createTypeFromText("T", method), null)
     }, false);
   }
 
   public void testTypeParametersInMethod() {
-    doTest(null, null, null, new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        return new ParameterInfoImpl[]{
-          new ParameterInfoImpl(-1, "t", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
-          new ParameterInfoImpl(-1, "u", myFactory.createTypeFromText("U", method.getParameterList()), "null"),
-          new ParameterInfoImpl(-1, "cu", myFactory.createTypeFromText("C<U>", method.getParameterList()), "null")
-        };
-      }
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(-1, "t", myFactory.createTypeFromText("T", method.getParameterList()), "null"),
+      new ParameterInfoImpl(-1, "u", myFactory.createTypeFromText("U", method.getParameterList()), "null"),
+      new ParameterInfoImpl(-1, "cu", myFactory.createTypeFromText("C<U>", method.getParameterList()), "null")
     }, false);
   }
 
@@ -215,35 +200,20 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testUseAnyVariable() {
-    doTest(null, null, null, new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        return new ParameterInfoImpl[]{
-          new ParameterInfoImpl(-1, "l", myFactory.createTypeFromText("List", method), "null", true)
-        };
-      }
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(-1, "l", myFactory.createTypeFromText("List", method), "null", true)
     }, false);
   }
 
   public void testUseThisAsAnyVariable() {
-    doTest(null, null, null, new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        return new ParameterInfoImpl[]{
-          new ParameterInfoImpl(-1, "l", myFactory.createTypeFromText("List", method), "null", true)
-        };
-      }
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(-1, "l", myFactory.createTypeFromText("List", method), "null", true)
     }, false);
   }
 
   public void testUseAnyVariableAndDefault() {
-    doTest(null, null, null, new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        return new ParameterInfoImpl[]{
-          new ParameterInfoImpl(-1, "c", myFactory.createTypeFromText("C", method), "null", true)
-        };
-      }
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(-1, "c", myFactory.createTypeFromText("C", method), "null", true)
     }, false);
   }
 
@@ -282,13 +252,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAlreadyHandled() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           new GenExceptions() {
-             @Override
-             public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-               return new ThrownExceptionInfo[]{
-                 new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
-               };
-             }
+           method -> {
+             return new ThrownExceptionInfo[]{
+               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+             };
            },
            false
     );
@@ -296,13 +263,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testConstructorException() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           new GenExceptions() {
-             @Override
-             public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-               return new ThrownExceptionInfo[]{
-                 new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.io.IOException", method.getResolveScope()))
-               };
-             }
+           method -> {
+             return new ThrownExceptionInfo[]{
+               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.io.IOException", method.getResolveScope()))
+             };
            },
            false
     );
@@ -310,13 +274,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAddRuntimeException() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           new GenExceptions() {
-             @Override
-             public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-               return new ThrownExceptionInfo[]{
-                 new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
-               };
-             }
+           method -> {
+             return new ThrownExceptionInfo[]{
+               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
+             };
            },
            false
     );
@@ -324,13 +285,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAddException() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           new GenExceptions() {
-             @Override
-             public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
-               return new ThrownExceptionInfo[]{
-                 new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
-               };
-             }
+           method -> {
+             return new ThrownExceptionInfo[]{
+               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+             };
            },
            false
     );
@@ -357,14 +315,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testReplaceVarargWithArray() {
-    doTest(null, null, null, new GenParams() {
-      @Override
-      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
-        return new ParameterInfoImpl[]{
-          new ParameterInfoImpl(1, "l", myFactory.createTypeFromText("List<T>[]", method.getParameterList()), "null", false),
-          new ParameterInfoImpl(0, "s", myFactory.createTypeFromText("String", method.getParameterList()))
-        };
-      }
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(1, "l", myFactory.createTypeFromText("List<T>[]", method.getParameterList()), "null", false),
+      new ParameterInfoImpl(0, "s", myFactory.createTypeFromText("String", method.getParameterList()))
     }, false);
   }
 
@@ -397,7 +350,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testPropagateParameter() {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
-    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     final PsiClass containingClass = method.getContainingClass();
@@ -405,7 +358,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
     assertTrue(callers.length > 0);
     final PsiMethod caller = callers[0];
-    final HashSet<PsiMethod> propagateParametersMethods = new HashSet<PsiMethod>();
+    final HashSet<PsiMethod> propagateParametersMethods = new HashSet<>();
     propagateParametersMethods.add(caller);
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),

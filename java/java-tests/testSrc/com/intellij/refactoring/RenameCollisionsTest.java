@@ -16,10 +16,12 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
@@ -240,10 +242,37 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     doTest("T");
   }
 
+  private void doTestImpossibleToRename() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtil
+      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    assertTrue(PsiElementRenameHandler.isVetoed(element));
+  }
+
+  public void testNotAvailableForValueOf() throws Exception {
+    doTestImpossibleToRename();
+  }
+
+  public void testNotAvailableForValues() throws Exception {
+    doTestImpossibleToRename();
+  }
+
+  public void testNotAvailableForArrayLength() throws Exception {
+    try {
+      doTest("val");
+      fail("Should be impossible to rename");
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "This element cannot be renamed", e.getMessage());
+    }
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtilBase
-        .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil
+        .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
     new RenameProcessor(getProject(), element, newName, true, true).run();
     checkResultByFile(BASE_PATH + getTestName(false) + ".java.after");
@@ -251,10 +280,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
 
   public void testAllUsagesInCode() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtilBase
-        .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil
+        .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
-    final UsageInfo[] usageInfos = RenameUtil.findUsages(element, "newName", true, true, new HashMap<PsiElement, String>());
+    final UsageInfo[] usageInfos = RenameUtil.findUsages(element, "newName", true, true, new HashMap<>());
     assertSize(1, usageInfos);
     for (UsageInfo usageInfo : usageInfos) {
       assertTrue(usageInfo instanceof MoveRenameUsageInfo);

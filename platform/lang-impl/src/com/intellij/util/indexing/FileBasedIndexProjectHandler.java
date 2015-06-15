@@ -136,7 +136,11 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
-    final FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    final FileBasedIndex i = FileBasedIndex.getInstance();
+    if (!(i instanceof FileBasedIndexImpl)) {
+      return null;
+    }
+    final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
 
     if (index.getChangedFileCount() + index.getNumberOfPendingInvalidations() < 20) {
       return null;

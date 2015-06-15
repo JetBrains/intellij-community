@@ -25,11 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.*;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
-import git4idea.GitBranch;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.GitRemoteBranch;
-import git4idea.GitStandardRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.push.GitPushTagMode;
 import git4idea.repo.GitRemote;
@@ -265,8 +264,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     if (remote == null) {
       return null;
     }
-    GitRemoteBranch remoteBranch = GitUtil.findRemoteBranch(repository, remote, targetInfo.targetBranchName);
-    return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, targetInfo.targetBranchName, GitBranch.DUMMY_HASH));
+    return GitUtil.findOrCreateRemoteBranch(repository, remote, targetInfo.targetBranchName);
   }
 
   public void setPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch,

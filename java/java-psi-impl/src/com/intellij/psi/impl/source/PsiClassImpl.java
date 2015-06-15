@@ -38,8 +38,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,11 +119,15 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiElement getOriginalElement() {
-    final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
-    if (helper != null) {
-      return helper.getOriginalClass(this);
-    }
-    return this;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClass>() {
+      @Nullable
+      @Override
+      public Result<PsiClass> compute() {
+        final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
+        final PsiClass result = helper != null ? helper.getOriginalClass(PsiClassImpl.this) : PsiClassImpl.this;
+        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @Override

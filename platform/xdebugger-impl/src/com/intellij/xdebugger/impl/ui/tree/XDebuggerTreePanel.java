@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class XDebuggerTreePanel implements DnDSource {
     return myTree.getSelectedNodes(XValueNodeImpl.class, new Tree.NodeFilter<XValueNodeImpl>() {
       @Override
       public boolean accept(final XValueNodeImpl node) {
-        return node.getValueContainer().getEvaluationExpression() != null;
+        return DebuggerUIUtil.hasEvaluationExpression(node.getValueContainer());
       }
     });
   }

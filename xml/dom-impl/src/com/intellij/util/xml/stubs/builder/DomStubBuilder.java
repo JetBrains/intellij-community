@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import com.intellij.xml.util.XmlUtil;
  *         Date: 8/2/12
  */
 public class DomStubBuilder implements BinaryFileStubBuilder {
-  private final static Logger LOG = Logger.getInstance(DomStubBuilder.class);
+  private static final Logger LOG = Logger.getInstance(DomStubBuilder.class);
 
   @Override
   public boolean acceptsFile(VirtualFile file) {
@@ -57,6 +57,9 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(fileContent.getFile());
     Project project = fileContent.getProject();
+    if (project == null) {
+      project = psiFile.getProject();
+    }
     if (document != null) {
       PsiFile existingPsi = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (existingPsi instanceof XmlFile) {

@@ -70,7 +70,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
   private ProjectManager myProjectManager;
-  private volatile IProjectStore myComponentStore;
   private MyProjectManagerListener myProjectManagerListener;
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   public boolean myOptimiseTestLoadSpeed;
@@ -173,17 +172,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NotNull
   @Override
   public IProjectStore getStateStore() {
-    IProjectStore componentStore = myComponentStore;
-    if (componentStore != null) return componentStore;
-
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      componentStore = myComponentStore;
-      if (componentStore == null) {
-        myComponentStore = componentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
-      }
-      return componentStore;
-    }
+    return (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @Override
@@ -212,7 +201,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   @Override
-  protected ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getProjectComponents();
   }
 
@@ -346,7 +335,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
           }
         }
         catch (Throwable e) {
-          LOG.error("Unable to store project name");
+          LOG.error("Unable to store project name", e);
         }
       }
 
@@ -375,8 +364,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Extensions.disposeArea(this);
     myProjectManager = null;
     myProjectManagerListener = null;
-
-    myComponentStore = null;
 
     super.dispose();
 

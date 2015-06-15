@@ -207,7 +207,7 @@ public class CharTableImpl implements CharTable {
     for (Field field : aClass.getDeclaredFields()) {
       if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
       if ((field.getModifiers() & Modifier.PUBLIC) == 0) continue;
-      String typeName = ReflectionUtil.getField(aClass, null, String.class, field.getName());
+      String typeName = ReflectionUtil.getStaticFieldValue(aClass, String.class, field.getName());
       if (typeName != null) {
         staticIntern(typeName);
       }

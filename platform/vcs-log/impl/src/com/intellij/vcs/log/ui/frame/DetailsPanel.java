@@ -43,7 +43,6 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
-import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
@@ -533,8 +532,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     @Override
     public Dimension getPreferredSize() {
-      int width = myRefPainter.getComponentWidth(myRef.getName(), getFontMetrics(RefPainter.DEFAULT_FONT));
-      return new Dimension(width, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP);
+      int width = myRefPainter.getLabelWidth(myRef.getName(), getFontMetrics(RefPainter.DEFAULT_FONT));
+      return new Dimension(width, RefPainter.REF_HEIGHT + UIUtil.DEFAULT_VGAP);
     }
   }
 

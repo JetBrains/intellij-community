@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -56,7 +57,7 @@ public class AboutPopup {
   public void show(@Nullable Window window) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
-    JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
     if (appInfo.showLicenseeInfo()) {
       final InfoSurface infoSurface = new InfoSurface(image);
@@ -127,7 +128,7 @@ public class AboutPopup {
 
       setOpaque(false);
       setBackground(myColor);
-
+      setFocusable(true);
       Calendar cal = appInfo.getBuildDate();
       myLines.add(new AboutBoxLine(appInfo.getFullApplicationName(), true, null));
       appendLast();
@@ -213,7 +214,7 @@ public class AboutPopup {
       super.paintChildren(g);
 
       Graphics2D g2 = (Graphics2D)g;
-      UIUtil.applyRenderingHints(g);
+      UISettings.setupAntialiasing(g);
 
       Font labelFont = JBUI.Fonts.label();
       if (SystemInfo.isWindows) {

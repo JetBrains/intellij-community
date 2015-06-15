@@ -18,10 +18,10 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.IterationState2;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -35,37 +35,43 @@ import java.util.List;
 class LineLayout {
   private final BidiRun[] myBidiRunsInLogicalOrder;
   private final BidiRun[] myBidiRunsInVisualOrder;
-  private final float myMaxX;
+  private final float myWidth;
 
   /**
    * Creates a layout for a fragment of text from editor.
    */
-  LineLayout(@NotNull EditorView view, int startOffset, int endOffset, 
-             @NotNull FontRenderContext fontRenderContext, float startX) {
-    this(createFragments(view, startOffset, endOffset, fontRenderContext), startX);
+  LineLayout(@NotNull EditorView view, 
+             int startOffset, int endOffset, 
+             @NotNull FontRenderContext fontRenderContext) {
+    this(createFragments(view, startOffset, endOffset, fontRenderContext), false);
   }
 
   /**
    * Creates a layout for an arbitrary piece of text (using a common font style).
    */
-  LineLayout(@NotNull EditorView view, @NotNull CharSequence text, @JdkConstants.FontStyle int fontStyle, 
-             @NotNull FontRenderContext fontRenderContext, float startX) {
-    this(createFragments(view, text, fontStyle, fontRenderContext), startX);
+  LineLayout(@NotNull EditorView view, 
+             @NotNull CharSequence text, @JdkConstants.FontStyle int fontStyle, 
+             @NotNull FontRenderContext fontRenderContext) {
+    this(createFragments(view, text, fontStyle, fontRenderContext), true);
   }
   
-  private LineLayout(@NotNull List<BidiRun> runs, float startX) {
+  private LineLayout(@NotNull List<BidiRun> runs, boolean calculateWidth) {
     myBidiRunsInLogicalOrder = runs.toArray(new BidiRun[runs.size()]);
     myBidiRunsInVisualOrder = myBidiRunsInLogicalOrder.clone();
-    
-    if (myBidiRunsInLogicalOrder.length > 1) {
-      byte[] levels = new byte[myBidiRunsInLogicalOrder.length];
-      for (int i = 0; i < myBidiRunsInLogicalOrder.length; i++) {
-        levels[i] = myBidiRunsInLogicalOrder[i].level;
+   
+    reorderRunsVisually(myBidiRunsInVisualOrder);
+
+    myWidth = calculateWidth ? calculateWidth() : -1;
+  }
+
+  private static void reorderRunsVisually(BidiRun[] bidiRunsInLogicalOrder) {
+    if (bidiRunsInLogicalOrder.length > 1) {
+      byte[] levels = new byte[bidiRunsInLogicalOrder.length];
+      for (int i = 0; i < bidiRunsInLogicalOrder.length; i++) {
+        levels[i] = bidiRunsInLogicalOrder[i].level;
       }
-      Bidi.reorderVisually(levels, 0, myBidiRunsInVisualOrder, 0, levels.length);
+      Bidi.reorderVisually(levels, 0, bidiRunsInLogicalOrder, 0, levels.length);
     }
-    
-    myMaxX = calculateMaxX(startX);
   }
   
   private static List<BidiRun> createFragments(@NotNull EditorView view, int lineStartOffset, int lineEndOffset,
@@ -74,9 +80,10 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(editor.getDocument().getImmutableCharSequence(), lineStartOffset, lineEndOffset);
-    List<BidiRun> runs = createRuns(chars);
+    List<BidiRun> runs = createRuns(editor, chars);
     for (BidiRun run : runs) {
-      IterationState2 it = new IterationState2(editor, lineStartOffset + run.startOffset, lineStartOffset + run.endOffset, false);
+      IterationState it = new IterationState(editor, lineStartOffset + run.startOffset, lineStartOffset + run.endOffset, 
+                                             false, false, false, false);
       while (!it.atEnd()) {
         addFragments(run, chars, it.getStartOffset() - lineStartOffset, it.getEndOffset() - lineStartOffset,
                      it.getMergedAttributes().getFontType(), fontPreferences, fontRenderContext, view.getTabFragment());
@@ -93,16 +100,16 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(text);
-    List<BidiRun> runs = createRuns(chars);
+    List<BidiRun> runs = createRuns(editor, chars);
     for (BidiRun run : runs) {
-      addFragments(run, chars, run.startOffset, run.endOffset, fontStyle, fontPreferences, fontRenderContext,
-                   view.getTabFragment());
+      addFragments(run, chars, run.startOffset, run.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
       assert !run.fragments.isEmpty();
     }
     return runs;
   }
   
-  private static List<BidiRun> createRuns(char[] text) {
+  private static List<BidiRun> createRuns(EditorImpl editor, char[] text) {
+    if (editor.myDisableRtl) return Collections.singletonList(new BidiRun((byte)0, 0, text.length));
     Bidi bidi = new Bidi(text, 0, null, 0, text.length, Bidi.DIRECTION_LEFT_TO_RIGHT);
     int runCount = bidi.getRunCount();
     List<BidiRun> runs = new ArrayList<BidiRun>(runCount);
@@ -113,12 +120,13 @@ class LineLayout {
   }
   
   private static void addFragments(BidiRun run, char[] text, int start, int end, int fontStyle,
-                                   FontPreferences fontPreferences, FontRenderContext fontRenderContext, TabFragment tabFragment) {
+                                   FontPreferences fontPreferences, FontRenderContext fontRenderContext, 
+                                   @Nullable TabFragment tabFragment) {
     Font currentFont = null;
     int currentIndex = start;
     for(int i = start; i < end; i++) {
       char c = text[i];
-      if (c == '\t') {
+      if (c == '\t' && tabFragment != null) {
         assert run.level == 0;
         addTextFragmentIfNeeded(run, text, currentIndex, i, currentFont, fontRenderContext, run.isRtl());
         run.fragments.add(tabFragment);
@@ -145,33 +153,105 @@ class LineLayout {
     }
   }
   
-  private float calculateMaxX(float x) {
-    for (Fragment fragment : getFragmentsInVisualOrder()) {
-      x = fragment.advance(x);
+  private float calculateWidth() {
+    float x = 0;
+    for (VisualFragment fragment : getFragmentsInVisualOrder(x)) {
+      x = fragment.getEndX();
     }
     return x;
   }
   
-  float getMaxX() {
-    return myMaxX;
+  float getWidth() {
+    if (myWidth < 0) throw new RuntimeException("This LineLayout instance doesn't have precalculated width");
+    return myWidth;
   }
   
-  Iterable<Fragment> getFragmentsInLogicalOrder() {
-    return new Iterable<Fragment>() {
+  Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX) {
+    return new Iterable<VisualFragment>() {
       @Override
-      public Iterator<Fragment> iterator() {
-        return new LogicalOrderIterator();
+      public Iterator<VisualFragment> iterator() {
+        return new VisualOrderIterator(startX, 0, myBidiRunsInVisualOrder);
       }
     };
   }
 
-  Iterable<Fragment> getFragmentsInVisualOrder() {
-    return new Iterable<Fragment>() {
+  Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX, final int startVisualColumn, int startOffset, int endOffset) {
+    assert startOffset <= endOffset;
+    final BidiRun[] runs;
+    if (startOffset == endOffset) {
+      runs = new BidiRun[0];
+    }
+    else {
+      List<BidiRun> runList = new ArrayList<BidiRun>();
+      for (BidiRun run : myBidiRunsInLogicalOrder) {
+        if (run.endOffset <= startOffset) continue;
+        if (run.startOffset >= endOffset) break;
+        runList.add(run.subRun(startOffset, endOffset));
+      }
+      runs = runList.toArray(new BidiRun[runList.size()]);
+      reorderRunsVisually(runs);
+    }
+    return new Iterable<VisualFragment>() {
       @Override
-      public Iterator<Fragment> iterator() {
-        return new VisualOrderIterator();
+      public Iterator<VisualFragment> iterator() {
+        return new VisualOrderIterator(startX, startVisualColumn, runs);
       }
     };
+  }
+
+  boolean isLtr() {
+    return myBidiRunsInLogicalOrder.length == 0 || myBidiRunsInLogicalOrder.length == 1 && !myBidiRunsInLogicalOrder[0].isRtl();
+  }
+  
+  boolean isRtlLocation(int offset, boolean leanForward) {
+    if (offset == 0 && !leanForward) return false;
+    for (BidiRun run : myBidiRunsInLogicalOrder) {
+      if (offset < run.endOffset || offset == run.endOffset && !leanForward) return run.isRtl();
+    }
+    return false;
+  }
+
+  boolean isDirectionBoundary(int offset) {
+    boolean prevIsRtl = false;
+    for (BidiRun run : myBidiRunsInLogicalOrder) {
+      boolean curIsRtl = run.isRtl();
+      if (offset == run.startOffset && curIsRtl != prevIsRtl) return true;
+      if (offset < run.endOffset) return false;
+      prevIsRtl = curIsRtl;
+    }
+    return prevIsRtl;
+  }
+
+  int findNearestDirectionBoundary(int offset, boolean lookForward) {
+    if (lookForward) {
+      boolean foundOrigin = false;
+      boolean originIsRtl = false;
+      for (BidiRun run : myBidiRunsInLogicalOrder) {
+        if (foundOrigin) {
+          if (run.isRtl() != originIsRtl) return run.startOffset;
+        }
+        else if (run.endOffset > offset) {
+          foundOrigin = true;
+          originIsRtl = run.isRtl();
+        }
+      }
+      return originIsRtl ? myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset : -1;
+    }
+    else {
+      boolean foundOrigin = false;
+      boolean originIsRtl = false;
+      for (int i = myBidiRunsInLogicalOrder.length - 1; i >= 0; i--) {
+        BidiRun run = myBidiRunsInLogicalOrder[i];
+        if (foundOrigin) {
+          if (run.isRtl() != originIsRtl) return run.endOffset;
+        }
+        else if (run.startOffset < offset) {
+          foundOrigin = true;
+          originIsRtl = run.isRtl();
+        }
+      }
+      return originIsRtl ? 0 : -1;
+    }
   }
 
   private static class BidiRun {
@@ -189,66 +269,71 @@ class LineLayout {
     private boolean isRtl() {
       return (level & 1) != 0;
     }
-  }
-  
-  private class LogicalOrderIterator implements Iterator<Fragment> {
-    private int myRunIndex = 0;
-    private int myFragmentIndex = 0;
-    private int myOffset = 0;
-    private Fragment myFragment = new Fragment();
-    
-    @Override
-    public boolean hasNext() {
-      return myRunIndex < myBidiRunsInLogicalOrder.length && myFragmentIndex < myBidiRunsInLogicalOrder[myRunIndex].fragments.size();
-    }
 
-    @Override
-    public Fragment next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
+    private BidiRun subRun(int targetStartOffset, int targetEndOffset) {
+      assert targetStartOffset < endOffset;
+      assert targetEndOffset > startOffset;
+      if (targetStartOffset <= startOffset && targetEndOffset >= this.endOffset) {
+        return this;
       }
-      BidiRun run = myBidiRunsInLogicalOrder[myRunIndex];
-      myFragment.isRtl = run.isRtl();
-      myFragment.delegate = run.fragments.get(myFragmentIndex);
-      myFragment.startOffset = myOffset;
-      
-      myOffset += myFragment.delegate.getLength();
-      myFragmentIndex++;
-      if (myFragmentIndex >= run.fragments.size()) {
-        myFragmentIndex = 0;
-        myRunIndex++;
+      int start = Math.max(startOffset, targetStartOffset);
+      int end = Math.min(endOffset, targetEndOffset);
+      BidiRun run = new BidiRun(level, start, end);
+      int offset = startOffset;
+      for (LineFragment fragment : fragments) {
+        if (end <= offset) break;
+        int endOffset = offset + fragment.getLength();
+        if (start < endOffset) {
+          run.fragments.add(fragment.subFragment(Math.max(start, offset) - offset, Math.min(end, endOffset) - offset));
+        }
+        offset = endOffset;
       }
-      return myFragment;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
+      return run;
     }
   }
 
-  private class VisualOrderIterator implements Iterator<Fragment> {
+  private static class VisualOrderIterator implements Iterator<VisualFragment> {
+    private BidiRun[] myRuns;
     private int myRunIndex = 0;
     private int myFragmentIndex = 0;
     private int myOffsetInsideRun = 0;
-    private Fragment myFragment = new Fragment();
+    private VisualFragment myFragment = new VisualFragment();
 
-    @Override
-    public boolean hasNext() {
-      return myRunIndex < myBidiRunsInVisualOrder.length && myFragmentIndex < myBidiRunsInVisualOrder[myRunIndex].fragments.size();
+    public VisualOrderIterator(float startX, int startVisualColumn, BidiRun[] runsInVisualOrder) {
+      myRuns = runsInVisualOrder;
+      myFragment.startX = startX;
+      myFragment.startVisualColumn = startVisualColumn;
     }
 
     @Override
-    public Fragment next() {
+    public boolean hasNext() {
+      return myRunIndex < myRuns.length && myFragmentIndex < myRuns[myRunIndex].fragments.size();
+    }
+
+    @Override
+    public VisualFragment next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      BidiRun run = myBidiRunsInLogicalOrder[myRunIndex];
+      BidiRun run = myRuns[myRunIndex];
+
+      if (myRunIndex > 0 || myFragmentIndex > 0) {
+        myFragment.startLogicalColumn = myFragment.getEndLogicalColumn();
+        if (myFragmentIndex == 0) {
+          myFragment.startLogicalColumn += (run.isRtl() ? run.endOffset : run.startOffset) - myFragment.getEndOffset();
+        }
+        myFragment.startVisualColumn = myFragment.getEndVisualColumn();
+        myFragment.startX = myFragment.getEndX();
+      }
+      
       myFragment.isRtl = run.isRtl();
       myFragment.delegate = run.fragments.get(run.isRtl() ? run.fragments.size() - 1 - myFragmentIndex : myFragmentIndex);
-      myFragment.startOffset = run.isRtl() ? run.endOffset - myOffsetInsideRun - myFragment.delegate.getLength() 
-                                           : run.startOffset + myOffsetInsideRun;
+      myFragment.startOffset = run.isRtl() ? run.endOffset - myOffsetInsideRun : run.startOffset + myOffsetInsideRun;
       
+      if (myRunIndex == 0 && myFragmentIndex == 0) {
+        myFragment.startLogicalColumn = myFragment.startOffset;
+      }
+
       myOffsetInsideRun += myFragment.getLength();
       myFragmentIndex++;
       if (myFragmentIndex >= run.fragments.size()) {
@@ -265,82 +350,131 @@ class LineLayout {
       throw new UnsupportedOperationException();
     }
   }
-
-  static class Fragment implements LineFragment {
+  
+  static class VisualFragment {
     private LineFragment delegate;
     private int startOffset;
+    private int startLogicalColumn;
+    private int startVisualColumn;
+    private float startX;
     private boolean isRtl;
+
+    boolean isRtl() {
+      return isRtl;
+    }
+
+    int getMinOffset() {
+      return isRtl ? startOffset - getLength() : startOffset;
+    }
+
+    int getMaxOffset() {
+      return isRtl ? startOffset : startOffset + getLength();
+    }
 
     int getStartOffset() {
       return startOffset;
     }
 
     int getEndOffset() {
-      return startOffset + getLength();
+      return isRtl ? startOffset - getLength() : startOffset + getLength();
     }
 
-    int getVisualStartOffset() {
-      return isRtl ? getEndOffset() : getStartOffset();
-    }
-
-    int getVisualEndOffset() {
-      return isRtl ? getStartOffset() : getEndOffset();
-    }
-
-    boolean isRtl() {
-      return isRtl;
-    }
-
-    @Override
-    public int getLength() {
+    int getLength() {
       return delegate.getLength();
     }
 
-    @Override
-    public int getColumnCount(float startX) {
-      return delegate.getColumnCount(startX);
+    int getStartLogicalColumn() {
+      return startLogicalColumn;
     }
 
-    @Override
-    public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
-      delegate.draw(g, x, y, startOffset, endOffset);
+    int getEndLogicalColumn() {
+      return isRtl ? startLogicalColumn - getLogicalColumnCount() : startLogicalColumn + getLogicalColumnCount();
     }
 
-    @Override
-    public float offsetToX(float startX, int startOffset, int offset) {
-      return delegate.offsetToX(startX, startOffset, offset);
+    int getMinLogicalColumn() {
+      return isRtl ? startLogicalColumn - getLogicalColumnCount() : startLogicalColumn;
     }
 
-    @Override
-    public int offsetToColumn(float startX, int offset) {
-      return delegate.offsetToColumn(startX, offset);
+    int getMaxLogicalColumn() {
+      return isRtl ? startLogicalColumn : startLogicalColumn + getLogicalColumnCount();
     }
 
-    @Override
-    public int columnToOffset(float startX, int column) {
-      return delegate.columnToOffset(startX, column);
+    int getStartVisualColumn() {
+      return startVisualColumn;
     }
 
-    @Override
-    public int xToColumn(float startX, float x) {
-      return delegate.xToColumn(startX, x);
+    int getEndVisualColumn() {
+      return startVisualColumn + getVisualColumnCount();
     }
 
-    @Override
-    public float columnToX(float startX, int column) {
-      return delegate.columnToX(startX, column);
+    int getLogicalColumnCount() {
+      return isRtl ? getLength() : delegate.getLogicalColumnCount(getMinLogicalColumn());
+    }
+
+    int getVisualColumnCount() {
+      return delegate.getVisualColumnCount(startX);
+    }
+
+    float getStartX() {
+      return startX;
+    }
+
+    float getEndX() {
+      return delegate.offsetToX(startX, 0, getLength());
+    }
+
+    float getWidth() {
+      return getEndX() - getStartX();
     }
     
-    float advance(float startX) {
-      return delegate.offsetToX(startX, 0, delegate.getLength()); 
+    // column is expected to be between minLogicalColumn and maxLogicalColumn for this fragment
+    int logicalToVisualColumn(int column) {
+      return startVisualColumn + delegate.logicalToVisualColumn(startX, getMinLogicalColumn(), 
+                                                                isRtl ? startLogicalColumn - column : column - startLogicalColumn);
     }
 
-    int absoluteToRelativeOffset(int offset) {
-      return isRtl() ? getEndOffset() - offset : offset - getStartOffset();
+    // column is expected to be between startVisualColumn and endVisualColumn for this fragment
+    int visualToLogicalColumn(int column) {
+      int relativeLogicalColumn = delegate.visualToLogicalColumn(startX, getMinLogicalColumn(), column - startVisualColumn);
+      return isRtl ? startLogicalColumn - relativeLogicalColumn : startLogicalColumn + relativeLogicalColumn;
     }
-    
-    float absoluteOffsetToX(float startX, int offset) {
-      return offsetToX(startX, 0, absoluteToRelativeOffset(offset));
+
+    // offset is expected to be between minOffset and maxOffset for this fragment
+    float offsetToX(int offset) {
+      return delegate.offsetToX(startX, 0, getRelativeOffset(offset));
+    }
+
+    // both startOffset and offset are expected to be between minOffset and maxOffset for this fragment
+    float offsetToX(float startX, int startOffset, int offset) {
+      return delegate.offsetToX(startX, getRelativeOffset(startOffset), getRelativeOffset(offset));
+    }
+
+    // x is expected to be between startX and endX for this fragment
+    // returns array of two elements 
+    // - first one is visual column, 
+    // - second one is 1 if target location is closer to larger columns and 0 otherwise
+    int[] xToVisualColumn(float x) {
+      int[] column = delegate.xToVisualColumn(startX, x);
+      column[0] += startVisualColumn;
+      return column;
+    }
+
+    // column is expected to be between startVisualColumn and endVisualColumn for this fragment
+    float visualColumnToX(int column) {
+      return delegate.visualColumnToX(startX, column - startVisualColumn);
+    }
+
+    void draw(Graphics2D g, float x, float y) {
+      delegate.draw(g, x, y, 0, getLength());
+    }
+
+    // columns are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
+      delegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
+    }
+
+    private int getRelativeOffset(int offset) {
+      return isRtl ? startOffset - offset : offset - startOffset;
     }
   }
 }

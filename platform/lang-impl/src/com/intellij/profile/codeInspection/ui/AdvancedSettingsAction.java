@@ -31,6 +31,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -192,13 +193,8 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
       icon = EmptyIcon.create(20, 18);
     }
     if (icon != null) {
-      final Insets i = checkBox.getInsets();
-      final Rectangle r = checkBox.getBounds();
-      final Rectangle r1 = new Rectangle();
-      r1.x = i.left;
-      r1.y = i.top;
-      r1.width = r.width - (i.right + r1.x);
-      r1.height = r.height - (i.bottom + r1.y);
+      final Rectangle r1 = new Rectangle(checkBox.getWidth(), checkBox.getHeight());
+      JBInsets.removeFrom(r1, checkBox.getInsets());
       final Rectangle iconRect = new Rectangle();
       SwingUtilities.layoutCompoundLabel(
         checkBox, checkBox.getFontMetrics(checkBox.getFont()), checkBox.getText(), icon,

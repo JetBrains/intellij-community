@@ -15,15 +15,14 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.sm.runner.ProxyFilters;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.execution.testframework.sm.runner.ProxyFilters;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.pom.Navigatable;
+import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,12 +36,6 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
 
   public SMTRunnerUIActionsHandler(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
-  }
-
-  public void onTestNodeAdded(final TestResultsViewer sender, final SMTestProxy test) {
-    if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myConsoleProperties)) {
-      sender.selectAndNotify(test);
-    }
   }
 
   public void onTestingFinished(final TestResultsViewer sender) {
@@ -82,7 +75,10 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
     SMRunnerUtil.runInEventDispatchThread(new Runnable() {
       public void run() {
         if (ScrollToTestSourceAction.isScrollEnabled(model)) {
-          OpenSourceUtil.openSourcesFrom(model.getTreeView(), false);
+          final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedTestProxy, model);
+          if (descriptor != null) {
+            OpenSourceUtil.navigate(false, descriptor);
+          }
         }
       }
     }, ModalityState.NON_MODAL);

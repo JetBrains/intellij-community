@@ -19,7 +19,7 @@
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
     <fileTypeDetector implementation="com.jetbrains.python.PyFileTypeDetector"/>
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
-    <lang.syntaxHighlighterFactory key="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
@@ -27,6 +27,7 @@
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
     <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
+    <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
     <lang.whiteSpaceFormattingStrategy language="Python"
                                        implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
     <lang.lineWrapStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyLineWrapPositionStrategy"/>
@@ -131,10 +132,6 @@
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
 
     <runConfigurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
-    <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
-    
-    <testSrcLocator implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestUrlProvider"/>
-
     <runConfigurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
@@ -262,6 +259,21 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToTupleIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToListIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToSetIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyTransformConditionalExpressionIntention</className>
       <category>Python</category>
     </intentionAction>
@@ -382,7 +394,7 @@
                            implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
     <lang.parserDefinition language="PythonVerboseRegExp"
                            implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="PythonVerboseRegExp"
+    <lang.syntaxHighlighterFactory language="PythonVerboseRegExp"
                                    implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCodeInsightSettings"
@@ -519,7 +531,7 @@
 
     <lang.parserDefinition language="BuildoutCfg" implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgParserDefinition"/>
     <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>
-    <lang.syntaxHighlighterFactory key="BuildoutCfg"
+    <lang.syntaxHighlighterFactory language="BuildoutCfg"
                                    implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
 
     <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="com.jetbrains.python.PyBundle"
@@ -581,6 +593,7 @@
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
     <extensionPoint qualifiedName="Pythonid.breakpointHandler" interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"/>
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -629,6 +642,7 @@
     <!-- NumPy -->
     <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
     <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
+    <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
   </extensions>
 
   <project-components>
@@ -764,6 +778,12 @@
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
+    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode"
+            text="Step Into My Code" description="Step to the next line executed ignoring libraries"
+            use-shortcut-of="ForceStepInto">
+      <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+    </action>
 
   </actions>
 

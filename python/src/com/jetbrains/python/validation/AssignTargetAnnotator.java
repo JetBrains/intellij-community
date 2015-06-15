@@ -130,7 +130,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyTupleExpression(final PyTupleExpression node) {
-      if (node.getElements().length == 0) {
+      if (node.isEmpty()) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.parens"));
       }
       else if (myOp == Operation.AugAssign) {
@@ -153,7 +153,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyListLiteralExpression(final PyListLiteralExpression node) {
-      if (node.getElements().length == 0) {
+      if (node.isEmpty()) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.brackets"));
       }
       else if (myOp == Operation.AugAssign) {

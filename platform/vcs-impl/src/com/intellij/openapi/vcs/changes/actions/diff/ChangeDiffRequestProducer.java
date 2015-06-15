@@ -45,6 +45,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -239,8 +240,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       FilePath path = ChangesUtil.getFilePath(change);
       VirtualFile file = path.getVirtualFile();
       if (file == null) {
-        path.hardRefresh();
-        file = path.getVirtualFile();
+        file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
       }
       if (file == null) throw new DiffRequestProducerException("Can't show merge conflict - file not found");
 

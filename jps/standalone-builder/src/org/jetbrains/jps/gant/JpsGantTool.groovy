@@ -23,7 +23,9 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 /**
@@ -39,6 +41,9 @@ final class JpsGantTool {
     binding.setVariable("projectBuilder", builder)
     binding.setVariable("loadProjectFromPath", {String path ->
       loadProject(path, model, builder);
+    })
+    binding.setVariable("addModule", {File imlFile ->
+      return addModule(imlFile, model, builder);
     })
 
     binding.setVariable("jdk", {Object[] args ->
@@ -103,6 +108,15 @@ final class JpsGantTool {
     }
     binding.ant.project.addReference(contextLoaderRef, contextLoader)
     binding.ant.taskdef(name: "layout", loaderRef: contextLoaderRef, classname: "jetbrains.antlayout.tasks.LayoutTask")
+  }
+
+  private static JpsModule addModule(File imlFile, JpsModel model, JpsGantProjectBuilder builder) {
+    def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+    def modules = JpsProjectLoader.loadModules(Collections.singletonList(imlFile), JpsJavaSdkType.INSTANCE, pathVariables)
+    def module = modules.get(0)
+    model.project.addModule(module)
+    builder.info("Module ${module.getName()} added to the project")
+    return module
   }
 
   private void loadProject(String path, JpsModel model, JpsGantProjectBuilder builder) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
  */
 package com.intellij.execution.junit2.inspection;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.execution.junit.JUnitUtil;
@@ -43,7 +42,7 @@ public class JUnitEntryPoint extends EntryPoint {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionsBundle.message("inspection.dead.code.option2");
+    return "JUnit test cases";
   }
 
   public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,12 +276,6 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
   }
 
-  /** @deprecated use {@link #moveContentToStackTop(Transferable)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public void moveContentTopStackTop(Transferable t) {
-    moveContentToStackTop(t);
-  }
-
   public void moveContentToStackTop(Transferable t) {
     moveContentToStackTop(t, true);
   }
@@ -294,6 +288,11 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       if (notifyOthers) {
         setSystemClipboardContent(t);
         fireContentChanged(current, t);
+      }
+    }
+    else {
+      if (notifyOthers) {
+        setSystemClipboardContent(t);
       }
     }
   }

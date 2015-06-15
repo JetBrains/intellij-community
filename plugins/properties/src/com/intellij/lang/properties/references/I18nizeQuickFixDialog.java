@@ -64,7 +64,7 @@ import java.util.regex.Pattern;
 
 public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuickFixModel {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
-  
+
   private static final Pattern PATTERN = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
   private JTextField myValue;
@@ -269,7 +269,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected String defaultSuggestPropertyKey(String value) {
-    return null;  
+    return null;
   }
 
   private void propertiesFileChanged() {
@@ -359,7 +359,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected List<String> defaultSuggestPropertiesFiles() {
-    return I18nUtil.defaultGetPropertyFiles(myProject);
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
   }
 
   protected PropertiesFile getPropertiesFile() {
@@ -438,10 +438,14 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
       final String propValue = myValue.getText();
       if (existingProperty != null && !Comparing.strEqual(existingProperty.getValue(), propValue)) {
-        Messages.showErrorDialog(myProject, CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(),
-                                                                      propertiesFile.getName()),
-                                            CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.title"));
-        return;
+        final String messageText = CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
+        final int code = Messages.showOkCancelDialog(myProject,
+                                                     messageText,
+                                                     CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.title"),
+                                                     null);
+        if (code == Messages.CANCEL) {
+          return;
+        }
       }
     }
 

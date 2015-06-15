@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
@@ -55,13 +56,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("ConstantConditions")
 public class FileTypesTest extends PlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
-
-  public FileTypesTest() {
-    initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -347,16 +345,16 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   private static void log(String message) {
-    //System.out.println(message);
+    System.out.println(message);
   }
 
   private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    log("T: ensureRedetected: commit");
+    log("T: ensureRedetected: commit. queue: "+myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
-    log("T: ensureRedetected: dispatch");
+    log("T: ensureRedetected: dispatch. queue: "+ myFileTypeManager.dumpReDetectQueue());
     myFileTypeManager.drainReDetectQueue();
-    log("T: ensureRedetected: drain");
+    log("T: ensureRedetected: drain. queue: "+myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
     log("T: ensureRedetected: dispatch");
     FileType type = vFile.getFileType();
@@ -379,6 +377,9 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
     myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+    myFileTypeManager.clearForTests();
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.initComponent();
   }
 
   public void testRenamedPropertiesToUnknownAndBack() throws Exception {
@@ -480,5 +481,41 @@ public class FileTypesTest extends PlatformTestCase {
     finally {
       Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
     }
+  }
+
+  // IDEA-139409 Persistent message "File type recognized: File extension *.vm was reassigned to VTL"
+  public void testReassign() throws Exception {
+    Element element = JDOMUtil.loadDocument(
+      "<component name=\"FileTypeManager\" version=\"13\">\n" +
+      "   <extensionMap>\n" +
+      "      <mapping ext=\"zip\" type=\"Velocity Template files\" />\n" +
+      "   </extensionMap>\n" +
+      "</component>").getRootElement();
+
+    myFileTypeManager.loadState(element);
+    myFileTypeManager.initComponent();
+    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    assertEquals(1, mappings.size());
+    assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
+    mappings.clear();
+    assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
+    Element map = myFileTypeManager.getState().getChild("extensionMap");
+    if (map != null) {
+      fail(JDOMUtil.writeElement(map));
+    }
+  }
+
+  public void testDefaultFileType() throws Exception {
+    FileType idl = myFileTypeManager.findFileTypeByName("IDL");
+    myFileTypeManager.associatePattern(idl, "*.xxx");
+    Element element = myFileTypeManager.getState();
+    log(JDOMUtil.writeElement(element));
+    myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+    myFileTypeManager.clearForTests();
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.loadState(element);
+    myFileTypeManager.initComponent();
+    FileType extensions = myFileTypeManager.getFileTypeByExtension("xxx");
+    assertEquals("IDL", extensions.getName());
   }
 }

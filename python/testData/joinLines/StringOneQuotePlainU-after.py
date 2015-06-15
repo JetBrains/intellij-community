@@ -1,2 +1,1 @@
-a = (u"Ein Deutsche Text. "
-    "An English text")
+a = (u"Ein Deutsche Text. " "An English text")

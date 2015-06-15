@@ -47,9 +47,6 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
  */
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
-  @NonNls private static final String SECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.seconds");
-  @NonNls private static final String MILLISECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.milliseconds");
-  @NonNls private static final String WORLD_CREATION_TIME = "0" + SECONDS_SUFFIX;
   @NonNls private static final String DURATION_UNKNOWN = SMTestsRunnerBundle.message(
       "sm.test.runner.ui.tabs.statistics.columns.duration.unknown");
   @NonNls private static final String DURATION_NO_TESTS = SMTestsRunnerBundle.message(
@@ -92,8 +89,7 @@ public class TestsPresentationUtil {
     if (allCategories != null) {
       // if all categories is just one default tests category - let's do not add prefixes
 
-      if (allCategories.size() > 1
-          || (allCategories.size() == 1 && !DEFAULT_TESTS_CATEGORY.equals(allCategories.iterator().next()))) {
+      if (hasNonDefaultCategories(allCategories)) {
 
         sb.append(' ');
         boolean first = true;
@@ -131,11 +127,18 @@ public class TestsPresentationUtil {
     if (endTime != 0) {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
-      sb.append('(').append(convertToSecondsOrMs(time)).append(')');
+      sb.append('(').append(StringUtil.formatDuration(time)).append(')');
     }
     sb.append(DOUBLE_SPACE);
 
     return sb.toString();
+  }
+
+  public static boolean hasNonDefaultCategories(@Nullable Set<String> allCategories) {
+    if (allCategories == null) {
+      return false;
+    }
+    return allCategories.size() > 1 || (allCategories.size() == 1 && !DEFAULT_TESTS_CATEGORY.equals(allCategories.iterator().next()));
   }
 
   public static void formatRootNodeWithChildren(final SMTestProxy.SMRootTestProxy testProxy,
@@ -145,7 +148,10 @@ public class TestsPresentationUtil {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final String text;
-    if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
+    final String presentableName = testProxy.getPresentation();
+    if (presentableName != null) {
+      text = presentableName;
+    } else if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running.tests");
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.was.terminated");
@@ -153,6 +159,10 @@ public class TestsPresentationUtil {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.results");
     }
     renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    final String comment = testProxy.getComment();
+    if (comment != null) {
+      renderer.append(" (" + comment + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
   }
 
   public static void formatRootNodeWithoutChildren(final SMTestProxy.SMRootTestProxy testProxy,
@@ -406,21 +416,7 @@ public class TestsPresentationUtil {
              ? DURATION_NO_TESTS
              : DURATION_UNKNOWN;
     } else {
-      return convertToSecondsOrMs(duration.longValue());
-    }
-  }
-
-  /**
-   * @param duration In milliseconds
-   * @return Value in seconds or millisecond depending on its value
-   */
-  private static String convertToSecondsOrMs(@NotNull final Long duration) {
-    if (duration == 0) {
-      return WORLD_CREATION_TIME;
-    } else if (duration < 100) {
-      return String.valueOf(duration) + MILLISECONDS_SUFFIX;
-    } else {
-      return String.valueOf(duration.floatValue() / 1000) + SECONDS_SUFFIX;
+      return StringUtil.formatDuration(duration.longValue());
     }
   }
 

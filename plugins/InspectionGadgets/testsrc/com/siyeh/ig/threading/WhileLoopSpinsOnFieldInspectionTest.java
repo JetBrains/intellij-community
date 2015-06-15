@@ -1,11 +1,18 @@
 package com.siyeh.ig.threading;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class WhileLoopSpinsOnFieldInspectionTest extends IGInspectionTestCase {
+public class WhileLoopSpinsOnFieldInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/threading/spins",
-           new WhileLoopSpinsOnFieldInspection());
+  public void testWhileLoopSpinsOnField() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new WhileLoopSpinsOnFieldInspection();
   }
 }

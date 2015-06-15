@@ -84,7 +84,7 @@
     </extensionPoint>
 
     <extensionPoint name="lang.syntaxHighlighterFactory"
-                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+                    beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"/>
     </extensionPoint>
 
@@ -132,7 +132,6 @@
     <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.TypedActionHandler"/>
     </extensionPoint>
-    <extensionPoint name="contentBasedClassFileProcessor" interface="com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor"/>
 
     <extensionPoint name="additionalTextAttributes" beanClass="com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP" />
     <extensionPoint name="bundledColorScheme" beanClass="com.intellij.openapi.editor.colors.impl.BundledColorSchemeEP"/>
@@ -182,7 +181,6 @@
     <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
 
-    <extensionPoint name="editorCustomization" area="IDEA_PROJECT" interface="com.intellij.ui.EditorCustomization"/>
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate"/>
 
     <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>

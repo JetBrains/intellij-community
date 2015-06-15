@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -53,7 +52,6 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
 
   @Override
   public void setUp() throws Exception {
-    PlatformTestCase.initPlatformLangPrefix();
     super.setUp();
     myModule = context.mock(Module.class, "myModule");
     context.checking(new Expectations() {{

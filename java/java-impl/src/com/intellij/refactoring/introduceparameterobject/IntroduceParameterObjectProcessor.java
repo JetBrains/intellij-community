@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
@@ -50,12 +53,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger logger = Logger.getInstance("com.siyeh.rpp.introduceparameterobject.IntroduceParameterObjectProcessor");
 
-  private MoveDestination myMoveDestination;
+  private final MoveDestination myMoveDestination;
   private final PsiMethod method;
   private final String className;
   private final String packageName;

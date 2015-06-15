@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -35,12 +34,16 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * User: anna
@@ -106,7 +109,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   }
 
                   if (ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {body}).isEmpty()) {
-                    if (isCollectCall(body, statement.getIterationParameter())) {
+                    if (!(iteratedValueType instanceof PsiClassType && ((PsiClassType)iteratedValueType).isRaw()) && 
+                        isCollectCall(body, statement.getIterationParameter())) {
                       holder.registerProblem(iteratedValue, "Can be replaced with collect call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithCollectCallFix());
                     } else if (!isTrivial(body, statement.getIterationParameter())) {
@@ -297,6 +301,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               (PsiExpressionStatement)callStatement.replace(elementFactory.createStatementFromText(buffer.toString() + "(" + parameter.getText() + ") -> " + wrapInBlock(body) + ");", callStatement));
           }
 
+          simplifyRedundantCast(callStatement);
+
           CodeStyleManager.getInstance(project).reformat(callStatement);
         }
       }
@@ -381,8 +387,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
                     if (argumentList != null && argumentList.getExpressions().length == 0) {
                       restoreComments(foreachStatement, body);
-                      final String callText = builder.toString() + createInitializerReplacementText(initializer) + ")";
+                      final String callText = builder.toString() + createInitializerReplacementText(((PsiVariable)resolve).getType(), initializer) + ")";
                       result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
+                      simplifyRedundantCast(result);
                       foreachStatement.delete();
                       return;
                     }
@@ -394,6 +401,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
             final String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + builder.toString() + "toList()));");
             result = foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
+            simplifyRedundantCast(result);
           }
           finally {
             if (result != null) {
@@ -404,14 +412,24 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
-    private static String createInitializerReplacementText(PsiExpression initializer) {
+    private static String createInitializerReplacementText(PsiType varType, PsiExpression initializer) {
       final PsiType initializerType = initializer.getType();
       final PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
-      if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST)) {
+      final PsiClassType rawVarType = varType instanceof PsiClassType ? ((PsiClassType)varType).rawType() : null;
+      if (rawType != null && rawVarType != null &&
+          rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
+          rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST)) {
         return "toList()";
-      } else if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET)) {
+      }
+      else if (rawType != null && rawVarType != null &&
+               rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
+               rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET)) {
         return "toSet()";
-      } else {
+      }
+      else if (rawType != null) {
+        return "toCollection(" + rawType.getClassName() + "::new)";
+      }
+      else {
         return "toCollection(() -> " + initializer.getText() +")";
       }
     }
@@ -427,7 +445,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           .canBeMethodReferenceProblem(expression, new PsiParameter[]{parameter}, functionalInterfaceType);
         final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, new PsiParameter[]{parameter});
         if (methodReferenceText != null) {
-          iteration += methodReferenceText;
+          LOG.assertTrue(functionalInterfaceType != null);
+          iteration += "(" + functionalInterfaceType.getCanonicalText() + ")" + methodReferenceText;
         } else {
           iteration += parameter.getName() + " -> " + expression.getText();
         }
@@ -438,6 +457,20 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     private static boolean isIdentityMapping(PsiParameter parameter, PsiExpression mapperCall) {
       return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == parameter;
+    }
+  }
+
+  private static void simplifyRedundantCast(PsiElement result) {
+    final PsiMethodReferenceExpression methodReferenceExpression = PsiTreeUtil.findChildOfType(result, PsiMethodReferenceExpression.class);
+    if (methodReferenceExpression != null) {
+      final PsiElement parent = methodReferenceExpression.getParent();
+      if (parent instanceof PsiTypeCastExpression) {
+        if (RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)parent)) {
+          final PsiExpression operand = ((PsiTypeCastExpression)parent).getOperand();
+          LOG.assertTrue(operand != null);
+          parent.replace(operand);
+        }
+      }
     }
   }
 

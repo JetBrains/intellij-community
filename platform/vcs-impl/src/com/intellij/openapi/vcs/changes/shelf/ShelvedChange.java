@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,7 +130,7 @@ public class ShelvedChange {
       File baseDir = new File(project.getBaseDir().getPath());
 
       File file = getAbsolutePath(baseDir, myBeforePath);
-      final FilePathImpl beforePath = new FilePathImpl(file, false);
+      FilePath beforePath = VcsUtil.getFilePath(file, false);
       beforePath.refresh();
       ContentRevision beforeRevision = null;
       if (myFileStatus != FileStatus.ADDED) {
@@ -143,7 +144,7 @@ public class ShelvedChange {
       }
       ContentRevision afterRevision = null;
       if (myFileStatus != FileStatus.DELETED) {
-        final FilePathImpl afterPath = new FilePathImpl(getAbsolutePath(baseDir, myAfterPath), false);
+        FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
         afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
       }
       myChange = new Change(beforeRevision, afterRevision, myFileStatus);

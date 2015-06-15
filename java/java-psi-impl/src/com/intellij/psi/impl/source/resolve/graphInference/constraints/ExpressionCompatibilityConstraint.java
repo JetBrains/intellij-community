@@ -84,38 +84,31 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
       if (argumentList != null) {
         final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiCallExpression)myExpression).getArgumentList());
-        final JavaResolveResult resolveResult;
         PsiType returnType = null;
         PsiTypeParameter[] typeParams = null;
+        final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCallExpression)myExpression, argumentList);
+        PsiMethod method = null;
         if (candidateProperties != null) {
-          resolveResult = null;
+          method = candidateProperties.getMethod();
         }
         else {
-          if (myExpression instanceof PsiNewExpression) {
-            final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)myExpression).getClassOrAnonymousClassReference();
-            final PsiElement psiClass = classReference != null ? classReference.resolve() : null;
-            if (psiClass instanceof PsiClass) {
-
-              final JavaPsiFacade facade = JavaPsiFacade.getInstance(myExpression.getProject());
-              resolveResult = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, myExpression);
-
-              returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType((PsiClass)psiClass, PsiSubstitutor.EMPTY);
-              typeParams = ((PsiClass)psiClass).getTypeParameters();
-            } 
-            else {
-              resolveResult = JavaResolveResult.EMPTY;
-            }
-          } 
-          else {
-            resolveResult = ((PsiCallExpression)myExpression).resolveMethodGenerics();
+          final PsiElement element = resolveResult.getElement();
+          if (element instanceof PsiMethod) {
+            method = (PsiMethod)element;
           }
         }
-        final PsiMethod method = candidateProperties != null ? candidateProperties.getMethod() : (PsiMethod)resolveResult.getElement();
 
         if (method != null && !method.isConstructor()) {
           returnType = method.getReturnType();
           if (returnType != null) {
             typeParams = method.getTypeParameters();
+          }
+        }
+        else if (resolveResult != null) {
+          final PsiClass psiClass = method != null ? method.getContainingClass() : (PsiClass)resolveResult.getElement();
+          if (psiClass != null) {
+            returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType(psiClass, PsiSubstitutor.EMPTY);
+            typeParams = psiClass.getTypeParameters();
           }
         }
 

@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -43,7 +45,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     final boolean[] needStrictSignatureSearch = new boolean[1];
     final boolean strictSignatureSearch = p.isStrictSignatureSearch();
 
-    final PsiClass aClass = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(new Computable<PsiClass>() {
+    final PsiClass aClass = resolveInReadAction(p.getProject(), new Computable<PsiClass>() {
       public PsiClass compute() {
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) return null;
@@ -65,7 +67,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     final SearchRequestCollector collector = p.getOptimizer();
 
-    final SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(new Computable<SearchScope>() {
+    final SearchScope searchScope = resolveInReadAction(p.getProject(), new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
         return p.getEffectiveSearchScope();
@@ -91,8 +93,9 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
       return;
     }
 
-    DumbService.getInstance(p.getProject()).runReadActionInSmartMode(new Runnable() {
-      public void run() {
+    resolveInReadAction(p.getProject(), new Computable<Void>() {
+      @Override
+      public Void compute() {
         final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
         SearchScope accessScope = methods[0].getUseScope();
         for (int i = 1; i < methods.length; i++) {
@@ -107,8 +110,13 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
                              getTextOccurrenceProcessor(methods, aClass, strictSignatureSearch));
 
         SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccessScope, collector);
+        return null;
       }
     });
+  }
+
+  static <T> T resolveInReadAction(@NotNull Project p, Computable<T> computable) {
+    return ApplicationManager.getApplication().isReadAccessAllowed() ? computable.compute() : DumbService.getInstance(p).runReadActionInSmartMode(computable);
   }
 
   protected MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod[] methods, PsiClass aClass, boolean strictSignatureSearch) {

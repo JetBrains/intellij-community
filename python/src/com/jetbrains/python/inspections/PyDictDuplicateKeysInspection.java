@@ -58,9 +58,10 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
 
     @Override
     public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
-      if (node.getElements().length != 0){
+      final PyKeyValueExpression[] elements = node.getElements();
+      if (elements.length != 0){
         final Map<String, PyElement> map = new HashMap<String, PyElement>();
-        for (PyExpression exp : node.getElements()) {
+        for (PyExpression exp : elements) {
           final PyExpression key = ((PyKeyValueExpression)exp).getKey();
           if (key instanceof PyNumericLiteralExpression
                   || key instanceof PyStringLiteralExpression || key instanceof PyReferenceExpression) {

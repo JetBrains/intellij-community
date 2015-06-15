@@ -102,7 +102,7 @@ public class ExternalSystemShortcutsManager implements Disposable {
       KeymapManager keymapManager = KeymapManager.getInstance();
       if (keymapManager != null) {
         listenTo(keymapManager.getActiveKeymap());
-        keymapManager.addKeymapManagerListener(this);
+        keymapManager.addKeymapManagerListener(this, ExternalSystemShortcutsManager.this);
       }
     }
 
@@ -129,10 +129,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
 
     private void stopListen() {
       listenTo(null);
-      KeymapManager keymapManager = KeymapManager.getInstance();
-      if (keymapManager != null) {
-        keymapManager.removeKeymapManagerListener(this);
-      }
     }
   }
 

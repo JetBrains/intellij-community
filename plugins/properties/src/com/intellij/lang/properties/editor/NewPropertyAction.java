@@ -22,7 +22,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -148,11 +148,10 @@ class NewPropertyAction extends AnAction {
         }
       }
 
-      final PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          WriteCommandAction.runWriteCommandAction(resourceBundle.getProject(), new Runnable() {
             @Override
             public void run() {
               myResourceBundleEditor.getPropertiesInsertDeleteManager().insertNewProperty(newPropertyName, "");

@@ -16,7 +16,7 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleAction {
 
-  private ExternalProjectsView myView;
+  private ExternalProjectsViewImpl myView;
 
   @Override
   protected boolean isEnabled(AnActionEvent e) {
@@ -36,28 +36,28 @@ public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleA
 
   @Override
   protected boolean doIsSelected(AnActionEvent e) {
-    final ExternalProjectsView view = getView();
+    final ExternalProjectsViewImpl view = getView();
     return view != null && isSelected(view);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final ExternalProjectsView view = getView();
+    final ExternalProjectsViewImpl view = getView();
     if (view != null){
       setSelected(view, state);
     }
   }
 
-  protected abstract boolean isSelected(@NotNull ExternalProjectsView view);
+  protected abstract boolean isSelected(@NotNull ExternalProjectsViewImpl view);
 
-  protected abstract void setSelected(@NotNull ExternalProjectsView view, boolean value);
+  protected abstract void setSelected(@NotNull ExternalProjectsViewImpl view, boolean value);
 
   @Nullable
-  protected ExternalProjectsView getView() {
+  protected ExternalProjectsViewImpl getView() {
     return myView;
   }
 
-  public void setView(ExternalProjectsView view) {
+  public void setView(ExternalProjectsViewImpl view) {
     myView = view;
   }
 }

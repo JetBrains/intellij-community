@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports any chains of if-else statements all of whose conditions are <b>instanceof</b> expressions
-(or combinations of such expressions). Such constructions usually indicate a failure of object-oriented design, which
+Reports any chains of <b>if</b>-<b>else</b> statements all of whose conditions are <b>instanceof</b> expressions
+or class equality expressions (e.g. comparison with <b>String.class</b>).
+Such constructions usually indicate a failure of object-oriented design, which
 dictates that such type-based dispatch should be done via polymorphic method calls rather than explicit chains
 of type tests.
 <!-- tooltip end -->

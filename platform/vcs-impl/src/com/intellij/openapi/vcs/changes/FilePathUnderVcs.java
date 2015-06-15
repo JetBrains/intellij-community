@@ -18,8 +18,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsRoot;
 import org.jetbrains.annotations.NonNls;
 
 public class FilePathUnderVcs {
@@ -30,11 +28,6 @@ public class FilePathUnderVcs {
   public FilePathUnderVcs(final FilePath path, final AbstractVcs vcs) {
     myPath = path;
     myVcs = vcs;
-  }
-
-  FilePathUnderVcs(final VcsRoot root) {
-    myPath = new FilePathImpl(root.getPath());
-    myVcs = root.getVcs();
   }
 
   public FilePath getPath() {

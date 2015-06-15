@@ -70,13 +70,6 @@ public class DfaPsiUtil {
       return Nullness.UNKNOWN;
     }
 
-    if (NullableNotNullManager.isNullable(owner)) {
-      return Nullness.NULLABLE;
-    }
-    if (NullableNotNullManager.isNotNull(owner)) {
-      return Nullness.NOT_NULL;
-    }
-
     if (resultType != null) {
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
       for (PsiAnnotation annotation : resultType.getAnnotations()) {
@@ -93,6 +86,13 @@ public class DfaPsiUtil {
           return Nullness.NOT_NULL;
         }
       }
+    }
+
+    if (NullableNotNullManager.isNullable(owner)) {
+      return Nullness.NULLABLE;
+    }
+    if (NullableNotNullManager.isNotNull(owner)) {
+      return Nullness.NOT_NULL;
     }
 
     return Nullness.UNKNOWN;
@@ -126,13 +126,6 @@ public class DfaPsiUtil {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
         final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false) {
-          boolean shouldCheck;
-
-          @Override
-          protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
-            super.prepareAnalysis(psiBlock, initialStates);
-            shouldCheck = psiBlock == body;
-          }
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction) ||
@@ -160,19 +153,17 @@ public class DfaPsiUtil {
 
           @Override
           protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
-            if (shouldCheck) {
-              Instruction instruction = instructionState.getInstruction();
-              if (isCallExposingNonInitializedFields(instruction) ||
-                  instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
-                for (PsiField field : containingClass.getFields()) {
-                  if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
-                    map.put(field, false);
-                  } else if (!map.containsKey(field)) {
-                    map.put(field, true);
-                  }
+            Instruction instruction = instructionState.getInstruction();
+            if (isCallExposingNonInitializedFields(instruction) ||
+                instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
+              for (PsiField field : containingClass.getFields()) {
+                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
+                  map.put(field, false);
+                } else if (!map.containsKey(field)) {
+                  map.put(field, true);
                 }
-                return DfaInstructionState.EMPTY_ARRAY;
               }
+              return DfaInstructionState.EMPTY_ARRAY;
             }
             return super.acceptInstruction(visitor, instructionState);
           }

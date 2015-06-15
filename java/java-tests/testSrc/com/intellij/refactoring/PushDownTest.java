@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -69,7 +69,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   private void doTest(final boolean failure) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
-    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on member name", targetElement instanceof PsiMember);
 
     final PsiMember psiMember = (PsiMember)targetElement;
@@ -78,7 +78,7 @@ public class PushDownTest extends LightRefactoringTestCase {
 
     assert currentClass != null;
 
-    final List<MemberInfo> membersToMove = new ArrayList<MemberInfo>();
+    final List<MemberInfo> membersToMove = new ArrayList<>();
 
     final PsiField fieldByName = currentClass.findFieldByName("fieldToMove", false);
     if (fieldByName != null) {
@@ -109,12 +109,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     PsiClass currentClass = JavaPsiFacade.getInstance(getProject()).findClass("Test", GlobalSearchScope.projectScope(getProject()));
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(currentClass, new MemberInfo.Filter<PsiMember>() {
-      @Override
-      public boolean includeMember(PsiMember element) {
-        return true;
-      }
-    });
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(currentClass, element -> true);
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(currentClass);
     for (MemberInfo member : members) {
       member.setChecked(true);

@@ -4,7 +4,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -65,7 +65,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
 
   private void perform() throws Exception {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
 
@@ -80,10 +80,10 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
 
   private void performWithFields() throws Exception {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
-    final ArrayList<VariableData> parametersForFields = new ArrayList<VariableData>();
+    final ArrayList<VariableData> parametersForFields = new ArrayList<>();
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(aClass, parametersForFields);
 
     new MakeClassStaticProcessor(

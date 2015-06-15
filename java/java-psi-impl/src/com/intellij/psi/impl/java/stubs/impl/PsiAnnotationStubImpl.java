@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,13 @@ import com.intellij.util.IncorrectOperationException;
 public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements PsiAnnotationStub {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
 
+  static {
+    CharTableImpl.addStringsFromClassToStatics(AnnotationUtil.class);
+    CharTableImpl.staticIntern("@NotNull");
+    CharTableImpl.staticIntern("@Nullable");
+    CharTableImpl.staticIntern("@Override");
+  }
+
   private final String myText;
   private SoftReference<PsiAnnotation> myParsedFromRepository;
 
@@ -41,13 +48,6 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
     super(parent, JavaStubElementTypes.ANNOTATION);
     CharSequence interned = CharTableImpl.getStaticInterned(text);
     myText = interned == null ? text : interned.toString();
-  }
-
-  static {
-    CharTableImpl.addStringsFromClassToStatics(AnnotationUtil.class);
-    CharTableImpl.staticIntern("@NotNull");
-    CharTableImpl.staticIntern("@Nullable");
-    CharTableImpl.staticIntern("@Override");
   }
 
   @Override

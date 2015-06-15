@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,13 +97,14 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public boolean set(final int bitIndex) {
+    final long mask = 1L << bitIndex;
     long prevWord = changeWord(bitIndex, new TLongFunction() {
       @Override
       public long execute(long word) {
-        return word | (1L << bitIndex);
+        return word | mask;
       }
     });
-    return (prevWord & (1L << bitIndex)) != 0;
+    return (prevWord & mask) != 0;
   }
 
   long changeWord(int bitIndex, @NotNull TLongFunction change) {

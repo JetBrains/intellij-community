@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -86,23 +85,7 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
       }
     }
 
-    SyntaxHighlighter highlighter = null;
-    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
-      boolean applicable;
-      try {
-        applicable = processor.isApplicable(project, vFile);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        continue;
-      }
-      if (applicable && processor instanceof ContentBasedClassFileProcessor) {
-        highlighter = ((ContentBasedClassFileProcessor)processor).createHighlighter(project, vFile);
-      }
-    }
-    if (highlighter == null) {
-      highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, vFile);
-    }
+    SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, vFile);
     return createEditorHighlighter(highlighter, settings);
   }
 

@@ -8,11 +8,11 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.impl.ModifiablePanel;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +91,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
   private static class SvnTreeConflictDiffViewer implements FrameDiffTool.DiffViewer {
     @NotNull private final DiffContext myContext;
     @NotNull private final SvnTreeConflictDiffRequest myRequest;
-    @NotNull private final ModifiablePanel myPanel = new ModifiablePanel();
+    @NotNull private final Wrapper myPanel = new Wrapper();
 
     @NotNull private final BackgroundTaskQueue myQueue;
     @NotNull private final TreeConflictRefreshablePanel myDelegate;

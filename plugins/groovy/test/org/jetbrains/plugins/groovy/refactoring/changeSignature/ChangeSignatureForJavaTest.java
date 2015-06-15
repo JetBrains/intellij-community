@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
@@ -240,7 +240,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
   private void doTest(@Nullable @PsiModifier.ModifierConstant String newVisibility, @Nullable String newName, @Nullable String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
     myFixture.configureByFile(getTestName(false) +".groovy");
     myFixture.configureByFile(getTestName(false) + ".java");
-    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();

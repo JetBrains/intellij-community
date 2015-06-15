@@ -168,7 +168,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     return null;
   }
 
-  private static boolean checkCapitalization(String value, Nls.Capitalization capitalization) {
+  public static boolean checkCapitalization(String value, Nls.Capitalization capitalization) {
     if (StringUtil.isEmpty(value) || capitalization == Nls.Capitalization.NotSpecified) {
       return true;
     }
@@ -184,7 +184,12 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     if (!StringUtil.isCapitalized(words[0])) return false;
     for (int i = 1; i < words.length; i++) {
       String word = words[i];
-      if (StringUtil.isCapitalized(word)) return false;
+      if (StringUtil.isCapitalized(word)) {
+        // check for abbreviations like SQL or I18n
+        if (word.length() == 1 || !Character.isLowerCase(word.charAt(1)))
+          continue;
+        return false;
+      }
     }
     return true;
   }

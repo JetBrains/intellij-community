@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,15 +74,15 @@ public abstract class AbstractExternalFilter {
 
     protected abstract String convertReference(String root, String href);
 
-    public String refFilter(final String root, String read) {
-      String toMatch = StringUtil.toUpperCase(read);
+    public CharSequence refFilter(final String root, @NotNull CharSequence read) {
+      CharSequence toMatch = StringUtilRt.toUpperCase(read);
       StringBuilder ready = new StringBuilder();
       int prev = 0;
       Matcher matcher = mySelector.matcher(toMatch);
 
       while (matcher.find()) {
-        String before = read.substring(prev, matcher.start(1) - 1);     // Before reference
-        final String href = read.substring(matcher.start(1), matcher.end(1)); // The URL
+        CharSequence before = read.subSequence(prev, matcher.start(1) - 1);     // Before reference
+        final CharSequence href = read.subSequence(matcher.start(1), matcher.end(1)); // The URL
         prev = matcher.end(1) + 1;
         ready.append(before);
         ready.append("\"");
@@ -90,16 +90,16 @@ public abstract class AbstractExternalFilter {
           new Computable<String>() {
             @Override
             public String compute() {
-              return convertReference(root, href);
+              return convertReference(root, href.toString());
             }
           }
         ));
         ready.append("\"");
       }
 
-      ready.append(read.substring(prev, read.length()));
+      ready.append(read, prev, read.length());
 
-      return ready.toString();
+      return ready;
     }
   }
 
@@ -114,13 +114,11 @@ public abstract class AbstractExternalFilter {
     return path;
   }
 
-  public String correctRefs(String root, String read) {
-    String result = read;
-
+  public CharSequence correctRefs(String root, CharSequence read) {
+    CharSequence result = read;
     for (RefConvertor myReferenceConvertor : getRefConverters()) {
       result = myReferenceConvertor.refFilter(root, result);
     }
-
     return result;
   }
 
@@ -158,7 +156,12 @@ public abstract class AbstractExternalFilter {
       throw exception;
     }
 
-    final String docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), fetcher.data.toString());
+    return correctDocText(url, fetcher.data);
+  }
+
+  @NotNull
+  protected String correctDocText(@NotNull String url, @NotNull CharSequence data) {
+    CharSequence docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), data);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Filtered JavaDoc: " + docText + "\n");
     }
@@ -175,10 +178,10 @@ public abstract class AbstractExternalFilter {
   }
 
   protected void doBuildFromStream(final String url, Reader input, final StringBuilder data, boolean searchForEncoding, boolean matchStart) throws IOException {
-    Trinity<Pattern, Pattern, Boolean> settings = getParseSettings(url);
-    @NonNls Pattern startSection = settings.first;
-    @NonNls Pattern endSection = settings.second;
-    boolean useDt = settings.third;
+    ParseSettings settings = getParseSettings(url);
+    @NonNls Pattern startSection = settings.startPattern;
+    @NonNls Pattern endSection = settings.endPattern;
+    boolean useDt = settings.useDt;
     @NonNls String greatestEndSection = "<!-- ========= END OF CLASS DATA ========= -->";
 
     data.append(HTML);
@@ -232,7 +235,7 @@ public abstract class AbstractExternalFilter {
 
     if (read == null) {
       data.setLength(0);
-      if (matchStart && input instanceof MyReader) {
+      if (matchStart && !settings.forcePatternSearch && input instanceof MyReader) {
         try {
           final MyReader reader = contentEncoding != null ? new MyReader(((MyReader)input).myInputStream, contentEncoding)
                                                           : new MyReader(((MyReader)input).myInputStream, ((MyReader)input).getEncoding());
@@ -295,26 +298,19 @@ public abstract class AbstractExternalFilter {
     data.append(HTML_CLOSE);
   }
 
-  /**
-   * Decides what settings should be used for parsing content represented by the given url.
-   *
-   * @param url url which points to the target content
-   * @return following data: (start interested data boundary pattern; end interested data boundary pattern;
-   * replace table data by &lt;dt&gt;)
-   */
   @NotNull
-  protected Trinity<Pattern, Pattern, Boolean> getParseSettings(@NotNull String url) {
+  protected ParseSettings getParseSettings(@NotNull String url) {
     Pattern startSection = ourClassDataStartPattern;
     Pattern endSection = ourClassDataEndPattern;
-    boolean useDt = true;
+    boolean anchorPresent = false;
 
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
-      useDt = false;
+      anchorPresent = true;
       startSection = Pattern.compile(Pattern.quote("<a name=\"" + anchorMatcher.group(1) + "\""), Pattern.CASE_INSENSITIVE);
       endSection = ourNonClassDataEndPattern;
     }
-    return Trinity.create(startSection, endSection, useDt);
+    return new ParseSettings(startSection, endSection, !anchorPresent, anchorPresent);
   }
 
   private static boolean reachTheEnd(StringBuilder data, String read, StringBuilder classDetails) {
@@ -435,6 +431,37 @@ public abstract class AbstractExternalFilter {
 
       in.reset();
       myInputStream = in;
+    }
+  }
+
+  /**
+   * Settings used for parsing of external documentation
+   */
+  protected static class ParseSettings {
+    @NotNull
+    /**
+     * Pattern defining the start of target fragment
+     */
+    private final Pattern startPattern;
+    @NotNull
+    /**
+     * Pattern defining the end of target fragment
+     */
+    private final Pattern endPattern;
+    /**
+     * If <code>false</code>, and line matching start pattern is not found, whole document will be processed
+     */
+    private final boolean forcePatternSearch;
+    /**
+     * Replace table data by &lt;dt&gt;
+     */
+    private final boolean useDt;
+
+    public ParseSettings(@NotNull Pattern startPattern, @NotNull Pattern endPattern, boolean useDt, boolean forcePatternSearch) {
+      this.startPattern = startPattern;
+      this.endPattern = endPattern;
+      this.useDt = useDt;
+      this.forcePatternSearch = forcePatternSearch;
     }
   }
 }

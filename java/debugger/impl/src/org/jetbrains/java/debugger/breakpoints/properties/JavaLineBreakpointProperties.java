@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,20 @@
  */
 package org.jetbrains.java.debugger.breakpoints.properties;
 
+import com.intellij.util.xmlb.annotations.OptionTag;
+
 /**
  * @author egor
  */
 public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaLineBreakpointProperties> {
+  private Integer myOffset = null;
+
+  @OptionTag("offset")
+  public Integer getOffset() {
+    return myOffset;
+  }
+
+  public void setOffset(Integer offset) {
+    myOffset = offset;
+  }
 }

@@ -47,6 +47,7 @@ import static java.util.Collections.singleton;
  *
  * @author Kirill Likhodedov
  */
+@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class GitImpl implements Git {
 
   private final Logger LOG = Logger.getInstance(Git.class);
@@ -235,10 +236,11 @@ public class GitImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult checkout(@NotNull GitRepository repository,
-                                          @NotNull String reference,
-                                          @Nullable String newBranch,
-                                          boolean force,
-                                          @NotNull GitLineHandlerListener... listeners) {
+                                   @NotNull String reference,
+                                   @Nullable String newBranch,
+                                   boolean force,
+                                   boolean detach,
+                                   @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
@@ -246,7 +248,7 @@ public class GitImpl implements Git {
       h.addParameters("--force");
     }
     if (newBranch == null) { // simply checkout
-      h.addParameters(reference);
+      h.addParameters(detach ? reference + "^0" : reference); // we could use `--detach` here, but it is supported only since 1.7.5.
     } 
     else { // checkout reference as new branch
       h.addParameters("-b", newBranch, reference);
@@ -624,13 +626,24 @@ public class GitImpl implements Git {
   public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
     return run(handlerConstructor);
   }
-  
+
+  @NotNull
+  @Override
+  public GitCommandResult runCommand(@NotNull final GitLineHandler handler) {
+    return runCommand(new Computable<GitLineHandler>() {
+      @Override
+      public GitLineHandler compute() {
+        return handler;
+      }
+    });
+  }
+
   /**
    * Check if the line looks line an error message
    */
   private static boolean isError(String text) {
     for (String indicator : ERROR_INDICATORS) {
-      if (text.startsWith(indicator.toLowerCase())) {
+      if (text.trim().toLowerCase().startsWith(indicator.toLowerCase())) {
         return true;
       }
     }
@@ -640,7 +653,7 @@ public class GitImpl implements Git {
   // could be upper-cased, so should check case-insensitively
   public static final String[] ERROR_INDICATORS = {
     "error", "remote: error", "fatal",
-    "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull", "cannot rebase:", "conflict",
+    "Cannot", "Could not", "Interactive rebase already started", "refusing to pull", "cannot rebase:", "conflict",
     "unable"
   };
 }

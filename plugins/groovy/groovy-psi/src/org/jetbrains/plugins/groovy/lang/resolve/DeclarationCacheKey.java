@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
@@ -119,7 +118,7 @@ class DeclarationCacheKey {
   }
 
   private List<DeclarationHolder> collectDeclarations(final PsiElement place) {
-    final ArrayList<DeclarationHolder> result = new ArrayList<DeclarationHolder>();
+    final List<DeclarationHolder> result = ContainerUtil.newSmartList();
     PsiTreeUtil.treeWalkUp(place, null, new PairProcessor<PsiElement, PsiElement>() {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
@@ -167,20 +166,24 @@ class DeclarationCacheKey {
                               List<Pair<PsiElement, ResolveState>> plainDeclarations,
                               List<Pair<PsiElement, ResolveState>> nonCodeDeclarations) {
       this.scope = scope;
-      this.plainDeclarations = plainDeclarations;
-      this.nonCodeDeclarations = nonCodeDeclarations;
+      this.plainDeclarations = plainDeclarations.isEmpty() ? null : plainDeclarations;
+      this.nonCodeDeclarations = nonCodeDeclarations.isEmpty() ? null : nonCodeDeclarations;
     }
 
     boolean processCachedDeclarations(PsiScopeProcessor processor) {
       PsiScopeProcessor realProcessor = ResolveUtil.substituteProcessor(processor, scope);
-      for (Pair<PsiElement, ResolveState> pair : plainDeclarations) {
-        if (!realProcessor.execute(pair.first, pair.second)) {
-          return false;
+      if (plainDeclarations != null) {
+        for (Pair<PsiElement, ResolveState> pair : plainDeclarations) {
+          if (!realProcessor.execute(pair.first, pair.second)) {
+            return false;
+          }
         }
       }
-      for (Pair<PsiElement, ResolveState> pair : nonCodeDeclarations) {
-        if (!processor.execute(pair.first, pair.second)) {
-          return false;
+      if (nonCodeDeclarations != null) {
+        for (Pair<PsiElement, ResolveState> pair : nonCodeDeclarations) {
+          if (!processor.execute(pair.first, pair.second)) {
+            return false;
+          }
         }
       }
 
@@ -195,7 +198,7 @@ class DeclarationCacheKey {
   }
 
   private class MyCollectProcessor extends GrScopeProcessorWithHints {
-    final List<Pair<PsiElement, ResolveState>> declarations = ContainerUtil.newArrayList();
+    final List<Pair<PsiElement, ResolveState>> declarations = ContainerUtil.newSmartList();
 
     public MyCollectProcessor() {
       super(DeclarationCacheKey.this.name, DeclarationCacheKey.this.kinds);

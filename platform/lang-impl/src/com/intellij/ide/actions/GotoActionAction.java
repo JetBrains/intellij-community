@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     GotoActionCallback<Object> callback = new GotoActionCallback<Object>() {
       @Override
       public void elementChosen(@NotNull ChooseByNamePopup popup, @NotNull Object element) {
-        String enteredText = popup.getEnteredText();
+        String enteredText = popup.getTrimmedText();
         openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, e);
       }
     };
@@ -193,7 +193,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         @Override
         public void run() {
           if (component == null) return;
-          DataContext context = DataManager.getInstance().getDataContext(component);
+          DataManager instance = DataManager.getInstance();
+          DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
           InputEvent inputEvent = e == null ? null : e.getInputEvent();
           AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
 
@@ -201,8 +202,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
               ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
                 event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-              if (component.isShowing()) {
-                popup.showInBestPositionFor(context);
+              Window window = SwingUtilities.getWindowAncestor(component);
+              if (window != null) {
+                popup.showInCenterOf(window);
               }
               else {
                 popup.showInFocusCenter();

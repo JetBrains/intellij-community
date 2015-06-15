@@ -92,12 +92,12 @@ public final class GitBranchWorker {
   public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint,
                                             @NotNull List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitCheckoutOperation(myProject, myFacade, myGit, myUiHandler, repositories, startPoint, newBranchName).execute();
+    new GitCheckoutOperation(myProject, myFacade, myGit, myUiHandler, repositories, startPoint, false, newBranchName).execute();
   }
 
-  public void checkout(@NotNull final String reference, @NotNull List<GitRepository> repositories) {
+  public void checkout(@NotNull final String reference, boolean detach, @NotNull List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitCheckoutOperation(myProject, myFacade, myGit, myUiHandler, repositories, reference, null).execute();
+    new GitCheckoutOperation(myProject, myFacade, myGit, myUiHandler, repositories, reference, detach, null).execute();
   }
 
 

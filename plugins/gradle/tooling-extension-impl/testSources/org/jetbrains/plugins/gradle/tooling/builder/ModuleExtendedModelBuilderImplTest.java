@@ -28,10 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -139,6 +136,24 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
       });
 
     assertEquals(modulesSize, models.size());
+  }
+
+  @Test
+  public void testJavaExtendedModel() throws Exception {
+    final Map<String, ModuleExtendedModel> modulesMap = getModulesMap(ModuleExtendedModel.class);
+    assertEquals(3, modulesMap.size());
+
+    final ModuleExtendedModel rootModule = modulesMap.get(":");
+    assertNotNull(rootModule);
+    assertNull(rootModule.getJavaSourceCompatibility());
+
+    final ModuleExtendedModel defaultJavaModule = modulesMap.get(":defaultJavaModule");
+    assertNotNull(defaultJavaModule);
+    assertNotNull(defaultJavaModule.getJavaSourceCompatibility());
+
+    final ModuleExtendedModel javaModule = modulesMap.get(":javaModule");
+    assertNotNull(javaModule);
+    assertEquals("1.6", javaModule.getJavaSourceCompatibility());
   }
 
   private void fillDirectories(final ModuleExtendedModel model,

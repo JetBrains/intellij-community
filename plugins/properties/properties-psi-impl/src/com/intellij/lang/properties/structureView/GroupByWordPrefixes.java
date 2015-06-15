@@ -21,6 +21,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.editor.PropertiesAnchorizer;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -69,7 +70,10 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       if (!(element instanceof StructureViewTreeElement)) {
         continue;
       }
-      final Object value = ((StructureViewTreeElement)element).getValue();
+      Object value = ((StructureViewTreeElement)element).getValue();
+      if (value instanceof PropertiesAnchorizer.PropertyAnchor) {
+        value = ((PropertiesAnchorizer.PropertyAnchor)value).getRepresentative();
+      }
       if (!(value instanceof IProperty)) {
         continue;
       }
@@ -181,6 +185,11 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     public Key(final List<String> words, final TreeElement node) {
       this.words = words;
       this.node = node;
+    }
+
+    @Override
+    public String toString() {
+      return "Key{words=" + words + ", node=" + node + '}';
     }
   }
 

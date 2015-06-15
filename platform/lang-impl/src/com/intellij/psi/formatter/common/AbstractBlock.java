@@ -37,8 +37,10 @@ public abstract class AbstractBlock implements ASTBlock {
   @NotNull protected final  ASTNode     myNode;
   @Nullable protected final Wrap        myWrap;
   @Nullable protected final Alignment   myAlignment;
-  private                   List<Block> mySubBlocks;
-  private                   Boolean     myIncomplete;
+
+  private List<Block> mySubBlocks;
+  private Boolean myIncomplete;
+  private boolean myBuildInjectedBlocks = true;
 
   protected AbstractBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment) {
     myNode = node;
@@ -66,8 +68,23 @@ public abstract class AbstractBlock implements ASTBlock {
     return mySubBlocks;
   }
 
+  /**
+   * Prevents from building injected blocks, which allows to build blocks faster
+   * Initially was made for formatting-based indent detector
+   */
+  protected void setBuildInjectedBlocks(boolean value) {
+    myBuildInjectedBlocks = value;
+  }
+
+  protected boolean isBuildInjectedBlocks() {
+    return myBuildInjectedBlocks;
+  }
+
   @NotNull
   private List<Block> buildInjectedBlocks() {
+    if (!myBuildInjectedBlocks) {
+      return EMPTY;
+    }
     if (!(this instanceof SettingsAwareBlock)) {
       return EMPTY;
     }

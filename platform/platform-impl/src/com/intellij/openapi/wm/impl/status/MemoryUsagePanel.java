@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -163,12 +164,6 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
         g2.drawLine(xOffset + usedBarLength + unusedBarLength, yOffset, xOffset + usedBarLength + unusedBarLength, barHeight);
       }
 
-      // frame
-      if (!UIUtil.isUnderDarcula()) {
-        g2.setColor(USED_COLOR_2);
-        g2.drawRect(xOffset, yOffset, totalBarLength - 1, barHeight - 1);
-      }
-
       // label
       g2.setFont(getFont());
       final long used = usedMem / MEGABYTE;
@@ -177,7 +172,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final FontMetrics fontMetrics = g.getFontMetrics();
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
       final int infoHeight = fontMetrics.getAscent();
-      UIUtil.applyRenderingHints(g2);
+      UISettings.setupAntialiasing(g2);
       g2.setColor(UIUtil.getLabelForeground());
       g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + infoHeight + (barHeight - infoHeight) / 2 - 1);
 

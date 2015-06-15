@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -35,6 +34,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
@@ -225,7 +225,7 @@ public class GitMergeUpdater extends GitUpdater {
         path = myRoot.getPath() + "/" + GitUtil.unescapePath(line);
         final File file = new File(path);
         if (file.exists()) {
-          paths.add(new FilePathImpl(file, false));
+          paths.add(VcsUtil.getFilePath(file, false));
         }
       } catch (VcsException e) { // just continue
       }

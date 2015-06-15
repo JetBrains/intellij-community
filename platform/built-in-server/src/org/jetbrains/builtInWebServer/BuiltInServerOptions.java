@@ -1,9 +1,6 @@
 package org.jetbrains.builtInWebServer;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.Configurable;
@@ -13,9 +10,11 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
+import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.io.CustomPortServerManagerBase;
 
@@ -27,8 +26,10 @@ import java.util.Collections;
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
 public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
+  private static final int DEFAULT_PORT = 63342;
+
   @Attribute
-  public int builtInServerPort = 63342;
+  public int builtInServerPort = DEFAULT_PORT;
   @Attribute
   public boolean builtInServerAvailableExternally = false;
 
@@ -46,7 +47,8 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
     @Override
     public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
       if (category == DebuggerSettingsCategory.GENERAL) {
-        return Collections.singletonList(SimpleConfigurable.create("builtInServer", "", BuiltInServerConfigurableUi.class, getInstance()));
+        return Collections.singletonList(SimpleConfigurable.create("builtInServer", XmlBundle
+          .message("setting.builtin.server.category.label"), BuiltInServerConfigurableUi.class, getInstance()));
       }
       return Collections.emptyList();
     }
@@ -74,17 +76,17 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   public static final class MyCustomPortServerManager extends CustomPortServerManagerBase {
     @Override
     public void cannotBind(Exception e, int port) {
-      String groupDisplayId = "Built-in Web Server";
-      Notifications.Bus.register(groupDisplayId, NotificationDisplayType.STICKY_BALLOON);
-      new Notification(groupDisplayId, "Built-in HTTP server on custom port " + port + " disabled",
-                       "Cannot start built-in HTTP server on custom port " + port + ". " +
-                       "Please ensure that port is free (or check your firewall settings) and restart " + ApplicationNamesInfo.getInstance().getFullProductName(),
-                       NotificationType.ERROR).notify(null);
+      BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue().createNotification("Cannot start built-in HTTP server on custom port " +
+                                                                                port + ". " +
+                                                                                "Please ensure that port is free (or check your firewall settings) and restart " +
+                                                                                ApplicationNamesInfo.getInstance().getFullProductName(),
+                                                                                NotificationType.ERROR).notify(null);
     }
 
     @Override
     public int getPort() {
-      return getInstance().builtInServerPort;
+      int port = getInstance().builtInServerPort;
+      return port == DEFAULT_PORT ? -1 : port;
     }
 
     @Override

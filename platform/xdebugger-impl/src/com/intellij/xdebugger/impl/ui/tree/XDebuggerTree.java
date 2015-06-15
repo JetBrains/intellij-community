@@ -40,6 +40,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -308,6 +310,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     Object rootNode = myTreeModel.getRoot();
     if (rootNode instanceof XDebuggerTreeNode) {
       ((XDebuggerTreeNode)rootNode).clearChildren();
+      if (isRootVisible() && rootNode instanceof XValueNodeImpl) {
+        ((XValueNodeImpl)rootNode).getValueContainer().computePresentation((XValueNode)rootNode, XValuePlace.TREE);
+      }
       treeState.restoreState(this);
       repaint();
     }

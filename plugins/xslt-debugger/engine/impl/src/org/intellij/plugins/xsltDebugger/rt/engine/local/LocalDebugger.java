@@ -70,7 +70,7 @@ public class LocalDebugger implements Debugger {
           stopped();
         }
       }
-    });
+    },"local debugger");
   }
 
   protected void prepareTransformer(Transformer transformer) {

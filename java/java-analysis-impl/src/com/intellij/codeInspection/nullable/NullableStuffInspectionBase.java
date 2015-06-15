@@ -32,11 +32,9 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -101,140 +99,16 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           final String anno = annotated.isDeclaredNotNull ? manager.getDefaultNotNull() : manager.getDefaultNullable();
           final List<String> annoToRemove = annotated.isDeclaredNotNull ? manager.getNullables() : manager.getNotNulls();
 
-          if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
-            final PsiAnnotation notNull = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
-            final PsiAnnotation nullable = AnnotationUtil.findAnnotation(field, manager.getNullables());
-            final PsiAnnotation annotation;
-            String message = "Not \'";
-            if (annotated.isDeclaredNullable) {
-              message += nullable.getQualifiedName();
-              annotation = nullable;
-            } else {
-              message += notNull.getQualifiedName();
-              annotation = notNull;
-            }
-            message += "\' but \'" + anno + "\' would be used for code generation.";
-            final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
-            holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
-                                   message,
-                                   ProblemHighlightType.WEAK_WARNING,
-                                   new ChangeNullableDefaultsFix(notNull, nullable, manager));
-            return;
-          }
+          if (!checkNonStandardAnnotations(field, annotated, manager, anno, holder)) return;
 
-          String propName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-          final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-          final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
-          final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
-          if (nameIdentifier != null && nameIdentifier.isPhysical()) {
-            if (PropertyUtil.isSimpleGetter(getter)) {
-              AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)) {
-                @Override
-                public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-                  return 1;
-                }
-              };
-              if (REPORT_NOT_ANNOTATED_GETTER) {
-                if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
-                  holder.registerProblem(nameIdentifier, InspectionsBundle
-                    .message("inspection.nullable.problems.annotated.field.getter.not.annotated", getPresentableAnnoName(field)),
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
-                }
-              }
-              if (annotated.isDeclaredNotNull && isNullableNotInferred(getter, false) ||
-                  annotated.isDeclaredNullable && isNotNullNotInferred(getter, false, false)) {
-                holder.registerProblem(nameIdentifier, InspectionsBundle.message(
-                  "inspection.nullable.problems.annotated.field.getter.conflict", getPresentableAnnoName(field), getPresentableAnnoName(getter)),
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
-              }
-            }
-          }
-
-          final PsiClass containingClass = field.getContainingClass();
-          final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propName, isStatic, false);
-          if (setter != null && setter.isPhysical()) {
-            final PsiParameter[] parameters = setter.getParameterList().getParameters();
-            assert parameters.length == 1 : setter.getText();
-            final PsiParameter parameter = parameters[0];
-            LOG.assertTrue(parameter != null, setter.getText());
-            AddAnnotationPsiFix addAnnoFix = new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annoToRemove));
-            if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-              final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-              assertValidElement(setter, parameter, nameIdentifier1);
-              holder.registerProblem(nameIdentifier1,
-                                     InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated",
-                                                               getPresentableAnnoName(field)),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     addAnnoFix);
-            }
-            if (PropertyUtil.isSimpleSetter(setter)) {
-              if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false)) {
-                final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-                assertValidElement(setter, parameter, nameIdentifier1);
-                holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
-                                       "inspection.nullable.problems.annotated.field.setter.parameter.conflict",
-                                       getPresentableAnnoName(field), getPresentableAnnoName(parameter)),
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                       addAnnoFix);
-              }
-            }
-          }
+          checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
           if (REQUIRE_NOTNULL_FIELDS_INITIALIZED) {
-            if (annotated.isDeclaredNotNull && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
-              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
-              if (annotation != null) {
-                holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
-                                       "Not-null fields must be initialized",
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-              }
-            }
+            checkNotNullFieldsInitialized(field, annotated, manager, holder);
           }
 
-          for (PsiExpression rhs : DfaPsiUtil.findAllConstructorInitializers(field)) {
-            if (rhs instanceof PsiReferenceExpression) {
-              PsiElement target = ((PsiReferenceExpression)rhs).resolve();
-              if (target instanceof PsiParameter && target.isPhysical()) {
-                PsiParameter parameter = (PsiParameter)target;
-                AddAnnotationPsiFix fix = new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annoToRemove));
-                if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-                  final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
-                  assert nameIdentifier2 != null : parameter;
-                  assert nameIdentifier2.isPhysical() : parameter;
-                  holder.registerProblem(nameIdentifier2, InspectionsBundle
-                    .message("inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated",
-                             getPresentableAnnoName(field)),
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
-                  continue;
-                }
-                if (annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
-                  boolean usedAsQualifier = !ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
-                    @Override
-                    public boolean process(PsiReference reference) {
-                      final PsiElement element = reference.getElement();
-                      return !(element instanceof PsiReferenceExpression && element.getParent() instanceof PsiReferenceExpression);
-                    }
-                  });
-                  if (!usedAsQualifier) {
-                    final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
-                    assert nameIdentifier2 != null : parameter;
-                    holder.registerProblem(nameIdentifier2, InspectionsBundle.message(
-                      "inspection.nullable.problems.annotated.field.constructor.parameter.conflict", getPresentableAnnoName(field),
-                      getPresentableAnnoName(parameter)),
-                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                           fix);
-                  }
-                }
-
-              }
-            }
-          }
+          checkConstructorParameters(field, annotated, manager, anno, annoToRemove, holder);
         }
-      }
-
-      private void assertValidElement(PsiMethod setter, PsiParameter parameter, PsiIdentifier nameIdentifier1) {
-        LOG.assertTrue(nameIdentifier1 != null && nameIdentifier1.isPhysical(), setter.getText());
-        LOG.assertTrue(parameter.isPhysical(), setter.getText());
       }
 
       @Override
@@ -250,6 +124,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         if (value instanceof PsiClassObjectAccessExpression) {
           PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
           if (psiClass != null && !hasStringConstructor(psiClass)) {
+            //noinspection DialogTitleCapitalization
             holder.registerProblem(value,
                                    "Custom exception class should have a constructor with a single message parameter of String type",
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -269,6 +144,167 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         return false;
       }
     };
+  }
+
+  private static boolean checkNonStandardAnnotations(PsiField field,
+                                                     Annotated annotated,
+                                                     NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
+    if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
+      final PsiAnnotation notNull = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
+      final PsiAnnotation nullable = AnnotationUtil.findAnnotation(field, manager.getNullables());
+      final PsiAnnotation annotation;
+      String message = "Not \'";
+      if (annotated.isDeclaredNullable) {
+        message += nullable.getQualifiedName();
+        annotation = nullable;
+      } else {
+        message += notNull.getQualifiedName();
+        annotation = notNull;
+      }
+      message += "\' but \'" + anno + "\' would be used for code generation.";
+      final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
+      holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
+                             message,
+                             ProblemHighlightType.WEAK_WARNING,
+                             new ChangeNullableDefaultsFix(notNull, nullable, manager));
+      return false;
+    }
+    return true;
+  }
+
+  private void checkAccessors(PsiField field,
+                              Annotated annotated,
+                              Project project,
+                              NullableNotNullManager manager, final String anno, final List<String> annoToRemove, @NotNull ProblemsHolder holder) {
+    String propName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+    final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
+    final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
+    if (nameIdentifier != null && nameIdentifier.isPhysical()) {
+      if (PropertyUtil.isSimpleGetter(getter)) {
+        AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)) {
+          @Override
+          public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
+            return 1;
+          }
+        };
+        if (REPORT_NOT_ANNOTATED_GETTER) {
+          if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
+            holder.registerProblem(nameIdentifier, InspectionsBundle
+                                     .message("inspection.nullable.problems.annotated.field.getter.not.annotated", getPresentableAnnoName(field)),
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
+          }
+        }
+        if (annotated.isDeclaredNotNull && isNullableNotInferred(getter, false) ||
+            annotated.isDeclaredNullable && isNotNullNotInferred(getter, false, false)) {
+          holder.registerProblem(nameIdentifier, InspectionsBundle.message(
+                                   "inspection.nullable.problems.annotated.field.getter.conflict", getPresentableAnnoName(field), getPresentableAnnoName(getter)),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getterAnnoFix);
+        }
+      }
+    }
+
+    final PsiClass containingClass = field.getContainingClass();
+    final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propName, isStatic, false);
+    if (setter != null && setter.isPhysical()) {
+      final PsiParameter[] parameters = setter.getParameterList().getParameters();
+      assert parameters.length == 1 : setter.getText();
+      final PsiParameter parameter = parameters[0];
+      LOG.assertTrue(parameter != null, setter.getText());
+      AddAnnotationPsiFix addAnnoFix = createAddAnnotationFix(anno, annoToRemove, parameter);
+      if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+        final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
+        assertValidElement(setter, parameter, nameIdentifier1);
+        holder.registerProblem(nameIdentifier1,
+                               InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated",
+                                                         getPresentableAnnoName(field)),
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               addAnnoFix);
+      }
+      if (PropertyUtil.isSimpleSetter(setter)) {
+        if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false)) {
+          final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
+          assertValidElement(setter, parameter, nameIdentifier1);
+          holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
+                                   "inspection.nullable.problems.annotated.field.setter.parameter.conflict",
+                                   getPresentableAnnoName(field), getPresentableAnnoName(parameter)),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 addAnnoFix);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static AddAnnotationPsiFix createAddAnnotationFix(String anno, List<String> annoToRemove, PsiParameter parameter) {
+    return new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annoToRemove));
+  }
+
+  private static void assertValidElement(PsiMethod setter, PsiParameter parameter, PsiIdentifier nameIdentifier1) {
+    LOG.assertTrue(nameIdentifier1 != null && nameIdentifier1.isPhysical(), setter.getText());
+    LOG.assertTrue(parameter.isPhysical(), setter.getText());
+  }
+
+  private static void checkNotNullFieldsInitialized(PsiField field,
+                                                    Annotated annotated,
+                                                    NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
+    if (annotated.isDeclaredNotNull && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
+      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
+      if (annotation != null) {
+        holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
+                               "Not-null fields must be initialized",
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      }
+    }
+  }
+
+  private void checkConstructorParameters(PsiField field,
+                                          Annotated annotated,
+                                          NullableNotNullManager manager,
+                                          String anno, List<String> annoToRemove, @NotNull ProblemsHolder holder) {
+    List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
+    if (initializers.isEmpty()) return;
+    
+    List<PsiParameter> notNullParams = ContainerUtil.newArrayList();
+
+    boolean isFinal = field.hasModifierProperty(PsiModifier.FINAL);
+
+    for (PsiExpression rhs : initializers) {
+      if (rhs instanceof PsiReferenceExpression) {
+        PsiElement target = ((PsiReferenceExpression)rhs).resolve();
+        if (target instanceof PsiParameter && target.isPhysical()) {
+          PsiParameter parameter = (PsiParameter)target;
+          if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+            final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
+            if (nameIdentifier != null && nameIdentifier.isPhysical()) {
+              holder.registerProblem(
+                nameIdentifier,
+                InspectionsBundle.message("inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated", getPresentableAnnoName(field)),
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createAddAnnotationFix(anno, annoToRemove, parameter));
+              continue;
+            }
+          }
+
+          if (isFinal && annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
+            notNullParams.add(parameter);
+          }
+
+        }
+      }
+    }
+
+    if (notNullParams.size() != initializers.size()) {
+      // it's not the case that the field is final and @Nullable and always initialized via @NotNull parameters
+      // so there might be other initializers that could justify it being nullable
+      // so don't highlight field and constructor parameter annotation inconsistency
+      return;
+    }
+
+    PsiIdentifier nameIdentifier = field.getNameIdentifier();
+    if (nameIdentifier.isPhysical()) {
+      holder.registerProblem(nameIdentifier, "@" + getPresentableAnnoName(field) + " field is always initialized not-null", 
+                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AddNotNullAnnotationFix(field));
+    }
   }
 
   @NotNull

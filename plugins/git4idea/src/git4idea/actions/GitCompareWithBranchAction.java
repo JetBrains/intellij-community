@@ -24,7 +24,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -32,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
@@ -199,7 +199,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
 
     private static void showDiffWithBranch(@NotNull Project project, @NotNull VirtualFile file, @NotNull String head,
                                            @NotNull String branchToCompare) throws VcsException {
-      FilePath filePath = new FilePathImpl(file);
+      FilePath filePath = VcsUtil.getFilePath(file);
       // we could use something like GitRepository#getCurrentRevision here,
       // but this way we can easily identify if the file is available in the branch
       GitRevisionNumber compareRevisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare);
@@ -218,7 +218,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       VcsFileRevision compareRevision = new GitFileRevision(project, filePath,
                                                             new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp()));
       CurrentRevision currentRevision = new CurrentRevision(file, new GitRevisionNumber(head, currentRevisionNumber.getTimestamp()));
-      new GitDiffFromHistoryHandler(project).showDiffForTwo(project, new FilePathImpl(file), compareRevision, currentRevision);
+      new GitDiffFromHistoryHandler(project).showDiffForTwo(project, VcsUtil.getFilePath(file), compareRevision, currentRevision);
     }
 
     private static void fileDoesntExistInBranchError(@NotNull Project project, @NotNull VirtualFile file, @NotNull String branchToCompare) {

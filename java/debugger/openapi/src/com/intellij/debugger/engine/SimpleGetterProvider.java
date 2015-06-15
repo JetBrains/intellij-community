@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.psi.*;
 
 /**
  * @author Nikolay.Tropin
+ * @deprecated Use {@link SimplePropertyGetterProvider} instead
  */
+@Deprecated
 public interface SimpleGetterProvider {
   ExtensionPointName<SimpleGetterProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.simpleGetterProvider");
 

@@ -19,6 +19,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,8 +135,11 @@ public class PropertiesUtil {
     }
     final String containingResourceBundleBaseName = propertiesFile.getResourceBundle().getBaseName();
     LOG.assertTrue(name.startsWith(containingResourceBundleBaseName));
-    name = name.substring(containingResourceBundleBaseName.length());
-    final Matcher matcher = LOCALE_PATTERN.matcher(name);
+    return getLocale(name.substring(containingResourceBundleBaseName.length()));
+  }
+
+  public static Locale getLocale(String suffix) {
+    final Matcher matcher = LOCALE_PATTERN.matcher(suffix);
     if (matcher.find()) {
       final String rawLocale = matcher.group(1);
       final String[] splittedRawLocale = rawLocale.split("_");
@@ -208,5 +212,20 @@ public class PropertiesUtil {
   @Nullable
   public static String getPackageQualifiedName(@NotNull PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
+  }
+
+  @NotNull
+  public static String getPresentableLocale(@NotNull Locale locale) {
+    List<String> names = new ArrayList<String>();
+    if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
+      names.add(locale.getDisplayLanguage());
+    }
+    if (!Comparing.strEqual(locale.getDisplayCountry(), null)) {
+      names.add(locale.getDisplayCountry());
+    }
+    if (!Comparing.strEqual(locale.getDisplayVariant(), null)) {
+      names.add(locale.getDisplayVariant());
+    }
+    return names.isEmpty() ? "" : (" (" + StringUtil.join(names, "/") + ")");
   }
 }

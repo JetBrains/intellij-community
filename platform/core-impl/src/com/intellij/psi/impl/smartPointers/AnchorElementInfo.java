@@ -51,7 +51,9 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   private static long pack(int stubId, IStubElementType stubElementType) {
-    return ((long)stubId) | (stubElementType == null ? 0 : (((long)stubElementType.getIndex()) << 32));
+    short index = stubElementType == null ? 0 : stubElementType.getIndex();
+    assert index >= 0 : "Unregistered token types not allowed here: " + stubElementType;
+    return ((long)stubId) | ((long)index << 32);
   }
 
   private int getStubId() {
@@ -66,7 +68,8 @@ class AnchorElementInfo extends SelfElementInfo {
     if (stubId != -1) {
       PsiFile file = restoreFile();
       if (!(file instanceof PsiFileWithStubSupport)) return null;
-      IStubElementType stubElementType = (IStubElementType)IElementType.find((short)(typeAndId >> 32));
+      short index = (short)(typeAndId >> 32);
+      IStubElementType stubElementType = (IStubElementType)IElementType.find(index);
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, stubElementType, false);
     }
     if (!mySyncMarkerIsValid) return null;

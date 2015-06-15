@@ -27,19 +27,17 @@ package org.jetbrains.lang.manifest.header;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.text.LevenshteinDistance;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.lang.manifest.psi.Header;
 import org.jetbrains.lang.manifest.psi.HeaderValuePart;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -53,7 +51,7 @@ public class HeaderParserRepository {
     @NotNull
     @Override
     protected Map<String, HeaderParser> compute() {
-      Map<String, HeaderParser> map = ContainerUtil.newHashMap();
+      Map<String, HeaderParser> map = new THashMap<String, HeaderParser>(CaseInsensitiveStringHashingStrategy.INSTANCE);
       for (HeaderParserProvider provider : Extensions.getExtensions(HeaderParserProvider.EP_NAME)) {
         map.putAll(provider.getHeaderParsers());
       }
@@ -64,23 +62,6 @@ public class HeaderParserRepository {
   @Nullable
   public HeaderParser getHeaderParser(@Nullable String headerName) {
     return myParsers.getValue().get(headerName);
-  }
-
-  @NotNull
-  public Collection<HeaderNameMatch> getMatches(@NotNull String headerName) {
-    HeaderParser parser = myParsers.getValue().get(headerName);
-    if (parser != null) {
-      return ContainerUtil.emptyList();
-    }
-
-    LevenshteinDistance distance = new LevenshteinDistance();
-    Set<HeaderNameMatch> result = new TreeSet<HeaderNameMatch>();
-    for (Map.Entry<String, HeaderParser> entry : myParsers.getValue().entrySet()) {
-      String otherName = entry.getKey();
-      int dist = distance.calculateMetrics(headerName, otherName);
-      result.add(new HeaderNameMatch(dist, otherName));
-    }
-    return result;
   }
 
   @NotNull

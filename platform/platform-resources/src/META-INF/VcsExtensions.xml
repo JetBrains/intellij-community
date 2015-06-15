@@ -63,6 +63,8 @@
     <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
+
+    <getDataRule key="VCS_REVISION_NUMBERS" implementationClass="com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule"/>
   </extensions>
 </idea-plugin>
 

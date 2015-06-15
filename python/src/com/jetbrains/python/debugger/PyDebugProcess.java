@@ -53,6 +53,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PythonFileType;
@@ -60,6 +61,7 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -385,6 +387,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void startStepInto() {
     passToCurrentThread(ResumeOrStepCommand.Mode.STEP_INTO);
+  }
+
+  public void startStepIntoMyCode() {
+    if (!checkCanPerformCommands()) return;
+    XDebugSessionImpl session = (XDebugSessionImpl)getSession();
+    session.doResume();
+    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
   }
 
   @Override
@@ -846,7 +855,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        elementRef.set(element);
+        if (!(element instanceof PyImportElement)) {
+          if (elementRef.isNull()) {
+            elementRef.set(element);
+          }
+        }
         return false;
       }
 

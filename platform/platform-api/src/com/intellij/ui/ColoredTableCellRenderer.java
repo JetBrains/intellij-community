@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -25,7 +27,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer implements TableCellRenderer {
-  public final Component getTableCellRendererComponent(JTable table, Object value,
+  public final Component getTableCellRendererComponent(JTable table, @Nullable Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int col) {
     clear();
     setPaintFocusBorder(hasFocus && table.getCellSelectionEnabled());
@@ -35,5 +37,5 @@ public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer imp
     return this;
   }
 
-  protected abstract void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column);
+  protected abstract void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column);
 }

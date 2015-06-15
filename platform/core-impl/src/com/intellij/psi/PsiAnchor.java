@@ -52,6 +52,7 @@ public abstract class PsiAnchor {
   public abstract int getStartOffset();
   public abstract int getEndOffset();
 
+  @NotNull
   public static PsiAnchor create(@NotNull final PsiElement element) {
     if (!element.isValid()) {
       throw new PsiInvalidElementAccessException(element);
@@ -125,7 +126,7 @@ public abstract class PsiAnchor {
     return elementType instanceof IStubFileElementType && vFile != null && ((IStubFileElementType)elementType).shouldBuildStubFor(vFile);
   }
 
-  public static int calcStubIndex(StubBasedPsiElement psi) {
+  public static int calcStubIndex(@NotNull StubBasedPsiElement psi) {
     if (psi instanceof PsiFile) {
       return 0;
     }

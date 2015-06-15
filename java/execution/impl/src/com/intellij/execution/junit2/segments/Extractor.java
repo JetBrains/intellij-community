@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.execution.junit2.segments;
 import com.intellij.execution.junit.SegmentedInputStreamReader;
 import com.intellij.execution.junit2.SegmentedInputStream;
 import com.intellij.execution.testframework.Printable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -31,20 +33,19 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author dyoma
  */
-public class Extractor {
+public class Extractor implements Disposable {
   private static final int MAX_TASKS_TO_PROCESS_AT_ONCE = 100;
   
   private DeferredActionsQueue myFulfilledWorkGate = null;
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
-  private final Executor myExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final SequentialTaskExecutor myExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
@@ -53,6 +54,16 @@ public class Extractor {
 
   public void setDispatchListener(final DispatchListener listener) {
     myFulfilledWorkGate.setDispactchListener(listener);
+  }
+
+  @Override
+  public void dispose() {
+    // wait until all our submitted tasks are executed
+    try {
+      myExecutor.submit(EmptyRunnable.getInstance()).get();
+    }
+    catch (Exception ignored) {
+    }
   }
 
   public void setPacketDispatcher(@NotNull final PacketProcessor packetProcessor, final DeferredActionsQueue queue) {

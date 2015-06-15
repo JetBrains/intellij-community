@@ -17,12 +17,18 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ExternalResourceManagerEx extends ExternalResourceManager {
   @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
+
+  public enum XMLSchemaVersion {
+    XMLSchema_1_0,
+    XMLSchema_1_1
+  }
 
   public static ExternalResourceManagerEx getInstanceEx() {
     return (ExternalResourceManagerEx)getInstance();
@@ -67,9 +73,15 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
 
   public abstract void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project);
 
+  public abstract XMLSchemaVersion getXmlSchemaVersion(@NotNull Project project);
+
+  public abstract void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project);
+
   public abstract String getCatalogPropertiesFile();
 
   public abstract void setCatalogPropertiesFile(@Nullable String filePath);
 
   public abstract long getModificationCount(@NotNull Project project);
+
+  public abstract MultiMap<String, String> getUrlsByNamespace(Project project);
 }

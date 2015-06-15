@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
@@ -312,7 +311,12 @@ public class LambdaUtil {
         return ((PsiArrayType)psiType).getComponentType();
       }
     } else if (parent instanceof PsiTypeCastExpression) {
-      final PsiType castType = ((PsiTypeCastExpression)parent).getType();
+      //ensure no capture is performed to target type of cast expression, from 15.16 Cast Expressions:
+      //Casts can be used to explicitly "tag" a lambda expression or a method reference expression with a particular target type. 
+      //To provide an appropriate degree of flexibility, the target type may be a list of types denoting an intersection type, 
+      // provided the intersection induces a functional interface (§9.8).
+      final PsiTypeElement castTypeElement = ((PsiTypeCastExpression)parent).getCastType();
+      final PsiType castType = castTypeElement != null ? castTypeElement.getType() : null;
       if (castType instanceof PsiIntersectionType) {
         final PsiType conjunct = extractFunctionalConjunct((PsiIntersectionType)castType);
         if (conjunct != null) return conjunct;
@@ -340,9 +344,6 @@ public class LambdaUtil {
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
-          if (MethodCandidateInfo.isOverloadCheck()) {
-            MethodCandidateInfo.ourOverloadGuard.prohibitResultCaching(MethodCandidateInfo.ourOverloadGuard.currentStack().get(0));
-          }
           if (properties != null && properties.isApplicabilityCheck()) { //todo simplification
             final PsiParameter[] parameters = properties.getMethod().getParameterList().getParameters();
             final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);
@@ -350,14 +351,14 @@ public class LambdaUtil {
               return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
             }
           }
-          final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
+          final JavaResolveResult resolveResult = properties != null ? properties.getInfo() : contextCall.resolveMethodGenerics();
             final PsiElement resolve = resolveResult.getElement();
             if (resolve instanceof PsiMethod) {
               final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+                return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, !MethodCandidateInfo.isOverloadCheck(), new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
                     return resolveResult.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
@@ -423,6 +424,12 @@ public class LambdaUtil {
     return typeByExpression instanceof PsiMethodReferenceType || typeByExpression instanceof PsiLambdaExpressionType || typeByExpression instanceof PsiLambdaParameterType;
   }
 
+  public static boolean isLambdaReturnExpression(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    return parent instanceof PsiLambdaExpression ||
+           parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) != null;
+  }
+  
   public static PsiReturnStatement[] getReturnStatements(PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
     return body instanceof PsiCodeBlock ? PsiUtil.findReturnStatements((PsiCodeBlock)body) : PsiReturnStatement.EMPTY_ARRAY;

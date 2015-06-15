@@ -49,7 +49,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   public void testDuplicateShortcuts() {
     StringBuilder failMessage = new StringBuilder();
     Map<String, Map<String, List<String>>> knownDuplicates = getKnownDuplicates();
-    
+
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
       String failure = checkDuplicatesInKeymap(keymap, knownDuplicates);
       if (failMessage.length() > 0) failMessage.append("\n");
@@ -92,7 +92,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Execute.Multiline"},
     { "control EQUALS",           "ExpandAll", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
-    { "control D",                "EditorDuplicate", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
+    { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
     { "control N",                "FileChooser.NewFolder", "GotoClass", "GotoChangedFile"},
     { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
@@ -177,12 +177,10 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
                                   "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab"},
     { "alt DOWN",                 "ShowContent", "MethodDown"},
     { "alt SLASH",                "CodeCompletion", "HippieCompletion"},
-    { "control 0",                "Unsplit", "GotoBookmark0"},
-    { "control 1",                "CloseAllEditorsButActive", "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
+    { "control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
     { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
-    { "control 5",                "ChangeSplitOrientation", "GotoBookmark5"},
-    { "control D",                "$Delete", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
+    { "control D",                "$Delete", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control K",                "EditorCutLineEnd", "CheckinProject"},
     { "control N",                "EditorDown", "FileChooser.NewFolder"},
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
@@ -197,7 +195,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt S",            "ShowSettings", "Find"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
     { "shift alt S",              "FindUsages", "context.save"},
-    { "shift alt G",              "GotoClass", "GotoChangedFile"},
+    { "shift alt G",              "GotoChangedFile", "GotoClass", "hg4idea.QGotoFromPatches"},
+    { "shift alt P",              "ParameterInfo", "hg4idea.QPushAction"},
     { "shift control X",          "GotoPreviousError", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     });
     put("Visual Studio", new String[][] {
@@ -250,7 +249,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
     { "control F10",              "ShowPopupMenu", "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
     { "control F11",              "Rerun", "ToggleBookmarkWithMnemonic"},
-    { "control D",                "EditorDeleteLine", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
+    { "control D",                "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},
     { "control P",                "FileChooser.TogglePathShowing", "Print"},
     { "control R",                "RunToCursor", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
@@ -258,7 +257,10 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt DOWN",         "Console.TableResult.NextPage", "EditorDuplicateLines"},
     { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit"},
     { "control alt G",            "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
+    { "shift alt D",              "hg4idea.QFold", "Debug"},
+    { "shift alt G",              "RerunTests", "hg4idea.QGotoFromPatches"},
     { "shift alt L",              "IntroduceVariable", "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
+    { "shift alt P",              "hg4idea.QPushAction", "ImplementMethods"},
     { "shift alt S",              "ShowPopupMenu", "context.save"},
     { "shift alt T",              "ShowPopupMenu", "tasks.switch", "tasks.switch.toolbar"},
     { "shift control DOWN",       "ResizeToolWindowDown", "MethodDown"},
@@ -288,7 +290,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
     { "control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
     { "control DIVIDE",           "CollapseRegionRecursively", "Images.Editor.ActualSize"},
-    { "control D",                "EditorDuplicate", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
+    { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control M",                "Vcs.ShowMessageHistory", "Move"},
     { "control R",                "RenameElement", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
@@ -299,6 +301,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control alt UP",           "MethodUp", "Console.TableResult.PreviousPage"},
     { "shift F4",                 "RecentFiles", "Debugger.EditTypeSource", "Vcs.ShowMessageHistory", "EditSourceInNewWindow"},
     { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
+    { "shift alt D",              "ToggleFloatingMode", "hg4idea.QFold"},
     { "shift control DOWN",       "EditorDuplicate", "ResizeToolWindowDown", },
     { "shift control ENTER",      "EditorChooseLookupItemCompleteStatement", "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
@@ -333,7 +336,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
       { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
       { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},
-      { "meta D",                   "EditorDeleteLine", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
+      { "meta D",                   "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
       { "meta I",                   "DatabaseView.PropertiesAction", "AutoIndentLines"},
       { "meta P",                   "FileChooser.TogglePathShowing", "Print"},
       { "meta R",                   "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "RunToCursor"},
@@ -350,13 +353,13 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     });
   }};
   // @formatter:on
-  
+
   private Map<String, Map<String, List<String>>> getKnownDuplicates() {
     Map<String, Map<String, List<String>>> result = new LinkedHashMap<String, Map<String, List<String>>>();
     collectKnownDuplicates(result);
     return result;
-  } 
-  
+  }
+
   protected void collectKnownDuplicates(Map<String, Map<String, List<String>>> result) {
     appendKnownDuplicates(result, DEFAULT_DUPLICATES);
   }
@@ -364,17 +367,17 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   protected static void appendKnownDuplicates(Map<String, Map<String, List<String>>> result, Map<String, String[][]> duplicates) {
     for (Map.Entry<String, String[][]> eachKeymap : duplicates.entrySet()) {
       String keymapName = eachKeymap.getKey();
-      
+
       Map<String, List<String>> mapping = result.get(keymapName);
       if (mapping == null) {
         result.put(keymapName, mapping = new LinkedHashMap<String, List<String>>());
       }
 
       for (String[] shortcuts : eachKeymap.getValue()) {
-        TestCase.assertTrue("known duplicates list entry for '" + keymapName + "' must not contain empty array", 
+        TestCase.assertTrue("known duplicates list entry for '" + keymapName + "' must not contain empty array",
                             shortcuts.length > 0);
         TestCase.assertTrue("known duplicates list entry for '" + keymapName + "', shortcut '" + shortcuts[0] +
-                            "' must contain at least two conflicting action ids", 
+                            "' must contain at least two conflicting action ids",
                             shortcuts.length > 2);
         mapping.put(shortcuts[0], ContainerUtil.newArrayList(shortcuts, 1, shortcuts.length));
       }
@@ -486,7 +489,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
     ""
   ));
-  
+
   protected void collectUnknownActions(Set<String> result) {
     result.addAll(unknownActionIds);
   }
@@ -494,8 +497,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   public void testValidActionIds() {
     THashSet<String> unknownActions = new THashSet<String>();
     collectUnknownActions(unknownActions);
-    
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     Map<String, List<String>> missingActions = new FactoryMap<String, List<String>>() {
       @Override
       protected Map<String, List<String>> createMap() {
@@ -507,7 +510,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       protected List<String> create(String key) {
         return new ArrayList<String>();
       }
-    }; 
+    };
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
       String[] ids = keymap.getActionIds();
       Arrays.sort(ids);
@@ -526,7 +529,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
         }
       }
     }
-    
+
     List<String> reappearedAction = new ArrayList<String>();
     for (String id : unknownActions) {
       AnAction action = ActionManager.getInstance().getAction(id);
@@ -575,7 +578,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
                         ContainerUtil.subtract(duplicates.keySet(), allMaps).isEmpty()
     );
 
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     Map<Keymap, List<Shortcut>> reassignedShortcuts = new FactoryMap<Keymap, List<Shortcut>>() {
       @Override
       protected Map<Keymap, List<Shortcut>> createMap() {
@@ -587,7 +590,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       protected List<Shortcut> create(Keymap key) {
         return new ArrayList<Shortcut>();
       }
-    }; 
+    };
     for (String name : duplicates.keySet()) {
       Keymap keymap = KeymapManagerEx.getInstanceEx().getKeymap(name);
       TestCase.assertNotNull("KeyMap " + name + " not found", keymap);

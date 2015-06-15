@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return result.toString();
   }
 
-  protected enum Action {REFORMAT, INDENT}
+  protected enum Action {REFORMAT, INDENT, REFORMAT_WITH_CONTEXT}
 
   public static JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
@@ -105,6 +106,13 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
         CodeStyleManager.getInstance(getProject()).adjustLineIndent(psiFile, startOffset);
+      }
+    });
+    ACTIONS.put(Action.REFORMAT_WITH_CONTEXT, new TestFormatAction() {
+      @Override
+      public void run(PsiFile psiFile, int startOffset, int endOffset) {
+        List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
+        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges);
       }
     });
   }

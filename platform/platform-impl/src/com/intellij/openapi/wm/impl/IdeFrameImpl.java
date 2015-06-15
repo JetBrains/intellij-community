@@ -452,7 +452,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   public void dispose() {
     if (SystemInfo.isMac && isInFullScreen()) {
       ((MacMainFrameDecorator)myFrameDecorator).exitFullScreenAndDispose();
-    } else {
+    }
+    else {
       disposeImpl();
     }
   }
@@ -465,18 +466,18 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     MouseGestureManager.getInstance().remove(this);
     WelcomeFrame.notifyFrameClosed(this);
 
+    // clear both our and swing hard refs
     if (myRootPane != null) {
-      // clear both our and swing hard refs
       myRootPane = null;
-      setRootPane(null);
+      setRootPane(new JRootPane());
     }
-
     if (myFrameDecorator != null) {
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
     }
     if (myWindowsBorderUpdater != null) {
       Toolkit.getDefaultToolkit().removePropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
+      myWindowsBorderUpdater = null;
     }
 
     FocusTrackback.release(this);
@@ -511,7 +512,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   @Override
   public void paint(@NotNull Graphics g) {
-    UIUtil.applyRenderingHints(g);
+    UISettings.setupAntialiasing(g);
     //noinspection Since15
     super.paint(g);
   }

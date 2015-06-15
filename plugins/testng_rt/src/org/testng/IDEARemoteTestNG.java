@@ -16,17 +16,21 @@
 package org.testng;
 
 
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.testng.collections.Lists;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 
 public class IDEARemoteTestNG extends TestNG {
+
+  private final String myParam;
+  public IDEARemoteTestNG(String param) {
+    myParam = param;
+  }
 
   private static void calculateAllSuites(List<XmlSuite> suites, List<XmlSuite> outSuites) {
     for (XmlSuite s : suites) {
@@ -43,32 +47,33 @@ public class IDEARemoteTestNG extends TestNG {
       calculateAllSuites(m_suites, suites);
       if(suites.size() > 0) {
 
-        int testCount= 0;
-
         for (XmlSuite suite : suites) {
-          System.out.println("##teamcity[suiteTreeStarted name=\'" + suite.getName() + "\' locationHint=\'java:suite://" + suite.getName() + "\']");
           final List<XmlTest> tests = suite.getTests();
           for (XmlTest test : tests) {
-            for (XmlClass aClass : test.getXmlClasses()) {
-              System.out.println("##teamcity[suiteTreeStarted name=\'" + aClass.getName() + "\' locationHint=\'java:suite://" + aClass.getName() +  "\']");
-              for (XmlInclude include : aClass.getIncludedMethods()) {
-                System.out.println("##teamcity[suiteTreeNode name=\'" + include.getName() + "\']");
+            try {
+              if (myParam != null) {
+                for (XmlClass aClass : test.getXmlClasses()) {
+                  for (XmlInclude include : aClass.getIncludedMethods()) {
+                    final XmlInclude xmlInclude = new XmlInclude(include.getName(), Collections.singletonList(Integer.parseInt(myParam)), 0);
+                    aClass.setIncludedMethods(Collections.singletonList(xmlInclude));
+                  }
+                }
               }
-              System.out.println("##teamcity[suiteTreeEnded name=\'" + aClass.getName() + "\']");
             }
-            testCount += test.getClasses().size();
+            catch (NumberFormatException e) {
+              System.err.println("Invocation number: expected integer but found: " + myParam);
+            }
           }
-          System.out.println("##teamcity[suiteTreeEnded name=\'" + suite.getName() + "\']");
         }
 
-        final HashMap<String, String> map = new HashMap<String, String>();
-        map.put("count", String.valueOf(testCount));
-        System.out.println(ServiceMessage.asString("testCount", map));
-        addListener((ISuiteListener) new IDEATestNGRemoteListener());
-        addListener((ITestListener)  new IDEATestNGRemoteListener());
+        final IDEATestNGRemoteListener listener = new IDEATestNGRemoteListener();
+        addListener((ISuiteListener)listener);
+        addListener((ITestListener)listener);
         super.run();
+        System.exit(0);
       }
       else {
+        System.out.println("##teamcity[enteredTheMatrix]");
         System.err.println("Nothing found to run");
       }
     }

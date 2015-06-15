@@ -1,4 +1,7 @@
 public int hashCode() {
+#if (!$superHasHashCode && $fields.size()==1 && $fields[0].array)
+  return java.util.Arrays.hashCode($fields[0].accessor);
+#else
   return java.util.Objects.hash(##
     #set($i = 0)
     #if($superHasHashCode)
@@ -13,4 +16,5 @@ public int hashCode() {
       #set($i = $i + 1)
     #end
   );
+#end
 }

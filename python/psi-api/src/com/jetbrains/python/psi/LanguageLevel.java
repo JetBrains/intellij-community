@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,12 @@ public enum LanguageLevel {
     .add(PYTHON35)
     .build();
 
-  private static LanguageLevel DEFAULT2 = PYTHON27;
-  private static LanguageLevel DEFAULT3 = PYTHON34;
+  private static final LanguageLevel DEFAULT2 = PYTHON27;
+  private static final LanguageLevel DEFAULT3 = PYTHON34;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
+  @NotNull
   public static LanguageLevel getDefault() {
     return DEFAULT2;
   }

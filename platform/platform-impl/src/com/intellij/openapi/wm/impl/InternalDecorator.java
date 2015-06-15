@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -270,7 +270,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
     final NonOpaquePanel inner = new NonOpaquePanel(innerPanel);
-    inner.setBorder(new EmptyBorder(0, 0, 0, 0));
+    inner.setBorder(new EmptyBorder(-1, 0, 0, 0));
 
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
@@ -649,18 +649,27 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
 
   private final class ToggleContentUiTypeAction extends ToggleAction implements DumbAware {
+    private boolean myHadSeveralContents;
+
     private ToggleContentUiTypeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_CONTENT_UI_TYPE_ACTION_ID));
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      myHadSeveralContents = myHadSeveralContents || myToolWindow.getContentManager().getContentCount() > 1;
+      super.update(e);
+      e.getPresentation().setVisible(myHadSeveralContents);
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent e) {
-      return myInfo.getContentUiType() == ToolWindowContentUiType.TABBED;
+      return myInfo.getContentUiType() == ToolWindowContentUiType.COMBO;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      fireContentUiTypeChanges(state ? ToolWindowContentUiType.TABBED : ToolWindowContentUiType.COMBO);
+      fireContentUiTypeChanges(state ? ToolWindowContentUiType.COMBO : ToolWindowContentUiType.TABBED);
     }
   }
 

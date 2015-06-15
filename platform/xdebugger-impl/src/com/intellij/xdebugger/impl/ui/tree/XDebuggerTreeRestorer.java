@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     tree.addTreeSelectionListener(this);
   }
 
-  public void restoreChildren(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
+  private void restoreChildren(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
     if (nodeInfo.isExpanded()) {
       myTree.expandPath(treeNode.getPath());
       List<? extends XDebuggerTreeNode> children = treeNode.getLoadedChildren();
@@ -61,11 +61,20 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     }
   }
 
+  void restore(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo) {
+    if (treeNode instanceof RestorableStateNode) {
+      doRestoreNode((RestorableStateNode)treeNode, parentInfo);
+    }
+    else {
+      restoreChildren(treeNode, parentInfo);
+    }
+  }
+
   private void restoreNode(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo) {
     if (treeNode instanceof RestorableStateNode) {
       RestorableStateNode node = (RestorableStateNode)treeNode;
       if (node.isComputed()) {
-        doRestoreNode(node, parentInfo, node.getName());
+        doRestoreNode(node, parentInfo.removeChild(node.getName()));
       }
       else {
         myNode2ParentState.put(node, parentInfo);
@@ -73,13 +82,12 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     }
   }
 
-  private void doRestoreNode(final RestorableStateNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo, final String nodeName) {
-    XDebuggerTreeState.NodeInfo childInfo = parentInfo.removeChild(nodeName);
-    if (childInfo != null) {
-      if (!checkExtendedModified(treeNode) && !(Comparing.equal(childInfo.getValue(), treeNode.getRawValue()))) {
+  private void doRestoreNode(final RestorableStateNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
+    if (nodeInfo != null) {
+      if (!checkExtendedModified(treeNode) && !(Comparing.equal(nodeInfo.getValue(), treeNode.getRawValue()))) {
         treeNode.markChanged();
       }
-      if (!myStopRestoringSelection && childInfo.isSelected()) {
+      if (!myStopRestoringSelection && nodeInfo.isSelected()) {
         try {
           myInsideRestoring = true;
           myTree.addSelectionPath(treeNode.getPath());
@@ -89,7 +97,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
         }
       }
 
-      restoreChildren((XDebuggerTreeNode)treeNode, childInfo);
+      restoreChildren((XDebuggerTreeNode)treeNode, nodeInfo);
     }
     else if (!checkExtendedModified(treeNode)) {
       treeNode.markChanged();
@@ -112,7 +120,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   public void nodeLoaded(@NotNull final RestorableStateNode node, final String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     if (parentInfo != null) {
-      doRestoreNode(node, parentInfo, name);
+      doRestoreNode(node, parentInfo.removeChild(node.getName()));
     }
     disposeIfFinished();
   }

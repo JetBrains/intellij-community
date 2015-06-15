@@ -127,6 +127,18 @@ public class BulkChangesMergerTest {
     doTest("0123456789ABC", "0abc1358d9eBC", c("abc", 1), c("", 2, 3), c("", 4, 5), c("", 6, 8), c("d", 9), c("e", 10, 11));
   }
 
+  @Test
+  public void updateOffset() {
+    doTestUpdateOffset(5, 5, c("a", 6));
+    doTestUpdateOffset(5, 6, c("a", 3));
+    doTestUpdateOffset(5, 5, c("a", 6, 7));
+    doTestUpdateOffset(5, 5, c("a", 3, 4));
+    doTestUpdateOffset(5, 4, c("", 3, 4));
+    doTestUpdateOffset(5, 5, c("", 6, 7));
+    
+    doTestUpdateOffset(5, 2, c("", 0, 1), c("", 2, 3), c("", 3, 4));
+  }
+
   //@Config(inplace = true)
   //@Test
   //public void client() {
@@ -175,6 +187,10 @@ public class BulkChangesMergerTest {
       CharSequence actual = myMerger.mergeToCharSequence(initial.toCharArray(), interestedSymbolsNumber, Arrays.asList(changes));
       assertEquals(expected, actual.toString());
     }
+  }
+
+  private void doTestUpdateOffset(int initialOffset, int expectedOffset, TextChangeImpl... changes) {
+    assertEquals(expectedOffset, myMerger.updateOffset(initialOffset, Arrays.asList(changes)));
   }
   
   @Target(ElementType.METHOD)

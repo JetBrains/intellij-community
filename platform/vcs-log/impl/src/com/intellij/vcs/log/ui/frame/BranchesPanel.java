@@ -30,8 +30,6 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
-
 /**
  * Panel with branch labels, above the graph.
  */
@@ -52,7 +50,7 @@ public class BranchesPanel extends JPanel {
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
     myRefPainter = new RefPainter(myUI.getColorManager(), true);
 
-    setPreferredSize(new Dimension(-1, HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
+    setPreferredSize(new Dimension(-1, RefPainter.REF_HEIGHT + UIUtil.DEFAULT_VGAP));
 
     addMouseListener(new MouseAdapter() {
       @Override
@@ -281,7 +279,7 @@ public class BranchesPanel extends JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(calcWidth(), HEIGHT_CELL);
+      return new Dimension(calcWidth(), RefPainter.REF_HEIGHT);
     }
 
     private int calcWidth() {

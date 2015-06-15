@@ -7,6 +7,6 @@ abstract class B {
   }
 
   void foo(Class<?> aClass) {
-    A a = <error descr="Inferred type 'capture<?>' for type parameter 'T' is not within its bound; should extend 'A'">getA(aClass)</error>;
+    A a = getA<error descr="'getA(java.lang.Class<T>)' in 'B' cannot be applied to '(java.lang.Class<capture<?>>)'">(aClass)</error>;
   }
 }

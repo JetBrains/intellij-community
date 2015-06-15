@@ -53,6 +53,7 @@ import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
+import org.zmlx.hg4idea.provider.commit.HgMQNewExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.roots.HgIntegrationEnabler;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
@@ -64,6 +65,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -103,6 +105,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final Object myExecutableValidatorLock = new Object();
   private File myPromptHooksExtensionFile;
   private final CommitExecutor myCommitAndPushExecutor;
+  private final CommitExecutor myMqNewExecutor;
   private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
@@ -129,6 +132,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     committedChangesProvider = new HgCachingCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
+    myMqNewExecutor = new HgMQNewExecutor(checkinEnvironment);
     myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
   }
 
@@ -382,7 +386,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public List<CommitExecutor> getCommitExecutors() {
-    return Collections.singletonList(myCommitAndPushExecutor);
+    return Arrays.asList(myCommitAndPushExecutor, myMqNewExecutor);
   }
 
   @NotNull

@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
@@ -163,7 +164,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
-    return FileNameCache.appendPathOnFileSystem(mySegment.getNameId(myId), getParent(), accumulatedPathLength, positionRef);
+    CharSequence name = FileNameCache.getVFileName(mySegment.getNameId(myId));
+
+    char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
+    int i = positionRef[0];
+    chars[i] = '/';
+    positionRef[0] = copyString(chars, i + 1, name);
+
+    return chars;
   }
 
   protected static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
@@ -177,18 +185,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public String getUrl() {
     String protocol = getFileSystem().getProtocol();
     int prefixLen = protocol.length() + "://".length();
-    int[] pos = {prefixLen};
-    char[] chars = appendPathOnFileSystem(prefixLen, pos);
+    char[] chars = appendPathOnFileSystem(prefixLen, new int[]{prefixLen});
     copyString(chars, copyString(chars, 0, protocol), "://");
-    return chars.length == pos[0] ? StringFactory.createShared(chars) : new String(chars, 0, pos[0]);
+    return StringFactory.createShared(chars);
   }
 
   @Override
   @NotNull
   public String getPath() {
-    int[] pos = {0};
-    char[] chars = appendPathOnFileSystem(0, pos);
-    return chars.length == pos[0] ? StringFactory.createShared(chars) : new String(chars, 0, pos[0]);
+    return StringFactory.createShared(appendPathOnFileSystem(0, new int[]{0}));
   }
 
   @Override
@@ -321,6 +326,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
     mySegment.setNameId(myId, FileNameCache.storeName(newName));
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
     parent.addChild(this);
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -64,6 +65,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
@@ -107,8 +109,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private final VcsHistoryProvider myProvider;
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
-  private final FilePath myFilePath;
-  private final FileHistoryRefresherI myRefresherI;
+  @NotNull private final FilePath myFilePath;
+  @NotNull private final FileHistoryRefresherI myRefresherI;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private final DualView myDualView;
 
@@ -345,9 +347,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
   public FileHistoryPanelImpl(AbstractVcs vcs,
-                              FilePath filePath, VcsHistorySession session,
+                              @NotNull FilePath filePath,
+                              VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager, final FileHistoryRefresherI refresherI, final boolean isStaticEmbedded) {
+                              ContentManager contentManager,
+                              @NotNull FileHistoryRefresherI refresherI,
+                              final boolean isStaticEmbedded) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history", ! isStaticEmbedded);
     myProject = vcs.getProject();
     myIsStaticAndEmbedded = false;
@@ -578,8 +583,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
       setEmptyText("File " + myFilePath.getName() + " not found");
     }
-    else {
+    else if (myInRefresh) {
       setEmptyText(CommonBundle.getLoadingTreeNodeText());
+    }
+    else {
+      setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
     }
   }
 
@@ -761,12 +769,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     final MyDiffAction diffAction = new MyDiffAction();
     result.add(diffAction);
     if (!popup) {
-      diffAction.registerCustomShortcutSet(new CustomShortcutSet(
-        CommonShortcuts.getDiff().getShortcuts() [0],
-        CommonShortcuts.DOUBLE_CLICK_1.getShortcuts() [0]), myDualView.getFlatView());
-      diffAction.registerCustomShortcutSet(new CustomShortcutSet(
-        CommonShortcuts.getDiff().getShortcuts() [0],
-        CommonShortcuts.DOUBLE_CLICK_1.getShortcuts() [0]), myDualView.getTreeView());
+      List<Shortcut> shortcuts = new SmartList<Shortcut>();
+      ContainerUtil.addAll(shortcuts, CommonShortcuts.getDiff().getShortcuts());
+      ContainerUtil.addAll(shortcuts, CommonShortcuts.DOUBLE_CLICK_1.getShortcuts());
+      CustomShortcutSet shortcutSet = new CustomShortcutSet(ContainerUtil.toArray(shortcuts, new Shortcut[shortcuts.size()]));
+
+      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getFlatView());
+      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getTreeView());
     }
     else {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
@@ -934,7 +943,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
             public void run() {
               vp.refresh(false, true, new Runnable() {
                 public void run() {
-                  myFilePath.refresh();
                   action.finish();
                 }
               });
@@ -1038,7 +1046,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         writeContentToIOFile(revision);
       }
       else {
-        Document document = myFilePath.getDocument();
+        Document document = null;
+        VirtualFile virtualFile = myFilePath.getVirtualFile();
+        if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
+          document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        }
         if (document == null) {
           writeContentToFile(revision);
         }
@@ -1092,7 +1104,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
       if (Boolean.TRUE.equals(nonLocal)) return null;
 
-      return e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      if (file == null || file.isDirectory()) return null;
+
+      VirtualFile localVirtualFile = getVirtualFile();
+      if (localVirtualFile.getFileType().isBinary() && myFilePath.getFileType().isBinary()) return null;
+
+      return file;
     }
 
     @Nullable
@@ -1493,6 +1511,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public Object valueOf(TreeNodeOnVcsRevision o) {
       return myBaseColumn.valueOf(o.myRevision);
     }
+  }
+
+  @NotNull
+  public FileHistoryRefresherI getRefresher() {
+    return myRefresherI;
+  }
+
+  @NotNull
+  public FilePath getFilePath() {
+    return myFilePath;
   }
 
   public VirtualFile getVirtualFile() {

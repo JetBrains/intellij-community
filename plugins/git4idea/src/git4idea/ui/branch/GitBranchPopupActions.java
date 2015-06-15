@@ -24,6 +24,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
@@ -111,7 +113,7 @@ class GitBranchPopupActions {
         .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.checkout(reference, Collections.singletonList(myRepository), null);
+        brancher.checkout(reference, true, Collections.singletonList(myRepository), null);
       }
     }
 
@@ -192,7 +194,7 @@ class GitBranchPopupActions {
       @Override
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.checkout(myBranchName, myRepositories, null);
+        brancher.checkout(myBranchName, false, myRepositories, null);
       }
 
     }
@@ -282,25 +284,31 @@ class GitBranchPopupActions {
                                         @NotNull String remoteBranchName) {
         super("Checkout as new local branch");
         myProject = project;
-        myRepositories = repositories;
         myRemoteBranchName = remoteBranchName;
+        myRepositories = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
+          @Override
+          public boolean value(GitRepository repository) {
+            return !guessBranchName(myRemoteBranchName).equals(repository.getCurrentBranchName());
+          }
+        });
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout Remote Branch", Messages.getQuestionIcon(),
-                                               guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
+                                                     guessBranchName(myRemoteBranchName),
+                                                     GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
           brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
         }
       }
 
-      private String guessBranchName() {
+      private static String guessBranchName(@NotNull String remoteBranchName) {
         // TODO: check if we already have a branch with that name; check if that branch tracks this remote branch. Show different messages
-        int slashPosition = myRemoteBranchName.indexOf("/");
+        int slashPosition = remoteBranchName.indexOf("/");
         // if no slash is found (for example, in the case of git-svn remote branches), propose the whole name.
-        return myRemoteBranchName.substring(slashPosition+1);
+        return remoteBranchName.substring(slashPosition + 1);
       }
     }
 

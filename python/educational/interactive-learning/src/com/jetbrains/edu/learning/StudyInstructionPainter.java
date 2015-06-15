@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -25,8 +26,8 @@ public class StudyInstructionPainter extends EditorEmptyTextPainter {
   @Override
   public void paintEmptyText(final EditorsSplitters splitters, Graphics g) {
     boolean isDarkBackground = UIUtil.isUnderDarcula();
-    UIUtil.applyRenderingHints(g);
-    GraphicsUtil.setupAntialiasing(g, true, false);
+    UISettings.setupAntialiasing(g);
+
     g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
     g.setFont(UIUtil.getLabelFont().deriveFont(isDarkBackground ? 24f : 20f));
 

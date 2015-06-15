@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
@@ -184,7 +183,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     for (int i = 0; i < size; i++) {
       basicData.put(i,  gitFileAnnotation.getLineRevisionNumber(i));
     }
-    return new VcsAnnotation(new FilePathImpl(gitFileAnnotation.getFile()), basicData, null);
+    return new VcsAnnotation(VcsUtil.getFilePath(gitFileAnnotation.getFile()), basicData, null);
   }
 
   @Override

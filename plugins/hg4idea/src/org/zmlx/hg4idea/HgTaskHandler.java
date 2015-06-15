@@ -67,7 +67,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   @Override
   protected Iterable<String> getAllBranches(@NotNull HgRepository repository) {
     //be careful with equality names of branches/bookmarks =(
-    return ContainerUtil.concat(HgUtil.getNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
+    return ContainerUtil.concat(HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
   }
 
   @Override

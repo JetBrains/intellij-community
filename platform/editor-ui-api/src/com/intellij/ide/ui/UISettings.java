@@ -68,6 +68,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int RECENT_FILES_LIMIT = 50;
   public int CONSOLE_COMMAND_HISTORY_LIMIT = 300;
   public int EDITOR_TAB_LIMIT = 10;
+  public boolean REUSE_NOT_MODIFIED_TABS = false;
   public boolean ANIMATE_WINDOWS = true;
   @Deprecated //todo remove in IDEA 16
   public int ANIMATION_SPEED = 4000; // Pixels per second
@@ -94,7 +95,11 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean CLOSE_NON_MODIFIED_FILES_FIRST = false;
   public boolean ACTIVATE_MRU_EDITOR_ON_CLOSE = false;
   public boolean ACTIVATE_RIGHT_EDITOR_ON_CLOSE = false;
+  @Deprecated
   public boolean ANTIALIASING_IN_EDITOR = true;
+  public boolean ANTIALIASING_IN_IDE = ANTIALIASING_IN_EDITOR;
+  public LCDRenderingScope LCD_RENDERING_SCOPE = UIUtil.isRetina() ? LCDRenderingScope.OFF : LCDRenderingScope.IDE;
+  public boolean USE_LCD_RENDERING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
   public int ALPHA_MODE_DELAY = 1500;
@@ -252,45 +257,39 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     fireUISettingsChanged();
   }
 
-  private static final boolean DEFAULT_ALIASING             =
-    SystemProperties.getBooleanProperty("idea.use.default.antialiasing.in.editor", false);
-  private static final boolean FORCE_USE_FRACTIONAL_METRICS =
+  public static final boolean FORCE_USE_FRACTIONAL_METRICS =
     SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false);
 
+  public static void setupFractionalMetrics(final Graphics2D g2d) {
+    if (FORCE_USE_FRACTIONAL_METRICS) {
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+    }
+  }
+
+  /* This method must not be used for set up antialiasing for editor components
+   */
   public static void setupAntialiasing(final Graphics g) {
-    if (DEFAULT_ALIASING) return;
+
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      // We cannot use services while Aplication has not been loaded yet
+      // So let's apply the default hints.
+      UIUtil.applyRenderingHints(g);
+      return;
+    }
 
     Graphics2D g2d = (Graphics2D)g;
     UISettings uiSettings = getInstance();
 
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-    if (!isRemoteDesktopConnected() && UIUtil.isRetina()) {
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+    if (uiSettings != null) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, LCDRenderingScope.getKeyForCurrentScope(false));
+    } else {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
-    else {
-      if (uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR) {
-        Toolkit tk = Toolkit.getDefaultToolkit();
-        //noinspection HardCodedStringLiteral
-        Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
-        if (map != null) {
-          if (isRemoteDesktopConnected()) {
-            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
-          }
-          else {
-            g2d.addRenderingHints(map);
-          }
-        }
-        else {
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        }
-        if (FORCE_USE_FRACTIONAL_METRICS) {
-          g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        }
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-      }
-    }
+
+    setupFractionalMetrics(g2d);
   }
 
   /**

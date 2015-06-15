@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -57,22 +59,8 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     GitVcs vcs = GitVcs.getInstance(project);
     final List<VirtualFile> roots = getGitRoots(project, vcs);
     if (roots == null) return;
-    // get default root
-    final VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    VirtualFile defaultRootVar = null;
-    if (vFiles != null) {
-      for (VirtualFile file : vFiles) {
-        final VirtualFile root = GitUtil.gitRootOrNull(file);
-        if (root != null) {
-          defaultRootVar = root;
-          break;
-        }
-      }
-    }
-    if (defaultRootVar == null) {
-      defaultRootVar = roots.get(0);
-    }
-    final VirtualFile defaultRoot = defaultRootVar;
+
+    final VirtualFile defaultRoot = getDefaultRoot(project, roots, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     final Set<VirtualFile> affectedRoots = new HashSet<VirtualFile>();
     String actionName = getActionName();
 
@@ -86,6 +74,20 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     if (executeFinalTasksSynchronously()) {
       runFinalTasks(project, vcs, affectedRoots, actionName, exceptions);
     }
+  }
+
+  @NotNull
+  private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<VirtualFile> roots, @Nullable VirtualFile[] vFiles) {
+    if (vFiles != null) {
+      for (VirtualFile file : vFiles) {
+        VirtualFile root = GitUtil.gitRootOrNull(file);
+        if (root != null) {
+          return root;
+        }
+      }
+    }
+    GitRepository currentRepository = GitBranchUtil.getCurrentRepository(project);
+    return currentRepository != null ? currentRepository.getRoot() : roots.get(0);
   }
 
   protected final void runFinalTasks(Project project, GitVcs vcs, Set<VirtualFile> affectedRoots, String actionName,
@@ -113,17 +115,16 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       if (files != null) {
         for (VirtualFile file : files) {
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-          if (manager == null) {
-            return false;
-          }
-          final GitRepository repositoryForFile = manager.getRepositoryForFile(file);
-          if (repositoryForFile != null && repositoryForFile.getState() == GitRepository.State.REBASING) {
-            return true;
-          }
+          if (isRebasing(manager.getRepositoryForFile(file))) return true;
         }
       }
+      if (isRebasing(GitBranchUtil.getCurrentRepository(project))) return true;
     }
     return false;
+  }
+
+  private static boolean isRebasing(@Nullable GitRepository repository) {
+    return repository != null && repository.getState() == Repository.State.REBASING;
   }
 
   /**

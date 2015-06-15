@@ -37,12 +37,12 @@ import org.jetbrains.annotations.Nullable;
 public class HtmlParsing {
   @NonNls private static final String TR_TAG = "tr";
   @NonNls private static final String TD_TAG = "td";
-  @NonNls private static final String DD_TAG = "dd";
-  @NonNls private static final String DT_TAG = "dt";
+  @NonNls private static final String TH_TAG = "th";
   @NonNls private static final String TABLE_TAG = "table";
 
   private final PsiBuilder myBuilder;
   private final Stack<String> myTagNamesStack = new Stack<String>();
+  private final Stack<String> myOriginalTagNamesStack = new Stack<String>();
   private final Stack<PsiBuilder.Marker> myTagMarkersStack = new Stack<PsiBuilder.Marker>();
   @NonNls private static final String COMPLETION_NAME = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.toLowerCase();
 
@@ -64,7 +64,7 @@ public class HtmlParsing {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_START_TAG_START) {
         error = flushError(error);
-        parseTag("");
+        parseTag();
         myTagMarkersStack.clear();
         myTagNamesStack.clear();
       }
@@ -133,146 +133,72 @@ public class HtmlParsing {
     doctype.done(XmlElementType.XML_DOCTYPE);
   }
 
-  private static boolean ddordt(String name) {
-    return DT_TAG.equals(name) || DD_TAG.equals(name);
-  }
-
-  private boolean parseTag(String parentName) {
+  private void parseTag() {
     assert token() == XmlTokenType.XML_START_TAG_START : "Tag start expected";
-    final PsiBuilder.Marker tag = mark();
-    myTagMarkersStack.push(tag);
-
-    // Start tag header
-    advance();
-    final String originalTagName;
-    if (token() != XmlTokenType.XML_NAME) {
-      error(XmlErrorMessages.message("xml.parsing.tag.name.expected"));
-      originalTagName = "";
-    }
-    else {
-      originalTagName = myBuilder.getTokenText();
-      advance();
-    }
-
-    String tagName = StringUtil.toLowerCase(originalTagName);
-    if (ddordt(tagName) && ddordt(parentName) ||
-        tagName.equals(parentName) && HtmlUtil.isOptionalEndForHtmlTagL(tagName) ||
-        myTagMarkersStack.size() > MAGIC_FRAME_COUNT // no chance for evil guys wanting us to have stack overflow
-       ) {
-      tag.rollbackTo();
-      myTagMarkersStack.pop();
-      return false;
-    }
-
-    myTagNamesStack.push(tagName);
-
-    boolean freeMakerTag = !tagName.isEmpty() && '#' == tagName.charAt(0);
-
-    do {
-      final IElementType tt = token();
-      if (freeMakerTag) {
-        if (tt == XmlTokenType.XML_EMPTY_ELEMENT_END ||
-            tt == XmlTokenType.XML_TAG_END ||
-            tt == XmlTokenType.XML_END_TAG_START ||
-            tt == XmlTokenType.XML_START_TAG_START) break;
-        advance();
-      }
-      else {
-        if (tt == XmlTokenType.XML_NAME) {
-          parseAttribute();
-        }
-        else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-          parseReference();
-        }
-        else {
-          break;
-        }
-      }
-    }
-    while (!eof());
-
-    if (token() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-      advance();
-      tag.done(XmlElementType.HTML_TAG);
-      return true;
-    }
-
-    if (token() == XmlTokenType.XML_TAG_END) {
-      advance();
-    }
-    else {
-      error(XmlErrorMessages.message("tag.start.is.not.closed"));
-      tag.done(XmlElementType.HTML_TAG);
-      return true;
-    }
-
-    if (HtmlUtil.isSingleHtmlTagL(tagName)) {
-      final PsiBuilder.Marker footer = mark();
-      if (token() == XmlTokenType.XML_END_TAG_START) {
-        advance();
-        if (token() == XmlTokenType.XML_NAME) {
-          if (tagName.equalsIgnoreCase(myBuilder.getTokenText())) {
-            advance();
-            footer.drop();
-            if (token() == XmlTokenType.XML_TAG_END) {
-              advance();
-            }
-            tag.done(XmlElementType.HTML_TAG);
-            return true;
-          }
-        }
-      }
-
-      footer.rollbackTo();
-      tag.done(XmlElementType.HTML_TAG);
-      return true;
-    }
-
-    // Done header, start content
-
-    boolean isInlineTagContainer = HtmlUtil.isInlineTagContainerL(tagName);
-    boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(tagName);
-
-    PsiBuilder.Marker firstBlockChild = null;
-
+    String originalTagName;
     PsiBuilder.Marker xmlText = null;
     while (!eof()) {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_START_TAG_START) {
         xmlText = terminateText(xmlText);
-        if (!parseTag(tagName)) {
-          tag.done(XmlElementType.HTML_TAG);
-          return true;
+        final PsiBuilder.Marker tag = mark();
+
+        // Start tag header
+        advance();
+        if (token() != XmlTokenType.XML_NAME) {
+          error(XmlErrorMessages.message("xml.parsing.tag.name.expected"));
+          originalTagName = "";
+        }
+        else {
+          originalTagName = myBuilder.getTokenText();
+          advance();
         }
 
-        PsiBuilder.Marker childMarker = myTagMarkersStack.pop();
-        String childName = myTagNamesStack.pop();
+        String tagName = StringUtil.toLowerCase(originalTagName);
+        while (childTerminatesParentInStack(tagName)) {
+          PsiBuilder.Marker top = closeTag();
+          top.doneBefore(XmlElementType.HTML_TAG, tag);
+        }
 
-        if (isOptionalTagEnd) {
-          boolean foundMatch = childTerminatesParentInStack(childName, true);
-          if (foundMatch) {
-            // allow only one promotion per tag, otherwise last row in table
-            // will make it up to the first one moving all tags in between under first node
-            if (!canTerminate(childName, tagName)) {
-              myTagMarkersStack.pop();
-              myTagNamesStack.pop();
+        myTagMarkersStack.push(tag);
+        myTagNamesStack.push(tagName);
+        myOriginalTagNamesStack.push(originalTagName);
 
-              myTagMarkersStack.push(childMarker);
-              myTagNamesStack.push(childName);
+        parseHeader(tagName);
+
+        if (token() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+          advance();
+          doneTag(tag);
+          continue;
+        }
+
+        if (token() == XmlTokenType.XML_TAG_END) {
+          advance();
+        }
+        else {
+          error(XmlErrorMessages.message("tag.start.is.not.closed"));
+          doneTag(tag);
+          continue;
+        }
+
+        if (HtmlUtil.isSingleHtmlTagL(tagName)) {
+          final PsiBuilder.Marker footer = mark();
+          if (token() == XmlTokenType.XML_END_TAG_START) {
+            advance();
+            if (token() == XmlTokenType.XML_NAME) {
+              if (tagName.equalsIgnoreCase(myBuilder.getTokenText())) {
+                advance();
+                footer.drop();
+                if (token() == XmlTokenType.XML_TAG_END) {
+                  advance();
+                }
+                doneTag(tag);
+                continue;
+              }
             }
-
-            tag.doneBefore(XmlElementType.HTML_TAG, childMarker);
-            return true;
           }
-        }
-
-
-        if (isInlineTagContainer && HtmlUtil.isHtmlBlockTagL(childName) && isOptionalTagEnd && !HtmlUtil.isPossiblyInlineTag(childName)) {
-          tag.doneBefore(XmlElementType.HTML_TAG, childMarker);
-          return true;
-        }
-        else if (isOptionalTagEnd && firstBlockChild == null && HtmlUtil.isHtmlBlockTagL(childName) && !HtmlUtil.isHtmlBlockTagL(tagName) && canTerminate(childName, tagName)) {
-          firstBlockChild = childMarker;
+          footer.rollbackTo();
+          doneTag(tag);
         }
       }
       else if (tt == XmlTokenType.XML_PI_START) {
@@ -312,23 +238,20 @@ public class HtmlParsing {
 
         if (token() == XmlTokenType.XML_NAME) {
           String endName = StringUtil.toLowerCase(myBuilder.getTokenText());
-          if (!tagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
-            final boolean hasChancesToMatch = HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName, false) : myTagNamesStack.contains(endName);
+          final String parentTagName = !myTagNamesStack.isEmpty() ? myTagNamesStack.peek() : "";
+          if (!parentTagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
+            final boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
+            final boolean hasChancesToMatch = HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName) : myTagNamesStack.contains(endName);
             if (hasChancesToMatch) {
               footer.rollbackTo();
               if (isOptionalTagEnd) {
-                if (firstBlockChild != null) {
-                  tag.doneBefore(XmlElementType.HTML_TAG, firstBlockChild);
-                }
-                else {
-                  tag.done(XmlElementType.HTML_TAG);
-                }
+                doneTag(myTagMarkersStack.peek());
               }
               else {
-                error(XmlErrorMessages.message("named.element.is.not.closed", originalTagName));
-                tag.done(XmlElementType.HTML_TAG);
+                error(XmlErrorMessages.message("named.element.is.not.closed", myOriginalTagNamesStack.peek()));
+                doneTag(myTagMarkersStack.peek());
               }
-              return true;
+              continue;
             }
             else {
               advance();
@@ -356,57 +279,105 @@ public class HtmlParsing {
         else {
           error(XmlErrorMessages.message("xml.parsing.closing.tag.is.not.done"));
         }
-
-        tag.done(XmlElementType.HTML_TAG);
-        return true;
-      }
-      else {
+        if (hasTags()) doneTag(myTagMarkersStack.peek());
+      } else if ((token() == XmlTokenType.XML_REAL_WHITE_SPACE || token() == XmlTokenType.XML_DATA_CHARACTERS) && !hasTags()) {
+        xmlText = terminateText(xmlText);
+        advance();
+      } else {
         xmlText = startText(xmlText);
         advance();
       }
     }
-
     terminateText(xmlText);
+    while (hasTags()) {
+      final String tagName = myTagNamesStack.peek();
+      if (!HtmlUtil.isOptionalEndForHtmlTagL(tagName) && !"html".equals(tagName) && !"body".equals(tagName)) {
+        error(XmlErrorMessages.message("named.element.is.not.closed", myOriginalTagNamesStack.peek()));
+      }
+      doneTag(myTagMarkersStack.peek());
+    }
+  }
 
-    if (isOptionalTagEnd || "body".equalsIgnoreCase(tagName) || "html".equalsIgnoreCase(tagName)) {
-      if (firstBlockChild != null) {
-        tag.doneBefore(XmlElementType.HTML_TAG, firstBlockChild);
+  private boolean hasTags() {
+    return !myTagNamesStack.isEmpty();
+  }
+
+  private PsiBuilder.Marker closeTag() {
+    myTagNamesStack.pop();
+    myOriginalTagNamesStack.pop();
+    return myTagMarkersStack.pop();
+  }
+
+  private void doneTag(PsiBuilder.Marker tag) {
+    tag.done(XmlElementType.HTML_TAG);
+    final String tagName = myTagNamesStack.peek();
+    closeTag();
+
+    final String parentTagName = hasTags() ? myTagNamesStack.peek() : "";
+    boolean isInlineTagContainer = HtmlUtil.isInlineTagContainerL(parentTagName);
+    boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
+    if (isInlineTagContainer && HtmlUtil.isHtmlBlockTagL(tagName) && isOptionalTagEnd && !HtmlUtil.isPossiblyInlineTag(tagName)) {
+      PsiBuilder.Marker top = closeTag();
+      top.doneBefore(XmlElementType.HTML_TAG, tag);
+    }
+  }
+
+  private void parseHeader(String tagName) {
+    boolean freeMakerTag = !tagName.isEmpty() && '#' == tagName.charAt(0);
+
+    do {
+      final IElementType tt = token();
+      if (freeMakerTag) {
+        if (tt == XmlTokenType.XML_EMPTY_ELEMENT_END ||
+            tt == XmlTokenType.XML_TAG_END ||
+            tt == XmlTokenType.XML_END_TAG_START ||
+            tt == XmlTokenType.XML_START_TAG_START) break;
+        advance();
       }
       else {
-        tag.done(XmlElementType.HTML_TAG);
+        if (tt == XmlTokenType.XML_NAME) {
+          parseAttribute();
+        }
+        else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+          parseReference();
+        }
+        else {
+          break;
+        }
       }
     }
-    else {
-      error(XmlErrorMessages.message("named.element.is.not.closed", originalTagName));
-      tag.done(XmlElementType.HTML_TAG);
-    }
-
-    return true;
+    while (!eof());
   }
 
-  private static boolean canTerminate(final String childTagName,final String tagName) {
-    return childTagName.equals(tagName) || HtmlUtil.canTerminate(childTagName, tagName);
-  }
-
-  private boolean childTerminatesParentInStack(final String childName, final boolean terminateOnNonOptionalTag) {
-    boolean isCell = TD_TAG.equals(childName) || "th".equals(childName);
+  private boolean childTerminatesParentInStack(final String childName) {
+    boolean isCell = TD_TAG.equals(childName) || TH_TAG.equals(childName);
     boolean isRow = TR_TAG.equals(childName);
+    boolean isStructure = isStructure(childName);
 
     for (int i = myTagNamesStack.size() - 1; i >= 0; i--) {
       String parentName = myTagNamesStack.get(i);
-      if (terminateOnNonOptionalTag && !HtmlUtil.isOptionalEndForHtmlTagL(parentName)) return false;
-      if (isCell && (TR_TAG.equals(parentName) || TABLE_TAG.equals(parentName)) ||
-          isRow && TABLE_TAG.equals(parentName)) {
+      final boolean isParentTable = TABLE_TAG.equals(parentName);
+      final boolean isParentStructure = isStructure(parentName);
+      if (isCell && (TR_TAG.equals(parentName) || isParentStructure || isParentTable) ||
+          isRow && (isParentStructure || isParentTable) ||
+          isStructure && isParentTable) {
         return false;
       }
 
-      if (canTerminate(childName, parentName)) {
+      if ("li".equals(childName) && ("ul".equals(parentName) || "ol".equals(parentName))) {
+        return false;
+      }
+
+      if (HtmlUtil.canTerminate(childName, parentName)) {
         return true;
       }
     }
     return false;
   }
 
+  private static boolean isStructure(String childName) {
+    return "thead".equals(childName) || "tbody".equals(childName) || "tfoot".equals(childName);
+  }
 
   @NotNull
   private PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
@@ -621,6 +592,4 @@ public class HtmlParsing {
   private void error(final String message) {
     myBuilder.error(message);
   }
-
-  private static final int MAGIC_FRAME_COUNT = 450;
 }

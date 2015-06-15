@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,16 @@ public abstract class ConfigurationFromContext {
   }
 
   /**
+   * Checks if this configuration should replace another one, that is if the other should be discarded.
+   *
+   * @see RunConfigurationProducer#shouldReplace(ConfigurationFromContext, ConfigurationFromContext)
+   * @return true if the other configuration should be discarded, false otherwise.
+   */
+  public boolean shouldReplace(ConfigurationFromContext other) {
+    return false;
+  }
+
+  /**
    * Checks if this configuration was created by the specified producer.
    *
    * @param producerClass the run configuration producer class.
@@ -117,7 +127,13 @@ public abstract class ConfigurationFromContext {
       if (!configuration1.isPreferredTo(configuration2)) {
         return 1;
       }
+      if (configuration2.shouldReplace(configuration1)) {
+        return 1;
+      }
       if (!configuration2.isPreferredTo(configuration1)) {
+        return -1;
+      }
+      if (configuration1.shouldReplace(configuration2)) {
         return -1;
       }
       return 0;

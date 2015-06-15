@@ -190,11 +190,9 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @Override
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
-    if (myBufferingEnabled) {
-      final ValueContainer<Value> valueContainer = myMap.get(key);
-      if (valueContainer != null) {
-        return valueContainer;
-      }
+    final ValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      return valueContainer;
     }
 
     return myBackendStorage.read(key);

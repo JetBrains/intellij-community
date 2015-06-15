@@ -22,6 +22,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -95,7 +96,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
       return false;
     }
 
-    return !(expression.getParent() instanceof PsiExpressionStatement);
+    return !(expression.getParent() instanceof PsiExpressionStatement) && !PsiUtil.isAccessedForWriting(expression);
   }
 
   private static String suggestDefaultValue(@NotNull PsiExpression expression) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,12 +56,14 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 class PostHighlightingVisitor {
@@ -110,11 +112,10 @@ class PostHighlightingVisitor {
     }
   }
 
-  // returns true if error highlight was created
-  public PostHighlightingVisitor(@NotNull PsiFile file,
-                                 @NotNull Document document,
-                                 @NotNull RefCountHolder refCountHolder,
-                                 @NotNull HighlightingSession highlightingSession) throws ProcessCanceledException {
+  PostHighlightingVisitor(@NotNull PsiFile file,
+                          @NotNull Document document,
+                          @NotNull RefCountHolder refCountHolder,
+                          @NotNull HighlightingSession highlightingSession) throws ProcessCanceledException {
     myHighlightingSession = highlightingSession;
     myProject = file.getProject();
     myFile = file;
@@ -149,9 +150,9 @@ class PostHighlightingVisitor {
                                                                        HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
   }
 
-  public void collectHighlights(@NotNull PsiFile file,
-                                @NotNull HighlightInfoHolder result,
-                                @NotNull ProgressIndicator progress) {
+  void collectHighlights(@NotNull PsiFile file,
+                         @NotNull HighlightInfoHolder result,
+                         @NotNull ProgressIndicator progress) {
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
@@ -372,9 +373,17 @@ class PostHighlightingVisitor {
     return highlightInfo;
   }
 
-  private static boolean isOverriddenOrOverrides(PsiMethod method) {
-    boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
-    return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
+  private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = new ConcurrentFactoryMap<PsiMethod, Boolean>() {
+    @Nullable
+    @Override
+    protected Boolean create(PsiMethod method) {
+      boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+      return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
+    }
+  };
+
+  private boolean isOverriddenOrOverrides(@NotNull PsiMethod method) {
+    return isOverriddenOrOverrides.get(method);
   }
 
   @Nullable

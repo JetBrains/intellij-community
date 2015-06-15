@@ -772,29 +772,44 @@ public class ExternalSystemApiUtil {
     return (T)loader.loadClass(clazz.getName()).newInstance();
   }
 
-  @Contract("_, null -> false")
+  @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull ProjectSystemId systemId, @Nullable Module module) {
     return module != null && !module.isDisposed() && systemId.getId().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
   }
 
-  @Contract("_, null -> false")
+  @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
     return module != null && !module.isDisposed() && systemId.equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
   }
 
   @Nullable
+  @Contract(pure=true)
   public static String getExternalProjectPath(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;
   }
 
   @Nullable
+  @Contract(pure=true)
   public static String getExternalRootProjectPath(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY) : null;
   }
 
   @Nullable
+  @Contract(pure=true)
   public static String getExternalProjectId(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_ID_KEY) : null;
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static String getExternalProjectGroup(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY) : null;
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static String getExternalProjectVersion(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY) : null;
   }
 
   public static void subscribe(@NotNull Project project,

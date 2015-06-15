@@ -17,7 +17,6 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
     readInterfaceRecursive(type)
   }
 
-  throws(javaClass<JsonProtocolModelParseException>())
   private fun readInterfaceRecursive(clazz: Class<*>) {
     if (visitedInterfaces.contains(clazz)) {
       return
@@ -46,7 +45,7 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
       var returnType = m.getGenericReturnType()
       var isList = false
       if (returnType is ParameterizedType) {
-        val parameterizedType = returnType as ParameterizedType
+        val parameterizedType = returnType
         if (parameterizedType.getRawType() == javaClass<List<Any>>()) {
           isList = true
           returnType = parameterizedType.getActualTypeArguments()[0]
@@ -57,9 +56,6 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
       var typeWriter: TypeWriter<*>? = typeToTypeHandler.get(returnType)
       if (typeWriter == null) {
         typeWriter = createHandler(typeToTypeHandler, m.getReturnType())
-        if (typeWriter == null) {
-          throw JsonProtocolModelParseException("Unknown return type in " + m)
-        }
       }
 
       val arguments = m.getGenericParameterTypes()
@@ -68,7 +64,7 @@ class ReaderRoot<R>(public val type: Class<R>, private val typeToTypeHandler: Li
       }
       val argument = arguments[0]
       if (argument == javaClass<JsonReaderEx>() || argument == javaClass<Any>()) {
-        methodMap.put(m, ReadDelegate(typeWriter!!, isList, arguments.size() != 1))
+        methodMap.put(m, ReadDelegate(typeWriter, isList, arguments.size() != 1))
       }
       else {
         throw JsonProtocolModelParseException("Unrecognized argument type in " + m)

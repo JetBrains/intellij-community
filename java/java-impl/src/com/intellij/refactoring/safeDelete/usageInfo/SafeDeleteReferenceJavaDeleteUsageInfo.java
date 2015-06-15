@@ -46,8 +46,11 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
       LOG.assertTrue(element != null);
       PsiElement importStatement = ImportSearcher.getImport(element, false);
       if (importStatement != null) {
-        if (element instanceof PsiImportStaticReferenceElement && 
-            ((PsiImportStaticReferenceElement)element).multiResolve(false).length < 2) {
+        if (element instanceof PsiImportStaticReferenceElement) {
+          if (((PsiImportStaticReferenceElement)element).multiResolve(false).length < 2) {
+            importStatement.delete();
+          }
+        } else {
           importStatement.delete();
         }
       }

@@ -64,6 +64,12 @@ public abstract class FormatterEx{
                               CommonCodeStyleSettings.IndentOptions javaIndentOptions,
                               FormatTextRanges affectedRanges) throws IncorrectOperationException;
 
+  public abstract void format(final FormattingModel model,
+                              final CodeStyleSettings settings,
+                              final CommonCodeStyleSettings.IndentOptions indentOptions,
+                              final FormatTextRanges affectedRanges,
+                              final boolean formatContextAroundRanges) throws IncorrectOperationException;
+
 
   public abstract IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel psiBasedFormattingModel,
                                                  final Block block,

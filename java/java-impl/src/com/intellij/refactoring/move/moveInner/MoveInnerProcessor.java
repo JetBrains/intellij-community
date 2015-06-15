@@ -20,8 +20,6 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +36,9 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.Function;
@@ -193,8 +193,11 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)element.getParent();
           PsiElement parentRefElement = parentRef.resolve();
           if (parentRefElement instanceof PsiClass) { // reference to inner class inside our inner
-            parentRef.getQualifier().delete();
-            continue;
+            final PsiReferenceList referenceList = PsiTreeUtil.getTopmostParentOfType(parentRef, PsiReferenceList.class);
+            if (referenceList == null || referenceList.getParent() != newClass) {
+              parentRef.getQualifier().delete();
+              continue;
+            }
           }
         }
         ref.bindToElement(newClass);

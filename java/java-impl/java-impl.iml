@@ -8,15 +8,12 @@
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc" isTestSource="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/testSrc" isTestSource="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" type="java-resource" />
     </content>
     <orderEntry type="module" module-name="boot" />
@@ -40,7 +37,6 @@
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="java-psi-impl" exported="" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="java-indexing-impl" exported="" />
@@ -52,10 +48,10 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="java-structure-view" exported="" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="library" name="nekohtml" level="project" />
+    <orderEntry type="module" module-name="built-in-server" />
   </component>
   <component name="copyright">
     <Base>
@@ -63,4 +59,3 @@
     </Base>
   </component>
 </module>
-

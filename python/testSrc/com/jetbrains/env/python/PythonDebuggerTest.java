@@ -234,6 +234,48 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  public void testStepIntoMyCode() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_my_code.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 5);
+        toggleBreakpoint(getScriptPath(), 7);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepIntoMyCode();
+        waitForPause();
+        eval("x").hasValue("2");
+        resume();
+        waitForPause();
+        stepIntoMyCode();
+        waitForPause();
+        eval("stopped_in_user_file").hasValue("True");
+      }
+    });
+  }
+
+  public void testStepIntoMyCodeFromLib() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_my_code.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 7);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepInto();
+        waitForPause();
+        stepIntoMyCode();
+        waitForPause();
+        eval("stopped_in_user_file").hasValue("True");
+      }
+    });
+  }
+
   public void testSmartStepInto() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
       @Override

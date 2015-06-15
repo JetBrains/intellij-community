@@ -21,15 +21,14 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -64,7 +63,7 @@ public class GitSimplePathsBrowser extends JPanel {
     return ContainerUtil.map(absolutePaths, new Function<String, FilePath>() {
       @Override
       public FilePath fun(String path) {
-        return new FilePathImpl(new File(path), false);
+        return VcsUtil.getFilePath(path, false);
       }
     });
   }

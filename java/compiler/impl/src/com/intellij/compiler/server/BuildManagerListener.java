@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface BuildManagerListener {
   Topic<BuildManagerListener> TOPIC = Topic.create("Build Manager", BuildManagerListener.class);
   
+  void beforeBuildProcessStarted(Project project, UUID sessionId);
+  
   void buildStarted(Project project, UUID sessionId, boolean isAutomake);
   
   void buildFinished(Project project, UUID sessionId, boolean isAutomake);

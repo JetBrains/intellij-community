@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -40,7 +40,7 @@ public class SvnWriteOperationLocks extends SvnAbstractWriteOperationLocks {
   }
 
   protected WorkingCopy getCopy(File file, boolean directory) throws SVNException {
-    final VirtualFile parentOrSelf = ChangesUtil.findValidParentAccurately(new FilePathImpl(file, directory));
+    final VirtualFile parentOrSelf = ChangesUtil.findValidParentAccurately(VcsUtil.getFilePath(file, directory));
     final WorkingCopy wcRoot = myRootsToWorkingCopies.getWcRoot(parentOrSelf);
     if (wcRoot == null) {
       throw new SVNException(SVNErrorMessage.create(directory ? SVNErrorCode.WC_NOT_WORKING_COPY : SVNErrorCode.WC_NOT_FILE));

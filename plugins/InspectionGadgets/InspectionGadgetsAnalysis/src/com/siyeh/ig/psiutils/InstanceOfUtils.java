@@ -30,6 +30,9 @@ public class InstanceOfUtils {
       return null;
     }
     final PsiClassType classType = (PsiClassType)castType;
+    if (((PsiClassType)castType).resolve() instanceof PsiTypeParameter) {
+      return null;
+    }
     final PsiClassType rawType = classType.rawType();
     final InstanceofChecker checker = new InstanceofChecker(operand, rawType, false);
     PsiElement parent = PsiTreeUtil.getParentOfType(context, PsiIfStatement.class, PsiConditionalExpression.class,

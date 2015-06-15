@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
 
 
     @Override
-    public void runCheckinHandlers(Runnable runnable) {
+    public void runCheckinHandlers(@NotNull Runnable runnable) {
       if (VcsConfiguration.getInstance(myProject).CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT  && !DumbService.isDumb(myProject)) {
 
         List<VirtualFile> filesToProcess = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myPanel.getVirtualFiles(), myProject);

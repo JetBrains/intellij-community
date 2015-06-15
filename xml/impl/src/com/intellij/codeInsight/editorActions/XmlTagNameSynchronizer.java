@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
@@ -50,7 +51,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -239,7 +242,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
       if (myMarkers.isEmpty()) return;
 
       boolean fitsInMarker = fitsInMarker(offset, oldLength);
-      if (!fitsInMarker) {
+      if (!fitsInMarker || myMarkers.size() != myEditor.getCaretModel().getCaretCount()) {
         clearMarkers();
         beforeDocumentChange(event);
       }
@@ -340,13 +343,13 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements Applicatio
 
       if (support == null) return null;
 
-      int diff = offset - element.getTextRange().getStartOffset();
       final TextRange range = support.getTextRange();
-      return range != null ? document.createRangeMarker(range.getStartOffset() + diff, range.getEndOffset() + diff, true) : null;
+      TextRange realRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element.getContainingFile(), range);
+      return document.createRangeMarker(realRange.getStartOffset(), realRange.getEndOffset(), true);
     }
 
     private static PsiElement findSupportElement(PsiElement element) {
-      if (element == null) return null;
+      if (element == null || TreeUtil.findSibling(element.getNode(), XmlTokenType.XML_TAG_END) == null) return null;
       PsiElement support = RenameTagBeginOrEndIntentionAction.findOtherSide(element, false);
       support = support == null || element == support ? RenameTagBeginOrEndIntentionAction.findOtherSide(element, true) : support;
       return support != null && StringUtil.equals(element.getText(), support.getText()) ? support : null;

@@ -91,7 +91,7 @@ public class OnesideFragmentBuilderAutoTest extends AutoTestCase {
     List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2,
                                                                          policy, DumbProgressIndicator.INSTANCE);
 
-    OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, true, masterSide);
+    OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, masterSide);
     builder.exec();
 
     boolean ignoreWhitespaces = policy != ComparisonPolicy.DEFAULT;

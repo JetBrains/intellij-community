@@ -1,11 +1,18 @@
 package com.siyeh.ig.performance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class StringConcatenationInsideStringBufferAppendInspectionTest extends IGInspectionTestCase {
+public class StringConcatenationInsideStringBufferAppendInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/performance/string_concatenation_inside_string_buffer_append",
-           new StringConcatenationInsideStringBufferAppendInspection());
+  public void testStringConcatenationInsideStringBufferAppend() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new StringConcatenationInsideStringBufferAppendInspection();
   }
 }

@@ -138,12 +138,12 @@ public class VcsRepositoryManagerTest extends UsefulTestCase {
         return !myGlobalRepositoryManager.getRepositories().isEmpty();
       }
     });
-    new Thread(modifyRepositoryMapping).start();
+    new Thread(modifyRepositoryMapping,"vcs modify").start();
 
     //wait until modification starts
     assertTrue(LOCK_ERROR_TEXT, READY_TO_READ.await(1, TimeUnit.SECONDS));
 
-    new Thread(readExistingRepo).start();
+    new Thread(readExistingRepo,"vcs read").start();
     assertNotNull(readExistingRepo.get(1, TimeUnit.SECONDS));
     CONTINUE_MODIFY.countDown();
     assertTrue(modifyRepositoryMapping.get(1, TimeUnit.SECONDS));

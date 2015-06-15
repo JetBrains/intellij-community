@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -107,7 +108,7 @@ abstract class GitChangesCollector {
     final List<FilePath> paths = new ArrayList<FilePath>(allPaths.size());
     for (String p : allPaths) {
       final File file = new File(p);
-      paths.add(new FilePathImpl(file, file.isDirectory()));
+      paths.add(VcsUtil.getFilePath(file));
     }
     return paths;
   }

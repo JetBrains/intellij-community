@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,7 +60,7 @@ public class ModuleStateStorageManager extends StateStorageManagerImpl {
 
         return ContainerUtil.concat(sessions, Collections.singletonList(new StateStorage.SaveSession() {
           @Override
-          public void save() {
+          public void save() throws IOException {
             if (data.isDirty()) {
               myModule.getStateStore().getMainStorage().forceSave();
             }

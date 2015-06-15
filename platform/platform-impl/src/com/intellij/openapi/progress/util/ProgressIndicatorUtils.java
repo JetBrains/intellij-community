@@ -24,10 +24,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import javax.swing.*;
 import java.util.concurrent.Executor;
 
 /**
@@ -131,7 +131,7 @@ public class ProgressIndicatorUtils {
     // to tolerate any immediate modality changes (e.g. https://youtrack.jetbrains.com/issue/IDEA-135180)
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
+    EdtInvocationManager.getInstance().invokeLater(new Runnable() {
       @Override
       public void run() {
         if (application.isDisposed()) return;

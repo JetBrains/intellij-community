@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -31,7 +30,7 @@ import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurab
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
-import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
+import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerBase;
 import com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContributor;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.Deployment;
@@ -49,7 +48,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author michael.golubev
@@ -104,9 +106,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
   public interface LogProvidingNode {
     @Nullable
-    LoggingHandlerImpl getLoggingHandler();
+    JComponent getComponent();
 
-    @NotNull String getLogId();
+    @NotNull
+    String getLogId();
   }
 
   public class ServersTreeRootNode extends AbstractTreeNode<Object> {
@@ -343,9 +346,11 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @Nullable
     @Override
-    public LoggingHandlerImpl getLoggingHandler() {
+    public JComponent getComponent() {
       DeploymentLogManagerImpl logManager = getLogManager();
-      return logManager != null && logManager.isMainHandlerVisible() ? logManager.getMainLoggingHandler() : null;
+      return logManager != null && logManager.isMainHandlerVisible()
+             ? logManager.getMainLoggingHandler().getConsole().getComponent()
+             : null;
     }
 
     @Nullable
@@ -368,10 +373,9 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public Collection<? extends AbstractTreeNode> getChildren() {
       DeploymentLogManagerImpl logManager = (DeploymentLogManagerImpl)getConnection().getLogManager(getValue());
       if (logManager != null) {
-        Map<String,LoggingHandlerImpl> handlers = logManager.getAdditionalLoggingHandlers();
         List<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
-        for (Map.Entry<String, LoggingHandlerImpl> entry : handlers.entrySet()) {
-          nodes.add(new DeploymentLogNode(Pair.create(entry.getValue(), entry.getKey()), this));
+        for (LoggingHandlerBase loggingComponent : logManager.getAdditionalLoggingHandlers()) {
+          nodes.add(new DeploymentLogNode(loggingComponent, this));
         }
         return nodes;
       }
@@ -398,10 +402,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
   }
 
-  public class DeploymentLogNode extends AbstractTreeNode<Pair<LoggingHandlerImpl, String>> implements ServersTreeNode, LogProvidingNode {
+  public class DeploymentLogNode extends AbstractTreeNode<LoggingHandlerBase> implements ServersTreeNode, LogProvidingNode {
     @NotNull private final DeploymentNodeImpl myDeploymentNode;
 
-    public DeploymentLogNode(@NotNull Pair<LoggingHandlerImpl, String> value, @NotNull DeploymentNodeImpl deploymentNode) {
+    public DeploymentLogNode(@NotNull LoggingHandlerBase value, @NotNull DeploymentNodeImpl deploymentNode) {
       super(doGetProject(), value);
       myDeploymentNode = deploymentNode;
     }
@@ -419,13 +423,13 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     private String getLogName() {
-      return getValue().getSecond();
+      return getValue().getPresentableName();
     }
 
     @Nullable
     @Override
-    public LoggingHandlerImpl getLoggingHandler() {
-      return getValue().getFirst();
+    public JComponent getComponent() {
+      return getValue().getComponent();
     }
 
     @NotNull

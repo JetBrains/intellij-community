@@ -151,9 +151,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static final String[] PREFIX_CANDIDATES = {
     "AppCode", "CLion", "CidrCommon", 
-    "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea" };
+    "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea", "PlatformLangXml" };
 
+  /**
+   * @deprecated calling this method is no longer necessary
+   */
   public static void autodetectPlatformPrefix() {
+    doAutodetectPlatformPrefix();
+  }
+
+  public static void doAutodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
       return;
     }
@@ -458,15 +465,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         result.add(e);
       }
 
-      //cleanTheWorld();
       try {
-        myEditorListenerTracker.checkListenersLeak();
+        if (myEditorListenerTracker != null) {
+          myEditorListenerTracker.checkListenersLeak();
+        }
       }
       catch (AssertionError error) {
         result.add(error);
       }
       try {
-        myThreadTracker.checkLeak();
+        if (myThreadTracker != null) {
+          myThreadTracker.checkLeak();
+        }
       }
       catch (AssertionError error) {
         result.add(error);
@@ -477,9 +487,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       catch (Throwable error) {
         result.add(error);
       }
-      //if (directoryIndex != null) {
-      //  directoryIndex.assertAncestorConsistent();
-      //}
     }
     finally {
       myProjectManager = null;
@@ -835,6 +842,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
   }
 
+  /**
+   * @deprecated calling this method is no longer necessary
+   */
   public static void initPlatformLangPrefix() {
     initPlatformPrefix(IDEA_MARKER_CLASS, "PlatformLangXml");
   }
@@ -849,6 +859,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
    *
    * @param classToTest marker class qualified name e.g. {@link #IDEA_MARKER_CLASS}.
    * @param prefix platform prefix to be set up if marker class not found in classpath.
+   * @deprecated calling this method is no longer necessary
    */
   public static void initPlatformPrefix(String classToTest, String prefix) {
     if (!ourPlatformPrefixInitialized) {

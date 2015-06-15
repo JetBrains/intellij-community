@@ -350,7 +350,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     flatModel.fireTableDataChanged();
 
     myRepositoryChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), Collections.<Change>emptyList(), null);
-    myRepositoryChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myRevisionsList);
+    myRepositoryChangesBrowser.getDiffAction().registerCustomShortcutSet(myRepositoryChangesBrowser.getDiffAction().getShortcutSet(), myRevisionsList);
     setChangesDecorator();
     mySplitter.setSecondComponent(myRepositoryChangesBrowser);
     mySplitter.setDividerWidth(2);

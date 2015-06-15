@@ -80,7 +80,7 @@ public class DarculaLaf extends BasicLookAndFeel {
   @SuppressWarnings("UnusedParameters")
   private static void log(Exception e) {
 //    everything is gonna be alright
-//    e.printStackTrace();
+    e.printStackTrace();
   }
 
   @Override
@@ -436,5 +436,9 @@ public class DarculaLaf extends BasicLookAndFeel {
   @Override
   public boolean getSupportsWindowDecorations() {
     return true;
+  }
+
+  public static Icon loadIcon(String path) {
+    return IconLoader.findIcon(path, DarculaLaf.class, true);
   }
 }

@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeCopyProvider;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -43,6 +42,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +89,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
-    myCopyProvider = new TreeCopyProvider(this);
+    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
     new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).installOn(this);
 
     myNodeRenderer = new ChangesBrowserNodeRenderer(project, false, true);
@@ -404,7 +404,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
           final VcsCurrentRevisionProxy before =
             VcsCurrentRevisionProxy.create(file, myProject, vcs.getKeyInstanceMethod());
           if (before != null) {
-            ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
+            ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
             changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
           }
         }

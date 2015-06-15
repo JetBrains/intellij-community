@@ -30,7 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
@@ -324,6 +323,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
     @Override public void visitVariable(PsiVariable variable) {
       if (variable == myLocalVariable) return;
+      if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == myMethodToReplaceIn) {
+        if (getParametersToRemove().contains(myMethodToReplaceIn.getParameterList().getParameterIndex((PsiParameter)variable))){
+          return;
+        }
+      }
       if (myParameterName.equals(variable.getName())) {
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));

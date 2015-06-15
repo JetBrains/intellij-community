@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,16 +36,14 @@ import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandlerBase");
 
-  @NotNull protected final Process myProcess;
-  @Nullable protected final String myCommandLine;
-  protected final ProcessWaitFor myWaitFor;
-  @Nullable protected final Charset myCharset;
+  protected final Process myProcess;
+  protected final String myCommandLine;
+  protected final Charset myCharset;
 
-  public BaseOSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, @Nullable Charset charset) {
+  public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
     myCharset = charset;
-    myWaitFor = new ProcessWaitFor(process, this);
   }
 
   /**
@@ -94,23 +92,22 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          final BaseDataReader stdoutReader = createOutputDataReader(getPolicy());
-          final BaseDataReader stderrReader = processHasSeparateErrorStream() ? createErrorDataReader(getPolicy()) : null;
+          final BaseDataReader stdOutReader = createOutputDataReader(getPolicy());
+          final BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader(getPolicy()) : null;
 
-          myWaitFor.setTerminationCallback(new Consumer<Integer>() {
+          ProcessWaitFor.attach(myProcess, new Consumer<Integer>() {
             @Override
             public void consume(Integer exitCode) {
               try {
                 // tell readers that no more attempts to read process' output should be made
-                if (stderrReader != null) stderrReader.stop();
-                stdoutReader.stop();
+                if (stdErrReader != null) stdErrReader.stop();
+                stdOutReader.stop();
 
                 try {
-                  if (stderrReader != null) stderrReader.waitFor();
-                  stdoutReader.waitFor();
+                  if (stdErrReader != null) stdErrReader.waitFor();
+                  stdOutReader.waitFor();
                 }
-                catch (InterruptedException ignore) {
-                }
+                catch (InterruptedException ignore) { }
               }
               finally {
                 onOSProcessTerminated(exitCode);
@@ -194,7 +191,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       public void run() {
         closeStreams();
 
-        myWaitFor.detach();
+        ProcessWaitFor.detach(myProcess);
         notifyProcessDetached();
       }
     };

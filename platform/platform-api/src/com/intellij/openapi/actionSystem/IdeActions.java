@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,10 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_ENTER = "EditorEnter";
   @NonNls String ACTION_EDITOR_START_NEW_LINE = "EditorStartNewLine";
   @NonNls String ACTION_EDITOR_SPLIT = "EditorSplitLine";
+  @NonNls String ACTION_EDITOR_TEXT_START = "EditorTextStart";
+  @NonNls String ACTION_EDITOR_TEXT_END = "EditorTextEnd";
+  @NonNls String ACTION_EDITOR_TEXT_START_WITH_SELECTION = "EditorTextStartWithSelection";
+  @NonNls String ACTION_EDITOR_TEXT_END_WITH_SELECTION = "EditorTextEndWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_LINE_START = "EditorLineStart";
   @NonNls String ACTION_EDITOR_MOVE_LINE_END = "EditorLineEnd";
   @NonNls String ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION = "EditorLineStartWithSelection";
@@ -155,9 +159,10 @@ public interface IdeActions {
   @NonNls String ACTION_CLOSE_ALL_UNMODIFIED_EDITORS = "CloseAllUnmodifiedEditors";
   @NonNls String ACTION_CLOSE_ALL_EDITORS_BUT_THIS = "CloseAllEditorsButActive";
 
-  @NonNls String ACTION_SHOW_DIFF = "CompareTwoFiles";
+  @NonNls String ACTION_SHOW_DIFF_COMMON = "Diff.ShowDiff";
   @NonNls String ACTION_PREVIOUS_DIFF = "PreviousDiff";
   @NonNls String ACTION_NEXT_DIFF = "NextDiff";
+  @NonNls String GROUP_DIFF_EDITOR_POPUP = "Diff.EditorPopupMenu";
 
   @NonNls String ACTION_EXPAND_ALL = "ExpandAll";
   @NonNls String ACTION_COLLAPSE_ALL = "CollapseAll";
@@ -307,4 +312,5 @@ public interface IdeActions {
   String ACTION_SEARCH_EVERYWHERE = "SearchEverywhere";
   
   String ACTION_MARK_ALL_NOTIFICATIONS_AS_READ = "MarkNotificationsAsRead";
+  String ACTION_SWITCHER = "Switcher";
 }

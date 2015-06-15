@@ -47,7 +47,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   private static final int IS_USES_DEPRECATION_MASK = 0x200;
   private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
 
-  protected RefJavaElementImpl(String name, @NotNull RefJavaElement owner) {
+  protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);
     String am = owner.getAccessModifier();
     doSetAccessModifier(am);
@@ -91,6 +91,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     myOutTypeReferences.add(refClass);
   }
 
+  @NotNull
   public static String getName(PsiElement element) {
    if (element instanceof PsiAnonymousClass) {
      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;

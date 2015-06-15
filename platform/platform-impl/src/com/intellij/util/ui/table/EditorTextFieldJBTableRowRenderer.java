@@ -16,18 +16,17 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextFieldCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldCellRenderer implements JBTableRowRenderer {
-  protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @NotNull Disposable parent) {
-    super(project, parent);
+  protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
+    super(project, fileType, parent);
   }
 
   @Override
@@ -40,25 +39,5 @@ public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldC
     return getText(table, row);
   }
 
-  @Override
-  protected final Color getCellBackground(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
-    return getRowBackground(table, selected, focused, row);
-  }
-
-  @Nullable
-  @Override
-  protected final TextAttributes getTextAttributes(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
-    return getTextAttributes(table, row);
-  }
-
   protected abstract String getText(JTable table, int row);
-
-  @Nullable
-  protected TextAttributes getTextAttributes(JTable table, int row) {
-    return null;
-  }
-
-  protected Color getRowBackground(JTable table, boolean selected, boolean focused, int row) {
-    return super.getCellBackground(table, null, selected, focused, row, 0);
-  }
 }

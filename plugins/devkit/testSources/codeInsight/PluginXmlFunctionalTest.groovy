@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.codeInsight
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.openapi.application.ApplicationManager
@@ -253,7 +253,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   public void testExtensionPointPresentation() {
     myFixture.configureByFile(getTestName(true) + ".xml");
     final PsiElement element =
-      TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+      TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assert element != null;
     assertEquals("Extension Point", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE));
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE));

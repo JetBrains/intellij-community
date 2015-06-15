@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.testFramework.PlatformTestCase.initPlatformLangPrefix;
-
 public class CompositeFoldingBuilderTest extends AbstractEditorTest {
-  static {
-    initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -50,7 +44,7 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
     LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, second);
 
     try {
-      FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(getProject(), getFile(), getEditor().getDocument(), false);
+      FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(getFile(), getEditor().getDocument(), false);
       Collection<FoldingDescriptor> descriptors = foldingMap.get(getFile());
 
       assert descriptors.size() == 1: "Only one descriptor allowed for the same text range. Descriptors: " + descriptors;

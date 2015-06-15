@@ -281,7 +281,7 @@ public class TreeUtil {
     return nextLeaf((TreeElement)node, null);
   }
 
-  public static Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
+  public static final Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
   public static FileElement getFileElement(TreeElement element) {
     TreeElement parent = element;
     while (parent != null && !(parent instanceof FileElement)) {

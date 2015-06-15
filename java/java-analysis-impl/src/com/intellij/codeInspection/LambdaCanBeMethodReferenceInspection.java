@@ -334,7 +334,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (qualifierExpression != null) {
       boolean isReceiverType = false;
       if (qualifierExpression instanceof PsiReferenceExpression && ArrayUtil.find(parameters, ((PsiReferenceExpression)qualifierExpression).resolve()) > -1) {
-        isReceiverType = PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(functionalInterfaceType, methodCall), containingClass, substitutor);
+        isReceiverType = PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(functionalInterfaceType, qualifierExpression), containingClass, substitutor);
       }
       return isReceiverType ? composeReceiverQualifierText(parameters, psiMethod, containingClass, qualifierExpression)
                             : qualifierExpression.getText();
@@ -390,7 +390,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     }
 
     final PsiType qualifierExpressionType = qualifierExpression.getType();
-    return qualifierExpressionType != null ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(containingClass);
+    return qualifierExpressionType != null && !TypeConversionUtil.containsWildcards(qualifierExpressionType)
+           ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(containingClass);
   }
 
   private static String getClassReferenceName(PsiClass containingClass) {

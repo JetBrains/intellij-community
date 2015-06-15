@@ -103,7 +103,7 @@ class _LettuceRunner(_bdd_utils.BddRunner):
         elif step.failed:
             reason = step.why
             assert isinstance(reason, ReasonToFail), reason
-            self._test_failed(test_name, message=reason.exception, details=reason.traceback)
+            self._test_failed(test_name, message=reason.exception.message, details=reason.traceback)
         elif step.has_definition:
             self._test_skipped(test_name, "In lettuce, we do know the reason", step.described_at)
         else:

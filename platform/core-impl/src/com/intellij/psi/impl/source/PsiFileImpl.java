@@ -71,6 +71,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
   private volatile Reference<StubTree> myStub;
+  private boolean myInvalidated;
   protected final PsiManagerEx myManager;
   private volatile Getter<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
   public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
@@ -147,22 +148,21 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public boolean isValid() {
-    FileViewProvider provider = getViewProvider();
-    final VirtualFile vFile = provider.getVirtualFile();
-    if (!vFile.isValid()) return false;
-    if (!provider.isEventSystemEnabled()) return true; // "dummy" file
-    if (myManager.getProject().isDisposed()) return false;
-    return isPsiUpToDate(vFile);
+    if (myManager.getProject().isDisposed()) {
+      // normally FileManager.dispose would call markInvalidated
+      // but there's temporary disposed project in tests, which doesn't actually dispose its components :(
+      return false;
+    }
+    if (!myViewProvider.getVirtualFile().isValid()) {
+      // PSI listeners receive VFS deletion events and do markInvalidated
+      // but some VFS listeners receive the same events before that and ask PsiFile.isValid
+      return false;
+    }
+    return !myInvalidated;
   }
 
-  protected boolean isPsiUpToDate(@NotNull VirtualFile vFile) {
-    final FileViewProvider provider = myManager.findViewProvider(vFile);
-    Language language = getLanguage();
-    if (provider == null || provider.getPsi(language) == this) { // provider == null in tests
-      return true;
-    }
-    Language baseLanguage = provider.getBaseLanguage();
-    return baseLanguage != language && provider.getPsi(baseLanguage) == this;
+  public void markInvalidated() {
+    myInvalidated = true;
   }
 
   @Override
@@ -304,39 +304,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     clearStub(STUB_PSI_MISMATCH);
     scheduleDropCachesWithInvalidStubPsi();
 
-    String msg = message;
-    msg += "\n file=" + this;
-    msg += ", modStamp=" + getModificationStamp();
-    msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
-    msg += "\n document before=" + cachedDocument;
-
-    ObjectStubTree latestIndexedStub = StubTreeLoader.getInstance().readFromVFile(getProject(), getVirtualFile());
-    msg += "\nlatestIndexedStub=" + latestIndexedStub;
-    if (latestIndexedStub != null) {
-      msg += "\n   same size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
-      msg += "\n   debugInfo=" + latestIndexedStub.getDebugInfo();
-    }
-
-    FileViewProvider viewProvider = getViewProvider();
-    msg += "\n viewProvider=" + viewProvider;
-    msg += "\n viewProvider stamp: " + viewProvider.getModificationStamp();
-
-    VirtualFile file = viewProvider.getVirtualFile();
-    msg += "; file stamp: " + file.getModificationStamp();
-    msg += "; file modCount: " + file.getModificationCount();
-    msg += "; file length: " + file.getLength();
-
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null) {
-      msg += "\n doc saved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
-      msg += "; doc stamp: " + document.getModificationStamp();
-      msg += "; doc size: " + document.getTextLength();
-      msg += "; committed: " + PsiDocumentManager.getInstance(getProject()).isCommitted(document);
-    }
-    
-    msg += "\nindexing info: " + StubTreeLoader.getInstance().getIndexingStampDebugInfo(file);
-
-    throw new AssertionError(msg + "\n------------\n");
+    throw new AssertionError(message
+                             + StubTreeLoader.getInstance().getStubAstMismatchDiagnostics(getViewProvider().getVirtualFile(), this,
+                                                                                          stubTree, cachedDocument)
+                             + "\n------------\n");
   }
 
   private void scheduleDropCachesWithInvalidStubPsi() {
@@ -522,8 +493,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   @Nullable
   public PsiDirectory getContainingDirectory() {
-    final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
+    VirtualFile file = getViewProvider().getVirtualFile();
+    final VirtualFile parentFile = file.getParent();
     if (parentFile == null) return null;
+    if (!parentFile.isValid()) {
+      LOG.error("Invalid parent: " + parentFile + " of file " + file + ", file.valid=" + file.isValid());
+      return null;
+    }
     return getManager().findDirectory(parentFile);
   }
 
@@ -735,7 +711,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  public PsiManager getManager() {
+  public final PsiManager getManager() {
     return myManager;
   }
 
@@ -953,11 +929,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   @NotNull
-  public Project getProject() {
-    final PsiManager manager = getManager();
-    if (manager == null) throw new PsiInvalidElementAccessException(this);
-
-    return manager.getProject();
+  public final Project getProject() {
+    return getManager().getProject();
   }
 
   @NotNull

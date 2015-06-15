@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -50,6 +51,7 @@ import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
@@ -58,7 +60,6 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -490,10 +491,10 @@ public class MergeFromTheirsResolver {
     return false;
   }
 
-  private FilePath rebasePath(final FilePath oldBase, final FilePath newBase, final FilePath path) {
-    final String relativePath = FileUtil.getRelativePath(oldBase.getPath(), path.getPath(), File.separatorChar);
-    //if (StringUtil.isEmptyOrSpaces(relativePath)) return path;
-    return ((FilePathImpl) newBase).createChild(relativePath, path.isDirectory());
+  @NotNull
+  private static FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
+    String relativePath = ObjectUtils.assertNotNull(FileUtil.getRelativePath(oldBase.getPath(), path.getPath(), '/'));
+    return VcsUtil.getFilePath(newBase.getPath() + "/" + relativePath, path.isDirectory());
   }
 
   private class PreloadChangesContentsForFile extends TaskDescriptor {

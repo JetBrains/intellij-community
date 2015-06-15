@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ import java.util.List;
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 
 class ChainMethodCallsBlockBuilder {
-  private CommonCodeStyleSettings mySettings;
-  private CommonCodeStyleSettings.IndentOptions myIndentSettings;
-  private JavaCodeStyleSettings myJavaSettings;
+  private final CommonCodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings.IndentOptions myIndentSettings;
+  private final JavaCodeStyleSettings myJavaSettings;
 
-  private Wrap myBlockWrap;
-  private Alignment myBlockAlignment;
-  private Indent myBlockIndent;
+  private final Wrap myBlockWrap;
+  private final Alignment myBlockAlignment;
+  private final Indent myBlockIndent;
 
   private Wrap myWrap;
   private Alignment myChainedCallsAlignment;
@@ -58,9 +58,6 @@ class ChainMethodCallsBlockBuilder {
   }
 
   public Block build(List<ASTNode> nodes)  {
-    myWrap = getNewWrap();
-    myChainedCallsAlignment = getNewAlignment();
-
     List<Block> blocks = buildBlocksFrom(nodes);
 
     Indent indent = myBlockIndent != null ? myBlockIndent : Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
@@ -69,29 +66,39 @@ class ChainMethodCallsBlockBuilder {
 
   private List<Block> buildBlocksFrom(List<ASTNode> nodes) {
     List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
-    Wrap wrapToUse = null;
-    Alignment alignmentToUse = null;
+
+    myWrap = null;
+    myChainedCallsAlignment = null;
 
     List<Block> blocks = new ArrayList<Block>();
 
-    for (ChainedCallChunk currentCallChunk : methodCall) {
+    for (int i = 0; i < methodCall.size(); i++) {
+      ChainedCallChunk currentCallChunk = methodCall.get(i);
       if (isMethodCall(currentCallChunk)) {
-        wrapToUse = myWrap;
-        alignmentToUse = shouldAlignMethod(currentCallChunk, methodCall) ? myChainedCallsAlignment : null;
+        if (myWrap == null) myWrap = createCallChunkWrap(i, methodCall);
+        if (myChainedCallsAlignment == null) myChainedCallsAlignment = createCallChunkAlignment(i, methodCall);
       }
-      else if (wrapToUse != null) {
-        wrapToUse = null;
-        alignmentToUse = null;
-
-        myChainedCallsAlignment = getNewAlignment();
-        myWrap = getNewWrap();
+      else {
+        myWrap = null;
+        myChainedCallsAlignment = null;
       }
 
       SyntheticBlockBuilder builder = new SyntheticBlockBuilder(mySettings, myJavaSettings);
-      blocks.add(builder.create(currentCallChunk.nodes, wrapToUse, alignmentToUse));
+      blocks.add(builder.create(currentCallChunk.nodes, myWrap, myChainedCallsAlignment));
     }
 
     return blocks;
+  }
+
+  private Wrap createCallChunkWrap(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {
+    if (mySettings.WRAP_FIRST_METHOD_IN_CALL_CHAIN) {
+      ChainedCallChunk next = chunkIndex + 1 < methodCall.size() ? methodCall.get(chunkIndex + 1) : null;
+      if (next != null && isMethodCall(next)) {
+        return Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), true);
+      }
+    }
+
+    return Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false);
   }
 
   private boolean shouldAlignMethod(ChainedCallChunk currentMethodChunk, List<ChainedCallChunk> methodCall) {
@@ -121,12 +128,11 @@ class ChainMethodCallsBlockBuilder {
     return result;
   }
 
-  private Alignment getNewAlignment() {
-    return AbstractJavaBlock.createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null);
-  }
-
-  private Wrap getNewWrap() {
-    return Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false);
+  private Alignment createCallChunkAlignment(int chunkIndex, @NotNull List<ChainedCallChunk> methodCall) {
+    ChainedCallChunk current = methodCall.get(chunkIndex);
+    return shouldAlignMethod(current, methodCall)
+           ? AbstractJavaBlock.createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null)
+           : null;
   }
 
   private boolean isMethodCall(@NotNull ChainedCallChunk callChunk) {

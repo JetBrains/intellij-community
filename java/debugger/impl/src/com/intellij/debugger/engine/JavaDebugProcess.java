@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
@@ -43,6 +44,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -154,15 +157,27 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       public void sessionPaused() {
         saveNodeHistory();
+        showAlternativeNotification(session.getCurrentStackFrame());
       }
 
       @Override
       public void stackFrameChanged() {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
+          showAlternativeNotification(frame);
           StackFrameProxyImpl frameProxy = ((JavaStackFrame)frame).getStackFrameProxy();
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), frameProxy);
           saveNodeHistory(frameProxy);
+        }
+      }
+
+      private void showAlternativeNotification(XStackFrame frame) {
+        XSourcePosition position = frame.getSourcePosition();
+        if (position != null) {
+          VirtualFile file = position.getFile();
+          if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
+            EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
+          }
         }
       }
     });
@@ -238,8 +253,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
   @Override
   public void runToPosition(@NotNull XSourcePosition position) {
-    Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
-    myJavaSession.runToCursor(document, position.getLine(), false);
+    myJavaSession.runToCursor(position, false);
   }
 
   @NotNull
@@ -321,24 +335,17 @@ public class JavaDebugProcess extends XDebugProcess {
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
-    settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
+    Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
+    settings.addAction(new WatchLastMethodReturnValueAction(), beforeSort);
+    settings.addAction(new AutoVarsSwitchAction(), beforeSort);
   }
 
   private static class AutoVarsSwitchAction extends ToggleAction {
     private volatile boolean myAutoModeEnabled;
 
     public AutoVarsSwitchAction() {
-      super("", "", AllIcons.Debugger.AutoVariablesMode);
+      super(DebuggerBundle.message("action.auto.variables.mode"), DebuggerBundle.message("action.auto.variables.mode.description"), null);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final boolean autoModeEnabled = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
-      presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
     @Override
@@ -356,15 +363,13 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private static class WatchLastMethodReturnValueAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
-    private final String myTextEnable;
+    private final String myText;
     private final String myTextUnavailable;
-    private final String myMyTextDisable;
 
     public WatchLastMethodReturnValueAction() {
       super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
       myWatchesReturnValues = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
-      myTextEnable = DebuggerBundle.message("action.watches.method.return.value.enable");
-      myMyTextDisable = DebuggerBundle.message("action.watches.method.return.value.disable");
+      myText = DebuggerBundle.message("action.watches.method.return.value.enable");
       myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
     }
 
@@ -372,12 +377,10 @@ public class JavaDebugProcess extends XDebugProcess {
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final boolean watchValues = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
       DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
-      final String actionText = watchValues ? myMyTextDisable : myTextEnable;
       if (process == null || process.canGetMethodReturnValue()) {
         presentation.setEnabled(true);
-        presentation.setText(actionText);
+        presentation.setText(myText);
       }
       else {
         presentation.setEnabled(false);
@@ -413,11 +416,6 @@ public class JavaDebugProcess extends XDebugProcess {
       }
     }
     return null;
-  }
-
-  private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action != null) group.addAction(action, Constraints.FIRST);
   }
 
   public NodeManagerImpl getNodeManager() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.util.ui.JBInsets;
 import sun.swing.MenuItemLayoutHelper;
 import sun.swing.SwingUtilities2;
 
@@ -64,7 +65,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
     g.setFont(mi.getFont());
 
     Rectangle viewRect = new Rectangle(0, 0, mi.getWidth(), mi.getHeight());
-    applyInsets(viewRect, mi.getInsets());
+    JBInsets.removeFrom(viewRect, mi.getInsets());
 
     MenuItemLayoutHelper lh = new MenuItemLayoutHelper(mi, checkIcon,
         arrowIcon, viewRect, defaultTextIconGap, "-", //todo[kb] use protected field BasicMenuItemUI.acceleratorDelimiter when we move to java 1.7
@@ -194,15 +195,6 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
               lh.getArrowIcon().paintIcon(lh.getMenuItem(), g,
                       lr.getArrowRect().x, lr.getArrowRect().y);
           }
-      }
-  }
-
-  protected void applyInsets(Rectangle rect, Insets insets) {
-      if(insets != null) {
-          rect.x += insets.left;
-          rect.y += insets.top;
-          rect.width -= (insets.right + rect.x);
-          rect.height -= (insets.bottom + rect.y);
       }
   }
 }

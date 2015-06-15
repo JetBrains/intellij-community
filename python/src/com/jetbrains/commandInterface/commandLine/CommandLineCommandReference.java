@@ -16,8 +16,10 @@
 package com.jetbrains.commandInterface.commandLine;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.command.CommandExecutor;
 import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineCommand;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
@@ -28,6 +30,7 @@ import java.util.List;
 
 /**
  * Ref to be injected in command itself
+ *
  * @author Ilya.Kazakevich
  */
 public final class CommandLineCommandReference extends CommandLineElementReference<CommandLineCommand> {
@@ -60,7 +63,7 @@ public final class CommandLineCommandReference extends CommandLineElementReferen
     for (final Command command : commands) {
       final LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(command.getName());
       final Help help = command.getHelp(true);
-      result.addElement(lookupElementBuilder, (help != null ? help.getHelpString(): null));
+      result.addElement(lookupElementBuilder, (help != null ? help.getHelpString() : null));
     }
 
 

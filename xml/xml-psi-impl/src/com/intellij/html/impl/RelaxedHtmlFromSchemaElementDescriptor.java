@@ -19,7 +19,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.*;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlAttributeDescriptorsProvider;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
@@ -33,19 +36,6 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
 
   RelaxedHtmlFromSchemaElementDescriptor(XmlTag tag) {
     super(tag);
-  }
-
-  public static XmlAttributeDescriptor[] getCommonAttributeDescriptors(XmlTag context) {
-    final XmlNSDescriptor nsDescriptor = context != null ? context.getNSDescriptor(context.getNamespace(), false) : null;
-    if (nsDescriptor != null) {
-      for (XmlElementDescriptor descriptor : nsDescriptor.getRootElementsDescriptors(null)) {
-        final String name = descriptor.getName();
-        if ("div".equals(name) || "span".equals(name)) {
-          return descriptor.getAttributesDescriptors(context);
-        }
-      }
-    }
-    return XmlAttributeDescriptor.EMPTY;
   }
 
   @Override

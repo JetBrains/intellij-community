@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -45,6 +44,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -167,13 +168,14 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     try {
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl);
       if (!urls.isEmpty()) {
-        chooseUrl(urls).doWhenDone(new Consumer<Url>() {
-          @Override
-          public void consume(Url url) {
-            ApplicationManager.getApplication().saveAll();
-            BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
-          }
-        });
+        chooseUrl(urls)
+          .done(new Consumer<Url>() {
+            @Override
+            public void consume(Url url) {
+              ApplicationManager.getApplication().saveAll();
+              BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
+            }
+          });
       }
     }
     catch (WebBrowserUrlProvider.BrowserException e1) {
@@ -185,9 +187,9 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static AsyncResult<Url> chooseUrl(@NotNull Collection<Url> urls) {
+  private static Promise<Url> chooseUrl(@NotNull Collection<Url> urls) {
     if (urls.size() == 1) {
-      return new AsyncResult.Done<Url>(ContainerUtil.getFirstItem(urls));
+      return Promise.resolve(ContainerUtil.getFirstItem(urls));
     }
 
     final JBList list = new JBList(urls);
@@ -200,23 +202,24 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       }
     });
 
-    final AsyncResult<Url> result = new AsyncResult<Url>();
-    JBPopupFactory.getInstance().
-      createListPopupBuilder(list).
-      setTitle("Choose Url").
-      setItemChoosenCallback(new Runnable() {
+    final AsyncPromise<Url> result = new AsyncPromise<Url>();
+    JBPopupFactory.getInstance()
+      .createListPopupBuilder(list)
+      .setTitle("Choose Url")
+      .setItemChoosenCallback(new Runnable() {
         @Override
         public void run() {
           Url value = (Url)list.getSelectedValue();
-          if (value != null) {
-            result.setDone(value);
+          if (value == null) {
+            result.setError(Promise.createError("selected value is null"));
           }
           else {
-            result.setRejected();
+            result.setResult(value);
           }
         }
-      }).
-      createPopup().showInFocusCenter();
+      })
+      .createPopup()
+      .showInFocusCenter();
     return result;
   }
 }

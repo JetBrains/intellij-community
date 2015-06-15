@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     if (virtualFileArray.length != 0) {
       if (virtualFileArray.length > 1) return null;
       if (virtualFileArray.length > 0) {
-        result = new FilePathImpl(virtualFileArray[0]);
+        result = VcsUtil.getFilePath(virtualFileArray[0]);
       }
     }
 
@@ -84,7 +85,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
         if (parentIoFile == null) continue;
         final VirtualFile parent = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
         if (parent != null) {
-          final FilePathImpl child = new FilePathImpl(parent, file.getName(), false);
+          FilePath child = VcsUtil.getFilePath(parent, file.getName());
           if (result != null) return null;
           result = child;
         }

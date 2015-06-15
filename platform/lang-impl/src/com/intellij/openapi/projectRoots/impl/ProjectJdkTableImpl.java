@@ -26,8 +26,16 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,10 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "ProjectJdkTable",
@@ -60,37 +65,58 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
     myListenerList = new MessageListenerList<Listener>(myMessageBus, JDK_TABLE_TOPIC);
     // support external changes to jdk libraries (Endorsed Standards Override)
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       private FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        updateJdks(event.getFile());
+      public void before(@NotNull List<? extends VFileEvent> events) {
       }
 
-      private void updateJdks(VirtualFile file) {
-        if (file.isDirectory() ||
-            // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
-            !FileTypes.ARCHIVE.equals(myFileTypeManager.getFileTypeByFileName(file.getName()))) {
-          // consider only archive files that may contain libraries
-          return;
-        }
-        for (Sdk sdk : mySdks) {
-          final SdkType sdkType = (SdkType)sdk.getSdkType();
-          if (!(sdkType instanceof JavaSdkType)) {
-            continue;
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        if (!events.isEmpty()) {
+          final Set<Sdk> affected = new SmartHashSet<Sdk>();
+          for (VFileEvent event : events) {
+            addAffectedJavaSdk(event, affected);
           }
-          final VirtualFile home = sdk.getHomeDirectory();
-          if (home == null) {
-            continue;
-          }
-          if (VfsUtilCore.isAncestor(home, file, true)) {
-            sdkType.setupSdkPaths(sdk);
-            // no need to iterate further assuming the file cannot be under the home of several SDKs
-            break;
+          if (!affected.isEmpty()) {
+            for (Sdk sdk : affected) {
+              ((SdkType)sdk.getSdkType()).setupSdkPaths(sdk);
+            }
           }
         }
       }
+
+      private void addAffectedJavaSdk(VFileEvent event, Set<Sdk> affected) {
+        final VirtualFile file = event.getFile();
+        String fileName = null;
+        if (file != null && file.isValid()) {
+          if (file.isDirectory()) {
+            return;
+          }
+          fileName = file.getName();
+        }
+        final String eventPath = event.getPath();
+        if (fileName == null) {
+          fileName = VfsUtil.extractFileName(eventPath);
+        }
+        if (fileName != null) {
+          // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
+          // consider only archive files that may contain libraries
+          if (!FileTypes.ARCHIVE.equals(myFileTypeManager.getFileTypeByFileName(fileName))) {
+            return;
+          }
+        }
+
+        for (Sdk sdk : mySdks) {
+          if (sdk.getSdkType() instanceof JavaSdkType && !affected.contains(sdk)) {
+            final String homePath = sdk.getHomePath();
+            if (!StringUtil.isEmpty(homePath) && FileUtil.isAncestor(homePath, eventPath, true)) {
+              affected.add(sdk);
+            }
+          }
+        }
+      }
+
     });
   }
 

@@ -16,7 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
@@ -194,7 +194,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
 
   public void testInnerStaticClassUsed() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/beforeInnerStaticClassUsed.java");
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     assertFalse(MakeStaticUtil.isParameterNeeded((PsiMethod)element));
   }
@@ -230,7 +230,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
 
 
   private static void perform(boolean addClassParameter) {
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
 
@@ -245,10 +245,10 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   }
 
   private static void performWithFields(boolean delegate) {
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
-    final ArrayList<VariableData> parametersForFields = new ArrayList<VariableData>();
+    final ArrayList<VariableData> parametersForFields = new ArrayList<>();
     final boolean addClassParameter = MakeStaticUtil.buildVariableData(method, parametersForFields);
 
     new MakeMethodStaticProcessor(

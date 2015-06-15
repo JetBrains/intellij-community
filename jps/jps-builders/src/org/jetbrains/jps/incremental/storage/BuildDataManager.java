@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -42,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 27;
+  private static final int VERSION = 27 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String OUT_TARGET_STORAGE = "out-target";
@@ -184,7 +185,7 @@ public class BuildDataManager implements StorageOwner {
 
   public void clean() throws IOException {
     try {
-      myTargetStoragesOwner.close();
+      myTargetStoragesOwner.clean();
       myTargetStorages.clear();
     }
     finally {

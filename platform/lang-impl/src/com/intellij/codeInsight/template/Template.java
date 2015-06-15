@@ -24,6 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * Used to build and run a live template.
+ * @see TemplateManager
+ */
 public abstract class Template {
 
   public enum Property {

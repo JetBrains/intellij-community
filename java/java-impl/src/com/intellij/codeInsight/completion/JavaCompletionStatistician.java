@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -27,16 +28,23 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
 /**
  * @author peter
  */
 public class JavaCompletionStatistician extends CompletionStatistician{
+  private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.SUPER));
 
   @Override
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
     Object o = element.getObject();
 
     if (o instanceof PsiLocalVariable || o instanceof PsiParameter || o instanceof PsiThisExpression || o instanceof PsiKeyword) {
+      return StatisticsInfo.EMPTY;
+    }
+
+    if (SUPER_CALL.accepts(location.getCompletionParameters().getPosition())) {
       return StatisticsInfo.EMPTY;
     }
 

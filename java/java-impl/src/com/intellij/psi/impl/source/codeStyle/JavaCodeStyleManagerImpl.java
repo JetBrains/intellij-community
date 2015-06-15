@@ -922,6 +922,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private static boolean hasConflictingVariable(PsiElement place, String name, boolean allowShadowing) {
+    if (place == null) {
+      return false;
+    }
     PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
     PsiVariable existingVariable = helper.resolveAccessibleReferencedVariable(name, place);
     if (existingVariable == null) return false;

@@ -68,7 +68,7 @@ class SubiterableDiffIterable extends ChangeDiffIterableBase {
 
         myLast = new Range(Math.max(myStart1, range.start1) - myStart1, Math.min(myEnd1, range.end1) - myStart1,
                            Math.max(myStart2, range.start2) - myStart2, Math.min(myEnd2, range.end2) - myStart2);
-        if (!DiffIterableUtil.isEmpty(myLast)) break;
+        if (!myLast.isEmpty()) break;
         myLast = null;
       }
     }

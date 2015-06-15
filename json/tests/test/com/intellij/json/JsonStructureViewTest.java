@@ -9,7 +9,6 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
@@ -21,12 +20,7 @@ public class JsonStructureViewTest extends JsonTestCase {
 
   private void doTest(final String expected) {
     myFixture.configureByFile("structureView/" + getTestName(false) + ".json");
-    myFixture.testStructureView(new Consumer<StructureViewComponent>() {
-      @Override
-      public void consume(StructureViewComponent component) {
-        assertTreeEqual(component.getTree(), expected);
-      }
-    });
+    myFixture.testStructureView(component -> assertTreeEqual(component.getTree(), expected));
   }
 
   public void testPropertyOrderPreserved() {

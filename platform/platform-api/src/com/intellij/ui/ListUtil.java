@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ public class ListUtil {
       boolean myIsEngaged = false;
 
       public void mouseMoved(MouseEvent e) {
-        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
           Point point = e.getPoint();
           int index = list.locationToIndex(point);
           list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.TRUE);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,9 +46,10 @@ import java.awt.*;
 import java.util.List;
 
 /**
+ * This class provides basic functionality for running consoles.
+ * It launches external process and handles line input with history
+ *
  * @author oleg
- *         This class provides basic functionality for running consoles.
- *         It launches external process and handles line input with history
  */
 public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleView> {
   private final String myConsoleTitle;
@@ -88,7 +90,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     // Init console view
     myConsoleView = createConsoleView();
     if (myConsoleView instanceof JComponent) {
-      ((JComponent)myConsoleView).setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
+      ((JComponent)myConsoleView).setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
     }
     myProcessHandler = createProcessHandler(process);
 
@@ -234,21 +236,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 14
-   */
-  public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
-                                                 @NotNull ProcessHandler processHandler,
-                                                 @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
-                                    consoleExecuteActionHandler);
-  }
-
   protected AnAction createConsoleExecAction(@NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
-                                    consoleExecuteActionHandler);
+    String emptyAction = consoleExecuteActionHandler.getEmptyExecuteAction();
+    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, emptyAction, consoleExecuteActionHandler);
   }
 
   @NotNull

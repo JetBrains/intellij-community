@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
@@ -1286,7 +1287,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               }
               Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
-              UISettings.setupAntialiasing(cg);
+              EditorUIUtil.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
               AffineTransform translateInstance = AffineTransform.getTranslateInstance(-3, lineShift);
@@ -1310,7 +1311,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               myRelativeY = SwingUtilities.convertPoint(this, 0, 0, myEditor.getScrollPane()).y;
               Graphics2D g2d = myCacheLevel1.createGraphics();
               final AffineTransform transform = g2d.getTransform();
-              UISettings.setupAntialiasing(g2d);
+              EditorUIUtil.setupAntialiasing(g2d);
               GraphicsUtil.setupAAPainting(g2d);
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());

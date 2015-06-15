@@ -830,7 +830,7 @@ public class TypeConversionUtil {
              && rText.endsWith(lText)
              && rText.charAt(rText.length() - lText.length() - 1) == '.';
     }
-    return isClassAssignable(leftResult, rightResult, allowUncheckedConversion);
+    return isClassAssignable(leftResult, rightResult, allowUncheckedConversion, left.getResolveScope());
   }
 
   private static boolean isAssignableFromWildcard(@NotNull PsiType left, @NotNull PsiWildcardType rightWildcardType) {
@@ -923,18 +923,19 @@ public class TypeConversionUtil {
 
   private static boolean isClassAssignable(@NotNull PsiClassType.ClassResolveResult leftResult,
                                            @NotNull PsiClassType.ClassResolveResult rightResult,
-                                           boolean allowUncheckedConversion) {
+                                           boolean allowUncheckedConversion, GlobalSearchScope resolveScope) {
     final PsiClass leftClass = leftResult.getElement();
     final PsiClass rightClass = rightResult.getElement();
-    return leftClass != null
-           && rightClass != null
-           && InheritanceUtil.isInheritorOrSelf(rightClass, leftClass, true)
-           && typeParametersAgree(leftResult, rightResult, allowUncheckedConversion);
+    if (leftClass == null || rightClass == null) return false;
+
+    PsiSubstitutor superSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(leftClass, rightClass, resolveScope,
+                                                                                             rightResult.getSubstitutor());
+    return superSubstitutor != null && typeParametersAgree(leftResult, rightResult, allowUncheckedConversion, superSubstitutor);
   }
 
   private static boolean typeParametersAgree(@NotNull PsiClassType.ClassResolveResult leftResult,
                                              @NotNull PsiClassType.ClassResolveResult rightResult,
-                                             boolean allowUncheckedConversion) {
+                                             boolean allowUncheckedConversion, PsiSubstitutor superSubstitutor) {
     PsiSubstitutor rightSubstitutor = rightResult.getSubstitutor();
     PsiClass leftClass = leftResult.getElement();
     PsiClass rightClass = rightResult.getElement();
@@ -945,7 +946,7 @@ public class TypeConversionUtil {
     PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
 
     if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
-      rightSubstitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
+      rightSubstitutor = superSubstitutor;
       rightClass = leftClass;
     }
     else if (!PsiUtil.typeParametersIterator(rightClass).hasNext()) return true;
@@ -1063,7 +1064,7 @@ public class TypeConversionUtil {
    *
    * @return substitutor (never returns <code>null</code>)
    * @see PsiClass#isInheritor(PsiClass, boolean)
-   * @see InheritanceUtil#isInheritorOrSelf(com.intellij.psi.PsiClass, com.intellij.psi.PsiClass, boolean)
+   * @see InheritanceUtil#isInheritorOrSelf(PsiClass, PsiClass, boolean)
    */
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
@@ -1089,28 +1090,7 @@ public class TypeConversionUtil {
                                                              @NotNull PsiClass derivedClass,
                                                              @NotNull PsiSubstitutor derivedSubstitutor,
                                                              @Nullable Set<PsiClass> visited) {
-    if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) {
-      return InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) ? PsiSubstitutor.EMPTY : null; //optimization
-    }
-
-    final PsiManager manager = superClass.getManager();
-    if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {
-      return InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) ? JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(superClass) : null;
-    }
-
-    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(superClass.getName()) &&
-        manager.areElementsEquivalent(superClass, JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, superClass.getResolveScope()))) {
-      return PsiSubstitutor.EMPTY;
-    }
-
-    if (derivedClass instanceof PsiAnonymousClass) {
-      final PsiClassType baseType = ((PsiAnonymousClass)derivedClass).getBaseClassType();
-      final JavaResolveResult result = baseType.resolveGenerics();
-      if (result.getElement() == null) return PsiSubstitutor.UNKNOWN;
-      derivedClass = (PsiClass)result.getElement();
-      derivedSubstitutor = derivedSubstitutor.putAll(result.getSubstitutor());
-    }
-    return getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited == null ? new THashSet<PsiClass>() : visited, manager);
+    return JavaClassSupers.getInstance().getSuperClassSubstitutor(superClass, derivedClass, derivedClass.getResolveScope(), derivedSubstitutor);
   }
 
   private static void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass, @NotNull Set<PsiClass> visited) {
@@ -1149,62 +1129,6 @@ public class TypeConversionUtil {
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass, @NotNull PsiClassType classType) {
       final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
       return getSuperClassSubstitutor(superClass, classResolveResult.getElement(), classResolveResult.getSubstitutor());
-  }
-
-  @Nullable
-  private static PsiSubstitutor getSuperClassSubstitutorInner(@NotNull PsiClass base,
-                                                              @NotNull PsiClass candidate,
-                                                              @NotNull PsiSubstitutor candidateSubstitutor,
-                                                              @NotNull Set<PsiClass> visited,
-                                                              @NotNull PsiManager manager) {
-    if (!visited.add(candidate)) return null;
-    assert candidateSubstitutor.isValid();
-
-    if (base == candidate) return candidateSubstitutor;
-    if (manager.areElementsEquivalent(base, candidate)) {
-      PsiTypeParameter[] baseParams = base.getTypeParameters();
-      PsiTypeParameter[] candidateParams = candidate.getTypeParameters();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(base.getProject()).getElementFactory();
-      if (baseParams.length > 0 && candidateParams.length == 0) {
-        return factory.createRawSubstitutor(base);
-      }
-      else {
-        Map<PsiTypeParameter, PsiType> m = new HashMap<PsiTypeParameter, PsiType>();
-        for (int i = 0; i < candidateParams.length && i < baseParams.length; i++) {
-          m.put(baseParams[i], candidateSubstitutor.substitute(candidateParams[i]));
-        }
-        return factory.createSubstitutor(m);
-      }
-    }
-
-    PsiSubstitutor substitutor = checkReferenceList(candidate.getExtendsListTypes(), candidateSubstitutor, base, visited, manager);
-    if (substitutor == null) {
-      substitutor = checkReferenceList(candidate.getImplementsListTypes(), candidateSubstitutor, base, visited, manager);
-    }
-    return substitutor;
-  }
-
-  private static PsiSubstitutor checkReferenceList(@NotNull PsiClassType[] types,
-                                                   @NotNull PsiSubstitutor candidateSubstitutor,
-                                                   @NotNull PsiClass base,
-                                                   @NotNull Set<PsiClass> set,
-                                                   @NotNull PsiManager manager) {
-    for (final PsiClassType type : types) {
-      final PsiType substitutedType = candidateSubstitutor.substitute(type);
-      //if (!(substitutedType instanceof PsiClassType)) return null;
-      LOG.assertTrue(substitutedType instanceof PsiClassType);
-
-      final JavaResolveResult result = ((PsiClassType)substitutedType).resolveGenerics();
-      final PsiElement newCandidate = result.getElement();
-      if (newCandidate != null) {
-        final PsiSubstitutor substitutor = result.getSubstitutor();
-        final PsiSubstitutor newSubstitutor = getSuperClassSubstitutorInner(base, (PsiClass)newCandidate, substitutor, set, manager);
-        if (newSubstitutor != null) {
-          return type.isRaw() ? JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(base) : newSubstitutor;
-        }
-      }
-    }
-    return null;
   }
 
   /**

@@ -47,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
@@ -1194,14 +1195,23 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitExpressionList(PsiExpressionList list) {
     if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
-      createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
+      createSpaceInCode(mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      createParenthSpace(mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE,
-                         myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+      boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+      if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+        createSpaceWithLinefeedIfListWrapped(list, space);
+        return;
+      }
+      createSpaceInCode(space);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
-      createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+      boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+      if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+        createSpaceWithLinefeedIfListWrapped(list, space);
+        return;
+      }
+      createSpaceInCode(space);
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
@@ -1209,6 +1219,22 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(false);
     }
+  }
+
+  private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
+    PsiExpression[] expressions = list.getExpressions();
+    int length = expressions.length;
+    assert length > 1;
+
+    List<TextRange> ranges = ContainerUtil.newArrayList();
+    for (int i = 0; i < length - 1; i++) {
+      int startOffset = expressions[i].getTextRange().getEndOffset();
+      int endOffset = expressions[i + 1].getTextRange().getStartOffset();
+      ranges.add(new TextRange(startOffset, endOffset));
+    }
+
+    int spaces = space ? 1 : 0;
+    myResult = Spacing.createDependentLFSpacing(spaces, spaces, ranges, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   @Override

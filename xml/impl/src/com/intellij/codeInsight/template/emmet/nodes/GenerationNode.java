@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,7 +285,12 @@ public class GenerationNode extends UserDataHolderBase {
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, xmlFile.getText(), false, true);
+    String text = xmlFile.getText();
+    final PsiElement context = callback.getFile().getContext();
+    if (context != null && context.getText().startsWith("\"")) {
+      text = text.replace('"', '\'');
+    }
+    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, text, false, true);
     final XmlTag tag = dummyFile.getRootTag();
     if (tag != null) {
 
@@ -324,7 +329,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static String prepareVariableName(@NotNull String attributeName) {
-    char[] toReplace = {'-', '+', ':'};
+    char[] toReplace = {'$', '-', '+', ':'};
     StringBuilder builder = new StringBuilder(attributeName.length());
     for (int i = 0; i < attributeName.length(); i++) {
       char c = attributeName.charAt(i);
@@ -491,7 +496,7 @@ public class GenerationNode extends UserDataHolderBase {
     for (XmlAttribute xmlAttribute : tag.getAttributes()) {
       final String attributeName = xmlAttribute.getName();
       final XmlAttributeValue xmlAttributeValueElement = xmlAttribute.getValueElement();
-      if (xmlAttributeValueElement != null && !attributes.containsKey(attributeName)) {
+      if ((xmlAttributeValueElement != null && !attributes.containsKey(attributeName)) || !ZenCodingUtil.isXML11ValidQName(attributeName)) {
         continue;
       }
 

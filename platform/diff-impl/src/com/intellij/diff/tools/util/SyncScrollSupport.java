@@ -15,21 +15,27 @@
  */
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 public class SyncScrollSupport {
+  private static final Logger LOG = Logger.getInstance(SyncScrollSupport.class);
+
   public interface SyncScrollable {
     @CalledInAwt
     boolean isSyncScrollEnabled();
@@ -46,7 +52,8 @@ public class SyncScrollSupport {
     @NotNull private final MyScrollHelper myHelper1;
     @NotNull private final MyScrollHelper myHelper2;
 
-    public boolean myDuringSyncScroll = false;
+    private boolean myDisabled = false;
+    private boolean myDuringSyncScroll = false;
 
     public TwosideSyncScrollSupport(@NotNull Editor editor1, @NotNull Editor editor2, @NotNull SyncScrollable scrollable) {
       myEditor1 = editor1;
@@ -57,8 +64,22 @@ public class SyncScrollSupport {
       myHelper2 = create(myEditor2, myEditor1, myScrollable, Side.RIGHT);
     }
 
+    public boolean isDuringSyncScroll() {
+      return myDuringSyncScroll;
+    }
+
+    public void setDisabled(boolean value) {
+      if (myDisabled == value) LOG.warn(new Throwable("myDisabled == value: " + myDisabled + " - " + value));
+      myDisabled = value;
+    }
+
+    @NotNull
+    public SyncScrollable getScrollable() {
+      return myScrollable;
+    }
+
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (!myScrollable.isSyncScrollEnabled() || myDuringSyncScroll) return;
+      if (!myScrollable.isSyncScrollEnabled() || myDuringSyncScroll || myDisabled) return;
 
       myDuringSyncScroll = true;
       try {
@@ -74,13 +95,51 @@ public class SyncScrollSupport {
       }
     }
 
-    @NotNull
-    public SyncScrollable getScrollable() {
-      return myScrollable;
-    }
+    public void makeVisible(@NotNull Side masterSide,
+                            int startLine1, int endLine1, int startLine2, int endLine2,
+                            final boolean animate) {
+      Side slaveSide = masterSide.other();
 
-    public boolean isDuringSyncScroll() {
-      return myDuringSyncScroll;
+      final IntPair offsets = getTargetOffsets(myEditor1, myEditor2, startLine1, endLine1, startLine2, endLine2);
+
+      final Editor masterEditor = masterSide.select(myEditor1, myEditor2);
+      final Editor slaveEditor = slaveSide.select(myEditor1, myEditor2);
+
+      final int masterOffset = masterSide.select(offsets.val1, offsets.val2);
+      final int slaveOffset = slaveSide.select(offsets.val1, offsets.val2);
+
+      int startOffset1 = myEditor1.getScrollingModel().getVisibleArea().y;
+      int startOffset2 = myEditor2.getScrollingModel().getVisibleArea().y;
+      final int masterStartOffset = masterSide.select(startOffset1, startOffset2);
+
+      myHelper1.setAnchor(startOffset1, offsets.val1, startOffset2, offsets.val2);
+      myHelper2.setAnchor(startOffset2, offsets.val2, startOffset1, offsets.val1);
+
+      doScrollHorizontally(masterEditor, 0, false); // animation will be canceled by "scroll vertically" anyway
+      doScrollVertically(masterEditor, masterOffset, animate);
+
+      masterEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+        @Override
+        public void run() {
+          myHelper1.removeAnchor();
+          myHelper2.removeAnchor();
+
+          int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
+          int slaveFinalOffset = slaveEditor.getScrollingModel().getVisibleArea().y;
+          if (slaveFinalOffset != slaveOffset) {
+            myDuringSyncScroll = true;
+
+            doScrollVertically(slaveEditor, slaveOffset, animate && masterFinalOffset == masterStartOffset);
+
+            slaveEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+              @Override
+              public void run() {
+                myDuringSyncScroll = false;
+              }
+            });
+          }
+        }
+      });
     }
   }
 
@@ -94,7 +153,8 @@ public class SyncScrollSupport {
     @NotNull private final MyScrollHelper myHelper21;
     @NotNull private final MyScrollHelper myHelper22;
 
-    public boolean myDuringSyncScroll = false;
+    private boolean myDisabled = false;
+    private boolean myDuringSyncScroll = false;
 
     public ThreesideSyncScrollSupport(@NotNull List<? extends Editor> editors,
                                       @NotNull SyncScrollable scrollable1,
@@ -112,8 +172,13 @@ public class SyncScrollSupport {
       myHelper22 = create(editors.get(2), editors.get(1), myScrollable2, Side.RIGHT);
     }
 
+    public void setDisabled(boolean value) {
+      if (myDisabled == value) LOG.warn(new Throwable("myDisabled == value: " + myDisabled + " - " + value));
+      myDisabled = value;
+    }
+
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (myDuringSyncScroll) return;
+      if (myDuringSyncScroll || myDisabled) return;
 
       myDuringSyncScroll = true;
       try {
@@ -157,13 +222,22 @@ public class SyncScrollSupport {
   private static class MyScrollHelper implements VisibleAreaListener {
     @NotNull private final Editor myMaster;
     @NotNull private final Editor mySlave;
-
     @NotNull private final TIntFunction myConvertor;
+
+    @Nullable private Anchor myAnchor;
 
     public MyScrollHelper(@NotNull Editor master, @NotNull Editor slave, @NotNull TIntFunction convertor) {
       myMaster = master;
       mySlave = slave;
       myConvertor = convertor;
+    }
+
+    public void setAnchor(int masterStartOffset, int masterEndOffset, int slaveStartOffset, int slaveEndOffset) {
+      myAnchor = new Anchor(masterStartOffset, masterEndOffset, slaveStartOffset, slaveEndOffset);
+    }
+
+    public void removeAnchor() {
+      myAnchor = null;
     }
 
     @Override
@@ -172,63 +246,126 @@ public class SyncScrollSupport {
       Rectangle oldRectangle = e.getOldRectangle();
       if (oldRectangle == null) return;
 
-      syncVerticalScroll(newRectangle, oldRectangle);
-      syncHorizontalScroll(newRectangle, oldRectangle);
+      if (newRectangle.x != oldRectangle.x) syncHorizontalScroll(false);
+      if (newRectangle.y != oldRectangle.y) syncVerticalScroll(false);
     }
 
-    private void syncVerticalScroll(@NotNull Rectangle newRectangle, @NotNull Rectangle oldRectangle) {
-      if (newRectangle.y == oldRectangle.y) return;
-
+    private void syncVerticalScroll(boolean animated) {
       if (myMaster.getDocument().getTextLength() == 0) return;
-
-      int masterVerticalScrollOffset = myMaster.getScrollingModel().getVerticalScrollOffset();
 
       Rectangle viewRect = myMaster.getScrollingModel().getVisibleArea();
       int middleY = viewRect.height / 3;
 
-      LogicalPosition masterPos = myMaster.xyToLogicalPosition(new Point(viewRect.x, masterVerticalScrollOffset + middleY));
-      int masterCenterLine = masterPos.line;
-      int scrollToLine = myConvertor.execute(masterCenterLine);
+      int offset;
+      if (myAnchor == null) {
+        LogicalPosition masterPos = myMaster.xyToLogicalPosition(new Point(viewRect.x, viewRect.y + middleY));
+        int masterCenterLine = masterPos.line;
+        int convertedCenterLine = myConvertor.execute(masterCenterLine);
 
-      int correction = (masterVerticalScrollOffset + middleY) % myMaster.getLineHeight();
-      Point point = mySlave.logicalPositionToXY(new LogicalPosition(scrollToLine, masterPos.column));
-      int offset = point.y - middleY + correction;
+        Point point = mySlave.logicalPositionToXY(new LogicalPosition(convertedCenterLine, masterPos.column));
+        int correction = (viewRect.y + middleY) % myMaster.getLineHeight();
+        offset = point.y - middleY + correction;
+      }
+      else {
+        double progress = myAnchor.masterStartOffset == myAnchor.masterEndOffset || viewRect.y == myAnchor.masterEndOffset ? 1 :
+                          ((double)(viewRect.y - myAnchor.masterStartOffset)) / (myAnchor.masterEndOffset - myAnchor.masterStartOffset);
+
+        offset = myAnchor.slaveStartOffset + (int)((myAnchor.slaveEndOffset - myAnchor.slaveStartOffset) * progress);
+      }
 
       int deltaHeaderOffset = getHeaderOffset(mySlave) - getHeaderOffset(myMaster);
-      doScrollVertically(mySlave.getScrollingModel(), offset + deltaHeaderOffset);
+      doScrollVertically(mySlave, offset + deltaHeaderOffset, animated);
     }
 
-    private void syncHorizontalScroll(@NotNull Rectangle newRectangle, @NotNull Rectangle oldRectangle) {
-      if (newRectangle.x == oldRectangle.x) return;
-
-      int offset = newRectangle.x;
-
-      doScrollHorizontally(mySlave.getScrollingModel(), offset);
+    private void syncHorizontalScroll(boolean animated) {
+      int offset = myMaster.getScrollingModel().getVisibleArea().x;
+      doScrollHorizontally(mySlave, offset, animated);
     }
   }
 
-  private static void doScrollVertically(@NotNull ScrollingModel model, int offset) {
-    model.disableAnimation();
-    try {
-      model.scrollVertically(offset);
-    }
-    finally {
-      model.enableAnimation();
-    }
+  private static void doScrollVertically(@NotNull Editor editor, int offset, boolean animated) {
+    ScrollingModel model = editor.getScrollingModel();
+    if (!animated) model.disableAnimation();
+    model.scrollVertically(offset);
+    if (!animated) model.enableAnimation();
   }
 
-  private static void doScrollHorizontally(@NotNull ScrollingModel model, int offset) {
-    model.disableAnimation();
-    try {
-      model.scrollHorizontally(offset);
-    }
-    finally {
-      model.enableAnimation();
-    }
+  private static void doScrollHorizontally(@NotNull Editor editor, int offset, boolean animated) {
+    ScrollingModel model = editor.getScrollingModel();
+    if (!animated) model.disableAnimation();
+    model.scrollHorizontally(offset);
+    if (!animated) model.enableAnimation();
   }
 
   private static int getHeaderOffset(@NotNull final Editor editor) {
     final JComponent header = editor.getHeaderComponent();
     return header == null ? 0 : header.getHeight();
+  }
+
+  @NotNull
+  private static IntPair getTargetOffsets(@NotNull Editor editor1, @NotNull Editor editor2,
+                                          int startLine1, int endLine1, int startLine2, int endLine2) {
+    int topOffset1 = editor1.logicalPositionToXY(new LogicalPosition(startLine1, 0)).y;
+    int bottomOffset1 = editor1.logicalPositionToXY(new LogicalPosition(endLine1 + 1, 0)).y;
+    int topOffset2 = editor2.logicalPositionToXY(new LogicalPosition(startLine2, 0)).y;
+    int bottomOffset2 = editor2.logicalPositionToXY(new LogicalPosition(endLine2 + 1, 0)).y;
+
+    int rangeHeight1 = bottomOffset1 - topOffset1;
+    int rangeHeight2 = bottomOffset2 - topOffset2;
+
+    int gapLines1 = 2 * editor1.getLineHeight();
+    int gapLines2 = 2 * editor2.getLineHeight();
+
+    int editorHeight1 = editor1.getScrollingModel().getVisibleArea().height;
+    int editorHeight2 = editor2.getScrollingModel().getVisibleArea().height;
+
+    int maximumOffset1 = ((EditorEx)editor1).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight1;
+    int maximumOffset2 = ((EditorEx)editor2).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight2;
+
+    // 'shift' here - distance between editor's top and first line of range
+
+    // make whole range visible. If possible, locate it at 'center' (1/3 of height)
+    // If can't show whole range - show as much as we can
+    boolean canShow1 = 2 * gapLines1 + rangeHeight1 <= editorHeight1;
+    boolean canShow2 = 2 * gapLines2 + rangeHeight2 <= editorHeight2;
+    
+    int topShift1 = canShow1 ? Math.min(editorHeight1 - gapLines1 - rangeHeight1, editorHeight1 / 3) : gapLines1;
+    int topShift2 = canShow2 ? Math.min(editorHeight2 - gapLines2 - rangeHeight2, editorHeight2 / 3) : gapLines2;
+
+    int topShift = Math.min(topShift1, topShift2);
+
+    // check if we're at the top of file
+    topShift = Math.min(topShift, Math.min(topOffset1, topOffset2));
+
+    int offset1 = topOffset1 - topShift;
+    int offset2 = topOffset2 - topShift;
+    if (maximumOffset1 > offset1 && maximumOffset2 > offset2) return new IntPair(offset1, offset2);
+
+    // One of the ranges is at end of file - we can't scroll where we want to.
+    topShift = Math.max(topOffset1 - maximumOffset1, topOffset2 - maximumOffset2);
+
+    // Try to show as much of range as we can (even if it breaks alignment)
+    offset1 = topOffset1 - topShift + Math.max(topShift + rangeHeight1 + gapLines1 - editorHeight1, 0);
+    offset2 = topOffset2 - topShift + Math.max(topShift + rangeHeight2 + gapLines2 - editorHeight2, 0);
+
+    // always show top of the range
+    offset1 = Math.min(offset1, topOffset1 - gapLines1);
+    offset2 = Math.min(offset2, topOffset2 - gapLines2);
+
+    return new IntPair(offset1, offset2);
+  }
+
+  private static class Anchor {
+    public final int masterStartOffset;
+    public final int masterEndOffset;
+    public final int slaveStartOffset;
+    public final int slaveEndOffset;
+
+    public Anchor(int masterStartOffset, int masterEndOffset, int slaveStartOffset, int slaveEndOffset) {
+      this.masterStartOffset = masterStartOffset;
+      this.masterEndOffset = masterEndOffset;
+      this.slaveStartOffset = slaveStartOffset;
+      this.slaveEndOffset = slaveEndOffset;
+    }
   }
 }

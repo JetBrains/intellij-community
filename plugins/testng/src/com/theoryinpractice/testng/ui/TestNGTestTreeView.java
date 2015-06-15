@@ -17,7 +17,6 @@ package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestTreeView;
-import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestNodeDescriptor;
 import com.theoryinpractice.testng.model.TestProxy;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
 
 /**
  * @author Hani Suleiman Date: Aug 1, 2005 Time: 11:33:12 AM
@@ -53,10 +51,5 @@ public class TestNGTestTreeView extends TestTreeView {
       return proxy.getName();
     }
     return "";
-  }
-
-  @Override
-  protected int getSelectionMode() {
-    return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
   }
 }

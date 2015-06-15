@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.io.IOUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +55,8 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     final Pair<PsiElement, Handler> pair = findHandler(element);
     if (pair == null) return false;
 
-    final String text = pair.first.getText();
-    for (int i = 0; i < text.length(); i++) {
-      if (shouldConvert(text.charAt(i))) return true;
-    }
-
-    return false;
+    String text = pair.first.getText();
+    return !IOUtil.isAscii(text);
   }
 
   @NotNull
@@ -152,7 +149,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   }
 
   private static class MyDocCommentHandler extends Handler {
-    private static Map<Character, String> ourEntities = null;
+    private static Map<Character, String> ourEntities;
 
     @Override
     public PsiElement findApplicable(final PsiElement element) {

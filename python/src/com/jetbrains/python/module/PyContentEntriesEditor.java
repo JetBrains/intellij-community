@@ -16,9 +16,8 @@
 package com.jetbrains.python.module;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -26,21 +25,14 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.ContentEntryImpl;
-import com.intellij.openapi.roots.impl.ContentFolderBaseImpl;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.templateLanguages.TemplatesService;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -50,32 +42,24 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 public class PyContentEntriesEditor extends CommonContentEntriesEditor {
-  private static final Color TEMPLATES_COLOR = JBColor.MAGENTA;
-  private final MultiMap<ContentEntry, VirtualFilePointer> myTemplateRoots = new MultiMap<ContentEntry, VirtualFilePointer>();
+  private final PyRootTypeProvider[] myRootTypeProviders;
   private final Module myModule;
   private Disposable myFilePointersDisposable;
-
-  private final VirtualFilePointerListener DUMMY_LISTENER = new VirtualFilePointerListener() {
-    @Override
-    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-    }
-
-    @Override
-    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-    }
-  };
+  private MyContentEntryEditor myContentEntryEditor;
 
   public PyContentEntriesEditor(Module module, ModuleConfigurationState moduleConfigurationState,
                                       JpsModuleSourceRootType<?>... rootTypes) {
     super(module.getName(), moduleConfigurationState, rootTypes);
+    myRootTypeProviders = Extensions.getExtensions(PyRootTypeProvider.EP_NAME);
     myModule = module;
     reset();
+  }
+
+  public MyContentEntryEditor getContentEntryEditor() {
+    return myContentEntryEditor;
   }
 
   @Override
@@ -90,24 +74,19 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     return entries;
   }
 
+  public ContentEntry[] getContentEntries() {
+    return getModel().getContentEntries();
+  }
+
   @Override
   public void reset() {
     if (myFilePointersDisposable != null) {
       Disposer.dispose(myFilePointersDisposable);
     }
-    myTemplateRoots.clear();
 
     myFilePointersDisposable = Disposer.newDisposable();
-    final TemplatesService instance = TemplatesService.getInstance(myModule);
-    if (instance != null) {
-      final List<VirtualFile> folders = instance.getTemplateFolders();
-      for (VirtualFile folder : folders) {
-        ContentEntry contentEntry = findContentEntryForFile(folder);
-        if (contentEntry != null) {
-          myTemplateRoots.putValue(contentEntry, VirtualFilePointerManager.getInstance().create(folder, myFilePointersDisposable,
-                                                                                                DUMMY_LISTENER));
-        }
-      }
+    for (PyRootTypeProvider provider : myRootTypeProviders) {
+      provider.reset(myFilePointersDisposable, this, myModule);
     }
 
     if (myRootTreeEditor != null) {
@@ -115,17 +94,6 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       if(editor!=null) editor.update();
       myRootTreeEditor.update();
     }
-  }
-
-  @Nullable
-  private ContentEntry findContentEntryForFile(VirtualFile virtualFile) {
-    for (ContentEntry contentEntry : getModel().getContentEntries()) {
-      final VirtualFile file = contentEntry.getFile();
-      if (file != null && VfsUtilCore.isAncestor(file, virtualFile, false)) {
-        return contentEntry;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -139,37 +107,26 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    List<VirtualFile> templateRoots = getCurrentState();
-    TemplatesService.getInstance(myModule).setTemplateFolders(templateRoots.toArray(new VirtualFile[templateRoots.size()]));
-  }
-
-  private List<VirtualFile> getCurrentState() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (ContentEntry entry : myTemplateRoots.keySet()) {
-      for (VirtualFilePointer filePointer : myTemplateRoots.get(entry)) {
-        result.add(filePointer.getFile());
-      }
+    for (PyRootTypeProvider provider : myRootTypeProviders) {
+      provider.apply(myModule);
     }
-    return result;
   }
 
   @Override
   public boolean isModified() {
     if (super.isModified()) return true;
-    final TemplatesService templatesService = TemplatesService.getInstance(myModule);
-    if (templatesService != null) {
-      List<VirtualFile> original = templatesService.getTemplateFolders();
-      List<VirtualFile> current = getCurrentState();
-
-      if (!Comparing.haveEqualElements(original, current)) return true;
-
+    for (PyRootTypeProvider provider : myRootTypeProviders) {
+     if (provider.isModified(myModule)) {
+       return true;
+     }
     }
     return false;
   }
 
   @Override
-  protected MyContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
-    return new MyContentEntryEditor(contentEntryUrl, getEditHandlers());
+  protected ContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
+    myContentEntryEditor = new MyContentEntryEditor(contentEntryUrl, getEditHandlers());
+    return myContentEntryEditor;
   }
 
   protected class MyContentEntryEditor extends ContentEntryEditor {
@@ -199,42 +156,43 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
 
     @Override
     public void deleteContentFolder(ContentEntry contentEntry, ContentFolder folder) {
-      if (folder instanceof TemplateRootFolder) {
-        removeTemplateRoot(folder.getUrl());
+      for (PyRootTypeProvider provider : myRootTypeProviders) {
+        if (provider.isMine(folder)) {
+          removeRoot(contentEntry, folder.getUrl(), provider);
+          return;
+        }
       }
-      else {
-        super.deleteContentFolder(contentEntry, folder);
+      super.deleteContentFolder(contentEntry, folder);
+    }
+
+    public void removeRoot(@Nullable ContentEntry contentEntry, String folder, PyRootTypeProvider provider) {
+      if (contentEntry == null) {
+        contentEntry = getContentEntry();
+      }
+      VirtualFilePointer root = getRoot(provider, folder);
+      if (root != null) {
+        provider.removeRoot(contentEntry, root, getModel());
+        fireUpdate();
       }
     }
 
-    public void addTemplateRoot(@NotNull final VirtualFile file) {
-      final VirtualFilePointer root = VirtualFilePointerManager.getInstance().create(file, myFilePointersDisposable, DUMMY_LISTENER);
-      myTemplateRoots.putValue(getContentEntry(), root);
+    public void fireUpdate() {
       myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
       update();
     }
 
-    public void removeTemplateRoot(@NotNull final String url) {
-      final VirtualFilePointer root = getTemplateRoot(url);
-      if (root != null) {
-        myTemplateRoots.remove(getContentEntry(), root);
-        myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
-        update();
-      }
-    }
-
-    public boolean hasTemplateRoot(@NotNull final VirtualFile file) {
-      return getTemplateRoot(file.getUrl()) != null;
-    }
-
-    @Nullable
-    public VirtualFilePointer getTemplateRoot(@NotNull final String url) {
-      for (VirtualFilePointer filePointer : myTemplateRoots.get(getContentEntry())) {
+    public VirtualFilePointer getRoot(PyRootTypeProvider provider, @NotNull final String url) {
+      for (VirtualFilePointer filePointer : provider.getRoots().get(getContentEntry())) {
         if (Comparing.equal(filePointer.getUrl(), url)) {
           return filePointer;
         }
       }
       return null;
+    }
+
+    public void addRoot(PyRootTypeProvider provider, @NotNull final VirtualFilePointer root) {
+      provider.getRoots().putValue(getContentEntry(), root);
+      fireUpdate();
     }
 
     protected class MyContentRootPanel extends ContentRootPanel {
@@ -252,22 +210,22 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       @Override
       protected void addFolderGroupComponents() {
         super.addFolderGroupComponents();
-        if (!myTemplateRoots.get(getContentEntry()).isEmpty()) {
-          final List<TemplateRootFolder> folders = new ArrayList<TemplateRootFolder>(myTemplateRoots.size());
-          for (VirtualFilePointer root : myTemplateRoots.get(getContentEntry())) {
-            folders.add(new TemplateRootFolder(root, getContentEntry()));
+        for (PyRootTypeProvider provider : myRootTypeProviders) {
+          MultiMap<ContentEntry, VirtualFilePointer> roots = provider.getRoots();
+          if (!roots.get(getContentEntry()).isEmpty()) {
+            final JComponent sourcesComponent = createFolderGroupComponent(provider.getName() + " Folders",
+                                                                           provider.createFolders(getContentEntry()),
+                                                                           provider.getColor(), null);
+            this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH,
+                                                              GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
           }
-          final JComponent sourcesComponent = createFolderGroupComponent("Template Folders",
-                                                                         folders.toArray(new ContentFolder[folders.size()]),
-                                                                         TEMPLATES_COLOR, null);
-          this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH,
-                                                            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
+
         }
       }
     }
   }
 
-  private static class MyContentEntryTreeEditor extends ContentEntryTreeEditor {
+  private class MyContentEntryTreeEditor extends ContentEntryTreeEditor {
 
     private final ChangeListener myListener = new ChangeListener() {
       @Override
@@ -303,43 +261,14 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     @Override
     protected void createEditingActions() {
       super.createEditingActions();
-
-      ContentEntryEditingAction a = new ContentEntryEditingAction(myTree) {
-        {
-          final Presentation templatePresentation = getTemplatePresentation();
-          templatePresentation.setText("Templates");
-          templatePresentation.setDescription("Template Folders");
-          templatePresentation.setIcon(PythonIcons.Python.TemplateRoot);
+      for (PyRootTypeProvider provider : myRootTypeProviders) {
+        ContentEntryEditingAction action = provider.createRootEntryEditingAction(myTree, myFilePointersDisposable, PyContentEntriesEditor.this, getModel());
+        myEditingActionsGroup.add(action);
+        CustomShortcutSet shortcut = provider.getShortcut();
+        if (shortcut != null) {
+          action.registerCustomShortcutSet(shortcut, myTree);
         }
-
-        @Override
-        public boolean isSelected(AnActionEvent e) {
-          final VirtualFile[] selectedFiles = getSelectedFiles();
-          return selectedFiles.length != 0 && getContentEntryEditor().hasTemplateRoot(selectedFiles[0]);
-        }
-
-        @Override
-        public void setSelected(AnActionEvent e, boolean isSelected) {
-          final VirtualFile[] selectedFiles = getSelectedFiles();
-          assert selectedFiles.length != 0;
-
-          for (VirtualFile selectedFile : selectedFiles) {
-            boolean wasSelected = getContentEntryEditor().hasTemplateRoot(selectedFile);
-            if (isSelected) {
-              if (!wasSelected) {
-                getContentEntryEditor().addTemplateRoot(selectedFile);
-              }
-            }
-            else {
-              if (wasSelected) {
-                getContentEntryEditor().removeTemplateRoot(selectedFile.getUrl());
-              }
-            }
-          }
-        }
-      };
-      myEditingActionsGroup.add(a);
-      a.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_MASK)), myTree);
+      }
     }
 
     @Override
@@ -347,18 +276,14 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       return new ContentEntryTreeCellRenderer(this, getEditHandlers()) {
         @Override
         protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, final Icon originalIcon) {
-          if (getContentEntryEditor().hasTemplateRoot(file)) {
-            return PythonIcons.Python.TemplateRoot;
+          for (PyRootTypeProvider provider : myRootTypeProviders) {
+            if (provider.hasRoot(file, PyContentEntriesEditor.this)) {
+              return provider.getIcon();
+            }
           }
           return super.updateIcon(entry, file, originalIcon);
         }
       };
     }
   }
-  private static class TemplateRootFolder extends ContentFolderBaseImpl {
-    protected TemplateRootFolder(@NotNull VirtualFilePointer filePointer, @NotNull ContentEntryImpl contentEntry) {
-      super(filePointer, contentEntry);
-    }
-  }
-
 }

@@ -15,11 +15,11 @@
  */
 package com.intellij.ide;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,10 +37,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -63,6 +66,7 @@ import java.util.List;
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements ProjectManagerListener, PersistentStateComponent<RecentProjectsManagerBase.State> {
   private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
+  private static Icon ourSmallAppIcon;
 
   public static RecentProjectsManagerBase getInstanceEx() {
     return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
@@ -191,8 +195,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  public static Icon getProjectIcon(String path) {
-    final File file = new File(path + "/.idea/icon.png");
+  public static Icon getProjectIcon(String path, boolean isDark) {
+    File file = isDark ? new File(path + "/.idea/icon_dark.png") : new File(path + "/.idea/icon.png");
     if (file.exists()) {
       final long timestamp = file.lastModified();
       MyIcon icon = ourProjectIcons.get(path);
@@ -200,32 +204,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         return icon.getIcon();
       }
       try {
-        final BufferedImage image = loadAndScaleImage(file);
-        Icon ico = new Icon() {
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (UIUtil.isRetina()) {
-              final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-              newG.scale(0.5, 0.5);
-              newG.drawImage(image, x/2, y/2, null);
-              newG.scale(1, 1);
-              newG.dispose();
-            }
-            else {
-              g.drawImage(image, x, y, null);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
-          }
-        };
+        Icon ico = createIcon(file);
         icon = new MyIcon(ico, timestamp);
         ourProjectIcons.put(path, icon);
         return icon.getIcon();
@@ -237,24 +216,91 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return null;
   }
 
+  @NotNull
+  public static Icon createIcon(File file) {
+    final BufferedImage image = loadAndScaleImage(file);
+    return toRetinaAwareIcon(image);
+  }
+
+  @NotNull
+  protected static Icon toRetinaAwareIcon(final BufferedImage image) {
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        if (UIUtil.isRetina()) {
+          final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+          newG.scale(0.5, 0.5);
+          newG.drawImage(image, x/2, y/2, null);
+          newG.scale(1, 1);
+          newG.dispose();
+        }
+        else {
+          g.drawImage(image, x, y, null);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
+      }
+    };
+  }
+
   private static BufferedImage loadAndScaleImage(File file) {
     try {
       Image img = ImageLoader.loadFromUrl(file.toURL());
-      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16), null);
+      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16));
     }
-    catch (MalformedURLException e) {
-      e.printStackTrace();
+    catch (MalformedURLException e) {//
     }
     return null;
   }
 
   public static Icon getProjectOrAppIcon(String path) {
-    final Icon icon = getProjectIcon(path);
+    Icon icon = getProjectIcon(path, UIUtil.isUnderDarcula());
     if (icon != null) {
       return icon;
     }
 
-    return AllIcons.Nodes.IdeaProject;
+    if (UIUtil.isUnderDarcula()) {
+      //No dark icon for this project
+      icon = getProjectIcon(path, false);
+      if (icon != null) {
+        return icon;
+      }
+    }
+
+    return getSmallApplicationIcon();
+  }
+
+  protected static Icon getSmallApplicationIcon() {
+    if (ourSmallAppIcon == null) {
+      try {
+        Icon appIcon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getIconUrl());
+
+        if (appIcon != null) {
+          if (appIcon.getIconWidth() == JBUI.scale(16) && appIcon.getIconHeight() == JBUI.scale(16)) {
+            ourSmallAppIcon = appIcon;
+          } else {
+            BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(appIcon));
+            image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16));
+            ourSmallAppIcon = toRetinaAwareIcon(image);
+          }
+        }
+      }
+      catch (Exception e) {//
+      }
+      if (ourSmallAppIcon == null) {
+        ourSmallAppIcon = EmptyIcon.ICON_16;
+      }
+    }
+
+    return ourSmallAppIcon;
   }
 
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
@@ -487,21 +533,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   protected void doReopenLastProject() {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
     if (generalSettings.isReopenLastProject()) {
-      Collection<String> openPaths;
+      Set<String> openPaths;
+      boolean forceNewFrame = true;
       synchronized (myStateLock) {
         openPaths = ContainerUtil.newLinkedHashSet(myState.openPaths);
-      }
-      if (!openPaths.isEmpty()) {
-        for (String openPath : openPaths) {
-          if (isValidProjectPath(openPath)) {
-            doOpenProject(openPath, null, true);
-          }
+        if (openPaths.isEmpty()) {
+          openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
+          forceNewFrame = false;
         }
       }
-      else {
-        String lastProjectPath = getLastProjectPath();
-        if (lastProjectPath != null) {
-          if (isValidProjectPath(lastProjectPath)) doOpenProject(lastProjectPath, null, false);
+      for (String openPath : openPaths) {
+        if (isValidProjectPath(openPath)) {
+          doOpenProject(openPath, null, forceNewFrame);
         }
       }
     }

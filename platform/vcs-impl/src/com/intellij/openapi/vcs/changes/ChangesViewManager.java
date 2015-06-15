@@ -22,7 +22,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -40,9 +41,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -123,7 +121,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myDiffDetails = new MyChangeProcessor(myProject);
-    myDiffDetails.init();
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -202,17 +199,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     DefaultActionGroup group = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewToolbar");
 
-    ActionManager.getInstance().getAction("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
-    ActionManager.getInstance().getAction("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
-    ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), panel);
-    AnAction moveToChangeList = ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
-    moveToChangeList.registerCustomShortcutSet(new CompositeShortcutSet(moveToChangeList.getShortcutSet(),
-                                                                        CommonShortcuts.getMove()), panel);
-    ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
-    ActionManager.getInstance().getAction("ChangesView.SetDefault").registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);
-
-    ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(CommonShortcuts.getDiff(), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), panel);
+    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.Rename",CommonShortcuts.getRename() , panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.Diff", CommonShortcuts.getDiff(), panel);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
@@ -226,9 +219,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, panel));
 
     ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
-    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
-                                                                                             ctrlMask())),
-                                                panel);
+    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, ctrlMask())), panel);
     visualActionsGroup.add(showFlattenAction);
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     visualActionsGroup.add(new ToggleShowIgnoredAction());

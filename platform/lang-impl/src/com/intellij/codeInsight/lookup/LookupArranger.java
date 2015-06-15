@@ -20,7 +20,9 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -102,7 +104,12 @@ public abstract class LookupArranger {
   }
 
   protected List<LookupElement> getMatchingItems() {
-    return Collections.unmodifiableList(myMatchingItems);
+    return ContainerUtil.filter(myMatchingItems, new Condition<LookupElement>() {
+      @Override
+      public boolean value(LookupElement element) {
+        return element.isValid();
+      }
+    });
   }
 
   public Map<LookupElement,StringBuilder> getRelevanceStrings() {

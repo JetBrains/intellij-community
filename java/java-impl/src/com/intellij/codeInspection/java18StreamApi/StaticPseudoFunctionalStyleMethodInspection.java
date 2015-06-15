@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -41,7 +42,7 @@ import java.util.List;
  */
 public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(StaticPseudoFunctionalStyleMethodInspection.class);
-  private StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
+  private final StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
@@ -74,10 +75,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
           if (qName == null) {
             return;
           }
-          final int dotIndex = qName.lastIndexOf('.');
-          if (dotIndex >= 0) {
-            qName = qName.substring(dotIndex + 1);
-          }
+          qName = StringUtil.getShortName(qName);
           final Collection<StaticPseudoFunctionalStyleMethodOptions.PipelineElement> handlerInfos = myOptions.findElementsByMethodName(qName);
           if (handlerInfos.isEmpty()) {
             return;
@@ -104,7 +102,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
           if (suitableHandler == null) {
             return;
           }
-          final int lambdaIndex = validateMethodParameters(methodCallExpression, method);
+          final int lambdaIndex = validateMethodParameters(methodCallExpression, method, suitableHandler.getStreamApiMethodName() == StreamApiConstants.FAKE_FIND_MATCHED);
           if (lambdaIndex != -1) {
             holder.registerProblem(methodCallExpression.getMethodExpression(), "",
                                    new ReplacePseudoLambdaWithLambda(lambdaIndex, methodCallExpression, method, suitableHandler));
@@ -147,26 +145,26 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
       LOG.assertTrue(expression != null);
       final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
       PsiExpression lambdaExpression = expressions[myLambdaIndex];
+      lambdaExpression = convertClassTypeExpression(lambdaExpression);
       lambdaExpression = convertToJavaLambda(lambdaExpression, mySuitableHandler.getStreamApiMethodName());
       LOG.assertTrue(lambdaExpression != null);
 
       final PsiExpression collectionExpression = expressions[(1 + myLambdaIndex) % 2];
       final String pipelineHead = createPipelineHeadText(collectionExpression);
 
-      final String patternForFake =
-        StreamApiConstants.FAKE_STREAM_API_METHODS_TO_PATTERN.getValue().get(mySuitableHandler.getStreamApiMethodName());
 
       final String lambdaExpressionText;
       final String elementText;
-      if (patternForFake == null) {
+      if (!StreamApiConstants.FAKE_FIND_MATCHED.equals(mySuitableHandler.getStreamApiMethodName())) {
         elementText = mySuitableHandler.getStreamApiMethodName();
         lambdaExpressionText = lambdaExpression.getText();
       }
       else {
-        elementText = String.format(patternForFake, lambdaExpression.getText());
+        elementText = expressions.length == 3
+                      ? String.format(StreamApiConstants.FAKE_FIND_MATCHED_WITH_DEFAULT_PATTERN, lambdaExpression.getText(), expressions[2].getText())
+                      : String.format(StreamApiConstants.FAKE_FIND_MATCHED_PATTERN, lambdaExpression.getText());
         lambdaExpressionText = null;
       }
-
       final String pipelineTail =
         StreamApiConstants.STREAM_STREAM_API_METHODS.getValue().contains(mySuitableHandler.getStreamApiMethodName())
         ? findSuitableTailMethodForCollection(myMethodPointer.getElement())
@@ -177,11 +175,24 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced.getParent());
     }
 
+    @NotNull
+    private static PsiExpression convertClassTypeExpression(PsiExpression expression) {
+      final PsiType type = expression.getType();
+      if (type instanceof PsiClassType) {
+        final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+        if (resolvedClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(resolvedClass.getQualifiedName())) {
+          return JavaPsiFacade.getElementFactory(expression.getProject())
+            .createExpressionFromText("(" + expression.getText() + ")::isInstance", null);
+        }
+      }
+      return expression;
+    }
+
     private static String createPipelineHeadText(PsiExpression collectionExpression) {
       final PsiType type = collectionExpression.getType();
       if (type instanceof PsiClassType) {
         final PsiClass resolved = ((PsiClassType)type).resolve();
-        LOG.assertTrue(resolved != null && resolved.getQualifiedName() != null);
+        LOG.assertTrue(resolved != null && resolved.getQualifiedName() != null, type);
         return collectionExpression.getText() + ".stream()";
       }
       else if (type instanceof PsiArrayType) {
@@ -207,17 +218,22 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
     }
   }
 
-  private static int validateMethodParameters(final PsiMethodCallExpression methodCallExpression, final PsiMethod method) {
+  private static int validateMethodParameters(final PsiMethodCallExpression methodCallExpression, final PsiMethod method, boolean canThirdParameterExist) {
     final PsiType[] argumentTypes = methodCallExpression.getArgumentList().getExpressionTypes();
     final PsiParameter[] expectedParameters = method.getParameterList().getParameters();
-    if (argumentTypes.length != expectedParameters.length || expectedParameters.length != 2) {
+
+    if (argumentTypes.length != expectedParameters.length) {
       return -1;
     }
-    final int collectionOrArrayIndex = findCollectionOrArrayPlacement(expectedParameters);
-    if (collectionOrArrayIndex == -1) {
-      return -1;
+    if (expectedParameters.length == 2 || (canThirdParameterExist && expectedParameters.length == 3)) {
+      final int collectionOrArrayIndex = findCollectionOrArrayPlacement(expectedParameters);
+      if (collectionOrArrayIndex == -1) {
+        return -1;
+      }
+      return (1 + collectionOrArrayIndex) % 2;
+
     }
-    return (1 + collectionOrArrayIndex) % 2;
+    return -1;
   }
 
   private static int findCollectionOrArrayPlacement(final PsiParameter[] parameters) {
@@ -232,6 +248,12 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
   }
 
   private static PsiExpression convertToJavaLambda(PsiExpression expression, String streamApiMethodName) {
+    if (streamApiMethodName.equals(StreamApiConstants.FAKE_FIND_MATCHED)) {
+      streamApiMethodName = StreamApiConstants.FILTER;
+    }
+    if (expression instanceof PsiMethodReferenceExpression) {
+      return expression;
+    }
     if (expression instanceof PsiLambdaExpression) {
       return expression;
     }

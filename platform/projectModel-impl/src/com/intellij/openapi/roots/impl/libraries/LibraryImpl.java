@@ -80,12 +80,22 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private final JarDirectoryWatcher myRootsWatcher = JarDirectoryWatcherFactory.getInstance().createWatcher(myJarDirectories, myRootProvider);
 
   LibraryImpl(LibraryTable table, @NotNull Element element, ModifiableRootModel rootModel) throws InvalidDataException {
-    this(table, rootModel, null, element.getAttributeValue(LIBRARY_NAME_ATTR),
-         (PersistentLibraryKind<?>)LibraryKind.findById(element.getAttributeValue(LIBRARY_TYPE_ATTR)));
+    this(table, rootModel, null, element.getAttributeValue(LIBRARY_NAME_ATTR), findPersistentLibraryKind(element));
     readProperties(element);
     myJarDirectories.readExternal(element);
     readRoots(element);
     myRootsWatcher.updateWatchedRoots();
+  }
+
+  @Nullable
+  private static PersistentLibraryKind<?> findPersistentLibraryKind(@NotNull Element element) {
+    String typeString = element.getAttributeValue(LIBRARY_TYPE_ATTR);
+    LibraryKind kind = LibraryKind.findById(typeString);
+    if (kind != null && !(kind instanceof PersistentLibraryKind<?>)) {
+      LOG.error("Cannot load non-persistable library kind: " + typeString);
+      return null;
+    }
+    return (PersistentLibraryKind<?>)kind;
   }
 
   LibraryImpl(String name, @Nullable final PersistentLibraryKind<?> kind, LibraryTable table, ModifiableRootModel rootModel) {

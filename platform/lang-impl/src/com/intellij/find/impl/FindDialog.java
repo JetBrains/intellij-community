@@ -24,9 +24,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,6 +68,7 @@ import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -177,6 +176,19 @@ public class FindDialog extends DialogWrapper {
   }
 
   @Override
+  public void doCancelAction() { // doCancel disposes fields and then calls dispose
+    rememberResultsPreviewWasOpen();
+    super.doCancelAction();
+  }
+
+  private void rememberResultsPreviewWasOpen() {
+    if (myResultsPreviewTable != null) {
+      int selectedIndex = myContent.getSelectedIndex();
+      if (selectedIndex != -1) myPreviewResultsTabWasSelected = selectedIndex == RESULTS_PREVIEW_TAB_INDEX;
+    }
+  }
+
+  @Override
   protected void dispose() {
     finishPreviousPreviewSearch();
     if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
@@ -186,7 +198,7 @@ public class FindDialog extends DialogWrapper {
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
-    if (myResultsPreviewTable != null) myPreviewResultsTabWasSelected = myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX;
+    rememberResultsPreviewWasOpen();
     super.dispose();
   }
 
@@ -395,7 +407,7 @@ public class FindDialog extends DialogWrapper {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
+                if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
                   int occurrences = resultsCount.get();
                   if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
                   myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE + " (" + (occurrences != ShowUsagesAction.USAGES_PAGE_SIZE ? Integer.valueOf(occurrences): occurrences + "+") +")");
@@ -573,6 +585,16 @@ public class FindDialog extends DialogWrapper {
       pane.insertTab("Options", null, optionsPanel, null, 0);
       pane.insertTab(PREVIEW_TITLE, null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
+      AnAction anAction = new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          int selectedIndex = myContent.getSelectedIndex();
+          myContent.setSelectedIndex(1 - selectedIndex);
+        }
+      };
+
+      final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
+      anAction.registerCustomShortcutSet(shortcutSet, getRootPane());
       if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
 
       return pane.getComponent();
@@ -653,6 +675,14 @@ public class FindDialog extends DialogWrapper {
       return;
     }
 
+    if (myResultsPreviewTable != null &&
+        myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX &&
+        myResultsPreviewTable.getSelectedRowCount() != 0
+       ) {
+      navigateToSelectedUsage(myResultsPreviewTable);
+      return;
+    }
+
     FindModel validateModel = myModel.clone();
     applyTo(validateModel, findAll);
 
@@ -684,11 +714,12 @@ public class FindDialog extends DialogWrapper {
     }
 
     findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
-    findSettings.setInStringLiteralsOnly(myModel.isInStringLiteralsOnly());
-    findSettings.setInCommentsOnly(myModel.isInCommentsOnly());
-    findSettings.setExceptComments(myModel.isExceptComments());
-    findSettings.setExceptStringLiterals(myModel.isExceptStringLiterals());
-    findSettings.setExceptCommentsAndLiterals(myModel.isExceptCommentsAndStringLiterals());
+    boolean saveContextBetweenRestarts = false;
+    findSettings.setInStringLiteralsOnly(saveContextBetweenRestarts && myModel.isInStringLiteralsOnly());
+    findSettings.setInCommentsOnly(saveContextBetweenRestarts && myModel.isInCommentsOnly());
+    findSettings.setExceptComments(saveContextBetweenRestarts && myModel.isExceptComments());
+    findSettings.setExceptStringLiterals(saveContextBetweenRestarts && myModel.isExceptStringLiterals());
+    findSettings.setExceptCommentsAndLiterals(saveContextBetweenRestarts && myModel.isExceptCommentsAndStringLiterals());
 
     findSettings.setRegularExpressions(myModel.isRegularExpressions());
     if (!myModel.isMultipleFiles()){
@@ -836,11 +867,12 @@ public class FindDialog extends DialogWrapper {
 
     findOptionsPanel.add(regExPanel);
 
-    mySearchContext = new ComboBox(new Object[] {FindBundle.message("find.context.anywhere.scope.label"),
-      FindBundle.message("find.context.in.comments.scope.label"), FindBundle.message("find.context.in.literals.scope.label"),
-      FindBundle.message("find.context.except.comments.scope.label"),
-      FindBundle.message("find.context.except.literals.scope.label"),
-      FindBundle.message("find.context.except.comments.and.literals.scope.label")});
+    mySearchContext = new ComboBox(new Object[] { getPresentableName(FindModel.SearchContext.ANY),
+      getPresentableName(FindModel.SearchContext.IN_COMMENTS),
+      getPresentableName(FindModel.SearchContext.IN_STRING_LITERALS),
+      getPresentableName(FindModel.SearchContext.EXCEPT_COMMENTS),
+      getPresentableName(FindModel.SearchContext.EXCEPT_STRING_LITERALS),
+      getPresentableName(FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS)});
     mySearchContext.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -881,6 +913,24 @@ public class FindDialog extends DialogWrapper {
     myCbPreserveCase.addActionListener(actionListener);
 
     return findOptionsPanel;
+  }
+
+  public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
+    @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
+    if (searchContext == FindModel.SearchContext.ANY) {
+      messageKey = "find.context.anywhere.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS) {
+      messageKey = "find.context.except.comments.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_STRING_LITERALS) {
+      messageKey = "find.context.except.literals.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS) {
+      messageKey = "find.context.except.comments.and.literals.scope.label";
+    } else if (searchContext == FindModel.SearchContext.IN_COMMENTS) {
+      messageKey = "find.context.in.comments.scope.label";
+    } else if (searchContext == FindModel.SearchContext.IN_STRING_LITERALS) {
+      messageKey = "find.context.in.literals.scope.label";
+    }
+    return messageKey != null ? FindBundle.message(messageKey) : searchContext.toString();
   }
 
   private void setupRegExpSetting() {
@@ -1452,6 +1502,26 @@ public class FindDialog extends DialogWrapper {
     updateControls();
   }
 
+  private void navigateToSelectedUsage(JBTable source) {
+    int[] rows = source.getSelectedRows();
+    List<Usage> navigations = null;
+    for(int row:rows) {
+      Object valueAt = source.getModel().getValueAt(row, 0);
+      if (valueAt instanceof Usage) {
+        if (navigations == null) navigations = new SmartList<Usage>();
+        Usage at = (Usage)valueAt;
+        navigations.add(at);
+      }
+    }
+
+    if (navigations != null) {
+      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
+      doCancelAction();
+      navigations.get(0).navigate(true);
+      for(int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
+    }
+  }
+
   private static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
     private ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
@@ -1505,26 +1575,6 @@ public class FindDialog extends DialogWrapper {
       if (!(source instanceof JBTable)) return false;
       navigateToSelectedUsage((JBTable)source);
       return true;
-    }
-
-    private void navigateToSelectedUsage(JBTable source) {
-      int[] rows = source.getSelectedRows();
-      List<Usage> navigations = null;
-      for(int row:rows) {
-        Object valueAt = source.getModel().getValueAt(row, 0);
-        if (valueAt instanceof Usage) {
-          if (navigations == null) navigations = new SmartList<Usage>();
-          Usage at = (Usage)valueAt;
-          navigations.add(at);
-        }
-      }
-
-      if (navigations != null) {
-        applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
-        doCancelAction();
-        navigations.get(0).navigate(true);
-        for(int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
-      }
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     assertValueReady();
     return myValue instanceof ArrayReference; 
   }
+
+
   
   public boolean isDirty() {
     assertValueReady();
@@ -122,6 +124,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public boolean isPrimitive() {
     assertValueReady();
     return myValue instanceof PrimitiveValue; 
+  }
+
+  public boolean isEnumConstant() {
+    assertValueReady();
+    return myValue instanceof ObjectReference && isEnumConstant(((ObjectReference)myValue));
   }
   
   public boolean isValueValid() {
@@ -466,9 +473,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public abstract PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   public static String getIdLabel(ObjectReference objRef) {
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    if (objRef instanceof StringReference && !classRenderer.SHOW_STRINGS_TYPE) {
+      return null;
+    }
     StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
-      final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
       final boolean showConcreteType =
         !classRenderer.SHOW_DECLARED_TYPE ||
         (!(objRef instanceof StringReference) && !(objRef instanceof ClassObjectReference) && !isEnumConstant(objRef));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 23-May-2007
  */
 package com.intellij.execution.testframework;
 
@@ -32,15 +27,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * @author anna
+ * @since 23-May-2007
+ */
 public abstract class AbstractTestProxy extends CompositePrintable {
   public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
+
   protected Printer myPrinter = null;
 
   public abstract boolean isInProgress();
 
   public abstract boolean isDefect();
 
-  //todo?
   public abstract boolean shouldRun();
 
   public abstract int getMagnitude();
@@ -55,9 +54,9 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract String getName();
 
-  public abstract Location getLocation(final Project project, GlobalSearchScope searchScope);
+  public abstract Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope);
 
-  public abstract Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties);
+  public abstract Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties);
 
   public abstract AbstractTestProxy getParent();
 
@@ -67,6 +66,11 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   @Nullable
   public Long getDuration() {
+    return null;
+  }
+
+  @Nullable
+  public String getDurationString(TestConsoleProperties consoleProperties) {
     return null;
   }
 
@@ -139,6 +143,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
+  @Deprecated
   public interface AssertEqualsDiffChain {
     DiffHyperlink getPrevious();
     DiffHyperlink getCurrent();

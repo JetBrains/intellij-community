@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.UriUtil;
@@ -94,12 +95,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     else if (result != null && doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
       RefreshQueue.getInstance().refresh(false, false, null, result);
       result = findChild(name, false, ensureCanonicalName, delegate);
-    }
-
-    if (result == null) {
-      synchronized (myData) {
-        addToAdoptedChildren(ignoreCase, name);
-      }
     }
 
     return result;
@@ -169,10 +164,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (indexInReal >= 0) {
         return VfsData.getFileById(array[indexInReal], this);
       }
+      if (allChildrenLoaded()) {
+        return null;
+      }
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
       int id = ourPersistence.getId(this, name, delegate);
       if (id <= 0) {
+        myData.addAdoptedName(name, !ignoreCase);
         return null;
       }
       child = createChild(FileNameCache.storeName(name), id, delegate);
@@ -419,6 +418,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.removeAdoptedName(childName);
       if (indexInReal < 0) {
         insertChildAt(child, indexInReal);
+        ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
       }
       // else already stored
       assertConsistency(ignoreCase, child);
@@ -447,6 +447,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void removeFromArray(int index) {
     myData.myChildrenIds = ArrayUtil.remove(myData.myChildrenIds, index);
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public boolean allChildrenLoaded() {

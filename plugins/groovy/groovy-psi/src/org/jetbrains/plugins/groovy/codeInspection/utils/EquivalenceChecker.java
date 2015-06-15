@@ -199,8 +199,8 @@ public class EquivalenceChecker {
 
   private static boolean variablesAreEquivalent(@NotNull GrVariable var1,
                                                 @NotNull GrVariable var2) {
-    final GrExpression initializer1 = (GrExpression) var1.getInitializer();
-    final GrExpression initializer2 = (GrExpression) var2.getInitializer();
+    final GrExpression initializer1 = var1.getInitializerGroovy();
+    final GrExpression initializer2 = var2.getInitializerGroovy();
     if (!expressionsAreEquivalent(initializer1, initializer2)) {
       return false;
     }

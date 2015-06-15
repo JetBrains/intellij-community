@@ -21,6 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 /**
  * @author Vladislav.Soroka
@@ -32,6 +33,8 @@ public abstract class GradleSettingsControlProvider {
     ExtensionPointName.create("org.jetbrains.plugins.gradle.settingsControlProvider");
 
   public abstract String getPlatformPrefix();
+
+  public abstract GradleSystemSettingsControlBuilder getSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings);
 
   public abstract GradleProjectSettingsControlBuilder getProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings);
 
@@ -51,6 +54,11 @@ public abstract class GradleSettingsControlProvider {
       @Override
       public String getPlatformPrefix() {
         return null;
+      }
+
+      @Override
+      public GradleSystemSettingsControlBuilder getSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
+        return new IdeaGradleSystemSettingsControlBuilder(initialSettings);
       }
 
       @Override

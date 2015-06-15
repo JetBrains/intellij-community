@@ -22,8 +22,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -34,7 +32,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -59,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
@@ -75,7 +77,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final XDebuggerWatchesManager myWatchesManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
-  private XDebugSessionImpl myActiveSession;
+  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<XDebugSessionImpl>();
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
@@ -167,15 +169,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @Override
   @NotNull
-  public XDebugSession startSession(@NotNull ProgramRunner runner,
-                                    @NotNull ExecutionEnvironment environment,
-                                    @Nullable RunContentDescriptor contentToReuse,
-                                    @NotNull XDebugProcessStarter processStarter) throws ExecutionException {
-    return startSession(contentToReuse, processStarter, new XDebugSessionImpl(RunContentBuilder.fix(environment, runner), this));
-  }
-
-  @Override
-  @NotNull
   public XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException {
     return startSession(environment.getContentToReuse(), processStarter, new XDebugSessionImpl(environment, this));
   }
@@ -262,16 +255,14 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         ExecutionManager.getInstance(myProject).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
       }
     }
-    if (myActiveSession == session) {
-      myActiveSession = null;
+    if (myActiveSession.compareAndSet(session, null)) {
       onActiveSessionChanged();
     }
   }
 
   public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection,
                                final @Nullable GutterIconRenderer gutterIconRenderer) {
-    boolean sessionChanged = myActiveSession != session;
-    myActiveSession = session;
+    boolean sessionChanged = myActiveSession.getAndSet(session) != session;
     updateExecutionPoint(position, useSelection, gutterIconRenderer);
     if (sessionChanged) {
       onActiveSessionChanged();
@@ -332,7 +323,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @Override
   @Nullable
   public XDebugSessionImpl getCurrentSession() {
-    return myActiveSession;
+    return myActiveSession.get();
   }
 
   @Override

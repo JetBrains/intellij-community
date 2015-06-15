@@ -18,8 +18,10 @@ package com.intellij.roots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.InheritedJdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
@@ -35,21 +37,15 @@ public class InheritedJdkTest extends ModuleTestCase {
 
   public void test1() throws Exception {
     final Sdk jdk = IdeaTestUtil.getMockJdk17("java 1.4");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(jdk);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectJdkTable.getInstance().addJdk(jdk);
     });
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ProjectRootManagerEx rootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
-        rootManagerEx.setProjectSdkName(jdk.getName());
-        ModuleRootModificationUtil.setSdkInherited(myModule);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final ProjectRootManagerEx rootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
+      rootManagerEx.setProjectSdkName(jdk.getName());
+      ModuleRootModificationUtil.setSdkInherited(myModule);
     });
 
     assertTrue("JDK is inherited after explicit inheritSdk()", rootManager.isSdkInherited());
@@ -61,11 +57,8 @@ public class InheritedJdkTest extends ModuleTestCase {
     assertNull("No JDK assigned", rootManager.getSdk());
 
     final Sdk jdk1 = IdeaTestUtil.getMockJdk17("jjj");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(jdk1);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectJdkTable.getInstance().addJdk(jdk1);
     });
     ModuleRootModificationUtil.setModuleSdk(myModule, jdk1);
 
@@ -81,29 +74,20 @@ public class InheritedJdkTest extends ModuleTestCase {
     assertNull("No JDK assigned", rootManager.getSdk());
 
     final Sdk mockJdk = IdeaTestUtil.getMockJdk17("mock 1.4");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(mockJdk);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectJdkTable.getInstance().addJdk(mockJdk);
     });
     final ProjectRootManagerEx projectRootManager = ProjectRootManagerEx.getInstanceEx(myProject);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        projectRootManager.setProjectSdk(mockJdk);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      projectRootManager.setProjectSdk(mockJdk);
     });
 
     assertTrue(rootManager.isSdkInherited());
     assertEquals("mockJdk inherited", mockJdk, rootManager.getSdk());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        projectRootManager.setProjectSdkName("jdk1");
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      projectRootManager.setProjectSdkName("jdk1");
     });
 
     assertTrue(rootManager.isSdkInherited());
@@ -117,11 +101,8 @@ public class InheritedJdkTest extends ModuleTestCase {
     assertNull("Non-existing JDK", rootManager.getSdk());
 
     final Sdk jdk1 = IdeaTestUtil.getMockJdk17("jdk1");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectJdkTable.getInstance().addJdk(jdk1);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectJdkTable.getInstance().addJdk(jdk1);
     });
 
     assertTrue(rootManager.isSdkInherited());

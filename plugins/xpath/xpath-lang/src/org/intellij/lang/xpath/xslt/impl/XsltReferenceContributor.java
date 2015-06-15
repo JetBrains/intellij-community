@@ -21,6 +21,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.XmlTagPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.xml.XmlAttribute;
@@ -56,20 +57,20 @@ public class XsltReferenceContributor {
 
   public static class XML extends PsiReferenceContributor {
     public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
+      final XmlTagPattern xsltTag = xmlTag().withNamespace(XsltSupport.XSLT_NS);
       registrar.registerReferenceProvider(
-        psiElement(XmlAttributeValue.class).withParent(
-          xmlAttribute().withLocalName("name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix").withParent(
-            xmlTag().withNamespace(XsltSupport.XSLT_NS))),
+        xmlAttributeValue("name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix")
+          .withSuperParent(2, xsltTag),
         new XsltReferenceProvider());
 
       registrar.registerReferenceProvider(
-        xmlAttributeValue()
+        xmlAttributeValue("as")
           .withValue(string().matches("[^()]+"))
-          .withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))), SchemaTypeProvider.INSTANCE);
+          .withSuperParent(2, xsltTag), SchemaTypeProvider.INSTANCE);
 
       registrar.registerReferenceProvider(
-        xmlAttributeValue()
-          .withParent(xmlAttribute("as").withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS)))
+        xmlAttributeValue("as")
+          .withSuperParent(2, xsltTag)
           .withValue(string().contains(":")), new PsiReferenceProvider() {
         @NotNull
         @Override

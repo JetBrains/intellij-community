@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBCardLayout;
+import com.intellij.util.ui.components.JBPanel;
 
 import java.awt.*;
 import java.util.ArrayList;

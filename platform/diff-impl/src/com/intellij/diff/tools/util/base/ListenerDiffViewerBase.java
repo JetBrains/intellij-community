@@ -16,9 +16,9 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.contents.BinaryFileContent;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -79,8 +79,8 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   protected VirtualFileListener createFileListener(@NotNull ContentDiffRequest request) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>(0);
     for (DiffContent content : request.getContents()) {
-      if (content instanceof BinaryFileContent) {
-        files.add(((BinaryFileContent)content).getFile());
+      if (content instanceof FileContent && !(content instanceof DocumentContent)) {
+        files.add(((FileContent)content).getFile());
       }
     }
 

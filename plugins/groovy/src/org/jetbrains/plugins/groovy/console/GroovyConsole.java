@@ -69,6 +69,8 @@ public class GroovyConsole {
   private final ConsoleView myConsoleView;
   private final ProcessHandler myProcessHandler;
 
+  private boolean first = true;
+
   public GroovyConsole(Project project, RunContentDescriptor descriptor, ConsoleView view, ProcessHandler handler) {
     myProject = project;
     myContentDescriptor = descriptor;
@@ -77,6 +79,13 @@ public class GroovyConsole {
   }
 
   public void execute(@NotNull String command) {
+    // dirty hack
+    if (first) {
+      first = false;
+    }
+    else {
+      myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    }
     if (!command.endsWith("\n")) command += "\n";
     myConsoleView.print("> ", ConsoleViewContentType.USER_INPUT);
     myConsoleView.print(command, ConsoleViewContentType.NORMAL_OUTPUT);
@@ -122,13 +131,13 @@ public class GroovyConsole {
     };
 
     final Module module = GroovyConsoleStateService.getInstance(project).getSelectedModule(contentFile);
-    if (module != null) {
-      // if module for console is already selected, then use it for creation
-      initializer.consume(module);
-    }
-    else {
+    if (module == null || module.isDisposed()) {
       // if not, then select module, then run initializer
       GroovyConsoleUtil.selectModuleAndRun(project, initializer);
+    }
+    else {
+      // if module for console is already selected, then use it for creation
+      initializer.consume(module);
     }
   }
 

@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -74,7 +73,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
-  private final SoftWrapModelImpl mySoftWrapModel;
+  private final SoftWrapModelWindow mySoftWrapModel;
 
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
@@ -111,8 +110,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     mySelectionModelDelegate = new SelectionModelWindow(myDelegate, myDocumentWindow,this);
     myMarkupModelDelegate = new MarkupModelWindow(myDelegate.getMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
-    mySoftWrapModel = new SoftWrapModelImpl(this);
-    Disposer.register(myDocumentWindow, mySoftWrapModel);
+    mySoftWrapModel = new SoftWrapModelWindow(this);
   }
 
   public static void disposeInvalidEditors() {
@@ -380,6 +378,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @NotNull
   public VisualPosition offsetToVisualPosition(final int offset) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
+  }
+
+  @Override
+  @NotNull
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward) {
+    return logicalToVisualPosition(offsetToLogicalPosition(offset).leanForward(leanForward));
   }
 
   @Override
@@ -866,5 +870,15 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   public int getPrefixTextWidthInPixels() {
     return myDelegate.getPrefixTextWidthInPixels();
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + "[disposed=" + myDisposed + "; valid=" + isValid() + "]";
+  }
+
+  @Override
+  public int getExpectedCaretOffset() {
+    return myDocumentWindow.hostToInjected(myDelegate.getExpectedCaretOffset());
   }
 }

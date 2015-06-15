@@ -16,7 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,7 +63,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   public void inlineElement(Project project, Editor editor, PsiElement element) {
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor);
     final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
     invoke(project, editor, (PsiLocalVariable) element, refExpr);
   }

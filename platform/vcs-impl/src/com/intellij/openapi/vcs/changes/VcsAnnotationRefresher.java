@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.BaseRevision;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;

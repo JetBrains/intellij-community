@@ -10,6 +10,6 @@ public class Collect {
   }
 
   void collectNames(List<Person> persons){
-    Set<String> names = persons.stream().map(Person::getName).collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+    Set<String> names = persons.stream().map(Person::getName).collect(Collectors.toCollection(LinkedHashSet::new));
   }
 }

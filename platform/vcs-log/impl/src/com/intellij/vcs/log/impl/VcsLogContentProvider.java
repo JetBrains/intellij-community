@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.components.JBPanel;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;

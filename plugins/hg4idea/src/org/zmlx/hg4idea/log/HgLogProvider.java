@@ -111,6 +111,7 @@ public class HgLogProvider implements VcsLogProvider {
     Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
     Collection<HgNameWithHashInfo> tags = repository.getTags();
     Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
+    Collection<HgNameWithHashInfo> mqAppliedPatches = repository.getMQAppliedPatches();
 
     Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
 
@@ -140,6 +141,10 @@ public class HgLogProvider implements VcsLogProvider {
     for (HgNameWithHashInfo localTagInfo : localTags) {
       refs.add(myVcsObjectsFactory.createRef(localTagInfo.getHash(), localTagInfo.getName(),
                               HgRefManager.LOCAL_TAG, root));
+    }
+    for (HgNameWithHashInfo mqPatchRef : mqAppliedPatches) {
+      refs.add(myVcsObjectsFactory.createRef(mqPatchRef.getHash(), mqPatchRef.getName(),
+                                             HgRefManager.MQ_APPLIED_TAG, root));
     }
     return refs;
   }
@@ -176,7 +181,7 @@ public class HgLogProvider implements VcsLogProvider {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
-    if (filterCollection.getBranchFilter() != null) {
+    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
       HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
       if (repository == null) {
         LOG.error("Repository not found for root " + root);
@@ -267,6 +272,14 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
+  }
+
+  @Nullable
+  @Override
+  public String getCurrentBranch(@NotNull VirtualFile root) {
+    HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    if (repository == null) return null;
+    return repository.getCurrentBranchName();
   }
 
   @Nullable

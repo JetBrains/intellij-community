@@ -17,7 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
- * because {@link Change} holds {@link FilePathImpl} which makes costly refreshes and type detections.
+ * because {@link Change} holds {@link LocalFilePath} which makes costly refreshes and type detections.
  */
 public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails {
 

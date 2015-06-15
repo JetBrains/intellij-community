@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -56,9 +57,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private final TextPanel myProcessName = new TextPanel();
   private boolean myDisposed;
-
-  private long myLastTimeProgressWasAtZero;
-  private boolean myLastTimeProgressWasZero;
 
   public InlineProgressIndicator(boolean compact, @NotNull TaskInfo processInfo) {
     myCompact = compact;
@@ -158,13 +156,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   public void updateProgressNow() {
-    if (myLastTimeProgressWasAtZero == 0 && getFraction() == 0) {
-      myLastTimeProgressWasAtZero = System.currentTimeMillis();
-    }
-
-    final long delta = System.currentTimeMillis() - myLastTimeProgressWasAtZero;
-
-    boolean indeterminate = isIndeterminate() || getFraction() == 0 && delta > 2000 && !myCompact;
+    boolean indeterminate = isIndeterminate() || getFraction() == 0;
     if (indeterminate) {
       myProgress.setIndeterminate(true);
     }
@@ -185,15 +177,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
 
     myCancelButton.setPainting(isCancelable());
-
-    if (getFraction() == 0) {
-      if (!myLastTimeProgressWasZero) {
-        myLastTimeProgressWasAtZero = System.currentTimeMillis();
-        myLastTimeProgressWasZero = true;
-      }
-    } else {
-      myLastTimeProgressWasZero = false;
-    }
 
     final boolean isStopping = wasStarted() && (isCanceled() || !isRunning()) && !isFinished();
     if (isStopping) {
@@ -270,7 +253,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       }
 
       final GraphicsConfig c = GraphicsUtil.setupAAPainting(g);
-      GraphicsUtil.setupAntialiasing(g, true, true);
+      UISettings.setupAntialiasing(g);
 
       int arc = 8;
       Color bg = getBackground();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public class WelcomeWizardUtil {
   private static volatile String ourWizardMacKeymap;
   private static volatile String ourWizardEditorScheme;
   private static volatile Boolean ourAutoScrollToSource;
-  private static volatile Set<String> ourFeaturedPluginsToInstall = new HashSet<String>();
+  private static final Set<String> ourFeaturedPluginsToInstall = new HashSet<String>();
 
   public static void setDefaultLAF(String laf) {
     ourDefaultLAF = laf;

@@ -21,7 +21,7 @@ import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.IdeHttpClientHelpers;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
@@ -160,7 +160,7 @@ public class GithubConnection {
       .setSocketTimeout(timeout);
 
     if (auth.isUseProxy()) {
-      HttpConfigurable.getInstance().setProxy(builder);
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(builder, auth.getHost());
     }
 
     return builder.build();
@@ -184,7 +184,7 @@ public class GithubConnection {
     }
 
     if (auth.isUseProxy()) {
-      HttpConfigurable.getInstance().setProxyCredentials(provider);
+      IdeHttpClientHelpers.ApacheHttpClient4.setProxyCredentialsForUrlIfEnabled(provider, auth.getHost());
     }
 
     return provider;

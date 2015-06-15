@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,7 @@ public class DarculaEditorTextFieldBorder implements Border {
     final EditorTextField textField = UIUtil.getParentOfType(EditorTextField.class, c);
     if (textField == null) return;
 
-    final int x1 = x + 3;
-    final int y1 = y + 3;
-    final int width1 = width - 8;
-    final int height1 = height - 6;
+    final Rectangle r = new Rectangle(x + 1, y + 1, width - 2, height - 2);
 
     if (c.isOpaque()) {
       g.setColor(UIUtil.getPanelBackground());
@@ -51,26 +48,26 @@ public class DarculaEditorTextFieldBorder implements Border {
     }
 
     g.setColor(c.getBackground());
-    g.fillRect(x1, y1, width1, height1);
+    g.fillRect(r.x, r.y, r.width, r.height);
 
     if (!textField.isEnabled()) {
       ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
     }
 
     if (textField.isEnabled() && textField.isVisible() && textField.getFocusTarget().hasFocus()) {
-      DarculaUIUtil.paintFocusRing(g, x1, y1, width1, height1);
+      DarculaUIUtil.paintFocusRing(g, r.x + 1, r.y + 1, r.width - 2, r.height - 2);
     } else {
       g.setColor(new JBColor(Gray._150, Gray._100));
-      g.drawRect(x1, y1, width1, height1);
+      g.drawRect(r.x, r.y, r.width, r.height);
     }
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
     if (isComboBoxEditor(c) /*|| isCellEditor(c)*/) {
-      return new InsetsUIResource(2,3,2,3);
+      return new InsetsUIResource(2, 3, 2, 3);
     }
-    return new InsetsUIResource(6, 7, 6, 7);
+    return new InsetsUIResource(4, 7, 4, 7);
   }
 
   @Override

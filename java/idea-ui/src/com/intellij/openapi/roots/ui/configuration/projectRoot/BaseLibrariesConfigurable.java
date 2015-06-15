@@ -102,6 +102,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   public void checkCanApply() throws ConfigurationException {
     super.checkCanApply();
+    checkForEmptyAndDuplicatedNames("Library", CommonBundle.getErrorTitle(), LibraryConfigurable.class);
     for (LibraryConfigurable configurable : getLibraryConfigurables()) {
       if (configurable.getDisplayName().isEmpty()) {
         ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();

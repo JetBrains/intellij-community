@@ -1,24 +1,25 @@
 // This is a generated file. Not intended for manual editing.
 package com.intellij.json;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
+import com.intellij.lang.PsiParser;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+
 import static com.intellij.json.JsonElementTypes.*;
 import static com.intellij.json.psi.JsonParserUtil.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.PsiParser;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class JsonParser implements PsiParser {
 
   public ASTNode parse(IElementType t, PsiBuilder b) {
-    parse_only_(t, b);
+    parseLight(t, b);
     return b.getTreeBuilt();
   }
 
-  public void parse_only_(IElementType t, PsiBuilder b) {
+  public void parseLight(IElementType t, PsiBuilder b) {
     boolean r;
     b = adapt_builder_(t, b, this, EXTENDS_SETS_);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
@@ -146,9 +147,20 @@ public class JsonParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // value
+  // value+
   static boolean json(PsiBuilder b, int l) {
-    return value(b, l + 1);
+    if (!recursion_guard_(b, l, "json")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = value(b, l + 1);
+    int c = current_position_(b);
+    while (r) {
+      if (!value(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "json", c)) break;
+      c = current_position_(b);
+    }
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

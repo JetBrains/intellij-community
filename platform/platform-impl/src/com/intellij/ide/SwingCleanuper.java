@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
@@ -82,7 +83,8 @@ public final class SwingCleanuper implements ApplicationComponent{
                 if(frame!=null){
                   final Application app = ApplicationManager.getApplication();
                   if (app != null && app.isActive()) {
-                    ((JComponent)frame.getStatusBar()).requestFocus();
+                    StatusBar statusBar = frame.getStatusBar();
+                    if (statusBar != null) ((JComponent)statusBar).requestFocus();
                   }
                 }
 
@@ -92,7 +94,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                     public void run() {
 
                       // KeyboardFocusManager.newFocusOwner
-                      resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
+                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
 
                       // Clear "realOppositeComponent", "realOppositeWindow"
                       final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -103,8 +105,8 @@ public final class SwingCleanuper implements ApplicationComponent{
                       // Memory leak on static field in BasicPopupMenuUI
 
                       try {
-                        final Object helperObject = ReflectionUtil.getField(BasicPopupMenuUI.class, null, Object.class, "menuKeyboardHelper");
-                        if (null != helperObject) {
+                        Object helperObject = ReflectionUtil.getStaticFieldValue(BasicPopupMenuUI.class, Object.class, "menuKeyboardHelper");
+                        if (helperObject != null) {
                           resetField(helperObject, Component.class, "lastFocused");
                         }
                       }
@@ -115,11 +117,10 @@ public final class SwingCleanuper implements ApplicationComponent{
                       // Memory leak on javax.swing.TransferHandler$SwingDragGestureRecognizer.component
 
                       try{
-                        final Object recognizerObject = ReflectionUtil.getField(TransferHandler.class, null, null, "recognizer");
+                        DragGestureRecognizer recognizer = ReflectionUtil.getStaticFieldValue(TransferHandler.class, DragGestureRecognizer.class, "recognizer");
 
-                        if(recognizerObject!=null){ // that is memory leak
-                          final Method setComponentMethod = DragGestureRecognizer.class.getDeclaredMethod("setComponent", Component.class);
-                          setComponentMethod.invoke(recognizerObject,new Object[]{null});
+                        if (recognizer != null) { // that is memory leak
+                          recognizer.setComponent(null);
                         }
                       }
                       catch (Exception e){
@@ -142,9 +143,9 @@ public final class SwingCleanuper implements ApplicationComponent{
                         // Ignore
                       }
 
-                      resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
-                      resetStaticField(KeyboardFocusManager.class, "permanentFocusOwner");
-                      resetStaticField(KeyboardFocusManager.class, "currentFocusCycleRoot");
+                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
+                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "permanentFocusOwner");
+                      ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "currentFocusCycleRoot");
                     }
                   }
                 );
@@ -246,9 +247,6 @@ public final class SwingCleanuper implements ApplicationComponent{
       // Ignore
     }
   }
-  private static void resetStaticField(@NotNull Class aClass, @NotNull @NonNls String name) {
-    ReflectionUtil.resetField(aClass, null, name);
-  }
 
   public final void disposeComponent(){}
 
@@ -260,7 +258,7 @@ public final class SwingCleanuper implements ApplicationComponent{
   public final void initComponent() { }
 
   private static void fixJTextComponentMemoryLeak() {
-    final JTextComponent component = ReflectionUtil.getField(JTextComponent.class, null, JTextComponent.class, "focusedComponent");
+    final JTextComponent component = ReflectionUtil.getStaticFieldValue(JTextComponent.class, JTextComponent.class, "focusedComponent");
     if (component != null && !component.isDisplayable()){
       ReflectionUtil.resetField(JTextComponent.class, JTextComponent.class, "focusedComponent");
     }

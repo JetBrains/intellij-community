@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Dmitry Avdeev
- * @see com.intellij.javaee.StandardResourceProvider
+ * @see StandardResourceProvider
  */
 public interface ResourceRegistrar {
 

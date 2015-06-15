@@ -53,11 +53,6 @@ public class GitSvnRemoteBranch extends GitRemoteBranch {
     return GitRemote.DOT;
   }
 
-  @Override
-  public boolean isRemote() {
-    return true;
-  }
-
   @NotNull
   @Override
   public String getFullName() {

@@ -23,10 +23,16 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.ResetConfigurationModuleAdapter;
+import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -35,6 +41,9 @@ import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.io.File;
 
 public class TestPackage extends TestObject {
   private boolean myFoundTests = true;
@@ -51,8 +60,8 @@ public class TestPackage extends TestObject {
 
   @NotNull
   @Override
-  protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
-    final JUnitProcessHandler handler = super.createHandler(executor);
+  protected JUnitProcessHandler createJUnitHandler(Executor executor) throws ExecutionException {
+    final JUnitProcessHandler handler = super.createJUnitHandler(executor);
     createSearchingForTestsTask().attachTaskToProcess(handler);
     return handler;
   }
@@ -92,11 +101,15 @@ public class TestPackage extends TestObject {
                 return null;
               }
             }
-          }, getPackageName(data), false, getJavaParameters());
+          }, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }
     };
+  }
+
+  protected boolean createTempFiles() {
+    return false;
   }
 
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
@@ -129,8 +142,22 @@ public class TestPackage extends TestObject {
   }
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
-    final PsiPackage aPackage = getPackage(data);
-    return PackageScope.packageScope(aPackage, true);
+    final Ref<CantRunException> ref = new Ref<CantRunException>();
+    final GlobalSearchScope aPackage = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      @Override
+      public GlobalSearchScope compute() {
+        try {
+          return PackageScope.packageScope(getPackage(data), true);
+        }
+        catch (CantRunException e) {
+          ref.set(e);
+          return null;
+        }
+      }
+    });
+    final CantRunException exception = ref.get();
+    if (exception != null) throw exception;
+    return aPackage;
   }
 
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
@@ -186,5 +213,10 @@ public class TestPackage extends TestObject {
     if (myFoundTests || !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), consoleProperties.isDebug())) {
       super.notifyByBalloon(model, started, consoleProperties);
     }
+  }
+
+  @TestOnly
+  public File getWorkingDirsFile() {
+    return myWorkingDirsFile;
   }
 }

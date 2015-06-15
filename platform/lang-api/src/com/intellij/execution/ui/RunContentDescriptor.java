@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,8 @@ public class RunContentDescriptor implements Disposable {
   private boolean myAutoFocusContent = false;
 
   private Content myContent;
-  private Runnable myRestarter;
   @NotNull
-  private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
+  private final AnAction[] myRestartActions;
 
   @Nullable
   private final Runnable myActivationCallback;
@@ -59,6 +58,16 @@ public class RunContentDescriptor implements Disposable {
                               String displayName,
                               @Nullable Icon icon,
                               @Nullable Runnable activationCallback) {
+    this(executionConsole, processHandler, component, displayName, icon, activationCallback, null);
+  }
+
+  public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
+                              @Nullable ProcessHandler processHandler,
+                              @NotNull JComponent component,
+                              String displayName,
+                              @Nullable Icon icon,
+                              @Nullable Runnable activationCallback,
+                              @Nullable AnAction[] restartActions) {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
@@ -69,6 +78,8 @@ public class RunContentDescriptor implements Disposable {
     if (myExecutionConsole != null) {
       Disposer.register(this, myExecutionConsole);
     }
+
+    myRestartActions = restartActions == null ? AnAction.EMPTY_ARRAY : restartActions;
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -76,23 +87,25 @@ public class RunContentDescriptor implements Disposable {
                               @NotNull JComponent component,
                               String displayName,
                               @Nullable Icon icon) {
-    this(executionConsole, processHandler, component, displayName, icon, null);
+    this(executionConsole, processHandler, component, displayName, icon, null, null);
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
                               @NotNull JComponent component,
                               String displayName) {
-    this(executionConsole, processHandler, component, displayName, null);
+    this(executionConsole, processHandler, component, displayName, null, null, null);
   }
 
   public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
-    this(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), ui.getComponent(), profile.getName(),
-         profile.getIcon());
+    this(executionResult.getExecutionConsole(),
+         executionResult.getProcessHandler(),
+         ui.getComponent(),
+         profile.getName(),
+         profile.getIcon(),
+         null,
+         executionResult instanceof DefaultExecutionResult ? ((DefaultExecutionResult)executionResult).getRestartActions() : null);
     myRunnerLayoutUi = ui;
-    if (executionResult instanceof DefaultExecutionResult) {
-      myRestartActions = ((DefaultExecutionResult)executionResult).getRestartActions();
-    }
   }
 
   public Runnable getActivationCallback() {
@@ -104,7 +117,7 @@ public class RunContentDescriptor implements Disposable {
    */
   @NotNull
   public AnAction[] getRestartActions() {
-    return myRestartActions.clone();
+    return myRestartActions.length == 0 ? AnAction.EMPTY_ARRAY : myRestartActions.clone();
   }
 
   public ExecutionConsole getExecutionConsole() {
@@ -115,7 +128,6 @@ public class RunContentDescriptor implements Disposable {
   public void dispose() {
     myExecutionConsole = null;
     myComponent = null;
-    myRestarter = null;
     myProcessHandler = null;
     myContent = null;
   }
@@ -162,26 +174,6 @@ public class RunContentDescriptor implements Disposable {
 
   public void setAttachedContent(@NotNull Content content) {
     myContent = content;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  @Deprecated
-  /**
-   * @deprecated Use {@link com.intellij.execution.runners.ExecutionUtil#restart(RunContentDescriptor)} instead
-   * to remove in IDEA 15
-   */
-  public Runnable getRestarter() {
-    return myRestarter;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  public void setRestarter(@Nullable Runnable runnable) {
-    myRestarter = runnable;
   }
 
   public boolean isActivateToolWindowWhenAdded() {

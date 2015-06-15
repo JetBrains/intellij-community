@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -35,6 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +143,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
                                          final Map<PsiTypeParameter, PsiType> substitutionMap) {
     final PsiClass containingClass = psiClass.getContainingClass();
     if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
-      final String outerClassRef = StringUtil.getPackageName(canonicalText);
+      final String outerClassRef = getOuterClassRef(canonicalText);
       final String[] classParameters = PsiNameHelper.getClassParametersText(outerClassRef);
       final PsiType[] args = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters).getTypeArguments();
       final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
@@ -156,6 +154,27 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       }
       collectOuterClassTypeArgs(containingClass, outerClassRef, substitutionMap);
     }
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  private static String getOuterClassRef(String ref) {
+    int stack = 0;
+    for (int i = ref.length() - 1; i >= 0; i--) {
+      char c = ref.charAt(i);
+      switch (c) {
+        case '<':
+          stack--;
+          break;
+        case '>':
+          stack++;
+          break;
+        case '.':
+          if (stack == 0) return ref.substring(0, i);
+      }
+    }
+
+    return "";
   }
 
   @Override
@@ -202,25 +221,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
       if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
-    return resolveClassPreferringMyJar(containingFile);
-  }
 
-  @Nullable
-  private PsiClass resolveClassPreferringMyJar(@NotNull PsiFile containingFile) {
     Project project = containingFile.getProject();
     GlobalSearchScope scope = ResolveScopeManager.getInstance(project).getResolveScope(this);
-    PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(myQualifiedName, scope);
-    if (classes.length == 0) return null;
-
-    if (classes.length > 1) {
-      VirtualFile jarFile = PsiUtil.getJarFile(containingFile);
-      if (jarFile != null) {
-        for (PsiClass aClass : classes) {
-          if (Comparing.equal(PsiUtil.getJarFile(aClass), jarFile)) return aClass;
-        }
-      }
-    }
-    return classes[0];
+    return JavaPsiFacade.getInstance(project).findClass(myQualifiedName, scope);
   }
 
   @Override

@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -51,18 +50,12 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDependencyDataService.class.getName());
 
-  @NotNull private final PlatformFacade         myPlatformFacade;
-  @NotNull private final ProjectStructureHelper myProjectStructureHelper;
   @NotNull private final ModuleDataService      myModuleManager;
   @NotNull private final LibraryDataService     myLibraryManager;
 
-  public LibraryDependencyDataService(@NotNull PlatformFacade platformFacade,
-                                      @NotNull ProjectStructureHelper helper,
-                                      @NotNull ModuleDataService moduleManager,
+  public LibraryDependencyDataService(@NotNull ModuleDataService moduleManager,
                                       @NotNull LibraryDataService libraryManager)
   {
-    myPlatformFacade = platformFacade;
-    myProjectStructureHelper = helper;
     myModuleManager = moduleManager;
     myLibraryManager = libraryManager;
   }
@@ -74,17 +67,20 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   }
 
   @Override
-  public void importData(@NotNull Collection<DataNode<LibraryDependencyData>> toImport, @NotNull Project project, boolean synchronous) {
+  public void importData(@NotNull Collection<DataNode<LibraryDependencyData>> toImport,
+                         @NotNull Project project,
+                         @NotNull PlatformFacade platformFacade,
+                         boolean synchronous) {
     if (toImport.isEmpty()) {
       return;
     }
 
     Map<DataNode<ModuleData>, List<DataNode<LibraryDependencyData>>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
     for (Map.Entry<DataNode<ModuleData>, List<DataNode<LibraryDependencyData>>> entry : byModule.entrySet()) {
-      Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
+      Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
         myModuleManager.importData(Collections.singleton(entry.getKey()), project, true);
-        module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
+        module = platformFacade.findIdeModule(entry.getKey().getData(), project);
         if (module == null) {
           LOG.warn(String.format(
             "Can't import library dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
@@ -93,18 +89,19 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           continue;
         }
       }
-      importData(entry.getValue(), module, synchronous);
+      importData(entry.getValue(), module, platformFacade, synchronous);
     }
   }
 
   public void importData(@NotNull final Collection<DataNode<LibraryDependencyData>> nodesToImport,
                          @NotNull final Module module,
+                         @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous)
   {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(module) {
       @Override
       public void execute() {
-        importMissingProjectLibraries(module, nodesToImport, synchronous);
+        importMissingProjectLibraries(module, platformFacade, nodesToImport, synchronous);
         
         // The general idea is to import all external project library dependencies and module libraries which don't present at the
         // ide side yet and remove all project library dependencies and module libraries which present at the ide but not at
@@ -137,10 +134,11 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           }
         }
 
-        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+        //ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        //final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+        final ModifiableRootModel moduleRootModel = ModifiableModelsProvider.SERVICE.getInstance().getModuleModifiableModel(module);
         LibraryTable moduleLibraryTable = moduleRootModel.getModuleLibraryTable();
-        LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
+        LibraryTable libraryTable = platformFacade.getProjectLibraryTable(module.getProject());
         try {
           syncExistingAndRemoveObsolete(moduleLibrariesToImport, projectLibrariesToImport, toImport, moduleRootModel, hasUnresolved);
 
@@ -258,10 +256,11 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   }
 
   private void importMissingProjectLibraries(@NotNull Module module,
+                                             @NotNull PlatformFacade platformFacade,
                                              @NotNull Collection<DataNode<LibraryDependencyData>> nodesToImport,
                                              boolean synchronous)
   {
-    LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
+    LibraryTable libraryTable = platformFacade.getProjectLibraryTable(module.getProject());
     List<DataNode<LibraryData>> librariesToImport = ContainerUtilRt.newArrayList();
     for (DataNode<LibraryDependencyData> dataNode : nodesToImport) {
       final LibraryDependencyData dependencyData = dataNode.getData();

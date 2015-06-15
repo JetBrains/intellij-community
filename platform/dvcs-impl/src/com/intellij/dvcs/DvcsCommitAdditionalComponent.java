@@ -25,13 +25,13 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,7 +166,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
     return ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
       @Override
       public FilePath fun(File file) {
-        return new FilePathImpl(file, file.isDirectory());
+        return VcsUtil.getFilePath(file);
       }
     });
   }

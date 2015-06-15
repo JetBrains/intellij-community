@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -55,6 +51,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.io.IOUtil.deleteAllFilesStartingWith;
 
+/**
+ * @author max
+ */
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
@@ -66,10 +65,12 @@ public class FSRecords implements Forceable {
   public static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
   public static final boolean useSnappyForCompression = SystemProperties.getBooleanProperty("idea.use.snappy.for.vfs", false);
   public static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
+  static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
   private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      (persistentAttributesList ? 31 : 0) + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
-                                     (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0);
+                                     (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
+                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 21:0);
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -137,14 +138,17 @@ public class FSRecords implements Forceable {
                              (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
                              (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
       setParent(id, parentId);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       throw DbConnection.handleError(e);
-    } finally {
+    }
+    finally {
       w.unlock();
     }
   }
 
   public static void requestVfsRebuild(Throwable e) {
+    //noinspection ThrowableResultOfMethodCallIgnored
     DbConnection.handleError(e);
   }
 
@@ -161,8 +165,7 @@ public class FSRecords implements Forceable {
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
-    private static VfsDependentEnum<String>
-      myAttributesList = new VfsDependentEnum<String>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
+    private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<String>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
     private static boolean myDirty = false;
@@ -242,11 +245,12 @@ public class FSRecords implements Forceable {
       final File basePath = basePath();
       basePath.mkdirs();
 
-      final File namesFile = new File(basePath, "names.dat");
-      final File attributesFile = new File(basePath, "attrib.dat");
-      final File contentsFile = new File(basePath, "content.dat");
-      final File contentsHashesFile = new File(basePath, "contentHashes.dat");
-      final File recordsFile = new File(basePath, "records.dat");
+      final File namesFile = new File(basePath, "names" + VFS_FILES_EXTENSION);
+      final File attributesFile = new File(basePath, "attrib" + VFS_FILES_EXTENSION);
+      final File contentsFile = new File(basePath, "content" + VFS_FILES_EXTENSION);
+      final File contentsHashesFile = new File(basePath, "contentHashes" + VFS_FILES_EXTENSION);
+      final File recordsFile = new File(basePath, "records" + VFS_FILES_EXTENSION);
+
       final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
 
       if (!namesFile.exists()) {
@@ -407,7 +411,7 @@ public class FSRecords implements Forceable {
     public static void flushSome() {
       if (!isDirty() || HeavyProcessLatch.INSTANCE.isRunning()) return;
 
-      w.lock();
+      r.lock();
       try {
         if (myFlushingFuture == null) {
           return; // avoid NPE when close has already taken place
@@ -423,7 +427,7 @@ public class FSRecords implements Forceable {
         }
       }
       finally {
-        w.unlock();
+        r.unlock();
       }
     }
 
@@ -1099,11 +1103,15 @@ public class FSRecords implements Forceable {
   }
 
   public static String getName(int id) {
+    return getNameSequence(id).toString();
+  }
+
+  public static CharSequence getNameSequence(int id) {
     try {
       r.lock();
       try {
         final int nameId = getRecordInt(id, NAME_OFFSET);
-        return nameId != 0 ? FileNameCache.getVFileName(nameId).toString() : "";
+        return nameId != 0 ? FileNameCache.getVFileName(nameId) : "";
       }
       finally {
         r.unlock();

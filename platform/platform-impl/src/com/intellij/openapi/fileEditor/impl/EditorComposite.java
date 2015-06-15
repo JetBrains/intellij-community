@@ -456,7 +456,7 @@ public abstract class EditorComposite implements Disposable {
     myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
   }
 
-  void addEditor(FileEditor editor) {
+  void addEditor(@NotNull FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FileEditor[] editors = ArrayUtil.append(myEditors, editor);
     if (myTabbedPaneWrapper == null) {

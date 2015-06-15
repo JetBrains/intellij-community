@@ -25,10 +25,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -360,4 +362,26 @@ public class PsiModificationTrackerTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(stamp1 != psiManager.findFile(file).getModificationStamp());
     assertEquals(hc, psiManager.findFile(file).hashCode());
   }
+
+  public void testLanguageLevelChange() {
+    //noinspection unused
+    PsiFile psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}");
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+
+    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("Foo", scope);
+    assertNotNull(psiClass);
+
+    long count = PsiManager.getInstance(getProject()).getModificationTracker().getJavaStructureModificationCount();
+
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_3);
+
+    assertTrue(count != PsiManager.getInstance(getProject()).getModificationTracker().getJavaStructureModificationCount());
+
+    psiClass = (JavaPsiFacade.getInstance(getProject()).findClass("Foo", scope));
+    assertNotNull(psiClass);
+    assertTrue(psiClass.isValid());
+  }
+
 }

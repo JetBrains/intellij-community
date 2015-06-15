@@ -24,7 +24,10 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.JavaCodeContextType
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateContextType
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
@@ -39,6 +42,8 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.event.DocumentAdapter
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
@@ -53,6 +58,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
@@ -152,10 +158,11 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
     assertEquals 'iterable', lookup.currentItem.lookupString
     edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
-    assertEquals 'iterable2', lookup.currentItem.lookupString
+    assert lookup.currentItem.lookupString == 'iterable2'
 
     type "r"
-    myFixture.assertPreferredCompletionItems 2, "iter", "iterable", 'iterable2'
+    assert lookup.items[0].lookupString == 'iter'
+    assert lookup.currentItem.lookupString == 'iterable2'
 
   }
 
@@ -950,6 +957,15 @@ class Foo {
     for (a1 in 0..actions) {
       for (a2 in 0..actions) {
         myFixture.configureByText("$a1 $a2 .java", src)
+        myFixture.editor.document.addDocumentListener(new DocumentAdapter() {
+          @Override
+          void documentChanged(DocumentEvent e) {
+            if (e.newFragment.toString().contains("a")) {
+              fail(e.toString())
+            }
+            super.documentChanged(e)
+          }
+        })
         myFixture.type 'i'
         joinSomething(a1)
         myFixture.type 'f'
@@ -1374,9 +1390,10 @@ class Foo {{
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.java', 'class Foo {{ Util<caret> }}'
     type '.'
-    assert myFixture.lookupElementStrings == ['Util.bar', 'Util.CONSTANT', 'Util.foo']
+    assert myFixture.lookupElementStrings as Set == ['Util.bar', 'Util.CONSTANT', 'Util.foo'] as Set
 
-    def p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(myFixture.lookupElements[1]) } as Computable)
+    def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
+    LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
     assert p.itemText == 'Util.CONSTANT'
     assert p.tailText == ' (foo)'
     assert p.typeText == 'int'
@@ -1587,7 +1604,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     myFixture.type('a')
     joinAutopopup()
-    myFixture.type('\na')
+    myFixture.type('\nf')
     joinCompletion()
     assert lookup
   }
@@ -1698,7 +1715,7 @@ class Cls {
     final JavaCodeContextType contextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement);
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
-    LiveTemplateTest.addTemplate(template, testRootDisposable)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
     
     myFixture.configureByText 'a.java', '''
 class Foo {
@@ -1720,7 +1737,7 @@ class Foo {
   public void "test autopopup after package completion"() {
     myFixture.addClass("package foo.bar.goo; class Foo {}")
     myFixture.configureByText "a.java", "class Foo { { foo.b<caret> } }"
-    myFixture.completeBasic()
+    assert myFixture.completeBasic() == null
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()
     joinCompletion()

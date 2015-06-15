@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,11 +295,11 @@ public class PullUpConflictsUtil {
 
   private static class ConflictingUsagesOfSuperClassMembers extends ClassMemberReferencesVisitor {
 
-    private PsiMember myMember;
-    private PsiClass mySubClass;
-    private PsiPackage myTargetPackage;
-    private Set<PsiMember> myMovedMembers;
-    private MultiMap<PsiElement, String> myConflicts;
+    private final PsiMember myMember;
+    private final PsiClass mySubClass;
+    private final PsiPackage myTargetPackage;
+    private final Set<PsiMember> myMovedMembers;
+    private final MultiMap<PsiElement, String> myConflicts;
 
     public ConflictingUsagesOfSuperClassMembers(PsiMember member, PsiClass aClass,
                                                 PsiPackage targetPackage,

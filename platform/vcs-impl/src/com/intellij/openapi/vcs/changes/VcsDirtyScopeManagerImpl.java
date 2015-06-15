@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -148,11 +147,16 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private void convertPaths(@Nullable final Collection<FilePath> from, final Collection<FilePathUnderVcs> to) {
     if (from != null) {
-      for (FilePath fp : from) {
-        final AbstractVcs vcs = myGuess.getVcsForDirty(fp);
-        if (vcs != null) {
-          to.add(new FilePathUnderVcs(fp, vcs));
-        }
+      for (final FilePath fp : from) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final AbstractVcs vcs = myGuess.getVcsForDirty(fp);
+            if (vcs != null) {
+              to.add(new FilePathUnderVcs(fp, vcs));
+            }
+          }
+        });
       }
     }
   }
@@ -162,12 +166,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
       final ArrayList<FilePathUnderVcs> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<FilePathUnderVcs>(dirsRecursivelyDirty.size());
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          convertPaths(filesDirty, filesConverted);
-          convertPaths(dirsRecursivelyDirty, dirsConverted);
-        }
-      });
+      convertPaths(filesDirty, filesConverted);
+      convertPaths(dirsRecursivelyDirty, dirsConverted);
       final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty()
                                 || dirsConverted != null && ! dirsConverted.isEmpty();
       if (! haveStuff) return;
@@ -211,11 +211,15 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private void convert(@Nullable final Collection<VirtualFile> from, final Collection<VcsRoot> to) {
     if (from != null) {
-      for (VirtualFile vf : from) {
-        final AbstractVcs vcs = myGuess.getVcsForDirty(vf);
-        if (vcs != null) {
-          to.add(new VcsRoot(vcs, vf));
-        }
+      for (final VirtualFile vf : from) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            final AbstractVcs vcs = myGuess.getVcsForDirty(vf);
+            if (vcs != null) {
+              to.add(new VcsRoot(vcs, vf));
+            }
+          }
+        });
       }
     }
   }
@@ -225,12 +229,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
       final ArrayList<VcsRoot> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<VcsRoot>(dirsRecursivelyDirty.size());
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          convert(filesDirty, filesConverted);
-          convert(dirsRecursivelyDirty, dirsConverted);
-        }
-      });
+      convert(filesDirty, filesConverted);
+      convert(dirsRecursivelyDirty, dirsConverted);
       final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty() || dirsConverted != null && ! dirsConverted.isEmpty();
       if (! haveStuff) return;
 
@@ -349,13 +349,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     public VcsInvalidated calculateInvalidated() {
       if (myInProgressDirtBuilder != null) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<VcsInvalidated>() {
-          public VcsInvalidated compute() {
-            final Scopes scopes = new Scopes(myProject, myGuess);
-            scopes.takeDirt(myInProgressDirtBuilder);
-            return scopes.retrieveAndClear();
-          }
-        });
+        final Scopes scopes = new Scopes(myProject, myGuess);
+        scopes.takeDirt(myInProgressDirtBuilder);
+        return scopes.retrieveAndClear();
       }
       return myInProgressState;
     }

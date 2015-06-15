@@ -69,9 +69,10 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     myWrapperRequest = request;
     myDiffChanges = diffChanges;
 
-    assert myEditor1 != null && myEditor2 != null;
+    assert getEditor1() != null && getEditor2() != null;
 
     for (EditorEx editor : getEditors()) {
+      if (editor == null) continue;
       EditorSettings settings = editor.getSettings();
 
       settings.setAdditionalLinesCount(0);
@@ -90,8 +91,8 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     }
 
     for (DiffChange change : myDiffChanges) {
-      DiffDrawUtil.createBorderLineMarker(myEditor1, change.myEndLine1, SeparatorPlacement.TOP);
-      DiffDrawUtil.createBorderLineMarker(myEditor2, change.myEndLine2, SeparatorPlacement.TOP);
+      DiffDrawUtil.createBorderLineMarker(getEditor1(), change.myEndLine1, SeparatorPlacement.TOP);
+      DiffDrawUtil.createBorderLineMarker(getEditor2(), change.myEndLine2, SeparatorPlacement.TOP);
     }
 
     DiffSplitter splitter = myContentPanel.getSplitter();
@@ -146,10 +147,10 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     return new Runnable() {
       @Override
       public void run() {
-        assert myEditor1 != null && myEditor2 != null;
+        assert getEditor1() != null && getEditor2() != null;
         for (DiffChange change : myDiffChanges) {
-          setupHighlighting(myEditor1, change, Side.LEFT);
-          setupHighlighting(myEditor2, change, Side.RIGHT);
+          setupHighlighting(getEditor1(), change, Side.LEFT);
+          setupHighlighting(getEditor2(), change, Side.RIGHT);
         }
       }
     };
@@ -205,31 +206,31 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
-      assert myEditor1 != null && myEditor2 != null;
-      Graphics2D gg = getDividerGraphics(g, divider);
+      assert getEditor1() != null && getEditor2() != null;
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, getEditor1().getComponent());
       Rectangle clip = gg.getClipBounds();
       if (clip == null) return;
 
       gg.setColor(DiffDrawUtil.getDividerColor());
       gg.fill(clip);
 
-      JComponent header1 = myEditor1.getHeaderComponent();
-      JComponent header2 = myEditor2.getHeaderComponent();
+      JComponent header1 = getEditor1().getHeaderComponent();
+      JComponent header2 = getEditor2().getHeaderComponent();
       int headerOffset1 = header1 == null ? 0 : header1.getHeight();
       int headerOffset2 = header2 == null ? 0 : header2.getHeight();
 
       // TODO: painting is ugly if shift1 != shift2 (ex: search field is opened for one of editors)
-      int shift1 = myEditor1.getScrollingModel().getVerticalScrollOffset() - headerOffset1;
-      int shift2 = myEditor2.getScrollingModel().getVerticalScrollOffset() - headerOffset2;
+      int shift1 = getEditor1().getScrollingModel().getVerticalScrollOffset() - headerOffset1;
+      int shift2 = getEditor2().getScrollingModel().getVerticalScrollOffset() - headerOffset2;
       double rotate = shift1 == shift2 ? 0 : Math.atan2(shift2 - shift1, clip.width);
 
-      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), false, rotate == 0, myEditor1, myEditor2, this);
+      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), false, rotate == 0, getEditor1(), getEditor2(), this);
 
       for (DiffChange change : myDiffChanges) {
-        int y1 = myEditor1.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;
-        int y2 = myEditor2.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.RIGHT), 0)).y - shift2;
-        int endY1 = myEditor1.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.LEFT), 0)).y - shift1;
-        int endY2 = myEditor2.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.RIGHT), 0)).y - shift2;
+        int y1 = getEditor1().logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;
+        int y2 = getEditor2().logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.RIGHT), 0)).y - shift2;
+        int endY1 = getEditor1().logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.LEFT), 0)).y - shift1;
+        int endY2 = getEditor2().logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.RIGHT), 0)).y - shift2;
 
         AffineTransform oldTransform = gg.getTransform();
         gg.translate(0, y1);
@@ -261,7 +262,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
         for (LineFragment fragment : diffChange.getFragments()) {
           if (!handler.process(Side.LEFT.getStartLine(fragment) + shift1, Side.LEFT.getEndLine(fragment) + shift1,
                                Side.RIGHT.getStartLine(fragment) + shift2, Side.RIGHT.getEndLine(fragment) + shift2,
-                               DiffUtil.getLineDiffType(fragment).getColor(myEditor1))) {
+                               DiffUtil.getLineDiffType(fragment).getColor(getEditor1()))) {
             return;
           }
         }

@@ -312,11 +312,11 @@ public final class UpdateChecker {
     return toUpdate.isEmpty() ? null : toUpdate.values();
   }
 
-  private static void checkAndPrepareToInstall(PluginDownloader downloader,
-                                               InstalledPluginsState state,
-                                               Map<PluginId, PluginDownloader> toUpdate,
-                                               Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                               @Nullable ProgressIndicator indicator) throws IOException {
+  public static void checkAndPrepareToInstall(PluginDownloader downloader,
+                                              InstalledPluginsState state,
+                                              Map<PluginId, PluginDownloader> toUpdate,
+                                              Collection<IdeaPluginDescriptor> incompatiblePlugins,
+                                              @Nullable ProgressIndicator indicator) throws IOException {
     String pluginId = downloader.getPluginId();
     if (PluginManagerCore.getDisabledPlugins().contains(pluginId)) return;
 
@@ -545,9 +545,9 @@ public final class UpdateChecker {
     String toBuildNumber = toBuild.asStringWithoutProductCode();
 
     String bundledJdk = "";
-    String jdkMacRedist = System.getProperty("idea.java.redist");
-    if (jdkMacRedist != null && jdkMacRedist.lastIndexOf("jdk-bundled") >= 0) {
-      bundledJdk = "jdk-bundled".equals(jdkMacRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
+    String jdkRedist = System.getProperty("idea.java.redist");
+    if (jdkRedist != null && jdkRedist.lastIndexOf("jdk-bundled") >= 0) {
+      bundledJdk = "jdk-bundled".equals(jdkRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
     }
 
     String osSuffix = "-" + patch.getOSSuffix();

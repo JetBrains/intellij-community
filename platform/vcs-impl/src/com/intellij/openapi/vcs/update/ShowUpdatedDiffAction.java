@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.history.ByteContent;
 import com.intellij.history.Label;
 import com.intellij.openapi.actionSystem.*;
@@ -23,9 +24,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
@@ -34,6 +37,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,11 +182,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
 
     @NotNull
     public FilePath getFile() {
-      final VirtualFile vf = myPointer.getFile();
-      if (vf != null) {
-        return new FilePathImpl(vf);
-      }
-      return new FilePathImpl(new File(myPointer.getPresentableUrl()), false);
+      return VcsUtil.getFilePath(myPointer.getPresentableUrl(), false);
     }
 
     @NotNull

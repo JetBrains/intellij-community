@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.MockDirtyScope;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.status.GitChangeProvider;
 import git4idea.test.GitSingleRepoTest;
@@ -164,7 +165,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
   protected void assertChanges(VirtualFile[] virtualFiles, FileStatus[] fileStatuses) throws VcsException {
     Map<FilePath, Change> result = getChanges(virtualFiles);
     for (int i = 0; i < virtualFiles.length; i++) {
-      FilePath fp = new FilePathImpl(virtualFiles[i]);
+      FilePath fp = VcsUtil.getFilePath(virtualFiles[i]);
       FileStatus status = fileStatuses[i];
       if (status == null) {
         assertFalse("File [" + tos(fp) + " shouldn't be in the changelist, but it was.", result.containsKey(fp));
@@ -205,7 +206,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
           }
         }
       } else {
-        filePath = new FilePathImpl(file);
+        filePath = VcsUtil.getFilePath(file);
       }
       result.put(filePath, change);
     }
@@ -252,7 +253,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
   }
 
   private void dirty(VirtualFile file) {
-    myDirtyScope.addDirtyFile(new FilePathImpl(file));
+    myDirtyScope.addDirtyFile(VcsUtil.getFilePath(file));
   }
 
   protected String tos(FilePath fp) {

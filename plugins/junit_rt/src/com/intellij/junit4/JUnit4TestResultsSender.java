@@ -29,14 +29,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class JUnit4TestResultsSender extends RunListener {
   private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
-  private static final String ASSERTION_CLASS_NAME = AssertionError.class.getName();
-  private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
 
   private final OutputObjectRegistry myRegistry;
   private Map myCurrentTestMeters = new HashMap();
@@ -51,7 +47,8 @@ public class JUnit4TestResultsSender extends RunListener {
     final Throwable throwable = failure.getException();
 
     final Throwable cause = throwable.getCause();
-    if (isAssertionError(throwable.getClass()) || isAssertionError(cause != null ? cause.getClass() : null)) {
+    if (ComparisonFailureData.isAssertionError(throwable.getClass()) || 
+        ComparisonFailureData.isAssertionError(cause != null ? cause.getClass() : null)) {
       // junit4 makes no distinction between errors and failures
       doAddFailure(description, throwable);
     }
@@ -99,16 +96,9 @@ public class JUnit4TestResultsSender extends RunListener {
     return isComparisonFailure(aClass.getSuperclass());
   }
 
-  private static boolean isAssertionError(Class throwableClass) {
-    if (throwableClass == null) return false;
-    final String throwableClassName = throwableClass.getName();
-    if (throwableClassName.equals(ASSERTION_CLASS_NAME) || throwableClassName.equals(ASSERTION_FAILED_CLASS_NAME)) return true;
-    return isAssertionError(throwableClass.getSuperclass());
-  }
-  
   private static PacketFactory createExceptionNotification(Throwable assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    final ComparisonFailureData notification = SMTestSender.createExceptionNotification(assertion);
+    final ComparisonFailureData notification = JUnit4TestListener.createExceptionNotification(assertion);
     if (notification != null) {
       return ComparisonDetailsExtractor.create(assertion, notification.getExpected(), notification.getActual());
     }

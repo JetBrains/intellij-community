@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,19 +29,19 @@ import java.util.ArrayList;
  * User: anna
  * Date: 09-Jan-2006
  */
-public class RefModuleImpl extends RefEntityImpl implements RefModule {
+class RefModuleImpl extends RefEntityImpl implements RefModule {
   private final Module myModule;
 
-  protected RefModuleImpl(@NotNull Module module, @NotNull RefManager manager) {
+  RefModuleImpl(@NotNull Module module, @NotNull RefManager manager) {
     super(module.getName(), manager);
     myModule = module;
     ((RefProjectImpl)manager.getRefProject()).add(this);
   }
 
   @Override
-  public void add(RefEntity child) {
+  public synchronized void add(@NotNull final RefEntity child) {
     if (myChildren == null) {
-       myChildren = new ArrayList<RefEntity>();
+      myChildren = new ArrayList<RefEntity>();
     }
     myChildren.add(child);
 
@@ -36,7 +51,7 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   @Override
-  protected void removeChild(RefEntity child) {
+  protected synchronized void removeChild(@NotNull final RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
     }
@@ -69,7 +84,7 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   @Nullable
-  public static RefEntity moduleFromName(final RefManager manager, final String name) {
+  static RefEntity moduleFromName(final RefManager manager, final String name) {
     return manager.getRefModule(ModuleManager.getInstance(manager.getProject()).findModuleByName(name));
   }
 }

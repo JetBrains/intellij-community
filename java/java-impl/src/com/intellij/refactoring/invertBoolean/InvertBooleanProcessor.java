@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -59,7 +60,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     myElement = namedElement;
     myNewName = newName;
     final Project project = namedElement.getProject();
-    myRenameProcessor = new RenameProcessor(project, namedElement, newName, false, false);
+    myRenameProcessor = Comparing.equal(namedElement.getName(), myNewName) ? null : new RenameProcessor(project, namedElement, newName, false, false);
     mySmartPointerManager = SmartPointerManager.getInstance(project);
   }
 
@@ -83,7 +84,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       return showConflicts(conflicts, null);
     }
 
-    if (myRenameProcessor.preprocessUsages(refUsages)) {
+    if (myRenameProcessor == null || myRenameProcessor.preprocessUsages(refUsages)) {
       prepareSuccessful();
       return true;
     }
@@ -99,8 +100,10 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
     if (myElement instanceof PsiMethod) {
       final Collection<PsiMethod> overriders = OverridingMethodsSearch.search((PsiMethod)myElement).findAll();
-      for (PsiMethod overrider : overriders) {
-        myRenameProcessor.addElement(overrider, myNewName);
+      if (myRenameProcessor != null) {
+        for (PsiMethod overrider : overriders) {
+          myRenameProcessor.addElement(overrider, myNewName);
+        }
       }
 
       Collection<PsiMethod> allMethods = new HashSet<PsiMethod>(overriders);
@@ -153,12 +156,14 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       final Collection<PsiMethod> overriders = OverridingMethodsSearch.search(method).findAll();
       for (PsiMethod overrider : overriders) {
         final PsiParameter overriderParameter = overrider.getParameterList().getParameters()[index];
-        myRenameProcessor.addElement(overriderParameter, myNewName);
+        if (myRenameProcessor != null) {
+          myRenameProcessor.addElement(overriderParameter, myNewName);
+        }
         addRefsToInvert(toInvert, overriderParameter);
       }
     }
 
-    final UsageInfo[] renameUsages = myRenameProcessor.findUsages();
+    final UsageInfo[] renameUsages = myRenameProcessor != null ? myRenameProcessor.findUsages() : UsageInfo.EMPTY_ARRAY;
 
     final SmartPsiElementPointer[] usagesToInvert = toInvert.toArray(new SmartPsiElementPointer[toInvert.size()]);
 
@@ -257,13 +262,15 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    for (final PsiElement element : myRenameProcessor.getElements()) {
-      try {
-        RenameUtil.doRename(element, myRenameProcessor.getNewName(element), extractUsagesForElement(element, usages), myProject, null);
-      }
-      catch (final IncorrectOperationException e) {
-        RenameUtil.showErrorMessage(e, element, myProject);
-        return;
+    if (myRenameProcessor != null) {
+      for (final PsiElement element : myRenameProcessor.getElements()) {
+        try {
+          RenameUtil.doRename(element, myRenameProcessor.getNewName(element), extractUsagesForElement(element, usages), myProject, null);
+        }
+        catch (final IncorrectOperationException e) {
+          RenameUtil.showErrorMessage(e, element, myProject);
+          return;
+        }
       }
     }
 

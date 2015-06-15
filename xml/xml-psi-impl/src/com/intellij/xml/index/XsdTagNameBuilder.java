@@ -16,8 +16,9 @@
 package com.intellij.xml.index;
 
 import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,12 +32,12 @@ import java.util.Collection;
  */
 public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
 
-  @Nullable
+  @NotNull
   public static Collection<String> computeTagNames(final InputStream is) {
     return computeTagNames(new InputStreamReader(is));
   }
 
-  @Nullable
+  @NotNull
   public static Collection<String> computeTagNames(final Reader reader) {
     try {
       final XsdTagNameBuilder builder = new XsdTagNameBuilder();
@@ -62,7 +63,7 @@ public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {
 
-    myElementStarted = nsPrefix != null && nsURI.equals("http://www.w3.org/2001/XMLSchema") && name.equals("element");
+    myElementStarted = nsPrefix != null && nsURI.equals(XmlUtil.XML_SCHEMA_URI) && name.equals("element");
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private DfaValue myString;
   private PsiType myNpe;
   private PsiType myAssertionError;
-  private Stack<PsiElement> myElementStack = new Stack<PsiElement>();
+  private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
 
   /**
    * Variables for try-related control transfers. Contain exceptions or an (Throwable-inconvertible) string to indicate return inside finally
@@ -212,7 +212,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void flushArrayElementsOnUnknownIndexAssignment(PsiExpression lExpr) {
     if (lExpr instanceof PsiArrayAccessExpression &&
-        myFactory.createValue(lExpr) == null // check for unknown index, otherwise AssignInstruction will flush only that element
+        !(myFactory.createValue(lExpr) instanceof DfaVariableValue) // check for unknown index, otherwise AssignInstruction will flush only that element
       ) {
       DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
       if (arrayVar instanceof DfaVariableValue) {
@@ -846,7 +846,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static class ApplyNotNullInstruction extends Instruction {
-    private PsiMethodCallExpression myCall;
+    private final PsiMethodCallExpression myCall;
 
     private ApplyNotNullInstruction(PsiMethodCallExpression call) {
       myCall = call;
@@ -1516,12 +1516,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   return contract.arguments.length == paramCount;
                 }
               });
-              return Result.create(applicable, contractAnno);
+              return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
             catch (Exception ignored) {
             }
           }
-          return Result.create(Collections.<MethodContract>emptyList(), contractAnno, method);
+          return Result.create(Collections.<MethodContract>emptyList(), contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
       });
     }

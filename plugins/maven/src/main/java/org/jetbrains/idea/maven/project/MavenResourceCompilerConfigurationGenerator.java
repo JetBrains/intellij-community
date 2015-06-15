@@ -14,15 +14,20 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Base64;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -222,18 +227,19 @@ public class MavenResourceCompilerConfigurationGenerator {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       try {
         manifest.write(outputStream);
-        resourceConfig.manifest = outputStream.toString("UTF8");
-
+        MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
+        final String resolvedText = MavenPropertyResolver.resolve(outputStream.toString(CharsetToolkit.UTF8), domModel);
+        resourceConfig.manifest = Base64.encode(resolvedText.getBytes(CharsetToolkit.UTF8));
       }
       finally {
         StreamUtil.closeStream(outputStream);
       }
     }
     catch (ManifestBuilder.ManifestBuilderException e) {
-      LOG.error("Unable to generate artifact manifest", e);
+      LOG.warn("Unable to generate artifact manifest", e);
     }
-    catch (IOException e) {
-      LOG.error("Unable to save generated artifact manifest", e);
+    catch (Exception e) {
+      LOG.warn("Unable to save generated artifact manifest", e);
     }
   }
 

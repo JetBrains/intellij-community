@@ -212,7 +212,7 @@ public class IoTestUtil {
           throw new RuntimeException(e);
         }
       }
-    }).start();
+    },"io test").start();
     return process.waitFor();
   }
 

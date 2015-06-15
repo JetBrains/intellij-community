@@ -21,13 +21,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
@@ -225,10 +225,11 @@ class SvnChangeProviderContext implements StatusReceiver {
       myChangelistBuilder.processLocallyDeletedFile(new SvnLocallyDeletedChange(filePath, getState(status)));
     }
     else if (status.is(StatusType.STATUS_IGNORED)) {
-      if (filePath.getVirtualFile() == null) {
-        filePath.hardRefresh();
+      VirtualFile file = filePath.getVirtualFile();
+      if (file == null) {
+        file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
       }
-      if (filePath.getVirtualFile() == null) {
+      if (file == null) {
         LOG.error("No virtual file for ignored file: " + filePath.getPresentableUrl() + ", isNonLocal: " + filePath.isNonLocal());
       }
       else if (!myVcs.isWcRoot(filePath)) {
@@ -251,7 +252,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   public void addModifiedNotSavedChange(@NotNull VirtualFile file) throws SVNException {
-    final FilePath filePath = new FilePathImpl(file);
+    final FilePath filePath = VcsUtil.getFilePath(file);
     final Info svnInfo = myVcs.getInfo(file);
 
     if (svnInfo != null) {

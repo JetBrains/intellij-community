@@ -74,6 +74,9 @@ public class AbstractMethodWithMissingImplementationsInspection
       }
       final InheritorFinder inheritorFinder = new InheritorFinder(containingClass);
       for (final PsiClass inheritor : inheritorFinder.getInheritors()) {
+        if (hasMatchingImplementation(inheritor, method)) {
+          continue;
+        }
         if (inheritor.isEnum()) {
           final List<PsiEnumConstant> enumConstants = PsiTreeUtil.getChildrenOfTypeAsList(inheritor, PsiEnumConstant.class);
           for (PsiEnumConstant enumConstant : enumConstants) {
@@ -83,11 +86,10 @@ public class AbstractMethodWithMissingImplementationsInspection
               return;
             }
           }
+          continue;
         }
-        else if (!hasMatchingImplementation(inheritor, method)) {
-          registerMethodError(method);
-          return;
-        }
+        registerMethodError(method);
+        return;
       }
     }
 

@@ -102,5 +102,6 @@ public class NumpyUfuncs {
     UFUNC_LIST.add("ceil");
     UFUNC_LIST.add("trunc");
 
+    UFUNC_LIST.add("fabs");
   }
 }

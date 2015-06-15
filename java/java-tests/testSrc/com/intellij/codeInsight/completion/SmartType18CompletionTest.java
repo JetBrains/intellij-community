@@ -123,6 +123,15 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  public void testSimpleMethodReference() throws Exception {
+    doTest(true);
+  }
+
+  public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() throws Exception {
+    configureByFile("/" + getTestName(false) + ".java");
+    assertEmpty(myItems);
+  }
+
   private void doTest() {
     doTest(true);
   }

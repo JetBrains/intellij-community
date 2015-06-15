@@ -136,6 +136,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
                  node.findChildByType(JavaTokenType.PRIVATE_KEYWORD) == null;
         }
       }
+      else if (aClass != null && aClass.isEnum() && ((PsiMethod)parent).isConstructor()) {
+        if (type == JavaTokenType.PRIVATE_KEYWORD) {
+          return true;
+        }
+      }
     }
     else if (parent instanceof PsiField) {
       if (parent instanceof PsiEnumConstant) {

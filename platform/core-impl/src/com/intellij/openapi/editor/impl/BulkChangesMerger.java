@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.TextChange;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -174,6 +173,20 @@ public class BulkChangesMerger {
       data[i + offset] = text.charAt(i);
     }
   }
+
+  /**
+   * Given an offset of some location in the document, returns offset of this location after application of given changes. List of changes
+   * is supposed to satisfy the same constraints as required by {@link #mergeToCharSequence(char[], int, List)} method.
+   */
+  public int updateOffset(int originalOffset, @NotNull List<? extends TextChange> changes) {
+    int offset = originalOffset;
+    for (TextChange change : changes) {
+      if (originalOffset > change.getStart()) {
+        offset += change.getText().length() - (change.getEnd() - change.getStart());
+      }
+    }
+    return offset;
+  } 
   
   private static class Context {
 
