@@ -178,7 +178,9 @@ public class PyMoveFileHandler extends MoveFileHandler {
           // TODO: Retarget qualified expressions in docstrings
           if (importStmt != null) {
             updatedFiles.add(file);
-            PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
+            if (PsiTreeUtil.getParentOfType(element, PyImportElement.class) != null) {
+              PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
+            }
             if (importStmt instanceof PyFromImportStatement && PsiTreeUtil.getParentOfType(element, PyImportElement.class) != null) {
               continue;
             }

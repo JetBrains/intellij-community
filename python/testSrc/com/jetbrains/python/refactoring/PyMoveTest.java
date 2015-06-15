@@ -314,6 +314,11 @@ public class PyMoveTest extends PyTestCase {
     }
   }
 
+  // PY-10553
+  public void testMoveModuleWithSameNameAsSymbolInside() {
+    doMoveFileTest("Animals/Carnivore.py", "Animals/test");
+  }
+
   // PY-15324
   public void testInterdependentSymbols() {
     doMoveSymbolsTest("b.py", "f", "A");
