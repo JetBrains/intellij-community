@@ -78,26 +78,7 @@ public class SourceResolver {
       return Urls.parseEncoded(url);
     }
 
-    String path = url;
-    if (url.charAt(0) != '/') {
-      String basePath = baseUrl.getPath();
-      if (baseUrlIsFile) {
-        int lastSlashIndex = basePath.lastIndexOf('/');
-        StringBuilder pathBuilder = new StringBuilder();
-        if (lastSlashIndex == -1) {
-          pathBuilder.append('/');
-        }
-        else {
-          pathBuilder.append(basePath, 0, lastSlashIndex + 1);
-        }
-        path = pathBuilder.append(url).toString();
-      }
-      else {
-        path = basePath + '/' + url;
-      }
-    }
-    path = FileUtil.toCanonicalPath(path, '/');
-
+    String path = canonicalizePath(url, baseUrl, baseUrlIsFile);
     if (baseUrl.getScheme() == null && baseUrl.isInLocalFileSystem()) {
       return Urls.newLocalFileUrl(path);
     }
@@ -121,6 +102,29 @@ public class SourceResolver {
       }
     }
     return new UrlImpl(baseUrl.getScheme(), baseUrl.getAuthority(), path, null);
+  }
+
+  public static String canonicalizePath(@NotNull String url, @NotNull Url baseUrl, boolean baseUrlIsFile) {
+    String path = url;
+    if (url.charAt(0) != '/') {
+      String basePath = baseUrl.getPath();
+      if (baseUrlIsFile) {
+        int lastSlashIndex = basePath.lastIndexOf('/');
+        StringBuilder pathBuilder = new StringBuilder();
+        if (lastSlashIndex == -1) {
+          pathBuilder.append('/');
+        }
+        else {
+          pathBuilder.append(basePath, 0, lastSlashIndex + 1);
+        }
+        path = pathBuilder.append(url).toString();
+      }
+      else {
+        path = basePath + '/' + url;
+      }
+    }
+    path = FileUtil.toCanonicalPath(path, '/');
+    return path;
   }
 
   @NotNull

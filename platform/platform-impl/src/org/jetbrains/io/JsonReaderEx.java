@@ -128,6 +128,10 @@ public final class JsonReaderEx implements Closeable {
       super(chars, start, end);
     }
 
+    public CharSequenceBackedByChars(@NotNull char[] chars) {
+      super(chars);
+    }
+
     @Override
     public CharSequence subSequence(int start, int end) {
       return start == 0 && end == length() ? this : new String(myChars, myStart + start, end - start);
