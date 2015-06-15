@@ -30,18 +30,27 @@ public class ProcessWaitForTest {
     File jvm = new File(System.getProperty("java.home"), "bin/java");
     assertTrue(jvm.canExecute());
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-
-    Process process = new ProcessBuilder(jvm.getPath(), "-version").redirectErrorStream(true).start();
-    ProcessWaitFor.attach(process, new Consumer<Integer>() {
+    final Semaphore semaphore1 = new Semaphore();
+    semaphore1.down();
+    Process process1 = new ProcessBuilder(jvm.getPath(), "-help").redirectErrorStream(true).start();
+    ProcessWaitFor.attach(process1, new Consumer<Integer>() {
       @Override
       public void consume(Integer exitCode) {
-        semaphore.up();
+        semaphore1.up();
       }
     });
-    process.waitFor();
 
-    assertTrue(semaphore.waitFor(5000));
+    final Semaphore semaphore2 = new Semaphore();
+    semaphore2.down();
+    Process process2 = new ProcessBuilder(jvm.getPath(), "-version").redirectErrorStream(true).start();
+    ProcessWaitFor.attach(process2, new Consumer<Integer>() {
+      @Override
+      public void consume(Integer exitCode) {
+        semaphore2.up();
+      }
+    });
+
+    assertTrue(semaphore1.waitFor(5000));
+    assertTrue(semaphore2.waitFor(5000));
   }
 }
