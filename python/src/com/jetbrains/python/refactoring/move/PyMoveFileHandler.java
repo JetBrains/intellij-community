@@ -83,23 +83,55 @@ public class PyMoveFileHandler extends MoveFileHandler {
     }
     module.putUserData(ORIGINAL_FILE_LOCATION, null);
     for (PyFromImportStatement statement : module.getFromImports()) {
-      if (statement.getRelativeLevel() == 0) {
+      if (!canBeRelative(statement)) {
         continue;
       }
-      final PsiFileSystemItem sourceElement = resolveRelativeImportSourceFromModuleLocation(originalLocation, statement);
+      final int relativeLevel = Math.max(statement.getRelativeLevel(), 1);
+      final PsiFileSystemItem sourceElement = resolveRelativeImportFromModuleLocation(statement.getManager(),
+                                                                                      originalLocation,
+                                                                                      statement.getImportSource(),
+                                                                                      relativeLevel);
       if (sourceElement == null) {
         continue;
       }
       final QualifiedName newName = QualifiedNameFinder.findShortestImportableQName(sourceElement);
       replaceRelativeImportSourceWithQualifiedExpression(statement, newName);
     }
+
+    for (PyImportElement importElement : module.getImportTargets()) {
+      final PyReferenceExpression referenceExpr = importElement.getImportReferenceExpression();
+      if (!canBeRelative(importElement) || referenceExpr == null) {
+        continue;
+      }
+      final PsiFileSystemItem resolved = resolveRelativeImportFromModuleLocation(importElement.getManager(),
+                                                                                 originalLocation, referenceExpr, 1);
+      if (resolved == null) {
+        continue;
+      }
+      final QualifiedName newName = QualifiedNameFinder.findShortestImportableQName(resolved);
+      replaceWithQualifiedExpression(referenceExpr, newName);
+    }
   }
 
+  private static boolean canBeRelative(@NotNull PyFromImportStatement statement) {
+    return !LanguageLevel.forElement(statement).isPy3K() || statement.getRelativeLevel() > 0;
+  }
+
+  private static boolean canBeRelative(@NotNull PyImportElement statement) {
+    return !LanguageLevel.forElement(statement).isPy3K();
+  }
+
+
+  /**
+   * @param referenceExpr is null if we resolve import of type "from .. import bar", and "foo" for import of type "from foo import bar"
+   */
   @Nullable
-  private static PsiFileSystemItem resolveRelativeImportSourceFromModuleLocation(@NotNull String moduleLocation,
-                                                                                 @NotNull PyFromImportStatement statement) {
+  private static PsiFileSystemItem resolveRelativeImportFromModuleLocation(@NotNull PsiManager manager,
+                                                                           @NotNull String moduleLocation,
+                                                                           @Nullable PyReferenceExpression referenceExpr,
+                                                                           int relativeLevel) {
     String relativeImportBasePath = VirtualFileManager.extractPath(moduleLocation);
-    for (int level = 0; level < statement.getRelativeLevel(); level++) {
+    for (int level = 0; level < relativeLevel; level++) {
       relativeImportBasePath = PathUtil.getParentPath(relativeImportBasePath);
     }
     if (!relativeImportBasePath.isEmpty()) {
@@ -108,8 +140,8 @@ public class PyMoveFileHandler extends MoveFileHandler {
       final String relativeImportBaseUrl = VirtualFileManager.constructUrl(protocol, relativeImportBasePath);
       final VirtualFile relativeImportBaseDir = VirtualFileManager.getInstance().findFileByUrl(relativeImportBaseUrl);
       VirtualFile sourceFile = relativeImportBaseDir;
-      if (relativeImportBaseDir != null && relativeImportBaseDir.exists() && statement.getImportSource() != null) {
-        final QualifiedName qualifiedName = statement.getImportSource().asQualifiedName();
+      if (relativeImportBaseDir != null && relativeImportBaseDir.isDirectory() && referenceExpr != null) {
+        final QualifiedName qualifiedName = referenceExpr.asQualifiedName();
         if (qualifiedName == null) {
           return null;
         }
@@ -120,13 +152,12 @@ public class PyMoveFileHandler extends MoveFileHandler {
         }
       }
       if (sourceFile != null) {
-        final PsiManager psiManager = statement.getManager();
         final PsiFileSystemItem sourceElement;
         if (sourceFile.isDirectory()) {
-          sourceElement = psiManager.findDirectory(sourceFile);
+          sourceElement = manager.findDirectory(sourceFile);
         }
         else {
-          sourceElement = psiManager.findFile(sourceFile);
+          sourceElement = manager.findFile(sourceFile);
         }
         return sourceElement;
       }
