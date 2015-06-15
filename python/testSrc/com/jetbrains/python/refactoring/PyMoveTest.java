@@ -319,6 +319,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("Animals/Carnivore.py", "Animals/test");
   }
 
+  // PY-14617
+  public void testOldStyleRelativeImport() {
+    doMoveFileTest("pkg/a.py", "");
+  }
+
   // PY-15324
   public void testInterdependentSymbols() {
     doMoveSymbolsTest("b.py", "f", "A");
