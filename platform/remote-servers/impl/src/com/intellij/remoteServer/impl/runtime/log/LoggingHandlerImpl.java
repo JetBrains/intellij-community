@@ -63,4 +63,9 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
   public void clear() {
     myConsole.clear();
   }
+
+  @Override
+  public boolean isClosed() {
+    return false;
+  }
 }

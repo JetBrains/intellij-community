@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 package com.intellij.spellchecker.compress;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class EncoderTest extends TestCase {
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+
+public class EncoderTest {
+  @Test
   public void testSimple() {
     Encoder encoder = new Encoder();
     final String wordToTest = "abc";
@@ -37,7 +41,7 @@ public class EncoderTest extends TestCase {
     }
   }
 
-
+  @Test
   public void testDouble() {
     Encoder encoder = new Encoder();
     final String wordToTest = "aaa";
@@ -49,6 +53,7 @@ public class EncoderTest extends TestCase {
     assertEquals(wordToTest, encoder.decode(bitSet.pack()));
   }
 
+  @Test
   public void testLetterRepetition() {
     Encoder encoder = new Encoder();
     final String wordToTest = "aba";
@@ -60,6 +65,7 @@ public class EncoderTest extends TestCase {
     assertEquals(wordToTest, encoder.decode(bitSet.pack()));
   }
 
+  @Test
   public void testReverse() {
     Encoder encoder = new Encoder();
     final String wordToTest1 = "abc";
@@ -83,19 +89,20 @@ public class EncoderTest extends TestCase {
     assertEquals(wordToTest2, encoder.decode(pack2));
   }
 
-
+  @Test
   public void testWithPredefinedAlphabet() {
-    Encoder encoder = new Encoder(new Alphabet("abcdefghijklmnopqrst"));
+    @SuppressWarnings("SpellCheckingInspection") Encoder encoder = new Encoder(new Alphabet("abcdefghijklmnopqrst"));
     final String wordToTest1 = "asia";
     //letter 'a' will be added at the end
     final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
     assertNotNull(bitSet);
     assertEquals(20, encoder.getAlphabet().getLastIndexUsed());
-    assertIndices(bitSet, 1, 19, 9,1);
+    assertIndices(bitSet, 1, 19, 9, 1);
 
     assertEquals(wordToTest1, encoder.decode(bitSet.pack()));
   }
 
+  @Test
   public void testUnknown() {
     Encoder encoder = new Encoder(new Alphabet("abc"));
     final String wordToTest1 = "def";

@@ -21,6 +21,7 @@ import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTag;
@@ -193,20 +194,37 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
       }
 
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        String oldText = ((XmlTag)myPosition).getName();
+        String oldText = getOldName();
         final TextRange range = getRangeInElement();
         final String newText =
           oldText.substring(0, range.getStartOffset() - 1) + newElementName + oldText.substring(range.getEndOffset() - 1);
-        return ((XmlTag)myPosition).setName(newText);
+        return setNewName(newText);
       }
 
       public PsiElement bindToElement(@NotNull PsiElement element)
         throws IncorrectOperationException {
-        String oldText = ((XmlTag)myPosition).getName();
+        String oldText = getOldName();
         final TextRange range = getRangeInElement();
         final String newText = (element instanceof PsiPackage ? ((PsiPackage)element).getQualifiedName() : ((PsiClass)element).getName()) +
                                oldText.substring(range.getEndOffset() - 1);
-        return ((XmlTag)myPosition).setName(newText);
+        return setNewName(newText);
+      }
+
+      private PsiElement setNewName(String newText) {
+        if (myPosition instanceof XmlTag) {
+          return ((XmlTag)myPosition).setName(newText);
+        }
+        else {
+          final XmlElementFactory xmlElementFactory = XmlElementFactory.getInstance(myPosition.getProject());
+          final XmlAttribute xmlAttribute = xmlElementFactory.createXmlAttribute("attributeName", newText);
+          final XmlAttributeValue valueElement = xmlAttribute.getValueElement();
+          assert valueElement != null;
+          return myPosition.replace(valueElement);
+        }
+      }
+
+      private String getOldName() {
+        return myPosition instanceof XmlTag ? ((XmlTag)myPosition).getName() : ((XmlAttributeValue)myPosition).getValue();
       }
 
       public boolean isReferenceTo(PsiElement element) {

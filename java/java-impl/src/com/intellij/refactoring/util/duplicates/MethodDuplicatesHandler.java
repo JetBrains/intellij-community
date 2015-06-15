@@ -108,7 +108,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       }
     } else if (member instanceof PsiField) {
       final PsiField field = (PsiField)member;
-      if (!field.hasInitializer()) {
+      if (field.getInitializer() == null) {
         return "Field " + member.getName() + " doesn't have initializer";
       }
       final PsiClass containingClass = field.getContainingClass();

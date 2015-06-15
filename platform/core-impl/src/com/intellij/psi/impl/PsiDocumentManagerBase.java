@@ -54,7 +54,7 @@ import javax.swing.*;
 import java.util.*;
 
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, DocumentBulkUpdateListener {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
+  static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REFERENCE_TO_PSI");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
@@ -73,11 +73,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final SmartPointerManagerImpl mySmartPointerManager;
 
-  public PsiDocumentManagerBase(@NotNull final Project project,
-                                @NotNull PsiManager psiManager,
-                                @NotNull SmartPointerManager smartPointerManager,
-                                @NotNull MessageBus bus,
-                                @NonNls @NotNull final DocumentCommitProcessor documentCommitProcessor) {
+  protected PsiDocumentManagerBase(@NotNull final Project project,
+                                   @NotNull PsiManager psiManager,
+                                   @NotNull SmartPointerManager smartPointerManager,
+                                   @NotNull MessageBus bus,
+                                   @NonNls @NotNull final DocumentCommitProcessor documentCommitProcessor) {
     myProject = project;
     myPsiManager = psiManager;
     myDocumentCommitProcessor = documentCommitProcessor;
@@ -132,7 +132,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Nullable
-  public FileViewProvider getCachedViewProvider(@NotNull Document document) {
+  FileViewProvider getCachedViewProvider(@NotNull Document document) {
     final VirtualFile virtualFile = getVirtualFile(document);
     if (virtualFile == null) return null;
     return getCachedViewProvider(virtualFile);
@@ -149,7 +149,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Nullable
-  protected PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile) {
+  PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile) {
     return ((PsiManagerEx)myPsiManager).getFileManager().getCachedPsiFile(virtualFile);
   }
 
@@ -543,7 +543,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
   }
 
-  protected void fireDocumentCreated(@NotNull Document document, PsiFile file) {
+  void fireDocumentCreated(@NotNull Document document, PsiFile file) {
     for (Listener listener : myListeners) {
       listener.documentCreated(document, file);
     }
@@ -611,7 +611,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();
 
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
-    if (!isBulk && isRelevant) {
+    if (!isBulk && isRelevant && shouldNotifySmartPointers(virtualFile)) {
       mySmartPointerManager.fastenBelts(virtualFile, event.getOffset(), null);
     }
 
@@ -652,7 +652,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     boolean isBulk = document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate();
 
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
-    if (!isBulk && isRelevant) {
+    if (!isBulk && isRelevant && shouldNotifySmartPointers(virtualFile)) {
       mySmartPointerManager.unfastenBelts(virtualFile, event.getOffset());
     }
 
@@ -711,19 +711,20 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void updateStarted(@NotNull Document document) {
     final VirtualFile virtualFile = getVirtualFile(document);
-    if (virtualFile == null || !isRelevant(virtualFile)) return;
-
-    mySmartPointerManager.fastenBelts(virtualFile, 0, null);
+    if (virtualFile != null && isRelevant(virtualFile) && shouldNotifySmartPointers(virtualFile)) {
+      mySmartPointerManager.fastenBelts(virtualFile, 0, null);
+    }
   }
 
   @Override
   public void updateFinished(@NotNull Document document) {
     final VirtualFile virtualFile = getVirtualFile(document);
-    if (virtualFile == null || !isRelevant(virtualFile)) return;
-    mySmartPointerManager.unfastenBelts(virtualFile, 0);
+    if (virtualFile != null && isRelevant(virtualFile) && shouldNotifySmartPointers(virtualFile)) {
+      mySmartPointerManager.unfastenBelts(virtualFile, 0);
+    }
   }
 
-  public void handleCommitWithoutPsi(@NotNull Document document) {
+  void handleCommitWithoutPsi(@NotNull Document document) {
     final Pair<CharSequence, Long> prevPair = myLastCommittedTexts.remove(document);
     if (prevPair == null) {
       return;
@@ -768,6 +769,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {
     return !virtualFile.getFileType().isBinary() && !myProject.isDisposed();
+  }
+
+  boolean shouldNotifySmartPointers(@NotNull VirtualFile virtualFile) {
+    return true;
   }
 
   public static boolean checkConsistency(@NotNull PsiFile psiFile, @NotNull Document document) {

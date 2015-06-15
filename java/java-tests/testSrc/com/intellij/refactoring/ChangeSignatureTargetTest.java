@@ -51,6 +51,11 @@ public class ChangeSignatureTargetTest extends LightCodeInsightTestCase {
     doTest("A1");
   }
 
+  public void testDisabledForEnum() throws Exception {
+    configureByFile("/refactoring/changeSignatureTarget/" + getTestName(true) + ".java");
+    assertNull(new JavaChangeSignatureHandler().findTargetMember(getFile(), getEditor()));
+  }
+
   private void doTest(String expectedMemberName) throws Exception {
     String basePath = "/refactoring/changeSignatureTarget/" + getTestName(true);
     @NonNls final String filePath = basePath + ".java";

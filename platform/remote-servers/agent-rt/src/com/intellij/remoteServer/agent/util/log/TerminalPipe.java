@@ -24,20 +24,22 @@ public abstract class TerminalPipe extends LogPipeBase {
 
   private final String myLogPipeName;
   private final CloudAgentLoggingHandler myLoggingHandler;
+  private TerminalListener myTerminalListener;
 
   public TerminalPipe(String logPipeName, CloudAgentLoggingHandler loggingHandler) {
     myLogPipeName = logPipeName;
     myLoggingHandler = loggingHandler;
+    myTerminalListener = TerminalListener.NULL;
   }
 
   @Override
   public void open() {
-    myLoggingHandler.createTerminal(myLogPipeName, getOutputStream(), getInputStream());
+    myTerminalListener = myLoggingHandler.createTerminal(myLogPipeName, getOutputStream(), getInputStream());
   }
 
   @Override
   public void close() {
-
+    myTerminalListener.close();
   }
 
   protected abstract OutputStream getOutputStream();

@@ -17,8 +17,10 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
@@ -32,10 +34,25 @@ public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
     return false;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    return elements.length == 1 &&
-           (elements[0] instanceof PsiMethod && ((PsiMethod)elements[0]).isConstructor() || elements[0] instanceof PsiClass)
-           && elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE);
+    return false;
+  }
+
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context) {
+    return (element instanceof PsiMethod &&
+            ((PsiMethod)element).isConstructor() &&
+            acceptClass(((PsiMethod)element).getContainingClass())  ||
+            acceptClass(element))
+           && element.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+  }
+
+  private static boolean acceptClass(PsiElement element) {
+    return element instanceof PsiClass && !((PsiClass)element).isEnum();
   }
 
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {

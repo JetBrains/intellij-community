@@ -16,6 +16,7 @@
 package com.intellij.remoteServer.agent.util;
 
 import com.intellij.remoteServer.agent.util.log.LogListener;
+import com.intellij.remoteServer.agent.util.log.TerminalListener;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,5 +36,5 @@ public interface CloudAgentLoggingHandler {
 
   boolean isTtySupported();
 
-  void createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput);
+  TerminalListener createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput);
 }

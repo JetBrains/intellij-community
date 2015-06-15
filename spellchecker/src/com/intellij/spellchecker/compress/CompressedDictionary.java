@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,13 +89,26 @@ public final class CompressedDictionary implements Dictionary {
     return new TreeSet<byte[]>(COMPARATOR);
   }
 
-  @NotNull
+  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public List<String> getWords(char first, int minLength, int maxLength) {
-    int index = alphabet.getIndex(first, false);
     List<String> result = new ArrayList<String>();
-    if (index == -1) {
-      return result;
-    }
+    getWords(first, minLength, maxLength, result);
+    return result;
+  }
+
+  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public List<String> getWords(char first) {
+    List<String> result = new ArrayList<String>();
+    getWords(first, 0, Integer.MAX_VALUE, result);
+    return result;
+  }
+
+  public void getWords(char first, int minLength, int maxLength, @NotNull Collection<String> result) {
+    int index = alphabet.getIndex(first, false);
+    if (index == -1) return;
+
     int i = 0;
     for (byte[] data : words) {
       int length = lengths[i];
@@ -110,12 +123,6 @@ public final class CompressedDictionary implements Dictionary {
       }
       i++;
     }
-    return result;
-  }
-
-  @NotNull
-  public List<String> getWords(char first) {
-    return getWords(first, 0, Integer.MAX_VALUE);
   }
 
   @NotNull
@@ -149,9 +156,9 @@ public final class CompressedDictionary implements Dictionary {
   @Override
   public Set<String> getWords() {
     Set<String> words = new THashSet<String>();
-    for (int i=0; i<=alphabet.getLastIndexUsed();i++) {
+    for (int i = 0; i <= alphabet.getLastIndexUsed(); i++) {
       char letter = alphabet.getLetter(i);
-      words.addAll(getWords(letter));
+      getWords(letter, 0, Integer.MAX_VALUE, words);
     }
     return words;
   }

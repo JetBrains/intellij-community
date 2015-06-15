@@ -144,8 +144,11 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
         include(name: "*.*")
       }
     }
+
     dir("license") {
-      fileset(dir: "${home}/license")
+      fileset(dir: "${home}/license") {
+        exclude(name: "placeholder.txt")
+      }
     }
     fileset(file: "${home}/LICENSE.txt")
     fileset(file: "${home}/NOTICE.txt")

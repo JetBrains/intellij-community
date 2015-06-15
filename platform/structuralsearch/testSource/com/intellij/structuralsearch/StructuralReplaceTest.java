@@ -2259,15 +2259,15 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
   public void testReplaceAnnotation() {
     String in = "@SuppressWarnings(\"ALL\")\n" +
-                "class A {}";
+                "public class A {}";
     String what = "@SuppressWarnings(\"ALL\")";
 
     final String by1 = "";
-    assertEquals("class A {}", replacer.testReplace(in, what, by1, options, false));
+    assertEquals("public class A {}", replacer.testReplace(in, what, by1, options, false));
 
     final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
     assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
-                 "class A {}", replacer.testReplace(in, what, by2, options, false));
+                 "public class A {}", replacer.testReplace(in, what, by2, options, false));
   }
 
   public void testReplacePolyadicExpression() {

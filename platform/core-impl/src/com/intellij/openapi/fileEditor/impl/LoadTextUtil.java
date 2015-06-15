@@ -407,7 +407,7 @@ public final class LoadTextUtil {
         return text;
       }
 
-      throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " + file.getPresentableUrl());
+      throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " + file.getPresentableUrl() + ". File type: " + fileType.getName());
     }
 
     try {

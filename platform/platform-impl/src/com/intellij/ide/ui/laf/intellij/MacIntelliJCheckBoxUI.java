@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -27,6 +27,8 @@ import java.awt.*;
  */
 public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   public static final Icon DEFAULT_ICON = EmptyIcon.create(14);
+  public static final Icon CHECKED_ICON = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/checkboxSelectedMac.png");
+  public static final Icon UNCHECKED_ICON = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/checkboxMac.png");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -35,23 +37,15 @@ public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
-    Icon icon;
-    if (selected) {
-      icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/checkboxSelectedMac.png", MacIntelliJCheckBoxUI.class, true);
-    } else {
-      icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/checkboxMac.png", MacIntelliJCheckBoxUI.class, true);
-    }
-    if (icon != null) {
-      icon.paintIcon(c, g, iconRect.x, iconRect.y);
-    }
+    getIcon(selected).paintIcon(c, g, iconRect.x, iconRect.y);
+  }
+
+  private Icon getIcon(boolean selected) {
+    return selected ? CHECKED_ICON : UNCHECKED_ICON;
   }
 
   @Override
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
-  }
-
-  private static boolean isGraphite() {
-    return false;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ import java.util.List;
  */
 public abstract class SingleTaskController<Request, Result> {
 
+  private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
+
   @NotNull private final Consumer<Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
 
@@ -55,8 +58,10 @@ public abstract class SingleTaskController<Request, Result> {
   public final void request(@NotNull Request requests) {
     synchronized (LOCK) {
       myAwaitingRequests.add(requests);
+      LOG.debug("Added requests: " + requests);
       if (!myActive) {
         startNewBackgroundTask();
+        LOG.debug("Started a new bg task");
         myActive = true;
       }
     }
@@ -77,6 +82,7 @@ public abstract class SingleTaskController<Request, Result> {
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
       myAwaitingRequests = ContainerUtil.newArrayList();
+      LOG.debug("Popped requests: " + requests);
       return requests;
     }
   }
@@ -89,13 +95,16 @@ public abstract class SingleTaskController<Request, Result> {
   protected final void taskCompleted(@Nullable Result result) {
     if (result != null) {
       myResultHandler.consume(result);
+      LOG.debug("Handled result: " + result);
     }
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) {
         myActive = false;
+        LOG.debug("No more requests");
       }
       else {
         startNewBackgroundTask();
+        LOG.debug("Restarted a bg task");
       }
     }
   }

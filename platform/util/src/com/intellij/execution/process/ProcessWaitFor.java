@@ -18,18 +18,19 @@ package com.intellij.execution.process;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.Collection;
+import java.util.Iterator;
 
 public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
 
-  private static final Map<Process, Consumer<Integer>> ourQueue;
+  private static final MultiMap<Process, Consumer<Integer>> ourQueue;
 
   static {
-    ourQueue = ContainerUtil.newConcurrentMap();
+    ourQueue = new MultiMap<Process, Consumer<Integer>>();
 
     BaseOSProcessHandler.ExecutorServiceHolder.submit(new Runnable() {
       @Override
@@ -44,27 +45,36 @@ public class ProcessWaitFor {
   }
 
   private static void processQueue() {
-    for (Process process : ourQueue.keySet()) {
-      try {
-        int value = process.exitValue();
+    synchronized (ourQueue) {
+      for (Iterator<Process> iterator = ourQueue.keySet().iterator(); iterator.hasNext(); ) {
+        Process process = iterator.next();
+        try {
+          int value = process.exitValue();
 
-        Consumer<Integer> callback = ourQueue.remove(process);
-        if (callback != null) {
-          callback.consume(value);
+          Collection<Consumer<Integer>> callbacks = ourQueue.get(process);
+          for (Consumer<Integer> callback : callbacks) {
+            callback.consume(value);
+          }
+
+          iterator.remove();
         }
-      }
-      catch (IllegalThreadStateException ignore) { }
-      catch (RuntimeException e) {
-        LOG.debug(e);
+        catch (IllegalThreadStateException ignore) { }
+        catch (RuntimeException e) {
+          LOG.debug(e);
+        }
       }
     }
   }
 
   public static void attach(@NotNull Process process, @NotNull Consumer<Integer> callback) {
-    ourQueue.put(process, callback);
+    synchronized (ourQueue) {
+      ourQueue.putValue(process, callback);
+    }
   }
 
   public static void detach(@NotNull Process process) {
-    ourQueue.remove(process);
+    synchronized (ourQueue) {
+      ourQueue.remove(process);
+    }
   }
 }

@@ -34,8 +34,4 @@ public class DefaultFileTemplateUsageInspectionTest extends LightCodeInsightFixt
     myFixture.enableInspections(new DefaultFileTemplateUsageInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
-
-  public void testWtf() throws Exception {
-
-  }
 }

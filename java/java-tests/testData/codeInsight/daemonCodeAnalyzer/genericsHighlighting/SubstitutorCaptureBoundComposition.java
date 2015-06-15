@@ -22,7 +22,7 @@ class Test {
 
     traverser.filter<error descr="'filter(Predicate<? super capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'">(filter)</error>;
     traverser.filter1<error descr="'filter1(Predicate<capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'">(filter)</error>;
-    traverser.filter2<error descr="'filter2(Predicate<capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'">(filter)</error>; //"'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'"
+    traverser.filter2<error descr="'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'">(filter)</error>; //"'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'"
 
     traverser1.filter<error descr="'filter(Predicate<? super capture<? extends java.lang.String>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'">(filter)</error>;
     traverser1.filter1<error descr="'filter1(Predicate<capture<? extends java.lang.String>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<?>>)'">(filter)</error>;
@@ -36,7 +36,7 @@ class Test {
 
     traverser.filter<error descr="'filter(Predicate<? super capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'">(filter1)</error>;
     traverser.filter1<error descr="'filter1(Predicate<capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'">(filter1)</error>;
-    traverser.filter2<error descr="'filter2(Predicate<capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'">(filter1)</error>;// "'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'"
+    traverser.filter2<error descr="'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'">(filter1)</error>;// "'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'"
 
     traverser1.filter<error descr="'filter(Predicate<? super capture<? extends java.lang.String>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'">(filter1)</error>;
     traverser1.filter1<error descr="'filter1(Predicate<capture<? extends java.lang.String>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? extends java.lang.String>>)'">(filter1)</error>;
@@ -50,7 +50,7 @@ class Test {
 
     traverser.filter<error descr="'filter(Predicate<? super capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? super java.lang.String>>)'">(filter2)</error>;
     traverser.filter1<error descr="'filter1(Predicate<capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? super java.lang.String>>)'">(filter2)</error>;
-    traverser.filter2<error descr="'filter2(Predicate<capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? super java.lang.String>>)'">(filter2)</error>;//  "'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? super java.lang.String>>)'"
+    traverser.filter2<error descr="'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? super java.lang.String>>)'">(filter2)</error>;//  "'filter2(Predicate<? extends capture<?>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? super java.lang.String>>)'"
 
     traverser1.filter(filter2);
     traverser1.filter1<error descr="'filter1(Predicate<capture<? extends java.lang.String>>)' in 'NodeTraverser' cannot be applied to '(Predicate<capture<? super java.lang.String>>)'">(filter2)</error>;

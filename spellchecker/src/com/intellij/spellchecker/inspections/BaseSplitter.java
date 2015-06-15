@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.TextRange;
@@ -32,13 +32,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public abstract class BaseSplitter implements Splitter {
-
-  static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.inspections.BaseSplitter");
-
   public static final int MIN_RANGE_LENGTH = 3;
-
 
   protected static void addWord(@NotNull Consumer<TextRange> consumer, boolean ignore, @Nullable TextRange found) {
     if (found == null || ignore) {
@@ -51,7 +46,6 @@ public abstract class BaseSplitter implements Splitter {
     consumer.consume(found);
   }
 
-
   protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<TextRange> words) {
     for (TextRange word : words) {
       CharacterIterator it = new StringCharacterIterator(text, word.getStartOffset(), word.getEndOffset(), word.getStartOffset());
@@ -62,7 +56,6 @@ public abstract class BaseSplitter implements Splitter {
       }
     }
     return true;
-
   }
 
   protected static boolean containsShortWord(@NotNull List<TextRange> words) {
@@ -130,15 +123,13 @@ public abstract class BaseSplitter implements Splitter {
       return toCheck;
     }
     catch (ProcessCanceledException e) {
-      //LOG.warn("Matching took too long: >>>" + range.substring(text) + "<<< " + toExclude);
       return Collections.singletonList(range);
-      //return Collections.emptyList();
     }
   }
 
   public static void checkCancelled() {
-    ProgressIndicatorProvider.checkCanceled();
+    if (ApplicationManager.getApplication() != null) {
+      ProgressIndicatorProvider.checkCanceled();
+    }
   }
-
-
 }

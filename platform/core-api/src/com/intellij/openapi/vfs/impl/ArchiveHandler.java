@@ -44,6 +44,14 @@ public abstract class ArchiveHandler {
     public final long length;
     public final long timestamp;
 
+    @Deprecated
+    /**
+     * Please use the {@link EntryInfo#EntryInfo(ArchiveHandler.EntryInfo, CharSequence, boolean, long, long)} instead
+     */
+    public EntryInfo(EntryInfo parent, @NotNull String shortName, boolean isDirectory, long length, long timestamp) {
+      this(parent, (CharSequence) shortName, isDirectory, length, timestamp);
+    }
+
     public EntryInfo(EntryInfo parent, @NotNull CharSequence shortName, boolean isDirectory, long length, long timestamp) {
       this.parent = parent;
       this.shortName = shortName;

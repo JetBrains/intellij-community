@@ -37,6 +37,10 @@ public class GenericsHighlightingGenerated8Test extends LightDaemonAnalyzerTestC
     doTest();
   }
 
+  public void _testUnrelatedClassesExtendsTypeParams() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), myTestRootDisposable);

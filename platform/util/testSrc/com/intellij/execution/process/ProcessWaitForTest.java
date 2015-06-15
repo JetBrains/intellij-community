@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.junit.Test;
@@ -27,21 +28,30 @@ import static org.junit.Assert.assertTrue;
 public class ProcessWaitForTest {
   @Test(timeout = 10000)
   public void notification() throws IOException, InterruptedException {
-    File jvm = new File(System.getProperty("java.home"), "bin/java");
+    File jvm = new File(System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java"));
     assertTrue(jvm.canExecute());
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-
-    Process process = new ProcessBuilder(jvm.getPath(), "-version").redirectErrorStream(true).start();
-    ProcessWaitFor.attach(process, new Consumer<Integer>() {
+    final Semaphore semaphore1 = new Semaphore();
+    semaphore1.down();
+    Process process1 = new ProcessBuilder(jvm.getPath(), "-help").redirectErrorStream(true).start();
+    ProcessWaitFor.attach(process1, new Consumer<Integer>() {
       @Override
       public void consume(Integer exitCode) {
-        semaphore.up();
+        semaphore1.up();
       }
     });
-    process.waitFor();
 
-    assertTrue(semaphore.waitFor(5000));
+    final Semaphore semaphore2 = new Semaphore();
+    semaphore2.down();
+    Process process2 = new ProcessBuilder(jvm.getPath(), "-version").redirectErrorStream(true).start();
+    ProcessWaitFor.attach(process2, new Consumer<Integer>() {
+      @Override
+      public void consume(Integer exitCode) {
+        semaphore2.up();
+      }
+    });
+
+    assertTrue(semaphore1.waitFor(5000));
+    assertTrue(semaphore2.waitFor(5000));
   }
 }

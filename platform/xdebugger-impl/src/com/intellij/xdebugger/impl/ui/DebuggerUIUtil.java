@@ -94,7 +94,7 @@ public class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
-  public static RelativePoint calcPopupLocation(Editor editor, final int line) {
+  public static RelativePoint calcPopupLocation(@NotNull Editor editor, final int line) {
     Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
