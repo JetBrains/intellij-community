@@ -390,64 +390,85 @@
 
     <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
 
-    <localInspection language="XML" shortName="CheckTagEmptyBody" bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" shortName="CheckTagEmptyBody" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckTagEmptyBodyInspection"/>
     <!-- TODO: assign it to XML & DTD -->
-    <localInspection shortName="CheckDtdRefs" bundle="messages.XmlBundle" key="xml.inspections.check.dtd.references" groupName="XML"
-                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.xml.util.CheckDtdReferencesInspection"/>
-    <localInspection language="XML" shortName="CheckEmptyScriptTag" bundle="messages.XmlBundle" key="html.inspections.check.empty.tag" groupName="HTML"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.intellij.xml.util.CheckEmptyTagInspection"/>
-    <localInspection language="XML" shortName="CheckValidXmlInScriptTagBody" bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
-                     groupName="HTML" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
-    <localInspection language="XML" shortName="CheckXmlFileWithXercesValidator" bundle="messages.XmlBundle" key="xml.inspections.check.file.with.xerces"
-                     groupName="XML" enabledByDefault="true" level="ERROR"
+    <localInspection shortName="CheckDtdRefs" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.check.dtd.references"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.xml.util.CheckDtdReferencesInspection"/>
+    <localInspection language="XML" shortName="CheckXmlFileWithXercesValidator" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.check.file.with.xerces"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection" unfair="true"/>
-
-    <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
+    <localInspection language="XML" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
+                     bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.xml.util.XmlDuplicatedIdInspection"/>
     <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.invalid.id"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
                      implementationClass="com.intellij.xml.util.XmlInvalidIdInspection"/>
-
-    <localInspection language="XML" shortName="RequiredAttributes" bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
-                     groupName="HTML" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection" unfair="true"/>
-    <localInspection language="XML" shortName="HtmlExtraClosingTag" bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag" groupName="HTML"
-                     enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
-    <localInspection language="XML" shortName="XmlWrongRootElement" bundle="messages.XmlBundle" key="xml.inspection.wrong.root.element" groupName="XML"
+    <localInspection language="XML" shortName="XmlWrongRootElement"
+                     bundle="messages.XmlBundle" key="xml.inspection.wrong.root.element"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.htmlInspections.XmlWrongRootElementInspection"/>
-    <localInspection language="XML" shortName="HtmlUnknownTag" bundle="messages.XmlBundle" key="html.inspections.unknown.tag" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection"/>
-    <localInspection language="XML" shortName="HtmlUnknownAttribute" bundle="messages.XmlBundle" key="html.inspections.unknown.attribute" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
-    <localInspection language="XML" bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
-    <localInspection language="XML" shortName="XmlUnboundNsPrefix" bundle="messages.XmlBundle" key="xml.inspections.unbound.prefix"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" shortName="XmlUnboundNsPrefix" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.unbound.prefix"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection"/>
-    <localInspection language="XML" shortName="XmlUnusedNamespaceDeclaration" displayName="Unused XML schema declaration"
-                     groupKey="xml.inspections.group.name" bundle="messages.XmlBundle" enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" shortName="XmlUnusedNamespaceDeclaration" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.unused.schema"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection"/>
-    <localInspection language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"
-                     displayName="File path resolving in XML"
-                     groupName="XML" enabledByDefault="true" level="ERROR"/>
-    <localInspection language="XML" shortName="HtmlUnknownTarget" bundle="messages.XmlBundle" key="html.inspections.unknown.target" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.path.resolve"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"/>
+
+    <localInspection language="XML" shortName="CheckEmptyScriptTag" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.check.empty.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.xml.util.CheckEmptyTagInspection"/>
+    <localInspection language="XML" shortName="CheckValidXmlInScriptTagBody" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
+    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING" unfair="true"
+                     bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
+    <localInspection language="XML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
+    <localInspection language="XML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection"/>
+    <localInspection language="XML" shortName="HtmlUnknownAttribute" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.attribute"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
+    <localInspection language="XML" shortName="HtmlUnknownTarget" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.target"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownTargetInspection"/>
-    <localInspection language="XML" shortName="HtmlUnknownAnchorTarget" bundle="messages.XmlBundle" key="html.inspections.unknown.anchor" groupName="HTML"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="XML" shortName="HtmlUnknownAnchorTarget" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.unknown.anchor"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownAnchorTargetInspection"/>
 
-
-    <globalInspection language="XML" shortName="XmlHighlighting" displayName="XML highlighting" groupName="xml.inspections.group.name" enabledByDefault="true" level="ERROR"
+    <globalInspection language="XML" shortName="XmlHighlighting" enabledByDefault="true" level="ERROR"
+                      bundle="messages.XmlBundle" key="xml.inspections.global"
+                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                       implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection"/>
 
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
