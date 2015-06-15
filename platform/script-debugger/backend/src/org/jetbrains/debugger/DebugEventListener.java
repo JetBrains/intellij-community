@@ -29,7 +29,7 @@ public interface DebugEventListener extends EventListener {
   /**
    * Reports that a new script has been loaded.
    */
-  void scriptAdded(@NotNull Script script, @Nullable CharSequence sourceMapData);
+  void scriptAdded(@NotNull Script script, @Nullable String sourceMapUrl);
 
   void sourceMapFound(@NotNull Script script, @Nullable Url sourceMapUrl, @NotNull String sourceMapData);
 
