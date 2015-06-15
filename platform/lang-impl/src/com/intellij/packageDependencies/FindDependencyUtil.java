@@ -99,6 +99,12 @@ public class FindDependencyUtil {
         @Override
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
+          if (dependencyFile != null) {
+            final PsiElement navigationElement = dependencyFile.getNavigationElement();
+            if (navigationElement instanceof PsiFile) {
+              dependencyFile = (PsiFile)navigationElement;
+            }
+          }
           if (searchFor.contains(dependencyFile)) {
             usages.add(new UsageInfo(place));
           }

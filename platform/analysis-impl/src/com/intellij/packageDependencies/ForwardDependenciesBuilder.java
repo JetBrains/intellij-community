@@ -138,7 +138,8 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
                       (fileIndex.isInContent(virtualFile) ||
                        fileIndex.isInLibraryClasses(virtualFile) ||
                        fileIndex.isInLibrarySource(virtualFile))) {
-                    found.add(dependencyFile);
+                    final PsiElement navigationElement = dependencyFile.getNavigationElement();
+                    found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
                   }
                 }
               }
