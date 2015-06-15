@@ -428,6 +428,14 @@ public final class PyClassRefactoringUtil {
     });
   }
 
+  /**
+   * Updates the import statement if the given PSI element <em>has the same name</em> as one of the import elements of that statement.
+   * It means that you should be careful it you actually want to update the source part of a "from import" statement, because in cases
+   * like {@code from foo import foo} this method may do not what you expect.
+   *
+   * @param importStatement parent import statement that contains reference to given element
+   * @param element         PSI element reference to which should be updated
+   */
   public static void updateImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
     final String name = getOriginalName(element);
     if (name != null) {
