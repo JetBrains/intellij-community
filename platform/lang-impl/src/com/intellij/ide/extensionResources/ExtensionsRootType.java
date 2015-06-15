@@ -17,6 +17,7 @@ package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchFileService.Option;
@@ -133,7 +134,7 @@ public class ExtensionsRootType extends RootType {
     PluginId ownerPluginId = getOwnerPluginId(resourcesDir);
     if (ownerPluginId == null) return null;
 
-    if ("com.intellij".equals(ownerPluginId.getIdString())) {
+    if (PluginManagerCore.CORE_PLUGIN_ID.equals(ownerPluginId.getIdString())) {
       return PlatformUtils.getPlatformPrefix();
     }
 
