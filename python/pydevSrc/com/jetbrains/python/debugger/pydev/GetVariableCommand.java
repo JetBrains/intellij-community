@@ -26,7 +26,7 @@ public class GetVariableCommand extends GetFrameCommand {
         sb.insert(0, BY_ID).insert(0, '\t').insert(0, p.getId());
         break;
       } else {
-        sb.insert(0, p.getTempName());
+        sb.insert(0, p.getTempName().replaceAll("\t", TAB_CHAR));
       }
       p = p.getParent();
     }

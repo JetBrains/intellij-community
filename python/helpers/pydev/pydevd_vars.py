@@ -200,6 +200,9 @@ def getVariable(thread_id, frame_id, scope, attrs):
     else:
         attrList = []
 
+    for attr in attrList:
+        attr.replace("@_@TAB_CHAR@_@", '\t')
+
     if scope == 'EXPRESSION':
         for count in xrange(len(attrList)):
             if count == 0:
