@@ -942,6 +942,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
             map.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
           }
           myDisplayLevelMap = map;
+          return map;
         }
       }
     }
