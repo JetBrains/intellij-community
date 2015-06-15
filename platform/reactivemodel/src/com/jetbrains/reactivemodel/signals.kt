@@ -172,13 +172,14 @@ fun<T> varSignal(lifetime: Lifetime = Lifetime.Eternal, name: String = "anonymou
 fun main(args: Array<String>) : Unit {
     val s1 = varSignal(initial=0, name="int-var1")
     val s2 = varSignal(initial=1, name="int-var2")
-    val react = reaction(true, "+", s1, s2) { i1, i2->
+
+    val sum = reaction(true, "+", s1, s2) { i1, i2->
         i1+i2
     }
-    val square = reaction(true, "square", react) {
+    val square = reaction(true, "square", sum) {
         it*it
     }
-    val cube = reaction(true, "cube", react) {
+    val cube = reaction(true, "cube", sum) {
         it*it*it
     }
     val squarePlusCube = reaction(true, "square+cube", square, cube) { sq, cb ->
