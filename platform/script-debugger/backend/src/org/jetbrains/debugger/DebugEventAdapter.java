@@ -18,7 +18,7 @@ public abstract class DebugEventAdapter implements DebugEventListener {
   }
 
   @Override
-  public void scriptAdded(@NotNull Script script, @Nullable String sourceMapData) {
+  public void scriptAdded(@NotNull Script script, @Nullable String sourceMapUrl) {
   }
 
   @Override

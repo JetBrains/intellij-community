@@ -26,10 +26,10 @@ public interface CloudTerminalProvider {
 
   ExtensionPointName<CloudTerminalProvider> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.CloudTerminalProvider");
 
-  LoggingHandlerBase createTerminal(@NotNull String presentableName,
-                                    @NotNull Project project,
-                                    @NotNull InputStream terminalOutput,
-                                    @NotNull OutputStream terminalInput);
+  TerminalHandlerBase createTerminal(@NotNull String presentableName,
+                                     @NotNull Project project,
+                                     @NotNull InputStream terminalOutput,
+                                     @NotNull OutputStream terminalInput);
 
   boolean isTtySupported();
 }

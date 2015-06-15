@@ -189,6 +189,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
   @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
+    rect.height=Math.min(rect.height, COMBOBOX.getIconHeight());
     rect.y+=2;
     rect.x+=5;
     rect.height-=4;
@@ -257,17 +258,21 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
+  public void paintCurrentValue(Graphics g,Rectangle bounds,boolean hasFocus) {
+    super.paintCurrentValue(g, bounds, comboBox.isPopupVisible());
+  }
 
   @Override
   public void paint(Graphics g, JComponent c) {
     super.paint(g, c);
 
-    int stop = arrowButton.getBounds().x;
+    Rectangle r = arrowButton.getBounds();
+    int stop = r.x;
     g.setClip(0,0, stop, COMBOBOX.getIconHeight());
-    COMBOBOX_LEFT.paintIcon(c,g,0,0);
+    COMBOBOX_LEFT.paintIcon(c,g,0,r.y);
     int x = COMBOBOX_LEFT.getIconWidth();
     while (x < stop) {
-      COMBOBOX_TOP_BOTTOM.paintIcon(c, g, x, 0);
+      COMBOBOX_TOP_BOTTOM.paintIcon(c, g, x, r.y);
       x+=COMBOBOX_TOP_BOTTOM.getIconWidth();
     }
     ((Graphics2D)g).scale(0.5d, 0.5d);

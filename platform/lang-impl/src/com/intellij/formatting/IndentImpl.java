@@ -18,7 +18,7 @@ package com.intellij.formatting;
 
 import org.jetbrains.annotations.NonNls;
 
-class IndentImpl extends Indent {
+public class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
   private final boolean myRelativeToDirectParent;
 
@@ -38,7 +38,7 @@ class IndentImpl extends Indent {
     myEnforceIndentToChildren = enforceIndentToChildren;
   }
 
-  Type getType() {
+  public Type getType() {
     return myType;
   }
 

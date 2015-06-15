@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.lang.manifest;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
-import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.lang.manifest.psi.Header;
 import org.jetbrains.lang.manifest.psi.HeaderValue;
@@ -27,16 +26,16 @@ import org.jetbrains.lang.manifest.psi.ManifestFile;
 public class ManifestPsiTest extends LightIdeaTestCase {
   public void testFile() {
     ManifestFile file = createFile("");
-    Assert.assertEquals(0, file.getSections().size());
-    Assert.assertNull(file.getMainSection());
-    Assert.assertEquals(0, file.getHeaders().size());
+    assertEquals(0, file.getSections().size());
+    assertNull(file.getMainSection());
+    assertEquals(0, file.getHeaders().size());
 
     file = createFile("Header: value\n\nAnother-Header: another value\n");
-    Assert.assertEquals(2, file.getSections().size());
-    Assert.assertNotNull(file.getMainSection());
-    Assert.assertEquals(1, file.getHeaders().size());
-    Assert.assertNotNull(file.getHeader("Header"));
-    Assert.assertNull(file.getHeader("Another-Header"));
+    assertEquals(2, file.getSections().size());
+    assertNotNull(file.getMainSection());
+    assertEquals(1, file.getHeaders().size());
+    assertNotNull(file.getHeader("Header"));
+    assertNull(file.getHeader("Another-Header"));
   }
 
   public void testHeader() {
@@ -54,15 +53,15 @@ public class ManifestPsiTest extends LightIdeaTestCase {
 
   private static void assertHeaderValue(ManifestFile file, String name, @Nullable String expected) {
     Header header = file.getHeader(name);
-    Assert.assertNotNull(header);
+    assertNotNull(header);
 
     HeaderValue value = header.getHeaderValue();
     if (expected == null) {
-      Assert.assertNull(value);
+      assertNull(value);
     }
     else {
-      Assert.assertNotNull(value);
-      Assert.assertEquals(expected, value.getUnwrappedText());
+      assertNotNull(value);
+      assertEquals(expected, value.getUnwrappedText());
     }
   }
 }

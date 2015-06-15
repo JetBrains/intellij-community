@@ -519,6 +519,6 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   @Nullable
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Nodes.AnonymousClass;
+    return AllIcons.Nodes.MethodReference;
   }
 }

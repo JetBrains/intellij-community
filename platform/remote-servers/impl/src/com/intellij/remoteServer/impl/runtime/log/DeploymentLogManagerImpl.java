@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
+import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,9 +81,10 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
   }
 
   @Override
-  public void addTerminal(@NotNull final String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
-    LoggingHandlerBase handler = getTerminalProvider().createTerminal(presentableName, myProject, terminalOutput, terminalInput);
+  public TerminalHandler addTerminal(@NotNull final String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
+    TerminalHandlerBase handler = getTerminalProvider().createTerminal(presentableName, myProject, terminalOutput, terminalInput);
     addAdditionalLoggingHandler(handler);
+    return handler;
   }
 
   private static CloudTerminalProvider getTerminalProvider() {

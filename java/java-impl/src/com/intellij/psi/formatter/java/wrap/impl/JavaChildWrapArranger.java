@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -268,6 +269,8 @@ public class JavaChildWrapArranger {
 
   private static boolean isTypeAnnotationOrFalseIfDumb(@NotNull ASTNode child) {
     PsiElement node = child.getPsi();
+    PsiElement next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class, PsiAnnotation.class);
+    if (next instanceof PsiKeyword) return false;
     return !DumbService.isDumb(node.getProject()) && isTypeAnnotation(node);
   }
 

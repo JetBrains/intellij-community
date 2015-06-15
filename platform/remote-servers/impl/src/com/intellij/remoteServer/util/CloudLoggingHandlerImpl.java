@@ -18,8 +18,10 @@ package com.intellij.remoteServer.util;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
+import com.intellij.remoteServer.agent.util.log.TerminalListener;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
+import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
@@ -108,8 +110,15 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
-  public void createTerminal(final String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
-    myLogManager.addTerminal(pipeName, terminalOutput, terminalInput);
+  public TerminalListener createTerminal(final String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
+    final TerminalHandler terminalHandler = myLogManager.addTerminal(pipeName, terminalOutput, terminalInput);
+    return new TerminalListener() {
+
+      @Override
+      public void close() {
+        terminalHandler.close();
+      }
+    };
   }
 
   private static class LogListenerImpl implements LogListener {

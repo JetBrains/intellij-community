@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -566,7 +566,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
     int borderSoftWrapColumnDiff = 0;
     int borderSoftWrapLinesBeforeDiff = 0;
     int borderSoftWrapLinesCurrentDiff = 0;
-    for (int i = 0; i < myAffectedByUpdateCacheEntries.size(); i++) {
+    int affectedEntriesCount = myAffectedByUpdateCacheEntries.size();
+    for (int i = 0; i < affectedEntriesCount; i++) {
       CacheEntry entry = myAffectedByUpdateCacheEntries.get(i);
       if (firstIndex < 0) {
         if (entry.startOffset < recalcEndOffsetTranslated) {
@@ -574,15 +575,12 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
           continue;
         }
         firstIndex = i;
-        if (lastEntry != null) {
-          borderLogicalLine = lastEntry.endLogicalLine;
-          if (entry.startLogicalLine + logicalLinesDiff == borderLogicalLine) {
-            borderColumnDiff = lastEntry.endLogicalColumn - entry.startLogicalColumn;
-            borderSoftWrapLinesBeforeDiff = lastEntry.endSoftWrapLinesBefore - entry.startSoftWrapLinesBefore;
-            borderSoftWrapLinesCurrentDiff = lastEntry.endSoftWrapLinesCurrent - entry.startSoftWrapLinesCurrent + 1;
-            borderFoldedColumnDiff = lastEntry.endFoldingColumnDiff - entry.startFoldingColumnDiff;
-            borderSoftWrapColumnDiff = - borderColumnDiff - borderFoldedColumnDiff;
-          }
+        if (lastEntry != null && entry.startLogicalLine + logicalLinesDiff == borderLogicalLine) {
+          borderColumnDiff = lastEntry.endLogicalColumn - entry.startLogicalColumn;
+          borderSoftWrapLinesBeforeDiff = lastEntry.endSoftWrapLinesBefore - entry.startSoftWrapLinesBefore;
+          borderSoftWrapLinesCurrentDiff = lastEntry.endSoftWrapLinesCurrent - entry.startSoftWrapLinesCurrent + 1;
+          borderFoldedColumnDiff = lastEntry.endFoldingColumnDiff - entry.startFoldingColumnDiff;
+          borderSoftWrapColumnDiff = -borderColumnDiff - borderFoldedColumnDiff;
         }
         if (lengthDiff == 0 && logicalLinesDiff == 0 && foldedLinesDiff == 0 && softWrappedLinesDiff == 0 
             && borderColumnDiff == 0 && borderSoftWrapColumnDiff == 0 && borderFoldedColumnDiff == 0 
@@ -625,6 +623,9 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
         if (lastEntry.visualLine >= nextEntry.visualLine) {
           LOG.error("Invalid soft wrap cache update", new Attachment("state.txt", myEditor.getSoftWrapModel().toString()));
         }
+      }
+      if (myAffectedByUpdateCacheEntries.get(affectedEntriesCount - 1).endOffset > myEditor.getDocument().getTextLength()) {
+        LOG.error("Invalid soft wrap cache entries emerged", new Attachment("state.txt", myEditor.getSoftWrapModel().toString()));
       }
       myCache.addAll(myAffectedByUpdateCacheEntries.subList(firstIndex, myAffectedByUpdateCacheEntries.size()));
     }

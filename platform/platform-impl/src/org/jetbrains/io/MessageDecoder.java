@@ -44,7 +44,7 @@ public abstract class MessageDecoder extends Decoder {
         chunkedContent = null;
         consumedContentByteCount = 0;
       }
-      return new ChannelBufferToString.MyCharArrayCharSequence(ChannelBufferToString.readIntoCharBuffer(input, required, charBuffer));
+      return new JsonReaderEx.CharSequenceBackedByChars(ChannelBufferToString.readIntoCharBuffer(input, required, charBuffer));
     }
   }
 

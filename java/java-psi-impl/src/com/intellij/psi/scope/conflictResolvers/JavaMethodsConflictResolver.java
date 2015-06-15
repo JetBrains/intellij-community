@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.scope.conflictResolvers;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -71,12 +72,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   @Override
   public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
+    /*
+    //non-default policies
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(myArgumentsList);
     if (properties != null) {
       final PsiMethod method = properties.getMethod();
       LOG.error("Recursive conflict resolution for:" + method + "; " + myArgumentsList.getText() + "; file="
                 + (method == null ? "<unknown>" : method.getContainingFile()));
-    }
+    }*/
     return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, true, new Computable<CandidateInfo>() {
       @Override
       public CandidateInfo compute() {

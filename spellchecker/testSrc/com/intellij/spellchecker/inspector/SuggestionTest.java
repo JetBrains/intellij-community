@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,34 +20,14 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 import java.util.List;
 
-
+@SuppressWarnings("SpellCheckingInspection")
 public class SuggestionTest extends LightPlatformCodeInsightFixtureTestCase {
+  public void testSuggestions() { doTest("upgade", "upgrade"); }
+  public void testFirstLetterUppercaseSuggestions() { doTest("Upgade", "Upgrade"); }
+  public void testCamelCaseSuggestions() { doTest("TestUpgade", "TestUpgrade"); }
 
-  private SpellCheckerManager spManager;
-
-  private SpellCheckerManager getManager() {
-    if (spManager == null) {
-      spManager = SpellCheckerManager.getInstance(myFixture.getProject());
-    }
-    assert spManager != null;
-    return spManager;
-  }
-
-  public void testSuggestions() {
-    List<String> result = getManager().getSuggestions("upgade");
-    assertEquals("upgrade", result.get(0));
-  }
-
-
-  public void testFirstLetterUppercaseSuggestions() {
-    List<String> result = getManager().getSuggestions("Upgade");
-    assertEquals("Upgrade", result.get(0));
-  }
-
-  public void testCamelCaseSuggestions() {
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
-    assert manager != null;
-    List<String> result = manager.getSuggestions("TestUpgade");
-    assertEquals("TestUpgrade", result.get(0));
+  private void doTest(String word, String expected) {
+    List<String> result = SpellCheckerManager.getInstance(myFixture.getProject()).getSuggestions(word);
+    assertEquals(expected, result.get(0));
   }
 }

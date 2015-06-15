@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class FormatProcessor {
+public class FormatProcessor {
 
   private static final Map<Alignment.Anchor, BlockAlignmentProcessor> ALIGNMENT_PROCESSORS =
     new EnumMap<Alignment.Anchor, BlockAlignmentProcessor>(Alignment.Anchor.class);

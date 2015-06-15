@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -74,10 +75,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
           if (qName == null) {
             return;
           }
-          final int dotIndex = qName.lastIndexOf('.');
-          if (dotIndex >= 0) {
-            qName = qName.substring(dotIndex + 1);
-          }
+          qName = StringUtil.getShortName(qName);
           final Collection<StaticPseudoFunctionalStyleMethodOptions.PipelineElement> handlerInfos = myOptions.findElementsByMethodName(qName);
           if (handlerInfos.isEmpty()) {
             return;

@@ -15,21 +15,34 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public abstract class VcsLogPlatformTest extends UsefulTestCase {
 
-  @NotNull protected Project myProject;
-  @NotNull protected VirtualFile myProjectRoot;
-  @NotNull protected String myProjectPath;
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
 
-  @NotNull private IdeaProjectTestFixture myProjectFixture;
+  private static final Logger LOG = Logger.getInstance(VcsLogPlatformTest.class);
+
+  protected Project myProject;
+  protected VirtualFile myProjectRoot;
+  protected String myProjectPath;
+
+  private IdeaProjectTestFixture myProjectFixture;
+  private String myTestStartedIndicator;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
   protected VcsLogPlatformTest() {
@@ -39,6 +52,7 @@ public abstract class VcsLogPlatformTest extends UsefulTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    enableDebugLogging();
 
     try {
       myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
@@ -54,6 +68,22 @@ public abstract class VcsLogPlatformTest extends UsefulTestCase {
     myProjectPath = myProjectRoot.getPath();
   }
 
+  private void enableDebugLogging() {
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, ArrayUtil.toStringArray(getDebugLogCategories()));
+    myTestStartedIndicator = createTestStartedIndicator();
+    LOG.info(myTestStartedIndicator);
+  }
+
+  @NotNull
+  private String createTestStartedIndicator() {
+    return "Starting " + getClass().getName() + "." + getTestName(false) + Math.random();
+  }
+
+  @NotNull
+  protected Collection<String> getDebugLogCategories() {
+    return Collections.emptyList();
+  }
+
   @Override
   public void tearDown() throws Exception {
     try {
@@ -64,4 +94,16 @@ public abstract class VcsLogPlatformTest extends UsefulTestCase {
     }
   }
 
+  @Override
+  protected void defaultRunBare() throws Throwable {
+    try {
+      super.defaultRunBare();
+    }
+    catch (Throwable throwable) {
+      if (myTestStartedIndicator != null) {
+        TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator);
+      }
+      throw throwable;
+    }
+  }
 }

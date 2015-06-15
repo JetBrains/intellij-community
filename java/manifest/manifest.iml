@@ -17,6 +17,6 @@
     <orderEntry type="module" module-name="java-psi-api" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
 </module>
-

@@ -35,7 +35,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +61,11 @@ public class XBreakpointUtil {
 
   public static <B extends XBreakpoint<?>> XBreakpointType<B, ?> getType(@NotNull B breakpoint) {
     //noinspection unchecked
-    return (XBreakpointType<B,?>)breakpoint.getType();
+    return (XBreakpointType<B, ?>)breakpoint.getType();
   }
 
   @Nullable
-  public static XBreakpointType<?,?> findType(@NotNull @NonNls String id) {
+  public static XBreakpointType<?, ?> findType(@NotNull @NonNls String id) {
     for (XBreakpointType breakpointType : getBreakpointTypes()) {
       if (id.equals(breakpointType.getId())) {
         return breakpointType;
@@ -75,7 +74,7 @@ public class XBreakpointUtil {
     return null;
   }
 
-  public static XBreakpointType<?,?>[] getBreakpointTypes() {
+  public static XBreakpointType<?, ?>[] getBreakpointTypes() {
     return XBreakpointType.EXTENSION_POINT_NAME.getExtensions();
   }
 
@@ -122,8 +121,9 @@ public class XBreakpointUtil {
     List<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (DebuggerSupport support : debuggerSupports) {
       support.getBreakpointPanelProvider().provideBreakpointItems(project, items);
-      if (items.contains(breakpointItem))
+      if (items.contains(breakpointItem)) {
         return support;
+      }
       items.clear();
     }
     return null;
@@ -136,10 +136,10 @@ public class XBreakpointUtil {
    */
   @NotNull
   public static AsyncResult<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
-                                                     @NotNull XSourcePosition position,
-                                                     @Nullable Editor editor,
-                                                     boolean temporary,
-                                                     boolean moveCarret) {
+                                                                  @NotNull XSourcePosition position,
+                                                                  @Nullable Editor editor,
+                                                                  boolean temporary,
+                                                                  boolean moveCarret) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority
@@ -162,7 +162,8 @@ public class XBreakpointUtil {
         final XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (breakpoint != null && temporary && !breakpoint.isTemporary()) {
           breakpoint.setTemporary(true);
-        } else if (type.canPutAt(file, line, project) || breakpoint != null) {
+        }
+        else if (type.canPutAt(file, line, project) || breakpoint != null) {
           if (typeWinner == null || type.getPriority() > typeWinner.getPriority()) {
             typeWinner = type;
             lineWinner = line;
@@ -178,8 +179,8 @@ public class XBreakpointUtil {
     if (typeWinner != null) {
       XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(file, lineWinner);
       if (winPosition != null) {
-        AsyncResult<XLineBreakpoint> res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary,
-                                                                              DebuggerUIUtil.calcPopupLocation(editor, lineWinner));
+        AsyncResult<XLineBreakpoint> res =
+          XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor);
 
         if (editor != null && lineStart != lineWinner) {
           int offset = editor.getDocument().getLineStartOffset(lineWinner);

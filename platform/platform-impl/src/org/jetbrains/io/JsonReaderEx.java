@@ -17,10 +17,12 @@ package org.jetbrains.io;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.stream.JsonToken;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.nio.CharBuffer;
 import java.util.Arrays;
 
 public final class JsonReaderEx implements Closeable {
@@ -114,6 +116,26 @@ public final class JsonReaderEx implements Closeable {
     position = start;
     limit = in.length();
     this.stack = stack;
+  }
+
+  // we must return string on subSequence() - JsonReaderEx will call toString in any case
+  public static final class CharSequenceBackedByChars extends CharArrayCharSequence {
+    public CharSequenceBackedByChars(@NotNull CharBuffer charBuffer) {
+      super(charBuffer.array(), charBuffer.arrayOffset(), charBuffer.position());
+    }
+
+    public CharSequenceBackedByChars(@NotNull char[] chars, int start, int end) {
+      super(chars, start, end);
+    }
+
+    public CharSequenceBackedByChars(@NotNull char[] chars) {
+      super(chars);
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+      return start == 0 && end == length() ? this : new String(myChars, myStart + start, end - start);
+    }
   }
 
   private final static class JsonScope {

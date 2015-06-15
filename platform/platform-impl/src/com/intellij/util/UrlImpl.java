@@ -44,7 +44,7 @@ public final class UrlImpl implements Url {
   public UrlImpl(@Nullable String scheme, @Nullable String authority, @Nullable String path, @Nullable String parameters) {
     this.scheme = scheme;
     this.authority = authority;
-    this.path = StringUtil.isEmpty(path) && !StringUtil.isEmpty(authority) ? "/" : StringUtil.notNullize(path);
+    this.path = StringUtil.notNullize(path);
     this.parameters = StringUtil.nullize(parameters);
   }
 
@@ -112,7 +112,7 @@ public final class UrlImpl implements Url {
 
     // relative path - special url, encoding is not required
     // authority is null in case of URI
-    if ((path.charAt(0) != '/' || authority == null) && !isInLocalFileSystem()) {
+    if ((authority == null || (!path.isEmpty() && path.charAt(0) != '/')) && !isInLocalFileSystem()) {
       return toDecodedForm();
     }
 

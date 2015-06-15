@@ -49,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -206,7 +205,7 @@ public class GitCucumberWorld {
   }
 
   @After(order = 0)
-  public void dumpToLog(@NotNull Scenario result) throws IOException {
+  public void dumpToLog(@NotNull Scenario result) {
     if (result.isFailed()) {
       TestLoggerFactory.dumpLogToStdout(getStartTestMarker());
     }

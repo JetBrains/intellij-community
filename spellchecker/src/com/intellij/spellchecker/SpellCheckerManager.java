@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,22 +43,15 @@ import java.io.InputStream;
 import java.util.*;
 
 public class SpellCheckerManager {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
 
   private static final int MAX_SUGGESTIONS_THRESHOLD = 5;
   private static final int MAX_METRICS = 1;
 
   private final Project project;
-
   private SpellCheckerEngine spellChecker;
-
   private EditableDictionary userDictionary;
-
-
-  @NotNull
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
-
   private final SpellCheckerSettings settings;
 
   public static SpellCheckerManager getInstance(Project project) {
@@ -75,7 +68,6 @@ public class SpellCheckerManager {
     spellChecker = SpellCheckerFactory.create(project);
     fillEngineDictionary();
   }
-
 
   public void updateBundledDictionaries(final List<String> removedDictionaries) {
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
@@ -179,9 +171,7 @@ public class SpellCheckerManager {
       spellChecker.loadDictionary(loader);
     }
     userDictionary = stateLoader.getDictionary();
-
   }
-
 
   public boolean hasProblem(@NotNull String word) {
     return !spellChecker.isCorrect(word);
@@ -202,8 +192,6 @@ public class SpellCheckerManager {
     restartInspections();
   }
 
-
-
   @NotNull
   public static List<String> getBundledDictionaries() {
     final ArrayList<String> dictionaries = new ArrayList<String>();
@@ -223,26 +211,23 @@ public class SpellCheckerManager {
     return suggestionProvider.getSuggestions(text);
   }
 
-
   @NotNull
   protected List<String> getRawSuggestions(@NotNull String word) {
     if (!spellChecker.isCorrect(word)) {
       List<String> suggestions = spellChecker.getSuggestions(word, MAX_SUGGESTIONS_THRESHOLD, MAX_METRICS);
       if (!suggestions.isEmpty()) {
-        boolean capitalized = Strings.isCapitalized(word);
-        boolean upperCases = Strings.isUpperCase(word);
-        if (capitalized) {
+        if (Strings.isCapitalized(word)) {
           Strings.capitalize(suggestions);
         }
-        else if (upperCases) {
+        else if (Strings.isUpperCase(word)) {
           Strings.upperCase(suggestions);
         }
+        Set<String> unique = new LinkedHashSet<String>(suggestions);
+        return unique.size() < suggestions.size() ? new ArrayList<String>(unique) : suggestions;
       }
-      return new ArrayList<String>(new LinkedHashSet<String>(suggestions));
     }
     return Collections.emptyList();
   }
-
 
   public static void restartInspections() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -257,6 +242,4 @@ public class SpellCheckerManager {
       }
     });
   }
-
-
 }

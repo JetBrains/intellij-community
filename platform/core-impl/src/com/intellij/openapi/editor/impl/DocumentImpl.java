@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myEventsHandling = false;
   private final boolean myAssertThreading;
   private volatile boolean myDoingBulkUpdate = false;
+  private boolean myUpdatingBulkModeStatus;
   private volatile boolean myAcceptSlashR = false;
   private boolean myChangeInProgress;
   private volatile int myBufferSize;
@@ -971,12 +972,21 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       // do not fire listeners or otherwise updateStarted() will be called more times than updateFinished()
       return;
     }
-    myDoingBulkUpdate = value;
-    if (value) {
-      getPublisher().updateStarted(this);
+    if (myUpdatingBulkModeStatus) {
+      throw new IllegalStateException("Detected bulk mode status update from DocumentBulkUpdateListener");
     }
-    else {
-      getPublisher().updateFinished(this);
+    myUpdatingBulkModeStatus = true;
+    try {
+      myDoingBulkUpdate = value;
+      if (value) {
+        getPublisher().updateStarted(this);
+      }
+      else {
+        getPublisher().updateFinished(this);
+      }
+    }
+    finally {
+      myUpdatingBulkModeStatus = false;
     }
   }
 

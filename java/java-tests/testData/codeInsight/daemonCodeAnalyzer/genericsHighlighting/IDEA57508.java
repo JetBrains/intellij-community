@@ -5,6 +5,6 @@ abstract class X {
   abstract <T> void copy(List<T> dest, List<? extends T> src);
 
   void foo(List<?> x, List<?> y){
-    copy<error descr="'copy(java.util.List<capture<?>>, java.util.List<capture<?>>)' in 'X' cannot be applied to '(java.util.List<capture<?>>, java.util.List<capture<?>>)'">(x, y)</error>;
+    copy<error descr="'copy(java.util.List<capture<?>>, java.util.List<? extends capture<?>>)' in 'X' cannot be applied to '(java.util.List<capture<?>>, java.util.List<capture<?>>)'">(x, y)</error>;
   }
 }
