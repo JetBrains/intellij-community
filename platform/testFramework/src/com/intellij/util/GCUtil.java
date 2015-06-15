@@ -53,7 +53,7 @@ public class GCUtil {
         break;
       }
       TimeoutUtil.sleep(10);
-      long bytes = Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE);
+      long bytes = Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE / 2);
       list.add(new SoftReference<byte[]>(new byte[(int)bytes]));
     }
   }
