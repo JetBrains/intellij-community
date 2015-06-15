@@ -51,6 +51,11 @@ public abstract class ArchiveHandler {
       this.length = length;
       this.timestamp = timestamp;
     }
+    
+    @Deprecated
+    public EntryInfo(EntryInfo parent, @NotNull String shortName, boolean isDirectory, long length, long timestamp) {
+      this(parent, (CharSequence) shortName, isDirectory, length, timestamp);
+    }
   }
 
   @NotNull
