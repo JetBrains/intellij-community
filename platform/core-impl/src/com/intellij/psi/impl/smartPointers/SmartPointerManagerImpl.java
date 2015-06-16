@@ -122,15 +122,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
     processQueue();
     synchronized (lock) {
-      FilePointersList pointers = getPointers(file);
-      if (pointers == null || pointers.isEmpty()) return;
-
       if (!getAndUnfasten(file)) return;
-
-      for (PointerReference ref : pointers.references) {
-        SmartPointerEx pointer = SoftReference.dereference(ref);
-        if (pointer != null) {
-          pointer.unfastenBelt(offset);
+      FilePointersList pointers = getPointers(file);
+      if (pointers != null && !pointers.isEmpty()) {
+        for (PointerReference ref : pointers.references) {
+          SmartPointerEx pointer = SoftReference.dereference(ref);
+          if (pointer != null) {
+            pointer.unfastenBelt(offset);
+          }
         }
       }
 
@@ -281,7 +280,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     file.putUserData(POINTERS_ARE_FASTENED_KEY, null);
     return fastened;
   }
-  private boolean areBeltsFastened(@NotNull VirtualFile file) {
+  boolean areBeltsFastened(@NotNull VirtualFile file) {
     return file.getUserData(POINTERS_ARE_FASTENED_KEY) == Boolean.TRUE;
   }
 
