@@ -40,13 +40,13 @@ public class RestoreBundledExtensionsAction extends DumbAwareAction {
     ExtensionsRootType extensionsRootType = ExtensionsRootType.getInstance();
 
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    PluginId pluginId = extensionsRootType.getOwnerPluginId(file);
+    PluginId pluginId = extensionsRootType.getOwner(file);
     String path = extensionsRootType.getPath(file);
 
     assert file != null && pluginId != null && path != null;
 
     try {
-      extensionsRootType.extractBundledExtensions(pluginId, path);
+      extensionsRootType.extractBundledResources(pluginId, path);
     }
     catch (IOException ex) {
       ExtensionsRootType.LOG.warn("Failed to extract bundled extensions for " + file.getPath(), ex);
