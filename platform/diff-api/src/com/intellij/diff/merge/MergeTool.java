@@ -17,6 +17,7 @@ package com.intellij.diff.merge;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.BooleanGetter;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,8 @@ import javax.swing.*;
 import java.util.List;
 
 public interface MergeTool {
+  ExtensionPointName<MergeTool> EP_NAME = ExtensionPointName.create("com.intellij.diff.merge.MergeTool");
+
   @CalledInAwt
   @NotNull
   MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request);

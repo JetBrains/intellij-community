@@ -19,8 +19,7 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.impl.DiffRequestPanelImpl;
 import com.intellij.diff.impl.DiffWindow;
-import com.intellij.diff.merge.MergeRequest;
-import com.intellij.diff.merge.MergeWindow;
+import com.intellij.diff.merge.*;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.binary.BinaryDiffTool;
 import com.intellij.diff.tools.dir.DirDiffTool;
@@ -95,6 +94,16 @@ public class DiffManagerImpl extends DiffManagerEx {
     result.add(BinaryDiffTool.INSTANCE);
     result.add(DirDiffTool.INSTANCE);
     Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public List<MergeTool> getMergeTools() {
+    List<MergeTool> result = new ArrayList<MergeTool>();
+    Collections.addAll(result, MergeTool.EP_NAME.getExtensions());
+    result.add(TextMergeTool.INSTANCE);
+    result.add(BinaryMergeTool.INSTANCE);
     return result;
   }
 

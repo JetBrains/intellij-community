@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.merge;
 
+import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.actions.impl.NextDifferenceAction;
 import com.intellij.diff.actions.impl.PrevDifferenceAction;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -78,7 +79,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myContext = new MyDiffContext();
     myContext.putUserData(DiffUserDataKeysEx.PLACE, DiffPlaces.MERGE);
 
-    myAvailableTools = ContainerUtil.list(TextMergeTool.INSTANCE, BinaryMergeTool.INSTANCE);
+    myAvailableTools = DiffManagerEx.getInstance().getMergeTools();
 
     myPanel = new JPanel(new BorderLayout());
     myMainPanel = new MyPanel();
