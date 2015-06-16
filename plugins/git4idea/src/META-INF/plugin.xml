@@ -93,6 +93,7 @@
     </group>
 
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
+    <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
@@ -104,6 +105,8 @@
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.CreateNewBranch" />
       <reference id="Git.CreateNewTag" />
+      <separator/>
+      <reference id="Git.BranchOperationGroup"/>
       <separator/>
       <reference id="Git.Reset.In.Log" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
