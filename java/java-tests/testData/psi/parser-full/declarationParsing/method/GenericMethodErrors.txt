@@ -24,7 +24,7 @@ PsiJavaFile:GenericMethodErrors.java
         PsiJavaToken:LT('<')
         PsiTypeParameter:Error
           PsiIdentifier:Error('Error')
-          PsiElement(EXTENDS_BOUND_LIST)
+          PsiReferenceList
             <empty list>
         PsiErrorElement:'>' expected.
           <empty list>

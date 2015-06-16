@@ -3,6 +3,6 @@ PsiJavaFile:TypeParams8.java
     PsiJavaToken:LT('<')
     PsiErrorElement:Unexpected wildcard
       PsiJavaToken:QUEST('?')
-      PsiElement(EXTENDS_BOUND_LIST)
+      PsiReferenceList
         <empty list>
     PsiJavaToken:GT('>')
