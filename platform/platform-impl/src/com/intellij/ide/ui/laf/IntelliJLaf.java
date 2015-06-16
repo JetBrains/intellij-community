@@ -66,7 +66,7 @@ public class IntelliJLaf extends DarculaLaf {
         }
       }
     }
-    Font menuFont = new Font("Lucida Grande", Font.PLAIN, 14);
+    Font menuFont = new FontUIResource("Lucida Grande", Font.PLAIN, 14);
     defaults.put("Menu.font", menuFont);
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
