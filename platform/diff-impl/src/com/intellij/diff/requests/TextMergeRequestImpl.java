@@ -20,6 +20,7 @@ import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class TextMergeRequestImpl extends TextMergeRequest {
+  @Nullable private final Project myProject;
   @NotNull private final DocumentContent myOutput;
   @NotNull private final List<DocumentContent> myContents;
 
@@ -38,7 +40,8 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @Nullable private final Consumer<MergeResult> myApplyCallback;
 
-  public TextMergeRequestImpl(@NotNull DocumentContent output,
+  public TextMergeRequestImpl(@Nullable Project project,
+                              @NotNull DocumentContent output,
                               @NotNull CharSequence originalContent,
                               @NotNull List<DocumentContent> contents,
                               @Nullable String title,
@@ -46,6 +49,7 @@ public class TextMergeRequestImpl extends TextMergeRequest {
                               @Nullable Consumer<MergeResult> applyCallback) {
     assert contents.size() == 3;
     assert contentTitles.size() == 3;
+    myProject = project;
 
     myOutput = output;
     myOriginalContent = originalContent;
@@ -104,7 +108,7 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     }
 
     if (applyContent != null) {
-      new WriteCommandAction.Simple(null) {
+      new WriteCommandAction.Simple(myProject) {
         @Override
         protected void run() throws Throwable {
           myOutput.getDocument().setText(applyContent);

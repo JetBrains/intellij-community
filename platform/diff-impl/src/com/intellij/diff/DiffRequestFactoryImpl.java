@@ -199,7 +199,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
       contents.add(myContentFactory.create(text, fileType));
     }
 
-    return new TextMergeRequestImpl(outputContent, originalContent, contents, title, titles, applyCallback);
+    return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, titles, applyCallback);
   }
 
   @NotNull
@@ -244,7 +244,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
       contents.add(FileAwareDocumentContent.create(project, bytes, output));
     }
 
-    return new TextMergeRequestImpl(outputContent, originalContent, contents, title, contentTitles, applyCallback);
+    return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles, applyCallback);
   }
 
   @NotNull
@@ -330,7 +330,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
       contents.add(document);
     }
 
-    return new TextMergeRequestImpl(outputContent, originalContent, contents, title, contentTitles, applyCallback);
+    return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles, applyCallback);
   }
 
   @NotNull
