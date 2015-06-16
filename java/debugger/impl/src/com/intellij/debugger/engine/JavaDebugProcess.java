@@ -38,9 +38,7 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -171,12 +169,14 @@ public class JavaDebugProcess extends XDebugProcess {
         }
       }
 
-      private void showAlternativeNotification(XStackFrame frame) {
-        XSourcePosition position = frame.getSourcePosition();
-        if (position != null) {
-          VirtualFile file = position.getFile();
-          if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
-            EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
+      private void showAlternativeNotification(@Nullable XStackFrame frame) {
+        if (frame != null) {
+          XSourcePosition position = frame.getSourcePosition();
+          if (position != null) {
+            VirtualFile file = position.getFile();
+            if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
+              EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
+            }
           }
         }
       }
