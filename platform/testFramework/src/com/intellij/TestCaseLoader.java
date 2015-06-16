@@ -36,6 +36,7 @@ import junit.framework.TestSuite;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -148,23 +149,9 @@ public class TestCaseLoader {
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
   }
 
-  public static boolean isBombed(final Method method) {
-    final Bombed bombedAnnotation = method.getAnnotation(Bombed.class);
+  public static boolean isBombed(final AnnotatedElement element) {
+    final Bombed bombedAnnotation = element.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
-    if (PlatformTestUtil.isRotten(bombedAnnotation)) {
-      String message = "Disarm the stale bomb for '" + method + "' in class '" + method.getDeclaringClass() + "'";
-      System.err.println(message);
-    }
-    return !PlatformTestUtil.bombExplodes(bombedAnnotation);
-  }
-
-  public static boolean isBombed(final Class<?> testCaseClass) {
-    final Bombed bombedAnnotation = testCaseClass.getAnnotation(Bombed.class);
-    if (bombedAnnotation == null) return false;
-    if (PlatformTestUtil.isRotten(bombedAnnotation)) {
-      String message = "Disarm the stale bomb for '" + testCaseClass + "'";
-      System.err.println(message);
-    }
     return !PlatformTestUtil.bombExplodes(bombedAnnotation);
   }
 
