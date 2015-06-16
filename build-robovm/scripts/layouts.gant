@@ -15,7 +15,7 @@
  */
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build-robovm/scripts/utils.gant")
 
 target('default': "Developers update") {
   def patchedDescriptorDir = patchAppDescriptor(deploy)
@@ -33,7 +33,7 @@ String patchAppDescriptor(String targetDirectory) {
   ant.delete(dir: patchedDirectory)
 
   layout(patchedDirectory) {
-    module("community-resources") {
+    module("robovm-studio-branding") {
       include(name: appInfoFileName())
     }
   }
@@ -155,7 +155,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("colorSchemes")
         module("resources")
         module("platform-resources")
-        module("community-resources") {
+        module("robovm-studio-branding") {
           if (patchedDescriptorDir != null) {
             exclude(name: appInfoFileName())
           }
@@ -254,6 +254,14 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           jar("intellilang-jps-plugin.jar") {
             module("intellilang-jps-plugin")
           }
+        }
+      }
+    }
+
+    dir("plugins") {
+      dir("robovm") {
+        dir("lib") {
+          fileset(dir: "${home}/robovm/robovm-idea/target/", includes: "org.robovm.idea-*-plugin-dist.jar");
         }
       }
     }

@@ -39,7 +39,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
+    <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright RoboVM AB, (c) 2014-@@year@@</string>
     <key>CFBundleShortVersionString</key>
     <string>@@version@@</string>
     <key>CFBundleVersion</key>
@@ -68,7 +68,7 @@
       <string>@@class_path@@</string>
 
       <key>JVMVersion</key>
-      <string>1.6*,1.7+</string>
+      <string>1.7+</string>
 
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>

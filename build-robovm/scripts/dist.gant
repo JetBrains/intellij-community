@@ -53,7 +53,7 @@ class Paths {
 def paths = new Paths(out)
 setProperty("paths", paths)
 
-setProperty("maySkipAndroidPlugin", true)
+setProperty("maySkipAndroidPlugin", false)
 
 target(compile: "Compile project") {
   loadProject()
@@ -72,7 +72,7 @@ target(compile: "Compile project") {
 }
 
 private String appInfoFile() {
-  return "${projectBuilder.moduleOutput(findModule("community-resources"))}/idea/IdeaApplicationInfo.xml"
+  return "${projectBuilder.moduleOutput(findModule("robovm-studio-branding"))}/idea/IdeaApplicationInfo.xml"
 }
 
 target('default': 'The default target') {
@@ -89,7 +89,7 @@ target('default': 'The default target') {
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
             home, null, paths, true)
-  String macZip = "$paths.artifacts/ideaIC-${snapshot}.mac.zip"
+  String macZip = "$paths.artifacts/robovm-studio-${snapshot}.mac.zip"
   notifyArtifactBuilt(macZip)
 }
 
@@ -105,7 +105,7 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
              home, null, paths)
-  String macZip = "$paths.artifacts/ideaIC-${snapshot}.mac.zip"
+  String macZip = "$paths.artifacts/robovm-studio-${snapshot}.mac.zip"
   notifyArtifactBuilt(macZip)
 }
 
@@ -113,7 +113,7 @@ private void indexSearchableOptions() {
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("resources-en"))}/search", [], {
     ant.pathelement(location: "$jdkHome/lib/tools.jar")
     ant.pathelement(location: "$home/lib/junit.jar")
-    projectBuilder.moduleRuntimeClasspath(findModule("community-main"), false).each {
+    projectBuilder.moduleRuntimeClasspath(findModule("robovm-studio-main"), false).each {
       ant.pathelement(location: it)
     }
   })
@@ -125,7 +125,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   wireBuildDate(args.buildNumber, appInfoFile())
   ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
 
-  def layouts = includeFile("$home/build/scripts/layouts.gant")
+  def layouts = includeFile("$home/build-robovm/scripts/layouts.gant")
   LayoutInfo info = layouts.layoutFull(home, paths.distAll, null)
   layouts.layout_core(home, paths.artifacts_core)
   ant.zip(destfile: "${paths.artifacts}/intellij-core-${StringUtil.trimStart(args.buildNumber, "IC-")}.zip") {
@@ -153,7 +153,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
     fileset(file: "${home}/LICENSE.txt")
     fileset(file: "${home}/NOTICE.txt")
   }
-  patchPropertiesFile(paths.distAll, args + [appendices: ["$home/build/conf/ideaCE.properties"]])
+  patchPropertiesFile(paths.distAll, args + [appendices: ["$home/build-robovm/conf/ideaCE.properties"]])
 
   layoutWin(args, home, paths)
   layoutMac(args, home, paths)
@@ -164,8 +164,8 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
                         paths.distWin, paths.distUnix, paths.distMac)
 
   def macAppRoot = isEap() ?
-                   "IntelliJ IDEA ${p("component.version.major")} CE EAP.app/Contents" :
-                   "IntelliJ IDEA ${p("component.version.major")} CE.app/Contents"
+                   "RoboVM Studio ${p("component.version.major")} EAP.app/Contents" :
+                   "RoboVM Studio ${p("component.version.major")}.app/Contents"
 
   String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
@@ -190,7 +190,7 @@ private layoutWin(Map args, String home, Paths paths) {
 
   winScripts(target, home, "idea.bat", args)
   winVMOptions(target, null, "idea.exe", "idea64.exe")
-  List resourcePaths = ["$home/community-resources/src", "$home/platform/icons/src"]
+  List resourcePaths = ["$home/robovm/robovm-studio-branding/src", "$home/platform/icons/src"]
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/idea.exe", appInfoFile(),
                    "$home/build/conf/ideaCE-launcher.properties", args.ce_exe_selector, resourcePaths)
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/idea64.exe", appInfoFile(),
@@ -201,7 +201,7 @@ private layoutMac(Map _args, String home, Paths paths) {
   String target = paths.distMac
 
   Map args = new HashMap(_args)
-  args.bundleIdentifier = "com.jetbrains.intellij.ce"
+  args.bundleIdentifier = "com.robovm.studio"
   args.doc_types = """
       <dict>
         <key>CFBundleTypeExtensions</key>
