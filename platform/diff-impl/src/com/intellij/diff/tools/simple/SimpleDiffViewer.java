@@ -520,6 +520,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       e.getPresentation().setIcon(getIcon(side));
+      e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(isSomeChangeSelected(side));
     }
 
