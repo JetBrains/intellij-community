@@ -16,13 +16,11 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class ErrorMergeTool implements MergeTool {
   public static final ErrorMergeTool INSTANCE = new ErrorMergeTool();
@@ -72,9 +70,13 @@ public class ErrorMergeTool implements MergeTool {
     @NotNull
     @Override
     public ToolbarComponents init() {
-      ToolbarComponents components = new ToolbarComponents();
+      return new ToolbarComponents();
+    }
 
-      Couple<List<Action>> bottomActions = MergeUtil.createBottomActions(new MergeUtil.AcceptActionProcessor() {
+    @Nullable
+    @Override
+    public BottomActions getBottomActions() {
+      return MergeUtil.createBottomAction(new MergeUtil.AcceptActionProcessor() {
         @Override
         public boolean isVisible(@NotNull MergeResult result) {
           if (myMergeRequest instanceof ThreesideMergeRequest) {
@@ -91,10 +93,6 @@ public class ErrorMergeTool implements MergeTool {
           myMergeContext.closeDialog();
         }
       });
-      components.leftActions = bottomActions.first;
-      components.rightActions = bottomActions.second;
-
-      return components;
     }
 
     @Override

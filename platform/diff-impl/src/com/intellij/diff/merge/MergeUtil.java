@@ -18,10 +18,7 @@ package com.intellij.diff.merge;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,38 +26,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MergeUtil {
   @NotNull
-  public static Couple<List<Action>> createBottomActions(@NotNull AcceptActionProcessor processor) {
-    Action left = SimpleAcceptAction.create(MergeResult.LEFT, processor);
-    Action right = SimpleAcceptAction.create(MergeResult.RIGHT, processor);
-    Action apply = SimpleAcceptAction.create(MergeResult.RESOLVED, processor);
-    Action cancel = SimpleAcceptAction.create(MergeResult.CANCEL, processor);
-
-    if (apply != null) apply.putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
-
-    if (SystemInfo.isMac) {
-      return Couple.of(listNotNull(left, right), listNotNull(cancel, apply));
-    }
-    else {
-      return Couple.of(listNotNull(left, right), listNotNull(apply, cancel));
-    }
-  }
-
-  @NotNull
-  private static <T> List<T> listNotNull(T... items) {
-    int count = 0;
-    for (T item : items) {
-      if (item != null) count++;
-    }
-    List<T> result = new ArrayList<T>(count);
-    for (T item : items) {
-      if (item != null) result.add(item);
-    }
-    return result;
+  public static MergeTool.BottomActions createBottomAction(@NotNull AcceptActionProcessor processor) {
+    MergeTool.BottomActions actions = new MergeTool.BottomActions();
+    actions.leftAction1 = SimpleAcceptAction.create(MergeResult.LEFT, processor);
+    actions.leftAction2 = SimpleAcceptAction.create(MergeResult.RIGHT, processor);
+    actions.resolveAction = SimpleAcceptAction.create(MergeResult.RESOLVED, processor);
+    actions.cancelAction = SimpleAcceptAction.create(MergeResult.CANCEL, processor);
+    return actions;
   }
 
   private static class SimpleAcceptAction extends AbstractAction {

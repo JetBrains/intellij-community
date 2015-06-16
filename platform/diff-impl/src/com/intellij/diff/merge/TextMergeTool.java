@@ -50,7 +50,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -156,11 +155,14 @@ public class TextMergeTool implements MergeTool {
         }
       };
 
-      Couple<List<Action>> bottomActions = myViewer.createBottomActions();
-      components.leftActions = bottomActions.first;
-      components.rightActions = bottomActions.second;
 
       return components;
+    }
+
+    @Nullable
+    @Override
+    public BottomActions getBottomActions() {
+      return MergeUtil.createBottomAction(myViewer.createActionProcessor());
     }
 
     @Override
@@ -245,8 +247,8 @@ public class TextMergeTool implements MergeTool {
       }
 
       @NotNull
-      private Couple<List<Action>> createBottomActions() {
-        return MergeUtil.createBottomActions(new MergeUtil.AcceptActionProcessor() {
+      private MergeUtil.AcceptActionProcessor createActionProcessor() {
+        return new MergeUtil.AcceptActionProcessor() {
           @Override
           public boolean isVisible(@NotNull MergeResult result) {
             return true;
@@ -275,7 +277,7 @@ public class TextMergeTool implements MergeTool {
             myMergeRequest.applyResult(result);
             myMergeContext.closeDialog();
           }
-        });
+        };
       }
 
       //

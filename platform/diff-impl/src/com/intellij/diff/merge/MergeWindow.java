@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 public class MergeWindow {
   @Nullable private final Project myProject;
@@ -65,10 +67,12 @@ public class MergeWindow {
   // TODO: use WindowWrapper
   private static class MyDialog extends DialogWrapper {
     @NotNull private final MergeRequestProcessor myProcessor;
+    @NotNull private final MergeTool.BottomActions myBottomActions;
 
     public MyDialog(@NotNull MergeRequestProcessor processor) {
       super(processor.getProject(), true);
       myProcessor = processor;
+      myBottomActions = myProcessor.getBottomActions();
     }
 
     @Override
@@ -91,12 +95,6 @@ public class MergeWindow {
 
     @Nullable
     @Override
-    protected JComponent createSouthPanel() {
-      return null;
-    }
-    
-    @Nullable
-    @Override
     public JComponent getPreferredFocusedComponent() {
       return myProcessor.getPreferredFocusedComponent();
     }
@@ -110,7 +108,34 @@ public class MergeWindow {
     @NotNull
     @Override
     protected Action[] createActions() {
-      return new Action[0];
+      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.rightAction4, myBottomActions.rightAction3,
+                                                                        myBottomActions.resolveAction, myBottomActions.cancelAction));
+      if (myBottomActions.resolveAction != null) {
+        myBottomActions.resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+      }
+      return actions.toArray(new Action[actions.size()]);
+    }
+
+    @NotNull
+    @Override
+    protected Action[] createLeftSideActions() {
+      List<Action> actions = ContainerUtil.skipNulls(ContainerUtil.list(myBottomActions.leftAction1, myBottomActions.leftAction2,
+                                                                        myBottomActions.leftAction3, myBottomActions.leftAction4));
+      return actions.toArray(new Action[actions.size()]);
+    }
+
+    @NotNull
+    @Override
+    protected Action getOKAction() {
+      if (myBottomActions.resolveAction != null) return myBottomActions.resolveAction;
+      return super.getOKAction();
+    }
+
+    @NotNull
+    @Override
+    protected Action getCancelAction() {
+      if (myBottomActions.cancelAction != null) return myBottomActions.cancelAction;
+      return super.getCancelAction();
     }
 
     @Nullable
