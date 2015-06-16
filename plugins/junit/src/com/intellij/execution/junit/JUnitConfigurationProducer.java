@@ -52,6 +52,9 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
                           ? ((PsiMemberParameterizedLocation)contextLocation).getParamSetName() : null;
     assert contextLocation != null;
     Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) {
+      return false;
+    }
     final PsiElement element = location.getPsiElement();
     final PsiClass testClass = JUnitUtil.getTestClass(element);
     final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
