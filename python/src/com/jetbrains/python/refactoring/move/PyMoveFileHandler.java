@@ -28,13 +28,16 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,9 +73,13 @@ public class PyMoveFileHandler extends MoveFileHandler {
       if (moveDestination != root && root != null && searchForReferences && !probablyNamespacePackage(file, moveDestination, root)) {
         CreatePackageAction.createInitPyInHierarchy(moveDestination, root);
       }
-      if (file instanceof PyFile) {
-        updateRelativeImportsInModule((PyFile)file);
-      }
+    }
+  }
+
+  @Override
+  public void updateMovedFile(PsiFile file) throws IncorrectOperationException {
+    if (file instanceof PyFile) {
+      updateRelativeImportsInModule((PyFile)file);
     }
   }
 
@@ -81,7 +88,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
     if (originalLocation == null) {
       return;
     }
-    module.putUserData(ORIGINAL_FILE_LOCATION, null);
+    //module.putUserData(ORIGINAL_FILE_LOCATION, null);
     for (PyFromImportStatement statement : module.getFromImports()) {
       if (!canBeRelative(statement)) {
         continue;
@@ -117,10 +124,10 @@ public class PyMoveFileHandler extends MoveFileHandler {
     return !LanguageLevel.forElement(statement).isPy3K() || statement.getRelativeLevel() > 0;
   }
 
+
   private static boolean canBeRelative(@NotNull PyImportElement statement) {
     return !LanguageLevel.forElement(statement).isPy3K();
   }
-
 
   /**
    * @param referenceExpr is null if we resolve import of type "from .. import bar", and "foo" for import of type "from foo import bar"
@@ -199,40 +206,54 @@ public class PyMoveFileHandler extends MoveFileHandler {
   public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
     final Set<PsiFile> updatedFiles = new HashSet<PsiFile>();
     for (UsageInfo usage : usages) {
-      final PsiElement element = usage.getElement();
-      if (element != null) {
-        final PsiNamedElement newElement = element.getCopyableUserData(REFERENCED_ELEMENT);
-        element.putCopyableUserData(REFERENCED_ELEMENT, null);
-        if (newElement != null) {
-          final PsiFile file = element.getContainingFile();
-          final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class);
+      final PsiElement usageElement = usage.getElement();
+      if (usageElement != null) {
+        final PsiNamedElement movedElement = usageElement.getCopyableUserData(REFERENCED_ELEMENT);
+        usageElement.putCopyableUserData(REFERENCED_ELEMENT, null);
+        if (movedElement != null) {
+          final PsiFile usageFile = usageElement.getContainingFile();
+
+          final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(usageElement, PyImportStatementBase.class);
           // TODO: Retarget qualified expressions in docstrings
           if (importStmt != null) {
-            updatedFiles.add(file);
-            if (PsiTreeUtil.getParentOfType(element, PyImportElement.class) != null) {
-              PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
+
+            if (usageFile.getUserData(ORIGINAL_FILE_LOCATION) != null) {
+              // Leave relative imports as they are after #updateRelativeImportsInModule
+              final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(usageFile.getProject(), usageFile);
+              final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+              if (ContainerUtil.getFirstItem(PyUtil.multiResolveTopPriority(usageElement, resolveContext)) == movedElement) {
+                continue;
+              }
             }
-            if (importStmt instanceof PyFromImportStatement && PsiTreeUtil.getParentOfType(element, PyImportElement.class) != null) {
-              continue;
+
+            updatedFiles.add(usageFile);
+            final boolean usageInsideImportElement = PsiTreeUtil.getParentOfType(usageElement, PyImportElement.class) != null;
+            if (usageInsideImportElement) {
+              // Handles imported element in "from import" statement (from some.package import module)
+              // or simple unqualified import of the module (import module).
+              if (PyClassRefactoringUtil.updateUnqualifiedImportOfElement(importStmt, movedElement)) {
+                continue;
+              }
             }
-            final QualifiedName newElementName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
+            final QualifiedName newElementName = QualifiedNameFinder.findCanonicalImportPath(movedElement, usageElement);
             if (importStmt instanceof PyFromImportStatement) {
-              replaceRelativeImportSourceWithQualifiedExpression((PyFromImportStatement)importStmt, newElementName);
+              if (!usageInsideImportElement) {
+                replaceRelativeImportSourceWithQualifiedExpression((PyFromImportStatement)importStmt, newElementName);
+              }
             }
             else {
-              replaceWithQualifiedExpression(element, newElementName);
+              replaceWithQualifiedExpression(usageElement, newElementName);
             }
           }
-          else if (element instanceof PyReferenceExpression) {
-            updatedFiles.add(file);
-            if (((PyReferenceExpression)element).isQualified()) {
-              final QualifiedName newQualifiedName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
-              replaceWithQualifiedExpression(element, newQualifiedName);
+          else if (usageElement instanceof PyReferenceExpression) {
+            updatedFiles.add(usageFile);
+            if (((PyReferenceExpression)usageElement).isQualified()) {
+              final QualifiedName newQualifiedName = QualifiedNameFinder.findCanonicalImportPath(movedElement, usageElement);
+              replaceWithQualifiedExpression(usageElement, newQualifiedName);
             }
             else {
-              final QualifiedName newName = QualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
-              final PsiElement replaced = replaceWithQualifiedExpression(element, newName);
-              PyClassRefactoringUtil.insertImport(replaced, newElement, null);
+              final QualifiedName newName = QualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(movedElement));
+              replaceWithQualifiedExpression(usageElement, newName);
             }
           }
         }
@@ -313,9 +334,5 @@ public class PyMoveFileHandler extends MoveFileHandler {
       }
     }
     return null;
-  }
-
-  @Override
-  public void updateMovedFile(PsiFile file) throws IncorrectOperationException {
   }
 }
