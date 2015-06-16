@@ -114,7 +114,7 @@ public class BinaryMergeTool implements MergeTool {
       return components;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public BottomActions getBottomActions() {
       return MergeUtil.createBottomAction(new MergeUtil.AcceptActionProcessor() {

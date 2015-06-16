@@ -73,7 +73,7 @@ public class ErrorMergeTool implements MergeTool {
       return new ToolbarComponents();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public BottomActions getBottomActions() {
       return MergeUtil.createBottomAction(new MergeUtil.AcceptActionProcessor() {

@@ -159,7 +159,7 @@ public class TextMergeTool implements MergeTool {
       return components;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public BottomActions getBottomActions() {
       return MergeUtil.createBottomAction(myViewer.createActionProcessor());
