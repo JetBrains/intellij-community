@@ -18,7 +18,9 @@ package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -115,5 +117,13 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    */
   public boolean canBeHitInOtherPlaces() {
     return false;
+  }
+
+  /**
+   * @return range to highlight on the line, null to highlight the whole line
+   */
+  @Nullable
+  public TextRange getHighlightRange(P properties, Document document, Project project) {
+    return null;
   }
 }

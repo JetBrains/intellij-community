@@ -46,6 +46,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.*;
@@ -169,8 +170,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                       Object value = ((JList)e.getSource()).getSelectedValue();
                       if (value instanceof XLineBreakpointVariant) {
                         TextRange range = ((XLineBreakpointVariant)value).getHighlightRange();
-                        TextRange lineRange =
-                          TextRange.create(editor.getDocument().getLineStartOffset(line), editor.getDocument().getLineEndOffset(line));
+                        TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
                         if (range != null) {
                           range = range.intersection(lineRange);
                         }
