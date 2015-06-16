@@ -435,8 +435,9 @@ public final class PyClassRefactoringUtil {
    *
    * @param importStatement parent import statement that contains reference to given element
    * @param element         PSI element reference to which should be updated
+   * @return                whether import statement was actually updated
    */
-  public static void updateImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
+  public static boolean updateUnqualifiedImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
     final String name = getOriginalName(element);
     if (name != null) {
       PyImportElement importElement = null;
@@ -448,14 +449,7 @@ public final class PyClassRefactoringUtil {
       if (importElement != null) {
         final PsiFile file = importStatement.getContainingFile();
         final PsiFile newFile = element.getContainingFile();
-        boolean deleteImportElement = false;
-        if (newFile == file) {
-          deleteImportElement = true;
-        }
-        else if (insertImport(importStatement, element, importElement.getAsName(), true)) {
-          deleteImportElement = true;
-        }
-        if (deleteImportElement) {
+        if (newFile == file || insertImport(importStatement, element, importElement.getAsName(), true)) {
           if (importStatement.getImportElements().length == 1) {
             final boolean isInjected =
               InjectedLanguageManager.getInstance(importElement.getProject()).isInjectedFragment(importElement.getContainingFile());
@@ -469,9 +463,11 @@ public final class PyClassRefactoringUtil {
           else {
             importElement.delete();
           }
+          return true;
         }
       }
     }
+    return false;
   }
 
   private static void deleteImportStatementFromInjected(@NotNull final PyImportStatementBase importStatement) {
