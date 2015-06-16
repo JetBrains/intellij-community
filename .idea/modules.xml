@@ -203,6 +203,7 @@
       <module fileurl="file://$PROJECT_DIR$/resources/resources.iml" filepath="$PROJECT_DIR$/resources/resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources-en/resources-en.iml" filepath="$PROJECT_DIR$/resources-en/resources-en.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/rest/rest.iml" filepath="$PROJECT_DIR$/python/rest/rest.iml" group="python" />
+      <module fileurl="file://$PROJECT_DIR$/robovm/robovm-studio-main/robovm-studio-main.iml" filepath="$PROJECT_DIR$/robovm/robovm-studio-main/robovm-studio-main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" filepath="$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" filepath="$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdk-common/sdk-common.iml" filepath="$PROJECT_DIR$/android/tools-base/sdk-common/sdk-common.iml" group="android/sdktools" />
