@@ -16,6 +16,7 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +34,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -117,6 +120,24 @@ public class PyMoveFileHandler extends MoveFileHandler {
       }
       final QualifiedName newName = QualifiedNameFinder.findShortestImportableQName(resolved);
       replaceWithQualifiedExpression(referenceExpr, newName);
+      final QualifiedName oldQualifiedName = referenceExpr.asQualifiedName();
+      if (!Comparing.equal(oldQualifiedName, newName)) {
+        final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(importElement);
+        if (scopeOwner == null) {
+          continue;
+        }
+        scopeOwner.accept(new PyRecursiveElementVisitor() {
+          @Override
+          public void visitPyReferenceExpression(PyReferenceExpression node) {
+            if (Comparing.equal(node.asQualifiedName(), oldQualifiedName)) {
+              replaceWithQualifiedExpression(node, newName);
+            }
+            else {
+              super.visitPyReferenceExpression(node);
+            }
+          }
+        });
+      }
     }
   }
 

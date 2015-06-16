@@ -329,6 +329,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("pkg/subpkg", "");
   }
 
+  // PY-14617
+  public void testUsagesOfUnqualifiedOldStyleRelativeImportsInsideMovedModule() {
+    doMoveFileTest("pkg/m1.py", "");
+  }
+
   // PY-15324
   public void testInterdependentSymbols() {
     doMoveSymbolsTest("b.py", "f", "A");
