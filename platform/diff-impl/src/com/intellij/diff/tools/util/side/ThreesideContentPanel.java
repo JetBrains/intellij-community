@@ -59,6 +59,7 @@ public class ThreesideContentPanel extends JPanel {
   }
 
   public void repaintDividers() {
+    if (myBaseEditor != null) myBaseEditor.getScrollPane().getVerticalScrollBar().repaint();
     mySplitter.repaintDividers();
   }
 
