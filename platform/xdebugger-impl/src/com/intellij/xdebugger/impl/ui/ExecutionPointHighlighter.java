@@ -24,14 +24,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
@@ -202,13 +202,21 @@ public class ExecutionPointHighlighter {
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = myNotTopFrame ? scheme.getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES)
-                                : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
+                                              : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     if (mySourcePosition instanceof HighlighterProvider) {
-      myRangeHighlighter = ((HighlighterProvider)mySourcePosition).createHighlighter(document, myProject, attributes);
+      TextRange range = ((HighlighterProvider)mySourcePosition).getHighlightRange();
+      if (range != null) {
+        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
+        if (range != null && !range.isEmpty()) {
+          myRangeHighlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                               DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes,
+                                                               HighlighterTargetArea.EXACT_RANGE);
+        }
+      }
     }
     if (myRangeHighlighter == null) {
-      myRangeHighlighter = DocumentMarkupModel.forDocument(document, myProject, true).
-          addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes);
+      myRangeHighlighter = markupModel.addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
@@ -231,6 +239,6 @@ public class ExecutionPointHighlighter {
 
   public interface HighlighterProvider {
     @Nullable
-    RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes);
+    TextRange getHighlightRange();
   }
 }

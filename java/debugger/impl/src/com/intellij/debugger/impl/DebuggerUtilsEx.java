@@ -46,8 +46,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -752,9 +750,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     @Nullable
     @Override
-    public RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes) {
+    public TextRange getHighlightRange() {
       if (mySourcePosition instanceof ExecutionPointHighlighter.HighlighterProvider) {
-        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).createHighlighter(document, project, attributes);
+        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).getHighlightRange();
       }
       return null;
     }
