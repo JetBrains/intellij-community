@@ -413,7 +413,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.copy(todir: path) {
-    fileset(dir: "$ch/build/conf/mac/Contents")
+    fileset(dir: "$ch/build-robovm/conf/mac/Contents")
   }
 
   ant.tstamp() {

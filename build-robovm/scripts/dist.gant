@@ -20,7 +20,7 @@ import org.jetbrains.jps.gant.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build-robovm/scripts/utils.gant")
 
 requireProperty("out", "$home/out")
 

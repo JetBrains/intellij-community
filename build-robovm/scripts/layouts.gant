@@ -690,7 +690,7 @@ def moduleOptional(String name, Closure init) {
 def reorder(String home, String targetDirectory) {
   if (findModule("util") != null) {
     ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
-      arg(value: "$home/build/order.txt")
+      arg(value: "$home/build-robovm/order.txt")
       arg(value: targetDirectory)
       arg(value: targetDirectory)
       arg(value: "$home/lib")
