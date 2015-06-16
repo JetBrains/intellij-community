@@ -450,6 +450,24 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertEquals(RTL_CHAR, myEditor.getDocument().getCharsSequence().charAt(myEditor.getCaretModel().getOffset() - 1));
   }
   
+  public void testJavadocTokensAreMergedForBidiLayoutPurposes() throws Exception {
+    init("/** " + RTL_CHAR + " " + RTL_CHAR + " */ class Foo {}", TestFileType.JAVA);
+    for (int i = 0; i < 5; i++) {
+      right();
+    }
+
+    assertEquals(7, myEditor.getCaretModel().getOffset());
+  }
+  
+  public void testXmlTextIsLaidOutCorrectly() throws Exception {
+    init("<l>" + RTL_CHAR + " " + RTL_CHAR + "</l>", TestFileType.XML);
+    for (int i = 0; i < 4; i++) {
+      right();
+    }
+
+    assertEquals(6, myEditor.getCaretModel().getOffset());
+  }
+  
   public void testMovingThroughBoundaryBetweenRunsWithNonadjacentLevels() throws Exception {
     init("r=1");
     right();
