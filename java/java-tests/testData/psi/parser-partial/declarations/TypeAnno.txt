@@ -21,7 +21,7 @@ PsiJavaFile:TypeAnno.java
         PsiWhiteSpace(' ')
         PsiIdentifier:T('T')
         PsiWhiteSpace(' ')
-        PsiElement(EXTENDS_BOUND_LIST)
+        PsiReferenceList
           PsiKeyword:extends('extends')
           PsiWhiteSpace(' ')
           PsiJavaCodeReferenceElement:@F Object

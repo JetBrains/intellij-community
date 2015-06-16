@@ -21,6 +21,8 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.ByteArrayCharSequence;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,13 +47,22 @@ public abstract class ArchiveHandler {
 
     @Deprecated
     /**
-     * Please use the {@link EntryInfo#EntryInfo(ArchiveHandler.EntryInfo, CharSequence, boolean, long, long)} instead
+     * Please use the {@link EntryInfo#EntryInfo(CharSequence, boolean, long, long, EntryInfo)} instead
      */
+    // used in Kotlin. todo to be removed in IDEA 16
     public EntryInfo(EntryInfo parent, @NotNull String shortName, boolean isDirectory, long length, long timestamp) {
-      this(parent, (CharSequence) shortName, isDirectory, length, timestamp);
+      this(shortName, isDirectory, length, timestamp, parent);
     }
 
+    /**
+     * @deprecated use {@link EntryInfo#EntryInfo(CharSequence, boolean, long, long, EntryInfo)} instead
+     */
     public EntryInfo(EntryInfo parent, @NotNull CharSequence shortName, boolean isDirectory, long length, long timestamp) {
+      this(shortName, isDirectory, length, timestamp, parent);
+    }
+
+    public EntryInfo(@NotNull CharSequence shortName,
+                     boolean isDirectory, long length, long timestamp, @Nullable EntryInfo parent) {
       this.parent = parent;
       this.shortName = shortName;
       this.isDirectory = isDirectory;
@@ -93,7 +103,7 @@ public abstract class ArchiveHandler {
     EntryInfo entry = getEntryInfo(relativePath);
     if (entry == null || !entry.isDirectory) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    Set<String> names = new HashSet<String>();
+    Set<String> names = new THashSet<String>();
     for (EntryInfo info : getEntriesMap().values()) {
       if (info.parent == entry) {
         names.add(info.shortName.toString());
@@ -145,7 +155,7 @@ public abstract class ArchiveHandler {
 
   @NotNull
   protected EntryInfo createRootEntry() {
-    return new EntryInfo(null, "", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP);
+    return new EntryInfo("", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, null);
   }
 
   @NotNull
@@ -154,7 +164,8 @@ public abstract class ArchiveHandler {
     if (entry == null) {
       Pair<String, String> path = splitPath(entryName);
       EntryInfo parentEntry = getOrCreate(map, path.first);
-      entry = new EntryInfo(parentEntry, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP);
+      CharSequence shortName = ByteArrayCharSequence.convertToBytesIfAsciiString(path.second);
+      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parentEntry);
       map.put(entryName, entry);
     }
     return entry;

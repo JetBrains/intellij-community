@@ -53,7 +53,7 @@ public class EditorView implements Disposable {
   private final EditorSizeManager mySizeManager;
   private final TextLayoutCache myTextLayoutCache;
   private final TabFragment myTabFragment;
-    
+  
   private String myPrefixText; // accessed only in EDT
   private LineLayout myPrefixLayout; // guarded by myLock
   private TextAttributes myPrefixAttributes; // accessed only in EDT
@@ -76,12 +76,13 @@ public class EditorView implements Disposable {
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this);
     myTabFragment = new TabFragment(this);
+    
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
     
     reinitSettings();
   }
-  
+
   EditorImpl getEditor() {
     return myEditor;
   }
@@ -276,7 +277,7 @@ public class EditorView implements Disposable {
     if (!visualPosition.equals(offsetToVisualPosition(offset, logicalPosition.leansForward))) return false;
     int line = myDocument.getLineNumber(offset);
     LineLayout layout = getLineLayout(line);
-    return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line));
+    return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line), logicalPosition.leansForward);
   }
 
   /**

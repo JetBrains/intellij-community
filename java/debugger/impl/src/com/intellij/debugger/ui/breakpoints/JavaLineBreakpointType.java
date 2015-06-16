@@ -33,11 +33,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointVariant;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointVariantsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
 import javax.swing.*;
@@ -48,8 +45,7 @@ import java.util.List;
  * Base class for java line-connected exceptions (line, method, field)
  * @author egor
  */
-public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreakpointProperties>
-  implements JavaBreakpointType, XLineBreakpointVariantsProvider<JavaLineBreakpointType.JavaBreakpointVariant> {
+public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties> implements JavaBreakpointType {
   public JavaLineBreakpointType() {
     super("java-line", DebuggerBundle.message("line.breakpoints.tab.title"));
   }
@@ -65,7 +61,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreak
   }
 
   @Override
-  public List<XBreakpointGroupingRule<XLineBreakpoint<JavaBreakpointProperties>, ?>> getGroupingRules() {
+  public List<XBreakpointGroupingRule<XLineBreakpoint<JavaLineBreakpointProperties>, ?>> getGroupingRules() {
     return XDebuggerUtil.getInstance().getGroupingByFileRuleAsList();
   }
 
@@ -94,7 +90,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreak
 
   @NotNull
   @Override
-  public List<JavaBreakpointVariant> computeLineBreakpointVariants(@NotNull Project project, @NotNull XSourcePosition position) {
+  public List<JavaBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
     PsiFile file = PsiManager.getInstance(project).findFile(position.getFile());
     if (file == null) {
       return Collections.emptyList();
@@ -190,5 +186,22 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreak
       properties.setOffset(mySourcePosition.getOffset());
       return properties;
     }
+  }
+
+  @Nullable
+  @Override
+  public TextRange getHighlightRange(JavaLineBreakpointProperties properties, Document document, Project project) {
+    Integer offset = properties.getOffset();
+    if (offset != null) {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file != null) {
+        PsiElement elem = file.findElementAt(offset);
+        NavigatablePsiElement method = PsiTreeUtil.getParentOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
+        if (method != null) {
+          return method.getTextRange();
+        }
+      }
+    }
+    return null;
   }
 }

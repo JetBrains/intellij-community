@@ -19,10 +19,7 @@ import com.intellij.formatting.Block;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 
 public class NewLineBlocksIterator implements Iterator<Block> {
@@ -97,9 +94,9 @@ public class NewLineBlocksIterator implements Iterator<Block> {
     }
 
     List<Block> blocks = current.getSubBlocks();
-    Collections.reverse(blocks);
-    for (Block block : blocks) {
-      myStack.push(block);
+    ListIterator<Block> iterator = blocks.listIterator(blocks.size());
+    while (iterator.hasPrevious()) {
+      myStack.push(iterator.previous());
     }
   }
 

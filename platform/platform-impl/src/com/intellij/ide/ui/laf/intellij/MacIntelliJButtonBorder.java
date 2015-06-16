@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.breakpoints;
+package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.plaf.UIResource;
+import java.awt.*;
 
 /**
- * @author egor
+ * @author Konstantin Bulenkov
  */
-public abstract class XLineBreakpointVariant<P extends XBreakpointProperties> {
-  public abstract String getText();
+public class MacIntelliJButtonBorder implements Border, UIResource {
+  @Override
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
 
-  public abstract Icon getIcon();
+  }
 
-  public abstract TextRange getHighlightRange();
+  @Override
+  public Insets getBorderInsets(Component c) {
+    return JBUI.insets(3).asUIResource();
+  }
 
-  public abstract P createProperties();
+  @Override
+  public boolean isBorderOpaque() {
+    return false;
+  }
 }

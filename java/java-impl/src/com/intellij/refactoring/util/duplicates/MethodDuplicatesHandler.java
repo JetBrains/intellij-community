@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -55,9 +56,15 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class MethodDuplicatesHandler implements RefactoringActionHandler {
+public class MethodDuplicatesHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.method.code.duplicates.title");
   private static final Logger LOG = Logger.getInstance("#" + MethodDuplicatesHandler.class.getName());
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    return getCannotRefactorMessage(PsiTreeUtil.getParentOfType(element, PsiMember.class)) == null;
+  }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {

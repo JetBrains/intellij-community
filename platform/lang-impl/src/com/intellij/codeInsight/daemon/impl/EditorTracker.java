@@ -241,7 +241,7 @@ public class EditorTracker extends AbstractProjectComponent {
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
-      if (editor.getProject() != null && editor.getProject() != myProject) return;
+      if (editor.getProject() != null && editor.getProject() != myProject || myProject.isDisposed()) return;
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile == null) return;
 
@@ -275,7 +275,7 @@ public class EditorTracker extends AbstractProjectComponent {
           component.removeHierarchyListener(hierarchyListener);
           contentComponent.removeFocusListener(focusListener);
           // allow range markers in smart pointers to be collected
-          if (virtualFile != null) {
+          if (virtualFile != null && virtualFile.isValid()) {
             mySmartPointerManager.unfastenBelts(virtualFile, 0);
           }
         }

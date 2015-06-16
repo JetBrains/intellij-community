@@ -46,8 +46,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -63,6 +61,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -751,9 +750,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     @Nullable
     @Override
-    public RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes) {
+    public TextRange getHighlightRange() {
       if (mySourcePosition instanceof ExecutionPointHighlighter.HighlighterProvider) {
-        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).createHighlighter(document, project, attributes);
+        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).getHighlightRange();
       }
       return null;
     }
@@ -798,7 +797,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return Collections.emptyList();
     }
     PsiElement element = position.getElementAt();
-    final TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     do {
       PsiElement parent = element.getParent();
       if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
@@ -813,7 +812,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
-        if (!onlyOnTheLine || lineRange.intersects(expression.getTextRange())) {
+        PsiElement body = expression.getBody();
+        if (!onlyOnTheLine || (body != null && lineRange.intersects(body.getTextRange()))) {
           lambdas.add(expression);
         }
       }

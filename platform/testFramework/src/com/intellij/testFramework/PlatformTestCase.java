@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -237,6 +238,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     myProject = doCreateProject(projectFile);
     myProjectManager.openTestProject(myProject);
+    myProject.getComponent(EditorTracker.class).projectOpened();
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     setUpModule();

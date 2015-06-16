@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.breakpoints;
+package com.intellij.openapi.editor.bidi;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlTokenType;
 
-import java.util.List;
-
-/**
- * @author egor
- */
-public interface XLineBreakpointVariantsProvider<V extends XLineBreakpointVariant> {
-  @NotNull
-  List<V> computeLineBreakpointVariants(@NotNull Project project, @NotNull XSourcePosition position);
+public class XmlBidiRegionsSeparator extends TokenSetBidiRegionsSeparator {
+  public XmlBidiRegionsSeparator() {
+    super(TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS, 
+                          XmlTokenType.XML_REAL_WHITE_SPACE));
+  }
 }
