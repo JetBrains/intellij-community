@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -393,6 +394,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
+      ourProject.getComponent(EditorTracker.class).projectOpened();
     }
     ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
 
