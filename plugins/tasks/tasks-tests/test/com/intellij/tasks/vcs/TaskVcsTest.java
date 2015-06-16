@@ -96,7 +96,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("TEST-001 Summary", activeChangeList.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(anotherChangeList));
-    assertEquals(anotherChangeList.getName(), LocalChangeList.DEFAULT_NAME);
+    assertEquals(LocalChangeList.DEFAULT_NAME, anotherChangeList.getName());
 
     myTaskManager.activateTask(defaultTask, false);
     myChangeListManager.waitUntilRefreshed();
@@ -110,10 +110,10 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     assertNotNull(activeChangeList);
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(activeChangeList));
-    assertEquals(activeChangeList.getName(), LocalChangeList.DEFAULT_NAME);
+    assertEquals(LocalChangeList.DEFAULT_NAME, activeChangeList.getName());
 
     assertEquals(localTask, myTaskManager.getAssociatedTask(anotherChangeList));
-    assertEquals(anotherChangeList.getName(), "TEST-001 Summary");
+    assertEquals("TEST-001 Summary", anotherChangeList.getName());
   }
 
   public void testAddChangeListViaCreateChangeListAction() throws Exception {
@@ -146,13 +146,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(anotherChangeList);
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListActive));
-    assertEquals(defaultChangeListActive.getName(), "Default (1)");
+    assertEquals("Default (1)", defaultChangeListActive.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListInactive));
-    assertEquals(defaultChangeListInactive.getName(), LocalChangeList.DEFAULT_NAME);
+    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeListInactive.getName());
 
     assertEquals(anotherTask, myTaskManager.getAssociatedTask(anotherChangeList));
-    assertEquals(anotherChangeList.getName(), "TEST-001 Summary");
+    assertEquals("TEST-001 Summary", anotherChangeList.getName());
   }
 
   public void testRemoveChangelistViaVcsAction() throws Exception {
@@ -181,7 +181,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeList));
-    assertEquals(defaultChangeList.getName(), LocalChangeList.DEFAULT_NAME);
+    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeList.getName());
   }
 
   private void activateAndCreateChangelist(Task task) {
@@ -220,13 +220,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(anotherChangeList);
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListActive));
-    assertEquals(defaultChangeListActive.getName(), LocalChangeList.DEFAULT_NAME);
+    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeListActive.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListInactive));
-    assertEquals(defaultChangeListInactive.getName(), "Default (1)");
+    assertEquals("Default (1)", defaultChangeListInactive.getName());
 
     assertEquals(anotherTask, myTaskManager.getAssociatedTask(anotherChangeList));
-    assertEquals(anotherChangeList.getName(), "TEST-001 Summary");
+    assertEquals("TEST-001 Summary", anotherChangeList.getName());
   }
 
   public void testTrackContext() {
@@ -239,7 +239,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(newChangeList);
     LocalTask newTask = myTaskManager.getAssociatedTask(newChangeList);
     assertNotNull(newTask);
-    assertEquals(newTask.getSummary(), "New Changelist");
+    assertEquals("New Changelist", newTask.getSummary());
 
     myTaskManager.getState().trackContextForNewChangelist = false;
   }
