@@ -253,12 +253,14 @@ class LineLayout {
     return false;
   }
 
-  boolean isDirectionBoundary(int offset) {
+  boolean isDirectionBoundary(int offset, boolean leanForward) {
     boolean prevIsRtl = false;
-    for (BidiRun run : myBidiRunsInLogicalOrder) {
+    boolean found = offset == 0 && !leanForward;
+    for (BidiRun run : myBidiRunsInVisualOrder) {
       boolean curIsRtl = run.isRtl();
-      if (offset == run.startOffset && curIsRtl != prevIsRtl) return true;
-      if (offset < run.endOffset) return false;
+      if (found || offset == (curIsRtl ? run.endOffset : run.startOffset)) return curIsRtl != prevIsRtl;
+      if (offset > run.startOffset && offset < run.endOffset) return false;
+      found = (offset == (curIsRtl ? run.startOffset : run.endOffset));
       prevIsRtl = curIsRtl;
     }
     return prevIsRtl;

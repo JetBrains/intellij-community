@@ -450,6 +450,12 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertEquals(RTL_CHAR, myEditor.getDocument().getCharsSequence().charAt(myEditor.getCaretModel().getOffset() - 1));
   }
   
+  public void testMovingThroughBoundaryBetweenRunsWithNonadjacentLevels() throws Exception {
+    init("r=1");
+    right();
+    assertVisualCaretLocation(1, false);
+  }
+  
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
   }
