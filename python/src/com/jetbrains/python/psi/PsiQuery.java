@@ -77,6 +77,7 @@ public class PsiQuery {
     return new PsiQuery(result.toArray(new PsiElement[result.size()]));
   }
 
+  
   /**
    * Searches for string literals with specific text
    * @param clazz string literal class
