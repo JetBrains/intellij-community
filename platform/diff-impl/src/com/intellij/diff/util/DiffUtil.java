@@ -40,6 +40,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -789,7 +790,22 @@ public class DiffUtil {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        CommandProcessor.getInstance().executeCommand(project, task, name, null);
+        CommandProcessor.getInstance().executeCommand(project, task, name, null, document);
+      }
+    });
+  }
+
+  @CalledInAwt
+  public static void executeWriteCommand(@NotNull final Document document,
+                                         @Nullable final Project project,
+                                         @Nullable final String name,
+                                         @NotNull final UndoConfirmationPolicy confirmationPolicy,
+                                         @NotNull final Runnable task) {
+    if (!makeWritable(project, document)) return;
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        CommandProcessor.getInstance().executeCommand(project, task, name, null, confirmationPolicy, document);
       }
     });
   }

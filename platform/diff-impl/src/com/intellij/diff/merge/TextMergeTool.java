@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -284,12 +285,14 @@ public class TextMergeTool implements MergeTool {
       private void setInitialOutputContent() {
         final Document baseDocument = ThreeSide.BASE.select(myMergeRequest.getContents()).getDocument();
         final Document outputDocument = myMergeRequest.getOutputContent().getDocument();
-        DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", new Runnable() {
-          @Override
-          public void run() {
-            outputDocument.setText(baseDocument.getCharsSequence());
-          }
-        });
+
+        DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content",
+                                     UndoConfirmationPolicy.REQUEST_CONFIRMATION, new Runnable() {
+            @Override
+            public void run() {
+              outputDocument.setText(baseDocument.getCharsSequence());
+            }
+          });
       }
 
       @Override
