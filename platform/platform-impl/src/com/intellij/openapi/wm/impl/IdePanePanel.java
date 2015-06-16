@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.util.ui.components.JBPanel;
+import com.intellij.ui.components.JBPanel;
 
 import java.awt.*;
 
