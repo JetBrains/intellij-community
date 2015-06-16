@@ -126,4 +126,22 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   public TextRange getHighlightRange(P properties, Document document, Project project) {
     return null;
   }
+
+  /**
+   * Return a list of variants if there can be more than one breakpoint on the line
+   */
+  @NotNull
+  public List<? extends XLineBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
+    return Collections.emptyList();
+  }
+
+  public abstract class XLineBreakpointVariant {
+    public abstract String getText();
+
+    public abstract Icon getIcon();
+
+    public abstract TextRange getHighlightRange();
+
+    public abstract P createProperties();
+  }
 }
