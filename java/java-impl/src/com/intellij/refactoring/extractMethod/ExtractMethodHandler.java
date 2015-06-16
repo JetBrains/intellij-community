@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -56,7 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ExtractMethodHandler implements RefactoringActionHandler {
+public class ExtractMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.method.title");
@@ -103,10 +104,21 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       }
     }
 
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    callback.pass(getElements(project, editor, file));
+  }
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    final PsiElement[] elements = getElements(file.getProject(), editor, file);
+    return elements != null && elements.length > 0;
+  }
+
+  public static PsiElement[] getElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement[] elements;
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
@@ -125,7 +137,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         }
       }
     }
-    callback.pass(elements);
+    return elements;
   }
 
   private static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
