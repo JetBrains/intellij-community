@@ -379,6 +379,7 @@ public class FileSystemUtil {
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
     private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
     private static final int[] LNX_PPC64 = LINUX_64;
+    private static final int[] LINUX_ARM = LNX_PPC32;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
@@ -399,7 +400,10 @@ public class FileSystemUtil {
 
     private JnaUnixMediatorImpl() throws Exception {
       if (SystemInfo.isLinux) {
-        if ("ppc".equals(SystemInfo.OS_ARCH)) {
+        if ("arm".equals(SystemInfo.OS_ARCH)) {
+          myOffsets = LINUX_ARM;
+        }
+        else if ("ppc".equals(SystemInfo.OS_ARCH)) {
           myOffsets = SystemInfo.is32Bit ? LNX_PPC32 : LNX_PPC64;
         }
         else {
