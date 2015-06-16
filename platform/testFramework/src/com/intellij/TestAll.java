@@ -94,13 +94,13 @@ public class TestAll implements Test {
   };
 
   private final TestCaseLoader myTestCaseLoader;
-  private long myStartTime = 0;
-  private boolean myInterruptedByOutOfTime = false;
-  private long myLastTestStartTime = 0;
+  private long myStartTime;
+  private boolean myInterruptedByOutOfTime;
+  private long myLastTestStartTime;
   private String myLastTestClass;
   private int myRunTests = -1;
   private boolean mySavingMemorySnapshot;
-  private int myLastTestTestMethodCount = 0;
+  private int myLastTestTestMethodCount;
   private TestRecorder myTestRecorder;
 
   public TestAll(String packageRoot) throws Throwable {
@@ -191,7 +191,7 @@ public class TestAll implements Test {
 
   private void beforeFirstTest() {
     if ((ourMode & START_GUARD) != 0) {
-      Thread timeAndMemoryGuard = new Thread() {
+      Thread timeAndMemoryGuard = new Thread("Time and Memory Guard") {
         @Override
         public void run() {
           log("Starting Time and Memory Guard");
@@ -243,7 +243,7 @@ public class TestAll implements Test {
     if (PlatformTestCase.ourTestThread != null) {
       return PlatformTestCase.ourTestThread;
     }
-    else return LightPlatformTestCase.ourTestThread;
+    return LightPlatformTestCase.ourTestThread;
   }
 
   private void addErrorMessage(TestResult testResult, String message) {
@@ -284,7 +284,7 @@ public class TestAll implements Test {
     tryGc(10);
   }
 
-  private static boolean shouldRecord(Class<?> aClass) {
+  private static boolean shouldRecord(@NotNull Class<?> aClass) {
     return aClass.getAnnotation(RecordExecution.class) != null;
   }
 
