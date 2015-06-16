@@ -1,0 +1,240 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.jps.gant.LayoutInfo
+
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+
+requireProperty("out", "$home/out")
+
+class Paths {
+  final sandbox
+  final distWin
+  final distAll
+  final distUnix
+  final distMac
+  final artifacts
+  final artifacts_core
+  final artifacts_jps
+  final ideaSystem
+  final ideaConfig
+
+  def Paths(String out) {
+    sandbox = out
+    distWin = "$sandbox/dist.win.ce"
+    distAll = "$sandbox/dist.all.ce"
+    distUnix = "$sandbox/dist.unix.ce"
+    distMac = "$sandbox/dist.mac.ce"
+    artifacts = "$sandbox/artifacts"
+    artifacts_core = "$artifacts/core"
+    artifacts_jps = "$artifacts/jps"
+    ideaSystem = "$sandbox/system"
+    ideaConfig = "$sandbox/config"
+  }
+}
+
+def paths = new Paths(out)
+setProperty("paths", paths)
+
+setProperty("maySkipAndroidPlugin", true)
+
+target(compile: "Compile project") {
+  loadProject()
+  bundledJDKs()
+  projectBuilder.stage("Cleaning up sandbox folder")
+  forceDelete(paths.sandbox)
+
+  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core, paths.artifacts_jps].each {
+    ant.mkdir(dir: it)
+  }
+
+  projectBuilder.targetFolder = "$out/classes"
+  projectBuilder.cleanOutput()
+  projectBuilder.buildProduction()
+  projectBuilder.makeModuleTests(findModule("jps-builders"))
+}
+
+private String appInfoFile() {
+  return "${projectBuilder.moduleOutput(findModule("community-resources"))}/idea/IdeaApplicationInfo.xml"
+}
+
+target('default': 'The default target') {
+  depends([compile])
+
+  // load ApplicationInfo.xml properties
+  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
+
+  zipSources(home, paths.artifacts)
+
+  indexSearchableOptions()
+
+  layoutAll([buildNumber: "IC-$snapshot",
+             system_selector: "IdeaIC${p("component.version.major")}",
+             tools_jar: true],
+            home, null, paths, true)
+  String macZip = "$paths.artifacts/ideaIC-${snapshot}.mac.zip"
+  notifyArtifactBuilt(macZip)
+}
+
+target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
+  loadProject()
+
+  // load ApplicationInfo.xml properties
+  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
+
+  indexSearchableOptions()
+
+  layoutAll([buildNumber: "IC-$snapshot",
+             system_selector: "IdeaIC${p("component.version.major")}",
+             tools_jar: true],
+             home, null, paths)
+  String macZip = "$paths.artifacts/ideaIC-${snapshot}.mac.zip"
+  notifyArtifactBuilt(macZip)
+}
+
+private void indexSearchableOptions() {
+  buildSearchableOptions("${projectBuilder.moduleOutput(findModule("resources-en"))}/search", [], {
+    ant.pathelement(location: "$jdkHome/lib/tools.jar")
+    ant.pathelement(location: "$home/lib/junit.jar")
+    projectBuilder.moduleRuntimeClasspath(findModule("community-main"), false).each {
+      ant.pathelement(location: it)
+    }
+  })
+}
+
+def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false) {
+  Paths paths = _paths != null ? _paths : new Paths(out)
+
+  wireBuildDate(args.buildNumber, appInfoFile())
+  ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
+
+  def layouts = includeFile("$home/build/scripts/layouts.gant")
+  LayoutInfo info = layouts.layoutFull(home, paths.distAll, null)
+  layouts.layout_core(home, paths.artifacts_core)
+  ant.zip(destfile: "${paths.artifacts}/intellij-core-${StringUtil.trimStart(args.buildNumber, "IC-")}.zip") {
+    fileset(dir: paths.artifacts_core)
+  }
+
+  notifyArtifactBuilt(paths.artifacts_core)
+  if (buildJps) {
+    layouts.layoutJps(home, paths.artifacts_jps, args.buildNumber, {})
+    notifyArtifactBuilt(paths.artifacts_jps)
+  }
+
+  layout(paths.distAll) {
+    dir("bin") {
+      fileset(dir: "${home}/bin") {
+        include(name: "*.*")
+      }
+    }
+
+    dir("license") {
+      fileset(dir: "${home}/license") {
+        exclude(name: "placeholder.txt")
+      }
+    }
+    fileset(file: "${home}/LICENSE.txt")
+    fileset(file: "${home}/NOTICE.txt")
+  }
+  patchPropertiesFile(paths.distAll, args + [appendices: ["$home/build/conf/ideaCE.properties"]])
+
+  layoutWin(args, home, paths)
+  layoutMac(args, home, paths)
+  layoutUnix(args, home, paths)
+
+  buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin])
+  buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
+                        paths.distWin, paths.distUnix, paths.distMac)
+
+  def macAppRoot = isEap() ?
+                   "IntelliJ IDEA ${p("component.version.major")} CE EAP.app/Contents" :
+                   "IntelliJ IDEA ${p("component.version.major")} CE.app/Contents"
+
+  String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
+  buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
+
+  buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
+  if (p("jdk.bundled.linux") != "false") {
+    buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/bin/*"])
+  }
+  return info
+}
+
+private layoutWin(Map args, String home, Paths paths) {
+  String target = paths.distWin
+
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/bin/win")
+    }
+  }
+
+  ant.copy(file: "$home/platform/icons/src/idea_CE.ico", tofile: "$target/bin/idea.ico")
+
+  winScripts(target, home, "idea.bat", args)
+  winVMOptions(target, null, "idea.exe", "idea64.exe")
+  List resourcePaths = ["$home/community-resources/src", "$home/platform/icons/src"]
+  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/idea.exe", appInfoFile(),
+                   "$home/build/conf/ideaCE-launcher.properties", args.ce_exe_selector, resourcePaths)
+  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/idea64.exe", appInfoFile(),
+                   "$home/build/conf/ideaCE64-launcher.properties", args.ce_exe_selector, resourcePaths)
+}
+
+private layoutMac(Map _args, String home, Paths paths) {
+  String target = paths.distMac
+
+  Map args = new HashMap(_args)
+  args.bundleIdentifier = "com.jetbrains.intellij.ce"
+  args.doc_types = """
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>ipr</string>
+        </array>
+        <key>CFBundleTypeIconFile</key>
+        <string>idea.icns</string>
+        <key>CFBundleTypeName</key>
+        <string>IntelliJ IDEA Project File</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+      </dict>
+"""
+  args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
+  args.urlSchemes = ["idea"]
+  args.mac_no_yjp = true
+  args.executable = "idea"
+  layoutMacApp(target, home, args)
+}
+
+private layoutUnix(Map args, String home, Paths paths) {
+  String target = paths.distUnix
+
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/bin/linux")
+    }
+  }
+
+  ant.copy(file: "$home/platform/icons/src/icon_CE_128.png", tofile: "$target/bin/idea.png")
+
+  unixScripts(target, home, "idea.sh", args)
+  unixVMOptions(target, "idea")
+  unixReadme(target, home, args)
+}

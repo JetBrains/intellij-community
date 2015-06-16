@@ -1,0 +1,59 @@
+<project name="Test gant invocation from Ant script" default="doGant">
+  <dirname property="build.dir" file="${ant.file}"/>
+  <property name="project.home" value="${build.dir}/.."/>
+  <property name="gant.home" value="${project.home}/build/lib/gant"/>
+  <property name="idea.lib" value="${project.home}/lib"/>
+
+  <condition property="gant.target" value="default">
+    <not>
+      <isset property="gant.target"/>
+    </not>
+  </condition>
+
+  <path id="gant.classpath">
+    <fileset dir="${gant.home}/lib">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${project.home}/build/lib/jps">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset file="${project.home}/jps/lib/optimizedFileManager.jar"/>
+    <fileset dir="${project.home}/build/kotlinc/jps" erroronmissingdir="false">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${project.home}/build/kotlinc/lib" erroronmissingdir="false">
+      <include name="kotlin-runtime.jar"/>
+    </fileset>
+    <fileset dir="${project.home}/build/kotlinc/plugin" erroronmissingdir="false">
+      <include name="kotlin-plugin.jar"/>
+    </fileset>
+    <fileset dir="${idea.lib}">
+       <include name="jdom.jar"/>
+       <include name="log4j.jar"/>
+       <include name="trove4j.jar"/>
+       <include name="groovy-all-*.jar"/>
+       <include name="protobuf*.jar"/>
+       <include name="netty*.jar"/>
+       <include name="asm-all.jar"/>
+       <include name="asm-commons.jar"/>
+       <include name="jgoodies-forms.jar"/>
+       <include name="guava*.jar"/>
+       <include name="picocontainer.jar"/>
+       <include name="jna.jar"/>
+       <include name="jna-utils.jar"/>
+       <include name="oromatcher.jar"/>
+       <include name="snappy-in-java-*.jar"/>
+       <include name="cli-parser-*.jar"/>
+       <include name="nanoxml-*.jar"/>
+       <include name="jsr166e.jar"/>
+    </fileset>
+  </path>
+
+  <taskdef name="gant" classname="org.jetbrains.jps.gant.GantWithClasspathTask">
+    <classpath refid="gant.classpath"/>
+  </taskdef>
+
+  <target name="doGant">
+    <gant file="${gant.script}" target="${gant.target}"/>
+  </target>
+</project>

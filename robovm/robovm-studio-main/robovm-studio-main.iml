@@ -6,6 +6,7 @@
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="module" module-name="robovm-studio-branding" />
     <orderEntry type="module" module-name="ant" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="bootstrap" />
@@ -55,7 +56,6 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="community-resources" />
     <orderEntry type="module" module-name="java-tests" />
     <orderEntry type="module" module-name="copyright" />
     <orderEntry type="module" module-name="cvs-plugin" />

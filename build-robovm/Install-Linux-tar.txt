@@ -1,0 +1,51 @@
+@@product_full@@
+
+INSTALLATION INSTRUCTIONS
+===============================================================================
+
+  Linux Installation Instructions
+  ------------------------------------------------------------------------------
+  1. Unpack the @@product_full@@ distribution archive that you downloaded to
+     where you wish to install the program. We will refer to this destination
+     location as your {installation home} below.
+
+  2. Open a console and cd into "{installation home}/bin" and type:
+
+       ./@@product@@.sh
+
+     to start the application.
+
+  3. [OPTIONAL] Add the "{installation home}/bin" to your PATH environmental
+     variable so that you may start @@product_full@@ from any directory.
+
+  4. [OPTIONAL] To adjust the value of JVM heap size open @@product@@.vmoptions
+     (@@product@@64.vmoptions for 64-bit JDK), and modify the -Xms and -Xmx parameters.
+
+
+  [OPTIONAL] Changing location of "config" and "system" directory
+  ------------------------------------------------------------------------------
+  By default @@product_full@@ stores all your settings under ~/.@@system_selector@@/config directory
+  and stores data cache under ~/.@@system_selector@@/system directory.
+  If you want to change these settings,
+
+  1. Open a console and cd into "{installation home}/bin"
+
+  2. Open file "idea.properties" in an editor. You should find strings like
+
+     idea.system.path=~/.@@settings_dir@@/system
+
+     and
+
+     idea.config.path=~/.@@settings_dir@@/config
+
+     and change them.
+
+  3. Note that we recommend to store data cache ("system" directory) at a disk 
+     with at least 1G bytes free space
+
+
+
+
+Enjoy!
+
+-@@product_full@@ Development Team

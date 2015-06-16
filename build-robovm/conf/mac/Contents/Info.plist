@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      @@doc_types@@
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>*</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>All documents</string>
+        <key>CFBundleTypeOSTypes</key>
+        <array>
+          <string>****</string>
+        </array>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>LSTypeIsPackage</key>
+        <false/>
+      </dict>
+    </array>
+    <key>CFBundleExecutable</key>
+    <string>@@executable@@</string>
+    <key>CFBundleIconFile</key>
+    <string>@@icns@@</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>@@bundle_name@@@@product_state@@</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleIdentifier</key>
+    <string>@@bundle_identifier@@@@product_state@@</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleGetInfoString</key>
+    <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@@version@@</string>
+    <key>CFBundleVersion</key>
+    <string>@@build@@</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    <key>CFBundleHelpBookName</key>
+    <string>JetBrains.@@help_id@@.help</string>
+    <key>CFBundleHelpBookFolder</key>
+    <string>@@help_id@@.help</string>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
+    @@archs@@
+    <key>LSRequiresNativeExecution</key>
+    <string>YES</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>@@min_osx@@</string>
+
+    @@url_schemes@@
+
+    <key>JVMOptions</key>
+    <dict>
+      <key>ClassPath</key>
+      <string>@@class_path@@</string>
+
+      <key>JVMVersion</key>
+      <string>1.6*,1.7+</string>
+
+      <key>MainClass</key>
+      <string>com.intellij.idea.Main</string>
+      <key>Properties</key>
+      <dict>
+        @@idea_properties@@
+
+        <key>idea.java.redist</key>
+        <string>NoJavaDistribution</string>
+
+        <key>idea.home.path</key>
+        <string>$APP_PACKAGE/Contents</string>
+      </dict>
+
+      <key>VMOptions</key>
+      <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
+
+      <key>WorkingDirectory</key>
+      <string>$APP_PACKAGE/Contents/bin</string>
+    </dict>
+  </dict>
+</plist>

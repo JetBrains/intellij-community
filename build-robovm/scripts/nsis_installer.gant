@@ -1,0 +1,102 @@
+target(nsis: 'Build nsis windows installer') {
+  nsis_installer()
+}
+
+String p(String key) {
+  return getProperty(key)
+}
+
+def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includeToolsJar = true, associateIpr = true,
+                   system_selector = getProperty("system_selector"), failOnSignError = false, outFileName = null,
+                   boolean hasBundledJRE = false) {
+  // p.s: Groovy reevaluates default value of system_selector on each call, so it always uses actual property value.
+
+  if (outFileName == null) {
+    outFileName = "${outNamePrefix}${buildNumber}"
+  }
+
+  ant.taskdef(name: "nsis", classname: "com.intellij.internalUtilities.ant.NsiFiles", classpath: "${home}/community/build/lib/NsiFiles.jar")
+
+  def box = paths.sandbox
+  ant.mkdir(dir: "$box/bin")
+  ant.mkdir(dir: "$box/nsiconf")
+
+  if (!hasBundledJRE) {
+    ant.mkdir(dir: "$box/jre")
+    ant.unzip(dest: "$box/jre", src: winJDK)
+
+    ant.copy(todir: "$box/bin") {
+      fileset(dir: "$box/jre/jre/bin") {
+        include(name: "msvcr71.dll")
+      }
+    }
+  }
+
+  ant.copy(todir: "$box/nsiconf") {
+    fileset(dir: "$home/community/build/conf/nsis") {
+      include(name: "*")
+      exclude(name: "version*")
+      exclude(name: "strings*")
+      exclude(name: "paths*")
+    }
+  }
+
+  if (isEap()) {
+    ant.copy(file: "$home/community/build/conf/nsis/version.eap.nsi",
+             tofile: "$box/nsiconf/version.nsi", overwrite: true)
+  }
+  else {
+    ant.copy(file: "$home/community/build/conf/nsis/version.nsi",
+             tofile: "$box/nsiconf/version.nsi", overwrite: true)
+  }
+  ant.copy(file: pathsFile, toFile: "$box/nsiconf/paths.nsi", overwrite: true)
+
+  ant.nsis(instfile: "$box/nsiconf/idea_win.nsh", uninstfile: "$box/nsiconf/unidea_win.nsh") {
+    pathsToInclude.each {
+      fileset(dir: it, includes: "**/*") {
+        exclude(name: "**/idea.properties")
+        exclude(name: "**/*.vmoptions")
+      }
+    }
+    fileset(dir: box, includes: "bin/msvcr71.dll")
+    if (!hasBundledJRE) {
+      fileset(dir: box, includes: "jre/**/*")
+      if (includeToolsJar) {
+        fileset(dir: box) {
+          include(name: "jre/lib/tools.jar")
+        }
+      }
+    }
+  }
+
+  ant.replace(file: "$stringsFile") {
+    replacefilter(token: "__VERSION_MAJOR__", value: p("component.version.major"))
+    replacefilter(token: "__VERSION_MINOR__", value: p("component.version.minor"))
+  }
+  ant.copy(file: stringsFile, toFile: "$box/nsiconf/strings.nsi", overwrite: true)
+
+  ant.replace(file: "$box/nsiconf/version.nsi") {
+    replacefilter(token: "__BUILD_NUMBER__", value: buildNumber)
+    replacefilter(token: "__VERSION_MAJOR__", value: p("component.version.major"))
+    replacefilter(token: "__VERSION_MINOR__", value: p("component.version.minor"))
+    replacefilter(token: "__MIN_UPGRADE_BUILD__", value: p("component.install-over.minbuild"))
+    replacefilter(token: "__MAX_UPGRADE_BUILD__", value: p("component.install-over.maxbuild"))
+    replacefilter(token: "__UPGRADE_VERSION__", value: p("component.install-over.version"))
+    replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: system_selector)
+  }
+
+  ant.unzip(src: "$home/build/tools/NSIS.zip", dest: box)
+  ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
+                    " /DBASE_DIR=\"$home\"" +
+                    " /DCOMMUNITY_DIR=\"$home/community\"" +
+                    " /DIPR=\"${associateIpr}\"" +
+                    " /DOUT_FILE=\"${outFileName}\"" +
+                    " /DOUT_DIR=\"$paths.artifacts\"" +
+                    " \"${box}/nsiconf/idea.nsi\"")
+
+  projectBuilder.stage("Signing binaries")
+  executeExternalAnt(["dirName": "${paths.artifacts}", "fileName": "${outFileName}.exe"], "$home/build/signBuild.xml")
+  projectBuilder.stage("Signing done")
+
+  return "${paths.artifacts}/${outFileName}.exe"
+}

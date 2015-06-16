@@ -1,0 +1,104 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/cucumber-tests.gant")
+
+requireProperty("out", "$home/out")
+
+target(compile: "Compile project") {
+  ant.delete(failonerror: false) {
+    fileset(dir: "$home/reports")
+    fileset(dir: "$home/bin", includes: "*.hprof")
+  }
+
+  loadProject()
+  prepareOutputFolder()
+
+  if (!isDefined("avoid.project.rebuild")) {
+    projectBuilder.cleanOutput()
+    projectBuilder.buildAll()
+  }
+}
+
+private pass(List<String> args, String prop) {
+  if (isDefined(prop)) {
+    args << "-D$prop=${p(prop)}"
+  }
+}
+
+target('run_tests': 'Run java tests') {
+  depends([compile])
+
+  def classpathFile = "$home/junit.classpath"
+  //todo[nik] currently runtime classpath includes path to JDKs from all modules in it so we need to manually exclude paths from JDK 1.6
+  List<String> testRuntimeClasspath = removeJdkJarFiles(projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true))
+  testRuntimeClasspath << "${jdk8Home}/lib/tools.jar"
+  projectBuilder.info("Test runtime classpath=" + testRuntimeClasspath)
+  new File(classpathFile).text = testRuntimeClasspath.findAll({ new File((String)it).exists() }).join('\n')
+
+  List<String> bootstrapClasspath = removeJdkJarFiles(projectBuilder.moduleRuntimeClasspath(findModule("tests_bootstrap"), false))
+  bootstrapClasspath << "${jdk8Home}/lib/tools.jar"
+  projectBuilder.info("Bootstrap classpath=" + bootstrapClasspath)
+
+  testcases.each { testCase ->
+    List<String> jvmArgs = [
+      "-Dclasspath.file=${classpathFile}",
+      "-Didea.platform.prefix=Idea",
+      "-Dbootstrap.testcases=$testCase"
+    ]
+
+    [
+      "idea.test.group",
+      "idea.test.patterns",
+      "idea.fast.only",
+      "idea.coverage.enabled.build",
+      "teamcity.build.tempDir",
+      "teamcity.tests.recentlyFailedTests.file"
+    ].each { pass(jvmArgs, it) }
+
+    System.getProperties().entrySet().each {
+      if (it.key.startsWith("pass.")) {
+        def trimmed = it.key.substring("pass.".length());
+        jvmArgs << "-D${trimmed}=${it.value}"
+      };
+    }
+    jvmArgs.addAll(commonJvmArgsForTests())
+    if (isDefined("jvm_args")) {
+      jvmArgs.addAll(jvm_args)
+    }
+
+    projectBuilder.info("Starting JUnit $testCase, JVM options: $jvmArgs")
+    ant.junit(fork: "yes", showoutput: "true", logfailedtests: false) {
+      jvmArgs.each {
+        jvmarg(value: it)
+      }
+
+      classpath {
+        bootstrapClasspath.each {
+          pathelement(location: it)
+        }
+      }
+
+      test(name: 'com.intellij.tests.BootstrapTests')
+    }
+  }
+}
+
+target('default' : "Run all tests") {
+  depends([compile, run_tests, run_cucumber_tests])
+}

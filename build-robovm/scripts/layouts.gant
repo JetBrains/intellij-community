@@ -1,0 +1,878 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+
+target('default': "Developers update") {
+  def patchedDescriptorDir = patchAppDescriptor(deploy)
+  layoutFull(home, deploy, patchedDescriptorDir)
+  ant.delete(dir: patchedDescriptorDir)
+}
+
+String appInfoFileName() {
+  return "idea/IdeaApplicationInfo.xml"
+}
+
+String patchAppDescriptor(String targetDirectory) {
+  def patchedDirectory = "${targetDirectory}/../patched"
+
+  ant.delete(dir: patchedDirectory)
+
+  layout(patchedDirectory) {
+    module("community-resources") {
+      include(name: appInfoFileName())
+    }
+  }
+
+  ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_NUMBER__", value: "IC-$snapshot")
+  ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_DATE__", value: new Date().format("yyyyMMddHHmm"))
+
+  return patchedDirectory
+}
+
+def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
+  projectBuilder.stage("layout to $targetDirectory")
+
+  List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]
+  List<String> openapiModules = [platformApiModules,
+    "compiler-openapi",
+    "debugger-openapi",
+    "dom-openapi",
+    "execution-openapi",
+    "java-analysis-api",
+    "java-indexing-api",
+    "java-psi-api",
+    "jsp-openapi",
+    "jsp-base-openapi",
+    "openapi",
+    "remote-servers-java-api",
+    "testFramework-java",
+  ].flatten()
+
+  List<String> implementationModules = [platformImplementationModules,
+    "compiler-impl",
+    "debugger-impl",
+    "dom-impl",
+    "duplicates-analysis",
+    "execution-impl",
+    "external-system-impl",
+    "idea-ui",
+    "java-analysis-impl",
+    "java-indexing-impl",
+    "java-impl",
+    "java-psi-impl",
+    "java-structure-view",
+    "jsp-spi",
+    "manifest",
+    "platform-main",
+    "remote-servers-java-impl",
+    "structuralsearch",
+    "structuralsearch-java",
+    "testFramework",
+    "tests_bootstrap",
+    "typeMigration",
+    "ui-designer-core"
+  ].flatten()
+  implementationModules.removeAll(jpsCommonModules) //todo[nik] remove jps modules from platformImplementationModules instead and update layouts of minor IDEs accordingly
+
+  ant.patternset(id: "resources.included") {
+    include(name: "**/*.properties")
+    include(name: "fileTemplates/**/*")
+    include(name: "inspectionDescriptions/**/*")
+    include(name: "intentionDescriptions/**/*")
+    include(name: "tips/**/*")
+  }
+
+  ant.patternset(id: "resources.excluded") {
+    exclude(name: "**/*.properties")
+    exclude(name: "fileTemplates/**/*")
+    exclude(name: "fileTemplates")
+    exclude(name: "inspectionDescriptions/**/*")
+    exclude(name: "inspectionDescriptions")
+    exclude(name: "intentionDescriptions/**/*")
+    exclude(name: "intentionDescriptions")
+    exclude(name: "tips/**/*")
+    exclude(name: "tips")
+  }
+
+  def info = layout(targetDirectory) {
+    dir("lib") {
+      dir("rt") {
+        fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
+        jar("jps-plugin-system.jar") {
+          module("jps-plugin-system")
+        }
+      }
+
+      dir("libpty") {
+        fileset(dir: "$home/lib/libpty") {
+          exclude(name: "readme.txt")
+        }
+      }
+
+      jar("util.jar") {
+        module("util")
+        module("util-rt")
+      }
+
+      jar("openapi.jar") {
+        openapiModules.each { module it}
+      }
+
+      jar("annotations.jar") {
+        module("annotations-common")
+        module("annotations")
+      }
+      jar("jdkAnnotations.jar") {
+        fileset(dir: "${home}/java/jdkAnnotations")
+      }
+
+      jar("extensions.jar") { module("extensions")}
+
+      jar("idea.jar") {
+        implementationModules.each { module it}
+      }
+
+      jar("bootstrap.jar") { module("bootstrap") }
+
+      jar("jps-launcher.jar") { module("jps-launcher") }
+
+      jar("resources.jar") {
+        module("colorSchemes")
+        module("resources")
+        module("platform-resources")
+        module("community-resources") {
+          if (patchedDescriptorDir != null) {
+            exclude(name: appInfoFileName())
+          }
+        }
+        if (patchedDescriptorDir != null) {
+          fileset(dir: patchedDescriptorDir)
+        }
+      }
+
+      jar("idea_rt.jar") { module("java-runtime")}
+
+      jar("forms_rt.jar") {
+        module("forms_rt")
+        module("forms-compiler")
+      }
+
+      jar("resources_en.jar") {
+        module("resources-en")
+        module("platform-resources-en")
+      }
+
+      jar("icons.jar") { module("icons") }
+      jar("boot.jar") { module("boot") }
+
+      jar("javac2.jar") {
+        module("javac2")
+        module("forms-compiler")
+        module("forms_rt")
+        module("instrumentation-util")
+      }
+
+      jar("jps-model.jar") {
+        jpsCommonModules.each { module it }
+      }
+      jar("jps-server.jar") {
+        module("jps-builders")
+      }
+
+      fileset(dir: "$home/jps/lib") {
+        include(name: "optimizedFileManager.jar")
+      }
+
+      fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
+
+      dir("src") {
+        fileset(dir: "$home/lib/src") {
+          include(name: "trove4j_src.jar")
+        }
+      }
+      fileset(dir: "$home/xml/relaxng/lib", includes: "*.jar")
+
+      dir("ant") {
+        fileset(dir: "$home/lib/ant") {
+          exclude(name: "**/src/**")
+        }
+      }
+    }
+
+    dir("redist") {
+      jar("annotations-java8.jar") {
+        module("annotations-common")
+        module("annotations-java8")
+      }
+    }
+
+    layoutCommunityPlugins(home)
+
+    dir("plugins") {
+      dir("javaFX") {
+        dir("lib") {
+          jar("javaFX.jar") {
+            noResources("javaFX")
+            noResources("javaFX-CE")
+          }
+          resources(["javaFX", "javaFX-CE"])
+          jar("javaFX-jps-plugin.jar") {
+            module("javaFX-jps-plugin")
+          }
+          jar("common-javaFX-plugin.jar") {
+            module("common-javaFX-plugin")
+          }
+        }
+
+        fileset(dir: "${home}/plugins/javaFX/FxBuilderEmbedder/lib", includes: "embedder.jar");
+      }
+    }
+
+    dir("plugins") {
+      dir("IntelliLang") {
+        dir("lib") {
+          jar("IntelliLang.jar") {
+            module("IntelliLang")
+            module("IntelliLang-java")
+            module("IntelliLang-xml")
+          }
+          jar("intellilang-jps-plugin.jar") {
+            module("intellilang-jps-plugin")
+          }
+        }
+      }
+    }
+  }
+
+  printUnusedModules(info.usedModules)
+
+  //reorder(targetDirectory)
+  return info
+}
+
+public def layoutCommunityPlugins(String home) {
+  if (!isDefined("maySkipAndroidPlugin") || new File("$home/android").exists()) {
+    layoutAndroid("$home/android")
+  }
+  else {
+    projectBuilder.warning("Android plugin sources aren't found at $home/android. Android plugin is excluded from layout.")
+  }
+
+  dir("plugins") {
+    def simplePlugins = ["copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
+
+    simplePlugins.each {
+      layoutPlugin it
+    }
+
+    layoutPlugin("ant", "ant", "antIntegration") {
+      jar("ant-jps-plugin.jar") {
+        module("ant-jps-plugin")
+      }
+    }
+    layoutPlugin("uiDesigner", "ui-designer", "uiDesigner") {
+      dir("jps") {
+        jar("ui-designer-jps-plugin.jar") {
+          module("ui-designer-jps-plugin")
+        }
+      }
+    }
+
+    pluginDir("properties") {
+      dir("lib") {
+        jar("properties.jar") {
+          module("properties-psi-api")
+          module("properties-psi-impl")
+          module("properties")
+        }
+      }
+    }
+
+    layoutPlugin("maven") {
+      jar("maven-jps-plugin.jar") {
+        module("maven-jps-plugin")
+      }
+      jar("maven-server-api.jar") {
+        module("maven-server-api")
+      }
+      jar("maven2-server-impl.jar") {
+        module("maven2-server-impl")
+      }
+      jar("maven3-server-common.jar") {
+        module("maven3-server-common")
+      }
+      jar("maven30-server-impl.jar") {
+        module("maven30-server-impl")
+      }
+      jar("maven32-server-impl.jar") {
+        module("maven32-server-impl")
+      }
+
+      jar("artifact-resolver-m2.jar") {
+        module("maven-artifact-resolver-m2")
+      }
+
+      jar("artifact-resolver-m3.jar") {
+        module("maven-artifact-resolver-m3")
+        module("maven-artifact-resolver-m2") {
+          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
+        }
+      }
+
+      jar("artifact-resolver-m31.jar") {
+        module("maven-artifact-resolver-m31")
+        module("maven-artifact-resolver-m2") {
+          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
+        }
+      }
+
+      dir("maven3-server-lib") {
+        fileset(dir: "$home/plugins/maven/maven3-server-common/lib") {include(name: "*.jar")}
+      }
+      dir("maven3") {
+        fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3")
+      }
+
+      dir("maven2-server-lib") {
+        fileset(dir: "$home/lib/") { include(name: "jaxb*.jar")}
+        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib") {include(name: "*.jar")}
+      }
+      dir("maven2") {
+        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib/maven2")
+      }
+
+      fileset(dir: "$home/plugins/maven/lib") {exclude(name: "plexus-utils-*") }
+      fileset(dir: "$home/plugins/maven/maven-server-api/lib")
+    }
+
+    layoutPlugin("gradle") {
+      jar("gradle-jps-plugin.jar") {
+        module("gradle-jps-plugin")
+      }
+
+      jar("gradle-tooling-extension-api.jar") {
+        module("gradle-tooling-extension-api")
+      }
+
+      jar("gradle-tooling-extension-impl.jar") {
+        module("gradle-tooling-extension-impl")
+      }
+      fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
+      // add kryo lib
+      fileset(dir: "$home/lib/") {
+        include(name: "kryo-*.jar")
+        include(name: "reflectasm-*.jar")
+        include(name: "objenesis-*.jar")
+        include(name: "minlog-*.jar")
+      }
+    }
+
+    layoutPlugin("git4idea") {
+      jar("git4idea-rt.jar") {
+        module("git4idea-rt")
+      }
+      jar("remote-servers-git.jar") {
+        moduleOptional("remote-servers-git")
+      }
+      fileset(dir: "$home/plugins/git4idea/lib") {
+        include(name: "trilead-ssh2.jar")
+      }
+      fileset(dir: "$home/plugins/git4idea/lib/ini4j") {
+        include(name: "ini4j*.jar")
+        exclude(name: "ini4j*sources.jar")
+      }
+    }
+
+    layoutPlugin("svn4idea") {
+      fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
+    }
+
+    layoutPlugin("junit", "junit", "idea-junit") {
+      jar("junit-rt.jar") {
+        module("junit_rt")
+      }
+    }
+
+    pluginDir("ByteCodeViewer") {
+      dir("lib") {
+        jar("byteCodeViewer.jar") {
+          noResources("ByteCodeViewer")
+        }
+      }
+    }
+
+    pluginDir("cvsIntegration") {
+      dir("lib") {
+        jar("cvs_util.jar") {noResources("cvs-core")}
+        jar("cvsIntegration.jar") {noResources("cvs-plugin")}
+        jar("javacvs-src.jar") {noResources("javacvs-src")}
+        jar("smartcvs-src.jar") {noResources("smartcvs-src")}
+
+        resources(["cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src"])
+
+        fileset(dir: "${home}/plugins/cvs/lib")
+      }
+    }
+
+    pluginDir("testng") {
+      dir("lib") {
+        jar("testng-plugin.jar") {
+          noResources("testng")
+          noResources("testng_rt")
+        }
+
+        resources("testng")
+
+        fileset(dir: "$home/plugins/testng/lib") {
+          include(name: "testng.jar")
+        }
+      }
+    }
+
+    layoutPlugin("xpath") {
+      dir("rt") {
+        jar("xslt-rt.jar") {module("xslt-rt")}
+      }
+    }
+
+    layoutPlugin("xslt-debugger") {
+      jar("xslt-debugger-engine.jar") {
+        module("xslt-debugger-engine") {
+          excludes: "lib"
+        }
+      }
+      fileset(dir: "$home/plugins/xslt-debugger/engine/lib") {
+        include(name: "**/rmi-stubs.jar")
+      }
+      dir("rt") {
+        jar("xslt-debugger-engine-impl.jar") {
+          module("xslt-debugger-engine-impl") {
+            exclude(name: "lib")
+            exclude(name: "**/*.jar")
+            exclude(name: "**/*.html")
+          }
+        }
+        fileset(dir: "$home/plugins/xslt-debugger/engine/impl/lib") {
+          include(name: "**/*.jar")
+          exclude(name: "**/rmi-stubs.jar")
+          include(name: "**/*.html")
+        }
+      }
+    }
+
+    pluginDir("Groovy") {
+      dir("lib") {
+        jar("Groovy.jar") {
+          module("jetgroovy")
+          module("groovy-psi") {
+            exclude(name: "standardDsls/**")
+          }
+          module("structuralsearch-groovy")
+        }
+        //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
+        jar("groovy-jps-plugin.jar") {
+          module("groovy-jps-plugin")
+        }
+        jar("groovy_rt.jar") {
+          module("groovy_rt")
+        }
+        jar("groovy-rt-constants.jar") {
+          module("groovy-rt-constants")
+        }
+        dir("standardDsls") {
+          fileset(dir: "$home/plugins/groovy/groovy-psi/resources/standardDsls")
+        }
+        dir("agent") {
+          fileset(dir: "${home}/plugins/groovy/hotswap") {
+            include(name: "gragent.jar")
+          }
+        }
+
+
+        fileset(dir: "$home/plugins/groovy/groovy-psi/resources/conf")
+      }
+    }
+
+    pluginDir("tasks") {
+      dir("lib") {
+        jar("tasks-api.jar") { module("tasks-api") }
+        jar("jira.jar") { module("jira") }
+        jar("tasks-core.jar") { module("tasks-core") }
+        jar("jira.jar") { module("jira") }
+        jar("tasks-java.jar") { moduleOptional("tasks-java") }
+        fileset(dir: "${home}/plugins/tasks/tasks-core/lib") {
+          include(name: "**/*.jar")
+        }
+      }
+    }
+
+    layoutPlugin("devkit") {
+      jar("devkit-jps-plugin.jar") {
+        module("devkit-jps-plugin")
+      }
+      fileset(dir: "${home}/plugins/devkit/lib") {
+        include(name: "**/*.jar")
+      }
+    }
+    layoutPlugin("eclipse") {
+      jar("eclipse-jps-plugin.jar") {
+        module("eclipse-jps-plugin")
+      }
+      jar("common-eclipse-util.jar") {
+        module("common-eclipse-util")
+      }
+    }
+
+    layoutPlugin("terminal") {
+      fileset(dir: "$home/plugins/terminal/lib") {
+        include(name: "*.jar")
+        include(name: "*.in")
+      }
+    }
+
+    layoutPlugin("editorconfig") {
+      fileset(dir: "$home/plugins/editorconfig/lib") {
+        include(name: "**/*.jar")
+      }
+    }
+
+    pluginDir("coverage") {
+      dir("lib") {
+        jar("coverage.jar") {
+          noResources("coverage-common")
+          noResources("coverage")
+        }
+
+        jar("coverage_rt.jar") {
+          noResources("coverage_rt")
+        }
+
+        jar("resources_en.jar") {
+          module("coverage-common") {
+            patternset(refid: "resources.included")
+          }
+          module("coverage") {
+            patternset(refid: "resources.included")
+          }
+        }
+
+        fileset(dir: "${home}/plugins/coverage-common/lib") {
+          exclude(name: "finder.jar")
+          exclude(name: "**/coverage-src.zip")
+        }
+
+        fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
+      }
+    }
+
+    pluginDir("java-decompiler") {
+      dir("lib") {
+        jar("java-decompiler.jar") {
+          module("java-decompiler-engine")
+          module("java-decompiler-plugin")
+        }
+      }
+    }
+  }
+}
+
+
+def layoutPlugin(String moduleName) {
+  layoutPlugin(moduleName, moduleName, {})
+}
+
+def layoutPlugin(String moduleName, Closure custom) {
+  layoutPlugin(moduleName, moduleName, custom)
+}
+
+def layoutPlugin(String pluginName, String moduleName) {
+  layoutPlugin(pluginName, moduleName, {})
+}
+
+def layoutPlugin(String pluginName, String moduleName, Closure custom) {
+  layoutPlugin(pluginName, moduleName, pluginName, custom)
+}
+
+def layoutPlugin(String pluginName, String moduleName, String jarName) {
+  layoutPlugin(pluginName, moduleName, jarName, {})
+}
+
+def layoutPlugin(String pluginName, String moduleName, String jarName, Closure custom) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(moduleName) && !pluginFilter.contains(pluginName)) return
+  }
+
+  dir(pluginName) {
+    dir("lib") {
+      jar("${jarName}.jar") {
+        noResources(moduleName)
+      }
+
+      resources(moduleName)
+      custom()
+    }
+  }
+}
+
+def pluginDir(String dirName, Closure initializer) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(dirName)) return
+  }
+
+  dir(dirName) {
+    initializer()
+  }
+}
+
+private def resources(List<String> modules) {
+  jar("resources_en.jar") {
+    modules.each {
+      module(it) {
+        patternset(refid: "resources.included")
+      }
+    }
+  }
+}
+
+private def resources(String moduleName) {
+  jar("resources_en.jar") {
+    module(moduleName) {
+      patternset(refid: "resources.included")
+    }
+  }
+}
+
+private def noResources(String moduleName) {
+  module(moduleName) {
+    patternset(refid: "resources.excluded")
+  }
+}
+
+def moduleOptional(String name) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(name)) return
+  }
+
+  module(name)
+}
+
+def moduleOptional(String name, Closure init) {
+  if (isDefined("pluginFilter")) {
+    if (!pluginFilter.contains(name)) return
+  }
+
+  module(name, init)
+}
+
+def reorder(String home, String targetDirectory) {
+  if (findModule("util") != null) {
+    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
+      arg(value: "$home/build/order.txt")
+      arg(value: targetDirectory)
+      arg(value: targetDirectory)
+      arg(value: "$home/lib")
+      classpath {
+        pathelement(location: projectBuilder.moduleOutput(findModule("util")))
+        pathelement(location: projectBuilder.moduleOutput(findModule("util-rt")))
+        pathelement(location: "$home/lib/jna.jar")
+        pathelement(location: "$home/lib/trove4j.jar")
+      }
+    }
+  }
+}
+
+def layoutAndroid(String androidHome) {
+  dir("plugins") {
+    layoutPlugin("android") {
+      fileset(dir: "${androidHome}/android/lib") {
+        include(name: "**/*.jar")
+        exclude(name: "**/fest-*.jar")
+        exclude(name: "src/*.jar")
+      }
+
+      jar("android-common.jar") {
+        module("android-common")
+      }
+
+      jar("android-rt.jar") {
+        module("android-rt")
+      }
+
+      jar("common.jar") {
+        module("common")
+      }
+      jar("sdklib.jar") {
+        module("sdklib")
+      }
+      jar("sdk-common.jar") {
+        module("sdk-common")
+      }
+      jar("layoutlib-api.jar") {
+        module("layoutlib-api")
+      }
+      jar("manifest-merger.jar") {
+        module("manifest-merger")
+      }
+      jar("sdk-tools.jar") {
+        module("assetstudio")
+        module("ddmlib")
+        module("dvlib")
+        module("draw9patch")
+        module("lint-api")
+        module("lint-checks")
+        module("ninepatch")
+        module("perflib")
+      }
+      jar("androidAnnotations.jar") {
+        fileset(dir: "$androidHome/android/annotations")
+      }
+      dir("jps") {
+        jar("android-gradle-jps.jar") { module("android-gradle-jps") }
+      }
+      dir("device-art-resources") {
+        fileset(dir: "$androidHome/android/device-art-resources")
+      }
+
+      dir("jps") {
+        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
+      }
+      dir("templates") {
+        fileset(dir: "$androidHome/tools-base/templates")
+      }
+    }
+  }
+}
+
+def layoutJps(String home, String targetDir, String buildNumber, Closure additionalJars) {
+  layout(targetDir) {
+    zip("standalone-jps-${buildNumber}.zip") {
+      jar("util.jar") {
+        module("annotations-common")
+        module("annotations")
+        module("util-rt")
+        module("util")
+      }
+
+      jar("jps-launcher.jar") {
+        module("jps-launcher")
+      }
+
+      jar("jps-model.jar") {
+        module("jps-model-api")
+        module("jps-model-impl")
+        module("jps-model-serialization")
+      }
+      jar("jps-builders.jar") {
+        module("forms_rt")
+        module("forms-compiler")
+        module("instrumentation-util")
+        module("jps-builders")
+        module("jps-standalone-builder")
+        module("java-runtime")
+      }
+      jar("jps-plugin-system.jar") {
+        module("jps-plugin-system")
+      }
+      //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
+      jar("groovy-jps-plugin.jar") {
+        module("groovy-jps-plugin")
+      }
+      jar("groovy_rt.jar") {
+        module("groovy_rt")
+      }
+      jar("groovy-rt-constants.jar") {
+        module("groovy-rt-constants")
+      }
+      jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
+
+
+      jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
+      jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
+      fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
+
+      jar("eclipse-jps-plugin.jar") {
+        module("common-eclipse-util")
+        module("eclipse-jps-plugin")
+      }
+      jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
+      jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
+      fileset(dir: "$home/lib") {
+        include(name: "jdom.jar")
+        include(name: "jna.jar")
+        include(name: "trove4j.jar")
+        include(name: "asm-all.jar")
+        include(name: "nanoxml-*.jar")
+        include(name: "protobuf-*.jar")
+        include(name: "cli-parser-*.jar")
+        include(name: "log4j.jar")
+        include(name: "jgoodies-forms.jar")
+        include(name: "ecj*.jar")
+        include(name: "jsr166e.jar")
+        include(name: "netty-all-*.jar")
+        include(name: "snappy-in-java-*.jar")
+      }
+      fileset(dir: "$home/jps/lib") {
+        include(name: "optimizedFileManager.jar")
+      }
+      jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
+      additionalJars()
+    }
+    jar("jps-build-test-${buildNumber}.jar") {
+      moduleTests("jps-builders")
+      moduleTests("jps-model-tests")
+      moduleTests("jps-serialization-tests")
+    }
+  }
+}
+
+def layout_core(String home, String target) {
+  layout(target) {
+    jar("intellij-core.jar") {
+      module("util-rt")
+      module("util")
+      module("core-api")
+      module("core-impl")
+      module("boot")
+      module("extensions")
+      module("java-psi-api")
+      module("java-psi-impl")
+    }
+
+    jar("annotations.jar") {
+      module("annotations-common")
+      module("annotations")
+    }
+
+    jar("intellij-core-analysis.jar") {
+      analysisApiModules.each { module it; }
+      analysisImplModules.each { module it; }
+    }
+
+    fileset(dir: "$home/lib") {
+      include(name: "guava-17.0.jar")
+      include(name: "picocontainer.jar")
+      include(name: "trove4j.jar")
+      include(name: "asm.jar")
+      include(name: "asm-commons.jar")
+      include(name: "cli-parser-1.1.jar")
+      include(name: "snappy-in-java-0.3.1.jar")
+      include(name: "jayatana-1.2.4.jar")
+      include(name: "imgscalr-lib-4.2.jar")
+    }
+  }
+}
