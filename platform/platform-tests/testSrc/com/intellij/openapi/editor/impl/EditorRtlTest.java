@@ -19,7 +19,10 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.TestFileType;
 
 import java.awt.*;
 import java.io.IOException;
@@ -424,6 +427,27 @@ public class EditorRtlTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
     assertVisualCaretLocation(2, false);
     checkSelection(1, 2);
+  }
+  
+  public void testIterationStateAfterLineEnd() throws Exception {
+    init("rl");
+    myEditor.getCaretModel().moveToVisualPosition(new VisualPosition(0, 1, true));
+
+    IterationState it = new IterationState((EditorEx)myEditor, 1, 2, true, false, false, false);
+    assertFalse(it.atEnd());
+    assertEquals(1, it.getStartOffset());
+    assertEquals(2, it.getEndOffset());
+    it.advance();
+    assertTrue(it.atEnd());
+    assertFalse(it.hasPastLineEndBackgroundSegment());
+  }
+  
+  public void testUsingLexerForBidiLayout() throws Exception {
+    init("class Foo {\n  int<caret> " + RTL_CHAR + " = 1;\n}", TestFileType.JAVA);
+    right();
+    right();
+    
+    assertEquals(RTL_CHAR, myEditor.getDocument().getCharsSequence().charAt(myEditor.getCaretModel().getOffset() - 1));
   }
   
   private void init(String text) throws IOException {

@@ -44,7 +44,7 @@ public class URLUtil {
   public static final String JAR_PROTOCOL = "jar";
   public static final String JAR_SEPARATOR = "!/";
 
-  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
+  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset(?:=|:)[^,;]+)?(;base64)?,(.+)");
 
   private URLUtil() { }
 
@@ -244,5 +244,6 @@ public class URLUtil {
     }
     return host;
   }
+
 
 }

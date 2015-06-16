@@ -21,11 +21,13 @@ public class SmartPsiPointer {
   }
 
   public int getOffset() {
-    return pointer != null ? pointer.getElement().getTextRange().getStartOffset():-1;
+    PsiElement element = getElement();
+    return element == null ? -1 : element.getTextRange().getStartOffset();
   }
 
   public int getLength() {
-    return pointer != null ? pointer.getElement().getTextRange().getEndOffset():0;
+    PsiElement element = getElement();
+    return element == null ? 0 : element.getTextRange().getEndOffset();
   }
 
   public PsiElement getElement() {
@@ -37,7 +39,8 @@ public class SmartPsiPointer {
   }
 
   public Project getProject() {
-    return pointer != null ? pointer.getElement().getProject():null;
+    PsiElement element = getElement();
+    return element == null ? null : element.getProject();
   }
 
   public boolean equals(Object o) {
@@ -49,6 +52,7 @@ public class SmartPsiPointer {
   }
 
   public int hashCode() {
-    return pointer != null ? getElement().hashCode():0;
+    PsiElement element = getElement();
+    return element == null ? 0 : element.hashCode();
   }
 }

@@ -275,7 +275,7 @@ public class EditorTracker extends AbstractProjectComponent {
           component.removeHierarchyListener(hierarchyListener);
           contentComponent.removeFocusListener(focusListener);
           // allow range markers in smart pointers to be collected
-          if (virtualFile != null) {
+          if (virtualFile != null && virtualFile.isValid()) {
             mySmartPointerManager.unfastenBelts(virtualFile, 0);
           }
         }
