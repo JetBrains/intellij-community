@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.TestFileType;
 
 import java.awt.*;
 import java.io.IOException;
@@ -439,6 +440,14 @@ public class EditorRtlTest extends AbstractEditorTest {
     it.advance();
     assertTrue(it.atEnd());
     assertFalse(it.hasPastLineEndBackgroundSegment());
+  }
+  
+  public void testUsingLexerForBidiLayout() throws Exception {
+    init("class Foo {\n  int<caret> " + RTL_CHAR + " = 1;\n}", TestFileType.JAVA);
+    right();
+    right();
+    
+    assertEquals(RTL_CHAR, myEditor.getDocument().getCharsSequence().charAt(myEditor.getCaretModel().getOffset() - 1));
   }
   
   private void init(String text) throws IOException {
