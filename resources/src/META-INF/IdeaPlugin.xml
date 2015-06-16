@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2000-2014 JetBrains s.r.o.
+  ~ Copyright 2000-2015 JetBrains s.r.o.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -283,6 +283,9 @@
     <extensionPoint name="refactoring.moveInnerClassUsagesHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
     </extensionPoint>
+
+    <extensionPoint name="editor.navigationPolicy" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.fileEditor.impl.FileEditorNavigationPolicy"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

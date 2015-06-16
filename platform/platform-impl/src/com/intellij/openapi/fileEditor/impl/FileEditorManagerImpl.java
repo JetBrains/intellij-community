@@ -43,10 +43,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -640,6 +637,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   //-------------------------------------- Open File ----------------------------------------
 
+  protected VirtualFile getNavigationFile(VirtualFile requestedFile) {
+    Project project = ProjectUtil.guessProjectForFile(requestedFile);
+    if (project == null) {
+      return null;
+    }
+    for (FileEditorNavigationPolicy fileEditorNavigationPolicy : Extensions.getExtensions(FileEditorNavigationPolicy.EP_NAME, project)) {
+      VirtualFile navigationFile = fileEditorNavigationPolicy.getNavigationFile(requestedFile);
+      if (navigationFile != null && !navigationFile.equals(requestedFile)) {
+        return navigationFile;
+      }
+    }
+    return null;
+  }
+
   @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
@@ -649,6 +660,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
+
+    VirtualFile navigationFile = getNavigationFile(file);
+    if (navigationFile != null) {
+      return openFileWithProviders(navigationFile, focusEditor, searchForSplitter);
+    }
 
     if (isOpenInNewWindow(EventQueue.getCurrentEvent())) {
       return openFileInNewWindow(file);
@@ -742,6 +758,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
+
+    VirtualFile navigationFile = getNavigationFile(file);
+    if (navigationFile != null) {
+      return openFileWithProviders(navigationFile, focusEditor, window);
+    }
 
     return openFileImpl2(window, file, focusEditor);
   }
@@ -1120,6 +1141,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
       realDescriptor.setUseCurrentWindow(descriptor.isUseCurrentWindow());
       return openEditor(realDescriptor, focusEditor);
+    }
+    for (FileEditorNavigationPolicy fileEditorNavigationPolicy : Extensions
+      .getExtensions(FileEditorNavigationPolicy.EP_NAME, descriptor.getProject())) {
+      OpenFileDescriptor navigationDescriptor = fileEditorNavigationPolicy.getNavigationDescriptor(descriptor);
+      if (navigationDescriptor != null && navigationDescriptor != descriptor) {
+        return openEditor(navigationDescriptor, focusEditor);
+      }
     }
 
     final List<FileEditor> result = new SmartList<FileEditor>();
