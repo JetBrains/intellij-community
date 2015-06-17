@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Batkovich
  */
-public class WrongPropertyKeyValueDelimiterInspection extends PropertySuppressableInspectionBase {
+public class WrongPropertyKeyValueDelimiterInspection extends PropertySuppressableInspectionBase implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
