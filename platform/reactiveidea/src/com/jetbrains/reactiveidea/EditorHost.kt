@@ -15,7 +15,10 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.CaretAdapter
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.SelectionEvent
@@ -23,7 +26,6 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.util.TextRange
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
-import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -52,16 +54,18 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
 
       if (!caretGuard.locked) {
         caretGuard.lock {
-          if (caret != null) {
-            editor.getCaretModel().moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
-          }
-          if (selection != null) {
-            editor.getSelectionModel().setSelection(
-                (selection["startOffset"] as PrimitiveModel<Int>).value,
-                (selection["endOffset"] as PrimitiveModel<Int>).value)
-          } else {
-            editor.getSelectionModel().removeSelection()
-          }
+          CommandProcessor.getInstance().executeCommand(editor.getProject(), {
+            if (caret != null) {
+              editor.getCaretModel().moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
+            }
+            if (selection != null) {
+              editor.getSelectionModel().setSelection(
+                  (selection["startOffset"] as PrimitiveModel<Int>).value,
+                  (selection["endOffset"] as PrimitiveModel<Int>).value)
+            } else {
+              editor.getSelectionModel().removeSelection()
+            }
+          }, "Update caret and selection", DocCommandGroupId.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument())
 
         }
       }
