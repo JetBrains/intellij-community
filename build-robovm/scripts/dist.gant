@@ -86,7 +86,7 @@ target('default': 'The default target') {
   indexSearchableOptions()
 
   layoutAll([buildNumber: "IC-$snapshot",
-             system_selector: "RoboVMStudio${p("component.version.major")}",
+             system_selector: "RoboVMStudio${p("component.version.major")}.${p("component.version.minor")}",
              tools_jar: true],
             home, null, paths, true)
   String macZip = "$paths.artifacts/robovm-studio-${snapshot}.mac.zip"
@@ -102,7 +102,7 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   indexSearchableOptions()
 
   layoutAll([buildNumber: "IC-$snapshot",
-             system_selector: "RoboVMStudio${p("component.version.major")}",
+             system_selector: "RoboVMStudio${p("component.version.major")}.${p("component.version.minor")}",
              tools_jar: true],
              home, null, paths)
   String macZip = "$paths.artifacts/robovm-studio-${snapshot}.mac.zip"
@@ -164,8 +164,8 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
                         paths.distWin, paths.distUnix, paths.distMac)
 
   def macAppRoot = isEap() ?
-                   "RoboVM Studio ${p("component.version.major")} EAP.app/Contents" :
-                   "RoboVM Studio ${p("component.version.major")}.app/Contents"
+                   "RoboVM Studio ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" :
+                   "RoboVM Studio ${p("component.version.major")}.${p("component.version.minor")}.app/Contents"
 
   String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
