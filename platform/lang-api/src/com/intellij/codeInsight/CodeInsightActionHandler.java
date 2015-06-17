@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * See {@link ContextAwareActionHandler} to hide action from popups but allow access by shortcut, main menu or find.
+ * @see ContextAwareActionHandler to hide an action from popups but allow access by shortcut, main menu or find.
  */
 public interface CodeInsightActionHandler {
   void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
