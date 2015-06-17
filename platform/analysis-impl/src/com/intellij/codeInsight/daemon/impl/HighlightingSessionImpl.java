@@ -61,7 +61,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myProject = psiFile.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     Disposer.register(progressIndicator, this);
-    if (progressIndicator.isDisposed()) {
+    if (progressIndicator.isCanceled()) {
       Disposer.dispose(progressIndicator); //dispose both progress indicator and this session in case we managed to register after indicator dispose to avoid mem leaks
     }
   }
