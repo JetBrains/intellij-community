@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,9 @@
  */
 package org.jetbrains.jps.service;
 
-/**
- * @author nik
- */
-public abstract class SharedThreadPool implements ThreadExecutor {
-  public static SharedThreadPool getInstance() {
-    return JpsServiceManager.getInstance().getService(SharedThreadPool.class);
-  }
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
+public interface ThreadExecutor extends Executor {
+  Future<?> executeOnPooledThread(Runnable action);
 }

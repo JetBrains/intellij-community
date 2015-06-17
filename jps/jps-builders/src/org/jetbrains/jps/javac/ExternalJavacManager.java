@@ -15,7 +15,15 @@
  */
 package org.jetbrains.jps.javac;
 
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -32,19 +40,17 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
-import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.jps.service.ThreadExecutor;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,16 +58,25 @@ import java.util.concurrent.TimeUnit;
  *         Date: 1/22/12                       
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class ExternalJavacServer {
+public class ExternalJavacManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.javac.ExternalJavacServer");
-  public static final GlobalContextKey<ExternalJavacServer> KEY = GlobalContextKey.create("_external_javac_server_");
+  public static final GlobalContextKey<ExternalJavacManager> KEY = GlobalContextKey.create("_external_javac_server_");
   
   public static final int DEFAULT_SERVER_PORT = 7878;
+  public static final String STDOUT_LINE_PREFIX = "JAVAC_PROCESS[STDOUT]";
+  public static final String STDERR_LINE_PREFIX = "JAVAC_PROCESS[STDERR]";
   private static final AttributeKey<JavacProcessDescriptor> SESSION_DESCRIPTOR = AttributeKey.valueOf("ExternalJavacServer.JavacProcessDescriptor");
+  private final File mySystemRoot;
+  private final ThreadExecutor myThreadExecutor;
 
   private ChannelRegistrar myChannelRegistrar;
   private final Map<UUID, JavacProcessDescriptor> myMessageHandlers = new HashMap<UUID, JavacProcessDescriptor>();
   private int myListenPort = DEFAULT_SERVER_PORT;
+
+  public ExternalJavacManager(final File systemRoot, @NotNull ThreadExecutor threadExecutor) {
+    mySystemRoot = systemRoot;
+    myThreadExecutor = threadExecutor;
+  }
 
   public void start(int listenPort) {
     final ServerBootstrap bootstrap = new ServerBootstrap().group(new NioEventLoopGroup(1, SharedThreadPool.getInstance())).channel(NioServerSocketChannel.class);
@@ -83,23 +98,16 @@ public class ExternalJavacServer {
     myListenPort = listenPort;
   }
   
-  private static int getExternalJavacHeapSize(CompileContext context) {
-    final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
-    return options.MAXIMUM_HEAP_SIZE;
-  }
 
-  
-  public boolean forkJavac(CompileContext context, List<String> options,
-                           List<String> vmOptions, Collection<File> files,
-                           Collection<File> classpath,
+  public boolean forkJavac(final String javaHome, final int heapSize, List<String> vmOptions, List<String> options,
                            Collection<File> platformCp,
+                           Collection<File> classpath,
                            Collection<File> sourcePath,
+                           Collection<File> files,
                            Map<File, Set<File>> outs,
-                           DiagnosticOutputConsumer diagnosticSink,
-                           OutputFileConsumer outputSink,
-                           final String javaHome, final JavaCompilingTool compilingTool) {
+                           final DiagnosticOutputConsumer diagnosticSink, OutputFileConsumer outputSink,
+                           final JavaCompilingTool compilingTool,
+                           final CanceledStatus cancelStatus) {
     final ExternalJavacMessageHandler rh = new ExternalJavacMessageHandler(diagnosticSink, outputSink, getEncodingName(options));
     final JavacRemoteProto.Message.Request request = JavacProtoUtil.createCompilationRequest(options, files, classpath, platformCp, sourcePath, outs);
     final UUID uuid = UUID.randomUUID();
@@ -108,9 +116,27 @@ public class ExternalJavacServer {
       myMessageHandlers.put(uuid, processDescriptor);
     }
     try {
-      final JavacServerBootstrap.ExternalJavacProcessHandler processHandler = JavacServerBootstrap.launchExternalJavacProcess(
-        uuid, javaHome, getExternalJavacHeapSize(context), myListenPort, Utils.getSystemRoot(), vmOptions, compilingTool
+      final ExternalJavacProcessHandler processHandler = launchExternalJavacProcess(
+        uuid, javaHome, heapSize, myListenPort, mySystemRoot, vmOptions, compilingTool
       );
+      processHandler.addProcessListener(new ProcessAdapter() {
+        public void onTextAvailable(ProcessEvent event, Key outputType) {
+          final String text = event.getText();
+          if (!StringUtil.isEmptyOrSpaces(text)) {
+            String prefix = null;
+            if (outputType == ProcessOutputTypes.STDOUT) {
+              prefix = STDOUT_LINE_PREFIX;
+            }
+            else if (outputType == ProcessOutputTypes.STDERR) {
+              prefix = STDERR_LINE_PREFIX;
+            }
+            if (prefix != null) {
+              diagnosticSink.outputLineAvailable(prefix + ": " + text);
+            }
+          }
+        }
+      });
+      processHandler.startNotify();
 
       while (!processDescriptor.waitFor(300L)) {
         if (processHandler.isProcessTerminated() && processDescriptor.channel == null && processHandler.getExitCode() != 0) {
@@ -118,7 +144,7 @@ public class ExternalJavacServer {
           processDescriptor.setDone();
           break;
         }
-        if (context.getCancelStatus().isCanceled()) {
+        if (cancelStatus.isCanceled()) {
           processDescriptor.cancelBuild();
         }
       }
@@ -161,6 +187,130 @@ public class ExternalJavacServer {
   
   public void stop() {
     myChannelRegistrar.close().awaitUninterruptibly();
+  }
+
+  private ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid, String sdkHomePath,
+                                                                        int heapSize,
+                                                                        int port,
+                                                                        File workingDir,
+                                                                        List<String> vmOptions,
+                                                                        JavaCompilingTool compilingTool) throws Exception {
+    final List<String> cmdLine = new ArrayList<String>();
+    appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
+    //appendParam(cmdLine, "-XX:MaxPermSize=150m");
+    //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
+    appendParam(cmdLine, "-Djava.awt.headless=true");
+    final int xms = heapSize / 2;
+    if (xms > 32) {
+      appendParam(cmdLine, "-Xms" + xms + "m");
+    }
+    appendParam(cmdLine, "-Xmx" + heapSize + "m");
+
+    // debugging
+    //appendParam(cmdLine, "-XX:+HeapDumpOnOutOfMemoryError");
+    //appendParam(cmdLine, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5009");
+
+    // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
+    final String encoding = System.getProperty("file.encoding");
+    if (encoding != null) {
+      appendParam(cmdLine, "-Dfile.encoding=" + encoding);
+    }
+    final String lang = System.getProperty("user.language");
+    if (lang != null) {
+      //noinspection HardCodedStringLiteral
+      appendParam(cmdLine, "-Duser.language=" + lang);
+    }
+    final String country = System.getProperty("user.country");
+    if (country != null) {
+      //noinspection HardCodedStringLiteral
+      appendParam(cmdLine, "-Duser.country=" + country);
+    }
+    //noinspection HardCodedStringLiteral
+    final String region = System.getProperty("user.region");
+    if (region != null) {
+      //noinspection HardCodedStringLiteral
+      appendParam(cmdLine, "-Duser.region=" + region);
+    }
+
+    appendParam(cmdLine, "-D" + ExternalJavacProcess.JPS_JAVA_COMPILING_TOOL_PROPERTY + "=" + compilingTool.getId());
+
+    // this will disable standard extensions to ensure javac is loaded from the right tools.jar
+    appendParam(cmdLine, "-Djava.ext.dirs=");
+
+    appendParam(cmdLine, "-Dlog4j.defaultInitOverride=true");
+
+    for (String option : vmOptions) {
+      appendParam(cmdLine, option);
+    }
+
+    appendParam(cmdLine, "-classpath");
+
+    final List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
+    final StringBuilder classpath = new StringBuilder();
+    for (File file : cp) {
+      if (classpath.length() > 0) {
+        classpath.append(File.pathSeparator);
+      }
+      classpath.append(file.getPath());
+    }
+    appendParam(cmdLine, classpath.toString());
+
+    appendParam(cmdLine, ExternalJavacProcess.class.getName());
+    appendParam(cmdLine, uuid.toString());
+    appendParam(cmdLine, "127.0.0.1");
+    appendParam(cmdLine, Integer.toString(port));
+
+    workingDir.mkdirs();
+
+    appendParam(cmdLine, FileUtil.toSystemIndependentName(workingDir.getPath()));
+
+    final ProcessBuilder builder = new ProcessBuilder(cmdLine);
+    builder.directory(workingDir);
+
+    final Process process = builder.start();
+    return new ExternalJavacProcessHandler(process, myThreadExecutor);
+  }
+
+  private static void appendParam(List<String> cmdLine, String param) {
+    if (SystemInfo.isWindows) {
+      if (param.contains("\"")) {
+        param = StringUtil.replace(param, "\"", "\\\"");
+      }
+      else if (param.length() == 0) {
+        param = "\"\"";
+      }
+    }
+    cmdLine.add(param);
+  }
+
+  private static String getVMExecutablePath(String sdkHome) {
+    return sdkHome + "/bin/java";
+  }
+
+  private static class ExternalJavacProcessHandler extends BaseOSProcessHandler {
+    @NotNull
+    private final ThreadExecutor myExecutorService;
+    private volatile int myExitCode;
+
+    ExternalJavacProcessHandler(Process process, @NotNull ThreadExecutor executorService) {
+      super(process, null, null);
+      myExecutorService = executorService;
+      addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(ProcessEvent event) {
+          myExitCode = event.getExitCode();
+        }
+      });
+    }
+
+    @Override
+    protected Future<?> executeOnPooledThread(Runnable task) {
+      return myExecutorService.executeOnPooledThread(task);
+    }
+
+    public int getExitCode() {
+      return myExitCode;
+    }
   }
 
   @ChannelHandler.Sharable
