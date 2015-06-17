@@ -158,7 +158,12 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
             }
             else {
               final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
-              boxedQName = tagClass != null ? tagClass.getQualifiedName() : null;
+              if (tagClass != null && !InheritanceUtil.isInheritor(tagClass, false, JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+                boxedQName = tagClass.getQualifiedName();
+              }
+              else {
+                boxedQName = null;
+              }
             }
             if (boxedQName != null) {
               try {
