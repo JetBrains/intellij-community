@@ -355,11 +355,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
-                                 @Nullable final List<ShelvedBinaryFile> binaryFiles, final LocalChangeList targetChangeList) {
-    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, true);
-  }
-
   @AsynchronousExecution
   public void unshelveChangeList(final ShelvedChangeList changeList,
                                  @Nullable final List<ShelvedChange> changes,
