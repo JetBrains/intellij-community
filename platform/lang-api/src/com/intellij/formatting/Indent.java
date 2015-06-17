@@ -269,12 +269,8 @@ public abstract class Indent {
     return myFactory.getIndent(type, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
 
-  public static Indent getSmartIndent(Type type, Object group) {
-    return myFactory.getSmartIndent(type, group);
-  }
-
-  public static Indent getSmartIndentMinOffsetMarker(Type type, Object group) {
-    return myFactory.getSmartIndentMinOffsetMarker(type, group);
+  public static Indent getSmartIndent(Type type) {
+    return myFactory.getSmartIndent(type);
   }
 
   public static class Type {

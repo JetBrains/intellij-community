@@ -16,29 +16,21 @@
 package com.intellij.formatting;
 
 public class ExpandableIndent extends IndentImpl {
-
-  private final Object myGroup;
-  private boolean myMinGroupOffsetMarker;
+  private Block myStrictMinOffsetBlock;
   private boolean myEnforceIndent;
 
-  public ExpandableIndent(Type type, Object group) {
+  public ExpandableIndent(Type type) {
     super(type, false, 0, false, true);
-    myGroup = group;
     myEnforceIndent = false;
   }
 
-  public boolean isMinGroupOffsetMarker() {
-    return myMinGroupOffsetMarker;
+  public void setStrictMinOffsetBlock(Block block) {
+    myStrictMinOffsetBlock = block;
   }
 
-  void setMinGroupOffsetMarker(boolean value) {
-    myMinGroupOffsetMarker = value;
+  Block getStrictMinOffsetBlock() {
+    return myStrictMinOffsetBlock;
   }
-
-  public Object getGroup() {
-    return myGroup;
-  }
-
 
   @Override
   public boolean isEnforceIndentToChildren() {

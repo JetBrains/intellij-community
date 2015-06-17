@@ -867,9 +867,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     Indent internalIndent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
 
     if (isInsideMethodCallParenthesis(child)) {
-      Object group = new Object();
-      externalIndent = Indent.getSmartIndentMinOffsetMarker(Indent.Type.NONE, group);
-      internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION, group);
+      internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);
     }
 
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(doAlign, null), JavaTokenType.COMMA);
@@ -904,11 +902,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           result.add(createJavaBlock(child, mySettings, myJavaSettings, externalIndent, null, bracketAlignment));
         }
         else if (child.getElementType() == to) {
-          result.add(createJavaBlock(child, mySettings, myJavaSettings,
-                                     isAfterIncomplete && !afterAnonymousClass ? internalIndent : externalIndent,
-                                     null,
-                                     isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment)
-          );
+          Block block = createJavaBlock(child, mySettings, myJavaSettings,
+                                        isAfterIncomplete && !afterAnonymousClass ? internalIndent : externalIndent,
+                                        null,
+                                        isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment);
+          result.add(block);
+          if (internalIndent instanceof ExpandableIndent && to == JavaTokenType.RPARENTH) {
+            ((ExpandableIndent)internalIndent).setStrictMinOffsetBlock(block);
+          }
           return child;
         }
         else {

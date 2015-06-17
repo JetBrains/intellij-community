@@ -76,7 +76,9 @@ class InitialInfoBuilder {
   private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   private boolean myCollectAlignmentsInsideFormattingRange = false;
 
-  private MultiMap<Object, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<Object, AbstractBlockWrapper>();
+  private Set<Block> myStrictMinOffsetBlocks = ContainerUtil.newHashSet();
+  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<ExpandableIndent, AbstractBlockWrapper>();
+  private Map<Block, AbstractBlockWrapper> myMarkerIndentToBlock = ContainerUtil.newHashMap();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -289,8 +291,12 @@ class InitialInfoBuilder {
     return wrappedRootBlock;
   }
 
-  public MultiMap<Object, AbstractBlockWrapper> getBlocksWithSmartIndents() {
+  public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndentsBlocks() {
     return myBlocksToForceChildrenIndent;
+  }
+
+  public Map<Block, AbstractBlockWrapper> getMarkerBlocks() {
+    return myMarkerIndentToBlock;
   }
 
   private void doIteration(@NotNull State state) {
@@ -311,11 +317,7 @@ class InitialInfoBuilder {
     final AbstractBlockWrapper wrapper = buildFrom(
       block, childBlockIndex, state.wrappedBlock, state.parentBlockWrap, state.parentBlock, childBlockIsRightBlock
     );
-
-    if (block.getIndent() instanceof ExpandableIndent) {
-      ExpandableIndent expandableIndent = (ExpandableIndent)block.getIndent();
-      myBlocksToForceChildrenIndent.putValue(expandableIndent.getGroup(), wrapper);
-    }
+    registerExpandableIndents(block, wrapper);
 
     if (wrapper.getIndent() == null) {
       wrapper.setIndent((IndentImpl)block.getIndent());
@@ -334,7 +336,22 @@ class InitialInfoBuilder {
       }
     }
   }
-  
+
+  private void registerExpandableIndents(@NotNull Block block, @NotNull AbstractBlockWrapper wrapper) {
+    ExpandableIndent expandableIndent = block.getIndent() instanceof ExpandableIndent ? ((ExpandableIndent)block.getIndent()) : null;
+    if (expandableIndent != null) {
+      myBlocksToForceChildrenIndent.putValue(expandableIndent, wrapper);
+      Block markerBlock = expandableIndent.getStrictMinOffsetBlock();
+      if (markerBlock != null) {
+        myStrictMinOffsetBlocks.add(markerBlock);
+      }
+    }
+
+    if (myStrictMinOffsetBlocks.contains(block)) {
+      myMarkerIndentToBlock.put(block, wrapper);
+    }
+  }
+
   private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
       for (AbstractBlockWrapper wrapper : list) {

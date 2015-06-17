@@ -34,6 +34,5 @@ interface IndentFactory {
   Indent getSpaceIndent(final int spaces, boolean relativeToDirectParent);
   Indent getIndent(@NotNull Indent.Type type, boolean relativeToDirectParent, boolean enforceIndentToChildren);
   Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren);
-  Indent getSmartIndent(@NotNull Indent.Type type, @NotNull Object group);
-  Indent getSmartIndentMinOffsetMarker(@NotNull Indent.Type type, @NotNull Object group);
+  Indent getSmartIndent(@NotNull Indent.Type type);
 }

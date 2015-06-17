@@ -159,7 +159,8 @@ public class FormatProcessor {
 
   @NotNull
   private State myCurrentState;
-  private MultiMap<Object, AbstractBlockWrapper> myExpandableIndents;
+  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
+  private Map<Block, AbstractBlockWrapper> myExpandableIndentsMinOffsetBlocksToWrappers;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -1365,7 +1366,9 @@ public class FormatProcessor {
         root, model, affectedRanges, mySettings, myDefaultIndentOption, interestingOffset, myProgressCallback
       );
       myWrapper.setCollectAlignmentsInsideFormattingRange(myReformatContext);
-      myExpandableIndents = myWrapper.getBlocksWithSmartIndents();
+
+      myExpandableIndents = myWrapper.getExpandableIndentsBlocks();
+      myExpandableIndentsMinOffsetBlocksToWrappers = myWrapper.getMarkerBlocks();
     }
 
     @Override
@@ -1590,9 +1593,8 @@ public class FormatProcessor {
     }
   }
 
-
   private class ExpandChildrenIndent extends State {
-    private Iterator<Object> myIterator;
+    private Iterator<ExpandableIndent> myIterator;
 
     public ExpandChildrenIndent() {
       super(FormattingStateId.EXPANDING_CHILDREN_INDENTS);
@@ -1608,11 +1610,10 @@ public class FormatProcessor {
         return;
       }
 
-      Collection<AbstractBlockWrapper> blocksToExpandIndent = myExpandableIndents.get(myIterator.next());
-
-      if (shouldExpand(blocksToExpandIndent)) {
+      final ExpandableIndent indent = myIterator.next();
+      Collection<AbstractBlockWrapper> blocksToExpandIndent = myExpandableIndents.get(indent);
+      if (shouldExpand(indent, blocksToExpandIndent)) {
         for (AbstractBlockWrapper block : blocksToExpandIndent) {
-          ExpandableIndent indent = (ExpandableIndent)block.getIndent();
           indent.setEnforceIndent(true);
           reindentNewLineChildren(block);
           indent.setEnforceIndent(false);
@@ -1620,33 +1621,37 @@ public class FormatProcessor {
       }
     }
 
-    private boolean shouldExpand(Collection<AbstractBlockWrapper> blocksToExpandIndent) {
-      int minGroupOffset = Integer.MAX_VALUE;
+    private boolean shouldExpand(ExpandableIndent indent, Collection<AbstractBlockWrapper> blocksToExpandIndent) {
       for (AbstractBlockWrapper block : blocksToExpandIndent) {
         if (!block.getWhiteSpace().containsLineFeeds()) continue;
-
-        ExpandableIndent indent = (ExpandableIndent)block.getIndent();
-        if (indent.isMinGroupOffsetMarker()) {
-          minGroupOffset = block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
-        }
-        else {
-          return true;
-        }
+        return true;
       }
 
-      if (minGroupOffset == Integer.MAX_VALUE) return false;
+      int strictMinOffset = getStrictMinOffset(indent);
+      if (strictMinOffset == Integer.MAX_VALUE) {
+        return false;
+      }
 
       for (AbstractBlockWrapper block : blocksToExpandIndent) {
-        ExpandableIndent indent = (ExpandableIndent)block.getIndent();
-        if (indent.isMinGroupOffsetMarker()) continue;
-
         int minNewLineChildrenOffset = findMinNewLineIndent(block);
-        if (minNewLineChildrenOffset <= minGroupOffset) {
+        if (minNewLineChildrenOffset <= strictMinOffset) {
           return true;
         }
       }
 
       return false;
+    }
+
+    private int getStrictMinOffset(ExpandableIndent indent) {
+      final Block minOffsetBlock = indent.getStrictMinOffsetBlock();
+      if (minOffsetBlock == null) return Integer.MAX_VALUE;
+
+      AbstractBlockWrapper wrapper = myExpandableIndentsMinOffsetBlocksToWrappers.get(minOffsetBlock);
+      if (wrapper.getWhiteSpace().containsLineFeeds()) {
+        return wrapper.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+      }
+
+      return Integer.MAX_VALUE;
     }
 
     private int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
