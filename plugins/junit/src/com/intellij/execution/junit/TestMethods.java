@@ -75,7 +75,7 @@ public class TestMethods extends TestMethod {
       final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
                                                                           : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {
-        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + testInfo.getName();
+        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + ((PsiMethod)element).getName();
       }
     }
     return null;
