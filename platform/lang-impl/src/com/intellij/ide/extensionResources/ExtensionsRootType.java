@@ -31,6 +31,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.enumeration.EmptyEnumeration;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +69,7 @@ public class ExtensionsRootType extends RootType {
 
   @Nullable
   public PluginId getOwner(@Nullable VirtualFile resource) {
-    VirtualFile file = getPluginResourcesDirectory(resource);
+    VirtualFile file = getPluginResourcesDirectoryFor(resource);
     return file != null ? PluginId.findId(file.getName()) : null;
   }
 
@@ -84,16 +86,13 @@ public class ExtensionsRootType extends RootType {
   }
 
   public void extractBundledResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+    Enumeration<URL> bundledResources = getBundledResourceUrls(pluginId, path);
+    if (!bundledResources.hasMoreElements()) return;
+
     VirtualFile resourcesDirectory = findExtensionsDirectoryImpl(pluginId, path, true);
     if (resourcesDirectory == null) return;
 
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    ClassLoader classLoader = plugin != null ? plugin.getPluginClassLoader() : null;
-    if (classLoader == null) return;
-
     Application application = ApplicationManager.getApplication();
-
-    Enumeration<URL> bundledResources = classLoader.getResources(EXTENSIONS_PATH + "/" + path);
     while (bundledResources.hasMoreElements()) {
       URL bundledResourceDirUrl = bundledResources.nextElement();
       VirtualFile bundledResourcesDir = VfsUtil.findFileByURL(bundledResourceDirUrl);
@@ -114,7 +113,7 @@ public class ExtensionsRootType extends RootType {
   @Override
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
     try {
-      VirtualFile resourcesDir = getPluginResourcesDirectory(file);
+      VirtualFile resourcesDir = getPluginResourcesDirectoryFor(file);
       if (file.equals(resourcesDir)) {
         String name = getPluginResourcesRootName(resourcesDir);
         if (name != null) {
@@ -129,7 +128,7 @@ public class ExtensionsRootType extends RootType {
 
   @Nullable
   String getPath(@Nullable VirtualFile resource) {
-    VirtualFile pluginResourcesDir = getPluginResourcesDirectory(resource);
+    VirtualFile pluginResourcesDir = getPluginResourcesDirectoryFor(resource);
     PluginId pluginId = getOwner(pluginResourcesDir);
     return pluginResourcesDir != null && pluginId != null ? VfsUtilCore.getRelativePath(resource, pluginResourcesDir) : null;
   }
@@ -167,15 +166,13 @@ public class ExtensionsRootType extends RootType {
     return null;
   }
 
-  @Nullable
-  private VirtualFile getPluginResourcesDirectory(@Nullable VirtualFile virtualFile) {
-    if (virtualFile == null) return null;
-
-    VirtualFile root = getRootDirectory();
+  @Contract("null->null")
+  private VirtualFile getPluginResourcesDirectoryFor(@Nullable VirtualFile resource) {
+    VirtualFile root = resource != null ? getRootDirectory() : null;
     if (root == null) return null;
 
-    VirtualFile parent = virtualFile;
-    VirtualFile file = virtualFile;
+    VirtualFile parent = resource;
+    VirtualFile file = resource;
     while (parent != null && !root.equals(parent)) {
       file = parent;
       parent = file.getParent();
@@ -185,18 +182,20 @@ public class ExtensionsRootType extends RootType {
 
   @Nullable
   private VirtualFile getRootDirectory() {
-    try {
-      return VfsUtil.createDirectories(ScratchFileService.getInstance().getRootPath(this));
-    }
-    catch (IOException e) {
-      LOG.warn("Cannot initialize extension resources root directory", e);
-    }
-    return null;
+    String path = ScratchFileService.getInstance().getRootPath(this);
+    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   @NotNull
   private String getPath(@NotNull PluginId pluginId, @NotNull String path) {
     return ScratchFileService.getInstance().getRootPath(this) + "/" + pluginId.getIdString() + (StringUtil.isEmpty(path) ? "" : "/" + path);
+  }
+
+  @NotNull
+  private static Enumeration<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    ClassLoader cl = plugin != null ? plugin.getPluginClassLoader() : null;
+    return cl != null ? cl.getResources(EXTENSIONS_PATH + "/" + path) : EmptyEnumeration.<URL>getInstance();
   }
 
   private static void extractResources(@NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
