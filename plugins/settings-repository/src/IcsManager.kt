@@ -474,8 +474,8 @@ private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages
 }
 
 enum class SyncType {
-  MERGE
-  RESET_TO_THEIRS
+  MERGE,
+  RESET_TO_THEIRS,
   RESET_TO_MY
 }
 

@@ -13,23 +13,22 @@ import java.awt.Component
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
-private val COLUMNS = array(
-        object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
-          override fun getColumnClass() = javaClass<Boolean>()
+private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
+  override fun getColumnClass() = javaClass<Boolean>()
 
-          override fun valueOf(item: ReadonlySource) = item.active
+  override fun valueOf(item: ReadonlySource) = item.active
 
-          override fun setValue(item: ReadonlySource, value: Boolean) {
-            item.active = value
-          }
-        },
-        object : TableModelEditor.EditableColumnInfo<ReadonlySource, String>() {
-          override fun valueOf(item: ReadonlySource) = item.url
+  override fun setValue(item: ReadonlySource, value: Boolean) {
+    item.active = value
+  }
+},
+    object : TableModelEditor.EditableColumnInfo<ReadonlySource, String>() {
+      override fun valueOf(item: ReadonlySource) = item.url
 
-          override fun setValue(item: ReadonlySource, value: String) {
-            item.url = value
-          }
-        })
+      override fun setValue(item: ReadonlySource, value: String) {
+        item.url = value
+      }
+    })
 
 private fun createReadOnlySourcesEditor(dialogParent:Component): Configurable {
   val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource>() {

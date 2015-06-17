@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-State(name = "IcsProjectId", storages = array(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
+State(name = "IcsProjectId", storages = arrayOf(Storage(file = StoragePathMacros.WORKSPACE_FILE)))
 class ProjectId : PersistentStateComponent<ProjectId> {
   var uid: String? = null
   var path: String? = null

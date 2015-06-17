@@ -11,7 +11,7 @@ public data class Credentials(id: String?, token: String?) {
 
 public fun Credentials?.isFulfilled(): Boolean = this != null && id != null && token != null
 
-public trait CredentialsStore {
+public interface CredentialsStore {
   public fun get(host: String?, sshKeyFile: String? = null): Credentials?
 
   public fun save(host: String?, credentials: Credentials, sshKeyFile: String? = null)

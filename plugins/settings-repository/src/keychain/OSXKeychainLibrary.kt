@@ -10,7 +10,7 @@ val isOSXCredentialsStoreSupported: Boolean
 
 // http://developer.apple.com/mac/library/DOCUMENTATION/Security/Reference/keychainservices/Reference/reference.html
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
-public trait OSXKeychainLibrary : com.sun.jna.Library {
+public interface OSXKeychainLibrary : com.sun.jna.Library {
   companion object {
     private val LIBRARY = com.sun.jna.Native.loadLibrary("Security", javaClass<OSXKeychainLibrary>()) as OSXKeychainLibrary
 
@@ -38,7 +38,7 @@ public trait OSXKeychainLibrary : com.sun.jna.Library {
     fun findGenericPassword(serviceName: ByteArray, accountName: String): String? {
       val accountNameBytes = accountName.toByteArray()
       val passwordSize = IntArray(1);
-      val passwordData = array<Pointer?>(null);
+      val passwordData = arrayOf<Pointer?>(null);
       checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size(), accountNameBytes, passwordSize, passwordData))
       val pointer = passwordData[0] ?: return null
 

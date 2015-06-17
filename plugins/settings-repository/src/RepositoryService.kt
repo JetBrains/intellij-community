@@ -1,15 +1,15 @@
 package org.jetbrains.settingsRepository
 
-import java.awt.Container
-import org.eclipse.jgit.lib.Constants
-import java.io.File
 import com.intellij.openapi.ui.Messages
-import java.io.IOException
-import org.eclipse.jgit.transport.URIish
 import com.intellij.util.io.URLUtil
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.transport.URIish
 import org.jetbrains.settingsRepository.git.createBareRepository
+import java.awt.Container
+import java.io.File
+import java.io.IOException
 
-public trait RepositoryService {
+public interface RepositoryService {
   public fun checkUrl(uriString: String, messageParent: Container? = null): Boolean {
     val uri = URIish(uriString)
     val isFile: Boolean

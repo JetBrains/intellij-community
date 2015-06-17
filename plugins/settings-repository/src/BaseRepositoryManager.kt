@@ -18,7 +18,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.Arrays
 
-public abstract class BaseRepositoryManager protected() : RepositoryManager {
+public abstract class BaseRepositoryManager() : RepositoryManager {
   protected var dir: File = File(getPluginSystemDir(), "repository")
 
   protected val lock: Any = Object();

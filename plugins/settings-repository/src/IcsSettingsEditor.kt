@@ -80,7 +80,7 @@ class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
   }
 }
 
-trait Configurable {
+interface Configurable {
   fun isModified(): Boolean
 
   fun apply()

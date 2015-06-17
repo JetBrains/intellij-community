@@ -1,13 +1,12 @@
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.progress.ProgressIndicator
-
-import java.io.InputStream
-import gnu.trove.THashSet
-import java.util.Collections
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import gnu.trove.THashSet
+import java.io.InputStream
+import java.util.Collections
 
-public trait RepositoryManager {
+public interface RepositoryManager {
   public fun createRepositoryIfNeed(): Boolean
 
   /**
@@ -58,7 +57,7 @@ public trait RepositoryManager {
 
   public fun canCommit(): Boolean
 
-  public trait Updater {
+  public interface Updater {
     fun merge(): UpdateResult?
 
     // valid only if merge was called before
@@ -66,7 +65,7 @@ public trait RepositoryManager {
   }
 }
 
-public trait UpdateResult {
+public interface UpdateResult {
   val changed: Collection<String>
   val deleted: Collection<String>
 }

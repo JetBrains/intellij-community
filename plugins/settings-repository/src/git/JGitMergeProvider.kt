@@ -1,20 +1,20 @@
 package org.jetbrains.settingsRepository.git
 
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.lib.ObjectId
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vcs.merge.MergeData
-import org.jetbrains.settingsRepository.RepositoryVirtualFile
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.CharsetToolkit
-import java.nio.CharBuffer
+import com.intellij.openapi.vcs.merge.MergeData
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MergeSession
+import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.ColumnInfo
-import java.util.ArrayList
 import org.eclipse.jgit.diff.RawText
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.writePath
+import org.jetbrains.settingsRepository.RepositoryVirtualFile
+import java.nio.CharBuffer
+import java.util.ArrayList
 
 private fun conflictsToVirtualFiles(map: Map<String, org.eclipse.jgit.merge.MergeResult<*>>): MutableList<VirtualFile> {
   val result = ArrayList<VirtualFile>(map.size)
@@ -60,7 +60,7 @@ class JGitMergeProvider(private val repository: Repository, private val myCommit
 
   private inner class JGitMergeSession : MergeSession {
     override fun getMergeInfoColumns(): Array<ColumnInfo<out Any?, out Any?>> {
-      return array(StatusColumn(false), StatusColumn(true))
+      return arrayOf(StatusColumn(false), StatusColumn(true))
     }
 
     override fun canMerge(file: VirtualFile) = conflicts.contains(file.getPath())
