@@ -361,7 +361,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                  @Nullable final LocalChangeList targetChangeList,
                                  boolean showSuccessNotification) {
-    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Unshelve changes");
+    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true);
     final GatheringContinuationContext initContext = new GatheringContinuationContext();
     scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext, false,
                                false, null, null);

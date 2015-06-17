@@ -118,7 +118,7 @@ public class GitComplexProcess {
   }
 
   private void run() {
-    Continuation continuation = Continuation.createForCurrentProgress(myProject, true, myTitle);
+    Continuation continuation = Continuation.createForCurrentProgress(myProject, true);
     String taskTitle = "Git: " + myTitle;
     TaskDescriptor operation = new TaskDescriptor(taskTitle, Where.POOLED) {
       @Override public void run(final ContinuationContext context) {

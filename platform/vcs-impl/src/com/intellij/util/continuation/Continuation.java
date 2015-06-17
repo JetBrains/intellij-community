@@ -27,8 +27,8 @@ public class Continuation {
     myGeneralRunner = generalRunner;
   }
 
-  public static Continuation createForCurrentProgress(final Project project, final boolean cancellable, final String commonTitle) {
-    return new Continuation(new SameProgressRunner(project, cancellable, commonTitle));
+  public static Continuation createForCurrentProgress(final Project project, final boolean cancellable) {
+    return new Continuation(new SameProgressRunner(project, cancellable));
   }
 
   public static Continuation createFragmented(final Project project, final boolean cancellable) {
@@ -59,7 +59,7 @@ public class Continuation {
   }
 
   public void resumeOnNewIndicator(final Project project, final boolean cancellable, final String commonTitle) {
-    final SameProgressRunner runner = new SameProgressRunner(project, cancellable, commonTitle);
+    final SameProgressRunner runner = new SameProgressRunner(project, cancellable);
     runner.next(myGeneralRunner.myQueue);
     myGeneralRunner = runner;
     resume();

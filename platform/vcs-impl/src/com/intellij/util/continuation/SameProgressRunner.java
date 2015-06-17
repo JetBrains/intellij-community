@@ -36,7 +36,7 @@ public class SameProgressRunner extends GeneralRunner {
   private final Semaphore mySemaphore;
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.continuation.SameProgressRunner");
 
-  public SameProgressRunner(Project project, boolean cancellable, final String commonName) {
+  public SameProgressRunner(Project project, boolean cancellable) {
     super(project, cancellable);
 
     final Application application = ApplicationManager.getApplication();
