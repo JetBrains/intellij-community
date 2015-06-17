@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
@@ -37,8 +38,16 @@ public class ProcessWaitFor {
       public void run() {
         //noinspection InfiniteLoopStatement
         while (true) {
-          processQueue();
-          TimeoutUtil.sleep(50);
+          try {
+            processQueue();
+            TimeoutUtil.sleep(50);
+          }
+          catch (ThreadDeath e) {
+            throw e;
+          }
+          catch (Throwable t) {
+            LOG.error(t);
+          }
         }
       }
     });
@@ -46,22 +55,23 @@ public class ProcessWaitFor {
 
   private static void processQueue() {
     synchronized (ourQueue) {
-      for (Iterator<Process> iterator = ourQueue.keySet().iterator(); iterator.hasNext(); ) {
-        Process process = iterator.next();
+      for (Iterator<Map.Entry<Process, Collection<Consumer<Integer>>>> iterator = ourQueue.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<Process, Collection<Consumer<Integer>>> entry = iterator.next();
         try {
-          int value = process.exitValue();
+          int value = entry.getKey().exitValue();
 
-          Collection<Consumer<Integer>> callbacks = ourQueue.get(process);
-          for (Consumer<Integer> callback : callbacks) {
-            callback.consume(value);
+          for (Consumer<Integer> callback : entry.getValue()) {
+            try {
+              callback.consume(value);
+            }
+            catch (Throwable t) {
+              LOG.error(t);
+            }
           }
 
           iterator.remove();
         }
         catch (IllegalThreadStateException ignore) { }
-        catch (RuntimeException e) {
-          LOG.debug(e);
-        }
       }
     }
   }
@@ -72,9 +82,12 @@ public class ProcessWaitFor {
     }
   }
 
-  public static void detach(@NotNull Process process) {
-    synchronized (ourQueue) {
-      ourQueue.remove(process);
+
+  public static void detach(@NotNull Process process, Consumer<Integer> callback) {
+    if (callback != null) {
+      synchronized (ourQueue) {
+        ourQueue.remove(process, callback);
+      }
     }
   }
 }

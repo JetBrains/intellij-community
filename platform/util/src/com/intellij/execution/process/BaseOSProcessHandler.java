@@ -39,6 +39,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   protected final Process myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
+  private Consumer<Integer> myCallback = null;
 
   public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
     myProcess = process;
@@ -95,7 +96,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
           final BaseDataReader stdOutReader = createOutputDataReader(getPolicy());
           final BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader(getPolicy()) : null;
 
-          ProcessWaitFor.attach(myProcess, new Consumer<Integer>() {
+          ProcessWaitFor.attach(myProcess, myCallback = new Consumer<Integer>() {
             @Override
             public void consume(Integer exitCode) {
               try {
@@ -191,7 +192,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       public void run() {
         closeStreams();
 
-        ProcessWaitFor.detach(myProcess);
+        ProcessWaitFor.detach(myProcess, myCallback);
         notifyProcessDetached();
       }
     };
