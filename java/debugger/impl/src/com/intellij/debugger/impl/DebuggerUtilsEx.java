@@ -813,7 +813,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
         PsiElement body = expression.getBody();
-        if (!onlyOnTheLine || (body != null && lineRange.intersects(body.getTextRange()))) {
+        if (!onlyOnTheLine || (body != null && intersects(lineRange, body))) {
           lambdas.add(expression);
         }
       }
@@ -825,7 +825,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       lambdas.add((PsiLambdaExpression)method);
     }
     for (PsiElement sibling = getNextElement(element); sibling != null; sibling = getNextElement(sibling)) {
-      if (!lineRange.intersects(sibling.getTextRange())) {
+      if (!intersects(lineRange, sibling)) {
         break;
       }
       sibling.accept(lambdaCollector);
@@ -833,15 +833,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return lambdas;
   }
 
+  public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {
+    TextRange elemRange = elem.getTextRange();
+    return elemRange != null && elemRange.intersects(range);
+  }
+
   @Nullable
   public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
-    if (!lineRange.intersects(lambda.getTextRange())) return null;
+    if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
     if (body instanceof PsiCodeBlock) {
       for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
-        if (lineRange.intersects(statement.getTextRange())) {
+        if (intersects(lineRange, statement)) {
           return statement;
         }
       }
