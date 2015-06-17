@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
@@ -38,6 +40,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   @NonNls
   public static final String ID = "RemoteServers";
+  public static final String TYPE_NAME_DELIMITER = ", ";
 
   private final RemoteServersManager myServersManager;
   @Nullable private final ServerType<?> myServerType;
@@ -51,6 +54,21 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     myServersManager = manager;
     myServerType = type;
     initTree();
+  }
+
+  @Nullable
+  @Override
+  protected String getEmptySelectionString() {
+    final StringBuilder typeNames = new StringBuilder();
+    for (ServerType type : Extensions.getExtensions(ServerType.EP_NAME)) {
+      typeNames.append(type.getPresentableName()).append(TYPE_NAME_DELIMITER);
+    }
+
+    if (typeNames.length() > 1) {
+      typeNames.delete(typeNames.length() - TYPE_NAME_DELIMITER.length(), typeNames.length());
+      return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);
+    }
+    return null;
   }
 
   public static RemoteServerListConfigurable createConfigurable(@NotNull ServerType<?> type) {
