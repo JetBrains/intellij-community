@@ -40,6 +40,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 
+/**
+ * <p> Extensions root type provide a common interface for plugins to access resources that are modifiable by the user. </p>
+ * <p>Plugin's resources are stored in a directory named %plugin-id% under extensions root.</p>
+ * <p>
+ * Plugins can bundle default resources. Bundled resources are searched via {@link ClassLoader#getResources(String)}
+ * call to plugin's class loader passing {@link ExtensionsRootType#EXTENSIONS_PATH} concatenated with relative resource path as an argument.
+ * </p>
+ * <p> Bundled resources are updated automatically upon plugin version change. For bundled plugins, application version is used. </p>
+ */
 public class ExtensionsRootType extends RootType {
   public static final String EXTENSIONS_PATH = "extensions";
   public static final String BACKUP_FILE_EXTENSION = "old";
