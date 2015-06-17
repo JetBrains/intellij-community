@@ -98,7 +98,7 @@ public class GitShelveUtils {
         filesToRefresh.add(new File(projectPath + f.BEFORE_PATH));
       }
       if (f.AFTER_PATH != null) {
-        filesToRefresh.add(new File(projectPath + f.BEFORE_PATH));
+        filesToRefresh.add(new File(projectPath + f.AFTER_PATH));
       }
     }
     LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
