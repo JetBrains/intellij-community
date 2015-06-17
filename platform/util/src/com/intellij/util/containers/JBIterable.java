@@ -145,12 +145,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a string representation of this fluent iterable, with the format
-   * {@code [e1, e2, ..., en]}.
+   * Returns a string representation of this iterable up to 50 elements, with the format
+   * {@code (e1, e2, ..., en [, ...] )} for debugging purposes.
    */
   @Override
   public String toString() {
-    return "(" + StringUtil.join(take(50), ", ") + ")";
+    int max = 50;
+    List<E> list = take(max + 1).toList();
+    return "(" + StringUtil.join(list.subList(0, Math.min(list.size(), max)), ", ") + (list.size() > max ? ", ..." : "") + ")";
   }
 
   /**
