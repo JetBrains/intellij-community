@@ -140,4 +140,9 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   public boolean isWriteActionPending() {
     return false;
   }
+
+  @Override
+  public boolean isServer() {
+    return false;
+  }
 }

@@ -92,6 +92,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public boolean isServer() {
+    return false;
+  }
+
+  @Override
   public boolean isCommandLine() {
     return true;
   }

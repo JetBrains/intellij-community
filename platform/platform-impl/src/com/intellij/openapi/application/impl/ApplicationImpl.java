@@ -388,6 +388,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
+  public boolean isServer() {
+    return true;
+  }
+
+  @Override
   public boolean isCommandLine() {
     return myCommandLineMode;
   }

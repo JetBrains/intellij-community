@@ -178,7 +178,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
+    if (!ApplicationManager.getApplication().isServer() &&
+        !ApplicationManager.getApplication().isUnitTestMode() &&
+        !myEditor.getContentComponent().hasFocus()) return;
+
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state != null && !state.isFinished()) return;
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
@@ -190,7 +193,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
+    if (!ApplicationManager.getApplication().isServer() &&
+        !ApplicationManager.getApplication().isUnitTestMode() &&
+        !myEditor.getContentComponent().hasFocus()) return;
 
     // do not show intentions if caret is outside visible area
     LogicalPosition caretPos = myEditor.getCaretModel().getLogicalPosition();
