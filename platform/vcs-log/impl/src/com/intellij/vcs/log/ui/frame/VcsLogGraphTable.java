@@ -43,6 +43,7 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
@@ -288,7 +289,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
+    List<VcsFullCommitDetails> details = VcsLogUtil.collectLoadedSelectedDetails(myUI.getVcsLog(), true);
     if (!details.isEmpty()) {
       CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
         @Override
