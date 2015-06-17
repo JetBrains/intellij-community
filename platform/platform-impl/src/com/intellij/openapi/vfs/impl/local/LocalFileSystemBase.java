@@ -476,7 +476,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-    final FileInputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
+    final InputStream stream = new BufferedInputStream(new FileInputStream(convertToIOFileAndCheck(file)));
     try {
       long l = file.getLength();
       if (l > Integer.MAX_VALUE) throw new IOException("File is too large: " + l + ", " + file);

@@ -25,6 +25,7 @@ import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -194,6 +195,7 @@ public class ZipHandler extends ArchiveHandler {
       if (entry != null) {
         InputStream stream = zip.getInputStream(entry);
         if (stream != null) {
+          stream = new BufferedInputStream(stream);
           try {
             return FileUtil.loadBytes(stream, (int)entry.getSize());
           }
