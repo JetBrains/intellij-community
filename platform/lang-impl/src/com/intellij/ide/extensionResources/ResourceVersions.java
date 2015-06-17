@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -90,7 +91,7 @@ class ResourceVersions implements PersistentStateComponent<ResourceVersions.Stat
 
     @NotNull
     private static String getVersion(@NotNull IdeaPluginDescriptor plugin) {
-      if (!plugin.isBundled()) return plugin.getVersion();
+      if (!plugin.isBundled()) return ObjectUtils.assertNotNull(plugin.getVersion());
 
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       BuildNumber build = appInfo.getBuild();
