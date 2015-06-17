@@ -47,6 +47,7 @@ import java.util.List;
 /**
  * Group found usages by moved elements and move each of these elements using {@link PyMoveSymbolProcessor}.
  *
+ * attribute's
  * @author vlan
  * @author Mikhail Golubev
  *
