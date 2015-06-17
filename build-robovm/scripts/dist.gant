@@ -86,7 +86,7 @@ target('default': 'The default target') {
   indexSearchableOptions()
 
   layoutAll([buildNumber: "IC-$snapshot",
-             system_selector: "IdeaIC${p("component.version.major")}",
+             system_selector: "RoboVMStudio${p("component.version.major")}",
              tools_jar: true],
             home, null, paths, true)
   String macZip = "$paths.artifacts/robovm-studio-${snapshot}.mac.zip"
@@ -102,7 +102,7 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   indexSearchableOptions()
 
   layoutAll([buildNumber: "IC-$snapshot",
-             system_selector: "IdeaIC${p("component.version.major")}",
+             system_selector: "RoboVMStudio${p("component.version.major")}",
              tools_jar: true],
              home, null, paths)
   String macZip = "$paths.artifacts/robovm-studio-${snapshot}.mac.zip"

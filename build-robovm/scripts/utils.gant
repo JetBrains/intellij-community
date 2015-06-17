@@ -241,7 +241,7 @@ binding.setVariable("printUnusedModules", {Set<String> usedModules ->
 requireProperty("home", guessHome())
 
 String readSnapshotBuild() {
-  def file = new File("$home/community/build.txt")
+  def file = new File("$home/build-robovm/build.txt")
   if (!file.exists()) {
     file = new File("$home/build.txt")
   }
@@ -439,7 +439,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
-  String EAP = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "-EAP" : ""
+  String EAP = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? " EAP" : ""
 
   Map properties = readIdeaProperties(args)
 
