@@ -258,7 +258,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
       if (problemElement != null) {
         TextRange problemRange = problemElement.getTextRange();
-        if (!(problemElement instanceof PsiWhiteSpace) && crossesLineBoundary(document, text, problemRange)) {
+        // Multi-line warnings are shown only in the gutter and it's not the desired behavior from the usability point of view.
+        // So we register it only on that line where pep8.py found the problem originally.
+        if (crossesLineBoundary(document, text, problemRange)) {
           final int lineEndOffset;
           if (document != null) {
             lineEndOffset = line >= document.getLineCount() ? document.getTextLength() - 1 : document.getLineEndOffset(line);
