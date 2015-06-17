@@ -1,6 +1,6 @@
 package org.jetbrains.jsonProtocol
 
-public trait ItemDescriptor {
+public interface ItemDescriptor {
   public fun description(): String?
 
   public fun type(): String
@@ -9,7 +9,7 @@ public trait ItemDescriptor {
 
   public fun items(): ProtocolMetaModel.ArrayItemType
 
-  public trait Named : Referenceable {
+  public interface Named : Referenceable {
     public fun name(): String
 
     JsonOptionalField
@@ -18,11 +18,11 @@ public trait ItemDescriptor {
     public fun optional(): Boolean
   }
 
-  public trait Referenceable : ItemDescriptor {
+  public interface Referenceable : ItemDescriptor {
     public fun ref(): String
   }
 
-  public trait Type : ItemDescriptor {
+  public interface Type : ItemDescriptor {
     public fun properties(): List<ProtocolMetaModel.ObjectProperty>?
   }
 }

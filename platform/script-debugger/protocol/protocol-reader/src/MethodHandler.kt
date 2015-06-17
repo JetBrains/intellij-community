@@ -27,6 +27,6 @@ fun writeMethodDeclarationJava(out: TextOutput, m: Method, paramNames: List<Stri
   appendMethodSignatureJava(m, paramNames, out)
 }
 
-trait MethodHandler {
+interface MethodHandler {
   fun writeMethodImplementationJava(scope: ClassScope, method: Method, out: TextOutput)
 }

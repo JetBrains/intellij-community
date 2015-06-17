@@ -11,7 +11,7 @@ fun fixMethodName(name: String): String {
   return if (i > 0) name.substring(0, i) + 'B' + name.substring(i + 1) else name
 }
 
-trait TextOutConsumer {
+interface TextOutConsumer {
   fun append(out: TextOutput)
 }
 

@@ -7,7 +7,7 @@ private val indentGranularity = 2
 
 public class TextOutput(public val out: StringBuilder) {
   private var identLevel: Int = 0
-  private var indents = array(EMPTY_CHARS)
+  private var indents = arrayOf(EMPTY_CHARS)
   private var justNewLined: Boolean = false
 
   public fun indentIn(): TextOutput {

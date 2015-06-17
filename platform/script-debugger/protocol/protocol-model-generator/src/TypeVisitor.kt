@@ -2,7 +2,7 @@ package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 
-trait TypeVisitor<R> {
+interface TypeVisitor<R> {
   public fun visitRef(refName: String): R
 
   public fun visitBoolean(): R
