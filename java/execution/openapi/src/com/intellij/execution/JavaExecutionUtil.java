@@ -187,15 +187,15 @@ public class JavaExecutionUtil {
   @Nullable
   public static Location stepIntoSingleClass(@NotNull final Location location) {
     PsiElement element = location.getPsiElement();
-    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(location.getProject()).getFileIndex();
-    if (virtualFile == null || !fileIndex.isInSource(virtualFile)) {
-      return null;
-    }
     if (!(element instanceof PsiClassOwner)) {
       if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;
       element = PsiTreeUtil.getParentOfType(element, PsiClassOwner.class);
       if (element == null) return location;
+    }
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(location.getProject()).getFileIndex();
+    if (virtualFile == null || !fileIndex.isInSource(virtualFile)) {
+      return null;
     }
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();
