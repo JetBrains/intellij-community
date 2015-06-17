@@ -50,6 +50,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
   @NotNull
   @Override
   public AnAction[] getChildren(AnActionEvent e) {
+    if (e == null) return AnAction.EMPTY_ARRAY;
     Project project = e.getProject();
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
