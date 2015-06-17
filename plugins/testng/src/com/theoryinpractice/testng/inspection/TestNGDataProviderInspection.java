@@ -77,6 +77,7 @@ public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static CreateMethodQuickFix createMethodFix(PsiAnnotationMemberValue provider, PsiClass providerClass, PsiClass topLevelClass) {
+    final String name = StringUtil.unquoteString(provider.getText());
 
     FileTemplateDescriptor templateDesc = new TestNGFramework().getParametersMethodFileTemplateDescriptor();
     assert templateDesc != null;
@@ -84,10 +85,20 @@ public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
 
     String body = "";
     try {
-      body = fileTemplate.getText(new Properties());
+      final Properties attributes = new Properties();
+      attributes.put(FileTemplate.ATTRIBUTE_NAME, name);
+      body = fileTemplate.getText(attributes);
       body = body.replace("${BODY}", "");
+      final PsiMethod methodFromTemplate = JavaPsiFacade.getElementFactory(providerClass.getProject()).createMethodFromText(body, providerClass);
+      final PsiCodeBlock methodBody = methodFromTemplate.getBody();
+      if (methodBody != null) {
+        body = StringUtil.trimEnd(StringUtil.trimStart(methodBody.getText(), "{"), "}");
+      }
+      else {
+        body = "";
+      }
     }
-    catch (IOException ignored) {}
+    catch (Exception ignored) {}
     if (StringUtil.isEmptyOrSpaces(body)) {
       body = "return new Object[][]{};";
     }
@@ -96,7 +107,7 @@ public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
     if (providerClass == topLevelClass) {
       signature += "static ";
     }
-    signature += "Object[][] " + StringUtil.unquoteString(provider.getText()) + "()";
+    signature += "Object[][] " + name + "()";
 
     return CreateMethodQuickFix.createFix(providerClass, signature, body);
   }
