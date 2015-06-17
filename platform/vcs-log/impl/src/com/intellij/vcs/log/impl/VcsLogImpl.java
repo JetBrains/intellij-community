@@ -15,7 +15,11 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.google.common.primitives.Ints;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -25,9 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -35,6 +37,7 @@ import java.util.concurrent.Future;
  *
  */
 public class VcsLogImpl implements VcsLog {
+  private static final int SLICE_SIZE = 50;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogUiImpl myUi;
 
@@ -77,6 +80,12 @@ public class VcsLogImpl implements VcsLog {
         return rows.length;
       }
     };
+  }
+
+  @Override
+  public void requestSelectedDetails(@NotNull Consumer<Set<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
+    List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
+    myDataHolder.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
   }
 
   @Nullable

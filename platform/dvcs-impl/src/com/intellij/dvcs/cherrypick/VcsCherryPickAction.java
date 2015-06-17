@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -32,9 +33,9 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
@@ -57,39 +58,17 @@ public class VcsCherryPickAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
-    final List<VcsFullCommitDetails> commits = VcsLogUtil.collectLoadedSelectedDetails(log, false);
 
-    for (VcsFullCommitDetails commit : commits) {
-      myIdsInProgress.add(commit.getId());
-    }
-
-    FileDocumentManager.getInstance().saveAllDocuments();
-    final ChangeListManagerEx changeListManagerEx = (ChangeListManagerEx)ChangeListManager.getInstance(project);
-    changeListManagerEx.blockModalNotifications();
-
-    new Task.Backgroundable(project, "Cherry-picking", false) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          List<VcsFullCommitDetails> sortedCommits = sortCommits(commits);
-          Map<VcsCherryPicker, List<VcsFullCommitDetails>> groupedCommits = groupByVcs(project, sortedCommits);
-          for (Map.Entry<VcsCherryPicker, List<VcsFullCommitDetails>> entry : groupedCommits.entrySet()) {
-            entry.getKey().cherryPick(entry.getValue());
-          }
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              changeListManagerEx.unblockModalNotifications();
-              for (VcsFullCommitDetails commit : commits) {
-                myIdsInProgress.remove(commit.getId());
-              }
-            }
-          });
-        }
+    log.requestSelectedDetails(new Consumer<Set<VcsFullCommitDetails>>() {
+      @Override
+      public void consume(Set<VcsFullCommitDetails> details) {
+        ProgressManager.getInstance().run(new CherryPickingTask(project, details));
       }
-    }.queue();
+    }, null);
   }
 
   /**
@@ -99,27 +78,6 @@ public class VcsCherryPickAction extends DumbAwareAction {
   public static List<VcsFullCommitDetails> sortCommits(@NotNull List<VcsFullCommitDetails> commits) {
     Collections.reverse(commits);
     return commits;
-  }
-
-
-  private static Map<VcsCherryPicker, List<VcsFullCommitDetails>> groupByVcs(@NotNull Project project,
-                                                                             @NotNull List<VcsFullCommitDetails> commits) {
-    final ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
-    Map<VcsCherryPicker, List<VcsFullCommitDetails>> resultMap = new HashMap<VcsCherryPicker, List<VcsFullCommitDetails>>();
-    for (VcsFullCommitDetails commit : commits) {
-      VcsCherryPicker cherryPicker = getCherryPickerForCommit(project, projectLevelVcsManager, commit);
-      if (cherryPicker == null) {
-        VcsNotifier.getInstance(project).notifyWeakError(
-          "Cherry pick is not supported for commit " + commit.getId().toShortString() + " from root " + commit.getRoot().getName());
-        return Collections.emptyMap();
-      }
-      List<VcsFullCommitDetails> list = resultMap.get(cherryPicker);
-      if (list == null) {
-        resultMap.put(cherryPicker, list = new ArrayList<VcsFullCommitDetails>()); // ordered set!!
-      }
-      list.add(commit);
-    }
-    return resultMap;
   }
 
   @Nullable
@@ -190,5 +148,68 @@ public class VcsCherryPickAction extends DumbAwareAction {
     if (vcs == null) return null;
     VcsKey key = vcs.getKeyInstanceMethod();
     return getCherryPickerFor(project, key);
+  }
+
+  private class CherryPickingTask extends Task.Backgroundable {
+    private final Project myProject;
+    private final ProjectLevelVcsManager myProjectLevelVcsManager;
+    private final Map<VcsCherryPicker, List<VcsFullCommitDetails>> myGroupedCommits = ContainerUtil.newHashMap();
+    private final Collection<VcsFullCommitDetails> myAllCommits;
+    private final ChangeListManagerEx myChangeListManagerEx;
+
+    public CherryPickingTask(@NotNull Project project, @NotNull Set<VcsFullCommitDetails> details) {
+      super(project, "Cherry-Picking");
+      myProject = project;
+      myProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      myAllCommits = details;
+      myChangeListManagerEx = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
+      myChangeListManagerEx.blockModalNotifications();
+    }
+
+    public boolean processDetails(@NotNull VcsFullCommitDetails details) {
+      myIdsInProgress.add(details.getId());
+
+      VcsCherryPicker cherryPicker = getCherryPickerForCommit(myProject, myProjectLevelVcsManager, details);
+      if (cherryPicker == null) {
+        VcsNotifier.getInstance(myProject).notifyWeakError(
+          "Cherry pick is not supported for commit " + details.getId().toShortString() + " from root " + details.getRoot().getName());
+        return false;
+      }
+      List<VcsFullCommitDetails> list = myGroupedCommits.get(cherryPicker);
+      if (list == null) {
+        myGroupedCommits.put(cherryPicker, list = new ArrayList<VcsFullCommitDetails>()); // ordered set!!
+      }
+      list.add(details);
+      return true;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      try {
+        boolean isOk = true;
+        for (VcsFullCommitDetails details : myAllCommits) {
+          if (!processDetails(details)) {
+            isOk = false;
+            break;
+          }
+        }
+
+        if (isOk) {
+          for (Map.Entry<VcsCherryPicker, List<VcsFullCommitDetails>> entry : myGroupedCommits.entrySet()) {
+            entry.getKey().cherryPick(sortCommits(entry.getValue()));
+          }
+        }
+      }
+      finally {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myChangeListManagerEx.unblockModalNotifications();
+            for (VcsFullCommitDetails commit : myAllCommits) {
+              myIdsInProgress.remove(commit.getId());
+            }
+          }
+        });
+      }
+    }
   }
 }

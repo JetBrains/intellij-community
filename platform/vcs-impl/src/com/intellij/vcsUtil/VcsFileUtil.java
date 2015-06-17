@@ -15,6 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -61,10 +62,8 @@ public class VcsFileUtil {
     List<List<String>> chunks = chunkArguments(arguments);
 
     for (List<String> chunk : chunks) {
-      if (ProgressManager.getInstance().getProgressIndicator() != null &&
-          ProgressManager.getInstance().getProgressIndicator().isCanceled()) {
-        return result;
-      }
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) indicator.checkCanceled();
 
       result.addAll(processor.fun(chunk));
     }

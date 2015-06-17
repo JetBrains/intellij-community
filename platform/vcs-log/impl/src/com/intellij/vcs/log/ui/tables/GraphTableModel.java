@@ -152,16 +152,6 @@ public class GraphTableModel extends AbstractTableModel {
     return COLUMN_COUNT;
   }
 
-  @Nullable
-  private VcsShortCommitDetails getShortDetails(int rowIndex) {
-    return myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
-  }
-
-  @Nullable
-  public VcsFullCommitDetails getFullCommitDetails(int rowIndex) {
-    return myLogDataHolder.getCommitDetailsGetter().getCommitData(rowIndex, this);
-  }
-
   /**
    * Requests the proper data provider to load more data from the log & recreate the model.
    *
@@ -180,7 +170,7 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = getShortDetails(rowIndex);
+    VcsShortCommitDetails data = myLogDataHolder.getMiniDetailsGetter().getCommitData(rowIndex, this);
     switch (columnIndex) {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
@@ -225,8 +215,8 @@ public class GraphTableModel extends AbstractTableModel {
   public List<Change> getSelectedChanges(@NotNull List<Integer> selectedRows) {
     List<Change> changes = new ArrayList<Change>();
     for (int row : selectedRows) {
-      VcsFullCommitDetails commitData = getFullCommitDetails(row);
-      if (commitData == null || commitData instanceof LoadingDetails) {
+      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(row, this);
+      if (commitData instanceof LoadingDetails) {
         return null;
       }
       changes.addAll(commitData.getChanges());

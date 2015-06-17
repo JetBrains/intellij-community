@@ -15,12 +15,15 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 /**
@@ -40,6 +43,16 @@ public interface VcsLog {
    */
   @NotNull
   List<VcsFullCommitDetails> getSelectedDetails();
+
+  /**
+   * Sends a request to load details that are currently selected.
+   * Details are loaded in background. If a progress indicator is specified it is used during loading process.
+   * After all details are loaded they are provided to the consumer in the EDT.
+   *
+   * @param consumer called in EDT after all details are loaded.
+   * @param indicator progress indicator to use in loading process, can be null.
+   */
+  void requestSelectedDetails(@NotNull Consumer<Set<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator);
 
   /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable.

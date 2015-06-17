@@ -16,8 +16,10 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.mock.MockVirtualFile
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.graph.GraphCommit
@@ -149,11 +151,14 @@ class VisiblePackBuilderTest {
 
       val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
         override fun getCommitData(row: Int, tableModel: GraphTableModel): VcsFullCommitDetails? {
-          return null;
+          return null
+        }
+
+        override fun loadCommitsData(rows: MutableList<Int>, tableModel: GraphTableModel, consumer: Consumer<MutableSet<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
         }
 
         override fun getCommitDataIfAvailable(hash: Int): VcsFullCommitDetails? {
-          return null;
+          return null
         }
       }
       val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter)
