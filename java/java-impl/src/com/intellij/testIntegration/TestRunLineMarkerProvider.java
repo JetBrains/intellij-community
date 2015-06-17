@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.junit;
+package com.intellij.testIntegration;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.execution.PsiLocation;
 import com.intellij.execution.lineMarker.RunLineMarkerInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class JUnitRunLineMarkerProvider implements LineMarkerProvider {
+public class TestRunLineMarkerProvider implements LineMarkerProvider {
 
   private static final Function<PsiElement, String> TOOLTIP_PROVIDER = new Function<PsiElement, String>() {
     @Override
@@ -47,11 +48,17 @@ public class JUnitRunLineMarkerProvider implements LineMarkerProvider {
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement e) {
     if (e instanceof PsiIdentifier) {
       PsiElement element = e.getParent();
-      if (element instanceof PsiClass && JUnitUtil.isTestClass((PsiClass)element, false, true)) {
-        return new RunLineMarkerInfo(e, JUnitConfigurationType.getInstance().getIcon(), TOOLTIP_PROVIDER);
+      if (element instanceof PsiClass) {
+        TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
+        if (framework != null && framework.isTestClass(element)) {
+          return new RunLineMarkerInfo(e, framework.getIcon(), TOOLTIP_PROVIDER);
+        }
       }
-      if (element instanceof PsiMethod && JUnitUtil.isTestMethod(new PsiLocation<PsiMethod>((PsiMethod)element))) {
-        return new RunLineMarkerInfo(e, JUnitConfigurationType.getInstance().getIcon(), TOOLTIP_PROVIDER);
+      if (element instanceof PsiMethod) {
+        TestFramework framework = TestFrameworks.detectFramework(PsiTreeUtil.getParentOfType(element, PsiClass.class));
+        if (framework != null && framework.isTestMethod(element)) {
+          return new RunLineMarkerInfo(e, framework.getIcon(), TOOLTIP_PROVIDER);
+        }
       }
     }
     return null;

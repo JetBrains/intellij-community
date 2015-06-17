@@ -1462,6 +1462,7 @@
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator" />
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
 
     <callHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider"/>
     <methodHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.method.JavaMethodHierarchyProvider"/>
