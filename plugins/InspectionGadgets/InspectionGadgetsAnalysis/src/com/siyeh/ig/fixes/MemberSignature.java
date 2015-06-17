@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Bas Leijdekkers
+ * Copyright 2003-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ public class MemberSignature implements Comparable<MemberSignature> {
   @NonNls private static final String INITIALIZER_SIGNATURE = "()V";
   @NonNls private static final MemberSignature ASSERTIONS_DISABLED_FIELD =
     new MemberSignature("$assertionsDisabled", Modifier.STATIC | Modifier.FINAL, "Z");
-  @NonNls private static final MemberSignature CLASS_ACCESS_METHOD =
-    new MemberSignature("class$", Modifier.STATIC, "(Ljava.lang.String;)Ljava.lang.Class;");
   @NonNls private static final MemberSignature PACKAGE_PRIVATE_CONSTRUCTOR =
     new MemberSignature(CONSTRUCTOR_NAME, 0, INITIALIZER_SIGNATURE);
   @NonNls private static final MemberSignature PUBLIC_CONSTRUCTOR =
@@ -234,11 +232,6 @@ public class MemberSignature implements Comparable<MemberSignature> {
   public static MemberSignature getAssertionsDisabledFieldMemberSignature() {
     return ASSERTIONS_DISABLED_FIELD;
   }
-
-  public static MemberSignature getClassAccessMethodMemberSignature() {
-    return CLASS_ACCESS_METHOD;
-  }
-
 
   public int getModifiers() {
     return modifiers;
