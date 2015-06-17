@@ -33,6 +33,7 @@ public enum WorkingCopyFormat {
 
   public static final int INTERNAL_FORMAT_17 = 29;
   public static final int INTERNAL_FORMAT_18 = 31;
+  private static final Version ONE_DOT_NINE_VERSION = new Version(1, 9, 0);
 
   private final int myFormat;
   private final boolean myChangelistSupport;
@@ -114,10 +115,15 @@ public enum WorkingCopyFormat {
   public static WorkingCopyFormat from(@NotNull Version version) {
     WorkingCopyFormat result = UNKNOWN;
 
-    for (WorkingCopyFormat format : WorkingCopyFormat.values()) {
-      if (format.getVersion().is(version.major, version.minor)) {
-        result = format;
-        break;
+    if (version.compareTo(ONE_DOT_NINE_VERSION) >= 0) {
+      result = ONE_DOT_EIGHT;
+    }
+    else {
+      for (WorkingCopyFormat format : WorkingCopyFormat.values()) {
+        if (format.getVersion().is(version.major, version.minor)) {
+          result = format;
+          break;
+        }
       }
     }
 
