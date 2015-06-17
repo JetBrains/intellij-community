@@ -685,16 +685,9 @@ public class PyBlock implements ASTBlock {
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
-      final ASTNode node2 = ((ASTBlock)child2).getNode();
       final PsiElement psi1 = node1.getPsi();
       final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
       final IElementType childType1 = node1.getElementType();
-      final IElementType childType2 = node2.getElementType();
-
-      if (psi1 instanceof PyImportStatementBase && psi2 instanceof PyImportStatementBase &&
-          psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
-        return Spacing.createSpacing(0, 0, 2, true, 1);
-      }
 
       final CommonCodeStyleSettings settings = myContext.getSettings();
       if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
@@ -707,6 +700,21 @@ public class PyBlock implements ASTBlock {
           STATEMENT_OR_DECLARATION.contains(childType1) && hasTypeIgnoringPrecedingComments(psi2, PyElementTypes.CLASS_OR_FUNCTION)) {
         if (PyUtil.isTopLevel(psi1)) {
           return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
+        }
+      }
+
+      if (psi1 instanceof PyImportStatementBase) {
+        if (psi2 instanceof PyImportStatementBase &&
+            psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
+          return Spacing.createSpacing(0, 0, 2, true, 1);
+        }
+        if (psi2 instanceof PyStatement && !(psi2 instanceof PyImportStatementBase)) {
+          if (PyUtil.isTopLevel(psi1)) {
+            return getBlankLinesForOption(settings.BLANK_LINES_AFTER_IMPORTS);
+          }
+          else {
+            return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AFTER_LOCAL_IMPORTS);
+          }
         }
       }
 
@@ -730,8 +738,9 @@ public class PyBlock implements ASTBlock {
 
   private Spacing getBlankLinesForOption(final int option) {
     final int blankLines = option + 1;
-    return Spacing
-      .createSpacing(0, 0, blankLines, myContext.getSettings().KEEP_LINE_BREAKS, myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS);
+    return Spacing.createSpacing(0, 0, blankLines,
+                                 myContext.getSettings().KEEP_LINE_BREAKS,
+                                 myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
 
   private boolean needLineBreakInStatement() {

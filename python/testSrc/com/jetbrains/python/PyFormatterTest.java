@@ -65,6 +65,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15701
+  public void testNoBlankLinesAfterLocalImports() {
+    doTest();
+  }
+
   public void testBlankLineBeforeFunction() {
     doTest();
   }
