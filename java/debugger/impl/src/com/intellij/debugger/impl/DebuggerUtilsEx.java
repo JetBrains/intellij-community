@@ -791,8 +791,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
-    int line = position.getLine();
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final int line = position.getLine();
+    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null || line >= document.getLineCount()) {
       return Collections.emptyList();
     }
@@ -812,8 +812,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
-        PsiElement body = expression.getBody();
-        if (!onlyOnTheLine || (body != null && intersects(lineRange, body))) {
+        if (!onlyOnTheLine || getFirstElementOnTheLine(expression, document, line) != null) {
           lambdas.add(expression);
         }
       }
@@ -841,15 +840,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   @Nullable
   public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    TextRange lineRange = new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line));
+    TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
+    if (body == null || !intersects(lineRange, body)) return null;
     if (body instanceof PsiCodeBlock) {
       for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
         if (intersects(lineRange, statement)) {
           return statement;
         }
       }
+      return null;
     }
     return body;
   }
