@@ -103,7 +103,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     MarkupModelEx markupModel;
     if (highlighter == null) {
       markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-      TextRange range = myType.getHighlightRange(getProperties(), document, getProject());
+      TextRange range = myType.getHighlightRange(this);
       if (range != null && !range.isEmpty()) {
         range = range.intersection(DocumentUtil.getLineTextRange(document, getLine()));
         if (range != null && !range.isEmpty()) {

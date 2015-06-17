@@ -117,12 +117,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     res.add(new JavaBreakpointVariant(position)); //all
 
     if (startMethod instanceof PsiMethod) {
-      res.add(new ExactJavaBreakpointVariant(position, startMethod)); // base method
+      res.add(new ExactJavaBreakpointVariant(position, startMethod, -1)); // base method
     }
 
+    int ordinal = 0;
     for (PsiLambdaExpression lambda : lambdas) { //lambdas
       PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambda, document, position.getLine());
-      res.add(new ExactJavaBreakpointVariant(XSourcePositionImpl.createByElement(firstElem), lambda));
+      res.add(new ExactJavaBreakpointVariant(XSourcePositionImpl.createByElement(firstElem), lambda, ordinal++));
     }
 
     return res;
@@ -159,10 +160,12 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   private class ExactJavaBreakpointVariant extends JavaBreakpointVariant {
     private final PsiElement myElement;
+    private final Integer myLambdaOrdinal;
 
-    public ExactJavaBreakpointVariant(XSourcePosition position, PsiElement element) {
+    public ExactJavaBreakpointVariant(XSourcePosition position, PsiElement element, Integer lambdaOrdinal) {
       super(position);
       myElement = element;
+      myLambdaOrdinal = lambdaOrdinal;
     }
 
     @Override
@@ -183,22 +186,24 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     @Override
     public JavaLineBreakpointProperties createProperties() {
       JavaLineBreakpointProperties properties = super.createProperties();
-      properties.setOffset(mySourcePosition.getOffset());
+      properties.setLambdaOrdinal(myLambdaOrdinal);
       return properties;
     }
   }
 
   @Nullable
   @Override
-  public TextRange getHighlightRange(JavaLineBreakpointProperties properties, Document document, Project project) {
-    Integer offset = properties.getOffset();
-    if (offset != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (file != null) {
-        PsiElement elem = file.findElementAt(offset);
-        NavigatablePsiElement method = PsiTreeUtil.getParentOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
-        if (method != null) {
-          return method.getTextRange();
+  public TextRange getHighlightRange(XLineBreakpoint<JavaLineBreakpointProperties> breakpoint) {
+    JavaLineBreakpointProperties properties = breakpoint.getProperties();
+    if (properties != null) {
+      Integer ordinal = properties.getLambdaOrdinal();
+      if (ordinal != null) {
+        Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
+        if (javaBreakpoint instanceof LineBreakpoint) {
+          PsiElement method = ((LineBreakpoint)javaBreakpoint).getContainingMethod();
+          if (method != null) {
+            return method.getTextRange();
+          }
         }
       }
     }

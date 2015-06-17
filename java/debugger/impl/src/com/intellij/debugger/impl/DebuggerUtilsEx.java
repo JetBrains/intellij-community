@@ -788,7 +788,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  public static List<PsiLambdaExpression> collectLambdas(SourcePosition position, final boolean onlyOnTheLine) {
+  public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
     int line = position.getLine();
@@ -847,6 +847,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return body;
+  }
+
+  public static boolean inTheMethod(@NotNull SourcePosition pos, @NotNull PsiElement method) {
+    PsiElement elem = pos.getElementAt();
+    if (elem == null) return false;
+    NavigatablePsiElement elemMethod = PsiTreeUtil.getParentOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
+    return Comparing.equal(elemMethod, method);
   }
 
   public static boolean inTheSameMethod(@NotNull SourcePosition pos1, @NotNull SourcePosition pos2) {
