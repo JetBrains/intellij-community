@@ -22,8 +22,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -62,8 +64,14 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       @Nullable
       @Override
       public Result<Boolean> compute() {
-        return Result.create(FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)), 
-                             PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        AccessToken accessToken = ReadAction.start();
+        try {
+          return Result.create(FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
+                               PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+        finally {
+          accessToken.finish();
+        }
       }
     });
   }
