@@ -82,6 +82,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      });
   }
 
+  public void testConflictWithField() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer introducer) {
+        type("height");
+      }
+    });
+  }
+
   public void testCast() throws Exception {
     doTestTypeChange("Integer");
   }
