@@ -98,6 +98,16 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  public void testTernary() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {\n" +
+                                          "    void bar() {\n" +
+                                          "        @org.intellij.lang.annotations.Language(\"encoding-reference\")\n" +
+                                          "        String cset = true ? \"<error descr=\"Cannot resolve symbol 'cp1252345'\">cp1252345</error>\" : \"utf-8\";//\n" +
+                                          "    }\n" +
+                                          "}");
+    myFixture.testHighlighting();
+  }
+
   private PsiReference[] getInjectedReferences() {
     PsiElement element = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     element = PsiTreeUtil.getParentOfType(element, PsiLanguageInjectionHost.class);

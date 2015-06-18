@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
@@ -25,9 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class CompoundScheme<T extends SchemeElement> implements ExternalizableScheme {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.CompoundScheme");
-
   protected String myName;
   private final List<T> myElements = new ArrayList<T>();
   private final ExternalInfo myExternalInfo = new ExternalInfo();
@@ -85,25 +81,25 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
     return myExternalInfo;
   }
 
-  public CompoundScheme copy() {
-    CompoundScheme result = createNewInstance(getName());
-    for (T element : myElements) {
-      //noinspection unchecked
-      result.addElement(element.copy());
-    }
-    result.getExternalInfo().copy(getExternalInfo());
-    return result;
-  }
-
   private CompoundScheme createNewInstance(final String name) {
     try {
       Constructor<? extends CompoundScheme> constructor = getClass().getConstructor(String.class);
       return constructor.newInstance(name);
     }
     catch (Exception e) {
-      LOG.error(e);
-      return null;
+      throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  public CompoundScheme<T> copy() {
+    //noinspection unchecked
+    CompoundScheme<T> result = createNewInstance(getName());
+    for (T element : myElements) {
+      //noinspection unchecked
+      result.addElement((T)element.copy());
+    }
+    return result;
   }
 
   @Override
@@ -111,7 +107,7 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
     return getName();
   }
 
-  public boolean contains(final T element) {
+  public boolean contains(@NotNull T element) {
     for (T t : myElements) {
       if (t.getKey() != null && t.getKey().equals(element.getKey())) {
         return true;

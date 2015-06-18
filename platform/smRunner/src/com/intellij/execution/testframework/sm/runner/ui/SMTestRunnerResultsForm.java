@@ -303,7 +303,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     fireOnTestingFinished();
 
     if (testsRoot.isEmptySuite() &&
-        !testsRoot.isInterrupted() &&
+        testsRoot.isTestsReporterAttached() &&
         myConsoleProperties instanceof SMTRunnerConsoleProperties &&
         ((SMTRunnerConsoleProperties)myConsoleProperties).fixEmptySuite()) {
       return;

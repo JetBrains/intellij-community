@@ -179,6 +179,14 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
         commandLineOptions.add("-q");
       }
 
+      String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+      if (mavenEmbedderCliOptions != null) {
+        commandLineOptions.addAll(StringUtil.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
+      }
+      if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
+        myAlwaysUpdateSnapshots = true;
+      }
+
       //noinspection unchecked
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
@@ -332,7 +340,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       myBuildStartTime = new Date();
 
-      myAlwaysUpdateSnapshots = alwaysUpdateSnapshots;
+      myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
 
       setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
     }

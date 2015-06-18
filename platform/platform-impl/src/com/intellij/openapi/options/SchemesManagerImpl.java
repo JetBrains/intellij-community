@@ -28,10 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -46,6 +43,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.text.UniqueNameGenerator;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -725,5 +723,51 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       // do not save locally
       externalInfo.markRemote();
     }
+  }
+
+  @Override
+  public void setSchemes(@NotNull List<T> schemes, @Nullable Condition<T> removeCondition) {
+    Map<T, String> schemeToFilename = new THashMap<T, String>(mySchemes.size());
+    if (removeCondition == null) {
+      for (T scheme : mySchemes) {
+        String filename = scheme instanceof ExternalizableScheme ? ((ExternalizableScheme)scheme).getExternalInfo().getCurrentFileName() : null;
+        if (filename != null) {
+          schemeToFilename.put(scheme, filename);
+        }
+      }
+      clearAllSchemes();
+    }
+    else {
+      for (int i = 0; i < schemes.size(); i++) {
+        T scheme = schemes.get(i);
+        if (removeCondition.value(scheme)) {
+          String filename = scheme instanceof ExternalizableScheme ? ((ExternalizableScheme)scheme).getExternalInfo().getCurrentFileName() : null;
+          if (filename != null) {
+            schemeToFilename.put(scheme, filename);
+          }
+
+          schemeDeleted(scheme);
+          mySchemes.remove(i);
+        }
+      }
+    }
+
+    mySchemes.ensureCapacity(schemes.size());
+    for (T scheme : schemes) {
+      if (scheme instanceof ExternalizableScheme && ((ExternalizableScheme)scheme).getExternalInfo().getCurrentFileName() == null) {
+        ((ExternalizableScheme)scheme).getExternalInfo().setCurrentFileName(schemeToFilename.get(scheme));
+      }
+      addNewScheme(scheme, true);
+    }
+
+    if (myCurrentSchemeName != null) {
+      myCurrentScheme = findSchemeByName(myCurrentSchemeName);
+      if (myCurrentScheme != null) {
+        return;
+      }
+    }
+
+    myCurrentScheme = mySchemes.isEmpty() ? null : mySchemes.get(0);
+    myCurrentSchemeName = myCurrentScheme == null ? null : myCurrentScheme.getName();
   }
 }

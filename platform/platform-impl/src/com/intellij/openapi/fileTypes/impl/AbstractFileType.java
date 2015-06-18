@@ -100,11 +100,11 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   @Override
-  public void copyFrom(UserFileType newType) {
+  public void copyFrom(@NotNull UserFileType newType) {
     super.copyFrom(newType);
+
     if (newType instanceof AbstractFileType) {
       mySyntaxTable = ((CustomSyntaxTableFileType)newType).getSyntaxTable();
-      myExternalInfo.copy(((AbstractFileType)newType).myExternalInfo);
     }
   }
 

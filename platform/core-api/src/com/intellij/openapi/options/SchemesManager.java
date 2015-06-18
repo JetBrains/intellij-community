@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ThrowableConvertor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +29,11 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
   @NotNull
   public abstract Collection<E> loadSchemes();
 
-  public abstract void addNewScheme(@NotNull T scheme, final boolean replaceExisting);
+  public abstract void addNewScheme(@NotNull T scheme, boolean replaceExisting);
 
+  /**
+   * Consider to use {@link #setSchemes}
+   */
   public abstract void clearAllSchemes();
 
   @NotNull
@@ -53,5 +57,12 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
   public abstract File getRootDirectory();
 
   public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
+  }
+
+  public void setSchemes(@NotNull List<T> schemes) {
+    setSchemes(schemes, null);
+  }
+
+  public void setSchemes(@NotNull List<T> schemes, @Nullable Condition<T> removeCondition) {
   }
 }

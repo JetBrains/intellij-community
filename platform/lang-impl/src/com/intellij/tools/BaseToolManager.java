@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,11 +106,8 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
     return mySchemesManager.getAllSchemes();
   }
 
-  public void setTools(ToolsGroup[] tools) {
-    mySchemesManager.clearAllSchemes();
-    for (ToolsGroup newGroup : tools) {
-      mySchemesManager.addNewScheme(newGroup, true);
-    }
+  public void setTools(@NotNull List<ToolsGroup<T>> tools) {
+    mySchemesManager.setSchemes(tools);
     registerActions();
   }
 

@@ -109,7 +109,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       return null;
     }
     getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
-    getJavaParameters().getClassPath().addFirst(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
 
     final RunnerSettings runnerSettings = getRunnerSettings();
 

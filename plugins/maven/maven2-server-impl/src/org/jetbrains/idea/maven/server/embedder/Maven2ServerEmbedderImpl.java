@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -83,6 +84,12 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public static Maven2ServerEmbedderImpl create(MavenServerSettings facadeSettings) throws RemoteException {
     MavenEmbedderSettings settings = new MavenEmbedderSettings();
 
+    List<String> commandLineOptions = new ArrayList<String>();
+    String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+    if (mavenEmbedderCliOptions != null) {
+      commandLineOptions.addAll(StringUtil.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
+    }
+
     settings.setConfigurator(new PlexusComponentConfigurator() {
       public void configureComponents(@NotNull PlexusContainer c) {
         setupContainer(c);
@@ -101,7 +108,12 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     settings.setGlobalSettingsFile(facadeSettings.getGlobalSettingsFile());
     settings.setLocalRepository(facadeSettings.getLocalRepository());
 
-    settings.setSnapshotUpdatePolicy(convertUpdatePolicy(facadeSettings.getSnapshotUpdatePolicy()));
+    if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
+      settings.setSnapshotUpdatePolicy(MavenEmbedderSettings.UpdatePolicy.ALWAYS_UPDATE);
+    }
+    else {
+      settings.setSnapshotUpdatePolicy(convertUpdatePolicy(facadeSettings.getSnapshotUpdatePolicy()));
+    }
     settings.setPluginUpdatePolicy(convertUpdatePolicy(facadeSettings.getPluginUpdatePolicy()));
     settings.setProperties(MavenServerUtil.collectSystemProperties());
 

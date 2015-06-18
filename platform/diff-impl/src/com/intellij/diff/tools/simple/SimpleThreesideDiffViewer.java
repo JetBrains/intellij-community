@@ -17,9 +17,9 @@ package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.MergeUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -28,7 +28,12 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
-import com.intellij.diff.tools.util.threeside.ThreesideTextDiffViewer;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
+import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
@@ -36,6 +41,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -71,6 +77,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
+  private int myChangesCount = -1;
+  private int myConflictsCount = -1;
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -109,8 +117,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     group.add(new MyIgnorePolicySettingAction());
     //group.add(new MyHighlightPolicySettingAction()); // TODO
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(new ToggleAutoScrollAction());
-    group.add(new EditorReadOnlyLockAction());
+    group.add(new MyToggleAutoScrollAction());
+    group.add(new MyEditorReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     group.add(Separator.getInstance());
@@ -131,7 +139,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     //group.add(Separator.getInstance());
     //group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new ToggleAutoScrollAction());
+    group.add(new MyToggleAutoScrollAction());
     group.add(new MyToggleExpandByDefaultAction());
 
     return group;
@@ -155,6 +163,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   //
   // Diff
   //
+
+  @NotNull
+  public FoldingModelSupport.Settings getFoldingModelSettings() {
+    return TextDiffViewerUtil.getFoldingModelSettings(myContext);
+  }
 
   @Override
   protected void onSlowRediff() {
@@ -189,15 +202,15 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
       FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
       FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
-      List<MergeLineFragment> mergeFragments = MergeUtil.buildFair(fragments1, fragments2, indicator);
+      List<MergeLineFragment> mergeFragments = ComparisonMergeUtil.buildFair(fragments1, fragments2, indicator);
 
       return apply(mergeFragments, comparisonPolicy);
     }
-    catch (DiffTooBigException ignore) {
+    catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.DIFF_TOO_BIG);
     }
-    catch (ProcessCanceledException ignore) {
-      return applyNotification(DiffNotifications.OPERATION_CANCELED);
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
@@ -214,8 +227,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
+        myChangesCount = 0;
+        myConflictsCount = 0;
         for (MergeLineFragment fragment : fragments) {
-          myDiffChanges.add(new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy));
+          SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy);
+          myDiffChanges.add(change);
+          if (change.getDiffType() != TextDiffType.CONFLICT) myChangesCount++;
+          if (change.getDiffType() == TextDiffType.CONFLICT) myConflictsCount++;
         }
 
         myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
@@ -256,6 +274,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
     myInvalidDiffChanges.clear();
 
+    myChangesCount = -1;
+    myConflictsCount = -1;
+
     myFoldingModel.destroy();
 
     myContentPanel.repaintDividers();
@@ -281,17 +302,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       return;
     }
 
-    int offset1 = e.getOffset();
-    int offset2 = e.getOffset() + e.getOldLength();
-
-    if (StringUtil.endsWithChar(e.getOldFragment(), '\n') &&
-        StringUtil.endsWithChar(e.getNewFragment(), '\n')) {
-      offset2--;
-    }
-
-    int line1 = e.getDocument().getLineNumber(offset1);
-    int line2 = e.getDocument().getLineNumber(offset2) + 1;
-    int shift = StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+    int line1 = e.getDocument().getLineNumber(e.getOffset());
+    int line2 = e.getDocument().getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+    int shift = DiffUtil.countLinesShift(e);
 
     List<SimpleThreesideDiffChange> invalid = new ArrayList<SimpleThreesideDiffChange>();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
@@ -339,14 +352,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   // Getters
   //
 
-  private int getCurrentStartLine(@NotNull SimpleThreesideDiffChange change) {
-    return change.getStartLine(getCurrentSide());
-  }
-
-  private int getCurrentEndLine(@NotNull SimpleThreesideDiffChange change) {
-    return change.getEndLine(getCurrentSide());
-  }
-
   @NotNull
   protected List<SimpleThreesideDiffChange> getDiffChanges() {
     return myDiffChanges;
@@ -392,85 +397,51 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   // Actions
   //
 
-  private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
+  private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<SimpleThreesideDiffChange> {
+    @NotNull
     @Override
-    public boolean canGoNext() {
-      if (myDiffChanges.isEmpty()) return false;
+    protected List<SimpleThreesideDiffChange> getChanges() {
+      return myDiffChanges;
+    }
 
-      EditorEx editor = getCurrentEditor();
-      int line = editor.getCaretModel().getLogicalPosition().line;
-      if (line == editor.getDocument().getLineCount() - 1) return false;
-
-      SimpleThreesideDiffChange lastChange = myDiffChanges.get(myDiffChanges.size() - 1);
-      if (getCurrentStartLine(lastChange) <= line) return false;
-
-      return true;
+    @NotNull
+    @Override
+    protected EditorEx getEditor() {
+      return getCurrentEditor();
     }
 
     @Override
-    public void goNext() {
-      EditorEx editor = getCurrentEditor();
-
-      int line = editor.getCaretModel().getLogicalPosition().line;
-
-      SimpleThreesideDiffChange next = null;
-      for (int i = 0; i < myDiffChanges.size(); i++) {
-        SimpleThreesideDiffChange change = myDiffChanges.get(i);
-        if (getCurrentStartLine(change) <= line) continue;
-
-        next = change;
-        break;
-      }
-
-      assert next != null;
-      doScrollToChange(next, true);
+    protected int getStartLine(@NotNull SimpleThreesideDiffChange change) {
+      return change.getStartLine(getCurrentSide());
     }
 
     @Override
-    public boolean canGoPrev() {
-      if (myDiffChanges.isEmpty()) return false;
-
-      EditorEx editor = getCurrentEditor();
-      int line = editor.getCaretModel().getLogicalPosition().line;
-      if (line == 0) return false;
-
-      SimpleThreesideDiffChange firstChange = myDiffChanges.get(0);
-      if (getCurrentEndLine(firstChange) > line) return false;
-      if (getCurrentStartLine(firstChange) >= line) return false;
-
-      return true;
+    protected int getEndLine(@NotNull SimpleThreesideDiffChange change) {
+      return change.getEndLine(getCurrentSide());
     }
 
     @Override
-    public void goPrev() {
-      EditorEx editor = getCurrentEditor();
-
-      int line = editor.getCaretModel().getLogicalPosition().line;
-
-      SimpleThreesideDiffChange prev = null;
-      for (int i = 0; i < myDiffChanges.size(); i++) {
-        SimpleThreesideDiffChange change = myDiffChanges.get(i);
-
-        SimpleThreesideDiffChange next = i < myDiffChanges.size() - 1 ? myDiffChanges.get(i + 1) : null;
-        if (next == null || getCurrentEndLine(next) > line || getCurrentStartLine(next) >= line) {
-          prev = change;
-          break;
-        }
-      }
-
-      assert prev != null;
-      doScrollToChange(prev, true);
+    protected void scrollToChange(@NotNull SimpleThreesideDiffChange change) {
+      doScrollToChange(change, true);
     }
   }
 
-  private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
+  private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
+    public MyToggleExpandByDefaultAction() {
+      super(getTextSettings());
+    }
+
     @Override
     protected void expandAll(boolean expand) {
       myFoldingModel.expandAll(expand);
     }
   }
 
-  private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
+  private class MyIgnorePolicySettingAction extends TextDiffViewerUtil.IgnorePolicySettingAction {
+    public MyIgnorePolicySettingAction() {
+      super(getTextSettings());
+    }
+
     @NotNull
     @Override
     protected IgnorePolicy getCurrentSetting() {
@@ -483,6 +454,17 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       ArrayList<IgnorePolicy> settings = ContainerUtil.newArrayList(IgnorePolicy.values());
       settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
       return settings;
+    }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
+  }
+
+  protected class MyEditorReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
+    public MyEditorReadOnlyLockAction() {
+      super(getContext(), getEditableEditors());
     }
   }
 
@@ -599,9 +581,22 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   private class MyStatusPanel extends StatusPanel {
+    @Nullable
     @Override
-    protected int getChangesCount() {
-      return myDiffChanges.size() + myInvalidDiffChanges.size();
+    protected String getMessage() {
+      if (myChangesCount < 0 || myConflictsCount < 0) return null;
+      if (myChangesCount == 0 && myConflictsCount == 0) {
+        return DiffBundle.message("merge.dialog.all.conflicts.resolved.message.text");
+      }
+      return makeCounterWord(myChangesCount, "change") + ". " + makeCounterWord(myConflictsCount, "conflict");
+    }
+
+    @NotNull
+    private String makeCounterWord(int number, @NotNull String word) {
+      if (number == 0) {
+        return "No " + StringUtil.pluralize(word);
+      }
+      return number + " " + StringUtil.pluralize(word, number);
     }
   }
 

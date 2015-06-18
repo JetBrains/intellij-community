@@ -318,6 +318,7 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
 binding.setVariable("commonJvmArgsForTests", {
   def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
   if (debugPort != null) jdwp += ",address=$debugPort"
+
   return [
     "-ea",
     "-Dio.netty.leakDetectionLevel=PARANOID",

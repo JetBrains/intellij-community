@@ -303,6 +303,14 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       }
 
       @Override
+      public void setEnabled(boolean value) {
+        super.setEnabled(value);
+        for (Action option : myOptions) {
+          option.setEnabled(value);
+        }
+      }
+
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
       }

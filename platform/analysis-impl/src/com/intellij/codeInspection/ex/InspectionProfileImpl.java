@@ -664,9 +664,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   @NotNull
   public ModifiableModel getModifiableModel() {
-    InspectionProfileImpl modifiableModel = new InspectionProfileImpl(this);
-    modifiableModel.myExternalInfo.copy(myExternalInfo);
-    return modifiableModel;
+    return new InspectionProfileImpl(this);
   }
 
   @Override
@@ -801,8 +799,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myDisplayLevelMap = model.myDisplayLevelMap;
     myTools = model.myTools;
     myProfileManager = model.getProfileManager();
-
-    myExternalInfo.copy(model.getExternalInfo());
 
     InspectionProfileManager.getInstance().fireProfileChanged(model);
   }

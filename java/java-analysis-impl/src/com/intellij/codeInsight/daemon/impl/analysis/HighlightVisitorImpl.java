@@ -553,7 +553,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             // this check is for fake expression from JspMethodCallImpl
             referenceExpression.getParent() == expression) {
           try {
-            myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression, myResolveHelper));
+            if (PsiTreeUtil.findChildrenOfType(expression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
+              myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression, myResolveHelper, list));
+            }
           }
           catch (IndexNotReadyException ignored) {
           }
@@ -1210,8 +1212,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiExpressionList list = methodCallExpression.getArgumentList();
       if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, myResolveHelper, list, expression)) {
         try {
-          myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(expression, results, list, resolved, result,
-                                                                              methodCallExpression, myResolveHelper));
+          myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(expression, results, list, resolved, result, methodCallExpression, myResolveHelper));
+          
+          if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
+            myHolder.add(HighlightMethodUtil
+              .checkAmbiguousMethodCallArguments(expression, results, list, resolved, result, methodCallExpression, myResolveHelper, expression.getReferenceNameElement()));
+          }
         }
         catch (IndexNotReadyException ignored) {
         }

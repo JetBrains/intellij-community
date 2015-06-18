@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,17 +32,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class QuickListPanel {
+class QuickListPanel {
   private JPanel myPanel;
   private final JBList myActionsList;
-  private JTextField myDisplayName;
+  JTextField myDisplayName;
   private JTextField myDescription;
   private JPanel myListPanel;
-  private final QuickList[] myAllQuickLists;
+  QuickList item;
 
-  public QuickListPanel(@NotNull QuickList origin, @NotNull QuickList[] allQuickLists) {
-    myAllQuickLists = allQuickLists;
-
+  public QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
     myActionsList = new JBList(new DefaultListModel());
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
@@ -55,35 +54,84 @@ public class QuickListPanel {
       }
     }.installOn(myActionsList);
 
-    myListPanel.add(
-      ToolbarDecorator.createDecorator(myActionsList)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            includeSelectedAction();
-          }
-        }).addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
-        @Override
-        public void actionPerformed(@Nullable AnActionEvent e) {
-          addSeparator();
-        }
-      }).setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down").createPanel(), BorderLayout.CENTER);
+    myListPanel.add(ToolbarDecorator.createDecorator(myActionsList)
+                      .setAddAction(new AnActionButtonRunnable() {
+                        @Override
+                        public void run(AnActionButton button) {
+                          java.util.List<QuickList> items = model.getItems();
+                          ChooseActionsDialog dialog = new ChooseActionsDialog(myActionsList, KeymapManager.getInstance().getActiveKeymap(), items.toArray(new QuickList[items.size()]));
+                          if (dialog.showAndGet()) {
+                            String[] ids = dialog.getTreeSelectedActionIds();
+                            for (String id : ids) {
+                              includeActionId(id);
+                            }
+                            DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
+                            int size = listModel.getSize();
+                            ListSelectionModel selectionModel = myActionsList.getSelectionModel();
+                            if (size > 0) {
+                              selectionModel.removeIndexInterval(0, size - 1);
+                            }
+                            for (String id1 : ids) {
+                              int idx = listModel.lastIndexOf(id1);
+                              if (idx >= 0) {
+                                selectionModel.addSelectionInterval(idx, idx);
+                              }
+                            }
+                          }
+                        }
+                      })
+                      .addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
+                        @Override
+                        public void actionPerformed(@Nullable AnActionEvent e) {
+                          //noinspection unchecked
+                          ((DefaultListModel)myActionsList.getModel()).addElement(QuickList.SEPARATOR_ID);
+                        }
+                      })
+                      .setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down")
+                      .createPanel(), BorderLayout.CENTER);
+  }
 
-    myDisplayName.setText(origin.getName());
-    myDescription.setText(origin.getDescription());
+  public void apply() {
+    if (item == null) {
+      return;
+    }
 
-    String[] ids = origin.getActionIds();
-    for (String id : ids) {
+    item.setName(myDisplayName.getText().trim());
+    item.setDescription(myDescription.getText().trim());
+
+    ListModel model = getActionsList().getModel();
+    int size = model.getSize();
+    String[] ids;
+    if (size == 0) {
+      ids = ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+    else {
+      ids = new String[size];
+      for (int i = 0; i < size; i++) {
+        ids[i] = (String)model.getElementAt(i);
+      }
+    }
+
+    item.setActionIds(ids);
+  }
+
+  public void setItem(@Nullable QuickList item) {
+    apply();
+
+    this.item = item;
+    if (item == null) {
+      return;
+    }
+
+    myDisplayName.setText(this.item.getName());
+    myDescription.setText(item.getDescription());
+
+    ((DefaultListModel)myActionsList.getModel()).clear();
+    for (String id : item.getActionIds()) {
       includeActionId(id);
     }
-  }
 
-  public void addNameListener(DocumentAdapter adapter) {
-    myDisplayName.getDocument().addDocumentListener(adapter);
-  }
-
-  public void addDescriptionListener(final DocumentAdapter adapter) {
-    myDescription.getDocument().addDocumentListener(adapter);
+    myDisplayName.requestFocus();
   }
 
   private void excludeSelectionAction() {
@@ -91,32 +139,6 @@ public class QuickListPanel {
     for (int i = ids.length - 1; i >= 0; i--) {
       ((DefaultListModel)myActionsList.getModel()).remove(ids[i]);
     }
-  }
-
-  private void includeSelectedAction() {
-    final ChooseActionsDialog dlg = new ChooseActionsDialog(myActionsList, KeymapManager.getInstance().getActiveKeymap(), myAllQuickLists);
-    if (dlg.showAndGet()) {
-      String[] ids = dlg.getTreeSelectedActionIds();
-      for (String id : ids) {
-        includeActionId(id);
-      }
-      DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
-      int size = listModel.getSize();
-      ListSelectionModel selectionModel = myActionsList.getSelectionModel();
-      if (size > 0) {
-        selectionModel.removeIndexInterval(0, size - 1);
-      }
-      for (String id1 : ids) {
-        int idx = listModel.lastIndexOf(id1);
-        if (idx >= 0) {
-          selectionModel.addSelectionInterval(idx, idx);
-        }
-      }
-    }
-  }
-
-  private void addSeparator() {
-    ((DefaultListModel)myActionsList.getModel()).addElement(QuickList.SEPARATOR_ID);
   }
 
   public JList getActionsList() {
@@ -131,12 +153,12 @@ public class QuickListPanel {
     return myDisplayName.getText();
   }
 
-  private void includeActionId(String id) {
+  private void includeActionId(@NotNull String id) {
     DefaultListModel model = (DefaultListModel)myActionsList.getModel();
-    if (!QuickList.SEPARATOR_ID.equals(id) && model.contains(id)) {
-      return;
+    if (QuickList.SEPARATOR_ID.equals(id) || !model.contains(id)) {
+      //noinspection unchecked
+      model.addElement(id);
     }
-    model.addElement(id);
   }
 
   public JPanel getPanel() {
@@ -155,7 +177,6 @@ public class QuickListPanel {
       Icon icon = null;
       String actionId = (String)value;
       if (QuickList.SEPARATOR_ID.equals(actionId)) {
-        // TODO[vova,anton]: beautify
         setText("-------------");
       }
       else {

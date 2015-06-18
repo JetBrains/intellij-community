@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,11 +137,10 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
   public KeymapImpl deriveKeymap() {
     if (canModify()) {
-      return copy(false);
+      return copy();
     }
     else {
       KeymapImpl newKeymap = new KeymapImpl();
-
       newKeymap.myParent = this;
       newKeymap.myName = null;
       newKeymap.myCanModify = canModify();
@@ -149,7 +148,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
   }
 
-  public KeymapImpl copy(boolean copyExternalInfo) {
+  @NotNull
+  public KeymapImpl copy() {
     KeymapImpl newKeymap = new KeymapImpl();
     newKeymap.myParent = myParent;
     newKeymap.myName = myName;
@@ -158,15 +158,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     newKeymap.cleanShortcutsCache();
 
     for (Map.Entry<String, LinkedHashSet<Shortcut>> entry : myActionId2ListOfShortcuts.entrySet()) {
-      LinkedHashSet<Shortcut> list = entry.getValue();
-      String key = entry.getKey();
-      newKeymap.myActionId2ListOfShortcuts.put(key, new LinkedHashSet<Shortcut>(list));
+      newKeymap.myActionId2ListOfShortcuts.put(entry.getKey(), new LinkedHashSet<Shortcut>(entry.getValue()));
     }
-
-    if (copyExternalInfo) {
-      newKeymap.myExternalInfo.copy(myExternalInfo);
-    }
-
     return newKeymap;
   }
 

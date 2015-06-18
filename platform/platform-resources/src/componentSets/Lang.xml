@@ -121,6 +121,9 @@
       <loadForDefaultProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.SmartPointerEditorTracker</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>

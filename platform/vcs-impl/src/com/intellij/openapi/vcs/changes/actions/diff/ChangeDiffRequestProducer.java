@@ -284,16 +284,20 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         String title = DiffRequestFactory.getInstance().getTitle(file);
         List<String> titles = ContainerUtil.list(beforeRevisionTitle, "Base Version", afterRevisionTitle);
 
-        // Yep, we hope that it's a text file. And that charset wasn't changed.
+        DiffContentFactory contentFactory = DiffContentFactory.getInstance();
         List<DiffContent> contents = ContainerUtil.list(
-          createTextContent(mergeData.CURRENT, file),
-          createTextContent(mergeData.ORIGINAL, file),
-          createTextContent(mergeData.LAST, file)
+          contentFactory.createFromBytes(project, file, mergeData.CURRENT),
+          contentFactory.createFromBytes(project, file, mergeData.ORIGINAL),
+          contentFactory.createFromBytes(project, file, mergeData.LAST)
         );
 
         return new SimpleDiffRequest(title, contents, titles);
       }
       catch (VcsException e) {
+        LOG.info(e);
+        throw new DiffRequestProducerException(e);
+      }
+      catch (IOException e) {
         LOG.info(e);
         throw new DiffRequestProducerException(e);
       }
