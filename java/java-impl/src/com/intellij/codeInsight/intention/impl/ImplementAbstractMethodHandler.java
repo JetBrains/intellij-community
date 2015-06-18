@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
@@ -181,7 +182,7 @@ public class ImplementAbstractMethodHandler {
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, true)) {
-      if (!inheritor.isInterface()) {
+      if (!inheritor.isInterface() && GeneratedSourcesFilter.isInProjectAndNotGenerated(inheritor)) {
         final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
         PsiMethod method = classSubstitutor != null ? MethodSignatureUtil.findMethodBySignature(inheritor, myMethod.getSignature(classSubstitutor), true)
                                                     : inheritor.findMethodBySignature(myMethod, true);;

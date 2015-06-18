@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -33,7 +34,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!file.getManager().isInProject(file)) return false;
+    if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(file)) return false;
 
     useElementToTheLeft = false;
     final PsiElement elementToTheRight = getElementToTheRight(editor, file);

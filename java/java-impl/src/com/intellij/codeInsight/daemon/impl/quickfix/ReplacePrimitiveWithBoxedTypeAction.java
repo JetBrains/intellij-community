@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@ public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntenti
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
+    if (!super.isAvailable(project, file, startElement, endElement)) {
+      return false;
+    }
     if (startElement instanceof PsiTypeElement) {
       PsiType type = ((PsiTypeElement)startElement).getType();
       if (type instanceof PsiWildcardType) {

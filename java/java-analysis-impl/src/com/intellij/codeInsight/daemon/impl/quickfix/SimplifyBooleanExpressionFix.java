@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -70,9 +71,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   public boolean isAvailable() {
     PsiExpression expression = getSubExpression();
     return super.isAvailable()
-           && expression != null
-           && expression.isValid()
-           && expression.getManager().isInProject(expression)
+           && GeneratedSourcesFilter.isInProjectAndNotGenerated(expression)
            && !PsiUtil.isAccessedForWriting(expression);
   }
 

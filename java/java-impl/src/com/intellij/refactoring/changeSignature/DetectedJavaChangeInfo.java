@@ -19,6 +19,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -83,7 +84,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     final DetectedJavaChangeInfo fromMethod = new DetectedJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, null, method.getName(), method.getName());
     final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
     if (deepestSuperMethod != null) {
-      if (!deepestSuperMethod.getManager().isInProject(deepestSuperMethod)) return null;
+      if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(deepestSuperMethod)) return null;
     }
     fromMethod.setSuperMethod(deepestSuperMethod);
     return fromMethod;

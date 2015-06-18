@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,15 +51,6 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @NotNull
   public String getFamilyName() {
     return getText();
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    PsiElement myPsiElement = startElement;
-    return myPsiElement.isValid() && myPsiElement.getManager().isInProject(myPsiElement);
   }
 
   @Override

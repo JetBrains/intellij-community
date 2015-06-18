@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -80,7 +81,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
-    return context.isValid() && context.getManager().isInProject(context) && getContainer(context) != null;
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(context) && getContainer(context) != null;
   }
 
   @Override

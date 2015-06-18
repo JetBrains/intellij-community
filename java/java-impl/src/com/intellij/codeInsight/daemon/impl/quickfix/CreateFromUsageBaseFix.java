@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -366,10 +367,10 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
     if (psiClass instanceof PsiTypeParameter) {
       PsiClass[] supers = psiClass.getSupers();
-      List<PsiClass> filtered = new ArrayList<PsiClass>();
+      ArrayList<PsiClass> filtered = new ArrayList<PsiClass>();
       for (PsiClass aSuper : supers) {
-        if (!aSuper.getManager().isInProject(aSuper)) continue;
-        if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
+        // also consider type parameters, e.g. <MethodParam extends ClassParam>
+        collectSupers(aSuper, filtered, new HashSet<PsiClass>());
       }
       return filtered;
     }
@@ -384,14 +385,14 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
       if (!allowOuterClasses || !isAllowOuterTargetClass()) {
         final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
-        collectSupers(psiClass, classes);
+        collectSupers(psiClass, classes, new HashSet<PsiClass>());
         return classes;
       }
 
-      List<PsiClass> result = new ArrayList<PsiClass>();
+      ArrayList<PsiClass> result = new ArrayList<PsiClass>();
 
       while (psiClass != null) {
-        result.add(psiClass);
+        collectSupers(psiClass, result, new HashSet<PsiClass>());
         if (psiClass.hasModifierProperty(PsiModifier.STATIC)) break;
         psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
       }
@@ -399,14 +400,21 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  private void collectSupers(PsiClass psiClass, ArrayList<PsiClass> classes) {
-    classes.add(psiClass);
+  private void collectSupers(PsiClass psiClass, ArrayList<PsiClass> classes, Set<PsiClass> visited) {
+    if (visited.add(psiClass)) { // guard against infinite recursion, e.g. <T extends K, K extends T>
+      if (!(psiClass instanceof PsiTypeParameter)) {
+        if (GeneratedSourcesFilter.isInProjectAndNotGenerated(psiClass)) {
+          classes.add(psiClass);
+          // continue processing also if not added to cover inheritance of generated and handwritten code
+        }
+      }
 
-    final PsiClass[] supers = psiClass.getSupers();
-    for (PsiClass aSuper : supers) {
-      if (classes.contains(aSuper)) continue;
-      if (canBeTargetClass(aSuper)) {
-        collectSupers(aSuper, classes);
+
+      final PsiClass[] supers = psiClass.getSupers();
+      for (PsiClass aSuper : supers) {
+        if (canBeTargetClass(aSuper)) {
+          collectSupers(aSuper, classes, visited);
+        }
       }
     }
   }

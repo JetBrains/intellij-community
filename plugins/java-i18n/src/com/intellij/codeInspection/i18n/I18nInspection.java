@@ -34,6 +34,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -517,7 +518,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         if (PsiUtil.isLanguageLevel5OrHigher(expression)) {
           for (PsiModifierListOwner element : nonNlsTargets) {
             if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true, false)) {
-              if (!element.getManager().isInProject(element) || facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
+              if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(element) || facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
                 fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
               }
             }

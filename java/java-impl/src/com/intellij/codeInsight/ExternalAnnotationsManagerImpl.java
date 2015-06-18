@@ -452,7 +452,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
-    if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
+    if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = element.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -97,8 +98,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiClass myClass = (PsiClass)startElement;
 
     return myMethodPrototype.isValid() &&
-           myClass.isValid() &&
-           myClass.getManager().isInProject(myClass) &&
+           GeneratedSourcesFilter.isInProjectAndNotGenerated(myClass) &&
            myText != null &&
            MethodSignatureUtil.findMethodBySignature(myClass, myMethodPrototype, false) == null
         ;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -118,7 +119,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
     @Override
     public boolean execute(@NotNull PsiElement element) {
-      if (element instanceof PsiClass) {
+      if (element instanceof PsiClass && GeneratedSourcesFilter.isInProjectAndNotGenerated(element)) {
         PsiClass aClass = (PsiClass) element;
         if (aClass.isInterface()) return true;
         final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);

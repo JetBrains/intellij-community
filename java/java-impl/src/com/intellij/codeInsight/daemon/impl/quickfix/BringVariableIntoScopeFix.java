@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
@@ -67,7 +68,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     if (referenceName == null) return false;
 
     PsiManager manager = file.getManager();
-    if (!myUnresolvedReference.isValid() || !manager.isInProject(myUnresolvedReference)) return false;
+    if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(myUnresolvedReference)) return false;
 
     PsiElement container = PsiTreeUtil.getParentOfType(myUnresolvedReference, PsiCodeBlock.class, PsiClass.class);
     if (!(container instanceof PsiCodeBlock)) return false;

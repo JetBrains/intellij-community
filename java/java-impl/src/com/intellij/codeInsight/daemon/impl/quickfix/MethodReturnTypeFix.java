@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -90,8 +91,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     PsiType myReturnType = myReturnTypePointer.getType();
-    return myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(myMethod)
         && myReturnType != null
         && myReturnType.isValid()
         && !TypeConversionUtil.isNullType(myReturnType)

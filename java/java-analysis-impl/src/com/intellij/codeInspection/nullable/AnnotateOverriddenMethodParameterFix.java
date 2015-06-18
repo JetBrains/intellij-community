@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiParameter;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -75,7 +73,8 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
       PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
       if (index >= psiParameters.length) continue;
       PsiParameter psiParameter = psiParameters[index];
-      if (!AnnotationUtil.isAnnotated(psiParameter, myAnnotation, false, false) && psiMethod.getManager().isInProject(psiMethod)) {
+      if (!AnnotationUtil.isAnnotated(psiParameter, myAnnotation, false, false) &&
+          GeneratedSourcesFilter.isInProjectAndNotGenerated(psiMethod)) {
         toAnnotate.add(psiParameter);
       }
     }

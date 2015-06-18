@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -62,7 +63,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
 
   public static boolean isValidTarget(PsiElement psiElement) {
     if (!(psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer)) return false;
-    return psiElement.getManager().isInProject(psiElement) || isInScratches(psiElement);
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(psiElement) || isInScratches(psiElement);
   }
 
   protected static boolean isInScratches(PsiElement psiElement) {

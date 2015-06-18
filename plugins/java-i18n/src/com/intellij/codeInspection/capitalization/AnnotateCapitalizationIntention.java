@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -44,7 +45,7 @@ public class AnnotateCapitalizationIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiModifierListOwner element = getElement(editor, file);
     if (element == null ||
-        (!ApplicationManager.getApplication().isUnitTestMode() && element.getManager().isInProject(element)) ||
+        (!ApplicationManager.getApplication().isUnitTestMode() && GeneratedSourcesFilter.isInProjectAndNotGenerated(element)) ||
         AnnotationUtil.findAnnotation(element, Nls.class.getName()) != null) return false;
     return true;
   }

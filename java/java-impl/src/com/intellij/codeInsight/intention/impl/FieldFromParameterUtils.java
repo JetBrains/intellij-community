@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -256,9 +257,7 @@ public final class FieldFromParameterUtils {
   public static boolean isAvailable(@Nullable PsiParameter myParameter,
                                      @Nullable PsiType type,
                                      @Nullable PsiClass targetClass){
-    return myParameter != null
-           && myParameter.isValid()
-           && myParameter.getManager().isInProject(myParameter)
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(myParameter)
            && myParameter.getDeclarationScope() instanceof PsiMethod
            && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
            && type != null

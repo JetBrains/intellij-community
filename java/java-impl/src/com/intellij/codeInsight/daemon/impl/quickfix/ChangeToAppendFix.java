@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -61,8 +62,7 @@ public class ChangeToAppendFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return JavaTokenType.PLUSEQ == myTokenType &&
-           myAssignmentExpression.isValid() &&
-           PsiManager.getInstance(project).isInProject(myAssignmentExpression) &&
+           GeneratedSourcesFilter.isInProjectAndNotGenerated(myAssignmentExpression) &&
            (myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER) ||
             myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
             myLhsType.equalsToText("java.lang.Appendable"));

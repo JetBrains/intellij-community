@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiParameter;
 import com.intellij.util.IncorrectOperationException;
@@ -49,7 +50,7 @@ public class MakeVarargParameterLastFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myParameter.isValid() && myParameter.getManager().isInProject(myParameter);
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(myParameter);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
-import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -61,7 +61,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   @Override
   @Nullable
   public PsiDocCommentOwner getContainer(final PsiElement context) {
-    if (context == null || !context.getManager().isInProject(context)) {
+    if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(context)) {
       return null;
     }
     final PsiFile containingFile = context.getContainingFile();

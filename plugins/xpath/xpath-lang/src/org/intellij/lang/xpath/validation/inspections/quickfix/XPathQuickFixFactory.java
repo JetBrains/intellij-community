@@ -59,7 +59,7 @@ public interface XPathQuickFixFactory {
                                @NotNull PsiFile file,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
-      return startElement.isValid() && startElement.getParent().isValid();
+      return super.isAvailable(project, file, startElement, endElement) && startElement.getParent().isValid();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,7 +55,10 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline non-project class", REFACTORING_NAME, null);
       return;
     }
-
+    if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(superClass)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline super class from generated source code", REFACTORING_NAME, null);
+      return;
+    }
     for (PsiClass inheritor : inheritors) {
       if (PsiTreeUtil.isAncestor(superClass, inheritor, false)) {
         CommonRefactoringUtil.showErrorHint(project, editor, "Cannot inline into the inner class. Move \'" + inheritor.getName() + "\' to upper level", REFACTORING_NAME, null);

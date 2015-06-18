@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +50,7 @@ public class EditContractIntention extends BaseIntentionAction {
   private static PsiMethod getTargetMethod(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     if (owner instanceof PsiMethod &&
-        (!owner.getManager().isInProject(owner) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS)) {
+        (GeneratedSourcesFilter.isInProjectAndNotGenerated(owner) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS)) {
       PsiElement original = owner.getOriginalElement();
       return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;
     }

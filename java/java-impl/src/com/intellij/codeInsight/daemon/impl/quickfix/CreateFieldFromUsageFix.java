@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -53,7 +54,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
     for (PsiClass psiClass : super.getTargetClasses(element)) {
-      if (psiClass.getManager().isInProject(psiClass) && 
+      if (GeneratedSourcesFilter.isInProjectAndNotGenerated(psiClass) &&
           (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
         targetClasses.add(psiClass);
       }
@@ -63,7 +64,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return psiClass.getManager().isInProject(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
   }
 
   @Override

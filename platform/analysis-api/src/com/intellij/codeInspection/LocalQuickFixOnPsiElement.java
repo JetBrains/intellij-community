@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
@@ -59,7 +57,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return true;
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(startElement);
   }
 
   protected boolean isAvailable() {

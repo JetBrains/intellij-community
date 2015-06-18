@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoIns
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -94,7 +95,7 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
     myKey = container instanceof PsiClass ? "suppress.inspection.class" : container instanceof PsiMethod ? "suppress.inspection.method" : "suppress.inspection.field";
-    return container != null && context.getManager().isInProject(context);
+    return container != null && GeneratedSourcesFilter.isInProjectAndNotGenerated(context);
   }
 
   @Override
