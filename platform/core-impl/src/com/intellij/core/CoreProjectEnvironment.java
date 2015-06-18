@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class CoreProjectEnvironment {
     registerProjectComponent(PsiManager.class, myPsiManager);
     myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
     registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,
-                                                                                  SmartPointerManager.getInstance(myProject), myMessageBus,
+                                                                                  myMessageBus,
                                                                                   new MockDocumentCommitProcessor()));
 
     myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
