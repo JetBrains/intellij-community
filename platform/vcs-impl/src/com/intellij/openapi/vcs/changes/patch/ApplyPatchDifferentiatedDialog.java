@@ -339,7 +339,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (patchReader == null) return;
 
       List<FilePatch> filePatches = ContainerUtil.<FilePatch>newArrayList(patchReader.getPatches());
-      filePatches.addAll(myBinaryShelvedPatches);
+      if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
+        filePatches.addAll(myBinaryShelvedPatches);
+      }
       final List<AbstractFilePatchInProgress> matchedPatches = new MatchPatchPaths(myProject).execute(filePatches);
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
