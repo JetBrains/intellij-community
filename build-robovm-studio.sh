@@ -3,9 +3,9 @@
 set -e
 : ${IDEA_HOME?"Need to set IDEA_HOME to point to a valid IntelliJ IDEA installation"}
 cd robovm/robovm-idea
-awk '!/idea-version/' src/main/resources/META-INF/plugin.xml > plugin.xml.tmp && mv plugin.xml.tmp src/main/resources/META-INF/plugins.xml
+awk '!/idea-version/' src/main/resources/META-INF/plugin.xml > plugin.xml.tmp && mv plugin.xml.tmp src/main/resources/META-INF/plugin.xml
 mvn -Didea.home="$IDEA_HOME" clean package -Pdeployment
-git checkout -- src/main/resources/META-INF/plugins.xml
+git checkout -- src/main/resources/META-INF/plugin.xml
 cd ../..
 ant -f build-robovm.xml
 rm -rf out/robovm-studio
