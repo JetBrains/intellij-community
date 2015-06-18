@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class OnesideEditorHighlighter implements EditorHighlighter {
+class OnesideEditorHighlighter implements EditorHighlighter {
   public static final Logger LOG = OnesideDiffViewer.LOG;
 
   @NotNull private final Document myDocument;

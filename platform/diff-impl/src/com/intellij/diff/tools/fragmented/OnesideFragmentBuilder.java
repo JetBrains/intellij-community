@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // This class works incorrectly with non-fair differences (when chunk of matched lines has different length in left/right files)
-public class OnesideFragmentBuilder {
+class OnesideFragmentBuilder {
   @NotNull private final List<LineFragment> myFragments;
   @NotNull private final Document myDocument1;
   @NotNull private final Document myDocument2;

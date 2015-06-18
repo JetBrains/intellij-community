@@ -19,7 +19,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-public class HighlightRange {
+class HighlightRange {
   @NotNull private final TextRange myBase;
   @NotNull private final TextRange myChanged;
   @NotNull private final Side mySide;

@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class OnesideContentPanel extends JPanel {
+class OnesideContentPanel extends JPanel {
   public OnesideContentPanel(@NotNull List<JComponent> titles, @NotNull Editor editor) {
     super(new BorderLayout());
 

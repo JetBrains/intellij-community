@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class LineNumberConvertor {
+class LineNumberConvertor {
   // Oneside -> Twoside
   @NotNull private final TreeMap<Integer, Integer> myFragments1;
   @NotNull private final TreeMap<Integer, Integer> myFragments2;
