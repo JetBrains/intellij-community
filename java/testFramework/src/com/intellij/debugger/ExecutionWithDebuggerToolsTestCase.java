@@ -36,10 +36,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -400,33 +396,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  private Sdk getTestJdk() {
-    try {
-      ProjectJdkImpl jdk = (ProjectJdkImpl)JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().clone();
-      jdk.setName("JDK");
-      return jdk;
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
-  protected void setTestJDK() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        Sdk jdk = ProjectJdkTable.getInstance().findJdk("JDK");
-        if (jdk != null) {
-          ProjectJdkTable.getInstance().removeJdk(jdk);
-        }
-
-        ProjectJdkTable.getInstance().addJdk(getTestJdk());
-      }
-    });
-  }
-
-  private class DelayedEventsProcessListener implements DebugProcessListener {
+  private static class DelayedEventsProcessListener implements DebugProcessListener {
     private final DebugProcessAdapterImpl myTarget;
 
     public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
@@ -473,7 +443,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myTarget.attachException(state, exception, remoteConnection);
     }
 
-    private void pauseExecution() {
+    private static void pauseExecution() {
       TimeoutUtil.sleep(10);
     }
   }
