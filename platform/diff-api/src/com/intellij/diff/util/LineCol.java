@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.fragmented;
+package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 
 public class LineCol {
+  // counting from zero
   public final int line;
   public final int column;
+
+  public LineCol(int line) {
+    this(line, 0);
+  }
 
   public LineCol(int line, int column) {
     this.line = line;
