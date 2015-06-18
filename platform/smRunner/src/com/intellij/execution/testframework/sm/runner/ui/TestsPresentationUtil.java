@@ -169,10 +169,13 @@ public class TestsPresentationUtil {
                                                    final TestTreeRenderer renderer) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
     if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-      renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
-      renderer.append(SMTestsRunnerBundle.message(
-          "sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
-                      SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      if (!testProxy.getChildren().isEmpty()) {
+        formatRootNodeWithChildren(testProxy, renderer);
+      } else {
+        renderer.setIcon(getIcon(testProxy, renderer.getConsoleProperties()));
+        renderer.append(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.instantiating.tests"),
+                        SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     } else if (magnitude == TestStateInfo.Magnitude.NOT_RUN_INDEX) {
       renderer.setIcon(PoolOfTestIcons.NOT_RAN);
       renderer.append(SMTestsRunnerBundle.message(

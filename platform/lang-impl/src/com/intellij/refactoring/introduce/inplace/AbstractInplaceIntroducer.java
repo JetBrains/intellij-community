@@ -230,6 +230,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           updateTitle(getVariable());
           started = AbstractInplaceIntroducer.super.performInplaceRefactoring(nameSuggestions);
           if (started) {
+            onRenameTemplateStarted();
             myDocumentAdapter = new DocumentAdapter() {
               @Override
               public void documentChanged(DocumentEvent e) {
@@ -259,6 +260,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }, getCommandName(), getCommandName());
     return result.get();
   }
+
+  protected void onRenameTemplateStarted() {}
 
   protected int getCaretOffset() {
     RangeMarker r;

@@ -20,7 +20,7 @@ class Test {
         void m(IL lm, II s) { }
 
         {
-            m<error descr="Ambiguous method call: both 'Test.m(II, IL)' and 'Test.m(IL, II)' match">(() -> 1,  () ->1)</error>;
+            <error descr="Ambiguous method call: both 'Test.m(II, IL)' and 'Test.m(IL, II)' match">m</error>(() -> 1,  () ->1);
         }
 
 
@@ -42,17 +42,17 @@ class Test {
          {
             mi (1);
             m2();
-            m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(()->1)</error>;
+            <error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">m2</error>(()->1);
             m2(()->1, ()->1);
             m2(()->1, ()->1, ()->1);
 
             m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(null, null, null)</error>;
-            m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(()->1, null, null)</error>;
-            m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(null, ()->1, null)</error>;
-            m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(null, null, ()->1)</error>;
-            m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(()->1, ()->1, null)</error>;
-            m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(null, ()->1, ()->1)</error>;
-            m2<error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">(()->1, null, ()->1)</error>;
+            <error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">m2</error>(()->1, null, null);
+            <error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">m2</error>(null, ()->1, null);
+            <error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">m2</error>(null, null, ()->1);
+            <error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">m2</error>(()->1, ()->1, null);
+            <error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">m2</error>(null, ()->1, ()->1);
+            <error descr="Ambiguous method call: both 'Test.m2(II, II...)' and 'Test.m2(IL...)' match">m2</error>(()->1, null, ()->1);
 
             m2(()->1L, null, null);
             m2(null, ()->1L, null);
@@ -73,8 +73,8 @@ class Test {
             m3(() -> 1, () -> 1, () -> 1);
 
             m3<error descr="Ambiguous method call: both 'Test.m3(II...)' and 'Test.m3(IL...)' match">(null, null)</error>;
-            m3<error descr="Ambiguous method call: both 'Test.m3(II...)' and 'Test.m3(IL...)' match">(() -> 1,  null)</error>;
-            m3<error descr="Ambiguous method call: both 'Test.m3(II...)' and 'Test.m3(IL...)' match">(null, () -> 1)</error>;
+            <error descr="Ambiguous method call: both 'Test.m3(II...)' and 'Test.m3(IL...)' match">m3</error>(() -> 1,  null);
+            <error descr="Ambiguous method call: both 'Test.m3(II...)' and 'Test.m3(IL...)' match">m3</error>(null, () -> 1);
             m3(() -> 1L, null);
             m3(null, () -> 1L);
         }

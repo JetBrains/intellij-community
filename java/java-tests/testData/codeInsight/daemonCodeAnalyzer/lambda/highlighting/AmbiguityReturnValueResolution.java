@@ -1,6 +1,6 @@
 public interface IDEA99969 {
   default IntStream distinct(Stream s) {
-    return s.map(i -> <error descr="Inconvertible types; cannot cast '<lambda parameter>' to 'int'">(int) i</error>);
+    return s.<error descr="Ambiguous method call: both 'Stream.map(Function)' and 'Stream.map(IntFunction)' match">map</error>(i -> <error descr="Inconvertible types; cannot cast '<lambda parameter>' to 'int'">(int) i</error>);
   }
 }
 interface Stream<T> {
