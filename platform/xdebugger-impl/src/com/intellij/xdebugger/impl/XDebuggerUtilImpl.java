@@ -189,6 +189,21 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   }
                 }
               }
+
+              // calculate default item
+              int caretOffset = editor.getCaretModel().getOffset();
+              XLineBreakpointType<P>.XLineBreakpointVariant defaultVariant = null;
+              for (XLineBreakpointType<P>.XLineBreakpointVariant variant : variants) {
+                TextRange range = variant.getHighlightRange();
+                if (range != null && range.contains(caretOffset)) {
+                  //noinspection ConstantConditions
+                  if (defaultVariant == null || defaultVariant.getHighlightRange().getLength() > range.getLength()) {
+                    defaultVariant = variant;
+                  }
+                }
+              }
+              final int defaultIndex = defaultVariant != null ? variants.indexOf(defaultVariant) : 0;
+
               final MySelectionListener selectionListener = new MySelectionListener();
               ListPopup popup = JBPopupFactory.getInstance().createListPopup(
                 new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Create breakpoint for", variants) {
@@ -219,6 +234,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                       }
                     });
                     return FINAL_CHOICE;
+                  }
+
+                  @Override
+                  public int getDefaultOptionIndex() {
+                    return defaultIndex;
                   }
                 });
               popup.addListSelectionListener(selectionListener);

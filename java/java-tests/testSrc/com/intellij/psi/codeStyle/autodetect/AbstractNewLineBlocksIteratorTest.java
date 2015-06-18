@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.autodetect;
+package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;

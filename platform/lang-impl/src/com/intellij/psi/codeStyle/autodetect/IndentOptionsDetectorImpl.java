@@ -82,6 +82,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     if (linesWithTabs > linesWithWhiteSpaceIndent) {
       setUseTabs(indentOptions, true);
       indentOptions.INDENT_SIZE = indentOptions.TAB_SIZE;
+      indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.TAB_SIZE * 2;
     }
     else if (linesWithWhiteSpaceIndent > linesWithTabs) {
       setUseTabs(indentOptions, false);
