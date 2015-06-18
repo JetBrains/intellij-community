@@ -13,5 +13,4 @@ cp out/artifacts/*.mac.zip out/robovm-studio/robovm-studio-$version.zip
 cd out/robovm-studio
 unzip robovm-studio-$version.zip
 cd ../..
-rm out/robovm-studio/robovm-studio-10.SNAPSHOT.dmg
 appdmg robovm/robovm-studio-dmg/dmg.json out/robovm-studio/robovm-studio-$version.dmg
