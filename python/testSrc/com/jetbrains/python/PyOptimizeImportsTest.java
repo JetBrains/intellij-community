@@ -59,7 +59,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
-  public void testOrder() {
+  public void testOrderByType() {
+    doTest();
+  }
+
+  // PY-12018
+  public void testAlphabeticalOrder() {
     doTest();
   }
 

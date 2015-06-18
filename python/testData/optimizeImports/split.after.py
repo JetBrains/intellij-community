@@ -1,5 +1,5 @@
-import sys
 import datetime
+import sys
 
 sys.path
 datetime.time
