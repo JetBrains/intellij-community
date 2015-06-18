@@ -2,11 +2,8 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/pluginTestResources">
-      <sourceFolder url="file://$MODULE_DIR$/pluginTestResources" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/pluginTestSrc">
-      <sourceFolder url="file://$MODULE_DIR$/pluginTestSrc" isTestSource="true" />
+    <content url="file://$MODULE_DIR$/pluginResources">
+      <sourceFolder url="file://$MODULE_DIR$/pluginResources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -14,10 +11,8 @@
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="IntelliLang-java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="python-community-tests" />
     <orderEntry type="module" module-name="python-community-plugin" />
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="IntelliLang-xml" scope="RUNTIME" />
   </component>
 </module>
-
