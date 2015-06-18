@@ -401,7 +401,11 @@ public class FileSystemUtil {
     private JnaUnixMediatorImpl() throws Exception {
       if (SystemInfo.isLinux) {
         if ("arm".equals(SystemInfo.OS_ARCH)) {
-          myOffsets = LINUX_ARM;
+          if (SystemInfo.is32Bit) {
+            myOffsets = LINUX_ARM;
+          } else {
+            throw new IllegalStateException("AArch64 architecture is not supported");
+          }
         }
         else if ("ppc".equals(SystemInfo.OS_ARCH)) {
           myOffsets = SystemInfo.is32Bit ? LNX_PPC32 : LNX_PPC64;

@@ -195,7 +195,7 @@ public class FileWatcher {
     if (SystemInfo.isWindows) return (withSubDir ? "win" + File.separator : "") + "fsnotifier.exe";
     else if (SystemInfo.isMac) return (withSubDir ? "mac" + File.separator : "") + "fsnotifier";
     else if (SystemInfo.isLinux) return (withSubDir ? "linux" + File.separator : "") +
-                                        ("arm".equals(SystemInfo.OS_ARCH) ? "fsnotifier-arm"
+                                        ("arm".equals(SystemInfo.OS_ARCH) ? (SystemInfo.is32Bit ? "fsnotifier-arm" : null)
                                                                           : (SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier"));
     return null;
   }
