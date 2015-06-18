@@ -96,6 +96,22 @@ public class RepositoryAttachHandler {
     return configuration;
   }
 
+  public static List<MavenArtifact> resolveAndDownload(final Project project, final String coord, List<MavenRepositoryInfo> repositories) {
+    final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
+    final Ref<List<MavenArtifact>> result = Ref.create(null);
+    resolveLibrary(project, coord, extraTypes, repositories, new Processor<List<MavenArtifact>>() {
+      public boolean process(final List<MavenArtifact> artifacts) {
+        result.set(artifacts);
+
+        if (!artifacts.isEmpty()) {
+          notifyArtifactsDownloaded(project, artifacts);
+        }
+        return true;
+      }
+    });
+    return result.get();
+  }
+
   public static NewLibraryConfiguration resolveAndDownload(final Project project,
                                                            final String coord,
                                                            boolean attachJavaDoc,
