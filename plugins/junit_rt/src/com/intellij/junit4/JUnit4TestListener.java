@@ -21,9 +21,7 @@
 package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
-import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
+import com.intellij.rt.execution.junit.MapSerializerUtil;
 import junit.framework.ComparisonFailure;
 import org.junit.Ignore;
 import org.junit.runner.Description;
@@ -140,11 +138,11 @@ public class JUnit4TestListener extends RunListener {
     //class setUp failed
     if (methodName == null) {
       for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-        testFailure(failure, ServiceMessageTypes.TEST_FAILED, getFullMethodName((Description)iterator.next()));
+        testFailure(failure, MapSerializerUtil.TEST_FAILED, getFullMethodName((Description)iterator.next()));
       }
     }
     else {
-      testFailure(failure, ServiceMessageTypes.TEST_FAILED, methodName);
+      testFailure(failure, MapSerializerUtil.TEST_FAILED, methodName);
     }
   }
 
@@ -168,7 +166,7 @@ public class JUnit4TestListener extends RunListener {
       ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
     }
     finally {
-      myPrintStream.println(ServiceMessage.asString(messageName, attrs));
+      myPrintStream.println(MapSerializerUtil.asString(messageName, attrs));
     }
   }
 
@@ -204,7 +202,7 @@ public class JUnit4TestListener extends RunListener {
 
   private void testAssumptionFailure(Failure failure, Description testDescription, String name) throws Exception {
     testStarted(testDescription);
-    testFailure(failure, ServiceMessageTypes.TEST_IGNORED, name);
+    testFailure(failure, MapSerializerUtil.TEST_IGNORED, name);
     testFinished(testDescription);
   }
 
@@ -224,7 +222,7 @@ public class JUnit4TestListener extends RunListener {
       //junit < 4.4
     }
     attrs.put("name", getFullMethodName(description));
-    myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_IGNORED, attrs));
+    myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_IGNORED, attrs));
     testFinished(description);
   }
 
