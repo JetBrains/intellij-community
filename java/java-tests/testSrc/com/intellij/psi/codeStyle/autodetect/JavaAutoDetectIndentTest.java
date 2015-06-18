@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.autodetect;
+package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfoBuilder;

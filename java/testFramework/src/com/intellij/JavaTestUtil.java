@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
  * @author Konstantin Bulenkov
  */
 public class JavaTestUtil {
+  private static final String TEST_JDK_NAME = "JDK";
 
   public static String getJavaTestDataPath() {
     return PathManagerEx.getTestDataPath();
@@ -43,12 +44,14 @@ public class JavaTestUtil {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        Sdk jdk = ProjectJdkTable.getInstance().findJdk("JDK");
+        ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+
+        Sdk jdk = jdkTable.findJdk(TEST_JDK_NAME);
         if (jdk != null) {
-          ProjectJdkTable.getInstance().removeJdk(jdk);
+          jdkTable.removeJdk(jdk);
         }
 
-        ProjectJdkTable.getInstance().addJdk(getTestJdk());
+        jdkTable.addJdk(getTestJdk());
       }
     });
   }
@@ -56,14 +59,11 @@ public class JavaTestUtil {
   public static Sdk getTestJdk() {
     try {
       ProjectJdkImpl jdk = (ProjectJdkImpl)JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().clone();
-      jdk.setName("JDK");
+      jdk.setName(TEST_JDK_NAME);
       return jdk;
     }
     catch (CloneNotSupportedException e) {
-      //LOG.error(e);
-      return null;
+      throw new RuntimeException(e);
     }
   }
-
-
 }

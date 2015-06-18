@@ -9,6 +9,7 @@ public class ClassAccess implements Serializable {
 
     enum TestEnum {}
 
+  // at one point javac generated a synthetic field for .class accesses with a name starting with the string "class$"
   Map<TestEnum, Set<String>> testField = new EnumMap<TestEnum, Set<String>>(TestEnum.class);
   //    Map<TestEnum, Set<String>> testField = new HashMap<>();
 

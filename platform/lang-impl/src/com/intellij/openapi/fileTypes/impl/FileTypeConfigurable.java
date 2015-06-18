@@ -108,11 +108,10 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     Set<UserFileType> modifiedUserTypes = myOriginalToEditedMap.keySet();
     for (UserFileType oldType : modifiedUserTypes) {
-      UserFileType newType = myOriginalToEditedMap.get(oldType);
-      oldType.copyFrom(newType);
+      oldType.copyFrom(myOriginalToEditedMap.get(oldType));
     }
     myOriginalToEditedMap.clear();
 
