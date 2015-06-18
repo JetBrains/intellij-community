@@ -1451,7 +1451,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (previousDocStamp == currentDocStamp) return false;
 
     final CharSequence contentText = content.getText();
-    FileTypeManagerImpl.cacheFileType(vFile, vFile.getFileType());
+    myFileTypeManager.cacheFileType(vFile, vFile.getFileType());
 
     try {
       if (!isTooLarge(vFile, contentText.length()) &&
@@ -1489,7 +1489,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       assert previousState == previousDocStamp;
     }
     finally {
-      FileTypeManagerImpl.cacheFileType(vFile, null);
+      myFileTypeManager.cacheFileType(vFile, null);
     }
     return true;
   }
@@ -1631,7 +1631,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final VirtualFile file = content.getVirtualFile();
 
     FileType fileType = file.getFileType();
-    FileTypeManagerImpl.cacheFileType(file, fileType);
+    myFileTypeManager.cacheFileType(file, fileType);
 
     try {
       PsiFile psiFile = null;
@@ -1693,7 +1693,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
     finally {
-      FileTypeManagerImpl.cacheFileType(file, null);
+      myFileTypeManager.cacheFileType(file, null);
     }
   }
 
@@ -1970,7 +1970,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               // large file might be scheduled for update in before event when its size was not large
               myChangedFilesCollector.myFilesToUpdate.remove(file);
             } else {
-              FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+              myFileTypeManager.cacheFileType(file, file.getFileType());
               try {
                 final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
                 int fileId = getIdMaskingNonIdBasedFile(file);
@@ -2000,7 +2000,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 }
               }
               finally {
-                FileTypeManagerImpl.cacheFileType(file, null);
+                myFileTypeManager.cacheFileType(file, null);
               }
             }
           }
@@ -2360,7 +2360,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       try {
         FileType type = file.getFileType();
-        FileTypeManagerImpl.cacheFileType(file, type);
+        myFileTypeManager.cacheFileType(file, type);
 
         boolean oldStuff = true;
         if (file.isDirectory() || !isTooLarge(file)) {
@@ -2412,7 +2412,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
       finally {
-        FileTypeManagerImpl.cacheFileType(file, null);
+        myFileTypeManager.cacheFileType(file, null);
       }
 
       if (myProgressIndicator != null && file.isDirectory()) { // once for dir is cheap enough
