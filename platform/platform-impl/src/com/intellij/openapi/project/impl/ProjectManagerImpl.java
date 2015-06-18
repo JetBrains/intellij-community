@@ -22,6 +22,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -91,11 +92,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
   private boolean myDefaultProjectConfigurationChanged;
 
-  private final List<Project> myOpenProjects = new ArrayList<Project>();
-  private Project[] myOpenProjectsArrayCache = {};
+  private Project[] myOpenProjects = {}; // guarded by lock
+  private final Object lock = new Object();
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  private final Set<Project> myTestProjects = new THashSet<Project>();
 
   private final MultiMap<Project, Pair<VirtualFile, StateStorage>> myChangedProjectFiles = MultiMap.createWeakSet(); //guarded by myChangedProjectFiles
   private final SingleAlarm myChangedFilesAlarm;
@@ -413,35 +412,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @Override
   @NotNull
   public Project[] getOpenProjects() {
-    synchronized (myOpenProjects) {
-      if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
-        LOG.error("Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
-      }
-      if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
-        LOG.error("Open projects cache corrupted. Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
-      }
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        Project[] testProjects = myTestProjects.toArray(new Project[myTestProjects.size()]);
-        for (Project testProject : testProjects) {
-          assert !testProject.isDisposed() : testProject;
-        }
-        return ArrayUtil.mergeArrays(myOpenProjectsArrayCache, testProjects);
-      }
-      return myOpenProjectsArrayCache;
+    synchronized (lock) {
+      return myOpenProjects;
     }
   }
 
   @Override
   public boolean isProjectOpened(Project project) {
-    synchronized (myOpenProjects) {
-      return ApplicationManager.getApplication().isUnitTestMode() && myTestProjects.contains(project) || myOpenProjects.contains(project);
+    synchronized (lock) {
+      return ArrayUtil.contains(project, myOpenProjects);
     }
   }
 
   @Override
   public boolean openProject(@NotNull final Project project) {
     if (isLight(project)) {
-      throw new AssertionError("must not open light project");
+      ((ProjectImpl)project).setTemporarilyDisposed(false);
+      boolean isInitialized = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
+      if (isInitialized) {
+        addToOpened(project);
+        // events already fired
+        return true;
+      }
     }
 
     final Application application = ApplicationManager.getApplication();
@@ -449,13 +441,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       return false;
     }
 
-    synchronized (myOpenProjects) {
-      if (myOpenProjects.contains(project)) {
-        return false;
-      }
-      myOpenProjects.add(project);
-      cacheOpenProjects();
-    }
+    if (!addToOpened(project)) return false;
 
     fireProjectOpened(project);
     DumbService.getInstance(project).queueTask(new DumbModeTask() {
@@ -521,13 +507,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     return true;
   }
 
+  private boolean addToOpened(@NotNull Project project) {
+    assert !project.isDisposed() : "Must not open already disposed project";
+    synchronized (lock) {
+      if (isProjectOpened(project)) {
+        return false;
+      }
+      myOpenProjects = ArrayUtil.append(myOpenProjects, project);
+    }
+    return true;
+  }
+
+  @NotNull
+  private Collection<Project> removeFromOpened(@NotNull Project project) {
+    synchronized (lock) {
+      myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
+      return Arrays.asList(myOpenProjects);
+    }
+  }
+
   private static boolean canCancelProjectLoading() {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     return !(indicator instanceof NonCancelableSection);
-  }
-
-  private void cacheOpenProjects() {
-    myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
   private static void waitForFileWatcher(@NotNull ProgressIndicator indicator) {
@@ -727,22 +728,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   @Override
+  @TestOnly
   public void openTestProject(@NotNull final Project project) {
-    synchronized (myOpenProjects) {
-      assert ApplicationManager.getApplication().isUnitTestMode();
-      assert !project.isDisposed() : "Must not open already disposed project";
-      myTestProjects.add(project);
-    }
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    openProject(project);
+    UIUtil.dispatchAllInvocationEvents(); // post init activities are invokeLatered
   }
 
   @NotNull
   @Override
-  public Collection<Project> closeTestProject(@NotNull Project project) {
-    synchronized (myOpenProjects) {
-      assert ApplicationManager.getApplication().isUnitTestMode();
-      myTestProjects.remove(project);
-      return myTestProjects;
-    }
+  @TestOnly
+  public Collection<Project> closeTestProject(@NotNull final Project project) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    closeProject(project);
+    return Arrays.asList(getOpenProjects());
   }
 
   @Override
@@ -821,16 +820,29 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
     if (isLight(project)) {
-      throw new AssertionError("must not close light project");
+      // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
+      if (!((ProjectImpl)project).isTemporarilyDisposed()) {
+        ((ProjectImpl)project).setTemporarilyDisposed(true);
+        removeFromOpened(project);
+        return true;
+      }
+      ((ProjectImpl)project).setTemporarilyDisposed(false);
     }
-    if (!isProjectOpened(project)) return true;
+    else {
+      if (!isProjectOpened(project)) return true;
+    }
     if (checkCanClose && !canClose(project)) return false;
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
       if (save) {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        project.save();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            FileDocumentManager.getInstance().saveAllDocuments();
+            project.save();
+          }
+        });
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
@@ -842,11 +854,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          synchronized (myOpenProjects) {
-            myOpenProjects.remove(project);
-            cacheOpenProjects();
-            myTestProjects.remove(project);
-          }
+          removeFromOpened(project);
 
           synchronized (myChangedProjectFiles) {
             myChangedProjectFiles.remove(project);

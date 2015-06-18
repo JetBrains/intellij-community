@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,45 +29,52 @@ import java.io.File;
  *         Date: 4/9/12
  */
 public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
+  private RunContentDescriptor myContent;
+
+  @Override
+  protected void tearDown() throws Exception {
+    Disposer.dispose(myContent);
+    super.tearDown();
+  }
 
   public void testStacktrace() throws Exception {
-    RunContentDescriptor content = showText("");
-    Icon icon = content.getIcon();
-    String name = content.getDisplayName();
+    showText("");
+    Icon icon = myContent.getIcon();
+    String name = myContent.getDisplayName();
     assertEquals(null, icon);
     assertEquals("<Stacktrace>", name);
   }
 
   public void testException() throws Exception {
-    RunContentDescriptor content = showText("java.lang.NullPointerException\n" +
+    showText("java.lang.NullPointerException\n" +
                                             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
                                             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
                                             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)");
-    assertIcon("exception.png", content.getIcon());
-    assertEquals("NPE", content.getDisplayName());
+    assertIcon("exception.png", myContent.getIcon());
+    assertEquals("NPE", myContent.getDisplayName());
   }
 
   public void testThreadDump() throws Exception {
     File file = new File(getTestDataPath() + "threaddump.txt");
     String s = FileUtil.loadFile(file);
-    RunContentDescriptor content = showText(s);
-    assertIcon("threaddump.png", content.getIcon());
-    assertEquals("<Threads>", content.getDisplayName());
+    showText(s);
+    assertIcon("threaddump.png", myContent.getIcon());
+    assertEquals("<Threads>", myContent.getDisplayName());
   }
 
   public void testDeadlock() throws Exception {
     File file = new File(getTestDataPath() + "deadlock.txt");
     String s = FileUtil.loadFile(file);
-    RunContentDescriptor content = showText(s);
-    assertIcon("killProcess.png", content.getIcon());
-    assertEquals("<Deadlock>", content.getDisplayName());
+    showText(s);
+    assertIcon("killProcess.png", myContent.getIcon());
+    assertEquals("<Deadlock>", myContent.getDisplayName());
   }
 
-  private RunContentDescriptor showText(String unscramble) {
+  private void showText(String unscramble) {
     RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", getProject(), unscramble);
     assertNotNull(descriptor);
-    Disposer.register(myModule, descriptor);
-    return descriptor;
+    Disposer.register(getTestRootDisposable(), descriptor);
+    myContent = descriptor;
   }
 
   private static void assertIcon(String s, Icon icon) {
