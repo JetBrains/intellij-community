@@ -67,6 +67,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -531,7 +532,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return server;
     }
     final int listenPort = findFreePort();
-    server = new ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance());
+    server = new ExternalJavacManager(Utils.getSystemRoot()) {
+      protected ExternalJavacProcessHandler createProcessHandler(Process process) {
+        return new ExternalJavacProcessHandler(process) {
+          protected Future<?> executeOnPooledThread(Runnable task) {
+            return SharedThreadPool.getInstance().executeOnPooledThread(task);
+          }
+        };
+      }
+    };
     server.start(listenPort);
     ExternalJavacManager.KEY.set(context, server);
     return server;
