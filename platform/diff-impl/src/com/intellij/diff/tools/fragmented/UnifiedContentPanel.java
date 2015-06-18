@@ -22,8 +22,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-class OnesideContentPanel extends JPanel {
-  public OnesideContentPanel(@NotNull List<JComponent> titles, @NotNull Editor editor) {
+class UnifiedContentPanel extends JPanel {
+  public UnifiedContentPanel(@NotNull List<JComponent> titles, @NotNull Editor editor) {
     super(new BorderLayout());
 
     add(editor.getComponent(), BorderLayout.CENTER);

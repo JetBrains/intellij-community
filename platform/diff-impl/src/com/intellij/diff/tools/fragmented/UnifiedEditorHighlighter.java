@@ -34,13 +34,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-class OnesideEditorHighlighter implements EditorHighlighter {
-  public static final Logger LOG = OnesideDiffViewer.LOG;
+class UnifiedEditorHighlighter implements EditorHighlighter {
+  public static final Logger LOG = UnifiedDiffViewer.LOG;
 
   @NotNull private final Document myDocument;
   @NotNull private final List<Element> myPieces;
 
-  public OnesideEditorHighlighter(@NotNull Document document,
+  public UnifiedEditorHighlighter(@NotNull Document document,
                                   @NotNull EditorHighlighter highlighter1,
                                   @NotNull EditorHighlighter highlighter2,
                                   @NotNull List<HighlightRange> ranges,

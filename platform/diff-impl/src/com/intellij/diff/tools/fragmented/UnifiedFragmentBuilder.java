@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
@@ -27,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // This class works incorrectly with non-fair differences (when chunk of matched lines has different length in left/right files)
-class OnesideFragmentBuilder {
+class UnifiedFragmentBuilder {
   @NotNull private final List<LineFragment> myFragments;
   @NotNull private final Document myDocument1;
   @NotNull private final Document myDocument2;
@@ -39,7 +38,7 @@ class OnesideFragmentBuilder {
   @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
   @NotNull private final List<LineRange> myChangedLines = new ArrayList<LineRange>();
 
-  public OnesideFragmentBuilder(@NotNull List<LineFragment> fragments,
+  public UnifiedFragmentBuilder(@NotNull List<LineFragment> fragments,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
                                 @NotNull Side masterSide) {

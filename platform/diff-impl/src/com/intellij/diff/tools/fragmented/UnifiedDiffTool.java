@@ -21,20 +21,20 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer;
 import org.jetbrains.annotations.NotNull;
 
-public class OnesideDiffTool implements FrameDiffTool {
-  public static final OnesideDiffTool INSTANCE = new OnesideDiffTool();
+public class UnifiedDiffTool implements FrameDiffTool {
+  public static final UnifiedDiffTool INSTANCE = new UnifiedDiffTool();
 
   @NotNull
   @Override
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
     if (SimpleOnesideDiffViewer.canShowRequest(context, request)) return new SimpleOnesideDiffViewer(context, request);
-    if (OnesideDiffViewer.canShowRequest(context, request)) return new OnesideDiffViewer(context, request);
+    if (UnifiedDiffViewer.canShowRequest(context, request)) return new UnifiedDiffViewer(context, request);
     throw new IllegalArgumentException(request.toString());
   }
 
   @Override
   public boolean canShow(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return SimpleOnesideDiffViewer.canShowRequest(context, request) || OnesideDiffViewer.canShowRequest(context, request);
+    return SimpleOnesideDiffViewer.canShowRequest(context, request) || UnifiedDiffViewer.canShowRequest(context, request);
   }
 
   @NotNull

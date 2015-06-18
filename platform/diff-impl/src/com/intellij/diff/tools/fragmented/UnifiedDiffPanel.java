@@ -19,7 +19,6 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.tools.util.base.DiffPanelBase;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ import java.awt.*;
 
 import static com.intellij.diff.util.DiffUtil.createMessagePanel;
 
-public class OnesideDiffPanel extends DiffPanelBase {
+public class UnifiedDiffPanel extends DiffPanelBase {
   private static final String GOOD_CONTENT = "GoodContent";
   private static final String LOADING_CONTENT = "LoadingContent";
   private static final String TOO_BIG_CONTENT = "TooBigContent";
@@ -39,13 +38,13 @@ public class OnesideDiffPanel extends DiffPanelBase {
 
   @NotNull private final AsyncProcessIcon.Big myBusyIcon;
 
-  public OnesideDiffPanel(@Nullable Project project,
-                          @NotNull OnesideContentPanel content,
+  public UnifiedDiffPanel(@Nullable Project project,
+                          @NotNull UnifiedContentPanel content,
                           @NotNull DataProvider provider,
                           @NotNull DiffContext context) {
     super(project, provider, context);
 
-    myBusyIcon = new AsyncProcessIcon.Big("OnesideDiff");
+    myBusyIcon = new AsyncProcessIcon.Big("UnifiedDiff");
 
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(myNotificationsPanel, BorderLayout.NORTH);

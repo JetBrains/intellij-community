@@ -32,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class OnesideEditorRangeHighlighter {
-  public static final Logger LOG = OnesideDiffViewer.LOG;
+class UnifiedEditorRangeHighlighter {
+  public static final Logger LOG = UnifiedDiffViewer.LOG;
 
   @NotNull private final List<Element> myPieces = new ArrayList<Element>();
 
-  public OnesideEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
+  public UnifiedEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
@@ -56,7 +56,7 @@ class OnesideEditorRangeHighlighter {
     });
   }
 
-  public OnesideEditorRangeHighlighter(@Nullable Project project,
+  public UnifiedEditorRangeHighlighter(@Nullable Project project,
                                        @NotNull Document document1,
                                        @NotNull Document document2,
                                        @NotNull List<HighlightRange> ranges) {

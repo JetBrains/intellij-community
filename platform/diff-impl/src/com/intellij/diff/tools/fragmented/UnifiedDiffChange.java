@@ -38,8 +38,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OnesideDiffChange {
-  @NotNull private final OnesideDiffViewer myViewer;
+public class UnifiedDiffChange {
+  @NotNull private final UnifiedDiffViewer myViewer;
   @NotNull private final EditorEx myEditor;
 
   // Boundaries of this change in myEditor. If current state is out-of-date - approximate value.
@@ -51,7 +51,7 @@ public class OnesideDiffChange {
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
-  public OnesideDiffChange(@NotNull OnesideDiffViewer viewer, @NotNull ChangedBlock block, boolean innerFragments) {
+  public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block, boolean innerFragments) {
     myViewer = viewer;
     myEditor = viewer.getEditor();
 
@@ -263,7 +263,7 @@ public class OnesideDiffChange {
             DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
               @Override
               public void run() {
-                myViewer.applyChange(OnesideDiffChange.this, sourceSide);
+                myViewer.applyChange(UnifiedDiffChange.this, sourceSide);
               }
             });
             // applyChange() will schedule rediff, but we want to try to do it in sync

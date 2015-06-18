@@ -68,12 +68,12 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class OnesideDiffViewer extends ListenerDiffViewerBase {
-  public static final Logger LOG = Logger.getInstance(OnesideDiffViewer.class);
+public class UnifiedDiffViewer extends ListenerDiffViewerBase {
+  public static final Logger LOG = Logger.getInstance(UnifiedDiffViewer.class);
 
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
-  @NotNull private final OnesideDiffPanel myPanel;
+  @NotNull private final UnifiedDiffPanel myPanel;
 
   @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
@@ -95,7 +95,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   private boolean myStateIsOutOfDate; // whether something was changed since last rediff
   private boolean mySuppressEditorTyping; // our state is inconsistent. No typing can be handled correctly
 
-  public OnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
+  public UnifiedDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
@@ -113,9 +113,9 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
     List<JComponent> titles = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(myEditor, myEditor));
-    OnesideContentPanel contentPanel = new OnesideContentPanel(titles, myEditor);
+    UnifiedContentPanel contentPanel = new UnifiedContentPanel(titles, myEditor);
 
-    myPanel = new OnesideDiffPanel(myProject, contentPanel, this, myContext);
+    myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
 
     myFoldingModel = new MyFoldingModel(myEditor, this);
 
@@ -256,7 +256,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
         @Override
         public TwosideDocumentData compute() {
           indicator.checkCanceled();
-          OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, myMasterSide);
+          UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide);
           builder.exec();
 
           indicator.checkCanceled();
@@ -265,13 +265,13 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
                                                            documentData.getText1(), documentData.getText2(), builder.getRanges(),
                                                            builder.getText().length());
 
-          OnesideEditorRangeHighlighter rangeHighlighter = new OnesideEditorRangeHighlighter(myProject, document1, document2,
+          UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2,
                                                                                              builder.getRanges());
 
           return new TwosideDocumentData(builder, highlighter, rangeHighlighter);
         }
       });
-      OnesideFragmentBuilder builder = data.getBuilder();
+      UnifiedFragmentBuilder builder = data.getBuilder();
 
       FileType fileType = content2.getContentType() == null ? content1.getContentType() : content2.getContentType();
 
@@ -328,7 +328,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   protected void markStateIsOutOfDate() {
     myStateIsOutOfDate = true;
     if (myChangedBlockData != null) {
-      for (OnesideDiffChange diffChange : myChangedBlockData.getDiffChanges()) {
+      for (UnifiedDiffChange diffChange : myChangedBlockData.getDiffChanges()) {
         diffChange.updateGutterActions();
       }
     }
@@ -349,7 +349,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     if (highlighter1 == null) highlighter1 = DiffUtil.initEmptyEditorHighlighter(project, text1);
     if (highlighter2 == null) highlighter2 = DiffUtil.initEmptyEditorHighlighter(project, text2);
 
-    return new OnesideEditorHighlighter(myDocument, highlighter1, highlighter2, ranges, textLength);
+    return new UnifiedEditorHighlighter(myDocument, highlighter1, highlighter2, ranges, textLength);
   }
 
   @NotNull
@@ -389,9 +389,9 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
         if (data.getRangeHighlighter() != null) data.getRangeHighlighter().apply(myProject, myDocument);
 
 
-        ArrayList<OnesideDiffChange> diffChanges = new ArrayList<OnesideDiffChange>(blocks.size());
+        ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<UnifiedDiffChange>(blocks.size());
         for (ChangedBlock block : blocks) {
-          diffChanges.add(new OnesideDiffChange(OnesideDiffViewer.this, block, innerFragments));
+          diffChanges.add(new UnifiedDiffChange(UnifiedDiffViewer.this, block, innerFragments));
         }
 
         List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
@@ -509,7 +509,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   private void destroyChangedBlockData() {
     if (myChangedBlockData == null) return;
 
-    for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
+    for (UnifiedDiffChange change : myChangedBlockData.getDiffChanges()) {
       change.destroyHighlighter();
     }
     for (RangeMarker block : myChangedBlockData.getGuardedRangeBlocks()) {
@@ -517,7 +517,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     }
     myChangedBlockData = null;
 
-    OnesideEditorRangeHighlighter.erase(myProject, myDocument);
+    UnifiedEditorRangeHighlighter.erase(myProject, myDocument);
 
     myFoldingModel.destroy();
 
@@ -563,7 +563,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
         int twosideEndOffset = twosideDocument.getLineStartOffset(twosideEndLine) + onesideEndPosition.column;
         twosideDocument.replaceString(twosideStartOffset, twosideEndOffset, e.getNewFragment());
 
-        for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
+        for (UnifiedDiffChange change : myChangedBlockData.getDiffChanges()) {
           change.processChange(line1, line2, shift);
         }
 
@@ -624,7 +624,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   }
 
   @CalledWithWriteLock
-  public void applyChange(@NotNull OnesideDiffChange change, @NotNull Side sourceSide) {
+  public void applyChange(@NotNull UnifiedDiffChange change, @NotNull Side sourceSide) {
     if (myStateIsOutOfDate || myChangedBlockData == null) return;
 
     Side affectedSide = sourceSide.other();
@@ -716,7 +716,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
 
   @CalledInAwt
   @Nullable
-  protected List<OnesideDiffChange> getDiffChanges() {
+  protected List<UnifiedDiffChange> getDiffChanges() {
     return myChangedBlockData == null ? null : myChangedBlockData.getDiffChanges();
   }
 
@@ -767,11 +767,11 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
 
   @CalledInAwt
   @Nullable
-  protected OnesideDiffChange getCurrentChange() {
+  protected UnifiedDiffChange getCurrentChange() {
     if (myChangedBlockData == null) return null;
     int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
 
-    for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
+    for (UnifiedDiffChange change : myChangedBlockData.getDiffChanges()) {
       if (DiffUtil.isSelectedByLine(caretLine, change.getLine1(), change.getLine2())) return change;
     }
     return null;
@@ -803,10 +803,10 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   // Actions
   //
 
-  private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<OnesideDiffChange> {
+  private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<UnifiedDiffChange> {
     @NotNull
     @Override
-    protected List<OnesideDiffChange> getChanges() {
+    protected List<UnifiedDiffChange> getChanges() {
       return ContainerUtil.notNullize(getDiffChanges());
     }
 
@@ -817,17 +817,17 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Override
-    protected int getStartLine(@NotNull OnesideDiffChange change) {
+    protected int getStartLine(@NotNull UnifiedDiffChange change) {
       return change.getLine1();
     }
 
     @Override
-    protected int getEndLine(@NotNull OnesideDiffChange change) {
+    protected int getEndLine(@NotNull UnifiedDiffChange change) {
       return change.getLine2();
     }
 
     @Override
-    protected void scrollToChange(@NotNull OnesideDiffChange change) {
+    protected void scrollToChange(@NotNull UnifiedDiffChange change) {
       DiffUtil.scrollEditor(myEditor, change.getLine1(), true);
     }
   }
@@ -912,8 +912,8 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     protected void doApply(boolean readOnly) {
       myReadOnlyLockSet = readOnly;
       if (myChangedBlockData != null) {
-        for (OnesideDiffChange onesideDiffChange : myChangedBlockData.getDiffChanges()) {
-          onesideDiffChange.updateGutterActions();
+        for (UnifiedDiffChange unifiedDiffChange : myChangedBlockData.getDiffChanges()) {
+          unifiedDiffChange.updateGutterActions();
         }
       }
       updateEditorCanBeTyped();
@@ -967,11 +967,11 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
 
   private class ChangedLinesIterator extends BufferedLineIterator {
     @NotNull private final Side mySide;
-    @NotNull private final List<OnesideDiffChange> myChanges;
+    @NotNull private final List<UnifiedDiffChange> myChanges;
 
     private int myIndex = 0;
 
-    private ChangedLinesIterator(@NotNull Side side, @NotNull List<OnesideDiffChange> changes) {
+    private ChangedLinesIterator(@NotNull Side side, @NotNull List<UnifiedDiffChange> changes) {
       mySide = side;
       myChanges = changes;
       init();
@@ -986,7 +986,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     public void loadNextBlock() {
       LOG.assertTrue(!myStateIsOutOfDate);
 
-      OnesideDiffChange change = myChanges.get(myIndex);
+      UnifiedDiffChange change = myChanges.get(myIndex);
       myIndex++;
 
       LineFragment lineFragment = change.getLineFragment();
@@ -1022,7 +1022,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
       return myEditor;
     }
     else if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
-      OnesideDiffChange change = getCurrentChange();
+      UnifiedDiffChange change = getCurrentChange();
       if (change != null) {
         return new LineRange(change.getLine1(), change.getLine2());
       }
@@ -1038,20 +1038,20 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   }
 
   private static class TwosideDocumentData {
-    @NotNull private final OnesideFragmentBuilder myBuilder;
+    @NotNull private final UnifiedFragmentBuilder myBuilder;
     @Nullable private final EditorHighlighter myHighlighter;
-    @Nullable private final OnesideEditorRangeHighlighter myRangeHighlighter;
+    @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
 
-    public TwosideDocumentData(@NotNull OnesideFragmentBuilder builder,
+    public TwosideDocumentData(@NotNull UnifiedFragmentBuilder builder,
                                @Nullable EditorHighlighter highlighter,
-                               @Nullable OnesideEditorRangeHighlighter rangeHighlighter) {
+                               @Nullable UnifiedEditorRangeHighlighter rangeHighlighter) {
       myBuilder = builder;
       myHighlighter = highlighter;
       myRangeHighlighter = rangeHighlighter;
     }
 
     @NotNull
-    public OnesideFragmentBuilder getBuilder() {
+    public UnifiedFragmentBuilder getBuilder() {
       return myBuilder;
     }
 
@@ -1061,17 +1061,17 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Nullable
-    public OnesideEditorRangeHighlighter getRangeHighlighter() {
+    public UnifiedEditorRangeHighlighter getRangeHighlighter() {
       return myRangeHighlighter;
     }
   }
 
   private static class ChangedBlockData {
-    @NotNull private final List<OnesideDiffChange> myDiffChanges;
+    @NotNull private final List<UnifiedDiffChange> myDiffChanges;
     @NotNull private final List<RangeMarker> myGuardedRangeBlocks;
     @NotNull private final LineNumberConvertor myLineNumberConvertor;
 
-    public ChangedBlockData(@NotNull List<OnesideDiffChange> diffChanges,
+    public ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
                             @NotNull List<RangeMarker> guarderRangeBlocks,
                             @NotNull LineNumberConvertor lineNumberConvertor) {
       myDiffChanges = diffChanges;
@@ -1080,7 +1080,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     }
 
     @NotNull
-    public List<OnesideDiffChange> getDiffChanges() {
+    public List<UnifiedDiffChange> getDiffChanges() {
       return myDiffChanges;
     }
 
@@ -1098,14 +1098,14 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   private static class CombinedEditorData {
     @NotNull private final CharSequence myText;
     @Nullable private final EditorHighlighter myHighlighter;
-    @Nullable private final OnesideEditorRangeHighlighter myRangeHighlighter;
+    @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
     @Nullable private final FileType myFileType;
     @NotNull private final TIntFunction myLineConvertor1;
     @NotNull private final TIntFunction myLineConvertor2;
 
     public CombinedEditorData(@NotNull CharSequence text,
                               @Nullable EditorHighlighter highlighter,
-                              @Nullable OnesideEditorRangeHighlighter rangeHighlighter,
+                              @Nullable UnifiedEditorRangeHighlighter rangeHighlighter,
                               @Nullable FileType fileType,
                               @NotNull TIntFunction convertor1,
                               @NotNull TIntFunction convertor2) {
@@ -1128,7 +1128,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Nullable
-    public OnesideEditorRangeHighlighter getRangeHighlighter() {
+    public UnifiedEditorRangeHighlighter getRangeHighlighter() {
       return myRangeHighlighter;
     }
 
@@ -1152,7 +1152,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     @NotNull
     @Override
     protected List<? extends Editor> getEditors() {
-      return OnesideDiffViewer.this.getEditors();
+      return UnifiedDiffViewer.this.getEditors();
     }
 
     @Override
@@ -1214,9 +1214,9 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
 
     private boolean doScrollToChange(@NotNull ScrollToPolicy scrollToChangePolicy) {
       if (myChangedBlockData == null) return false;
-      List<OnesideDiffChange> changes = myChangedBlockData.getDiffChanges();
+      List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
 
-      OnesideDiffChange targetChange = scrollToChangePolicy.select(changes);
+      UnifiedDiffChange targetChange = scrollToChangePolicy.select(changes);
       if (targetChange == null) return false;
 
       DiffUtil.scrollEditor(myEditor, targetChange.getLine1(), false);

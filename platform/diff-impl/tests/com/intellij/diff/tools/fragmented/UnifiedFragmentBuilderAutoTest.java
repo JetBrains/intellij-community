@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OnesideFragmentBuilderAutoTest extends AutoTestCase {
+public class UnifiedFragmentBuilderAutoTest extends AutoTestCase {
   private static ComparisonManager myComparisonManager = new ComparisonManagerImpl();
 
   private static final int CHAR_COUNT = 12;
@@ -91,7 +91,7 @@ public class OnesideFragmentBuilderAutoTest extends AutoTestCase {
     List<LineFragment> fragments = myComparisonManager.compareLinesInner(sequence1, sequence2,
                                                                          policy, DumbProgressIndicator.INSTANCE);
 
-    OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, masterSide);
+    UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, masterSide);
     builder.exec();
 
     boolean ignoreWhitespaces = policy != ComparisonPolicy.DEFAULT;

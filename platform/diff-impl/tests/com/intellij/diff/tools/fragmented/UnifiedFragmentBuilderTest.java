@@ -29,7 +29,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import java.util.Collections;
 import java.util.List;
 
-public class OnesideFragmentBuilderTest extends UsefulTestCase {
+public class UnifiedFragmentBuilderTest extends UsefulTestCase {
   private static ComparisonManager myComparisonManager = new ComparisonManagerImpl();
 
   public void testEquals() {
@@ -39,7 +39,7 @@ public class OnesideFragmentBuilderTest extends UsefulTestCase {
     List<LineFragment> fragments = myComparisonManager.compareLinesInner(document1.getCharsSequence(), document2.getCharsSequence(),
                                                                          ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
 
-    OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, Side.LEFT);
+    UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, Side.LEFT);
     builder.exec();
 
     assertTrue(builder.isEqual());
@@ -55,7 +55,7 @@ public class OnesideFragmentBuilderTest extends UsefulTestCase {
     List<LineFragment> fragments = myComparisonManager.compareLinesInner(document1.getCharsSequence(), document2.getCharsSequence(),
                                                                          ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
 
-    OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, Side.RIGHT);
+    UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, Side.RIGHT);
     builder.exec();
 
     assertFalse(builder.isEqual());
