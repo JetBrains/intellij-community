@@ -80,7 +80,7 @@ public final class Urls {
   /**
    * Url will not be normalized (see {@link VfsUtilCore#toIdeaUrl(String)}), parsed as is
    */
-  public static Url newFromIdea(@NotNull String url) {
+  public static Url newFromIdea(@NotNull CharSequence url) {
     Url result = parseFromIdea(url);
     LOG.assertTrue(result != null, url);
     return result;
@@ -88,8 +88,8 @@ public final class Urls {
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   @Nullable
-  public static Url parseFromIdea(@NotNull String url) {
-    return URLUtil.containsScheme(url) ? parseUrl(url) : newLocalFileUrl(url);
+  public static Url parseFromIdea(@NotNull CharSequence url) {
+    return StringUtil.contains(url, URLUtil.SCHEME_SEPARATOR) ? parseUrl(url) : newLocalFileUrl(url.toString());
   }
 
   @Nullable
@@ -122,10 +122,10 @@ public final class Urls {
   }
 
   @Nullable
-  private static Url parseUrl(@NotNull String url) {
-    String urlToParse;
-    if (url.startsWith("jar:file://")) {
-      urlToParse = url.substring("jar:".length());
+  private static Url parseUrl(@NotNull CharSequence url) {
+    CharSequence urlToParse;
+    if (StringUtil.startsWith(url, "jar:file://")) {
+      urlToParse = url.subSequence("jar:".length(), url.length());
     }
     else {
       urlToParse = url;

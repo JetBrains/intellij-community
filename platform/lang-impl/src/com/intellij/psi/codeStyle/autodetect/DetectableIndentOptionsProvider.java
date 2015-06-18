@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -67,7 +68,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null || vFile instanceof LightVirtualFile || myDisabledFiles.contains(vFile)) return false;
-    return settings.AUTODETECT_INDENTS;
+    return LanguageFormatting.INSTANCE.forContext(file) != null && settings.AUTODETECT_INDENTS;
   }
 
   @TestOnly

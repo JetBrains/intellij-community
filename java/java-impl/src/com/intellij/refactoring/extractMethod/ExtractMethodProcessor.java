@@ -1438,7 +1438,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean chooseTargetClass(PsiElement codeFragment, final Pass<ExtractMethodProcessor> extractPass) throws PrepareFailedException {
-    final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements);
+    final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements, myOutputVariables);
 
     myNeedChangeContext = false;
     myTargetClass = myCodeFragmentMember instanceof PsiMember
@@ -1513,7 +1513,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void declareNecessaryVariablesInsideBody(PsiCodeBlock body) throws IncorrectOperationException {
-    List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariablesInBody();
+    List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariablesInBody(ControlFlowUtil.findCodeFragment(myElements[0]), myOutputVariables);
     for (PsiVariable variable : usedVariables) {
       boolean toDeclare = !isDeclaredInside(variable) && myInputVariables.toDeclareInsideBody(variable);
       if (toDeclare) {

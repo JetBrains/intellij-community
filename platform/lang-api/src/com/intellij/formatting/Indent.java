@@ -83,6 +83,8 @@ import org.jetbrains.annotations.NotNull;
 public abstract class Indent {
   private static IndentFactory myFactory;
 
+  public abstract Type getType();
+
   static void setFactory(IndentFactory factory) {
     myFactory = factory;
   }

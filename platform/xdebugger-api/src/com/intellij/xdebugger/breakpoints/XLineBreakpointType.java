@@ -19,6 +19,7 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -115,5 +116,31 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    */
   public boolean canBeHitInOtherPlaces() {
     return false;
+  }
+
+  /**
+   * @return range to highlight on the line, null to highlight the whole line
+   */
+  @Nullable
+  public TextRange getHighlightRange(XLineBreakpoint<P> breakpoint) {
+    return null;
+  }
+
+  /**
+   * Return a list of variants if there can be more than one breakpoint on the line
+   */
+  @NotNull
+  public List<? extends XLineBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
+    return Collections.emptyList();
+  }
+
+  public abstract class XLineBreakpointVariant {
+    public abstract String getText();
+
+    public abstract Icon getIcon();
+
+    public abstract TextRange getHighlightRange();
+
+    public abstract P createProperties();
   }
 }

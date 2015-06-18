@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myComponent" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="1135" height="646"/>
+      <xy x="20" y="20" width="1147" height="646"/>
     </constraints>
     <properties/>
     <clientProperties>
@@ -263,14 +263,6 @@
                   <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
-              <component id="1283d" class="javax.swing.JCheckBox" binding="myUseCommonProxy">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="30" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Use IDEA general proxy settings as default for Subversion" noi18n="true"/>
-                </properties>
-              </component>
               <grid id="96256" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
@@ -500,6 +492,28 @@
                   </grid>
                 </constraints>
               </vspacer>
+              <grid id="34bfa" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="1283d" class="javax.swing.JCheckBox" binding="myUseCommonProxy">
+                    <constraints border-constraint="West"/>
+                    <properties>
+                      <text value="Use IDEA general proxy settings as default for Subversion" noi18n="true"/>
+                    </properties>
+                  </component>
+                  <component id="a8ce1" class="com.intellij.ui.components.labels.LinkLabel" binding="myNavigateToCommonProxyLink" custom-create="true">
+                    <constraints border-constraint="East"/>
+                    <properties>
+                      <horizontalAlignment value="10"/>
+                      <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="navigate.to.idea.proxy.settings"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
             </children>
           </grid>
           <grid id="763be" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

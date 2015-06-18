@@ -155,7 +155,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public String getActionName() {
     final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
-    return testObject != null ? ProgramRunnerUtil.shortenName(testObject.getActionName(), 0) : null;
+    return testObject != null ? testObject.getActionName() : null;
   }
 
   public void setVMParameters(String value) {

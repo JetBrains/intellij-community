@@ -15,43 +15,26 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 /**
  * A facade for components responsible for drawing editor contents, managing editor size 
@@ -71,7 +54,6 @@ public class EditorView implements Disposable {
   private final TextLayoutCache myTextLayoutCache;
   private final TabFragment myTabFragment;
   
-  private EditorHighlighter myHighlighter; // accessed only in EDT
   private String myPrefixText; // accessed only in EDT
   private LineLayout myPrefixLayout; // guarded by myLock
   private TextAttributes myPrefixAttributes; // accessed only in EDT
@@ -100,65 +82,6 @@ public class EditorView implements Disposable {
     
     reinitSettings();
   }
-  
-  private void disposeHighlighter() {
-    if (myHighlighter != null) {
-      myDocument.removeDocumentListener(myHighlighter);
-      myHighlighter = null;
-    }
-  }
-  
-  private void updateHighlighter() {
-    disposeHighlighter();
-    myHighlighter = createHighlighter(myEditor);
-    if (myHighlighter != null) {
-      myDocument.addDocumentListener(myHighlighter);
-    }
-  }
-
-  @Nullable
-  private static EditorHighlighter createHighlighter(Editor editor) {
-    final Project project = editor.getProject();
-    if (project == null) return null;
-    final Document document = editor.getDocument();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null || !(file.getFileType() instanceof LanguageFileType)) return null;
-    Language draftLanguage = ((LanguageFileType)file.getFileType()).getLanguage();
-    Language language = LanguageSubstitutors.INSTANCE.substituteLanguage(draftLanguage, file, project);
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    if (parserDefinition == null) return null;
-    final Lexer lexer = parserDefinition.createLexer(project);
-    LexerEditorHighlighter highlighter = new LexerEditorHighlighter(new SyntaxHighlighterBase() {
-      @Override
-      public
-      @NotNull
-      Lexer getHighlightingLexer() {
-        return lexer;
-      }
-
-      @NotNull
-      @Override
-      public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-        return EMPTY;
-      }
-    }, DUMMY_COLORS_SCHEME);
-    highlighter.setEditor(new HighlighterClient() {
-      @Override
-      public Project getProject() {
-        return project;
-      }
-
-      @Override
-      public void repaint(int start, int end) {}
-
-      @Override
-      public Document getDocument() {
-        return document;
-      }
-    });
-    highlighter.setText(document.getImmutableCharSequence());
-    return highlighter;
-  }
 
   EditorImpl getEditor() {
     return myEditor;
@@ -180,14 +103,8 @@ public class EditorView implements Disposable {
     return myTabFragment;
   }
 
-  @Nullable
-  EditorHighlighter getHighlighter() {
-    return myHighlighter;
-  }
-
   @Override
   public void dispose() {
-    disposeHighlighter();
   }
 
   public int yToVisualLine(int y) {
@@ -324,7 +241,6 @@ public class EditorView implements Disposable {
     reset();
     setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
     invalidateFoldRegionLayouts();
-    updateHighlighter();
   }
   
   public void invalidateRange(int startOffset, int endOffset) {
@@ -361,7 +277,7 @@ public class EditorView implements Disposable {
     if (!visualPosition.equals(offsetToVisualPosition(offset, logicalPosition.leansForward))) return false;
     int line = myDocument.getLineNumber(offset);
     LineLayout layout = getLineLayout(line);
-    return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line));
+    return layout.isDirectionBoundary(offset - myDocument.getLineStartOffset(line), logicalPosition.leansForward);
   }
 
   /**
@@ -482,14 +398,4 @@ public class EditorView implements Disposable {
   private static void assertIsReadAccess() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
-  
-  private static final EditorColorsScheme DUMMY_COLORS_SCHEME = (EditorColorsScheme)
-    Proxy.newProxyInstance(EditorView.class.getClassLoader(), 
-                           new Class[]{EditorColorsScheme.class}, 
-                           new InvocationHandler() {
-                             @Override
-                             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                               throw new UnsupportedOperationException();
-                             }
-                           });
 }

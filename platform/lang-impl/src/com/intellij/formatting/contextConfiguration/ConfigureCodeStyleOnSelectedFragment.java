@@ -26,15 +26,13 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow;
 
@@ -107,13 +106,22 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       mySelectedTextFormatter = selectedTextFormatter;
       myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, settingsToShow, language, selectedTextFormatter);
 
+      myOKAction = new ApplyToSettings();
+      myOKAction.setEnabled(false);
+      myTabbedLanguagePanel.setOnSomethingChangedCallback(new Runnable() {
+        @Override
+        public void run() {
+          boolean isModified = myTabbedLanguagePanel.isModified(mySettings);
+          myOKAction.setEnabled(isModified);
+        }
+      });
+
       myEditor = editor;
       myDocument = editor.getDocument();
 
 
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
       setTitle(StringUtil.capitalizeWords(title, true) + ": " + language.getDisplayName());
-      setOKButtonText("Save");
 
       setInitialLocationCallback(new Computable<Point>() {
         @Override
@@ -145,13 +153,17 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
     @Override
     protected void doOKAction() {
+      applyFromUiToSettings();
+      super.doOKAction();
+    }
+
+    private void applyFromUiToSettings() {
       try {
         myTabbedLanguagePanel.apply(mySettings);
       }
       catch (ConfigurationException e) {
         LOG.debug("Can not apply code style settings from context menu to project code style settings");
       }
-      super.doOKAction();
     }
 
     @Override
@@ -277,6 +289,41 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
           }
         }
         return positionWithMaxColumn;
+      }
+    }
+
+    private class ApplyToSettings extends AbstractAction implements OptionAction {
+      private Action[] myOptions = {
+        new ApplyToSettingsAndReformat()
+      };
+
+      private ApplyToSettings() {
+        super("Save");
+        putValue(DEFAULT_ACTION, Boolean.TRUE);
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doOKAction();
+      }
+
+      @NotNull
+      @Override
+      public Action[] getOptions() {
+        return myOptions;
+      }
+    }
+
+    private class ApplyToSettingsAndReformat extends AbstractAction {
+      public ApplyToSettingsAndReformat() {
+        super("Save and Reformat File");
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        applyFromUiToSettings();
+        mySelectedTextFormatter.reformatWholeFile();
+        FragmentCodeStyleSettingsDialog.super.doOKAction();
       }
     }
   }

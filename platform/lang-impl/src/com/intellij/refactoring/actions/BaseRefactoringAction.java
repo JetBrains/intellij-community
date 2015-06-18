@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -64,7 +65,18 @@ public abstract class BaseRefactoringAction extends AnAction {
   }
 
   protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
-    return getHandler(dataContext) != null;
+    final RefactoringActionHandler handler = getHandler(dataContext);
+    if (handler != null) {
+      if (handler instanceof ContextAwareActionHandler) {
+        final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+        final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+        if (editor != null && file != null && !((ContextAwareActionHandler)handler).isAvailableForQuickList(editor, file, dataContext)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   @Nullable

@@ -287,9 +287,10 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
 
     @Override
     public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
-      assert !myListeners.contains(listener);
-      myListeners.add(listener);
-      super.addRootSetChangedListener(listener);
+      if (!myListeners.contains(listener)) {
+        myListeners.add(listener);
+        super.addRootSetChangedListener(listener);
+      }
     }
 
     @Override

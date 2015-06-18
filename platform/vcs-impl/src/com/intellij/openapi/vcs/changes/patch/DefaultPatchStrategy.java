@@ -27,9 +27,9 @@ public class DefaultPatchStrategy extends AutoMatchStrategy {
 
   @Override
   public void acceptPatch(TextFilePatch patch, Collection<VirtualFile> foundByName) {
-    FilePatchInProgress longest = null;
+    TextFilePatchInProgress longest = null;
     for (VirtualFile file : foundByName) {
-      final FilePatchInProgress current = processMatch(patch, file);
+      final TextFilePatchInProgress current = processMatch(patch, file);
       if ((current != null) && ((longest == null) || (longest.getCurrentStrip() > current.getCurrentStrip()))) {
         longest = current;
       }
@@ -38,7 +38,7 @@ public class DefaultPatchStrategy extends AutoMatchStrategy {
       registerFolderDecision(longest.getPatch().getBeforeName(), longest.getBase());
       myResult.add(longest);
     } else {
-      myResult.add(new FilePatchInProgress(patch, null, myBaseDir));
+      myResult.add(new TextFilePatchInProgress(patch, null, myBaseDir));
     }
   }
 

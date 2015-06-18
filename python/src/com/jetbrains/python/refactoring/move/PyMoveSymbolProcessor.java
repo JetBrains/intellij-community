@@ -160,7 +160,7 @@ public class PyMoveSymbolProcessor {
       else {
         final PyImportStatementBase importStmt = getImportStatementByElement(usage);
         if (importStmt != null) {
-          PyClassRefactoringUtil.updateImportOfElement(importStmt, newElement);
+          PyClassRefactoringUtil.updateUnqualifiedImportOfElement(importStmt, newElement);
         }
       }
       if (resolvesToLocalStarImport(usage)) {

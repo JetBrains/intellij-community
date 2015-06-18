@@ -102,5 +102,6 @@ public class NewLineBlocksIterator implements Iterator<Block> {
 
   @Override
   public void remove() {
+    throw new UnsupportedOperationException();
   }
 }

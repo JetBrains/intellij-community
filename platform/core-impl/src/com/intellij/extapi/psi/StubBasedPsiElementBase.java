@@ -157,7 +157,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     throw new AssertionError(message);
   }
 
-  public final void setNode(final ASTNode node) {
+  public final void setNode(@NotNull ASTNode node) {
     myNode = node;
   }
 

@@ -309,7 +309,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         if (!myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
           LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber, newLeansRight));
           int offset = myEditor.logicalPositionToOffset(log);
-          if (offset >= document.getTextLength()) {
+          if (offset >= document.getTextLength() && (!myEditor.myUseNewRendering || columnShift == 0)) {
             int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength(), true).column;
             // We want to move caret to the last column if if it's located at the last line and 'Down' is pressed.
             if (lastOffsetColumn > newColumnNumber) {

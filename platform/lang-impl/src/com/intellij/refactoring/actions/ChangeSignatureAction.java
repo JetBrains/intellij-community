@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -90,7 +91,14 @@ public class ChangeSignatureAction extends BasePlatformRefactoringAction {
   @Nullable
   @Override
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, final PsiElement element) {
-    return new RefactoringActionHandler() {
+    abstract class ContextAwareChangeSignatureHandler implements RefactoringActionHandler, ContextAwareActionHandler {}
+
+    return new ContextAwareChangeSignatureHandler() {
+      @Override
+      public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+        return findTargetMember(element) != null;
+      }
+
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
         editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);

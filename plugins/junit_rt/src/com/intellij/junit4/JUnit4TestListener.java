@@ -89,7 +89,7 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testStarted(Description description) throws Exception {
-    final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+    final String methodName = getFullMethodName(description);
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
     final List parents = (List)myParents.get(description);
@@ -130,17 +130,17 @@ public class JUnit4TestListener extends RunListener {
 
   public void testFinished(Description description) throws Exception {
     final long duration = currentTime() - myCurrentTestStart;
-    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(JUnit4ReflectionUtil.getMethodName(description)) +
+    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(getFullMethodName(description)) +
                           (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
   }
 
   public void testFailure(Failure failure) throws Exception {
     final Description description = failure.getDescription();
-    final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+    final String methodName = getFullMethodName(description);
     //class setUp failed
     if (methodName == null) {
       for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-        testFailure(failure, ServiceMessageTypes.TEST_FAILED, JUnit4ReflectionUtil.getMethodName((Description)iterator.next()));
+        testFailure(failure, ServiceMessageTypes.TEST_FAILED, getFullMethodName((Description)iterator.next()));
       }
     }
     else {
@@ -179,12 +179,12 @@ public class JUnit4TestListener extends RunListener {
   public void testAssumptionFailure(Failure failure) {
     final Description description = failure.getDescription();
     try {
-      final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+      final String methodName = getFullMethodName(description);
       //class setUp failed
       if (methodName == null) {
         for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
           final Description testDescription = (Description)iterator.next();
-          testAssumptionFailure(failure, testDescription, JUnit4ReflectionUtil.getMethodName(testDescription));
+          testAssumptionFailure(failure, testDescription, getFullMethodName(testDescription));
         }
       }
       else {
@@ -192,6 +192,14 @@ public class JUnit4TestListener extends RunListener {
       }
     }
     catch (Exception ignore) {}
+  }
+
+  private static String getFullMethodName(Description description) {
+    final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+    if (methodName != null) {
+      return getShortName(JUnit4ReflectionUtil.getClassName(description)) + "." + methodName;
+    }
+    return methodName;
   }
 
   private void testAssumptionFailure(Failure failure, Description testDescription, String name) throws Exception {
@@ -215,7 +223,7 @@ public class JUnit4TestListener extends RunListener {
     catch (NoSuchMethodError ignored) {
       //junit < 4.4
     }
-    attrs.put("name", JUnit4ReflectionUtil.getMethodName(description));
+    attrs.put("name", getFullMethodName(description));
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_IGNORED, attrs));
     testFinished(description);
   }
@@ -281,7 +289,7 @@ public class JUnit4TestListener extends RunListener {
 
     String className = JUnit4ReflectionUtil.getClassName(description);
     if (description.getChildren().isEmpty()) {
-      final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
+      final String methodName = getFullMethodName((Description)description);
       if (methodName != null) {
         if (parent != null) {
           List parents = (List)myParents.get(description);
@@ -332,7 +340,7 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private static String getTestMethodLocation(String methodName, String className) {
-    return "locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\'";
+    return "locationHint=\'java:test://" + escapeName(className + "." + getShortName(methodName)) + "\'";
   }
 
   private static boolean isParameter(Description description) {

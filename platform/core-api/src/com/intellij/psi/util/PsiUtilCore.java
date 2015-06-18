@@ -20,7 +20,10 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -45,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -485,6 +489,41 @@ public class PsiUtilCore {
       throw new PsiInvalidElementAccessException(element);
     }
   }
+
+  /**
+   * Tries to find PSI file for a virtual file and throws assertion error with debug info if it is null.
+   */
+  @NotNull
+  public static PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+    PsiManager psiManager = PsiManager.getInstance(project);
+    PsiFile psi = psiManager.findFile(file);
+    if (psi != null) return psi;
+    FileType fileType = file.getFileType();
+    FileViewProvider viewProvider = psiManager.findViewProvider(file);
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    StringBuilder sb = new StringBuilder();
+    sb.append("valid=").append(file.isValid()).
+      append(" isDirectory=").append(file.isDirectory()).
+      append(" hasDocument=").append(document != null).
+      append(" length=").append(file.getLength());
+    sb.append("\nproject=").append(project.getName()).
+      append(" default=").append(project.isDefault()).
+      append(" open=").append(project.isOpen());;
+    sb.append("\nfileType=").append(fileType.getName()).append("/").append(fileType.getClass().getName());
+    sb.append("\nviewProvider=").append(viewProvider == null ? "null" : viewProvider.getClass().getName());
+    if (viewProvider != null) {
+      List<PsiFile> files = viewProvider.getAllFiles();
+      sb.append(" language=").append(viewProvider.getBaseLanguage().getID());
+      sb.append(" physical=").append(viewProvider.isPhysical());
+      sb.append(" rootCount=").append(files.size());
+      for (PsiFile o : files) {
+        sb.append("\n  root=").append(o.getLanguage().getID()).append("/").append(o.getClass().getName());
+      }
+    }
+    LOG.error("no PSI for file '" + file.getName() + "'", new Attachment(file.getPresentableUrl(), sb.toString()));
+    throw new AssertionError();
+  }
+
 
   /**
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead

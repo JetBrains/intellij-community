@@ -39,12 +39,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author irengrig
- *         Date: 2/25/11
- *         Time: 5:58 PM
- */
-public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
+public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFilePatchInProgress> {
   private final Project myProject;
 
   public ApplyPatchDefaultExecutor(Project project) {
@@ -58,7 +53,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
   }
 
   @Override
-  public void apply(MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
+  public void apply(MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
                     LocalChangeList localList,
                     String fileName,
                     TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -69,8 +64,8 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
     for (VirtualFile base : patchGroups.keySet()) {
       final PatchApplier patchApplier =
         new PatchApplier<BinaryFilePatch>(myProject, base, ObjectsConvertor.convert(patchGroups.get(base),
-                                                                                  new Convertor<FilePatchInProgress, FilePatch>() {
-                                                                                    public FilePatch convert(FilePatchInProgress o) {
+                                                                                    new Convertor<AbstractFilePatchInProgress, FilePatch>() {
+                                                                                      public FilePatch convert(AbstractFilePatchInProgress o) {
                                                                                       return o.getPatch();
                                                                                     }
                                                                                   }), localList, null, commitContext);
@@ -144,10 +139,10 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
     }
   }
 
-  public static Set<String> pathsFromGroups(MultiMap<VirtualFile, FilePatchInProgress> patchGroups) {
+  public static Set<String> pathsFromGroups(MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups) {
     final Set<String> selectedPaths = new HashSet<String>();
-    final Collection<? extends FilePatchInProgress> values = patchGroups.values();
-    for (FilePatchInProgress value : values) {
+    final Collection<? extends AbstractFilePatchInProgress> values = patchGroups.values();
+    for (AbstractFilePatchInProgress value : values) {
       final String path = value.getPatch().getBeforeName() == null ? value.getPatch().getAfterName() : value.getPatch().getBeforeName();
       selectedPaths.add(path);
     }

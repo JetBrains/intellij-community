@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +77,7 @@ public interface GitBranchUiHandler {
    *                         specify the title of the force button; otherwise (force merge is not possible) pass null.
    * @return the code of the decision.
    */
+  @MagicConstant(valuesFromClass = GitSmartOperationDialog.class)
   int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
                                @NotNull String operation, @Nullable String forceButtonTitle);
 

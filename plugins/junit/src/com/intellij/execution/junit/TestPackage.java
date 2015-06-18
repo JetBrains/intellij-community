@@ -29,6 +29,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -120,7 +121,14 @@ public class TestPackage extends TestObject {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    getClassFilter(data);//check if junit found
+    final DumbService dumbService = DumbService.getInstance(getConfiguration().getProject());
+    try {
+      dumbService.setAlternativeResolveEnabled(true);
+      getClassFilter(data);//check if junit found
+    }
+    finally {
+      dumbService.setAlternativeResolveEnabled(false);
+    }
     createTempFiles(javaParameters);
 
     createServerSocket(javaParameters);

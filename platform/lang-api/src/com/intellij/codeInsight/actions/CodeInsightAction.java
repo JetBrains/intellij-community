@@ -82,7 +82,8 @@ public abstract class CodeInsightAction extends AnAction {
       return;
     }
 
-    Editor editor = getEditor(e.getDataContext(), project);
+    final DataContext dataContext = e.getDataContext();
+    Editor editor = getEditor(dataContext, project);
     if (editor == null) {
       presentation.setEnabled(false);
       return;
@@ -94,11 +95,16 @@ public abstract class CodeInsightAction extends AnAction {
       return;
     }
 
-    update(presentation, project, editor, file);
+    update(presentation, project, editor, file, dataContext, e.getPlace());
   }
 
   protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     presentation.setEnabled(isValidForFile(project, editor, file));
+  }
+
+  protected void update(@NotNull Presentation presentation, @NotNull Project project,
+                        @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext, @Nullable String actionPlace) {
+    update(presentation, project, editor, file);
   }
 
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

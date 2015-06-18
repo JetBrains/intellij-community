@@ -538,7 +538,7 @@ public class ActionsTree {
 
         Color foreground;
         if (selected) {
-          foreground = UIUtil.getTreeSelectionForeground();
+          foreground = UIUtil.getTreeForeground(true, hasFocus);
         }
         else {
           if (changed) {

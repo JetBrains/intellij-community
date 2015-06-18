@@ -24,6 +24,7 @@
  */
 package com.intellij;
 
+import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -93,13 +94,13 @@ public class TestAll implements Test {
   };
 
   private final TestCaseLoader myTestCaseLoader;
-  private long myStartTime = 0;
-  private boolean myInterruptedByOutOfTime = false;
-  private long myLastTestStartTime = 0;
+  private long myStartTime;
+  private boolean myInterruptedByOutOfTime;
+  private long myLastTestStartTime;
   private String myLastTestClass;
   private int myRunTests = -1;
   private boolean mySavingMemorySnapshot;
-  private int myLastTestTestMethodCount = 0;
+  private int myLastTestTestMethodCount;
   private TestRecorder myTestRecorder;
 
   public TestAll(String packageRoot) throws Throwable {
@@ -190,7 +191,7 @@ public class TestAll implements Test {
 
   private void beforeFirstTest() {
     if ((ourMode & START_GUARD) != 0) {
-      Thread timeAndMemoryGuard = new Thread() {
+      Thread timeAndMemoryGuard = new Thread("Time and Memory Guard") {
         @Override
         public void run() {
           log("Starting Time and Memory Guard");
@@ -242,7 +243,7 @@ public class TestAll implements Test {
     if (PlatformTestCase.ourTestThread != null) {
       return PlatformTestCase.ourTestThread;
     }
-    else return LightPlatformTestCase.ourTestThread;
+    return LightPlatformTestCase.ourTestThread;
   }
 
   private void addErrorMessage(TestResult testResult, String message) {
@@ -283,7 +284,7 @@ public class TestAll implements Test {
     tryGc(10);
   }
 
-  private static boolean shouldRecord(Class<?> aClass) {
+  private static boolean shouldRecord(@NotNull Class<?> aClass) {
     return aClass.getAnnotation(RecordExecution.class) != null;
   }
 
@@ -389,10 +390,14 @@ public class TestAll implements Test {
   }
 
   @Nullable
-  private static Test getTest(@NotNull final Class testCaseClass) {
+  private static Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
       if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
         return null;
+      }
+      Bombed classBomb = testCaseClass.getAnnotation(Bombed.class);
+      if (classBomb != null && PlatformTestUtil.bombExplodes(classBomb)) {
+        return new ExplodedBomb(testCaseClass.getName(), classBomb);
       }
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
@@ -416,8 +421,7 @@ public class TestAll implements Test {
         @Override
         public void addTest(Test test) {
           if (!(test instanceof TestCase)) {
-            testsCount[0]++;
-            super.addTest(test);
+            doAddTest(test);
           }
           else {
             String name = ((TestCase)test).getName();
@@ -426,11 +430,24 @@ public class TestAll implements Test {
               return;
 
             Method method = findTestMethod((TestCase)test);
-            if (method == null || !TestCaseLoader.isBombed(method)) {
-              testsCount[0]++;
-              super.addTest(test);
+            if (method == null) {
+              doAddTest(test);
+            }
+            else {
+              Bombed methodBomb = method.getAnnotation(Bombed.class);
+              if (methodBomb == null) {
+                doAddTest(test);
+              }
+              else if (PlatformTestUtil.bombExplodes(methodBomb)) {
+                doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
+              }
             }
           }
+        }
+
+        private void doAddTest(Test test) {
+          testsCount[0]++;
+          super.addTest(test);
         }
 
         @Nullable
@@ -487,5 +504,21 @@ public class TestAll implements Test {
 
   private static void log(String message) {
     TeamCityLogger.info(message);
+  }
+
+  @SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNonTrivialConstructors"})
+  private static class ExplodedBomb extends TestCase {
+    private final Bombed myBombed;
+
+    public ExplodedBomb(String testName, Bombed bombed) {
+      super(testName);
+      myBombed = bombed;
+    }
+
+    @Override
+    protected void runTest() throws Throwable {
+      String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
+      fail("Bomb created by " + myBombed.user() + description + " now explodes!");
+    }
   }
 }

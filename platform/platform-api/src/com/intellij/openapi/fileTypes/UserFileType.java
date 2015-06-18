@@ -80,7 +80,7 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
     return null;
   }
 
-  public void copyFrom(UserFileType newType) {
+  public void copyFrom(@NotNull UserFileType newType) {
     myName = newType.getName();
     myDescription = newType.getDescription();
   }

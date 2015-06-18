@@ -59,7 +59,8 @@ public class FormatterBasedLineIndentInfoBuilder {
     List<Block> normallyIndentedBlocks = ContainerUtil.filter(getBlocksStartingNewLine(), new Condition<Block>() {
       @Override
       public boolean value(Block block) {
-        Indent.Type type = block.getIndent() instanceof IndentImpl ? ((IndentImpl)block.getIndent()).getType() : null;
+        Indent indent = block.getIndent();
+        Indent.Type type = indent != null ? indent.getType() : null;
         return type == Indent.Type.NONE || type == Indent.Type.NORMAL;
       }
     });

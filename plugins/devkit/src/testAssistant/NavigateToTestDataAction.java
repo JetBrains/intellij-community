@@ -51,17 +51,21 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     List<String> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
-      String message = "Cannot find testdata files for class";
-      final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
-      Notifications.Bus.notify(notification, project);
+      String testData = guessTestData(dataContext);
+      if (testData == null) {
+        String message = "Cannot find testdata files for class";
+        final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
+        Notifications.Bus.notify(notification, project);
+        return;
+      }
+      fileNames = Collections.singletonList(testData);
     }
-    else {
-      final Editor editor = e.getData(CommonDataKeys.EDITOR);
-      final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) : popupFactory.guessBestPopupLocation(dataContext);
-      
-      TestDataNavigationHandler.navigate(point, fileNames, project);
-    }
+
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) : popupFactory.guessBestPopupLocation(dataContext);
+
+    TestDataNavigationHandler.navigate(point, fileNames, project);
   }
 
   @Nullable
@@ -126,5 +130,10 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
       }
     }
     return null;
+  }
+
+  private static String guessTestData(DataContext context) {
+    PsiMethod method = findTargetMethod(context);
+    return method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
   }
 }

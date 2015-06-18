@@ -24,7 +24,7 @@ PsiJavaFile:CompletionHack1.java
           PsiJavaToken:LT('<')
           PsiTypeParameter:X
             PsiIdentifier:X('X')
-            PsiElement(EXTENDS_BOUND_LIST)
+            PsiReferenceList
               <empty list>
           PsiErrorElement:'>' expected.
             <empty list>

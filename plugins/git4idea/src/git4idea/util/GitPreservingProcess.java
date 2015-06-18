@@ -37,14 +37,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 
 /**
  * Executes a Git operation on a number of repositories surrounding it by stash-unstash procedure.
  * I.e. stashes changes, executes the operation and then unstashes it.
- *
- * @author Kirill Likhodedov
  */
 public class GitPreservingProcess {
 
@@ -59,11 +58,9 @@ public class GitPreservingProcess {
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final Runnable myOperation;
   @NotNull private final String myStashMessage;
+  @NotNull private final GitStashChangesSaver mySaver;
 
-  // suppressed, because only the load() method needs to be synchronized not to load twice
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private GitStashChangesSaver mySaver;
-  private boolean myLoaded;
-  private final Object LOAD_LOCK = new Object();
+  @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
 
   public GitPreservingProcess(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git,
                               @NotNull Collection<GitRepository> repositories,
@@ -79,6 +76,7 @@ public class GitPreservingProcess {
     myOperation = operation;
     myStashMessage = String.format("%s %s at %s", StringUtil.capitalize(myOperationTitle), myDestinationName,
                                    DateFormatUtil.formatDateTime(Clock.getTime()));
+    mySaver = configureSaver();
   }
 
   public void execute() {
@@ -90,7 +88,6 @@ public class GitPreservingProcess {
       @Override
       public void run() {
         LOG.debug("starting");
-        mySaver = configureSaver();
         boolean savedSuccessfully = save();
         LOG.debug("save result: " + savedSuccessfully);
         if (savedSuccessfully) {
@@ -114,7 +111,7 @@ public class GitPreservingProcess {
   }
 
   /**
-   * Configures the saver, actually notifications and texts in the GitConflictResolver used inside.
+   * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
   private GitStashChangesSaver configureSaver() {
     GitStashChangesSaver saver = new GitStashChangesSaver(myProject, myFacade, myGit, myProgressIndicator, myStashMessage);
@@ -164,13 +161,9 @@ public class GitPreservingProcess {
   }
 
   public void load() {
-    synchronized (LOAD_LOCK) {
-      if (myLoaded) {
-        return;
-      }
+    if (myLoaded.compareAndSet(false, true)) {
       try {
         mySaver.load();
-        myLoaded = true;
       }
       catch (VcsException e) {
         LOG.info("Couldn't load local changes", e);
@@ -179,6 +172,8 @@ public class GitPreservingProcess {
                                                                      join(e.getMessages())));
       }
     }
+    else {
+      LOG.warn("The changes were already loaded", new Throwable());
+    }
   }
-
 }

@@ -60,11 +60,14 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
     if (handlers.isEmpty()) return;
 
+    boolean exactRange = false;
     TextRange range = EditorUtil.getSelectionInAnyMode(editor);
     final Map<PsiElement, ExpressionTypeProvider> map = ContainerUtil.newLinkedHashMap();
     for (ExpressionTypeProvider handler : handlers) {
       for (PsiElement element : ((ExpressionTypeProvider<? extends PsiElement>)handler).getExpressionsAt(elementAt)) {
-        if (!element.getTextRange().contains(range)) continue;
+        TextRange r = element.getTextRange();
+        if (exactRange && !r.equals(range) || !r.contains(range)) continue;
+        if (!exactRange) exactRange = r.equals(range);
         map.put(element, handler);
       }
     }

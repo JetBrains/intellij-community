@@ -142,10 +142,10 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     myParamsMap.put(result, paramString);
     final List<String> fqns = result.getTestHierarchy();
     onSuiteStart(fqns, true);
-    final String methodName = result.getMethodName();
     final String className = result.getClassName();
+    final String methodName = result.getMethodName();
     final String location = className + "." + methodName + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName + (paramString != null ? paramString : "")) +
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
                           "\' locationHint=\'java:test://" + escapeName(location) + "\']");
   }
 
@@ -187,7 +187,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private synchronized String getTestMethodNameWithParams(ExposedTestResult result) {
-    String methodName = result.getMethodName();
+    String methodName = getShortName(result.getClassName()) + "." + result.getMethodName();
     String paramString = myParamsMap.get(result);
     if (paramString != null) {
       methodName += paramString;

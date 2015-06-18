@@ -38,7 +38,7 @@ public class AutoMatchIterator {
     myStrategies.add(new DefaultPatchStrategy(baseDir));
   }
 
-  public List<FilePatchInProgress> execute(final List<TextFilePatch> list) {
+  public List<TextFilePatchInProgress> execute(final List<TextFilePatch> list) {
     final List<TextFilePatch> creations = new LinkedList<TextFilePatch>();
 
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);

@@ -21,14 +21,17 @@ import com.intellij.util.xmlb.annotations.OptionTag;
  * @author egor
  */
 public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaLineBreakpointProperties> {
-  private Integer myOffset = null;
+  // null - stop at all positions on the line
+  // -1 - stop only at the base position (first on the line)
+  // 0 or more - index of the lambda on the line to stop at
+  private Integer myLambdaOrdinal = null;
 
-  @OptionTag("offset")
-  public Integer getOffset() {
-    return myOffset;
+  @OptionTag("lambda-ordinal")
+  public Integer getLambdaOrdinal() {
+    return myLambdaOrdinal;
   }
 
-  public void setOffset(Integer offset) {
-    myOffset = offset;
+  public void setLambdaOrdinal(Integer lambdaOrdinal) {
+    myLambdaOrdinal = lambdaOrdinal;
   }
 }

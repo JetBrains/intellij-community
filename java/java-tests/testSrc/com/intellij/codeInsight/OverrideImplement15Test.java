@@ -20,6 +20,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -29,6 +30,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.MapDataContext;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +136,9 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     PsiElement context = getFile().findElementAt(offset);
     final PsiClass aClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
     assertTrue(aClass != null && aClass.isAnnotationType());
-    assertFalse(new JavaOverrideMethodsHandler().isValidFor(getEditor(), getFile()));
+    final JavaOverrideMethodsHandler handler = new JavaOverrideMethodsHandler();
+    assertTrue(handler.isValidFor(getEditor(), getFile()));
+    assertFalse(handler.isAvailableForQuickList(getEditor(), getFile(), new MapDataContext()));
   }
 
   private void doTest(boolean copyJavadoc) { doTest(copyJavadoc, null); }
