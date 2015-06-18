@@ -14,7 +14,7 @@ class Foo {
   void foo(K k){}
 
   void bar() {
-    foo((p) -> {
+    <error descr="Ambiguous method call: both 'Foo.foo(I)' and 'Foo.foo(K)' match">foo</error>((p) -> {
       System.out.println<error descr="Cannot resolve method 'println(<lambda parameter>)'">(p)</error>;
     });
 
@@ -26,9 +26,9 @@ class Foo {
       System.out.println(s);
     });
 
-    foo<error descr="Cannot resolve method 'foo(<lambda expression>)'">((String p, String k) -> {
+    <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>((String p, String k) -> {
       System.out.println(p);
-    })</error>;
+    });
   }
 }
 
@@ -62,7 +62,7 @@ class WithTypeParams {
         System.out.println(p);
       });
   
-      foo<error descr="Cannot resolve method 'foo(<lambda expression>)'">((int k) -> {System.out.println(k);})</error>;
+      <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>((int k) -> {System.out.println(k);});
     }
   }
 }
