@@ -22,6 +22,7 @@ package com.intellij.compiler;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
@@ -60,6 +61,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   }
 
   public boolean allowAutoMakeWhileRunningApplication() {
-    return false;/*ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION*/
+    return Registry.is("compiler.automake.allow.when.app.running", false);/*ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION*/
   }
 }
