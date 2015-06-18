@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,7 @@ import java.util.List;
 class DeclarationMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.DeclarationMover");
   private PsiEnumConstant myEnumToInsertSemicolonAfter;
+  private boolean moveEnumConstant = false;
 
   @Override
   public void beforeMove(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
@@ -62,6 +64,40 @@ class DeclarationMover extends LineMover {
   }
 
   @Override
+  public void afterMove(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
+    super.afterMove(editor, file, info, down);
+    if (moveEnumConstant) {
+      final Document document = editor.getDocument();
+      final CharSequence cs = document.getCharsSequence();
+      int end1 = info.range1.getEndOffset();
+      char c1 = cs.charAt(--end1);
+      while (Character.isWhitespace(c1)) {
+        c1 = cs.charAt(--end1);
+      }
+      int end2 = info.range2.getEndOffset();
+      char c2 = cs.charAt(--end2);
+      while (Character.isWhitespace(c2)) {
+        c2 = cs.charAt(--end2);
+      }
+      if (c1 == c2 || c1 != ',' && c2 != ',') {
+        return;
+      }
+      if (c1 == ';' || c2 == ';') {
+        document.replaceString(end1, end1 + 1, String.valueOf(c2));
+        document.replaceString(end2, end2 + 1, String.valueOf(c1));
+      }
+      else if (c1 == ',') {
+        document.deleteString(end1, end1 + 1);
+        document.insertString(end2 + 1, ",");
+      }
+      else {
+        document.deleteString(end2, end2 + 1);
+        document.insertString(end1 + 1, ",");
+      }
+    }
+  }
+
+  @Override
   public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     if (!(file instanceof PsiJavaFile)) {
       return false;
@@ -75,11 +111,22 @@ class DeclarationMover extends LineMover {
     if (psiRange == null) return false;
 
     final PsiMember firstMember = PsiTreeUtil.getParentOfType(psiRange.getFirst(), PsiMember.class, false);
-    final PsiMember lastMember = PsiTreeUtil.getParentOfType(psiRange.getSecond(), PsiMember.class, false);
+    PsiElement endElement = psiRange.getSecond();
+    if (firstMember instanceof PsiEnumConstant && endElement instanceof PsiJavaToken) {
+      final IElementType tokenType = ((PsiJavaToken)endElement).getTokenType();
+      if (down && tokenType == JavaTokenType.SEMICOLON) {
+        return info.prohibitMove();
+      }
+      if (tokenType == JavaTokenType.COMMA || tokenType == JavaTokenType.SEMICOLON) {
+        endElement = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+      }
+    }
+    final PsiMember lastMember = PsiTreeUtil.getParentOfType(endElement, PsiMember.class, false);
     if (firstMember == null || lastMember == null) return false;
 
     LineRange range;
     if (firstMember == lastMember) {
+      moveEnumConstant = firstMember instanceof PsiEnumConstant;
       range = memberRange(firstMember, editor, oldRange);
       if (range == null) return false;
       range.firstElement = range.lastElement = firstMember;
@@ -102,8 +149,17 @@ class DeclarationMover extends LineMover {
 
     PsiElement sibling = down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
     sibling = firstNonWhiteElement(sibling, down);
-    if (down && range.lastElement instanceof PsiEnumConstant && sibling instanceof PsiJavaToken) {
-      sibling = ((PsiJavaToken)sibling).getTokenType() == JavaTokenType.COMMA ? firstNonWhiteElement(sibling.getNextSibling(), true) : null;
+    if (range.lastElement instanceof PsiEnumConstant && sibling instanceof PsiJavaToken) {
+      final PsiJavaToken token = (PsiJavaToken)sibling;
+      final IElementType tokenType = token.getTokenType();
+      if (down && tokenType == JavaTokenType.SEMICOLON) {
+        return info.prohibitMove();
+      }
+      if (tokenType == JavaTokenType.COMMA) {
+        sibling = down ?
+                  PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class) :
+                  PsiTreeUtil.skipSiblingsBackward(sibling, PsiWhiteSpace.class);
+      }
     }
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
     info.toMove = range;
