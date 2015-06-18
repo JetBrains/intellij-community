@@ -194,6 +194,16 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     doTest(new JavaWithBlockSurrounder());
   }
 
+  public void testNoParenthesisSurrounderForLambdaParameter() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+
+    SurroundDescriptor item = ContainerUtil.getFirstItem(LanguageSurrounders.INSTANCE.allForLanguage(JavaLanguage.INSTANCE));
+    assertNotNull(item);
+    SelectionModel selectionModel = getEditor().getSelectionModel();
+    PsiElement[] elements = item.getElementsToSurround(getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    assertEmpty(elements);
+  }
+
   private void doTest(Surrounder surrounder) {
     doTest(getTestName(false), surrounder);
   }

@@ -319,7 +319,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (endOffset <= startOffset) return null;
 
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
-    if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) {
+    final PsiExpression containingExpression = PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false);
+    if (containingExpression == null || containingExpression instanceof PsiLambdaExpression) {
       if (injectedLanguageManager.isInjectedFragment(file)) {
         return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);
       }
