@@ -12,3 +12,5 @@ version=$(<build-robovm/build.txt)
 cp out/artifacts/*.mac.zip out/robovm-studio/robovm-studio-$version.zip
 cd out/robovm-studio
 unzip robovm-studio-$version.zip
+cd ../..
+appdmg robovm/robovm-studio-dmg/dmg.json out/robovm-studio/robovm-studio-$version.dmg
