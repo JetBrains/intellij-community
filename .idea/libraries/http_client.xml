@@ -13,8 +13,7 @@
       <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/fluent-hc/src/main/java" />
       <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/httpclient/src/main/java" />
       <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-client-4.4.1-src.zip!/httpcomponents-client-4.4.1/httpclient/src/main/java-deprecated" />
-      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.4.1
-      -src.zip!/httpcomponents-core-4.3.3/httpcore/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.4.1       -src.zip!/httpcomponents-core-4.3.3/httpcore/src/main/java" />
       <root url="jar://$PROJECT_DIR$/lib/src/httpcomponents-core-4.4.1-src.zip!/httpcomponents-core-4.3.3/httpcore/src/main/java-deprecated" />
     </SOURCES>
   </library>
