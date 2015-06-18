@@ -137,10 +137,13 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   public abstract class XLineBreakpointVariant {
     public abstract String getText();
 
+    @Nullable
     public abstract Icon getIcon();
 
+    @Nullable
     public abstract TextRange getHighlightRange();
 
+    @Nullable
     public abstract P createProperties();
   }
 }
