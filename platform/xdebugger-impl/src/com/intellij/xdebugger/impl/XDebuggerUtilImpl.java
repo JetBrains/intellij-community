@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -34,8 +35,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AsyncResult;
@@ -46,6 +45,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -205,7 +205,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               final int defaultIndex = defaultVariant != null ? variants.indexOf(defaultVariant) : 0;
 
               final MySelectionListener selectionListener = new MySelectionListener();
-              ListPopup popup = JBPopupFactory.getInstance().createListPopup(
+              ListPopupImpl popup = new ListPopupImpl(
                 new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Create breakpoint for", variants) {
                   @NotNull
                   @Override
@@ -241,6 +241,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                     return defaultIndex;
                   }
                 });
+              DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
               popup.addListSelectionListener(selectionListener);
               popup.show(relativePoint);
               result.setResult(res);
