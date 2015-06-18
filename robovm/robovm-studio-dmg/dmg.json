@@ -1,0 +1,12 @@
+{  
+  "title": "RoboVM Studio",
+  "icon": "../../build-robovm/conf/mac/Contents/Resources/idea.icns",
+  "background": "robovm_studio_background.png",
+  "icon-size": 60,
+
+  "contents": [  
+    { "x": 100, "y": 125, "type": "file", "path": "../../out/robovm-studio/RoboVM Studio 1.0 EAP.app" },
+    { "x": 300, "y": 125, "type": "link", "path": "/Applications" }   
+  ]
+
+}

@@ -6,11 +6,10 @@ git clone git://git.jetbrains.org/idea/adt-tools-base.git android/tools-base
 cd android/tools-base
 git pull
 cd ../..
-git clone https://github.com/robovm/robovm-studio-branding robovm/robovm-studio-branding
-cd robovm/robovm-studio-branding
-git pull
-cd ../..
 git clone https://github.com/robovm/robovm-idea robovm/robovm-idea
 cd robovm/robovm-idea
-git pull
+git checkout master
+git pull origin master
+: ${ROBOVM_IDEA_PLUGIN_VERSION="master"}
+git checkout $ROBOVM_IDEA_PLUGIN_VERSION
 cd ../..

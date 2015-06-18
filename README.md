@@ -36,10 +36,10 @@ You need to set two environment variables:
 
 ```bash
 export IDEA_HOME="/Applications/IntelliJ IDEA 14 CE.app/Contents"
-export ROBOVM_IDEA_PLUGIN_VERSION="robovm-idea-1.3.0"
+export ROBOVM_IDEA_PLUGIN_VERSION="tags/robovm-idea-1.3.0"
 ```
 
-If you do not specify a tag for the IDEA plugin, the current master branch will be used for building.
+If you do not specify a version tag for the IDEA plugin, the current master branch will be used for building.
 
 Once the environment variables are set, execute:
 
@@ -62,4 +62,6 @@ IntelliJ IDEA has a mechanism to inform users about new releases of the IDE. The
 invalid until we figure out what to put there. See this [issue](https://github.com/robovm/robovm-studio/issues/2).
 
 ### Versioning
-The version is defined in `robovm/robovm-studio-branding/src/idea/IdeaApplicationInfo.xml` as well as `build-robovm/build.txt` which is used by the IDEA build process and follows IDEAs version notation (which is a bit wonky). Changing the later to something more readable will make IDEAs fail on startup.
+The version is defined in three places (:():
+1. `robovm/robovm-studio-branding/src/idea/IdeaApplicationInfo.xml`,
+2. `build-robovm/build.txt` which is used by the IDEA build process and follows IDEAs version notation (which is a bit wonky). Changing it to something more readable will make IDEAs fail on startup.
