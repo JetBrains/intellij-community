@@ -48,16 +48,11 @@ public class QuickList implements ExternalizableScheme {
   QuickList() {
   }
 
-  public QuickList(@NotNull String displayName, @Nullable String description, String[] actionIds, boolean isReadonly) {
-    myName = displayName;
+  public QuickList(@NotNull String name, @Nullable String description, String[] actionIds, boolean isReadonly) {
+    myName = name;
     myDescription = StringUtil.nullize(description);
     myActionIds = actionIds;
     myReadonly = isReadonly;
-  }
-
-  @Deprecated
-  public String getDisplayName() {
-    return myName;
   }
 
   @Override
