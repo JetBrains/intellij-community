@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class QuickListsManager implements ExportableApplicationComponent {
@@ -66,6 +67,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
                                                                   RoamingType.PER_USER);
   }
 
+  @NotNull
   public static QuickListsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(QuickListsManager.class);
   }
@@ -120,6 +122,11 @@ public class QuickListsManager implements ExportableApplicationComponent {
   }
 
   @NotNull
+  public List<QuickList> getQuickLists() {
+    return mySchemesManager.getAllSchemes();
+  }
+
+  @NotNull
   public QuickList[] getAllQuickLists() {
     Collection<QuickList> lists = mySchemesManager.getAllSchemes();
     return lists.toArray(new QuickList[lists.size()]);
@@ -142,12 +149,9 @@ public class QuickListsManager implements ExportableApplicationComponent {
     }
   }
 
-  public void setQuickLists(@NotNull QuickList[] quickLists) {
-    mySchemesManager.clearAllSchemes();
+  public void setQuickLists(@NotNull List<QuickList> quickLists) {
     unregisterActions();
-    for (QuickList quickList : quickLists) {
-      mySchemesManager.addNewScheme(quickList, true);
-    }
+    mySchemesManager.setSchemes(quickLists);
     registerActions();
   }
 

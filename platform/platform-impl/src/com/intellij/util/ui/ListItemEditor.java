@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
+package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public interface ConfigurableUi<S> {
-  void reset(@NotNull S settings);
-
-  boolean isModified(@NotNull S settings);
-
-  void apply(@NotNull S settings) throws ConfigurationException;
-
+public abstract class ListItemEditor<T> extends CollectionItemEditor<T> {
   @NotNull
-  JComponent getComponent();
+  public abstract String getName(@NotNull T item);
 }

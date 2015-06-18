@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -626,17 +626,18 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     for (TemplateImpl template : myDefaultTemplates.values()) {
       myState.deletedKeys.add(TemplateKey.keyOf(template));
     }
-    mySchemesManager.clearAllSchemes();
     myMaxKeyLength = 0;
+    List<TemplateGroup> schemes = new SmartList<TemplateGroup>();
     for (TemplateGroup group : newGroups) {
       if (!group.isEmpty()) {
-        mySchemesManager.addNewScheme(group, true);
+        schemes.add(group);
         for (TemplateImpl template : group.getElements()) {
           clearPreviouslyRegistered(template);
           addTemplateImpl(template);
         }
       }
     }
+    mySchemesManager.setSchemes(schemes);
   }
 
   public List<TemplateGroup> getTemplateGroups() {

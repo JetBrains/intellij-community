@@ -25,10 +25,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -85,7 +82,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
                                  ? WelcomeWizardUtil.getWizardMacKeymap()
                                  : defaultKeymap.getDefaultKeymapName();
     for (Keymap keymap : keymaps) {
-      addKeymap(keymap);
+      mySchemesManager.addNewScheme(keymap, true);
       if (keymap.getName().equals(systemDefaultKeymap)) {
         setActiveKeymap(keymap);
       }
@@ -170,25 +167,13 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     return mySchemesManager;
   }
 
-  public void addKeymap(Keymap keymap) {
-    mySchemesManager.addNewScheme(keymap, true);
-  }
-
-  public void removeAllKeymapsExceptUnmodifiable() {
-    List<Keymap> schemes = mySchemesManager.getAllSchemes();
-    for (int i = schemes.size() - 1; i >= 0; i--) {
-      Keymap keymap = schemes.get(i);
-      if (keymap.canModify()) {
-        mySchemesManager.removeScheme(keymap);
+  public void setKeymaps(@NotNull List<Keymap> keymaps) {
+    mySchemesManager.setSchemes(keymaps, new Condition<Keymap>() {
+      @Override
+      public boolean value(Keymap keymap) {
+        return keymap.canModify();
       }
-    }
-
-    mySchemesManager.setCurrentSchemeName(null);
-
-    Collection<Keymap> keymaps = mySchemesManager.getAllSchemes();
-    if (!keymaps.isEmpty()) {
-      mySchemesManager.setCurrentSchemeName(keymaps.iterator().next().getName());
-    }
+    });
   }
 
   @Override

@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public class QuickList implements ExternalizableScheme {
 
   private String myName;
   private String myDescription;
-  private String[] myActionIds;
+  private String[] myActionIds = ArrayUtil.EMPTY_STRING_ARRAY;
   private boolean myReadonly;
   private final ExternalInfo myExternalInfo = new ExternalInfo();
 
@@ -46,6 +47,7 @@ public class QuickList implements ExternalizableScheme {
    * With read external to be called immediately after in mind
    */
   QuickList() {
+    myName = "";
   }
 
   public QuickList(@NotNull String name, @Nullable String description, String[] actionIds, boolean isReadonly) {
@@ -70,8 +72,16 @@ public class QuickList implements ExternalizableScheme {
     return myDescription;
   }
 
+  public void setDescription(@Nullable String value) {
+    myDescription = StringUtil.nullize(value);
+  }
+
   public String[] getActionIds() {
     return myActionIds;
+  }
+
+  public void setActionIds(@NotNull String[] value) {
+    myActionIds = value;
   }
 
   public boolean equals(Object o) {

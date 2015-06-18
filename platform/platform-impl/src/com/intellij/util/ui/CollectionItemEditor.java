@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
+package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public interface ConfigurableUi<S> {
-  void reset(@NotNull S settings);
-
-  boolean isModified(@NotNull S settings);
-
-  void apply(@NotNull S settings) throws ConfigurationException;
-
+public abstract class CollectionItemEditor<T> {
   @NotNull
-  JComponent getComponent();
+  /**
+   * Class must have empty constructor.
+   */
+  public abstract Class<T> getItemClass();
+
+  /**
+   * Used for "copy" and "in place edit" actions.
+   *
+   * You must perform deep clone in case of "add" operation, but in case of "in place edit" you should copy only exposed (via column) properties.
+   */
+  public abstract T clone(@NotNull T item, boolean forInPlaceEditing);
+
+  public boolean isRemovable(@NotNull T item) {
+    return true;
+  }
+
+  public boolean isEmpty(@NotNull T item) {
+    return false;
+  }
 }
