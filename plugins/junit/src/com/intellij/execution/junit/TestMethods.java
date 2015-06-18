@@ -27,6 +27,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -75,7 +76,9 @@ public class TestMethods extends TestMethod {
       final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
                                                                           : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {
-        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + testInfo.getName();
+        final String proxyName = testInfo.getName();
+        final String methodName = ((PsiMethod)element).getName();
+        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + proxyName.substring(proxyName.indexOf(methodName));
       }
     }
     return null;

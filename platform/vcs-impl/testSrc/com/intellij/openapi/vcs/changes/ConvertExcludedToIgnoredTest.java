@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.module.ModuleType;
@@ -6,6 +21,9 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -80,21 +98,24 @@ public class ConvertExcludedToIgnoredTest extends PlatformTestCase {
     assertFalse(getChangeListManager().isIgnoredFile(inner));
   }
 
-  private void assertIgnored(VirtualFile... ignoredDirs) {
+  private void assertIgnored(@NotNull VirtualFile... ignoredDirs) {
     assertIgnoredDirectories(getProject(), ignoredDirs);
   }
 
-  public static void assertIgnoredDirectories(final Project project, VirtualFile... ignoredDirs) {
+  public static void assertIgnoredDirectories(@NotNull Project project, @NotNull VirtualFile... expectedIgnoredDirs) {
     List<String> expectedIgnoredPaths = new ArrayList<String>();
-    for (VirtualFile dir : ignoredDirs) {
-      expectedIgnoredPaths.add(dir.getPath() + "/");
+    for (VirtualFile dir : expectedIgnoredDirs) {
+      expectedIgnoredPaths.add(dir.getPath()+"/");
     }
-    List<String> actualIgnoredPaths = new ArrayList<String>();
-    for (IgnoredFileBean fileBean : ChangeListManagerImpl.getInstanceImpl(project).getFilesToIgnore()) {
-      assertEquals("Unexpected ignore: " + fileBean, IgnoreSettingsType.UNDER_DIR, fileBean.getType());
-      actualIgnoredPaths.add(fileBean.getPath());
-    }
-    assertSameElements(expectedIgnoredPaths, actualIgnoredPaths);
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    expectedIgnoredPaths.addAll(changeListManager.predefinedIgnorePaths());
+    List<String> actualIgnoredPaths = ContainerUtil.map2List(changeListManager.getFilesToIgnore(), new Function<IgnoredFileBean, String>() {
+      @Override
+      public String fun(IgnoredFileBean bean) {
+        return bean.getPath();
+      }
+    });
+    assertSameElements(actualIgnoredPaths, expectedIgnoredPaths);
   }
 
   private ChangeListManagerImpl getChangeListManager() {

@@ -322,13 +322,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public boolean isDisposed() {
-    return myDisposed || temporarilyDisposed;
-  }
-
-  protected volatile boolean temporarilyDisposed;
-  @TestOnly
-  public void setTemporarilyDisposed(boolean disposed) {
-    temporarilyDisposed = disposed;
+    return myDisposed;
   }
 
   protected void loadComponents() {

@@ -52,7 +52,7 @@ import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
-import org.jetbrains.jps.javac.ExternalJavacServer;
+import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
@@ -313,10 +313,10 @@ public class IncProjectBuilder {
       pd.timestamps.getStorage().force();
       pd.dataManager.flush(false);
     }
-    final ExternalJavacServer server = ExternalJavacServer.KEY.get(context);
+    final ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       server.stop();
-      ExternalJavacServer.KEY.set(context, null);
+      ExternalJavacManager.KEY.set(context, null);
     }
   }
 

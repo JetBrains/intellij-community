@@ -59,8 +59,10 @@ import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -392,9 +394,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
 
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
-        final ExternalJavacServer server = ensureJavacServerStarted(context);
+        final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
-          context, options, vmOptions, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, sdkHome, compilingTool
+          sdkHome, getExternalJavacHeapSize(context), vmOptions, options, _platformCp, classpath, sourcePath, files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
       }
       return rc;
@@ -404,6 +406,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  private static int getExternalJavacHeapSize(CompileContext context) {
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
+    return options.MAXIMUM_HEAP_SIZE;
+  }
   @Nullable
   public static String validateCycle(ModuleChunk chunk,
                                      JpsJavaExtensionService javaExt,
@@ -517,15 +525,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-  private static synchronized ExternalJavacServer ensureJavacServerStarted(@NotNull CompileContext context) throws Exception {
-    ExternalJavacServer server = ExternalJavacServer.KEY.get(context);
+  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws Exception {
+    ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;
     }
     final int listenPort = findFreePort();
-    server = new ExternalJavacServer();
+    server = new ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance());
     server.start(listenPort);
-    ExternalJavacServer.KEY.set(context, server);
+    ExternalJavacManager.KEY.set(context, server);
     return server;
   }
 
@@ -584,7 +592,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     catch (IOException e) {
       e.printStackTrace(System.err);
-      return ExternalJavacServer.DEFAULT_SERVER_PORT;
+      return ExternalJavacManager.DEFAULT_SERVER_PORT;
     }
   }
 
@@ -903,7 +911,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     public void outputLineAvailable(String line) {
       if (!StringUtil.isEmpty(line)) {
-        if (line.contains("java.lang.OutOfMemoryError")) {
+        if (line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX)) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println(line);
+        }
+        else if (line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.err.println(line);
+        }
+        else if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
           myErrorCount++;
         }

@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
+import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -83,7 +84,7 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(editor.getDocument().getImmutableCharSequence(), lineStartOffset, lineEndOffset);
-    List<BidiRun> runs = createRuns(view, chars, lineStartOffset);
+    List<BidiRun> runs = createRuns(editor, chars, lineStartOffset);
     for (BidiRun run : runs) {
       IterationState it = new IterationState(editor, lineStartOffset + run.startOffset, lineStartOffset + run.endOffset, 
                                              false, false, false, false);
@@ -103,7 +104,7 @@ class LineLayout {
     EditorImpl editor = view.getEditor();
     FontPreferences fontPreferences = editor.getColorsScheme().getFontPreferences();
     char[] chars = CharArrayUtil.fromSequence(text);
-    List<BidiRun> runs = createRuns(view, chars, -1);
+    List<BidiRun> runs = createRuns(editor, chars, -1);
     for (BidiRun run : runs) {
       addFragments(run, chars, run.startOffset, run.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
       assert !run.fragments.isEmpty();
@@ -111,20 +112,19 @@ class LineLayout {
     return runs;
   }
   
-  private static List<BidiRun> createRuns(EditorView view, char[] text, int startOffsetInEditor) {
+  private static List<BidiRun> createRuns(EditorImpl editor, char[] text, int startOffsetInEditor) {
     int textLength = text.length;
-    if (view.getEditor().myDisableRtl) return Collections.singletonList(new BidiRun((byte)0, 0, textLength));
+    if (editor.myDisableRtl) return Collections.singletonList(new BidiRun((byte)0, 0, textLength));
     List<BidiRun> runs = new ArrayList<BidiRun>();
-    EditorHighlighter highlighter = view.getHighlighter();
-    if (startOffsetInEditor >= 0 && highlighter != null) {
+    if (startOffsetInEditor >= 0) {
       // running bidi algorithm separately for text fragments corresponding to different lexer tokens
       int lastOffset = startOffsetInEditor;
       IElementType lastToken = null;
-      HighlighterIterator iterator = highlighter.createIterator(startOffsetInEditor);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(startOffsetInEditor);
       int endOffsetInEditor = startOffsetInEditor + textLength;
       while (!iterator.atEnd() && iterator.getStart() < endOffsetInEditor) {
         IElementType currentToken = iterator.getTokenType();
-        if (currentToken != lastToken) {
+        if (distinctTokens(lastToken, currentToken)) {
           int tokenStart = Math.max(iterator.getStart(), startOffsetInEditor);
           addRuns(runs, text, lastOffset - startOffsetInEditor, tokenStart - startOffsetInEditor);
           lastToken = currentToken;
@@ -138,6 +138,14 @@ class LineLayout {
       addRuns(runs, text, 0, textLength);
     }
     return runs;
+  }
+
+  private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
+    if (token1 == token2) return false;
+    if (token1 == null || token2 == null) return true;
+    if (!token1.getLanguage().is(token2.getLanguage())) return true;
+    BidiRegionsSeparator separator = LanguageBidiRegionsSeparator.INSTANCE.forLanguage(token1.getLanguage());
+    return separator.createBorderBetweenTokens(token1, token2);
   }
   
   private static void addRuns(List<BidiRun> runs, char[] text, int start, int end) {
@@ -253,12 +261,14 @@ class LineLayout {
     return false;
   }
 
-  boolean isDirectionBoundary(int offset) {
+  boolean isDirectionBoundary(int offset, boolean leanForward) {
     boolean prevIsRtl = false;
-    for (BidiRun run : myBidiRunsInLogicalOrder) {
+    boolean found = offset == 0 && !leanForward;
+    for (BidiRun run : myBidiRunsInVisualOrder) {
       boolean curIsRtl = run.isRtl();
-      if (offset == run.startOffset && curIsRtl != prevIsRtl) return true;
-      if (offset < run.endOffset) return false;
+      if (found || offset == (curIsRtl ? run.endOffset : run.startOffset)) return curIsRtl != prevIsRtl;
+      if (offset > run.startOffset && offset < run.endOffset) return false;
+      found = (offset == (curIsRtl ? run.startOffset : run.endOffset));
       prevIsRtl = curIsRtl;
     }
     return prevIsRtl;

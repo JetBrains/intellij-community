@@ -101,13 +101,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     super.setUp();
     myFixture.enableInspections(new JavaFxUnresolvedFxIdReferenceInspection());
   }
-
-  @Override
-  protected void runTest() throws Throwable {
-    Assume.assumeFalse(SystemInfo.isMac);
-    super.runTest();
-  }
-
+  
   @NotNull
   @Override
   protected String getTestDataPath() {

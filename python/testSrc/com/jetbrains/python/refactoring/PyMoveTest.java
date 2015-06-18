@@ -314,6 +314,26 @@ public class PyMoveTest extends PyTestCase {
     }
   }
 
+  // PY-10553
+  public void testMoveModuleWithSameNameAsSymbolInside() {
+    doMoveFileTest("Animals/Carnivore.py", "Animals/test");
+  }
+
+  // PY-14617
+  public void testOldStyleRelativeImport() {
+    doMoveFileTest("pkg/a.py", "");
+  }
+
+  // PY-14617
+  public void testRelativeImportsToModulesInSameMovedPackageNotUpdated() {
+    doMoveFileTest("pkg/subpkg", "");
+  }
+
+  // PY-14617
+  public void testUsagesOfUnqualifiedOldStyleRelativeImportsInsideMovedModule() {
+    doMoveFileTest("pkg/m1.py", "");
+  }
+
   // PY-15324
   public void testInterdependentSymbols() {
     doMoveSymbolsTest("b.py", "f", "A");

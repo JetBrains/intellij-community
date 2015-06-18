@@ -60,7 +60,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -308,18 +307,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             descriptor.configureModule(ourModule, model, contentEntry);
           }
         });
-
-        MessageBusConnection connection = ourProject.getMessageBus().connect();
-        connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
-          @Override
-          public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-            fail("Adding modules is not permitted in LightIdeaTestCase.");
-          }
-        });
-
-        StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(ourProject);
-        startupManager.runStartupActivities();
-        startupManager.startCacheUpdate();
       }
 
       private void cleanSourceRoot() throws IOException {
@@ -394,10 +381,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
     }
-    ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
     projectManagerEx.openTestProject(ourProject);
+
+    MessageBusConnection connection = ourProject.getMessageBus().connect(parentDisposable);
+    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+        fail("Adding modules is not permitted in LightIdeaTestCase.");
+      }
+    });
 
     clearUncommittedDocuments(getProject());
 
@@ -594,11 +588,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (checkForEditors) {
       checkEditorsReleased();
     }
-    if (isLight(project)) {
-      // mark temporarily as disposed so that rogue component trying to access it will fail
-      ((ProjectImpl)project).setTemporarilyDisposed(true);
-      documentManager.clearUncommittedDocuments();
-    }
+    documentManager.clearUncommittedDocuments();
   }
 
   public static PsiDocumentManagerImpl clearUncommittedDocuments(@NotNull Project project) {
@@ -779,7 +769,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (ourProject != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-      ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
       if (!ourProject.isDisposed()) {
         VirtualFile projectFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
         File ioFile = projectFile == null ? null : VfsUtilCore.virtualToIoFile(projectFile);
@@ -795,8 +784,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }
 
+      ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
 
-      ProjectManagerEx.getInstanceEx().closeTestProject(ourProject);
       ourProject = null;
       ourPathToKeep = null;
     }

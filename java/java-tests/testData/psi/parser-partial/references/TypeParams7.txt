@@ -4,7 +4,7 @@ PsiJavaFile:TypeParams7.java
     PsiTypeParameter:T
       PsiIdentifier:T('T')
       PsiWhiteSpace(' ')
-      PsiElement(EXTENDS_BOUND_LIST)
+      PsiReferenceList
         PsiKeyword:extends('extends')
         PsiWhiteSpace(' ')
         PsiJavaCodeReferenceElement:X
@@ -15,6 +15,6 @@ PsiJavaFile:TypeParams7.java
     PsiWhiteSpace(' ')
     PsiTypeParameter:Y
       PsiIdentifier:Y('Y')
-      PsiElement(EXTENDS_BOUND_LIST)
+      PsiReferenceList
         <empty list>
     PsiJavaToken:GT('>')

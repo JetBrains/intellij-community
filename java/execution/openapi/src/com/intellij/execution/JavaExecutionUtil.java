@@ -28,13 +28,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,12 +184,18 @@ public class JavaExecutionUtil {
     return name == null || name.startsWith(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
   }
 
+  @Nullable
   public static Location stepIntoSingleClass(@NotNull final Location location) {
     PsiElement element = location.getPsiElement();
     if (!(element instanceof PsiClassOwner)) {
       if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;
       element = PsiTreeUtil.getParentOfType(element, PsiClassOwner.class);
       if (element == null) return location;
+    }
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(location.getProject()).getFileIndex();
+    if (virtualFile == null || !fileIndex.isInSource(virtualFile)) {
+      return null;
     }
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();

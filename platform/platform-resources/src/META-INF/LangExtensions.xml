@@ -342,6 +342,11 @@
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
     <scratch.rootType implementation="com.intellij.execution.console.IdeConsoleRootType"/>
 
+    <!-- Extension resources -->
+    <applicationService serviceInterface="com.intellij.ide.extensionResources.ResourceVersions"
+                        serviceImplementation="com.intellij.ide.extensionResources.ResourceVersions"/>
+    <scratch.rootType implementation="com.intellij.ide.extensionResources.ExtensionsRootType"/>
+
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="defaultLanguage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="ansi"/>
@@ -399,6 +404,8 @@
     <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
     <projectService serviceInterface="com.intellij.tools.ToolsProjectConfig"
                     serviceImplementation="com.intellij.tools.ToolsProjectConfig"/>
+
+    <bidiRegionsSeparator language="" implementationClass="com.intellij.openapi.editor.bidi.PlainTextBidiRegionsSeparator"/>
 
     <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
     <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory"/>

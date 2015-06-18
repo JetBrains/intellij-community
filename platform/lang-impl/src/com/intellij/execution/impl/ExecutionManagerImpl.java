@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -66,15 +67,160 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   private static final ProcessHandler[] EMPTY_PROCESS_HANDLERS = new ProcessHandler[0];
 
   private final Project myProject;
-
-  private RunContentManagerImpl myContentManager;
   private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
+  private RunContentManagerImpl myContentManager;
   private volatile boolean myForceCompilationInTests;
 
   protected ExecutionManagerImpl(@NotNull Project project) {
     myProject = project;
+  }
+
+  @NotNull
+  private static ExecutionEnvironmentBuilder createEnvironmentBuilder(@NotNull Project project,
+                                                                      @NotNull Executor executor,
+                                                                      @Nullable RunnerAndConfigurationSettings configuration) {
+    ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
+
+    ProgramRunner runner =
+      RunnerRegistry.getInstance().getRunner(executor.getId(), configuration != null ? configuration.getConfiguration() : null);
+    if (runner == null && configuration != null) {
+      LOG.error("Cannot find runner for " + configuration.getName());
+    }
+    else if (runner != null) {
+      assert configuration != null;
+      builder.runnerAndSettings(runner, configuration);
+    }
+    return builder;
+  }
+
+  public static boolean isProcessRunning(@Nullable RunContentDescriptor descriptor) {
+    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
+    return processHandler != null && !processHandler.isProcessTerminated();
+  }
+
+  private static void start(@NotNull ExecutionEnvironment environment) {
+    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
+  }
+
+  private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    final RunManagerConfig config = runManager.getConfig();
+    if (!config.isRestartRequiresConfirmation()) return true;
+
+    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return config.isRestartRequiresConfirmation();
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        config.setRestartRequiresConfirmation(value);
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.show");
+      }
+    };
+    return Messages.showOkCancelDialog(
+      project,
+      ExecutionBundle.message("rerun.singleton.confirmation.message", configName, instancesCount),
+      ExecutionBundle.message("process.is.running.dialog.title", configName),
+      ExecutionBundle.message("rerun.confirmation.button.text"),
+      CommonBundle.message("button.cancel"),
+      Messages.getQuestionIcon(), option) == Messages.OK;
+  }
+
+  private static boolean userApprovesStopForIncompatibleConfigurations(Project project,
+                                                                       String configName,
+                                                                       List<RunContentDescriptor> runningIncompatibleDescriptors) {
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    final RunManagerConfig config = runManager.getConfig();
+    if (!config.isStopIncompatibleRequiresConfirmation()) return true;
+
+    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return config.isStopIncompatibleRequiresConfirmation();
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        config.setStopIncompatibleRequiresConfirmation(value);
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.show");
+      }
+    };
+
+    final StringBuilder names = new StringBuilder();
+    for (final RunContentDescriptor descriptor : runningIncompatibleDescriptors) {
+      String name = descriptor.getDisplayName();
+      if (names.length() > 0) {
+        names.append(", ");
+      }
+      names.append(StringUtil.isEmpty(name) ? ExecutionBundle.message("run.configuration.no.name")
+                                            : String.format("'%s'", name));
+    }
+
+    //noinspection DialogTitleCapitalization
+    return Messages.showOkCancelDialog(
+      project,
+      ExecutionBundle.message("stop.incompatible.confirmation.message",
+                              configName, names.toString(), runningIncompatibleDescriptors.size()),
+      ExecutionBundle.message("incompatible.configuration.is.running.dialog.title", runningIncompatibleDescriptors.size()),
+      ExecutionBundle.message("stop.incompatible.confirmation.button.text"),
+      CommonBundle.message("button.cancel"),
+      Messages.getQuestionIcon(), option) == Messages.OK;
+  }
+
+  private static void stop(@Nullable RunContentDescriptor descriptor) {
+    ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
+    if (processHandler == null) {
+      return;
+    }
+
+    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
+      ((KillableProcess)processHandler).killProcess();
+      return;
+    }
+
+    if (!processHandler.isProcessTerminated()) {
+      if (processHandler.detachIsDefault()) {
+        processHandler.detachProcess();
+      }
+      else {
+        processHandler.destroyProcess();
+      }
+    }
   }
 
   @Override
@@ -139,7 +285,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       final long finalId = id;
       final Long executionSessionId = new Long(id);
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        /** @noinspection SSBasedInspection*/
+        /**
+         * @noinspection SSBasedInspection
+         */
         @Override
         public void run() {
           for (BeforeRunTask task : beforeRunTasks) {
@@ -240,6 +388,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
             }
           }
         }
+        catch (ProcessCanceledException e) {
+          LOG.info(e);
+        }
         catch (ExecutionException e) {
           ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, e);
           LOG.info(e);
@@ -283,26 +434,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       }
     }
     restartRunProfile(builder.target(target).build());
-  }
-
-  @NotNull
-  private static ExecutionEnvironmentBuilder createEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor, @Nullable RunnerAndConfigurationSettings configuration) {
-    ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
-
-    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), configuration != null ? configuration.getConfiguration() : null);
-    if (runner == null && configuration != null) {
-      LOG.error("Cannot find runner for " + configuration.getName());
-    }
-    else if (runner != null) {
-      assert configuration != null;
-      builder.runnerAndSettings(runner, configuration);
-    }
-    return builder;
-  }
-
-  public static boolean isProcessRunning(@Nullable RunContentDescriptor descriptor) {
-    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
-    return processHandler != null && !processHandler.isProcessTerminated();
   }
 
   @Override
@@ -370,108 +501,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     myForceCompilationInTests = forceCompilationInTests;
   }
 
-  private static void start(@NotNull ExecutionEnvironment environment) {
-    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
-  }
-
-  private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-    final RunManagerConfig config = runManager.getConfig();
-    if (!config.isRestartRequiresConfirmation()) return true;
-
-    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
-      @Override
-      public boolean isToBeShown() {
-        return config.isRestartRequiresConfirmation();
-      }
-
-      @Override
-      public void setToBeShown(boolean value, int exitCode) {
-        config.setRestartRequiresConfirmation(value);
-      }
-
-      @Override
-      public boolean canBeHidden() {
-        return true;
-      }
-
-      @Override
-      public boolean shouldSaveOptionsOnCancel() {
-        return false;
-      }
-
-      @NotNull
-      @Override
-      public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.show");
-      }
-    };
-    return Messages.showOkCancelDialog(
-      project,
-      ExecutionBundle.message("rerun.singleton.confirmation.message", configName, instancesCount),
-      ExecutionBundle.message("process.is.running.dialog.title", configName),
-      ExecutionBundle.message("rerun.confirmation.button.text"),
-      CommonBundle.message("button.cancel"),
-      Messages.getQuestionIcon(), option) == Messages.OK;
-  }
-
-  private static boolean userApprovesStopForIncompatibleConfigurations(Project project,
-                                                                       String configName,
-                                                                       List<RunContentDescriptor> runningIncompatibleDescriptors) {
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-    final RunManagerConfig config = runManager.getConfig();
-    if (!config.isStopIncompatibleRequiresConfirmation()) return true;
-
-    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
-      @Override
-      public boolean isToBeShown() {
-        return config.isStopIncompatibleRequiresConfirmation();
-      }
-
-      @Override
-      public void setToBeShown(boolean value, int exitCode) {
-        config.setStopIncompatibleRequiresConfirmation(value);
-      }
-
-      @Override
-      public boolean canBeHidden() {
-        return true;
-      }
-
-      @Override
-      public boolean shouldSaveOptionsOnCancel() {
-        return false;
-      }
-
-      @NotNull
-      @Override
-      public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.show");
-      }
-    };
-
-    final StringBuilder names = new StringBuilder();
-    for (final RunContentDescriptor descriptor : runningIncompatibleDescriptors) {
-      String name = descriptor.getDisplayName();
-      if (names.length() > 0) {
-        names.append(", ");
-      }
-      names.append(StringUtil.isEmpty(name) ? ExecutionBundle.message("run.configuration.no.name")
-                                                       : String.format("'%s'", name));
-    }
-
-    //noinspection DialogTitleCapitalization
-    return Messages.showOkCancelDialog(
-      project,
-      ExecutionBundle.message("stop.incompatible.confirmation.message",
-                              configName, names.toString(), runningIncompatibleDescriptors.size()),
-      ExecutionBundle.message("incompatible.configuration.is.running.dialog.title", runningIncompatibleDescriptors.size()),
-      ExecutionBundle.message("stop.incompatible.confirmation.button.text"),
-      CommonBundle.message("button.cancel"),
-      Messages.getQuestionIcon(), option) == Messages.OK;
-  }
-
   @NotNull
   private List<RunContentDescriptor> getRunningDescriptorsOfTheSameConfigType(@NotNull final RunnerAndConfigurationSettings configurationAndSettings) {
     return getRunningDescriptors(new Condition<RunnerAndConfigurationSettings>() {
@@ -509,27 +538,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       }
     }
     return result;
-  }
-
-  private static void stop(@Nullable RunContentDescriptor descriptor) {
-    ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
-    if (processHandler == null) {
-      return;
-    }
-
-    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
-      ((KillableProcess)processHandler).killProcess();
-      return;
-    }
-
-    if (!processHandler.isProcessTerminated()) {
-      if (processHandler.detachIsDefault()) {
-        processHandler.detachProcess();
-      }
-      else {
-        processHandler.destroyProcess();
-      }
-    }
   }
 
   private static class ProcessExecutionListener extends ProcessAdapter {

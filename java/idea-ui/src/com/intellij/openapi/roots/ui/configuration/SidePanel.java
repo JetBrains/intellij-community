@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,9 +128,10 @@ public class SidePanel extends JPanel {
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
           final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)((Place)value).getPath("category");
-          if (errorPane != null && errorPane.getErrorsCount() > 0) {
+          int errorsCount;
+          if (errorPane != null && (errorsCount = errorPane.getErrorsCount()) > 0) {
             myCountLabel.setSelected(isSelected);
-            myCountLabel.setText(String.valueOf(errorPane.getErrorsCount()));
+            myCountLabel.setText(errorsCount > 100 ? "100+" : String.valueOf(errorsCount));
           }
         }
         if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {

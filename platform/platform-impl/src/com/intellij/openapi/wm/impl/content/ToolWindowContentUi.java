@@ -550,7 +550,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           }
         }
       } else {
-        actions[i] = new DumbAwareAction(content.getTabName()) {
+        actions[i] = new DumbAwareAction() {
+          {
+            getTemplatePresentation().setText(content.getTabName(), false);
+          }
+
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             myManager.setSelectedContent(content, true, true);

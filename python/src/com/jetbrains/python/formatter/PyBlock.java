@@ -42,6 +42,7 @@ import java.util.List;
 
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
+import static com.jetbrains.python.formatter.PythonFormattingModelBuilder.STATEMENT_OR_DECLARATION;
 
 /**
  * @author yole
@@ -686,12 +687,7 @@ public class PyBlock implements ASTBlock {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
       final PsiElement psi1 = node1.getPsi();
       final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
-
       final IElementType childType1 = node1.getElementType();
-      if (psi1 instanceof PyImportStatementBase && psi2 instanceof PyImportStatementBase &&
-          psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
-        return Spacing.createSpacing(0, 0, 2, true, 1);
-      }
 
       final CommonCodeStyleSettings settings = myContext.getSettings();
       if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
@@ -700,18 +696,24 @@ public class PyBlock implements ASTBlock {
         }
       }
 
-      if ((childType1 == PyElementTypes.FUNCTION_DECLARATION || childType1 == PyElementTypes.CLASS_DECLARATION)
-          && myNode.getElementType() instanceof PyFileElementType) {
+      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && hasTypeIgnoringPrecedingComments(psi2, STATEMENT_OR_DECLARATION)) ||
+          STATEMENT_OR_DECLARATION.contains(childType1) && hasTypeIgnoringPrecedingComments(psi2, PyElementTypes.CLASS_OR_FUNCTION)) {
+        if (PyUtil.isTopLevel(psi1)) {
+          return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
+        }
+      }
 
-        if (psi2 instanceof PsiComment) {
-          final PsiElement psi3 = PsiTreeUtil.getNextSiblingOfType(psi2, PyElement.class);
-
-          if (psi3 != null) {
-            final IElementType type3 = psi3.getNode().getElementType();
-
-            if (type3 == PyElementTypes.CLASS_DECLARATION || type3 == PyElementTypes.FUNCTION_DECLARATION) {
-              return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
-            }
+      if (psi1 instanceof PyImportStatementBase) {
+        if (psi2 instanceof PyImportStatementBase &&
+            psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
+          return Spacing.createSpacing(0, 0, 2, true, 1);
+        }
+        if (psi2 instanceof PyStatement && !(psi2 instanceof PyImportStatementBase)) {
+          if (PyUtil.isTopLevel(psi1)) {
+            return getBlankLinesForOption(settings.BLANK_LINES_AFTER_IMPORTS);
+          }
+          else {
+            return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AFTER_LOCAL_IMPORTS);
           }
         }
       }
@@ -723,20 +725,30 @@ public class PyBlock implements ASTBlock {
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
 
+  private static boolean hasTypeIgnoringPrecedingComments(@NotNull PsiElement element, @NotNull TokenSet types) {
+    if (element instanceof PsiComment) {
+      final PsiElement psi3 = PsiTreeUtil.getNextSiblingOfType(element, PyElement.class);
+      if (psi3 != null) {
+        final IElementType type3 = psi3.getNode().getElementType();
+        return types.contains(type3);
+      }
+    }
+    return types.contains(element.getNode().getElementType());
+  }
+
   private Spacing getBlankLinesForOption(final int option) {
     final int blankLines = option + 1;
-    return Spacing
-      .createSpacing(0, 0, blankLines, myContext.getSettings().KEEP_LINE_BREAKS, myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS);
+    return Spacing.createSpacing(0, 0, blankLines,
+                                 myContext.getSettings().KEEP_LINE_BREAKS,
+                                 myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
 
   private boolean needLineBreakInStatement() {
     final PyStatement statement = PsiTreeUtil.getParentOfType(myNode.getPsi(), PyStatement.class);
     if (statement != null) {
       final Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
-      if ((parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
-          (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE)) {
-        return true;
-      }
+      return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
+             (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE);
     }
     return false;
   }

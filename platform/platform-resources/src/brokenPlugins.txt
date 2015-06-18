@@ -19,7 +19,7 @@ org.jetbrains.plugins.vagrant 0.1 0.2 0.3 0.4
 org.intellij.clojure 0.2.1.178
 net.nicoulaj.idea.markdown 0.9.5 0.9.4 0.9.3 0.9.2 0.9.1 0.8.3 0.8.2 0.8.1 0.8 0.7 0.6.1 0.6 0.5.1 0.5 0.4 0.3 0.2 0.1
 zielu.gittoolbox 13.1.0
-com.jetbrains.chronon 139.1220 134.1221 134.1414 134.1618 135.1291 135.476 135.666
+com.jetbrains.chronon 134.1221 134.1414 134.1618 135.1291 135.476 135.666
 ArgoUML.Integration 0.1.1 0.1.2
 IdeaServerPlugin 1.0 1.0.2 1.0.3 1.0.4 1.0.7 1.0.8
 copy.on.steroids 3.1

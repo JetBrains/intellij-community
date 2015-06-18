@@ -2,7 +2,7 @@ package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 
-trait StandaloneTypeBinding {
+interface StandaloneTypeBinding {
   public fun getJavaType(): BoxableType
 
   public fun generate()
@@ -13,10 +13,10 @@ trait StandaloneTypeBinding {
   public fun getDirection(): TypeData.Direction?
 }
 
-trait Target {
+interface Target {
   public fun resolve(context: ResolveContext): BoxableType
 
-  public trait ResolveContext {
+  public interface ResolveContext {
     public fun generateNestedObject(shortName: String, description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType
   }
 }

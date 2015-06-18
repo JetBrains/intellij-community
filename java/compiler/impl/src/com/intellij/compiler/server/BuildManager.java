@@ -232,21 +232,23 @@ public class BuildManager implements ApplicationComponent{
           return pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName());
         }
       });
-      final Date now = new Date();
-      for (File buildDataProjectDir : dirs) {
-        final File usageFile = getUsageFile(buildDataProjectDir);
-        if (usageFile.exists()) {
-          final Pair<Date, File> usageData = readUsageFile(usageFile);
-          if (usageData != null) {
-            final File projectFile = usageData.second;
-            if ((projectFile != null && !projectFile.exists()) || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
-              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir.getPath());
-              FileUtil.delete(buildDataProjectDir);
+      if (dirs != null) {
+        final Date now = new Date();
+        for (File buildDataProjectDir : dirs) {
+          final File usageFile = getUsageFile(buildDataProjectDir);
+          if (usageFile.exists()) {
+            final Pair<Date, File> usageData = readUsageFile(usageFile);
+            if (usageData != null) {
+              final File projectFile = usageData.second;
+              if ((projectFile != null && !projectFile.exists()) || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
+                LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir.getPath());
+                FileUtil.delete(buildDataProjectDir);
+              }
             }
           }
-        }
-        else {
-          updateUsageFile(null, buildDataProjectDir); // set usage stamp to start countdown
+          else {
+            updateUsageFile(null, buildDataProjectDir); // set usage stamp to start countdown
+          }
         }
       }
     }
@@ -1443,6 +1445,7 @@ public class BuildManager implements ApplicationComponent{
 
     @Override
     public void projectOpened(final Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {

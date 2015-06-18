@@ -56,6 +56,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 
 import javax.swing.*;
@@ -98,6 +99,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       myOldName = "";  // new project
     }
   }
+
+  @Override
+  public boolean isDisposed() {
+    return super.isDisposed() || temporarilyDisposed;
+  }
+
+  private volatile boolean temporarilyDisposed;
+  @TestOnly
+  public void setTemporarilyDisposed(boolean disposed) {
+    temporarilyDisposed = disposed;
+  }
+
+  @TestOnly
+  boolean isTemporarilyDisposed() {
+    return temporarilyDisposed;
+  }
+
 
   @Override
   public void setProjectName(@NotNull String projectName) {

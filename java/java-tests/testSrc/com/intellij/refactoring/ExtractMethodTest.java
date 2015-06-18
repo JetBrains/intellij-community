@@ -749,6 +749,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testConditionalExitCombinedWithNullabilityShouldPreserveVarsUsedInExitStatements() throws Exception {
+    doTest();
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;

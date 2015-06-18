@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -24,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
@@ -62,12 +64,13 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   private boolean isEnabled(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
+    if (file instanceof PsiCompiledFile) return false;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myIsEnabledInTest;
     }
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null || vFile instanceof LightVirtualFile || myDisabledFiles.contains(vFile)) return false;
-    return settings.AUTODETECT_INDENTS;
+    return LanguageFormatting.INSTANCE.forContext(file) != null && settings.AUTODETECT_INDENTS;
   }
 
   @TestOnly

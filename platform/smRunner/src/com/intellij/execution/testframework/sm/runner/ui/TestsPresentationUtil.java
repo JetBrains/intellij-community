@@ -218,8 +218,16 @@ public class TestsPresentationUtil {
 
     String presentationCandidate = name;
     if (parent != null) {
-      final String parentName = parent.getName();
-      if (name.startsWith(parentName)) {
+      String parentName = parent.getName();
+      boolean parentStartsWith = name.startsWith(parentName);
+      if (!parentStartsWith && parent instanceof SMTestProxy.SMRootTestProxy) {
+        final String presentation = ((SMTestProxy.SMRootTestProxy)parent).getPresentation();
+        if (presentation != null) {
+          parentName = presentation;
+          parentStartsWith = name.startsWith(parentName);
+        }
+      }
+      if (parentStartsWith) {
         presentationCandidate = name.substring(parentName.length());
 
         // remove "." separator

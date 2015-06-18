@@ -16,7 +16,7 @@ PsiJavaFile:Errors0.java
     PsiJavaToken:LT('<')
     PsiTypeParameter:caret
       PsiIdentifier:caret('caret')
-      PsiElement(EXTENDS_BOUND_LIST)
+      PsiReferenceList
         <empty list>
     PsiJavaToken:GT('>')
   PsiErrorElement:'class' or 'interface' expected

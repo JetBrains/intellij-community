@@ -28,9 +28,10 @@ import java.util.Map;
  *         Date: 2/25/11
  *         Time: 5:18 PM
  */
-public interface ApplyPatchExecutor {
+public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress> {
   String getName();
-  void apply(final MultiMap<VirtualFile, FilePatchInProgress> patchGroups,
+
+  void apply(final MultiMap<VirtualFile, T> patchGroups,
              final LocalChangeList localList,
              String fileName,
              TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);

@@ -200,7 +200,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static CharSequence getBaseContents(final TextFilePatch patchBase, final CommitContext commitContext, final Project project) {
+  private static CharSequence getBaseContents(final FilePatch patchBase, final CommitContext commitContext, final Project project) {
     final BaseRevisionTextPatchEP baseRevisionTextPatchEP = Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
     if (baseRevisionTextPatchEP != null) {
       final String path = patchBase.getBeforeName() == null ? patchBase.getAfterName() : patchBase.getBeforeName();

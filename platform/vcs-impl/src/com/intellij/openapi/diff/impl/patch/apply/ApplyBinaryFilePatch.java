@@ -29,7 +29,7 @@ public class ApplyBinaryFilePatch extends ApplyFilePatchBase<BinaryFilePatch> {
     super(patch);
   }
 
-  protected void applyCreate(final VirtualFile newFile, CommitContext commitContext) throws IOException {
+  protected void applyCreate(Project project, final VirtualFile newFile, CommitContext commitContext) throws IOException {
     newFile.setBinaryContent(myPatch.getAfterContent());
   }
 

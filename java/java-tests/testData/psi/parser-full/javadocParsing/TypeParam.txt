@@ -27,7 +27,7 @@ PsiJavaFile:TypeParam.java
       PsiJavaToken:LT('<')
       PsiTypeParameter:V
         PsiIdentifier:V('V')
-        PsiElement(EXTENDS_BOUND_LIST)
+        PsiReferenceList
           <empty list>
       PsiJavaToken:GT('>')
     PsiReferenceList

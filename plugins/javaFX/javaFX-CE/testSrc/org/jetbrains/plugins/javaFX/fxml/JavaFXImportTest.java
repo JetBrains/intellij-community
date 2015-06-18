@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.PsiTestUtil;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaFXImportTest extends JavaFXDaemonAnalyzerTestCase {
+public class JavaFXImportTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();

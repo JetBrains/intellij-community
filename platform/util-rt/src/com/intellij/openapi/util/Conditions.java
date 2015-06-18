@@ -133,16 +133,6 @@ public class Conditions {
     };
   }
 
-  public static <A> Condition<A> countDown(final int n) {
-    return new Condition<A>() {
-      int cur = n;
-      @Override
-      public boolean value(A a) {
-        return cur > 0 && cur -- != 0;
-      }
-    };
-  }
-
   public static <T> Condition<T> cached(Condition<T> c) {
     return new SoftRefCache<T>(c);
   }

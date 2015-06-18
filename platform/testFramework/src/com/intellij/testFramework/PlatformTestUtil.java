@@ -289,11 +289,6 @@ public class PlatformTestUtil {
     return now.after(raidDate(bombedAnnotation));
   }
 
-  public static boolean isRotten(Bombed bomb) {
-    long bombRotPeriod = 30L * 24 * 60 * 60 * 1000; // month
-    return new Date().after(new Date(raidDate(bomb).getTime() + bombRotPeriod));
-  }
-
   public static StringBuilder print(AbstractTreeStructure structure,
                                     Object node,
                                     int currentLevel,

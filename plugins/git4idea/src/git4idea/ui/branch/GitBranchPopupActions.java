@@ -179,7 +179,7 @@ class GitBranchPopupActions {
       };
     }
 
-    private static class CheckoutAction extends DumbAwareAction {
+    static class CheckoutAction extends DumbAwareAction {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myBranchName;
@@ -275,7 +275,7 @@ class GitBranchPopupActions {
       };
     }
 
-    private static class CheckoutRemoteBranchAction extends DumbAwareAction {
+    static class CheckoutRemoteBranchAction extends DumbAwareAction {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
       private final String myRemoteBranchName;

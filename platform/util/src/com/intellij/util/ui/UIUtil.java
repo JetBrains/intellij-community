@@ -894,6 +894,17 @@ public class UIUtil {
     return UIManager.getColor("Tree.selectionForeground");
   }
 
+  public static Color getTreeForeground(boolean selected, boolean hasFocus) {
+    if (!selected) {
+      return getTreeForeground();
+    }
+    Color fg = UIManager.getColor("Tree.selectionInactiveForeground");
+    if (!hasFocus && fg != null) {
+      return fg;
+    }
+    return getTreeSelectionForeground();
+  }
+
   /**
    * @deprecated use com.intellij.util.ui.UIUtil#getInactiveTextColor()
    */

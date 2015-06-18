@@ -77,6 +77,24 @@ public class PsiQuery {
     return new PsiQuery(result.toArray(new PsiElement[result.size()]));
   }
 
+  
+  /**
+   * Searches for string literals with specific text
+   * @param clazz string literal class
+   * @param expectedText expected text
+   * @return query {@link com.jetbrains.python.psi.PsiQuery}
+   */
+  @NotNull
+  public final PsiQuery childrenStringLiterals(@NotNull final Class<? extends PyStringLiteralExpression> clazz, @NotNull final String expectedText) {
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    for ( final PyStringLiteralExpression element : getChildrenElements(clazz)) {
+      if (element.getStringValue().equals(expectedText)) {
+        result.add(element);
+      }
+    }
+    return new PsiQuery(result.toArray(new PsiElement[result.size()]));
+  }
+
 
   /**
    * TODO: Support types?

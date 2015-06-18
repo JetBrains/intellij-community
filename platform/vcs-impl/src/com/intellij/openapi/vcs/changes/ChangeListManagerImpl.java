@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,9 +304,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             setDefaultChangeList(list);
 
             if (myIgnoredIdeaLevel.isEmpty()) {
-              final String name = myProject.getName();
-              myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(name + WorkspaceFileType.DOT_DEFAULT_EXTENSION, myProject));
-              myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml", myProject));
+              for (String path : predefinedIgnorePaths()) {
+                myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(path, myProject));
+              }
             }
           }
           if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
@@ -316,6 +316,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
+  }
+
+  @NotNull
+  List<String> predefinedIgnorePaths() {
+    List<String> myIgnoredIdeaLevel = new ArrayList<String>();
+    myIgnoredIdeaLevel.add(myProject.getName() + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
+    myIgnoredIdeaLevel.add(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml");
+
+    return myIgnoredIdeaLevel;
   }
 
   void convertExcludedToIgnored() {

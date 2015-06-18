@@ -49,6 +49,9 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(TestNGConfigurationType.getInstance());
     final Location contextLocation = context.getLocation();
     Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) {
+      return false;
+    }
     final PsiElement element = location.getPsiElement();
     RunnerAndConfigurationSettings template = RunManager.getInstance(location.getProject()).getConfigurationTemplate(getConfigurationFactory());
     final Module predefinedModule = ((TestNGConfiguration)template.getConfiguration()).getConfigurationModule().getModule();

@@ -39,7 +39,6 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -239,6 +238,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myProjectManager.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
+    myProjectManager.openTestProject(myProject);
     setUpModule();
 
     setUpJdk();
@@ -516,7 +516,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            Disposer.dispose(myProject);
             ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
             if (projectManager instanceof ProjectManagerImpl) {
               Collection<Project> projectsStillOpen = projectManager.closeTestProject(myProject);
@@ -524,15 +523,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
                 Project project = projectsStillOpen.iterator().next();
                 String message = "Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project);
                 try {
-                  projectManager.closeTestProject(project);
-                  Disposer.dispose(project);
+                  projectManager.closeAndDispose(project);
                 }
                 catch (Exception e) {
-                  // ignore, we already have somthing to throw
+                  // ignore, we already have something to throw
                 }
                 throw new AssertionError(message);
               }
             }
+            Disposer.dispose(myProject);
           }
         });
       }
@@ -587,18 +586,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (!b && file.exists() && !myAssertionsInTestDetected) {
       fail("Can't delete " + file.getAbsolutePath() + " in " + getFullName());
     }
-  }
-
-  protected void simulateProjectOpen() {
-    ModuleManagerImpl mm = (ModuleManagerImpl)ModuleManager.getInstance(myProject);
-    StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
-
-    mm.projectOpened();
-    setUpJdk();
-    sm.runStartupActivities();
-    sm.startCacheUpdate();
-    // extra init for libraries
-    sm.runPostStartupActivities();
   }
 
   protected void setUpJdk() {

@@ -53,10 +53,4 @@ public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTest
     super.setUp();
     enableInspections();
   }
-
-  @Override
-  protected void runTest() throws Throwable {
-    Assume.assumeFalse(SystemInfo.isMac);
-    super.runTest();
-  }
 }

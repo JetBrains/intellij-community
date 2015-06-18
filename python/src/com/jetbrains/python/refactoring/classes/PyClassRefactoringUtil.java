@@ -428,7 +428,16 @@ public final class PyClassRefactoringUtil {
     });
   }
 
-  public static void updateImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
+  /**
+   * Updates the import statement if the given PSI element <em>has the same name</em> as one of the import elements of that statement.
+   * It means that you should be careful it you actually want to update the source part of a "from import" statement, because in cases
+   * like {@code from foo import foo} this method may do not what you expect.
+   *
+   * @param importStatement parent import statement that contains reference to given element
+   * @param element         PSI element reference to which should be updated
+   * @return                whether import statement was actually updated
+   */
+  public static boolean updateUnqualifiedImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
     final String name = getOriginalName(element);
     if (name != null) {
       PyImportElement importElement = null;
@@ -440,14 +449,7 @@ public final class PyClassRefactoringUtil {
       if (importElement != null) {
         final PsiFile file = importStatement.getContainingFile();
         final PsiFile newFile = element.getContainingFile();
-        boolean deleteImportElement = false;
-        if (newFile == file) {
-          deleteImportElement = true;
-        }
-        else if (insertImport(importStatement, element, importElement.getAsName(), true)) {
-          deleteImportElement = true;
-        }
-        if (deleteImportElement) {
+        if (newFile == file || insertImport(importStatement, element, importElement.getAsName(), true)) {
           if (importStatement.getImportElements().length == 1) {
             final boolean isInjected =
               InjectedLanguageManager.getInstance(importElement.getProject()).isInjectedFragment(importElement.getContainingFile());
@@ -461,9 +463,11 @@ public final class PyClassRefactoringUtil {
           else {
             importElement.delete();
           }
+          return true;
         }
       }
     }
+    return false;
   }
 
   private static void deleteImportStatementFromInjected(@NotNull final PyImportStatementBase importStatement) {

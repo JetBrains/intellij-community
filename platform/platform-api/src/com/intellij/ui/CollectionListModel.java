@@ -42,6 +42,10 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     myItems = ContainerUtilRt.newArrayList(items);
   }
 
+  public CollectionListModel() {
+    myItems = new ArrayList<T>();
+  }
+
   @Override
   public int getSize() {
     return myItems.size();
@@ -147,5 +151,9 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
 
   public int getElementIndex(T item) {
     return myItems.indexOf(item);
+  }
+
+  public boolean isEmpty() {
+    return myItems.isEmpty();
   }
 }

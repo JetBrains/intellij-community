@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.impl.DomFileElementImpl;
@@ -35,45 +37,36 @@ import java.util.Set;
 public class DomFileDescriptionTest extends DomHardCoreTestCase {
   private XmlFile myFooElementFile;
   private XmlFile myBarElementFile;
+  private Disposable myDisposable = Disposer.newDisposable();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    myFooElementFile = new WriteCommandAction<XmlFile>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<XmlFile> result) throws Throwable {
-        result.setResult((XmlFile)createFile("a.xml", "<a/>"));
-      }
-    }.execute().getResultObject();
+    myFooElementFile = (XmlFile)createFile("a.xml", "<a/>");
 
-    getDomManager().registerFileDescription(new MockDomFileDescription<FooElement>(FooElement.class, "a", myFooElementFile), getTestRootDisposable());
+    getDomManager().registerFileDescription(new MockDomFileDescription<FooElement>(FooElement.class, "a", myFooElementFile), myDisposable);
 
-    myBarElementFile = new WriteCommandAction<XmlFile>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<XmlFile> result) throws Throwable {
-        result.setResult((XmlFile)createFile("b.xml", "<b/>"));
-      }
-    }.execute().getResultObject();
+    myBarElementFile = (XmlFile)createFile("b.xml", "<b/>");
 
     getDomManager().registerFileDescription(new DomFileDescription<BarElement>(BarElement.class, "b") {
-
       @Override
       public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
-        return myFooElementFile.getText().contains("239");
+        String text = myFooElementFile.getText();
+        return text.contains("239");
       }
-
       @Override
       public boolean isAutomaticHighlightingEnabled() {
         return false;
       }
-    }, getTestRootDisposable());
+    }, myDisposable);
 
     assertResultsAndClear();
   }
 
   @Override
   public void tearDown() throws Exception {
+    Disposer.dispose(myDisposable);
     myFooElementFile = null;
     myBarElementFile = null;
 
@@ -93,7 +86,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
       public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
         return /*super.isMyFile(file, module) && */file.getText().contains("239");
       }
-    }, getTestRootDisposable());
+    }, myDisposable);
 
 
     assertFalse(getDomManager().isDomFile(file));
@@ -127,7 +120,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   public void testCopyFileDescriptionFromOriginalFile() throws Throwable {
     final XmlFile file = (XmlFile)createFile("a.xml", "<b>42</b>");
 
-    getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", file), getTestRootDisposable());
+    getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", file), myDisposable);
     file.setName("b.xml");
     assertTrue(getDomManager().isDomFile(file));
     final XmlFile copy = (XmlFile)file.copy();
@@ -138,7 +131,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   public void testDependantFileDescriptionCauseStackOverflow() throws Throwable {
     final XmlFile interestingFile = (XmlFile)createFile("a.xml", "<b>42</b>");
 
-    getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", (XmlFile)null), getTestRootDisposable());
+    getDomManager().registerFileDescription(new MockDomFileDescription<MyElement>(MyElement.class, "b", (XmlFile)null), myDisposable);
     for (int i = 0; i < 239; i++) {
       getDomManager().registerFileDescription(new MockDomFileDescription<AbstractElement>(AbstractElement.class, "b", (XmlFile)null) {
         @Override
@@ -147,7 +140,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
           getDomManager().isDomFile(interestingFile);
           return super.getDependencyItems(file);
         }
-      }, getTestRootDisposable());
+      }, myDisposable);
     }
 
     getDomManager().isDomFile(interestingFile);
@@ -160,7 +153,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
       protected void initializeFileDescription() {
         registerNamespacePolicy("foo", "bar");
       }
-    }, getTestRootDisposable());
+    }, myDisposable);
 
     final PsiFile file = createFile("xxx.xml", "<xxx/>");
     assertFalse(getDomManager().isDomFile(file));
@@ -182,7 +175,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
       protected void initializeFileDescription() {
         registerNamespacePolicy("foo", "bar");
       }
-    }, getTestRootDisposable());
+    }, myDisposable);
 
     final PsiFile file = createFile("xxx.xml", "<xxx/>");
     assertFalse(getDomManager().isDomFile(file));
@@ -205,7 +198,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
       public boolean isMyFile(@NotNull final XmlFile file, @Nullable final Module module) {
         return file.getText().contains("foo");
       }
-    }, getTestRootDisposable());
+    }, myDisposable);
     final XmlFile file = (XmlFile)createFile("xxx.xml", "<xxx zzz=\"foo\"><boy/><boy/><xxx/>");
     final MyElement boy = getDomManager().getFileElement(file, MyElement.class).getRootElement().getBoys().get(0);
     new WriteCommandAction(getProject()) {

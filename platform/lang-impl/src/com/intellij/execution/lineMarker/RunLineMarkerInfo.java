@@ -19,12 +19,16 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +65,7 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
                                                 new Function<Executor, AnAction>() {
                                                   @Override
                                                   public AnAction fun(Executor executor) {
-                                                    return ActionManager.getInstance().getAction(executor.getContextActionId());
+                                                    return new ActionWrapper(ActionManager.getInstance().getAction(executor.getContextActionId()));
                                                   }
                                                 }));
         actions.add(Separator.getInstance());
@@ -70,7 +74,8 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
                                                   @Nullable
                                                   @Override
                                                   public AnAction fun(RunLineMarkerContributor contributor) {
-                                                    return contributor.getAdditionalAction(myElement);
+                                                    AnAction action = contributor.getAdditionalAction(myElement);
+                                                    return action != null ? new ActionWrapper(action) : null;
                                                   }
                                                 }));
 
@@ -82,5 +87,46 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
         return null;
       }
     };
+  }
+
+  private class ActionWrapper extends AnAction {
+
+    private final AnAction myOrigin;
+
+    public ActionWrapper(@NotNull AnAction origin) {
+      myOrigin = origin;
+      copyFrom(origin);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      myOrigin.update(createEvent(e));
+    }
+
+    @NotNull
+    private AnActionEvent createEvent(AnActionEvent e) {
+      return new AnActionEvent(
+        e.getInputEvent(), new MyDataContext(e.getDataContext()), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myOrigin.actionPerformed(createEvent(e));
+    }
+  }
+  
+  private class MyDataContext extends UserDataHolderBase implements DataContext {
+    private final DataContext myDelegate;
+
+    public MyDataContext(DataContext delegate) {
+      myDelegate = delegate;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (Location.DATA_KEY.is(dataId)) return new PsiLocation<PsiElement>(myElement);
+      return myDelegate.getData(dataId);
+    }
   }
 }

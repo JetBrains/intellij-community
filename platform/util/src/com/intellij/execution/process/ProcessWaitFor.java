@@ -15,66 +15,54 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
 
 public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
 
-  private static final MultiMap<Process, Consumer<Integer>> ourQueue;
+  private final Future<?> myWaitForThreadFuture;
+  private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<Consumer<Integer>>(1);
 
-  static {
-    ourQueue = new MultiMap<Process, Consumer<Integer>>();
+  public void detach() {
+    myWaitForThreadFuture.cancel(true);
+  }
 
-    BaseOSProcessHandler.ExecutorServiceHolder.submit(new Runnable() {
+
+  public ProcessWaitFor(final Process process, final TaskExecutor executor) {
+    myWaitForThreadFuture = executor.executeTask(new Runnable() {
       @Override
       public void run() {
-        //noinspection InfiniteLoopStatement
-        while (true) {
-          processQueue();
-          TimeoutUtil.sleep(50);
+        int exitCode = 0;
+        try {
+          while (true) {
+            try {
+              exitCode = process.waitFor();
+              break;
+            }
+            catch (InterruptedException e) {
+              LOG.debug(e);
+            }
+          }
+        }
+        finally {
+          try {
+            myTerminationCallback.take().consume(exitCode);
+          }
+          catch (InterruptedException e) {
+            LOG.info(e);
+          }
         }
       }
     });
   }
 
-  private static void processQueue() {
-    synchronized (ourQueue) {
-      for (Iterator<Process> iterator = ourQueue.keySet().iterator(); iterator.hasNext(); ) {
-        Process process = iterator.next();
-        try {
-          int value = process.exitValue();
-
-          Collection<Consumer<Integer>> callbacks = ourQueue.get(process);
-          for (Consumer<Integer> callback : callbacks) {
-            callback.consume(value);
-          }
-
-          iterator.remove();
-        }
-        catch (IllegalThreadStateException ignore) { }
-        catch (RuntimeException e) {
-          LOG.debug(e);
-        }
-      }
-    }
-  }
-
-  public static void attach(@NotNull Process process, @NotNull Consumer<Integer> callback) {
-    synchronized (ourQueue) {
-      ourQueue.putValue(process, callback);
-    }
-  }
-
-  public static void detach(@NotNull Process process) {
-    synchronized (ourQueue) {
-      ourQueue.remove(process);
-    }
+  public void setTerminationCallback(Consumer<Integer> r) {
+    myTerminationCallback.offer(r);
   }
 }

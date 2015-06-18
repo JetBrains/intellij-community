@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * invoke it twice.
  *
  * @see RefactoringActionHandlerFactory
+ * @see ContextAwareActionHandler to hide an action from popups but allow access by shortcut, main menu or find.
  */
 public interface RefactoringActionHandler {
   /**
