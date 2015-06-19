@@ -16,7 +16,6 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SourceScope;
@@ -55,8 +54,8 @@ public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<Test
   }
 
   @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, ExecutionEnvironment environment, JComponent parent) {
-    super.appendAdditionalActions(actionGroup, environment, parent);
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) {
+    super.appendAdditionalActions(actionGroup, parent);
     actionGroup.add(createIncludeNonStartedInRerun());
   }
 

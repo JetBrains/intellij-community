@@ -18,7 +18,6 @@ package com.intellij.execution.junit2.ui.properties;
 import com.intellij.execution.Executor;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SourceScope;
@@ -60,8 +59,8 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
 
   @Override
   protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                         ExecutionEnvironment environment, JComponent parent) {
-    super.appendAdditionalActions(actionGroup, environment, parent);
+                                         JComponent parent) {
+    super.appendAdditionalActions(actionGroup, parent);
     actionGroup.add(createIncludeNonStartedInRerun());
   }
 

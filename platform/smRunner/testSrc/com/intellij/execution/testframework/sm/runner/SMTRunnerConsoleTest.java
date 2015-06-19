@@ -43,7 +43,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
     private MyConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
-      super(consoleProperties, environment);
+      super(consoleProperties);
 
       myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
         @Override

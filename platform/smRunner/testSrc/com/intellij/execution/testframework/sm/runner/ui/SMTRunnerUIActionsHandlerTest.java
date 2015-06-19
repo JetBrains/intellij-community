@@ -55,12 +55,11 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
     TestConsoleProperties.SCROLL_TO_SOURCE.set(myProperties, false);
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(myProperties, false);
-    
-    final ExecutionEnvironment environment = new ExecutionEnvironment();
+
     myResultsForm = new SMTestRunnerResultsForm(myProperties.getConfiguration(),
                                                 new JLabel(),
-                                                myProperties,
-                                                environment) {
+                                                myProperties
+    ) {
       @Override
       public void selectAndNotify(AbstractTestProxy testProxy) {
         super.selectAndNotify(testProxy);

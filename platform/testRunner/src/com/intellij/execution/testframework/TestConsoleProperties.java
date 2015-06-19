@@ -193,7 +193,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     myUsePredefinedMessageFilter = usePredefinedMessageFilter;
   }
 
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, ExecutionEnvironment environment, JComponent parent) { }
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) { }
 
   @NotNull
   protected ToggleBooleanProperty createIncludeNonStartedInRerun() {

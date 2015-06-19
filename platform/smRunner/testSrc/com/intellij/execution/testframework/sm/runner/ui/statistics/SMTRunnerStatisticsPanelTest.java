@@ -50,8 +50,8 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final ExecutionEnvironment environment = new ExecutionEnvironment();
     myResultsForm = new SMTestRunnerResultsForm(consoleProperties.getConfiguration(),
                                                 new JLabel(),
-                                                consoleProperties,
-                                                environment);
+                                                consoleProperties
+    );
     Disposer.register(myResultsForm, consoleProperties);
     myResultsForm.initUI();
     myStatisticsPanel = myResultsForm.getStatisticsPane();

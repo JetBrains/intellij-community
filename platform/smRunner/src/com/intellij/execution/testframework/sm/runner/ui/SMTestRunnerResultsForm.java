@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.*;
@@ -28,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,7 +36,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -98,18 +95,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
-                                 final TestConsoleProperties consoleProperties,
-                                 final ExecutionEnvironment environment) {
-    this(runConfiguration, console, AnAction.EMPTY_ARRAY, consoleProperties, environment, null);
+                                 final TestConsoleProperties consoleProperties) {
+    this(runConfiguration, console, AnAction.EMPTY_ARRAY, consoleProperties, null);
   }
 
   public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
                                  AnAction[] consoleActions,
                                  final TestConsoleProperties consoleProperties,
-                                 final ExecutionEnvironment environment,
                                  @Nullable String splitterPropertyName) {
-    super(console, consoleActions, consoleProperties, environment,
+    super(console, consoleActions, consoleProperties,
           StringUtil.notNullize(splitterPropertyName, DEFAULT_SM_RUNNER_SPLITTER_PROPERTY), 0.2f);
     myConsoleProperties = consoleProperties;
 
@@ -148,7 +143,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   protected ToolbarPanel createToolbarPanel() {
-    return new SMTRunnerToolbarPanel(myConsoleProperties, myEnvironment, this, this);
+    return new SMTRunnerToolbarPanel(myConsoleProperties, this, this);
   }
 
   protected JComponent createTestTreeView() {

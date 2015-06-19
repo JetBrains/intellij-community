@@ -55,7 +55,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
 
   public ToolbarPanel(final TestConsoleProperties properties,
-                      ExecutionEnvironment environment, JComponent parent) {
+                      final JComponent parent) {
     super(new BorderLayout());
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addAction(new ToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
@@ -144,7 +144,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.addSeparator();
     secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                                  null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
-    properties.appendAdditionalActions(secondaryGroup, environment, parent);
+    properties.appendAdditionalActions(secondaryGroup, parent);
     actionGroup.add(secondaryGroup);
 
     add(ActionManager.getInstance().

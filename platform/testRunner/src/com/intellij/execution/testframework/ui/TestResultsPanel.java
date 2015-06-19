@@ -53,7 +53,6 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   private Splitter myStatisticsSplitter;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
-  protected final ExecutionEnvironment myEnvironment;
   private final String mySplitterProportionProperty;
   private final String myStatisticsSplitterProportionProperty;
   private final float mySplitterDefaultProportion;
@@ -63,13 +62,11 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   private Splitter mySplitter;
 
   protected TestResultsPanel(@NotNull JComponent console, AnAction[] consoleActions, TestConsoleProperties properties,
-                             ExecutionEnvironment environment,
                              String splitterProportionProperty, float splitterDefaultProportion) {
     super(new BorderLayout(0,1));
     myConsole = console;
     myConsoleActions = consoleActions;
     myProperties = properties;
-    myEnvironment = environment;
     mySplitterProportionProperty = splitterProportionProperty;
     mySplitterDefaultProportion = splitterDefaultProportion;
     myStatisticsSplitterProportionProperty = mySplitterProportionProperty + "_Statistics";
@@ -133,7 +130,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   protected abstract JComponent createStatisticsPanel();
 
   protected ToolbarPanel createToolbarPanel() {
-    return new ToolbarPanel(myProperties, myEnvironment, this);
+    return new ToolbarPanel(myProperties, this);
   }
 
   protected TestStatusLine createStatusLine() {
