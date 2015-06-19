@@ -72,20 +72,11 @@ public class PyImportOptimizer implements ImportOptimizer {
     public static final Ordering<PyImportStatementBase> BY_NAME_COMPARATOR =
       Ordering.natural()
               .nullsLast()
-              .onResultOf(new Function<PyImportStatementBase, String>() {
+              .onResultOf(new Function<PyImportStatementBase, QualifiedName>() {
+                @Nullable
                 @Override
-                public String apply(@Nullable PyImportStatementBase importStatement) {
-                  QualifiedName qualifiedName = null;
-                  if (importStatement instanceof PyFromImportStatement) {
-                    qualifiedName = ((PyFromImportStatement)importStatement).getImportSourceQName();
-                  }
-                  else if (importStatement instanceof PyImportStatement) {
-                    final PyImportElement importElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
-                    if (importElement != null) {
-                      qualifiedName = importElement.getImportedQName();
-                    }
-                  }
-                  return qualifiedName == null ? null : qualifiedName.toString();
+                public QualifiedName apply(@NotNull PyImportStatementBase importStatement) {
+                  return AddImportHelper.getImportFirstQualifiedName(importStatement);
                 }
               });
 
