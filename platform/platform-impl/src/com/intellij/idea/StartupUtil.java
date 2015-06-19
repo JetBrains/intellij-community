@@ -25,6 +25,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -37,6 +38,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
 import java.io.File;
@@ -68,7 +70,13 @@ public class StartupUtil {
   }
 
   public synchronized static int getAcquiredPort() {
-    return ourLock.getAcquiredPort();
+    BuiltInServer server = ourLock.getServer();
+    return server == null ? -1 : server.getPort();
+  }
+
+  @Nullable
+  public synchronized static BuiltInServer getServer() {
+    return ourLock.getServer();
   }
 
   interface AppStarter {
@@ -245,39 +253,23 @@ public class StartupUtil {
   private synchronized static boolean lockSystemFolders(String[] args) {
     assert ourLock == null;
     ourLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
-    if (ourLock.getAcquiredPort() == -1) {
-      showErrorTooManyInstances(null);
-      return false;
-    }
 
-    SocketLock.ActivateStatus activateStatus = null;
-    try {
-      activateStatus = ourLock.lock(args);
-    }
-    catch (Exception e) {
-      Main.showMessage("Cannot lock system folders", e);
-    }
-
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(args);
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      showErrorTooManyInstances(activateStatus);
+      if (activateStatus != null && (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE)) {
+        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
+        Main.showMessage("Too Many Instances", message, true);
+      }
       return false;
     }
 
-    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
         ourLock.dispose();
       }
-    }, "Unlock system folder"));
-
+    });
     return true;
-  }
-
-  private static void showErrorTooManyInstances(@Nullable SocketLock.ActivateStatus activateStatus) {
-    if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
-      Main.showMessage("Too Many Instances", message, true);
-    }
   }
 
   private static void fixProcessEnvironment(Logger log) {
