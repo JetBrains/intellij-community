@@ -395,21 +395,24 @@ public class PatchApplier<BinaryType extends FilePatch> {
           new Consumer<VcsDirtyScopeManager>() {
             @Override
             public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
-              vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
-              vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
+              markDirty(vcsDirtyScopeManager, directlyAffected, indirectlyAffected);
             }
           }, null);
         } else {
-          final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-          // will schedule update
-          vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
-          vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
+          markDirty(VcsDirtyScopeManager.getInstance(project), directlyAffected, indirectlyAffected);
           if (context != null) {
             context.ping();
           }
         }
       }
     });
+  }
+
+  private static void markDirty(@NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
+                                @NotNull Collection<FilePath> directlyAffected,
+                                @NotNull Collection<VirtualFile> indirectlyAffected) {
+    vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+    vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
   }
 
   @Nullable
