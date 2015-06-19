@@ -50,17 +50,17 @@ import kotlin.test.assertTrue
 public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
   public fun testSimpleDocumentSync() {
     var modelRef: ReactiveModel? = null
-    val mirror = ReactiveModel(Lifetime.Eternal) { diff ->
+    val mirror = ReactiveModel(Lifetime.Eternal, { diff ->
       modelRef!!.performTransaction { m ->
         m.patch(diff)
       }
-    }
+    })
 
-    val model = ReactiveModel(Lifetime.Eternal) { diff ->
+    val model = ReactiveModel(Lifetime.Eternal, { diff ->
       mirror.performTransaction { m ->
         m.patch(diff)
       }
-    }
+    })
     modelRef = model
 
     val first = DocumentImpl("my test document")

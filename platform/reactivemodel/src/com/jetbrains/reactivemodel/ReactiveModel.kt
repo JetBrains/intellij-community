@@ -8,7 +8,7 @@ import java.util.ArrayDeque
 import java.util.HashMap
 import java.util.Queue
 
-public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
+public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}, val actionsDispatcher: (Model) -> Unit = {}) {
   public var root: MapModel = MapModel()
   private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
@@ -65,18 +65,22 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
       }
     }
   }
+
+  fun dispatch(action: Model) {
+    actionsDispatcher(action)
+  }
 }
 
 fun main(args: Array<String>) {
-  val mirror = ReactiveModel(Lifetime.Eternal) {
+  val mirror = ReactiveModel(Lifetime.Eternal, {
     println(it)
-  }
+  })
 
-  val model = ReactiveModel(Lifetime.Eternal) { diff ->
+  val model = ReactiveModel(Lifetime.Eternal, { diff ->
     mirror.performTransaction { m ->
       m.patch(diff)
     }
-  }
+  })
 
   model.transaction { m ->
     MapModel(hashMapOf(

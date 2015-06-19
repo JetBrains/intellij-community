@@ -34,7 +34,7 @@ import org.json.JSONObject
 import java.util.ArrayList
 import java.util.HashMap
 
-fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
+fun serverModel(lifetime: Lifetime, port: Int, actionsDispatcher: (Model) -> Unit = {}): ReactiveModel {
   val config = Configuration()
   config.setHostname("localhost")
   config.setPort(port)
@@ -42,13 +42,13 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   val server = SocketIOServer(config)
 
 
-  val reactiveModel = ReactiveModel(lifetime) { diff ->
+  val reactiveModel = ReactiveModel(lifetime, { diff ->
     val jsonObj = toJson(diff)
     val jsonStr = jsonObj.toString()
 
     val jsonNode = ObjectMapper().readTree(jsonStr)
     server.getBroadcastOperations().sendEvent("diff", jsonNode)
-  }
+  }, actionsDispatcher)
 
   server.addConnectListener(object : ConnectListener {
     override fun onConnect(client: SocketIOClient) {
@@ -64,14 +64,21 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   })
 
 
-  server.addEventListener("diff", javaClass<JsonNode>(), { socketIOClient, json, ackRequest ->
+  server.addEventListener("diff", javaClass<JsonNode>()) { socketIOClient, json, ackRequest ->
     val diff = toDiff(JSONObject(json.toString()))
     UIUtil.invokeLaterIfNeeded {
       reactiveModel.performTransaction { m ->
         m.patch(diff)
       }
     }
-  })
+  }
+
+  server.addEventListener("action", javaClass<JsonNode>()) {client, json, ackRequest ->
+    val action = toModel(JSONObject(json.toString()))
+    UIUtil.invokeLaterIfNeeded {
+      reactiveModel.dispatch(action)
+    }
+  }
 
   server.addDisconnectListener(object : DisconnectListener {
     override fun onDisconnect(client: SocketIOClient) {
@@ -91,9 +98,9 @@ fun clientModel(url: String, lifetime: Lifetime): ReactiveModel {
 
   val socket = IO.socket(url);
 
-  val reactiveModel = ReactiveModel(lifetime) { diff ->
+  val reactiveModel = ReactiveModel(lifetime, { diff ->
     socket.emit("diff", toJson(diff))
-  }
+  })
 
   socket
       .on(Socket.EVENT_CONNECT, object : Emitter.Listener {

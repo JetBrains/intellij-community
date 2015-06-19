@@ -15,9 +15,13 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -27,8 +31,9 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.Path
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
-import java.util.HashMap
 
 public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
@@ -39,6 +44,26 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   override fun getComponentName(): String = "DocumentsSynchronizer"
 
   private val messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect()
+
+  private val actionsMap = hashMapOf(
+      "invoke-action" to {args : MapModel ->
+        val actionName = (args["name"] as PrimitiveModel<String>).value
+        val contextHint = args["context"] as MapModel
+        val anAction = ActionManager.getInstance().getAction(actionName)
+        if (anAction != null) {
+          val dataContext = guessDataContext(contextHint)
+          anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
+        } else {
+          println("can't find idea action $args")
+        }
+      })
+
+  private fun guessDataContext(contextHint: MapModel): DataContext? {
+    //todo: look at the hint!
+    val editor = bJavaHost!!.editor
+    val component = editor.getContentComponent()
+    return DataManager.getInstance().getDataContext(component)
+  }
 
   override fun initComponent() {
 
@@ -57,7 +82,17 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
                 }
               } else {
                 if (file.equals(bJava)) {
-                  val serverModel = serverModel(lifetime.lifetime, 12346)
+                  val serverModel = serverModel(lifetime.lifetime, 12346) { model ->
+                    model as MapModel
+                    val action = (model["action"] as PrimitiveModel<String>).value
+                    val handler = actionsMap[action]
+                    if (handler != null) {
+                      handler(model["args"] as MapModel)
+                    } else {
+                      println("unknown action $model")
+                    }
+                    println(model)
+                  }
                   bJavaHost = EditorHost(lifetime.lifetime, serverModel, Path("editor"), editor, true)
                 }
               }
