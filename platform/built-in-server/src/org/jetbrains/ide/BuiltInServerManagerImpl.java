@@ -87,8 +87,13 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       public void run() {
         try {
           BuiltInServer mainServer = StartupUtil.getServer();
-          LOG.assertTrue(mainServer != null);
-          server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
+          if (mainServer == null && ApplicationManager.getApplication().isUnitTestMode()) {
+            server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
+          }
+          else {
+            LOG.assertTrue(mainServer != null);
+            server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
+          }
           bindCustomPorts(server);
         }
         catch (Throwable e) {

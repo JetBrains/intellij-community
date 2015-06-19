@@ -76,7 +76,7 @@ public class StartupUtil {
 
   @Nullable
   public synchronized static BuiltInServer getServer() {
-    return ourLock.getServer();
+    return ourLock == null ? null : ourLock.getServer();
   }
 
   interface AppStarter {
