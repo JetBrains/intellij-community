@@ -1385,17 +1385,20 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private void paintChildrenImpl(Graphics g) {
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
       @SuppressWarnings("UndesirableClassUsage")
-      BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-      Graphics imageGraphics = image.getGraphics();
-
+      BufferedImage image = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+      Graphics2D imageGraphics = image.createGraphics();
+      //imageGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
       //noinspection UseJBColor
       imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
       imageGraphics.fillRect(0, 0, getWidth(), getHeight());
 
       super.paintChildren(imageGraphics);
       imageGraphics.dispose();
-
-      UIUtil.drawImage(g, makeColorTransparent(image, myFillColor), 0, 0, null);
+      Graphics2D g2d = (Graphics2D)g.create();
+      if (UIUtil.isRetina()) {
+        g2d.scale(.5, .5);
+      }
+      UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
     }
 
     private Image makeColorTransparent(Image image, Color color) {
@@ -1444,7 +1447,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       }
       else {
         if (myShadow != null) {
-          UIUtil.drawImage(g, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
+          Graphics2D graphics = (Graphics2D)g.create();
+          if (UIUtil.isRetina()) {
+            graphics.scale(.5, .5);
+          }
+          UIUtil.drawImage(graphics, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
         }
         myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)g, pointTarget);
       }
@@ -1467,8 +1474,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private void initComponentImage(Point pointTarget, Rectangle shapeBounds) {
       if (myImage != null) return;
 
-      //noinspection UndesirableClassUsage
-      myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB); //[kb]: don't use UIUtil.createImage here
+      myImage = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D imageGraphics = (Graphics2D)myImage.getGraphics();
       myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
       paintChildrenImpl(imageGraphics);
