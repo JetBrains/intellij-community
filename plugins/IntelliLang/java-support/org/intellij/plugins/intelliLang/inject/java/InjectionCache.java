@@ -94,7 +94,7 @@ public class InjectionCache {
             }
           }
         }
-        return new Result<Collection<String>>(result, PsiModificationTracker.MODIFICATION_COUNT, configuration);
+        return new Result<Collection<String>>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
       }
     }, false);
   }

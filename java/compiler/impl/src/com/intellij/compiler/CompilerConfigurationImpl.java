@@ -111,7 +111,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private Map<Module, ProcessorConfigProfile> myProcessorsProfilesMap = null;
 
   @Nullable
-  private String myBytecodeTargetLevel = null;  // null means compiler default
+  private String myBytecodeTargetLevel = null;  // null means same as effective language level
   private final Map<String, String> myModuleBytecodeTarget = new HashMap<String, String>();
 
   public CompilerConfigurationImpl(Project project) {

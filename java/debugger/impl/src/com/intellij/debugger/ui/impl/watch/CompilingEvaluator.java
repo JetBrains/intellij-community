@@ -37,15 +37,14 @@ import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import javax.tools.*;
-import java.io.ByteArrayOutputStream;
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -81,8 +80,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(evaluationContext, process);
 
     String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
-    JavaSdkVersion sdkVersion = JdkVersionUtil.getVersion(version);
-    Collection<OutputFileObject> classes = compile(sdkVersion != null ? sdkVersion.getDescription() : null);
+    Collection<OutputFileObject> classes = compile(JdkVersionUtil.getVersion(version));
 
     defineClasses(classes, evaluationContext, process, classLoader);
 
@@ -120,8 +118,11 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
                                   ClassLoaderReference classLoader) throws EvaluateException {
     for (OutputFileObject cls : classes) {
       if (cls.getName().contains(GEN_CLASS_NAME)) {
-        byte[] bytes = changeSuperToMagicAccessor(cls.toByteArray());
-        ClassLoadingUtils.defineClass(cls.myOrigName, bytes, context, process, classLoader);
+        final BinaryContent content = cls.getContent();
+        if (content != null) {
+          byte[] bytes = changeSuperToMagicAccessor(content.toByteArray());
+          ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, process, classLoader);
+        }
       }
     }
     return (ClassType)process.findClass(context, getGenClassQName(), classLoader);
@@ -164,58 +165,6 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   ///////////////// Compiler stuff
 
   @NotNull
-  protected abstract Collection<OutputFileObject> compile(String target) throws EvaluateException;
-
-  private static URI getUri(String name, JavaFileObject.Kind kind) {
-    return URI.create("memo:///" + name.replace('.', '/') + kind.extension);
-  }
-
-  protected static class SourceFileObject extends SimpleJavaFileObject {
-    private final String myContent;
-
-    SourceFileObject(String name, Kind kind, String content) {
-      super(getUri(name, kind), kind);
-      myContent = content;
-    }
-
-    @Override
-    public CharSequence getCharContent(boolean ignore) {
-      return myContent;
-    }
-  }
-
-  protected static class OutputFileObject extends SimpleJavaFileObject {
-    private final ByteArrayOutputStream myStream = new ByteArrayOutputStream();
-    private final String myOrigName;
-
-    OutputFileObject(String name, Kind kind) {
-      super(getUri(name, kind), kind);
-      myOrigName = name;
-    }
-
-    byte[] toByteArray() {
-      return myStream.toByteArray();
-    }
-
-    @Override
-    public ByteArrayOutputStream openOutputStream() {
-      return myStream;
-    }
-  }
-
-  protected static class MemoryFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
-    protected final Collection<OutputFileObject> classes = new ArrayList<OutputFileObject>();
-
-    MemoryFileManager(JavaCompiler compiler) {
-      super(compiler.getStandardFileManager(null, null, null));
-    }
-
-    @Override
-    public OutputFileObject getJavaFileForOutput(Location location, String name, JavaFileObject.Kind kind, FileObject source) {
-      OutputFileObject mc = new OutputFileObject(name, kind);
-      classes.add(mc);
-      return mc;
-    }
-  }
+  protected abstract Collection<OutputFileObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
 
 }

@@ -60,13 +60,17 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     this(project, valueClass, valueTitle, filter, showProjectNode, true);
   }
 
+  /**
+   * Due to historical reasons, passed filter does not perform all jobs - fileIndex.isInContent is checked in addition.
+   * Flag showContentFilesOnly allows you to disable such behavior.
+   */
   public AbstractFileTreeTable(@NotNull Project project,
                                @NotNull Class<T> valueClass,
                                @NotNull String valueTitle,
                                @NotNull VirtualFileFilter filter,
                                boolean showProjectNode,
-                               boolean filterNonContentFiles) {
-    super(new MyModel<T>(project, valueClass, valueTitle, filterNonContentFiles ? new NonContentFileFilter(project, filter) : filter));
+                               boolean showContentFilesOnly) {
+    super(new MyModel<T>(project, valueClass, valueTitle, showContentFilesOnly ? new NonContentFileFilter(project, filter) : filter));
     myProject = project;
 
     //noinspection unchecked

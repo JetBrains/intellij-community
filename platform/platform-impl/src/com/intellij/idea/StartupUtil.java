@@ -243,27 +243,27 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
-    if (Main.isHeadless()) {
-      // fast fix, disable in tests
-      return true;
-    }
-
     assert ourLock == null;
     ourLock = new SocketLock();
     if (ourLock.getAcquiredPort() == -1) {
+      showErrorTooManyInstances(null);
       return false;
     }
 
     SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), PathManager.getSystemPath(), args);
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
-      if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
-        Main.showMessage("Too Many Instances", message, true);
-      }
+      showErrorTooManyInstances(activateStatus);
       return false;
     }
 
     return true;
+  }
+
+  private static void showErrorTooManyInstances(@Nullable SocketLock.ActivateStatus activateStatus) {
+    if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
+      Main.showMessage("Too Many Instances", message, true);
+    }
   }
 
   private static void fixProcessEnvironment(Logger log) {
