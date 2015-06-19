@@ -171,8 +171,8 @@ public class VcsLogUtil {
   }
 
   // If this method stumbles on LoadingDetails instance it returns empty list
-  // Also, can be slow when many details are selected
-  public static List<VcsFullCommitDetails> collectLoadedSelectedDetails(@NotNull VcsLog log, boolean limitDetails) {
+  @NotNull
+  public static List<VcsFullCommitDetails> collectFirstPackOfLoadedSelectedDetails(@NotNull VcsLog log) {
     List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
 
     for (VcsFullCommitDetails next : log.getSelectedDetails()) {
@@ -181,7 +181,7 @@ public class VcsLogUtil {
       }
       else {
         result.add(next);
-        if (result.size() >= DETAILS_LIMIT && limitDetails) break;
+        if (result.size() >= DETAILS_LIMIT) break;
       }
     }
 

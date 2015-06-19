@@ -289,7 +289,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<VcsFullCommitDetails> details = VcsLogUtil.collectLoadedSelectedDetails(myUI.getVcsLog(), true);
+    List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(myUI.getVcsLog());
     if (!details.isEmpty()) {
       CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(details, new Function<VcsFullCommitDetails, String>() {
         @Override

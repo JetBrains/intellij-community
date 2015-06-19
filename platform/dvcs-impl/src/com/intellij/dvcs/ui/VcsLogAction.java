@@ -48,7 +48,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     log.requestSelectedDetails(new Consumer<Set<VcsFullCommitDetails>>() {
       @Override
       public void consume(Set<VcsFullCommitDetails> details) {
-        MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, false);
+        MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details);
         if (grouped == null) return;
         actionPerformed(project, grouped);
       }
@@ -64,7 +64,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
       return;
     }
 
-    MultiMap<Repo, VcsFullCommitDetails> grouped = getGroupedCommits(project, log, true);
+    MultiMap<Repo, VcsFullCommitDetails> grouped = getGroupedCommits(project, log);
     if (grouped == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
@@ -95,22 +95,16 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
   @Nullable
-  private MultiMap<Repo, VcsFullCommitDetails> getGroupedCommits(@NotNull Project project, @NotNull VcsLog log, boolean fromUpdate) {
-    return groupCommits(project, VcsLogUtil.collectLoadedSelectedDetails(log, fromUpdate), fromUpdate);
+  private MultiMap<Repo, VcsFullCommitDetails> getGroupedCommits(@NotNull Project project, @NotNull VcsLog log) {
+    return groupCommits(project, VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log));
   }
 
   @Nullable
-  private MultiMap<Repo, VcsFullCommitDetails> groupCommits(@NotNull Project project,
-                                                            Collection<VcsFullCommitDetails> commits,
-                                                            boolean fromUpdate) {
+  private MultiMap<Repo, VcsFullCommitDetails> groupCommits(@NotNull Project project, Collection<VcsFullCommitDetails> commits) {
     MultiMap<Repo, VcsFullCommitDetails> map = MultiMap.create();
     for (VcsFullCommitDetails commit : commits) {
       Repo root = getRepositoryForRoot(project, commit.getRoot());
       if (root == null) { // commit from some other VCS
-        if (!fromUpdate) {
-          VcsNotifier.getInstance(project).notifyWeakError(
-            "Can not perform action on commit " + commit.getId().toShortString() + " from root " + commit.getRoot().getName());
-        }
         return null;
       }
       map.putValue(root, commit);

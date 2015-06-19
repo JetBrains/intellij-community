@@ -102,7 +102,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
       return;
     }
 
-    final List<VcsFullCommitDetails> details = VcsLogUtil.collectLoadedSelectedDetails(log, true);
+    final List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
     VcsCherryPicker enabledCherryPicker = ContainerUtil.find(cherryPickers, new Condition<VcsCherryPicker>() {
       @Override
       public boolean value(VcsCherryPicker picker) {
