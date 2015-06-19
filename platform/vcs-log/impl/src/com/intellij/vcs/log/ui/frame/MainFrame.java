@@ -25,7 +25,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
@@ -48,15 +47,13 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.vcs.log.impl.VcsLogUtil.groupByRoot;
 
 public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
-  public static final int MAX_SELECTED_COMMITS = 100;
+  public static final int MAX_SELECTED_COMMITS = 1000;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
   @NotNull private final Project myProject;
@@ -307,15 +304,16 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       sink.put(key, myLogDataHolder);
     }
     else if (VcsDataKeys.CHANGES == key || VcsDataKeys.SELECTED_CHANGES == key) {
-      List<Change> selectedChanges = myGraphTable.getSelectedChanges();
+      List<Change> selectedChanges = myGraphTable.getSelectedChanges(MAX_SELECTED_COMMITS);
       if (selectedChanges != null) {
         sink.put(key, ArrayUtil.toObjectArray(selectedChanges, Change.class));
       }
     }
     else if (VcsDataKeys.CHANGE_LISTS == key) {
       List<VcsFullCommitDetails> details = myUI.getVcsLog().getSelectedDetails();
-      sink.put(key, ContainerUtil.map2Array(details, CommittedChangeListForRevision.class,
-        new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
+      if (details.size() > MAX_SELECTED_COMMITS) return;
+      sink.put(key, ContainerUtil
+        .map2Array(details, CommittedChangeListForRevision.class, new Function<VcsFullCommitDetails, CommittedChangeListForRevision>() {
           @Override
           public CommittedChangeListForRevision fun(@NotNull VcsFullCommitDetails details) {
             return new CommittedChangeListForRevision(details.getSubject(), details.getFullMessage(), details.getCommitter().getName(),
@@ -326,6 +324,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS == key) {
       List<CommitId> hashes = myUI.getVcsLog().getSelectedCommits();
+      if (hashes.size() > MAX_SELECTED_COMMITS) return;
       sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(hashes, new Function<CommitId, VcsRevisionNumber>() {
         @Override
         public VcsRevisionNumber fun(CommitId commitId) {
@@ -334,8 +333,22 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       }), VcsRevisionNumber.class));
     }
     else if (VcsDataKeys.VCS == key) {
-      MultiMap<VirtualFile, VcsFullCommitDetails> commitsByRoots = groupByRoot(myUI.getVcsLog().getSelectedDetails());
-      Set<VirtualFile> roots = commitsByRoots.keySet();
+      List<CommitId> commits = myUI.getVcsLog().getSelectedCommits();
+      Collection<VcsLogProvider> logProviders = myUI.getVcsLog().getLogProviders();
+      if (logProviders.size() == 1) {
+        if (!commits.isEmpty()) {
+          sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(commits)).getRoot()).getSupportedVcs());
+        }
+        return;
+      }
+      if (commits.size() > MAX_SELECTED_COMMITS) return;
+
+      Set<VirtualFile> roots = ContainerUtil.map2Set(commits, new Function<CommitId, VirtualFile>() {
+        @Override
+        public VirtualFile fun(CommitId commitId) {
+          return commitId.getRoot();
+        }
+      });
       if (roots.size() == 1) {
         sink.put(key, myLogDataHolder.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs());
       }
