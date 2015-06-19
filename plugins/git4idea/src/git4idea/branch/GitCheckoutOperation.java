@@ -224,7 +224,8 @@ class GitCheckoutOperation extends GitBranchOperation {
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     final AtomicBoolean result = new AtomicBoolean();
     GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit,
-                                                                      repositories, "checkout", reference, indicator,
+                                                                      GitUtil.getRootsFromRepositories(repositories), "checkout", reference,
+                                                                      indicator,
                                                                       new Runnable() {
       @Override
       public void run() {

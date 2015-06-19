@@ -30,8 +30,9 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
+import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
-import git4idea.repo.GitRepository;
+import git4idea.stash.GitChangesSaver;
 import git4idea.stash.GitStashChangesSaver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,7 @@ public class GitPreservingProcess {
   @NotNull private final Project myProject;
   @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final Git myGit;
-  @NotNull private final Collection<GitRepository> myRepositories;
+  @NotNull private final Collection<VirtualFile> myRootsToSave;
   @NotNull private final String myOperationTitle;
   @NotNull private final String myDestinationName;
   @NotNull private final ProgressIndicator myProgressIndicator;
@@ -62,14 +63,18 @@ public class GitPreservingProcess {
 
   @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
 
-  public GitPreservingProcess(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git,
-                              @NotNull Collection<GitRepository> repositories,
-                              @NotNull String operationTitle, @NotNull String destinationName,
-                              @NotNull ProgressIndicator indicator, @NotNull Runnable operation) {
+  public GitPreservingProcess(@NotNull Project project,
+                              @NotNull GitPlatformFacade facade,
+                              @NotNull Git git,
+                              @NotNull Collection<VirtualFile> rootsToSave,
+                              @NotNull String operationTitle,
+                              @NotNull String destinationName,
+                              @NotNull ProgressIndicator indicator,
+                              @NotNull Runnable operation) {
     myProject = project;
     myFacade = facade;
     myGit = git;
-    myRepositories = repositories;
+    myRootsToSave = rootsToSave;
     myOperationTitle = operationTitle;
     myDestinationName = destinationName;
     myProgressIndicator = indicator;
@@ -148,7 +153,7 @@ public class GitPreservingProcess {
    */
   private boolean save() {
     try {
-      mySaver.saveLocalChanges(GitUtil.getRootsFromRepositories(myRepositories));
+      mySaver.saveLocalChanges(myRootsToSave);
       return true;
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);

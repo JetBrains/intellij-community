@@ -215,7 +215,8 @@ class GitMergeOperation extends GitBranchOperation {
 
   private boolean doSmartMerge(@NotNull final Collection<GitRepository> repositories) {
     final AtomicBoolean success = new AtomicBoolean();
-    myPreservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, repositories, "merge", myBranchToMerge, getIndicator(),
+    myPreservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, GitUtil.getRootsFromRepositories(repositories), "merge",
+                                                   myBranchToMerge, getIndicator(),
       new Runnable() {
         @Override
         public void run() {
@@ -309,8 +310,9 @@ class GitMergeOperation extends GitBranchOperation {
   private GitCompoundResult smartRollback(@NotNull final Collection<GitRepository> repositories) {
     LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, repositories, "merge", myBranchToMerge,
-                                                                      getIndicator(),
+    Collection<VirtualFile> roots = GitUtil.getRootsFromRepositories(repositories);
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit, roots, "merge",
+                                                                      myBranchToMerge, getIndicator(),
       new Runnable() {
         @Override public void run() {
           for (GitRepository repository : repositories) {

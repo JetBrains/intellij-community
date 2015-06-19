@@ -111,7 +111,8 @@ public class GitResetOperation {
     int choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "reset", "&Hard Reset");
     if (choice == GitSmartOperationDialog.SMART_EXIT_CODE) {
       final Ref<GitCommandResult> result = Ref.create();
-      new GitPreservingProcess(myProject, myFacade, myGit, Collections.singleton(repository), "reset", target, myIndicator, new Runnable() {
+      new GitPreservingProcess(myProject, myFacade, myGit, Collections.singleton(repository.getRoot()), "reset", target, myIndicator,
+                               new Runnable() {
         @Override
         public void run() {
           result.set(myGit.reset(repository, myMode, target));
