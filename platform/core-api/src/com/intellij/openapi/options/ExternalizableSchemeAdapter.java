@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.options;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ExternalizableScheme extends Scheme {
+public abstract class ExternalizableSchemeAdapter implements ExternalizableScheme {
+  @Override
   @Nullable
-  @Deprecated
-  ExternalInfo getExternalInfo();
-
-  void setName(@NotNull String newName);
+  public final ExternalInfo getExternalInfo() {
+    return null;
+  }
 }

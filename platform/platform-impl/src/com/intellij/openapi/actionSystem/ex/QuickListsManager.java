@@ -27,8 +27,6 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConvertor;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -104,11 +102,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
         mySchemesManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
           @Override
           public QuickList convert(Element element) throws Throwable {
-            QuickList item = createItem(element);
-            item.getExternalInfo().setHash(JDOMUtil.getTreeHash(element, true));
-            item.getExternalInfo().setPreviouslySavedName(item.getName());
-            item.getExternalInfo().setCurrentFileName(PathUtilRt.getFileName(path));
-            return item;
+            return createItem(element);
           }
         });
       }

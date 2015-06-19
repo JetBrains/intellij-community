@@ -22,8 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.ExternalInfo;
-import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -49,7 +48,7 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class KeymapImpl implements Keymap, ExternalizableScheme {
+public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapImpl");
 
   @NonNls private static final String KEY_MAP = "keymap";
@@ -60,7 +59,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   @NonNls private static final String KEYSTROKE_ATTRIBUTE = "keystroke";
   @NonNls private static final String FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke";
   @NonNls private static final String SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke";
-  @NonNls private static final String ABBREVIATION = "abbreviation";
   @NonNls private static final String ACTION = "action";
   @NonNls private static final String VERSION_ATTRIBUTE = "version";
   @NonNls private static final String PARENT_ATTRIBUTE = "parent";
@@ -99,7 +97,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private KeymapManagerEx myKeymapManager;
-  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   static {
     ourNamesForKeycodes = new HashMap<Integer, String>();
@@ -971,12 +968,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   @Override
   public void removeAbbreviation(String actionId, String abbreviation) {
 
-  }
-
-  @Override
-  @NotNull
-  public ExternalInfo getExternalInfo() {
-    return myExternalInfo;
   }
 
   @Override

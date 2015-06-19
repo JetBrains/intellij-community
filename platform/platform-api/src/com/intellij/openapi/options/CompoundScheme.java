@@ -23,10 +23,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class CompoundScheme<T extends SchemeElement> implements ExternalizableScheme {
+public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchemeAdapter {
   protected String myName;
   private final List<T> myElements = new ArrayList<T>();
-  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   public CompoundScheme(final String name) {
     myName = name;
@@ -73,12 +72,6 @@ public class CompoundScheme<T extends SchemeElement> implements ExternalizableSc
 
   public boolean isEmpty() {
     return myElements.isEmpty();
-  }
-
-  @Override
-  @NotNull
-  public ExternalInfo getExternalInfo() {
-    return myExternalInfo;
   }
 
   private CompoundScheme createNewInstance(final String name) {
