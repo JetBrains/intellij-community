@@ -173,7 +173,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
   private boolean myVisible;
   private PositionTracker<Balloon> myTracker;
-  private int myAnimationCycle = 500;
+  private final int myAnimationCycle;
 
   private boolean myFadedIn;
   private boolean myFadedOut;
@@ -609,7 +609,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myCloseRec = new CloseButton();
 
     myComp.clear();
-    myComp.myAlpha = myAnimationEnabled ? 0f : -1;
+    myComp.myAlpha = isAnimationEnabled() ? 0f : -1;
 
     final int borderSize = getShadowBorderSize();
     myComp.setBorder(new EmptyBorder(borderSize, borderSize, borderSize, borderSize));
@@ -689,10 +689,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (myAnimator != null) {
       Disposer.dispose(myAnimator);
     }
-    myAnimator = new Animator("Balloon", 8, myAnimationEnabled ? myAnimationCycle : 0, false, forward) {
+
+    myAnimator = new Animator("Balloon", 8, isAnimationEnabled() ? myAnimationCycle : 0, false, forward) {
       @Override
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
-        if (myComp == null || myComp.getParent() == null || !myAnimationEnabled) return;
+        if (myComp == null || myComp.getParent() == null || !isAnimationEnabled()) return;
         myComp.setAlpha((float)frame / totalFrames);
       }
 
@@ -1441,18 +1442,22 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       if (myImage != null && myAlpha != -1) {
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
-
+        paintShadow(g);
         UIUtil.drawImage(g2d, myImage, 0, 0, null);
       }
       else {
-        if (myShadow != null) {
-          Graphics2D graphics = (Graphics2D)g.create();
-          if (UIUtil.isRetina()) {
-            graphics.scale(.5, .5);
-          }
-          UIUtil.drawImage(graphics, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
-        }
+        paintShadow(g);
         myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)g, pointTarget);
+      }
+    }
+
+    private void paintShadow(Graphics graphics) {
+      if (myShadow != null) {
+        if (UIUtil.isRetina()) {
+          graphics = graphics.create();
+          ((Graphics2D)graphics).scale(.5, .5);
+        }
+        UIUtil.drawImage(graphics, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
       }
     }
 
@@ -1668,7 +1673,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   public boolean isAnimationEnabled() {
-    return myAnimationEnabled;
+    return myAnimationEnabled && myAnimationCycle > 0;
   }
 
   public boolean isBlockClicks() {
