@@ -30,9 +30,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.enumeration.EmptyEnumeration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p> Extensions root type provide a common interface for plugins to access resources that are modifiable by the user. </p>
@@ -195,13 +196,30 @@ public class ExtensionsRootType extends RootType {
 
   @NotNull
   private static List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+    String resourcesPath = EXTENSIONS_PATH + "/" + path;
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     ClassLoader cl = plugin != null ? plugin.getPluginClassLoader() : null;
-    Enumeration<URL> urlEnumeration = cl != null ? cl.getResources(EXTENSIONS_PATH + "/" + path) : EmptyEnumeration.<URL>getInstance();
+    Enumeration<URL> urlEnumeration = plugin != null ? cl.getResources(resourcesPath) : null;
+    if (urlEnumeration == null) return ContainerUtil.emptyList();
+
+    Set<URL> excludedUrls = ContainerUtil.newHashSet();
+    if (!plugin.getUseIdeaClassLoader()) {
+      IdeaPluginDescriptor corePlugin = PluginManager.getPlugin(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
+      ClassLoader ideaClassLoader = ObjectUtils.assertNotNull(corePlugin).getPluginClassLoader();
+      Enumeration<URL> resources = ideaClassLoader.getResources(resourcesPath);
+      while (resources.hasMoreElements()) {
+        excludedUrls.add(resources.nextElement());
+      }
+    }
+
     LinkedHashSet<URL> urls = ContainerUtil.newLinkedHashSet();
     while (urlEnumeration.hasMoreElements()) {
-      urls.add(urlEnumeration.nextElement());
+      URL url = urlEnumeration.nextElement();
+      if (!excludedUrls.contains(url)) {
+        urls.add(url);
+      }
     }
+
     return ContainerUtil.newArrayList(urls);
   }
 
