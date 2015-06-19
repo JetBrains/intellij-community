@@ -143,6 +143,11 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
+  @Nullable
+  public String getLocationUrl() {
+    return null;
+  }
+
   @Deprecated
   public interface AssertEqualsDiffChain {
     DiffHyperlink getPrevious();

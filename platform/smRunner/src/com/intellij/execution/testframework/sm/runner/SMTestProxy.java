@@ -642,7 +642,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  protected String getLocationUrl() {
+  public String getLocationUrl() {
     return myLocationUrl;
   }
 

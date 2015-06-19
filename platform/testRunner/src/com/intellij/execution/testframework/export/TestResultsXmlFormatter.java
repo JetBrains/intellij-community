@@ -42,6 +42,7 @@ public class TestResultsXmlFormatter {
   private static final String ELEM_SUITE = "suite";
   private static final String ATTR_NAME = "name";
   private static final String ATTR_DURATION = "duration";
+  private static final String ATTR_LOCATION = "locationUrl";
   private static final String ELEM_COUNT = "count";
   private static final String ATTR_VALUE = "value";
   private static final String ELEM_OUTPUT = "output";
@@ -135,6 +136,10 @@ public class TestResultsXmlFormatter {
     Long duration = node.getDuration();
     if (duration != null) {
       attrs.put(ATTR_DURATION, String.valueOf(duration));
+    }
+    String locationUrl = node.getLocationUrl();
+    if (locationUrl != null) {
+      attrs.put(ATTR_LOCATION, locationUrl);
     }
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
     startElement(elemName, attrs);
