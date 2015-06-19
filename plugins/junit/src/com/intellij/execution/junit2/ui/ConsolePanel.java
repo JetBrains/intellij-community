@@ -91,7 +91,7 @@ public class ConsolePanel extends TestResultsPanel {
 
   @Override
   protected TestStatusLine createStatusLine() {
-    myStatusLine = new JUnitStatusLine();
+    myStatusLine = new JUnitStatusLine(myProperties);
     return myStatusLine;
   }
 
