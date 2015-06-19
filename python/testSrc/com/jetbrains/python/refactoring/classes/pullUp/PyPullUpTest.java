@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.refactoring.classes.pullUp;
 
-import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -147,7 +146,7 @@ public class PyPullUpTest extends PyClassRefactoringTest {
    */
   private void checkAbstract(@NotNull final String... methodNames) {
     final String[] modules = {"Class", "SuperClass"};
-    configureMultiFile(ArrayUtil.mergeArrays(modules, "abc"));
+    configureMultiFile(modules);
     doPullUp("Child", "Parent", true, methodNames);
     checkMultiFile(modules);
   }
