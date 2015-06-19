@@ -20,10 +20,13 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,5 +64,11 @@ public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<Test
   @Override
   public SMTestLocator getTestLocator() {
     return JavaTestLocator.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
+    return new RerunFailedTestsAction(consoleView, this);
   }
 }

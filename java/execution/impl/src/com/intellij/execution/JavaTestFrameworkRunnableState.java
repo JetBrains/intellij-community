@@ -84,8 +84,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   protected abstract void passTempFile(ParametersList parametersList, String tempFilePath);
 
-  @NotNull protected abstract AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties, ConsoleView consoleView);
-
   @NotNull protected abstract T getConfiguration();
 
   @Nullable protected abstract TestSearchScope getScope();
@@ -112,7 +110,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     final RunnerSettings runnerSettings = getRunnerSettings();
 
-    final TestConsoleProperties testConsoleProperties = createTestConsoleProperties(executor);
+    final SMTRunnerConsoleProperties testConsoleProperties = createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties, getEnvironment());
@@ -143,7 +141,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       }
     });
 
-    AbstractRerunFailedTestsAction rerunFailedTestsAction = createRerunFailedTestsAction(testConsoleProperties, consoleView);
+    AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
+    LOG.assertTrue(rerunFailedTestsAction != null);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override
       public TestFrameworkRunningModel get() {

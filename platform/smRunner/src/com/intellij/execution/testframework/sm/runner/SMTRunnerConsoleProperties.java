@@ -23,7 +23,9 @@ import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -188,6 +190,11 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
   @Nullable
   public TestProxyFilterProvider getFilterProvider() {
+    return null;
+  }
+  
+  @Nullable
+  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return null;
   }
 }
