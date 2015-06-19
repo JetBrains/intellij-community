@@ -41,7 +41,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.continuation.*;
@@ -375,46 +374,42 @@ public class PatchApplier<BinaryType extends FilePatch> {
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
     }
-    RefreshQueue.getInstance().refresh(false, true, new Runnable() {
+    lfs.refreshFiles(indirectlyAffected, false, true, null);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (project.isDisposed()) return;
+        if (project.isDisposed()) return;
 
-            final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-            if (! directlyAffected.isEmpty() && targetChangelistMover != null) {
-              changeListManager.invokeAfterUpdate(new Runnable() {
-                  @Override
-                  public void run() {
-                    targetChangelistMover.consume(directlyAffected);
-                    if (context != null) {
-                      context.ping();
-                    }
-                  }
-                }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
-              VcsBundle.message("change.lists.manager.move.changes.to.list"),
-              new Consumer<VcsDirtyScopeManager>() {
-                @Override
-                public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
-                  vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
-                  vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
+        final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+        if (! directlyAffected.isEmpty() && targetChangelistMover != null) {
+          changeListManager.invokeAfterUpdate(new Runnable() {
+              @Override
+              public void run() {
+                targetChangelistMover.consume(directlyAffected);
+                if (context != null) {
+                  context.ping();
                 }
-              }, null);
-            } else {
-              final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-              // will schedule update
+              }
+            }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
+          VcsBundle.message("change.lists.manager.move.changes.to.list"),
+          new Consumer<VcsDirtyScopeManager>() {
+            @Override
+            public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
               vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
               vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
-              if (context != null) {
-                context.ping();
-              }
             }
+          }, null);
+        } else {
+          final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+          // will schedule update
+          vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+          vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
+          if (context != null) {
+            context.ping();
           }
-        });
+        }
       }
-    }, indirectlyAffected);
+    });
   }
 
   @Nullable
