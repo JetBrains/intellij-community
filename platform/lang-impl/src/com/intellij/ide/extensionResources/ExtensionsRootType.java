@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,8 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * <p> Extensions root type provide a common interface for plugins to access resources that are modifiable by the user. </p>
@@ -86,15 +89,14 @@ public class ExtensionsRootType extends RootType {
   }
 
   public void extractBundledResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
-    Enumeration<URL> bundledResources = getBundledResourceUrls(pluginId, path);
-    if (!bundledResources.hasMoreElements()) return;
+    List<URL> bundledResources = getBundledResourceUrls(pluginId, path);
+    if (bundledResources.isEmpty()) return;
 
     VirtualFile resourcesDirectory = findExtensionsDirectoryImpl(pluginId, path, true);
     if (resourcesDirectory == null) return;
 
     Application application = ApplicationManager.getApplication();
-    while (bundledResources.hasMoreElements()) {
-      URL bundledResourceDirUrl = bundledResources.nextElement();
+    for (URL bundledResourceDirUrl : bundledResources) {
       VirtualFile bundledResourcesDir = VfsUtil.findFileByURL(bundledResourceDirUrl);
       if (!bundledResourcesDir.isDirectory()) continue;
 
@@ -192,10 +194,15 @@ public class ExtensionsRootType extends RootType {
   }
 
   @NotNull
-  private static Enumeration<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+  private static List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     ClassLoader cl = plugin != null ? plugin.getPluginClassLoader() : null;
-    return cl != null ? cl.getResources(EXTENSIONS_PATH + "/" + path) : EmptyEnumeration.<URL>getInstance();
+    Enumeration<URL> urlEnumeration = cl != null ? cl.getResources(EXTENSIONS_PATH + "/" + path) : EmptyEnumeration.<URL>getInstance();
+    LinkedHashSet<URL> urls = ContainerUtil.newLinkedHashSet();
+    while (urlEnumeration.hasMoreElements()) {
+      urls.add(urlEnumeration.nextElement());
+    }
+    return ContainerUtil.newArrayList(urls);
   }
 
   private static void extractResources(@NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
