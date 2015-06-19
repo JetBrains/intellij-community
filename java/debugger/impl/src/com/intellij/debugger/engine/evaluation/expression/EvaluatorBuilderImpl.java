@@ -720,17 +720,12 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             myResult = new FieldEvaluator(new TypeEvaluator(typeName), FieldEvaluator.createClassFilter(psiClass), name);
           }
           else {
-            PsiType type = qualifier.getType();
-            if(type == null) {
-              throwEvaluateException(DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()));
-            }
-
             qualifier.accept(this);
             if (myResult == null) {
               throwEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", qualifier.getText()));
             }
 
-            myResult = new FieldEvaluator(myResult, FieldEvaluator.createClassFilter(type), name);
+            myResult = new FieldEvaluator(myResult, FieldEvaluator.createClassFilter(qualifier.getType()), name);
           }
         }
         else {
