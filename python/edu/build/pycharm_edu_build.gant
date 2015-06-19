@@ -27,8 +27,6 @@ setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
 
-bundledJDKs()
-
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
 setProperty("system_selector", "PyCharmEdu${p("component.version.major")}0")
@@ -114,6 +112,7 @@ target('default': "Build artifacts") {
     format(property: "todayYear", pattern: "yyyy")
   }
 
+  bundledJDKs()
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
     include(name: "fileTemplates/**/*")
