@@ -157,6 +157,9 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         throw new EvaluateException(res.toString());
       }
     }
+    catch (EvaluateException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new EvaluateException(e.getMessage());
     }
