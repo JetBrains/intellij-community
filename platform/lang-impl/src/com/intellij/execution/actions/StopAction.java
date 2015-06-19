@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
@@ -130,8 +129,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         }
       }));
 
-      final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
-      final JBPopup popup = builder
+      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(true)
         .setTitle(handlerItems.first.size() == 1 ? "Confirm process stop" : "Stop process")
         .setFilteringEnabled(new Function<Object, String>() {
@@ -146,17 +144,22 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
             HandlerItem item = (HandlerItem)list.getSelectedValue();
             if (item != null) item.stop();
           }
-        }).setRequestFocus(true).createPopup();
-
-      assert project != null;
-      popup.showCenteredInCurrentWindow(project);
+        })
+        .setRequestFocus(true)
+        .createPopup();
+      if (project == null) {
+        popup.showInBestPositionFor(dataContext);
+      }
+      else {
+        popup.showCenteredInCurrentWindow(project);
+      }
     }
     else if (activeProcessHandler != null) {
       stopProcess(activeProcessHandler);
     }
   }
 
-  private static List<Pair<TaskInfo, ProgressIndicator>> getCancellableProcesses(Project project) {
+  private static List<Pair<TaskInfo, ProgressIndicator>> getCancellableProcesses(@Nullable Project project) {
     IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
     StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
     if (statusBar == null) return Collections.emptyList();
