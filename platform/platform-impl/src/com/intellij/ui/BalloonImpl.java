@@ -56,7 +56,7 @@ import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -1376,6 +1376,46 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     @Override
+    protected void paintChildren(Graphics g) {
+      if (myImage == null || myAlpha == -1) {
+        super.paintChildren(g);
+      }
+    }
+
+    private void paintChildrenImpl(Graphics g) {
+      // Paint to an image without alpha to preserve fonts subpixel antialiasing
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+      Graphics imageGraphics = image.getGraphics();
+
+      //noinspection UseJBColor
+      imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
+      imageGraphics.fillRect(0, 0, getWidth(), getHeight());
+
+      super.paintChildren(imageGraphics);
+      imageGraphics.dispose();
+
+      UIUtil.drawImage(g, makeColorTransparent(image, myFillColor), 0, 0, null);
+    }
+
+    private Image makeColorTransparent(Image image, Color color) {
+      final int markerRGB = color.getRGB() | 0xFF000000;
+      ImageFilter filter = new RGBImageFilter() {
+        @Override
+        public int filterRGB(int x, int y, int rgb) {
+          if ((rgb | 0xFF000000) == markerRGB) {
+            return 0x00FFFFFF & rgb; // set alpha to 0
+          }
+          else {
+            return rgb;
+          }
+        }
+      };
+      ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
+      return Toolkit.getDefaultToolkit().createImage(prod);
+    }
+
+    @Override
     protected void paintComponent(final Graphics g) {
       super.paintComponent(g);
 
@@ -1429,7 +1469,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       //noinspection UndesirableClassUsage
       myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB); //[kb]: don't use UIUtil.createImage here
-      myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)myImage.getGraphics(), pointTarget);
+      Graphics2D imageGraphics = (Graphics2D)myImage.getGraphics();
+      myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
+      paintChildrenImpl(imageGraphics);
+      imageGraphics.dispose();
     }
 
 
