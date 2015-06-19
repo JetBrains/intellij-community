@@ -35,6 +35,7 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -265,7 +266,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     DefaultActionGroup toolbarGroup =
       new DefaultActionGroup(collapseBranchesAction, expandBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
-    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
+    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(myFilterUi.createActionGroup());
@@ -277,7 +278,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         // I can of course if linear bek is enabled replace the action on start but why bother
       }
       else {
-        mainGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.VCS_LOG_INTELLI_SORT_ACTION));
+        mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_INTELLI_SORT_ACTION));
       }
     }
     mainGroup.add(toolbarGroup);

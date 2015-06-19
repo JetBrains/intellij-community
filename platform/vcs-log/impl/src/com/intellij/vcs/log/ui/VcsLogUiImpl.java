@@ -36,15 +36,9 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 
 public class VcsLogUiImpl implements VcsLogUi, Disposable {
+  private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
-
-  public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
-  public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
-  public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
-  public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
-
-  private static final Logger LOG = Logger.getInstance(VcsLogUiImpl.class);
 
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final VcsLogDataHolder myLogDataHolder;

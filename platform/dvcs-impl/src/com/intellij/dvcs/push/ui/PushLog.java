@@ -41,7 +41,7 @@ import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -219,7 +219,7 @@ public class PushLog extends JPanel implements DataProvider {
     showCommitInfoAction.registerCustomShortcutSet(quickDocAction.getShortcutSet(), myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    PopupHandler.installPopupHandler(myTree, VcsLogUiImpl.POPUP_ACTION_GROUP, CONTEXT_MENU);
+    PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
     myChangesBrowser =
       new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,

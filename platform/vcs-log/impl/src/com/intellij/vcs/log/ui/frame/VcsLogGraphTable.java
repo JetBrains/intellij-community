@@ -47,6 +47,7 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PositionUtil;
 import com.intellij.vcs.log.printer.idea.SimpleGraphCellPainter;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -132,7 +133,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     getTableHeader().setReorderingAllowed(false);
 
-    PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
+    PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
 
     setModel(new GraphTableModel(initialDataPack, myLogDataHolder, myUI));
