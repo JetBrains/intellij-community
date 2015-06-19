@@ -1,6 +1,8 @@
-from abc import ABCMeta
-from abc import abstractmethod
 from abc import object
+from abc import abstractmethod
+from abc import ABCMeta
+
+
 class Parent(object, metaclass=ABCMeta):
     @abstractmethod
     def my_method(self, foo):
