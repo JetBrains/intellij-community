@@ -64,18 +64,18 @@ public final class SocketLock {
   public SocketLock() {
     serverSocket = acquireSocket();
     if (serverSocket == null) {
-      String productName = ApplicationNamesInfo.getInstance().getProductName();
-      if (Main.isHeadless()) { //team server inspections
-        throw new RuntimeException("Only one instance of " + productName + " can be run at a time.");
-      }
-      String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
-      JOptionPane.showMessageDialog(
-        JOptionPane.getRootFrame(),
-        CommonBundle.message("cannot.start.other.instance.is.running.error.message", productName, pathToLogFile),
-        CommonBundle.message("title.warning"),
-        JOptionPane.WARNING_MESSAGE
-      );
       acquiredPort = -1;
+
+      if (!Main.isHeadless()) {
+        String pathToLogFile = PathManager.getLogPath() + "/idea.log file".replace('/', File.separatorChar);
+        JOptionPane.showMessageDialog(
+          JOptionPane.getRootFrame(),
+          CommonBundle.message("cannot.start.other.instance.is.running.error.message", ApplicationNamesInfo.getInstance().getProductName(),
+                               pathToLogFile),
+          CommonBundle.message("title.warning"),
+          JOptionPane.WARNING_MESSAGE
+        );
+      }
     }
     else {
       acquiredPort = serverSocket.getLocalPort();
