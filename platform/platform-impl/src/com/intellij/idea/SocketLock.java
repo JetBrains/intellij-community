@@ -23,13 +23,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.*;
@@ -56,12 +56,18 @@ public final class SocketLock {
   @NonNls private static final String LOCK_THREAD_NAME = "Lock thread";
   @NonNls private static final String ACTIVATE_COMMAND = "activate ";
 
+  private final String configPath;
+  private final String systemPath;
+
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
   private final int acquiredPort;
   private volatile Consumer<List<String>> activateListener;
 
-  public SocketLock() {
+  public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
+    this.configPath = configPath;
+    this.systemPath = systemPath;
+
     serverSocket = acquireSocket();
     if (serverSocket == null) {
       acquiredPort = -1;
@@ -89,16 +95,37 @@ public final class SocketLock {
     activateListener = consumer;
   }
 
-  @TestOnly
   public void dispose() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: destroyProcess()");
     }
+
     try {
       serverSocket.close();
     }
     catch (IOException e) {
-      LOG.debug(e);
+      LOG.info(e);
+    }
+    finally {
+      try {
+        executeAndClose(new Executor<Void>() {
+          @Override
+          public Void execute(@NotNull List<Closeable> closeables) throws IOException {
+            File config = new File(configPath);
+            File system = new File(systemPath);
+            lockPortMarker(config, closeables);
+            lockPortMarker(system, closeables);
+            FileUtil.delete(new File(config, "port"));
+            FileUtil.delete(new File(system, "port"));
+            myLockedPaths[0] = null;
+            myLockedPaths[1] = null;
+            return null;
+          }
+        });
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -110,7 +137,6 @@ public final class SocketLock {
     FileUtilRt.createDirectory(parent);
     FileOutputStream stream = new FileOutputStream(new File(parent, "port.lock"), true);
     list.add(stream);
-    stream.getChannel().lock();
   }
 
   private static void addExistingPort(@NotNull File portMarker, @NotNull String path, @NotNull MultiMap<Integer, String> portToPath) {
@@ -126,40 +152,56 @@ public final class SocketLock {
   }
 
   @NotNull
-  public ActivateStatus lock(@NotNull String configPath, @NotNull String systemPath, String... args) {
+  public ActivateStatus lock() throws IOException {
+    return lock(ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  @NotNull
+  public ActivateStatus lock(@NotNull final String[] args) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: lock(configPath='" + configPath + "', systemPath='" + systemPath + "')");
     }
 
-    File config = new File(configPath);
-    File system = new File(systemPath);
-    File portMarkerC = new File(config, "port");
-    File portMarkerS = new File(system, "port");
-    List<Closeable> closeables = new ArrayList<Closeable>();
-    try {
-      lockPortMarker(config, closeables);
-      lockPortMarker(system, closeables);
-      MultiMap<Integer, String> portToPath = MultiMap.createSmart();
-      addExistingPort(portMarkerC, configPath, portToPath);
-      addExistingPort(portMarkerS, systemPath, portToPath);
-      if (!portToPath.isEmpty()) {
-        for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
-          ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
-          if (status != ActivateStatus.NO_INSTANCE) {
-            return status;
+    final File config = new File(configPath);
+    final File system = new File(systemPath);
+    final File portMarkerC = new File(config, "port");
+    final File portMarkerS = new File(system, "port");
+    return executeAndClose(new Executor<ActivateStatus>() {
+      @Override
+      public ActivateStatus execute(@NotNull List<Closeable> closeables) throws IOException {
+        lockPortMarker(config, closeables);
+        lockPortMarker(system, closeables);
+        MultiMap<Integer, String> portToPath = MultiMap.createSmart();
+        addExistingPort(portMarkerC, configPath, portToPath);
+        addExistingPort(portMarkerS, systemPath, portToPath);
+        if (!portToPath.isEmpty()) {
+          for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
+            ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
+            if (status != ActivateStatus.NO_INSTANCE) {
+              return status;
+            }
           }
         }
+
+        byte[] portBytes = Integer.toString(acquiredPort).getBytes(CharsetToolkit.UTF8_CHARSET);
+        FileUtil.writeToFile(portMarkerC, portBytes);
+        FileUtil.writeToFile(portMarkerS, portBytes);
+
+        myLockedPaths[0] = configPath;
+        myLockedPaths[1] = systemPath;
+        return ActivateStatus.NO_INSTANCE;
       }
+    });
+  }
 
-      byte[] portBytes = Integer.toString(acquiredPort).getBytes(CharsetToolkit.UTF8_CHARSET);
-      FileUtil.writeToFile(portMarkerC, portBytes);
-      FileUtil.writeToFile(portMarkerS, portBytes);
+  private interface Executor<T> {
+    T execute(@NotNull List<Closeable> closeables) throws IOException;
+  }
 
-      myLockedPaths[0] = configPath;
-      myLockedPaths[1] = systemPath;
-    }
-    catch (IOException e) {
-      LOG.error(e);
+  private static <T> T executeAndClose(@NotNull Executor<T> executor) throws IOException {
+    List<Closeable> closeables = new ArrayList<Closeable>();
+    try {
+      return executor.execute(closeables);
     }
     finally {
       for (Closeable closeable : closeables) {
@@ -171,11 +213,6 @@ public final class SocketLock {
         }
       }
     }
-
-    portMarkerC.deleteOnExit();
-    portMarkerS.deleteOnExit();
-
-    return ActivateStatus.NO_INSTANCE;
   }
 
   public static boolean isPortForbidden(int port) {

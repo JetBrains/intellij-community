@@ -244,17 +244,31 @@ public class StartupUtil {
 
   private synchronized static boolean lockSystemFolders(String[] args) {
     assert ourLock == null;
-    ourLock = new SocketLock();
+    ourLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
     if (ourLock.getAcquiredPort() == -1) {
       showErrorTooManyInstances(null);
       return false;
     }
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), PathManager.getSystemPath(), args);
+    SocketLock.ActivateStatus activateStatus = null;
+    try {
+      activateStatus = ourLock.lock(args);
+    }
+    catch (Exception e) {
+      Main.showMessage("Cannot lock system folders", e);
+    }
+
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
       showErrorTooManyInstances(activateStatus);
       return false;
     }
+
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+      @Override
+      public void run() {
+        ourLock.dispose();
+      }
+    }, "Unlock system folder"));
 
     return true;
   }
