@@ -1387,7 +1387,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       @SuppressWarnings("UndesirableClassUsage")
       BufferedImage image = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       Graphics2D imageGraphics = image.createGraphics();
-      //imageGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
       //noinspection UseJBColor
       imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
       imageGraphics.fillRect(0, 0, getWidth(), getHeight());
