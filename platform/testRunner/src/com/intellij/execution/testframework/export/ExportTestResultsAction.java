@@ -198,7 +198,10 @@ public class ExportTestResultsAction extends DumbAwareAction {
                   }
 
                   try {
-                    VirtualFile result = parent.createChildData(this, outputFile.getName());
+                    VirtualFile result = parent.findChild(outputFile.getName());
+                    if (result == null) {
+                      result = parent.createChildData(this, outputFile.getName());
+                    }
                     VfsUtil.saveText(result, outputText);
                     return result;
                   }
