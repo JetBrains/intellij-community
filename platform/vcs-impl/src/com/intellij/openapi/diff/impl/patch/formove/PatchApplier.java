@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -32,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
@@ -51,7 +49,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
@@ -292,7 +289,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     directlyAffected.addAll(trigger.getAffected());
     final Consumer<Collection<FilePath>> mover = localChangeList == null ? null : createMover(project, localChangeList);
-    refreshPassedFilesAndMoveToChangelist(project, null, directlyAffected, indirectlyAffected, mover, false);
+    refreshPassedFilesAndMoveToChangelist(project, null, directlyAffected, indirectlyAffected, mover);
     showApplyStatus(project, result);
     return result;
   }
@@ -354,7 +351,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
     directlyAffected.addAll(additionalDirectly);
 
-    refreshPassedFilesAndMoveToChangelist(myProject, context, directlyAffected, indirectlyAffected, myToTargetListsMover, mySystemOperation);
+    refreshPassedFilesAndMoveToChangelist(myProject, context, directlyAffected, indirectlyAffected, myToTargetListsMover);
   }
 
   public List<FilePath> getDirectlyAffected() {
@@ -365,35 +362,14 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return myVerifier.getAllAffected();
   }
 
-  public static void refreshPassedFilesAndMoveToChangelist(@NotNull final Project project, final ContinuationContext context,
-      final Collection<FilePath> directlyAffected, final Collection<VirtualFile> indirectlyAffected,
-      final Consumer<Collection<FilePath>> targetChangelistMover, final boolean systemOperation) {
+  public static void refreshPassedFilesAndMoveToChangelist(@NotNull final Project project,
+                                                           final ContinuationContext context,
+                                                           final Collection<FilePath> directlyAffected,
+                                                           final Collection<VirtualFile> indirectlyAffected,
+                                                           final Consumer<Collection<FilePath>> targetChangelistMover) {
     if (context != null) {
       context.suspend();
     }
-
-    final Runnable scheduleProjectFilesReload = systemOperation ? EmptyRunnable.getInstance() : new Runnable() {
-      @Override
-      public void run() {
-        final Runnable projectFilesReload =
-          MergeVersion.MergeDocumentVersion.prepareToReportChangedProjectFiles(project, ObjectsConvertor.fp2vf(directlyAffected));
-        final TaskDescriptor projectFilesReloadTaskDescriptor = projectFilesReload == null ? null : new TaskDescriptor("", Where.AWT) {
-          @Override
-          public void run(final ContinuationContext context) {
-            projectFilesReload.run();
-          }
-        };
-
-        if (projectFilesReloadTaskDescriptor != null) {
-          if (context != null) {
-            context.last(projectFilesReloadTaskDescriptor);
-          }
-          else {
-            SwingUtilities.invokeLater(projectFilesReload);
-          }
-        }
-      }
-    };
 
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (FilePath filePath : directlyAffected) {
@@ -413,7 +389,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
                   @Override
                   public void run() {
                     targetChangelistMover.consume(directlyAffected);
-                    scheduleProjectFilesReload.run();
                     if (context != null) {
                       context.ping();
                     }
@@ -432,7 +407,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
               // will schedule update
               vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
               vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
-              scheduleProjectFilesReload.run();
               if (context != null) {
                 context.ping();
               }
