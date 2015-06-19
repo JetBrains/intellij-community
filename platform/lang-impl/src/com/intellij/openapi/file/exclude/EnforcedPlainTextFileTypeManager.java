@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener {
   private final Map<Project, Collection<VirtualFile>> myPlainTextFileSets = ContainerUtil.createConcurrentWeakMap();
-  private volatile boolean mySetsInitialized = false;
+  private volatile boolean mySetsInitialized;
   private static final Object LOCK = new Object();
 
   public EnforcedPlainTextFileTypeManager() {
@@ -112,12 +112,8 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     }
   }
 
-  private static class EnforcedPlainTextFileTypeManagerHolder {
-    private static final EnforcedPlainTextFileTypeManager ourInstance = ServiceManager.getService(EnforcedPlainTextFileTypeManager.class);
-  }
-
   public static EnforcedPlainTextFileTypeManager getInstance() {
-    return EnforcedPlainTextFileTypeManagerHolder.ourInstance;
+    return ServiceManager.getService(EnforcedPlainTextFileTypeManager.class);
   }
 
   @Override
