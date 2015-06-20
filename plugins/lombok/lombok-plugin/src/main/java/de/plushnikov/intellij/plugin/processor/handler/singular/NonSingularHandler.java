@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -18,22 +17,17 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 import java.util.List;
 
-public class NonSingularHandler extends AbstractSingularHandler {
+public class NonSingularHandler implements BuilderElementHandler {
   public static final String SETTER_PREFIX = "set";
 
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
     final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
     final LombokLightFieldBuilder fieldBuilder =
-        new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(psiVariable.getType(), psiVariable.getProject()))
+        new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, psiVariable.getType())
             .withModifier(PsiModifier.PRIVATE)
             .withNavigationElement(psiVariable)
             .withContainingClass(innerClass);
     fields.add(fieldBuilder);
-  }
-
-  @NotNull
-  protected PsiType getBuilderFieldType(@NotNull PsiType psiType, @NotNull Project project) {
-    return psiType;
   }
 
   public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
@@ -53,7 +47,7 @@ public class NonSingularHandler extends AbstractSingularHandler {
     return isFluent ? fieldName : SETTER_PREFIX + StringUtil.capitalize(fieldName);
   }
 
-  protected String getAllMethodBody(@NotNull String psiFieldName, boolean fluentBuilder) {
+  private String getAllMethodBody(@NotNull String psiFieldName, boolean fluentBuilder) {
     final String codeBlockTemplate = "this.{0} = {0};{1}";
     return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
   }

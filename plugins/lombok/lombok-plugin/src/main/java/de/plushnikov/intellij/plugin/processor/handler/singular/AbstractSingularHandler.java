@@ -23,8 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class AbstractSingularHandler {
+public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
+  @Override
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
     final String fieldName = psiVariable.getName();
 
@@ -42,6 +43,7 @@ public abstract class AbstractSingularHandler {
     return PsiTypeUtil.getCollectionClassType((PsiClassType) psiType, project, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
   }
 
+  @Override
   public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
     final String psiFieldName = psiVariable.getName();
     final String singularName = createSingularName(singularAnnotation, psiFieldName);
@@ -71,21 +73,13 @@ public abstract class AbstractSingularHandler {
     methods.add(allAddMethod);
   }
 
-  protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
+  protected abstract void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder);
 
-  }
+  protected abstract void addAllMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder);
 
-  protected void addAllMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
+  protected abstract String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder);
 
-  }
-
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
-    return "";
-  }
-
-  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
-    return "";
-  }
+  protected abstract String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder);
 
   protected String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
     String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");

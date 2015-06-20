@@ -21,7 +21,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
-import de.plushnikov.intellij.plugin.processor.handler.singular.AbstractSingularHandler;
+import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -30,6 +30,7 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -85,7 +86,26 @@ public class BuilderHandler {
       final PsiType psiBuilderType = getBuilderType(psiClass);
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
       result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
-          validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
+          validateExistingBuilderClass(builderClassName, psiClass, problemBuilder) &&
+          validateSingularVariables(psiClass, problemBuilder);
+    }
+    return result;
+  }
+
+  private boolean validateSingularVariables(@NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
+    boolean result = true;
+
+    final Collection<PsiField> builderFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet());
+    for (PsiVariable builderVariable : builderFields) {
+      final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(builderVariable, Singular.class);
+      if (null != singularAnnotation) {
+        final String qualifiedName = PsiTypeUtil.getQualifiedName(builderVariable.getType());
+        if (SingularHandlerFactory.isInvalidSingularType(qualifiedName)) {
+          problemBuilder.addError("Lombok does not know how to create the singular-form builder methods for type '%s'; " +
+              "they won't be generated.", qualifiedName != null ? qualifiedName : builderVariable.getType().getCanonicalText());
+          result = false;
+        }
+      }
     }
     return result;
   }
@@ -320,7 +340,7 @@ public class BuilderHandler {
     List<PsiField> fields = new ArrayList<PsiField>();
     for (PsiVariable psiVariable : psiVariables) {
       final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
-      AbstractSingularHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
+      BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
       handler.addBuilderField(fields, psiVariable, psiBuilderClass, accessorsInfo);
     }
     return fields;
@@ -355,12 +375,9 @@ public class BuilderHandler {
     for (PsiVariable psiVariable : psiVariables) {
       // skip methods already defined in builder class
       if (!existedMethodNames.contains(psiVariable.getName())) {
-        // get Field of the root class not of the Builder class
-        final PsiVariable originalFieldElement = (PsiVariable) psiVariable.getNavigationElement();
-
-        final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(originalFieldElement, Singular.class);
-        AbstractSingularHandler handler = SingularHandlerFactory.getHandlerFor(originalFieldElement, singularAnnotation);
-        handler.addBuilderMethod(methods, originalFieldElement, innerClass, fluentBuilder, returnType, singularAnnotation, accessorsInfo);
+        final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
+        BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
+        handler.addBuilderMethod(methods, psiVariable, innerClass, fluentBuilder, returnType, singularAnnotation, accessorsInfo);
       }
     }
     return methods;
