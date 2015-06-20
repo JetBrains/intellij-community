@@ -56,6 +56,10 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract int getIconsAreaWidth();
 
+  public abstract int getAnnotationsAreaOffset();
+
+  public abstract int getAnnotationsAreaWidth();
+
   @Nullable
   public abstract Point getPoint(GutterIconRenderer renderer);
 

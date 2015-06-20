@@ -1198,10 +1198,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return 0;
   }
 
+  @Override
   public int getAnnotationsAreaOffset() {
     return getLineNumberAreaOffset() + getLineNumberAreaWidth();
   }
 
+  @Override
   public int getAnnotationsAreaWidth() {
     return myTextAnnotationGuttersSize;
   }
