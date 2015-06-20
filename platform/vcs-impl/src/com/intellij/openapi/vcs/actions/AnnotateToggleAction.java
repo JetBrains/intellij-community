@@ -33,13 +33,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
@@ -223,7 +221,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 final FileAnnotation fileAnnotation,
                                 final AbstractVcs vcs,
                                 final boolean onCurrentRevision) {
-    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     editor.getGutter().closeAllAnnotations();
 
     fileAnnotation.setCloser(new Runnable() {
@@ -246,12 +243,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
+    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
 
-    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, switcher);
+    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher);
     if (vcs.getCommittedChangesProvider() != null) {
-      presentation.addAction(new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file));
+      presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, file));
     }
-    presentation.addAction(new CopyRevisionNumberFromAnnotateAction(getUpToDateLineNumber, fileAnnotation));
+    presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
     presentation.addAction(Separator.getInstance());
 
     final Couple<Map<VcsRevisionNumber, Color>> bgColorMap =
@@ -291,15 +289,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, editor, presentation, bgColorMap, actionGroup));
 
-    presentation.addAction(new AnnotateCurrentRevisionAction(getUpToDateLineNumber, fileAnnotation, vcs));
-    presentation.addAction(new AnnotatePreviousRevisionAction(getUpToDateLineNumber, fileAnnotation, vcs));
+    presentation.addAction(new AnnotateCurrentRevisionAction(fileAnnotation, vcs));
+    presentation.addAction(new AnnotatePreviousRevisionAction(fileAnnotation, vcs));
     addActionsFromExtensions(presentation, fileAnnotation);
-
-    for (AnAction action : presentation.getActions()) {
-      if (action instanceof LineNumberListener) {
-        presentation.addLineNumberListener((LineNumberListener)action);
-      }
-    }
 
     for (AnnotationFieldGutter gutter : gutters) {
       final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);
