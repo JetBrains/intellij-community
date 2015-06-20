@@ -203,6 +203,7 @@
 		<li>0.9.5
 				<ol>
 				    <li>Fixed #48: Importing @Builder generated builder classes does not work</li>
+				    <li>Added #77: Basic Support for new @Singular annotation for @Builder collection fields</li>
 				    <li>Fixed #111: @Builder on constructors/methods is not recognized in Android Studio</li>
 				    <li>Fixed #116: @Builder - Builder class can't be found without a static import</li>
 				    <li>Added Hrisey @Parcelable support patch</li>
