@@ -32,19 +32,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OutputChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.OutputChecker");
   private static final String JDK_HOME_STR = "!JDK_HOME!";
+  private static final String TEST_JDK_HOME_STR = "!TEST_JDK!";
 
   protected final String myAppPath;
 
@@ -186,7 +191,9 @@ public class OutputChecker {
         result = StringUtil.replace(result, "\r\n", "\n");
         result = StringUtil.replace(result, "\r", "\n");
         result = replaceAdditionalInOutput(result);
-        result = StringUtil.replace(result, testJdk.getHomePath(), "!TEST_JDK!", shouldIgnoreCase);
+        final String testJdkHome = testJdk.getHomePath();
+        result = StringUtil.replace(result, testJdkHome.replace('/', File.separatorChar), TEST_JDK_HOME_STR, shouldIgnoreCase);
+        result = StringUtil.replace(result, testJdkHome, TEST_JDK_HOME_STR, shouldIgnoreCase);
         result = StringUtil.replace(result, myAppPath, "!APP_PATH!", shouldIgnoreCase);
         result = StringUtil.replace(result, myAppPath.replace(File.separatorChar, '/'), "!APP_PATH!", shouldIgnoreCase);
         result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!", shouldIgnoreCase);
@@ -215,19 +222,8 @@ public class OutputChecker {
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
         result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
 
-        int commandLineStart = result.indexOf(JDK_HOME_STR);
-        while (commandLineStart != -1) {
-          final StringBuilder builder = new StringBuilder(result);
-          int i = commandLineStart + 1;
-          while (i < builder.length()) {
-            char c = builder.charAt(i);
-            if (c == '\n') break;
-            else if (c == File.separatorChar) builder.setCharAt(i, '\\');
-            i++;
-          }
-          result = builder.toString();
-          commandLineStart = result.indexOf(JDK_HOME_STR, commandLineStart + 1);
-        }
+        result = fixSlashes(result, TEST_JDK_HOME_STR);
+        result = fixSlashes(result, JDK_HOME_STR);
 
         result = stripQuotesAroundClasspath(result);
 
@@ -265,6 +261,24 @@ public class OutputChecker {
         return result;
       }
     });
+  }
+
+  @NotNull
+  private static String fixSlashes(String text, final String jdkHomeMarker) {
+    int commandLineStart = text.indexOf(jdkHomeMarker);
+    while (commandLineStart != -1) {
+      final StringBuilder builder = new StringBuilder(text);
+      int i = commandLineStart + 1;
+      while (i < builder.length()) {
+        char c = builder.charAt(i);
+        if (c == '\n') break;
+        else if (c == File.separatorChar) builder.setCharAt(i, '\\');
+        i++;
+      }
+      text = builder.toString();
+      commandLineStart = text.indexOf(jdkHomeMarker, commandLineStart + 1);
+    }
+    return text;
   }
 
   protected String replaceAdditionalInOutput(String str) {
