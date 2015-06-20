@@ -215,11 +215,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     ProgressManager.getInstance().run(annotateTask);
   }
 
-  public static void doAnnotate(final Editor editor,
-                                final Project project,
-                                final VirtualFile file,
-                                final FileAnnotation fileAnnotation,
-                                final AbstractVcs vcs,
+  public static void doAnnotate(@NotNull final Editor editor,
+                                @NotNull final Project project,
+                                @NotNull final VirtualFile currentFile,
+                                @NotNull final FileAnnotation fileAnnotation,
+                                @NotNull final AbstractVcs vcs,
                                 final boolean onCurrentRevision) {
     editor.getGutter().closeAllAnnotations();
 
@@ -237,7 +237,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       }
     });
     if (onCurrentRevision) {
-      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(file, fileAnnotation);
+      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
     }
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
@@ -247,7 +247,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher);
     if (vcs.getCommittedChangesProvider() != null) {
-      presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, file));
+      presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, currentFile));
     }
     presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
     presentation.addAction(Separator.getInstance());
