@@ -246,14 +246,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    final List<AnAction> additionalActions = new ArrayList<AnAction>();
+
+    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, switcher);
     if (vcs.getCommittedChangesProvider() != null) {
-      additionalActions.add(new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file));
+      presentation.addAction(new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file));
     }
-    additionalActions.add(new CopyRevisionNumberFromAnnotateAction(getUpToDateLineNumber, fileAnnotation));
-    final AnnotationPresentation presentation =
-      new AnnotationPresentation(fileAnnotation, switcher, editorGutter,
-                                 additionalActions.toArray(new AnAction[additionalActions.size()]));
+    presentation.addAction(new CopyRevisionNumberFromAnnotateAction(getUpToDateLineNumber, fileAnnotation));
+    presentation.addAction(Separator.getInstance());
 
     final Couple<Map<VcsRevisionNumber, Color>> bgColorMap =
       Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
@@ -267,6 +266,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       final MergeSourceAvailableMarkerGutter mergeSourceGutter =
         new MergeSourceAvailableMarkerGutter(fileAnnotation, editor, null, presentation, bgColorMap);
 
+      presentation.addAction(new SwitchAnnotationSourceAction(switcher, editorGutter));
       presentation.addSourceSwitchListener(currentRevisionGutter);
       presentation.addSourceSwitchListener(mergeSourceGutter);
 

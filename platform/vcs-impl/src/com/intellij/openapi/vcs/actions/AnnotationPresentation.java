@@ -16,10 +16,8 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Consumer;
@@ -28,37 +26,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 class AnnotationPresentation implements TextAnnotationPresentation {
   private final FileAnnotation myFileAnnotation;
   @Nullable
   private final AnnotationSourceSwitcher mySwitcher;
-  private final ArrayList<AnAction> myActions;
+  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
   private SwitchAnnotationSourceAction mySwitchAction;
   private final List<LineNumberListener> myPopupLineNumberListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  AnnotationPresentation(@NotNull FileAnnotation fileAnnotation,
-                         @Nullable final AnnotationSourceSwitcher switcher,
-                         final EditorGutterComponentEx gutter,
-                         final AnAction... actions) {
+  AnnotationPresentation(@NotNull FileAnnotation fileAnnotation, @Nullable final AnnotationSourceSwitcher switcher) {
     myFileAnnotation = fileAnnotation;
     mySwitcher = switcher;
-
-    myActions = new ArrayList<AnAction>();
-    myActions.add(Separator.getInstance());
-    if (actions != null) {
-      final List<AnAction> actionsList = Arrays.asList(actions);
-      if (!actionsList.isEmpty()) {
-        myActions.addAll(actionsList);
-        myActions.add(new Separator());
-      }
-    }
-    if (mySwitcher != null) {
-      mySwitchAction = new SwitchAnnotationSourceAction(mySwitcher, gutter);
-      myActions.add(mySwitchAction);
-    }
   }
 
   public void addLineNumberListener(final LineNumberListener listener) {
