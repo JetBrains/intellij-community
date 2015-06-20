@@ -32,11 +32,11 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
   protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
     if (null == psiParentMethod) {
-      final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentClass);
+      final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentClass, psiBuilderClass);
       target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
       target.addAll(builderHandler.createMethods(psiParentClass, null, psiBuilderClass, psiBuilderType, psiAnnotation, tmpFields));
     } else {
-      final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentMethod);
+      final Collection<PsiField> tmpFields = builderHandler.createFields(psiParentMethod, psiBuilderClass);
       target.addAll(builderHandler.createConstructors(psiBuilderClass, psiAnnotation));
       target.addAll(builderHandler.createMethods(psiParentClass, psiParentMethod, psiBuilderClass, psiBuilderType, psiAnnotation, tmpFields));
     }

@@ -20,6 +20,7 @@ import java.util.Collection;
  */
 public class AccessorsInfo {
   private static final String ACCESSORS_ANNOTATION_NAME = Accessors.class.getName();
+  public static final AccessorsInfo EMPTY = new AccessorsInfo(false, false, false);
 
   private final boolean fluent;
   private final boolean chain;

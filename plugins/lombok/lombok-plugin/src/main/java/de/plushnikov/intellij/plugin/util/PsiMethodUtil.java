@@ -63,7 +63,7 @@ public class PsiMethodUtil {
   public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName) {
     boolean hasMethod = false;
     for (PsiMethod classMethod : classMethods) {
-      if (classMethod.getName().equals(methodName)) {
+      if (methodName.equals(classMethod.getName())) {
         hasMethod = true;
         break;
       }
@@ -92,7 +92,7 @@ public class PsiMethodUtil {
   }
 
   public static boolean isSimilarMethod(@NotNull PsiMethod classMethod, @NotNull String methodName, int methodArgCount) {
-    boolean equalNames = classMethod.getName().equalsIgnoreCase(methodName);
+    boolean equalNames = methodName.equalsIgnoreCase(classMethod.getName());
 
     int parametersCount = classMethod.getParameterList().getParametersCount();
     if (classMethod.isVarArgs()) {
