@@ -32,8 +32,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract boolean isLineMarkersShown();
 
-  public abstract boolean isAnnotationsShown();
-
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 

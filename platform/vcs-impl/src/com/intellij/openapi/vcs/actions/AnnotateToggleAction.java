@@ -61,7 +61,6 @@ import java.util.List;
  */
 public class AnnotateToggleAction extends ToggleAction implements DumbAware, AnnotationColors {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
-  protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -126,8 +125,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   }
 
   private static boolean isAnnotated(@NotNull Editor editor) {
-    Collection annotations = editor.getUserData(KEY_IN_EDITOR);
-    return annotations != null && !annotations.isEmpty();
+    return editor.getGutter().isAnnotationsShown();
   }
 
   @Override
@@ -223,10 +221,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 final Project project,
                                 final VirtualFile file,
                                 final FileAnnotation fileAnnotation,
-                                final AbstractVcs vcs, final boolean onCurrentRevision) {
+                                final AbstractVcs vcs,
+                                final boolean onCurrentRevision) {
     final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     editor.getGutter().closeAllAnnotations();
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
 
     fileAnnotation.setCloser(new Runnable() {
       @Override
@@ -242,14 +240,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       }
     });
     if (onCurrentRevision) {
-      listener.registerAnnotation(file, fileAnnotation);
-    }
-
-    // be careful, not proxies but original items are put there (since only their presence not behaviour is important)
-    Collection<ActiveAnnotationGutter> annotations = editor.getUserData(KEY_IN_EDITOR);
-    if (annotations == null) {
-      annotations = new HashSet<ActiveAnnotationGutter>();
-      editor.putUserData(KEY_IN_EDITOR, annotations);
+      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(file, fileAnnotation);
     }
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
@@ -318,7 +309,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       else {
         editor.getGutter().registerTextAnnotation(proxy);
       }
-      annotations.add(gutter);
     }
   }
 
