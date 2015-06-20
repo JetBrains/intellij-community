@@ -47,7 +47,6 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -267,7 +266,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     final Couple<Map<VcsRevisionNumber, Color>> bgColorMap =
       Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
-    final Map<String, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
+    final Map<VcsRevisionNumber, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
 
     if (switcher != null) {
       switcher.switchTo(switcher.getDefaultSource());
@@ -334,31 +333,16 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   }
 
   @Nullable
-  private static Map<String, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
-    final SortedList<VcsFileRevision> revisions = new SortedList<VcsFileRevision>(new Comparator<VcsFileRevision>() {
-      @Override
-      public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-        try {
-          final int result = o1.getRevisionDate().compareTo(o2.getRevisionDate());
-          return result != 0 ? result : o1.getRevisionNumber().compareTo(o2.getRevisionNumber());
-        }
-        catch (Exception e) {
-          return 0;
-        }
-      }
-    });
-    final Map<String, Integer> numbers = new HashMap<String, Integer>();
+  private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
+    final Map<VcsRevisionNumber, Integer> numbers = new HashMap<VcsRevisionNumber, Integer>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
-      revisions.addAll(fileRevisionList);
-      for (VcsFileRevision revision : fileRevisionList) {
-        final String revNumber = revision.getRevisionNumber().asString();
-        if (!numbers.containsKey(revNumber)) {
-          final int num = revisions.indexOf(revision);
-          if (num != -1) {
-            numbers.put(revNumber, num + 1);
-          }
-        }
+      int size = fileRevisionList.size();
+      for (int i = 0; i < size; i++) {
+        VcsFileRevision revision = fileRevisionList.get(i);
+        final VcsRevisionNumber number = revision.getRevisionNumber();
+
+        numbers.put(number, size - i);
       }
     }
     return numbers.size() < 2 ? null : numbers;
