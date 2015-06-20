@@ -24,15 +24,17 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJButtonBorder implements Border, UIResource {
+public class MacIntelliJBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-
+    if (c.hasFocus()) {
+      MacIntelliJBorderPainter.paintBorder(c, g, x, y, width, height);
+    }
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3).asUIResource();
+    return JBUI.insets(2).asUIResource();
   }
 
   @Override
