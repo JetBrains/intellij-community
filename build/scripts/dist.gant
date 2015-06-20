@@ -159,7 +159,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   layoutMac(args, home, paths)
   layoutUnix(args, home, paths)
 
-  buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin], "${paths.sandbox}/bundled.win.jdk"])
+  buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin], "${paths.sandbox}/bundled.win.jdk")
   buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
                         paths.distWin, paths.distUnix, paths.distMac)
 
