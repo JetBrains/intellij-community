@@ -218,9 +218,9 @@ public class BuilderHandler {
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiMethod, builderClassName, psiAnnotation);
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
-    final Collection<PsiField> builderFields = createFields(psiMethod, builderClass);
-    builderClass.withFields(builderFields);
-    builderClass.withMethods(createMethods(psiClass, psiMethod, builderClass, psiBuilderType, psiAnnotation, builderFields));
+    final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
+    builderClass.withFields(generateFields(builderParameters, builderClass, AccessorsInfo.EMPTY));
+    builderClass.withMethods(createMethods(psiClass, psiMethod, builderClass, psiBuilderType, psiAnnotation, builderParameters));
 
     return builderClass;
   }
@@ -233,15 +233,15 @@ public class BuilderHandler {
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiClass, builderClassName, psiAnnotation);
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
-    final Collection<PsiField> builderFields = createFields(psiClass, builderClass);
-    builderClass.withFields(builderFields);
-    builderClass.withMethods(createMethods(psiClass, null, builderClass, psiBuilderType, psiAnnotation, builderFields));
+    final Collection<PsiField> psiFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet());
+    builderClass.withFields(generateFields(psiFields, builderClass, AccessorsInfo.build(psiClass)));
+    builderClass.withMethods(createMethods(psiClass, null, builderClass, psiBuilderType, psiAnnotation, psiFields));
 
     return builderClass;
   }
 
   @NotNull
-  public Collection<PsiMethod> createMethods(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiType psiBuilderType, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> fields) {
+  public Collection<PsiMethod> createMethods(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiType psiBuilderType, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<? extends PsiVariable> psiVariables) {
     final Collection<PsiMethod> methodsIntern = PsiClassUtil.collectClassMethodsIntern(psiBuilderClass);
     final Set<String> existedMethodNames = new HashSet<String>(methodsIntern.size());
     for (PsiMethod existedMethod : methodsIntern) {
@@ -249,7 +249,7 @@ public class BuilderHandler {
     }
 
     Collection<PsiMethod> psiMethods = new ArrayList<PsiMethod>();
-    psiMethods.addAll(createFieldMethods(fields, psiParentClass, psiBuilderClass, psiAnnotation, existedMethodNames));
+    psiMethods.addAll(createFieldMethods(psiVariables, psiParentClass, psiBuilderClass, psiAnnotation, existedMethodNames));
     final String buildMethodName = getBuildMethodName(psiAnnotation);
     if (!existedMethodNames.contains(buildMethodName)) {
       psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, psiBuilderType, buildMethodName));
@@ -287,7 +287,7 @@ public class BuilderHandler {
   }
 
   @NotNull
-  private Collection<PsiField> getBuilderFields(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> existedFields) {
+  public Collection<PsiField> getBuilderFields(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> existedFields) {
     final List<PsiField> fields = new ArrayList<PsiField>();
 
     final Set<String> existedFieldNames = new HashSet<String>(existedFields.size());
@@ -316,72 +316,47 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public Collection<PsiField> createFields(@NotNull PsiClass psiClass, @NotNull PsiClass psiBuilderClass) {
-    return createFields(psiClass, Collections.<PsiField>emptySet(), psiBuilderClass);
-  }
-
-  @NotNull
-  public Collection<PsiField> createFields(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> existedFields, @NotNull PsiClass psiBuilderClass) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
-
+  public Collection<PsiField> generateFields(@NotNull Collection<? extends PsiVariable> psiVariables, @NotNull PsiClass psiBuilderClass, @NotNull AccessorsInfo accessorsInfo) {
     List<PsiField> fields = new ArrayList<PsiField>();
-    for (PsiField psiField : getBuilderFields(psiClass, existedFields)) {
-      final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiField, Singular.class);
-      AbstractSingularHandler handler = SingularHandlerFactory.getHandlerFor(psiField, singularAnnotation);
-      handler.addBuilderField(fields, psiField, psiBuilderClass, accessorsInfo);
+    for (PsiVariable psiVariable : psiVariables) {
+      final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
+      AbstractSingularHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
+      handler.addBuilderField(fields, psiVariable, psiBuilderClass, accessorsInfo);
     }
     return fields;
   }
 
   @NotNull
-  public Collection<PsiField> createFields(@NotNull PsiMethod psiMethod, @NotNull PsiClass psiBuilderClass) {
-    return createFields(psiMethod, Collections.<PsiField>emptySet(), psiBuilderClass);
-  }
-
-  @NotNull
-  public Collection<PsiField> createFields(@NotNull PsiMethod psiMethod, @NotNull Collection<PsiField> existedFields, @NotNull PsiClass psiBuilderClass) {
+  public Collection<PsiParameter> getBuilderParameters(@NotNull PsiMethod psiMethod, @NotNull Collection<PsiField> existedFields) {
     final Set<String> existedFieldNames = new HashSet<String>(existedFields.size());
     for (PsiField existedField : existedFields) {
       existedFieldNames.add(existedField.getName());
     }
 
-    List<PsiField> fields = new ArrayList<PsiField>();
+    Collection<PsiParameter> result = new ArrayList<PsiParameter>();
+
     for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
       final String parameterName = psiParameter.getName();
       if (null != parameterName && !existedFieldNames.contains(parameterName)) {
-        final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiParameter, Singular.class);
-        AbstractSingularHandler handler = SingularHandlerFactory.getHandlerFor(psiParameter, singularAnnotation);
-        handler.addBuilderField(fields, psiParameter, psiBuilderClass, AccessorsInfo.EMPTY);
+        result.add(psiParameter);
       }
     }
-    return fields;
+    return result;
   }
 
   @NotNull
-  protected Collection<PsiMethod> createFieldMethods(@NotNull Collection<PsiField> psiFields, @NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<String> existedMethodNames) {
+  protected Collection<PsiMethod> createFieldMethods(@NotNull Collection<? extends PsiVariable> psiVariables, @NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<String> existedMethodNames) {
     final boolean fluentBuilder = isFluentBuilder(psiAnnotation);
     final PsiType returnType = createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass));
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(parentClass);
 
     final List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    for (PsiField psiField : psiFields) {
-      boolean createMethod = true;
-      PsiModifierList modifierList = psiField.getModifierList();
-      final String psiFieldName = psiField.getName();
-      if (null != modifierList) {
-        //Skip static fields.
-        createMethod = !modifierList.hasModifierProperty(PsiModifier.STATIC);
-        //Skip fields that start with $
-        createMethod &= !psiFieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-        // skip initialized final fields
-        createMethod &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
-        // skip methods already defined in builder class
-        createMethod &= !existedMethodNames.contains(psiField.getName());
-      }
-      if (createMethod) {
+    for (PsiVariable psiVariable : psiVariables) {
+      // skip methods already defined in builder class
+      if (!existedMethodNames.contains(psiVariable.getName())) {
         // get Field of the root class not of the Builder class
-        final PsiVariable originalFieldElement = (PsiVariable) psiField.getNavigationElement();
+        final PsiVariable originalFieldElement = (PsiVariable) psiVariable.getNavigationElement();
 
         final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(originalFieldElement, Singular.class);
         AbstractSingularHandler handler = SingularHandlerFactory.getHandlerFor(originalFieldElement, singularAnnotation);

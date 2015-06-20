@@ -5,6 +5,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
@@ -36,9 +38,11 @@ public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPr
   protected void generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiField> existedFields = PsiClassUtil.collectClassFieldsIntern(psiBuilderClass);
     if (null == psiParentMethod) {
-      target.addAll(builderHandler.createFields(psiParentClass, existedFields, psiBuilderClass));
+      final Collection<PsiField> builderFields = builderHandler.getBuilderFields(psiParentClass, existedFields);
+      target.addAll(builderHandler.generateFields(builderFields, psiBuilderClass, AccessorsInfo.build(psiParentClass)));
     } else {
-      target.addAll(builderHandler.createFields(psiParentMethod, existedFields, psiBuilderClass));
+      final Collection<PsiParameter> builderParameters = builderHandler.getBuilderParameters(psiParentMethod, existedFields);
+      target.addAll(builderHandler.generateFields(builderParameters, psiBuilderClass, AccessorsInfo.EMPTY));
     }
   }
 }
