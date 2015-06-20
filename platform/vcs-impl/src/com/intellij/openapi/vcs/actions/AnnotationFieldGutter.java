@@ -46,8 +46,16 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   private final boolean myIsGutterAction;
   private Couple<Map<VcsRevisionNumber, Color>> myColorScheme;
 
+  @Deprecated
   AnnotationFieldGutter(FileAnnotation annotation,
                         Editor editor,
+                        LineAnnotationAspect aspect,
+                        final TextAnnotationPresentation presentation,
+                        Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
+    this(annotation, aspect, presentation, colorScheme);
+  }
+
+  AnnotationFieldGutter(FileAnnotation annotation,
                         LineAnnotationAspect aspect,
                         final TextAnnotationPresentation presentation,
                         Couple<Map<VcsRevisionNumber, Color>> colorScheme) {

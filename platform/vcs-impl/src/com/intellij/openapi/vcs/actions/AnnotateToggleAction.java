@@ -260,9 +260,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       switcher.switchTo(switcher.getDefaultSource());
       final LineAnnotationAspect revisionAspect = switcher.getRevisionAspect();
       final CurrentRevisionAnnotationFieldGutter currentRevisionGutter =
-        new CurrentRevisionAnnotationFieldGutter(fileAnnotation, editor, revisionAspect, presentation, bgColorMap);
+        new CurrentRevisionAnnotationFieldGutter(fileAnnotation, revisionAspect, presentation, bgColorMap);
       final MergeSourceAvailableMarkerGutter mergeSourceGutter =
-        new MergeSourceAvailableMarkerGutter(fileAnnotation, editor, null, presentation, bgColorMap);
+        new MergeSourceAvailableMarkerGutter(fileAnnotation, null, presentation, bgColorMap);
 
       presentation.addAction(new SwitchAnnotationSourceAction(switcher, editorGutter));
       presentation.addSourceSwitchListener(currentRevisionGutter);
@@ -277,17 +277,17 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
-      gutters.add(new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation, bgColorMap));
+      gutters.add(new AnnotationFieldGutter(fileAnnotation, aspect, presentation, bgColorMap));
     }
 
 
     if (historyIds != null) {
-      gutters.add(new HistoryIdColumn(fileAnnotation, editor, presentation, bgColorMap, historyIds));
+      gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
-    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, bgColorMap));
+    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, null, presentation, bgColorMap));
     final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter);
     presentation.addAction(actionGroup, 1);
-    gutters.add(new ExtraFieldGutter(fileAnnotation, editor, presentation, bgColorMap, actionGroup));
+    gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 
     presentation.addAction(new AnnotateCurrentRevisionAction(fileAnnotation, vcs));
     presentation.addAction(new AnnotatePreviousRevisionAction(fileAnnotation, vcs));
