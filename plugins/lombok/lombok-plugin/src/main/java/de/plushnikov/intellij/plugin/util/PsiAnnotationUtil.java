@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 
 /**
  * Some util methods for annotation processing
+ *
  * @author peichhorn
  * @author Plushnikov Michail
  */

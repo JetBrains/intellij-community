@@ -69,7 +69,7 @@ public class LombokLightParameter extends LightParameter {
 
     LombokLightParameter that = (LombokLightParameter) o;
 
-    return getType().equals(that.getType());
+    return getType().isValid() == that.getType().isValid() && getType().equals(that.getType());
   }
 
   @Override

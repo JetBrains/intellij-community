@@ -27,15 +27,15 @@ public class SingularCollectionHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getOneMethodBody(String singularName, boolean fluentBuilder) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<?>(); \n" +
-        "this.{0}.add({0});{1}";
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList(); \n" +
+        "this.{0}.add({1});{2}";
 
-    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "");
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(String singularName, boolean fluentBuilder) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<?>(); \n"
+  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList(); \n"
         + "this.{0}.addAll({0});{1}";
     return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "");
   }

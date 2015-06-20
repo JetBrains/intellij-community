@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiType;
@@ -8,11 +9,8 @@ import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-
-import static java.util.Arrays.asList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SingularHandlerFactory {
 
@@ -25,33 +23,40 @@ public class SingularHandlerFactory {
   private static final String[] GUAVA_SETS = new String[]{"com.google.common.collect.ImmutableSet", "com.google.common.collect.ImmutableSortedSet"};
   private static final String[] GUAVA_MAPS = new String[]{"com.google.common.collect.ImmutableMap", "com.google.common.collect.ImmutableBiMap", "com.google.common.collect.ImmutableSortedMap"};
 
-  private static final Collection<String> COLLECTION_TYPES = Collections.unmodifiableSet(new HashSet<String>() {{
-    add(JAVA_LANG_ITERABLE);
-    add(JAVA_UTIL_COLLECTION);
-    add(JAVA_UTIL_LIST);
-    addAll(asList(JAVA_SETS));
-  }});
-  private static final Collection<String> GUAVA_COLLECTION_TYPES = Collections.unmodifiableSet(new HashSet<String>() {{
-    addAll(asList(GUAVE_COLLECTIONS));
-    addAll(asList(GUAVA_SETS));
-  }});
-  private static final Collection<String> MAP_TYPES = Collections.unmodifiableSet(new HashSet<String>() {{
-    addAll(asList(JAVA_MAPS));
-  }});
-  private static final Collection<String> GUAVA_MAP_TYPES = Collections.unmodifiableSet(new HashSet<String>() {{
-    addAll(asList(GUAVA_MAPS));
-  }});
+  private static final Map<String, String> COLLECTION_TYPES = new HashMap<String, String>() {{
+    putAll(toShortNames(JAVA_LANG_ITERABLE, JAVA_UTIL_COLLECTION, JAVA_UTIL_LIST));
+    putAll(toShortNames(JAVA_SETS));
+  }};
 
-  private static final Collection<String> VALID_SINGULAR_TYPES = Collections.unmodifiableSet(new HashSet<String>() {{
-    add(JAVA_LANG_ITERABLE);
-    add(JAVA_UTIL_COLLECTION);
-    add(JAVA_UTIL_LIST);
-    addAll(asList(JAVA_MAPS));
-    addAll(asList(JAVA_SETS));
-    addAll(asList(GUAVE_COLLECTIONS));
-    addAll(asList(GUAVA_SETS));
-    addAll(asList(GUAVA_MAPS));
-  }});
+  private static final Map<String, String> GUAVA_COLLECTION_TYPES = new HashMap<String, String>() {{
+    putAll(toShortNames(GUAVE_COLLECTIONS));
+    putAll(toShortNames(GUAVA_SETS));
+  }};
+
+  private static final Map<String, String> MAP_TYPES = new HashMap<String, String>() {{
+    putAll(toShortNames(JAVA_MAPS));
+  }};
+  private static final Map<String, String> GUAVA_MAP_TYPES = new HashMap<String, String>() {{
+    putAll(toShortNames(GUAVA_MAPS));
+  }};
+  private static final Map<String, String> VALID_SINGULAR_TYPES = new HashMap<String, String>() {{
+    putAll(COLLECTION_TYPES);
+
+    putAll(toShortNames(JAVA_MAPS));
+    putAll(toShortNames(JAVA_SETS));
+    putAll(toShortNames(GUAVE_COLLECTIONS));
+    putAll(toShortNames(GUAVA_SETS));
+    putAll(toShortNames(GUAVA_MAPS));
+  }};
+
+  private static Map<String, String> toShortNames(String... from) {
+    final Map<String, String> result = new HashMap<String, String>();
+    for (String string : from) {
+      result.put(StringUtil.getShortName(string), string);
+      result.put(string, string);
+    }
+    return result;
+  }
 
   @NotNull
   public static AbstractSingularHandler getHandlerFor(@NotNull PsiVariable psiVariable, @Nullable PsiAnnotation singularAnnotation) {
@@ -59,25 +64,25 @@ public class SingularHandlerFactory {
       return new NonSingularHandler();
     }
 
-    final PsiType psiFieldType = psiVariable.getType();
+    final PsiType psiType = psiVariable.getType();
 
-    final String qualifiedName = PsiTypeUtil.getQualifiedName(psiFieldType);
-    if (qualifiedName == null || !VALID_SINGULAR_TYPES.contains(qualifiedName)) {
+    final String qualifiedName = PsiTypeUtil.getQualifiedName(psiType);
+    if (qualifiedName == null || !VALID_SINGULAR_TYPES.containsKey(qualifiedName)) {
       //TODO add Error "Lombok does not know how to create the singular-form builder methods for type '" + qualifiedName + "'; they won't be generated."
       return new NonSingularHandler();
     }
 
-    if (COLLECTION_TYPES.contains(qualifiedName)) {
+    if (COLLECTION_TYPES.containsKey(qualifiedName)) {
       return new SingularCollectionHandler();
     }
-    if (MAP_TYPES.contains(qualifiedName)) {
+    if (MAP_TYPES.containsKey(qualifiedName)) {
       return new SingularMapHandler();
     }
-    if (GUAVA_COLLECTION_TYPES.contains(qualifiedName)) {
-      return new SingularGuavaCollectionHandler(qualifiedName, qualifiedName.contains("Sorted"));
+    if (GUAVA_COLLECTION_TYPES.containsKey(qualifiedName)) {
+      return new SingularGuavaCollectionHandler(GUAVA_COLLECTION_TYPES.get(qualifiedName), qualifiedName.contains("Sorted"));
     }
-    if (GUAVA_MAP_TYPES.contains(qualifiedName)) {
-      return new SingularGuavaMapHandler(qualifiedName, qualifiedName.contains("Sorted"));
+    if (GUAVA_MAP_TYPES.containsKey(qualifiedName)) {
+      return new SingularGuavaMapHandler(GUAVA_MAP_TYPES.get(qualifiedName), qualifiedName.contains("Sorted"));
     }
 
     return new NonSingularHandler();

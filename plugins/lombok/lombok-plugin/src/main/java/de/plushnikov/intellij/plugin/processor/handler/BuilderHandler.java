@@ -15,6 +15,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -248,7 +249,7 @@ public class BuilderHandler {
     }
 
     Collection<PsiMethod> psiMethods = new ArrayList<PsiMethod>();
-    psiMethods.addAll(createFieldMethods(fields, psiBuilderClass, psiAnnotation, existedMethodNames));
+    psiMethods.addAll(createFieldMethods(fields, psiParentClass, psiBuilderClass, psiAnnotation, existedMethodNames));
     final String buildMethodName = getBuildMethodName(psiAnnotation);
     if (!existedMethodNames.contains(buildMethodName)) {
       psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, psiBuilderType, buildMethodName));
@@ -277,8 +278,8 @@ public class BuilderHandler {
     final Collection<PsiMethod> methodsIntern = PsiClassUtil.collectClassConstructorIntern(psiClass);
 
     final String constructorName = noArgsConstructorProcessor.getConstructorName(psiClass);
-    for (PsiMethod existedConstrcutor : methodsIntern) {
-      if (constructorName.equals(existedConstrcutor.getName()) && existedConstrcutor.getParameterList().getParametersCount() == 0) {
+    for (PsiMethod existedConstructor : methodsIntern) {
+      if (constructorName.equals(existedConstructor.getName()) && existedConstructor.getParameterList().getParametersCount() == 0) {
         return Collections.emptySet();
       }
     }
@@ -357,9 +358,11 @@ public class BuilderHandler {
   }
 
   @NotNull
-  protected Collection<PsiMethod> createFieldMethods(@NotNull Collection<PsiField> psiFields, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<String> existedMethodNames) {
+  protected Collection<PsiMethod> createFieldMethods(@NotNull Collection<PsiField> psiFields, @NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<String> existedMethodNames) {
     final boolean fluentBuilder = isFluentBuilder(psiAnnotation);
     final PsiType returnType = createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass));
+
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(parentClass);
 
     final List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiField psiField : psiFields) {
@@ -378,11 +381,11 @@ public class BuilderHandler {
       }
       if (createMethod) {
         // get Field of the root class not of the Builder class
-        final PsiField originalFieldElement = (PsiField) psiField.getNavigationElement();
+        final PsiVariable originalFieldElement = (PsiVariable) psiField.getNavigationElement();
 
         final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(originalFieldElement, Singular.class);
         AbstractSingularHandler handler = SingularHandlerFactory.getHandlerFor(originalFieldElement, singularAnnotation);
-        handler.addBuilderMethod(methods, originalFieldElement, innerClass, fluentBuilder, returnType, singularAnnotation);
+        handler.addBuilderMethod(methods, originalFieldElement, innerClass, fluentBuilder, returnType, singularAnnotation, accessorsInfo);
       }
     }
     return methods;

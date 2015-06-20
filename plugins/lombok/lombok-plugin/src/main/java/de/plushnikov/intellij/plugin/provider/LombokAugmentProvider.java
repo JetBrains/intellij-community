@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Provides support for lombok generated elements
@@ -39,13 +38,6 @@ import java.util.Set;
  */
 public class LombokAugmentProvider extends PsiAugmentProvider {
   private static final Logger log = Logger.getInstance(LombokAugmentProvider.class.getName());
-
-  private final static ThreadLocal<Set<AugmentCallData>> recursionBreaker = new ThreadLocal<Set<AugmentCallData>>() {
-    @Override
-    protected Set<AugmentCallData> initialValue() {
-      return new HashSet<AugmentCallData>();
-    }
-  };
 
   private Collection<String> registeredAnnotationNames;
   private ValProcessor valProcessor;
@@ -85,28 +77,17 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
     initRegisteredAnnotations();
 
-    final AugmentCallData currentAugmentData = new AugmentCallData(element, type);
-    if (recursionBreaker.get().contains(currentAugmentData)) {
-      log.debug("Prevented recursion call");
-      return emptyResult;
+    final PsiClass psiClass = (PsiClass) element;
+
+    boolean fileOpenInEditor = true;
+
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (null != virtualFile) {
+      fileOpenInEditor = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
     }
 
-    recursionBreaker.get().add(currentAugmentData);
-    try {
-      final PsiClass psiClass = (PsiClass) element;
-
-      boolean fileOpenInEditor = true;
-
-      final VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (null != virtualFile) {
-        fileOpenInEditor = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
-      }
-
-      if (fileOpenInEditor || checkLombokPresent(psiClass)) {
-        return process(type, project, psiClass);
-      }
-    } finally {
-      recursionBreaker.get().remove(currentAugmentData);
+    if (fileOpenInEditor || checkLombokPresent(psiClass)) {
+      return process(type, project, psiClass);
     }
 
     return emptyResult;

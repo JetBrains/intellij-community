@@ -51,15 +51,15 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
     }
   }
 
-  protected String getOneMethodBody(String singularName, boolean fluentBuilder) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n" +
-        "this.{0}.put({0}" + LOMBOK_KEY + ", {0}" + LOMBOK_VALUE + ");{3}";
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
+        "this.{0}.put({1}" + LOMBOK_KEY + ", {1}" + LOMBOK_VALUE + ");{4}";
 
-    return MessageFormat.format(codeBlockTemplate, singularName, guavaQualifiedName,
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, guavaQualifiedName,
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(String singularName, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
         + "this.{0}.putAll({0});{3}";
 

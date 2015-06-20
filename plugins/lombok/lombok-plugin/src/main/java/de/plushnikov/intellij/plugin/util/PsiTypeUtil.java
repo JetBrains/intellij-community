@@ -49,6 +49,20 @@ public class PsiTypeUtil {
   }
 
   @NotNull
+  public static PsiClassType getGenericCollectionClassType(@NotNull PsiClassType psiType, @NotNull Project project, @NotNull String qualifiedName) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
+
+    PsiClass genericClass = facade.findClass(qualifiedName, globalsearchscope);
+    if (null != genericClass) {
+      PsiSubstitutor genericSubstitutor = PsiSubstitutor.EMPTY.putAll(genericClass, new PsiType[]{psiType});
+      return elementFactory.createType(genericClass, genericSubstitutor);
+    }
+    return elementFactory.createTypeByFQClassName(qualifiedName, globalsearchscope);
+  }
+
+  @NotNull
   public static PsiClassType getCollectionClassType(@NotNull PsiClassType psiType, @NotNull Project project, @NotNull String qualifiedName) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);

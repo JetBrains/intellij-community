@@ -33,15 +33,15 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getOneMethodBody(String singularName, boolean fluentBuilder) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n" +
-        "this.{0}.add({0});{3}";
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
+        "this.{0}.add({1});{4}";
 
-    return MessageFormat.format(codeBlockTemplate, singularName, guavaQualifiedName,
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, guavaQualifiedName,
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(String singularName, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
         + "this.{0}.addAll({0});{3}";
 

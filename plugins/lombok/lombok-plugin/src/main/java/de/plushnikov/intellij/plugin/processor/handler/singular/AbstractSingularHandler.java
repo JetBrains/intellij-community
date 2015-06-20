@@ -26,9 +26,11 @@ import java.util.List;
 public abstract class AbstractSingularHandler {
 
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
-    final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
+    final String fieldName = psiVariable.getName();
+
+    final PsiType fieldType = getBuilderFieldType(psiVariable.getType(), psiVariable.getProject());
     final LombokLightFieldBuilder fieldBuilder =
-        new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(psiVariable.getType(), psiVariable.getProject()))
+        new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, fieldType)
             .withModifier(PsiModifier.PRIVATE)
             .withNavigationElement(psiVariable)
             .withContainingClass(innerClass);
@@ -40,24 +42,20 @@ public abstract class AbstractSingularHandler {
     return PsiTypeUtil.getCollectionClassType((PsiClassType) psiType, project, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
   }
 
-  //    final PsiClass psiFieldClass = PsiUtil.resolveClassInType(psiFieldType);
-//    final PsiClassType.ClassResolveResult classInType = PsiUtil.resolveGenericsClassInType(psiFieldType);
-//    final String fieldFQN = psiFieldClass.getQualifiedName();
-
-  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiField psiField, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation) {
-    final String psiFieldName = psiField.getName();
+  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
+    final String psiFieldName = psiVariable.getName();
     final String singularName = createSingularName(singularAnnotation, psiFieldName);
 
-    final PsiType psiFieldType = psiField.getType();
+    final PsiType psiFieldType = psiVariable.getType();
 
-    final PsiManager psiManager = psiField.getManager();
+    final PsiManager psiManager = psiVariable.getManager();
 
     final LombokLightMethodBuilder oneAddMethod = new LombokLightMethodBuilder(psiManager, singularName)
         .withMethodReturnType(returnType)
         .withContainingClass(innerClass)
-        .withNavigationElement(psiField)
+        .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(PsiMethodUtil.createCodeBlockFromText(getOneMethodBody(singularName, fluentBuilder), innerClass));
+        .withBody(PsiMethodUtil.createCodeBlockFromText(getOneMethodBody(singularName, psiFieldName, fluentBuilder), innerClass));
 
     addOneMethodParameter(singularName, psiFieldType, oneAddMethod);
     methods.add(oneAddMethod);
@@ -65,11 +63,11 @@ public abstract class AbstractSingularHandler {
     final LombokLightMethodBuilder allAddMethod = new LombokLightMethodBuilder(psiManager, psiFieldName)
         .withMethodReturnType(returnType)
         .withContainingClass(innerClass)
-        .withNavigationElement(psiField)
+        .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
         .withBody(PsiMethodUtil.createCodeBlockFromText(getAllMethodBody(psiFieldName, fluentBuilder), innerClass));
 
-    addAllMethodParameter(singularName, psiFieldType, allAddMethod);
+    addAllMethodParameter(psiFieldName, psiFieldType, allAddMethod);
     methods.add(allAddMethod);
   }
 
@@ -81,11 +79,11 @@ public abstract class AbstractSingularHandler {
 
   }
 
-  protected String getOneMethodBody(String singularName, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
     return "";
   }
 
-  protected String getAllMethodBody(String singularName, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
     return "";
   }
 

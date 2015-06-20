@@ -25,7 +25,6 @@ public class SingularMapHandler extends AbstractSingularHandler {
   private static final String LOMBOK_KEY = "$key";
   private static final String LOMBOK_VALUE = "$value";
 
-
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
     final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
 
@@ -34,12 +33,14 @@ public class SingularMapHandler extends AbstractSingularHandler {
     if (psiTypes.length == 2) {
       final Project project = psiVariable.getProject();
 
-      fields.add(new LombokLightFieldBuilder(psiManager, fieldName + LOMBOK_KEY, getBuilderFieldType(psiTypes[0], project))
+      final PsiType builderFieldKeyType = getBuilderFieldType(psiTypes[0], project);
+      fields.add(new LombokLightFieldBuilder(psiManager, fieldName + LOMBOK_KEY, builderFieldKeyType)
           .withModifier(PsiModifier.PRIVATE)
           .withNavigationElement(psiVariable)
           .withContainingClass(innerClass));
 
-      fields.add(new LombokLightFieldBuilder(psiManager, fieldName + LOMBOK_VALUE, getBuilderFieldType(psiTypes[1], project))
+      final PsiType builderFieldValueType = getBuilderFieldType(psiTypes[1], project);
+      fields.add(new LombokLightFieldBuilder(psiManager, fieldName + LOMBOK_VALUE, builderFieldValueType)
           .withModifier(PsiModifier.PRIVATE)
           .withNavigationElement(psiVariable)
           .withContainingClass(innerClass));
@@ -48,7 +49,7 @@ public class SingularMapHandler extends AbstractSingularHandler {
 
   @NotNull
   protected PsiType getBuilderFieldType(@NotNull PsiType psiType, @NotNull Project project) {
-    return PsiTypeUtil.getCollectionClassType((PsiClassType) psiType, project, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
+    return PsiTypeUtil.getGenericCollectionClassType((PsiClassType) psiType, project, CommonClassNames.JAVA_UTIL_ARRAY_LIST);
   }
 
   protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
@@ -67,27 +68,27 @@ public class SingularMapHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getOneMethodBody(String singularName, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
-        "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<?>(); \n" +
-        "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<?>(); \n" +
+        "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList(); \n" +
+        "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList(); \n" +
         "'}' \n" +
-        "this.{0}" + LOMBOK_KEY + ".add({0}" + KEY + ");\n" +
-        "this.{0}" + LOMBOK_VALUE + ".add({0}" + VALUE + ");" +
-        "{1}";
+        "this.{0}" + LOMBOK_KEY + ".add({1}" + KEY + ");\n" +
+        "this.{0}" + LOMBOK_VALUE + ".add({1}" + VALUE + ");" +
+        "{2}";
 
-    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "");
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(String singularName, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0}" + LOMBOK_KEY + " == null) '{' \n" +
-        "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList<?>(); \n" +
-        "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList<?>(); \n" +
+        "this.{0}" + LOMBOK_KEY + " = new java.util.ArrayList(); \n" +
+        "this.{0}" + LOMBOK_VALUE + " = new java.util.ArrayList(); \n" +
         "'}' \n" +
         "for (java.util.Map.Entry<?, ?> $lombokEntry : {0}.entrySet()) '{'\n" +
         "this.{0}" + LOMBOK_KEY + ".add($lombokEntry.getKey());\n" +
         "this.{0}" + LOMBOK_VALUE + ".add($lombokEntry.getValue());\n" +
-        "'}';{1}";
+        "'}'{1}";
     return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "");
   }
 }

@@ -8,6 +8,9 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,19 +21,29 @@ import java.util.List;
 public class NonSingularHandler extends AbstractSingularHandler {
   public static final String SETTER_PREFIX = "set";
 
+  public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
+    final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
+    final LombokLightFieldBuilder fieldBuilder =
+        new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(psiVariable.getType(), psiVariable.getProject()))
+            .withModifier(PsiModifier.PRIVATE)
+            .withNavigationElement(psiVariable)
+            .withContainingClass(innerClass);
+    fields.add(fieldBuilder);
+  }
+
   @NotNull
   protected PsiType getBuilderFieldType(@NotNull PsiType psiType, @NotNull Project project) {
     return psiType;
   }
 
-  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiField psiField, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation) {
-    final String psiFieldName = psiField.getName();
+  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
+    final String psiFieldName = accessorsInfo.removePrefix(psiVariable.getName());
 
-    methods.add(new LombokLightMethodBuilder(psiField.getManager(), createSetterName(psiFieldName, fluentBuilder))
+    methods.add(new LombokLightMethodBuilder(psiVariable.getManager(), createSetterName(psiFieldName, fluentBuilder))
         .withMethodReturnType(returnType)
         .withContainingClass(innerClass)
-        .withParameter(psiFieldName, psiField.getType())
-        .withNavigationElement(psiField)
+        .withParameter(psiFieldName, psiVariable.getType())
+        .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
         .withBody(PsiMethodUtil.createCodeBlockFromText(getAllMethodBody(psiFieldName, fluentBuilder), innerClass)));
   }
@@ -40,7 +53,7 @@ public class NonSingularHandler extends AbstractSingularHandler {
     return isFluent ? fieldName : SETTER_PREFIX + StringUtil.capitalize(fieldName);
   }
 
-  protected String getAllMethodBody(String psiFieldName, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String psiFieldName, boolean fluentBuilder) {
     final String codeBlockTemplate = "this.{0} = {0};{1}";
     return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
   }
