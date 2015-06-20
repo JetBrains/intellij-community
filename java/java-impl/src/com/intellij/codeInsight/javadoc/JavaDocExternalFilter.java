@@ -120,7 +120,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   @Override
   @Nullable
    public String getExternalDocInfoForElement(@NotNull String docURL, final PsiElement element) throws Exception {
-    CharSequence externalDoc = null;
+    String externalDoc = null;
     String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
     if (docURL.startsWith(builtInServer)) {
       int refPosition = docURL.lastIndexOf('#');
@@ -137,7 +137,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
           reader.close();
         }
 
-        externalDoc = result;
+        externalDoc = correctDocText(docURL, result);
       }
     }
 
@@ -165,7 +165,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
       DocumentationManager.createHyperlink(buffer, className, className, false);
       return matcher.replaceFirst(buffer.append("</h3>").toString());
     }
-    return externalDoc.toString();
+    return externalDoc;
   }
 
   @NotNull
