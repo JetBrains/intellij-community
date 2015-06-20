@@ -61,13 +61,23 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       g.fillOval(x, y, off, off);
       AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
     } else {
+
       AbstractButton b = (AbstractButton) c;
+
+
       ButtonModel model = b.getModel();
 
       String text = layout(b, SwingUtilities2.getFontMetrics(b, g),
                            b.getWidth(), b.getHeight());
 
       final Border border = c.getBorder();
+
+      if (b.isFocusPainted() && b.hasFocus()) {
+        if (border instanceof MacIntelliJBorder) {
+          border.paintBorder(b, g, 1, 1, b.getWidth()-2, b.getHeight()-4);
+        }
+      }
+
       boolean isDefault = b instanceof JButton && ((JButton)b).isDefaultButton();
       //final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       final boolean square = isSquare(c);
@@ -78,13 +88,14 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       icon.paintIcon(b, g, x, y);
       x+=icon.getIconWidth();
       int stop = w - 3 - RIGHT.getIconWidth();
-      g.setClip(x, y, stop - x, h);
+      Graphics gg = g.create(0,0,w,h);
+      gg.setClip(x, y, stop - x, h);
       icon = isDefault ? MIDDLE_SELECTED : MIDDLE;
       while (x < stop) {
-        icon.paintIcon(b, g, x, y);
+        icon.paintIcon(b, gg, x, y);
         x+=icon.getIconWidth();
       }
-      g.setClip(0,0,w,h);
+      gg.dispose();
       icon = isDefault ? RIGHT_SELECTED : RIGHT;
       icon.paintIcon(b, g, stop, y);
       //config.restore();
@@ -109,11 +120,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         } else {
           paintText(g, b, textRect, text);
         }
-      }
-
-      if (b.isFocusPainted() && b.hasFocus()) {
-        // paint UI specific focus
-        paintFocus(g,b,viewRect,textRect,iconRect);
       }
     }
   }
@@ -162,7 +168,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    return new Dimension(size.width + 20, 28);
+    return new Dimension(size.width + 16, 27);
   }
 
   @Override
