@@ -459,7 +459,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    * This convertor returns -1 if exact matching is impossible
    */
   @CalledInAwt
-  protected int transferLineToOnesideStrict(@NotNull Side side, int line) {
+  public int transferLineToOnesideStrict(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return -1;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -470,7 +470,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    * This convertor returns -1 if exact matching is impossible
    */
   @CalledInAwt
-  protected int transferLineFromOnesideStrict(@NotNull Side side, int line) {
+  public int transferLineFromOnesideStrict(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return -1;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -481,7 +481,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @CalledInAwt
-  protected int transferLineToOneside(@NotNull Side side, int line) {
+  public int transferLineToOneside(@NotNull Side side, int line) {
     if (myChangedBlockData == null) return line;
 
     LineNumberConvertor lineConvertor = myChangedBlockData.getLineNumberConvertor();
@@ -493,7 +493,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    */
   @CalledInAwt
   @NotNull
-  protected Pair<int[], Side> transferLineFromOneside(int line) {
+  public Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
 
     if (myChangedBlockData == null) {
@@ -838,6 +838,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   //
   // Getters
   //
+
+
+  @NotNull
+  public Side getMasterSide() {
+    return myMasterSide;
+  }
 
   @NotNull
   public EditorEx getEditor() {

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -221,6 +220,18 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
                                 final boolean onCurrentRevision) {
+    if (onCurrentRevision) {
+      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
+    }
+    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, null);
+  }
+
+  public static void doAnnotate(@NotNull final Editor editor,
+                                @NotNull final Project project,
+                                @Nullable final VirtualFile currentFile,
+                                @NotNull final FileAnnotation fileAnnotation,
+                                @NotNull final AbstractVcs vcs,
+                                @Nullable UpToDateLineNumberProvider getUpToDateLineNumber) {
     editor.getGutter().closeAllAnnotations();
 
     fileAnnotation.setCloser(new Runnable() {
@@ -236,17 +247,15 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         });
       }
     });
-    if (onCurrentRevision) {
-      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
-    }
+
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
+    if (getUpToDateLineNumber == null) getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
 
     final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher);
-    if (vcs.getCommittedChangesProvider() != null) {
+    if (currentFile != null && vcs.getCommittedChangesProvider() != null) {
       presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, currentFile));
     }
     presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
