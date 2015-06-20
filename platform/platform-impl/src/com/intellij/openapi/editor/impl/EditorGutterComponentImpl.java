@@ -358,42 +358,58 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (w == 0) return;
 
-    Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
-    g.setColor(color != null ? color : JBColor.blue);
-    g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-
-    for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
-      TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(i);
-
-      int lineHeight = myEditor.getLineHeight();
-      int startLineNumber = clip.y / lineHeight;
-      int endLineNumber = (clip.y + clip.height) / lineHeight + 1;
-      int lastLine = myEditor.logicalToVisualPosition(
-        new LogicalPosition(endLineNumber(), 0))
-        .line;
-      endLineNumber = Math.min(endLineNumber, lastLine + 1);
-      if (startLineNumber >= endLineNumber) {
-        break;
+    Graphics2D g2 = (Graphics2D)g;
+    AffineTransform old = g2.getTransform();
+    try {
+      if (isMirrored()) {
+        final AffineTransform transform = new AffineTransform(old);
+        transform.scale(-1, 1);
+        int shift = -getWidth() + (getWidth() - x - getAnnotationsAreaWidth()) - x;
+        transform.translate(shift, 0);
+        g2.setTransform(transform);
       }
 
-      int annotationSize = myTextAnnotationGutterSizes.get(i);
-      for (int j = startLineNumber; j < endLineNumber; j++) {
-        int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
-        String s = gutterProvider.getLineText(logLine, myEditor);
-        final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
-        final Color bg = gutterProvider.getBgColor(logLine, myEditor);
-        if (bg != null) {
-          g.setColor(bg);
-          g.fillRect(x, j * lineHeight, annotationSize, lineHeight);
+      Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
+      g.setColor(color != null ? color : JBColor.blue);
+      g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+
+      for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
+        TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(i);
+
+        int lineHeight = myEditor.getLineHeight();
+        int startLineNumber = clip.y / lineHeight;
+        int endLineNumber = (clip.y + clip.height) / lineHeight + 1;
+        int lastLine = myEditor.logicalToVisualPosition(
+          new LogicalPosition(endLineNumber(), 0))
+          .line;
+        endLineNumber = Math.min(endLineNumber, lastLine + 1);
+        if (startLineNumber >= endLineNumber) {
+          break;
         }
-        g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
-        g.setFont(myEditor.getColorsScheme().getFont(style));
-        if (s != null) {
-          g.drawString(s, x, (j+1) * lineHeight - myEditor.getDescent());
+
+        int annotationSize = myTextAnnotationGutterSizes.get(i);
+        for (int j = startLineNumber; j < endLineNumber; j++) {
+          int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
+          String s = gutterProvider.getLineText(logLine, myEditor);
+          final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
+          final Color bg = gutterProvider.getBgColor(logLine, myEditor);
+          if (bg != null) {
+            g.setColor(bg);
+            g.fillRect(x, j * lineHeight, annotationSize, lineHeight);
+          }
+          g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
+          g.setFont(myEditor.getColorsScheme().getFont(style));
+          if (s != null) {
+            g.drawString(s, x, (j + 1) * lineHeight - myEditor.getDescent());
+          }
         }
+
+        x += annotationSize;
       }
 
-      x += annotationSize;
+    }
+    finally {
+      g2.setTransform(old);
     }
   }
 
