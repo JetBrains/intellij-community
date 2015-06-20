@@ -25,8 +25,10 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.runner.ui.actions.ImportTestsAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
   private final RunConfiguration myConfiguration;
+  @NotNull private final String myTestFrameworkName;
   private final CompositeFilter myCustomFilter;
   private boolean myIdBasedTestTree = false;
   private boolean myPrintTestingStartedTime = true;
@@ -59,6 +62,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
     super(getStorage(testFrameworkName), config.getProject(), executor);
     myConfiguration = config;
+    myTestFrameworkName = testFrameworkName;
     myCustomFilter = new CompositeFilter(config.getProject());
   }
 
@@ -80,6 +84,12 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Override
   public RunConfiguration getConfiguration() {
     return myConfiguration;
+  }
+
+  @Nullable
+  @Override
+  protected AnAction createImportAction() {
+    return new ImportTestsAction(this);
   }
 
   public boolean isIdBasedTestTree() {
@@ -196,5 +206,10 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Nullable
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return null;
+  }
+
+  @NotNull
+  public String getTestFrameworkName() {
+    return myTestFrameworkName;
   }
 }

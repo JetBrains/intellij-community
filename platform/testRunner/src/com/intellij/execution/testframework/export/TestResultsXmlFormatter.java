@@ -38,18 +38,23 @@ import java.util.*;
 public class TestResultsXmlFormatter {
 
   private static final String ELEM_RUN = "testrun";
-  private static final String ELEM_TEST = "test";
-  private static final String ELEM_SUITE = "suite";
-  private static final String ATTR_NAME = "name";
-  private static final String ATTR_DURATION = "duration";
-  private static final String ATTR_LOCATION = "locationUrl";
-  private static final String ELEM_COUNT = "count";
-  private static final String ATTR_VALUE = "value";
-  private static final String ELEM_OUTPUT = "output";
-  private static final String ATTR_OUTPUT_TYPE = "type";
-  private static final String ATTR_STATUS = "status";
-  private static final String TOTAL_STATUS = "total";
+  public static final String ELEM_TEST = "test";
+  public static final String ELEM_SUITE = "suite";
+  public static final String ATTR_NAME = "name";
+  public static final String ATTR_DURATION = "duration";
+  public static final String ATTR_LOCATION = "locationUrl";
+  public static final String ELEM_COUNT = "count";
+  public static final String ATTR_VALUE = "value";
+  public static final String ELEM_OUTPUT = "output";
+  public static final String ATTR_OUTPUT_TYPE = "type";
+  public static final String ATTR_STATUS = "status";
+  public static final String TOTAL_STATUS = "total";
   private static final String ATTR_FOORTER_TEXT = "footerText";
+  public static final String STATUS_PASSED = "passed";
+  public static final String STATUS_FAILED = "failed";
+  public static final String STATUS_ERROR = "error";
+  public static final String STATUS_IGNORED = "ignored";
+  public static final String STATUS_SKIPPED = "skipped";
 
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
@@ -232,17 +237,17 @@ public class TestResultsXmlFormatter {
     // TODO enumeration!
     switch (magnitude) {
       case 0:
-        return "skipped";
+        return STATUS_SKIPPED;
       case 5:
-        return "ignored";
+        return STATUS_IGNORED;
       case 1:
-        return "passed";
+        return STATUS_PASSED;
       case 6:
-        return "failed";
+        return STATUS_FAILED;
       case 8:
-        return "error";
+        return STATUS_ERROR;
       default:
-        return node.isPassed() ? "passed" : "failed";
+        return node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
     }
   }
 

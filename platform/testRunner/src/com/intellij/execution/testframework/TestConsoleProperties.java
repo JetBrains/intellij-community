@@ -20,11 +20,11 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -38,6 +38,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
@@ -194,6 +195,11 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   protected void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) { }
+  
+  @Nullable
+  protected AnAction createImportAction() {
+    return null;
+  }
 
   @NotNull
   protected ToggleBooleanProperty createIncludeNonStartedInRerun() {

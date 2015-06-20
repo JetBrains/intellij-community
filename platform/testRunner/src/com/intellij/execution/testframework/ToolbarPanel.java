@@ -118,6 +118,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), properties.getConfiguration());
     actionGroup.addAction(myExportAction);
 
+    final AnAction importAction = properties.createImportAction();
+    if (importAction != null) {
+      actionGroup.addAction(importAction);
+    }
+
     final DefaultActionGroup secondaryGroup = new DefaultActionGroup();
     secondaryGroup.setPopup(true);
     secondaryGroup.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);

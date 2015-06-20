@@ -241,6 +241,7 @@ public class SMTestRunnerConnectionUtil {
       @Override
       public void startNotified(final ProcessEvent event) {
         eventsProcessor.onStartTesting();
+        outputConsumer.onStartTesting();
       }
 
       @Override
