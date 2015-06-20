@@ -18,11 +18,11 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.BasicComboBoxUI;
@@ -35,7 +35,7 @@ import java.awt.event.KeyEvent;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UIResource {
+public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   private static final Icon COMBOBOX = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxMac.png");
   private static final Icon COMBOBOX_LEFT = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxLeft.png");
   private static final Icon COMBOBOX_TOP_BOTTOM = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxTopBottom.png");
@@ -43,7 +43,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
 
   public MacIntelliJComboBoxUI(JComboBox comboBox) {
     myComboBox = comboBox;
-    myComboBox.setBorder(this);
     currentValuePane = new CellRendererPane() {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
@@ -86,9 +85,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
   }
 
   private Dimension getSizeWithIcon(Dimension d) {
-    Insets insets = getBorderInsets(myComboBox);
-    return new Dimension(Math.max(d.width + insets.left + insets.right, COMBOBOX.getIconWidth()), Math.max(d.height,
-                                                                                                           COMBOBOX.getIconHeight()));
+    return new Dimension(Math.max(d.width + 6, COMBOBOX.getIconWidth()), Math.max(d.height, COMBOBOX.getIconHeight()));
   }
 
   @Override
@@ -96,10 +93,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
     return getSizeWithIcon(super.getPreferredSize(c));
   }
 
-  @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-
-  }
 
   @Override
   protected ComboBoxEditor createEditor() {
@@ -196,10 +189,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
     return rect;
   }
 
-  @Override
-  public Insets getBorderInsets(Component c) {
-    return JBUI.insets(0, 5, 0, 0);
-  }
 
   @Override
   protected LayoutManager createLayoutManager() {
@@ -275,15 +264,12 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI implements Border, UI
       COMBOBOX_TOP_BOTTOM.paintIcon(c, g, x, r.y);
       x+=COMBOBOX_TOP_BOTTOM.getIconWidth();
     }
-    ((Graphics2D)g).scale(0.5d, 0.5d);
-    g.setColor(Color.WHITE);
-    g.drawLine(COMBOBOX_LEFT.getIconWidth() * 2, 3, stop * 2, 3);
-    g.drawLine(COMBOBOX_LEFT.getIconWidth() * 2, 40, stop * 2, 40);
-    ((Graphics2D)g).scale(2d, 2d);
-  }
-
-  @Override
-  public boolean isBorderOpaque() {
-    return false;
+    if (UIUtil.isRetina()) {
+      ((Graphics2D)g).scale(0.5d, 0.5d);
+      g.setColor(Color.WHITE);
+      g.drawLine(COMBOBOX_LEFT.getIconWidth() * 2, 3, stop * 2, 3);
+      g.drawLine(COMBOBOX_LEFT.getIconWidth() * 2, 40, stop * 2, 40);
+      ((Graphics2D)g).scale(2d, 2d);
+    }
   }
 }
