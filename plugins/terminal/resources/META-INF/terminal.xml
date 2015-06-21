@@ -9,7 +9,7 @@
 
     <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.cloud.CloudTerminalProviderImpl"
-                        overrides="true"/>
+                        />
   </extensions>
 
   <project-components>
