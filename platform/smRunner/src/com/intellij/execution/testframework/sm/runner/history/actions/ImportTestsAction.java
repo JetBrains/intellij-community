@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.testframework.sm.runner.ui.actions;
+package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -26,7 +26,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.testframework.history.ImportedTestRunnableState;
+import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.icons.AllIcons;

@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.testframework.history;
+package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;

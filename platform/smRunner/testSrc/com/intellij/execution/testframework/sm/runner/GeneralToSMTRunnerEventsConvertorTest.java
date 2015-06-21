@@ -18,7 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.history.ImportedToGeneralTestEventsConverter;
+import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
-import java.io.InputStreamReader;
-import java.io.StringBufferInputStream;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Set;

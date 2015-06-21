@@ -26,7 +26,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
-import com.intellij.execution.testframework.sm.runner.ui.actions.ImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;

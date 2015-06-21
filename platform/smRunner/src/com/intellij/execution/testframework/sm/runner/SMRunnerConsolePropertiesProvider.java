@@ -19,7 +19,7 @@ import com.intellij.execution.Executor;
 
 /**
  * If {@link com.intellij.execution.configurations.RunConfiguration} uses SMRunner and implements this interface,
- * {@link com.intellij.execution.testframework.sm.runner.ui.actions.ImportTestsAction} would work from Main Menu.
+ * {@link com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction} would work from Main Menu.
  */
 public interface SMRunnerConsolePropertiesProvider {
   SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor);
