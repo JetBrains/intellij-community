@@ -47,6 +47,7 @@ import com.intellij.util.continuation.*;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.CalledInAwt;
 
 import java.io.IOException;
 import java.util.*;
@@ -155,6 +156,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       mySystemOperation = systemOperation;
     }
 
+    @CalledInAwt
     @Override
     public void run(ContinuationContext context) {
       myRemainingPatches.addAll(myPatches);
@@ -169,35 +171,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       }
 
       final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject, mySystemOperation);
-      final ApplyPatchStatus applyStatus;
-      try {
-        applyStatus = ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
-          @Override
-          public ApplyPatchStatus compute() {
-            final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
-            try {
-              setConfirmationToDefault();
-              CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-                @Override
-                public void run() {
-                  if (! createFiles()) {
-                    refStatus.set(ApplyPatchStatus.FAILURE);
-                    return;
-                  }
-                  addSkippedItems(trigger);
-                  trigger.prepare();
-                  refStatus.set(executeWritable());
-                }
-              }, VcsBundle.message("patch.apply.command"), null);
-            } finally {
-              returnConfirmationBack();
-            }
-            return refStatus.get();
-          }
-        });
-      } finally {
-        VcsFileListenerContextHelper.getInstance(myProject).clearContext();
-      }
+      final ApplyPatchStatus applyStatus = getApplyPatchStatus(trigger);
       myStatus = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
                  ApplyPatchStatus.and(patchStatus, applyStatus);
       // listeners finished, all 'legal' file additions/deletions with VCS are done
@@ -206,6 +180,32 @@ public class PatchApplier<BinaryType extends FilePatch> {
         showApplyStatus(myProject, myStatus);
       }
       refreshFiles(trigger.getAffected(), context);
+    }
+
+    @CalledInAwt
+    @NotNull
+    private ApplyPatchStatus getApplyPatchStatus(@NotNull final TriggerAdditionOrDeletion trigger) {
+      final Ref<ApplyPatchStatus> refStatus = Ref.create(ApplyPatchStatus.FAILURE);
+      try {
+        setConfirmationToDefault();
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          @Override
+          public void run() {
+            if (!createFiles()) {
+              refStatus.set(ApplyPatchStatus.FAILURE);
+              return;
+            }
+            addSkippedItems(trigger);
+            trigger.prepare();
+            refStatus.set(executeWritable());
+          }
+        }, VcsBundle.message("patch.apply.command"), null);
+      }
+      finally {
+        returnConfirmationBack();
+        VcsFileListenerContextHelper.getInstance(myProject).clearContext();
+      }
+      return refStatus.get();
     }
 
     private void returnConfirmationBack() {
