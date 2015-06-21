@@ -245,6 +245,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     context.next(createApplyPart(showSuccessNotification, silentAddDelete));
   }
 
+  @CalledInAwt
   public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, final LocalChangeList localChangeList) {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
@@ -345,6 +346,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
   }
 
+  @CalledInAwt
   protected void refreshFiles(final Collection<FilePath> additionalDirectly, @Nullable final ContinuationContext context) {
     final List<FilePath> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
@@ -361,6 +363,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return myVerifier.getAllAffected();
   }
 
+  @CalledInAwt
   public static void refreshPassedFilesAndMoveToChangelist(@NotNull final Project project,
                                                            final ContinuationContext context,
                                                            final Collection<FilePath> directlyAffected,
@@ -375,37 +378,32 @@ public class PatchApplier<BinaryType extends FilePatch> {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
     }
     lfs.refreshFiles(indirectlyAffected, false, true, null);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) return;
+    if (project.isDisposed()) return;
 
-        final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-        if (! directlyAffected.isEmpty() && targetChangelistMover != null) {
-          changeListManager.invokeAfterUpdate(new Runnable() {
-              @Override
-              public void run() {
-                targetChangelistMover.consume(directlyAffected);
-                if (context != null) {
-                  context.ping();
-                }
-              }
-            }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
-          VcsBundle.message("change.lists.manager.move.changes.to.list"),
-          new Consumer<VcsDirtyScopeManager>() {
-            @Override
-            public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
-              markDirty(vcsDirtyScopeManager, directlyAffected, indirectlyAffected);
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (! directlyAffected.isEmpty() && targetChangelistMover != null) {
+      changeListManager.invokeAfterUpdate(new Runnable() {
+          @Override
+          public void run() {
+            targetChangelistMover.consume(directlyAffected);
+            if (context != null) {
+              context.ping();
             }
-          }, null);
-        } else {
-          markDirty(VcsDirtyScopeManager.getInstance(project), directlyAffected, indirectlyAffected);
-          if (context != null) {
-            context.ping();
           }
+        }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
+      VcsBundle.message("change.lists.manager.move.changes.to.list"),
+      new Consumer<VcsDirtyScopeManager>() {
+        @Override
+        public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
+          markDirty(vcsDirtyScopeManager, directlyAffected, indirectlyAffected);
         }
+      }, null);
+    } else {
+      markDirty(VcsDirtyScopeManager.getInstance(project), directlyAffected, indirectlyAffected);
+      if (context != null) {
+        context.ping();
       }
-    });
+    }
   }
 
   private static void markDirty(@NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
