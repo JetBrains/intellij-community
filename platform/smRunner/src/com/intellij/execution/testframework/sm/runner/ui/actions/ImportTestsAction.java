@@ -17,8 +17,11 @@ package com.intellij.execution.testframework.sm.runner.ui.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.history.ImportedTestRunnableState;
@@ -33,12 +36,18 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
 
 public class ImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + ImportTestsAction.class.getName());
@@ -63,7 +72,7 @@ public class ImportTestsAction extends AnAction {
     final VirtualFile file = FileChooser.chooseFile(xmlDescriptor, project, null);
     if (file != null) {
       try {
-        ExecutionEnvironmentBuilder.create(project, myProperties.getExecutor(), new ImportRunProfile(file)).buildAndExecute();
+        ExecutionEnvironmentBuilder.create(project, myProperties.getExecutor(), new ImportRunProfile(file, project)).buildAndExecute();
       }
       catch (ExecutionException e1) {
         Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
@@ -73,20 +82,44 @@ public class ImportTestsAction extends AnAction {
 
   private class ImportRunProfile implements RunProfile {
     private final VirtualFile myFile;
+    private RunnerAndConfigurationSettingsImpl mySettings;
+    private boolean myImported;
 
-    public ImportRunProfile(VirtualFile file) {
+    public ImportRunProfile(VirtualFile file, Project project) {
       myFile = file;
+      try {
+        final Document document = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(myFile));
+        final Element config = document.getRootElement().getChild("config");
+        if (config != null) {
+          mySettings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project));
+          try {
+            mySettings.readExternal(config);
+          }
+          catch (InvalidDataException e) {
+            LOG.error(e);
+          }
+        }
+      }
+      catch (Exception ignore) {
+      }
     }
 
     @Nullable
     @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-      return new ImportedTestRunnableState(myProperties, VfsUtilCore.virtualToIoFile(myFile));
+      if (!myImported) {
+        myImported = true;
+        return new ImportedTestRunnableState(myProperties, VfsUtilCore.virtualToIoFile(myFile));
+      }
+      if (mySettings != null) {
+        return mySettings.getConfiguration().getState(executor, environment);
+      }
+      throw new ExecutionException("Unable to run the configuration");
     }
 
     @Override
     public String getName() {
-      return myFile.getNameWithoutExtension();
+      return myImported && mySettings != null ? mySettings.getName() : myFile.getNameWithoutExtension();
     }
 
     @Nullable
