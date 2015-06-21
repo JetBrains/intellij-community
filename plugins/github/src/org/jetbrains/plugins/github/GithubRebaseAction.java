@@ -31,6 +31,7 @@ import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.commands.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
@@ -234,7 +235,8 @@ public class GithubRebaseAction extends DumbAwareAction {
     AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       List<VirtualFile> rootsToSave = Collections.singletonList(gitRepository.getRoot());
-      GitPreservingProcess process = new GitPreservingProcess(project, facade, git, rootsToSave, "Rebasing", "upstream/master", indicator,
+      GitPreservingProcess process = new GitPreservingProcess(project, facade, git, rootsToSave, "Rebasing", "upstream/master",
+                                                              GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
         new Runnable() {
           @Override
           public void run() {

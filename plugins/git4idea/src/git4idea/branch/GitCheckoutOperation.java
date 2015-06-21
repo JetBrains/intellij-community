@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
@@ -225,7 +226,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     final AtomicBoolean result = new AtomicBoolean();
     GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myFacade, myGit,
                                                                       GitUtil.getRootsFromRepositories(repositories), "checkout", reference,
-                                                                      indicator,
+                                                                      GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
                                                                       new Runnable() {
       @Override
       public void run() {

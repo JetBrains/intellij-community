@@ -28,12 +28,10 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitPlatformFacade;
-import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
-import git4idea.stash.GitStashChangesSaver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +57,7 @@ public class GitPreservingProcess {
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final Runnable myOperation;
   @NotNull private final String myStashMessage;
-  @NotNull private final GitStashChangesSaver mySaver;
+  @NotNull private final GitChangesSaver mySaver;
 
   @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
 
@@ -69,6 +67,7 @@ public class GitPreservingProcess {
                               @NotNull Collection<VirtualFile> rootsToSave,
                               @NotNull String operationTitle,
                               @NotNull String destinationName,
+                              @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
     myProject = project;
@@ -81,7 +80,7 @@ public class GitPreservingProcess {
     myOperation = operation;
     myStashMessage = String.format("%s %s at %s", StringUtil.capitalize(myOperationTitle), myDestinationName,
                                    DateFormatUtil.formatDateTime(Clock.getTime()));
-    mySaver = configureSaver();
+    mySaver = configureSaver(saveMethod);
   }
 
   public void execute() {
@@ -118,8 +117,9 @@ public class GitPreservingProcess {
   /**
    * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
-  private GitStashChangesSaver configureSaver() {
-    GitStashChangesSaver saver = new GitStashChangesSaver(myProject, myFacade, myGit, myProgressIndicator, myStashMessage);
+  @NotNull
+  private GitChangesSaver configureSaver(@NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
+    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myFacade, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @Override
       public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {

@@ -61,15 +61,16 @@ public abstract class GitChangesSaver {
 
   /**
    * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
-   * @return {@link GitStashChangesSaver}, {@link GitShelveChangesSaver} or {@link GitDumbChangesSaver}
+   * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
-  public static GitChangesSaver getSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
-                                         @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
-    final GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    if (settings == null) {
-      return getDefaultSaver(project, platformFacade, git, progressIndicator, stashMessage);
-    }
-    switch (settings.updateChangesPolicy()) {
+  @NotNull
+  public static GitChangesSaver getSaver(@NotNull Project project,
+                                         @NotNull GitPlatformFacade platformFacade,
+                                         @NotNull Git git,
+                                         @NotNull ProgressIndicator progressIndicator,
+                                         @NotNull String stashMessage,
+                                         @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
+    switch (saveMethod) {
       case STASH: return new GitStashChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
       case SHELVE: return new GitShelveChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
     }

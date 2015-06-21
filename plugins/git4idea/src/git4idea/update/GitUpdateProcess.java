@@ -45,6 +45,7 @@ import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
+import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
@@ -99,8 +100,8 @@ public class GitUpdateProcess {
     myMerger = new GitMerger(myProject);
     mySaver = GitChangesSaver.getSaver(myProject, platformFacade, myGit,
                                        myProgressIndicator,
-                                       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
-    myRootsToSave = new HashSet<VirtualFile>(1);
+                                       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()),
+                                       GitVcsSettings.getInstance(project).updateChangesPolicy());
   }
 
   /**
