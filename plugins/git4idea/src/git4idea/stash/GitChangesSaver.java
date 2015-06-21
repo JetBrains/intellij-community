@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
@@ -108,8 +107,8 @@ public abstract class GitChangesSaver {
    * Loads local changes from stash or shelf, and sorts the changes back to the change lists they were before update.
    * @param context
    */
-  public void restoreLocalChanges(ContinuationContext context) {
-    load(context);
+  public void restoreLocalChanges() {
+    load();
   }
 
   public void notifyLocalChangesAreNotRestored() {
@@ -138,9 +137,8 @@ public abstract class GitChangesSaver {
 
   /**
    * Loads the changes - specific for chosen save strategy.
-   * @param exceptionConsumer
    */
-  protected abstract void load(ContinuationContext exceptionConsumer);
+  public abstract void load();
 
   /**
    * @return true if there were local changes to save.

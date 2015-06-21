@@ -167,15 +167,7 @@ public class GitPreservingProcess {
 
   public void load() {
     if (myLoaded.compareAndSet(false, true)) {
-      try {
-        mySaver.load();
-      }
-      catch (VcsException e) {
-        LOG.info("Couldn't load local changes", e);
-        VcsNotifier.getInstance(myProject).notifyError("Couldn't restore uncommitted changes",
-                                                       String.format("Tried to unstash uncommitted changes, but failed with error.<br/>%s",
-                                                                     join(e.getMessages())));
-      }
+      mySaver.load();
     }
     else {
       LOG.warn("The changes were already loaded", new Throwable());

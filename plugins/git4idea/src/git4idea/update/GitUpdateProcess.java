@@ -30,14 +30,9 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.ContinuationFinalTasksInserter;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
@@ -54,12 +49,12 @@ import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import git4idea.util.GitFreezingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 import static git4idea.util.GitUIUtil.*;
@@ -74,6 +69,7 @@ public class GitUpdateProcess {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
+  @NotNull private final GitPlatformFacade myPlatformFacade;
   @NotNull private final Collection<GitRepository> myRepositories;
   private final boolean myCheckRebaseOverMergeProblem;
   private final UpdatedFiles myUpdatedFiles;
@@ -83,7 +79,6 @@ public class GitUpdateProcess {
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
   private GitUpdateResult myResult;
-  private final Collection<VirtualFile> myRootsToSave;
 
   public GitUpdateProcess(@NotNull Project project,
                           @NotNull GitPlatformFacade platformFacade,
@@ -92,6 +87,7 @@ public class GitUpdateProcess {
                           @NotNull UpdatedFiles updatedFiles,
                           boolean checkRebaseOverMergeProblem) {
     myProject = project;
+    myPlatformFacade = platformFacade;
     myRepositories = repositories;
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
     myGit = ServiceManager.getService(Git.class);
@@ -136,26 +132,23 @@ public class GitUpdateProcess {
     if (!fetchAndNotify()) {
       return GitUpdateResult.NOT_READY;
     }
-
-    GitComplexProcess.Operation updateOperation = new GitComplexProcess.Operation() {
-      @Override public void run(ContinuationContext continuationContext) {
+    new GitFreezingProcess(myProject, myPlatformFacade, "update", new Runnable() {
+      public void run() {
         AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
         try {
-          myResult = updateImpl(updateMethod, continuationContext);
+          myResult = updateImpl(updateMethod);
         }
         finally {
           DvcsUtil.workingTreeChangeFinished(myProject, token);
         }
       }
-    };
-    GitComplexProcess.execute(myProject, "update", updateOperation);
-
+    }).execute();
     myProgressIndicator.setText(oldText);
     return myResult;
   }
 
   @NotNull
-  private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod, ContinuationContext context) {
+  private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
     Map<VirtualFile, GitUpdater> updaters;
     try {
       updaters = defineUpdaters(updateMethod);
@@ -193,6 +186,7 @@ public class GitUpdateProcess {
     }
 
     // save local changes if needed (update via merge may perform without saving).
+    Collection<VirtualFile> myRootsToSave = ContainerUtil.newArrayList();
     LOG.info("updateImpl: identifying if save is needed...");
     for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
       VirtualFile root = entry.getKey();
@@ -244,7 +238,7 @@ public class GitUpdateProcess {
       }
       else {
         LOG.info("updateImpl: restoring local changes...");
-        restoreLocalChanges(context);
+        restoreLocalChanges();
       }
     }
     return compoundResult;
@@ -312,28 +306,9 @@ public class GitUpdateProcess {
     return compoundResult.join(result);
   }
 
-  private void restoreLocalChanges(ContinuationContext context) {
-    context.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
-      @Override
-      public void consume(VcsException e) {
-        LOG.info("Couldn't restore local changes after update", e);
-        notifyImportantError(myProject, "Couldn't restore local changes after update",
-                             "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
-      }
-    });
-    // try restore changes under all circumstances
-    final ContinuationFinalTasksInserter finalTasksInserter = new ContinuationFinalTasksInserter(context);
-    finalTasksInserter.allNextAreFinal();
-    // !!!! this task is put NEXT, i.e. if unshelve/unstash will be done synchronously or scheduled on context,
-    // it is unimportant -> files will be refreshed after
-    context.next(new TaskDescriptor("Refresh local files", Where.POOLED) {
-      @Override
-      public void run(ContinuationContext context) {
-        mySaver.refresh();
-      }
-    });
-    mySaver.restoreLocalChanges(context);
-    finalTasksInserter.removeFinalPropertyAdder();
+  private void restoreLocalChanges() {
+    mySaver.restoreLocalChanges();
+    mySaver.refresh();
   }
 
   // fetch all roots. If an error happens, return false and notify about errors.

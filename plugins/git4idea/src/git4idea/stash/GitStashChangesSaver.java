@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -69,16 +68,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected void load(@NotNull ContinuationContext context) {
-    try {
-      load();
-    }
-    catch (VcsException e) {
-      context.handleException(e, false);
-    }
-  }
-
-  public void load() throws VcsException {
+  public void load() {
     for (VirtualFile root : myStashedRoots) {
       loadRoot(root);
     }
@@ -129,7 +119,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
    * Returns true if the root was loaded with conflict.
    * False is returned in all other cases: in the case of success and in case of some other error.
    */
-  private boolean loadRoot(final VirtualFile root) throws VcsException {
+  private boolean loadRoot(final VirtualFile root) {
     LOG.info("loadRoot " + root);
     myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
 

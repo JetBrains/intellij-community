@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -33,7 +34,6 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
-import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -52,13 +52,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.continuation.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
 import org.jdom.Element;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -355,60 +355,55 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  @AsynchronousExecution
+  @CalledInAny
   public void unshelveChangeList(final ShelvedChangeList changeList,
                                  @Nullable final List<ShelvedChange> changes,
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                  @Nullable final LocalChangeList targetChangeList,
                                  boolean showSuccessNotification) {
-    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true);
-    final GatheringContinuationContext initContext = new GatheringContinuationContext();
-    scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext, false,
-                               false, null, null);
-    continuation.run(initContext.getList());
+    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, false, false, null, null);
   }
 
-  @AsynchronousExecution
-  public void scheduleUnshelveChangeList(final ShelvedChangeList changeList,
-                                         @Nullable final List<ShelvedChange> changes,
-                                         @Nullable final List<ShelvedBinaryFile> binaryFiles,
-                                         @Nullable final LocalChangeList targetChangeList,
-                                         final boolean showSuccessNotification,
-                                         final ContinuationContext context,
-                                         final boolean systemOperation,
-                                         final boolean reverse,
-                                         final String leftConflictTitle,
-                                         final String rightConflictTitle) {
-    context.next(new TaskDescriptor("", Where.AWT) {
+  @CalledInAny
+  public void unshelveChangeList(final ShelvedChangeList changeList,
+                                 @Nullable final List<ShelvedChange> changes,
+                                 @Nullable final List<ShelvedBinaryFile> binaryFiles,
+                                 @Nullable final LocalChangeList targetChangeList,
+                                 final boolean showSuccessNotification,
+                                 final boolean systemOperation,
+                                 final boolean reverse,
+                                 final String leftConflictTitle,
+                                 final String rightConflictTitle) {
+    final List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
+
+    final CommitContext commitContext = new CommitContext();
+    final List<TextFilePatch> textFilePatches;
+    try {
+      textFilePatches = loadTextPatches(myProject, changeList, changes, remainingPatches, commitContext);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+      return;
+    }
+    catch (PatchSyntaxException e) {
+      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+      LOG.info(e);
+      return;
+    }
+
+    final List<FilePatch> patches = new ArrayList<FilePatch>(textFilePatches);
+
+    final List<ShelvedBinaryFile> remainingBinaries = new ArrayList<ShelvedBinaryFile>();
+    final List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles, remainingBinaries);
+
+    for (final ShelvedBinaryFile shelvedBinaryFile : binaryFilesToUnshelve) {
+      patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
+    }
+
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
-      public void run(ContinuationContext contextInner) {
-        final List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
-
-        final CommitContext commitContext = new CommitContext();
-        final List<TextFilePatch> textFilePatches;
-        try {
-          textFilePatches = loadTextPatches(myProject, changeList, changes, remainingPatches, commitContext);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
-          return;
-        }
-        catch (PatchSyntaxException e) {
-          PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
-          LOG.info(e);
-          return;
-        }
-
-        final List<FilePatch> patches = new ArrayList<FilePatch>(textFilePatches);
-
-        final List<ShelvedBinaryFile> remainingBinaries = new ArrayList<ShelvedBinaryFile>();
-        final List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles, remainingBinaries);
-
-        for (final ShelvedBinaryFile shelvedBinaryFile : binaryFilesToUnshelve) {
-          patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
-        }
-
+      public void run() {
         final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier();
         final PatchApplier<ShelvedBinaryFilePatch> patchApplier =
           new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(),
@@ -416,24 +411,18 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                    rightConflictTitle);
         patchApplier.setIsSystemOperation(systemOperation);
 
-        // after patch applier part
-        contextInner.next(new TaskDescriptor("", Where.AWT) {
-          @Override
-          public void run(ContinuationContext context) {
-            remainingPatches.addAll(patchApplier.getRemainingPatches());
+        remainingPatches.addAll(patchApplier.getRemainingPatches());
 
-            if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
-              recycleChangeList(changeList);
-            }
-            else {
-              saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext);
-            }
-          }
-        });
+        if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
+          recycleChangeList(changeList);
+        }
+        else {
+          saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext);
+        }
 
-        patchApplier.scheduleSelf(showSuccessNotification, contextInner, systemOperation);
+        patchApplier.execute(showSuccessNotification, systemOperation);
       }
-    });
+    }, ModalityState.defaultModalityState());
   }
 
   private static List<TextFilePatch> loadTextPatches(final Project project,

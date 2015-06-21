@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
@@ -85,13 +84,14 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     myProgressIndicator.setText(oldProgressTitle);
   }
 
-  protected void load(ContinuationContext context) {
+  @Override
+  public void load() {
     if (myShelvedLists != null) {
       LOG.info("load ");
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
       for (ShelvedChangeList list : myShelvedLists.values()) {
-        GitShelveUtils.doSystemUnshelve(myProject, list, myShelveManager, context,
+        GitShelveUtils.doSystemUnshelve(myProject, list, myShelveManager,
                                         getConflictLeftPanelTitle(), getConflictRightPanelTitle());
       }
       myProgressIndicator.setText(oldProgressTitle);
