@@ -15,24 +15,38 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.*;
+import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.update.Update;
@@ -43,9 +57,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -57,6 +80,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
+  private static final Logger LOG = Logger.getInstance("#" + SMTestRunnerResultsForm.class.getName());
 
   private SMTRunnerTestTreeView myTreeView;
 
@@ -91,6 +115,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private AbstractTestProxy myLastSelected;
   private Alarm myUpdateQueue;
   private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
+  private BackgroundableProcessIndicator mySaveToHistoryIndicator;
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -303,6 +328,56 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount, myTotalTestCount - myFinishedTestCount, myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myConsoleProperties.getProject(), testsRoot, myConsoleProperties, presentation);
+    addToHistory(testsRoot);
+  }
+
+  private void addToHistory(final SMTestProxy.SMRootTestProxy root) {
+    final RunProfile configuration = myConsoleProperties.getConfiguration();
+    if (configuration instanceof RunConfiguration && !(myConsoleProperties instanceof ImportedTestConsoleProperties)) {
+      final Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Save Test Results", true) {
+
+        private String myOutput;
+
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+            TransformerHandler handler = transformerFactory.newTransformerHandler();
+            handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
+            handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+            StringWriter w = new StringWriter();
+            handler.setResult(new StreamResult(w));
+            TestResultsXmlFormatter.execute(root, (RunConfiguration)configuration, handler);
+            myOutput = w.toString();
+          }
+          catch (ProcessCanceledException ignore) {
+            //canceled by user or frame dispose
+          }
+          catch (Exception e) {
+            LOG.info("Export to history failed", e);
+          }
+        }
+
+        @Override
+        public void onSuccess() {
+          if (myOutput != null) {
+            try {
+              ImportTestsAction.adjustHistory();
+              final String configurationNameIncludedDate = PathUtil.suggestFileName(configuration.getName()) + " " +
+                                                           FileUtil.sanitizeFileName(new SimpleDateFormat().format(new Date()));
+              final String presentableFileName = ExecutionBundle.message("export.test.results.filename", configurationNameIncludedDate);
+              FileUtil.writeToFile(new File(ImportTestsAction.TEST_HISTORY_PATH, presentableFileName + ".xml"), myOutput);
+            }
+            catch (IOException e) {
+              LOG.info("Fail to write test history", e);
+            }
+          }
+        }
+      };
+      mySaveToHistoryIndicator = new BackgroundableProcessIndicator(backgroundable);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, mySaveToHistoryIndicator);
+    }
   }
 
   public void onTestsCountInSuite(final int count) {
@@ -464,6 +539,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
     myStatisticsPane.doDispose();
+    if (mySaveToHistoryIndicator != null) {
+      mySaveToHistoryIndicator.cancel();
+    }
   }
 
   public void showStatisticsForSelectedProxy() {

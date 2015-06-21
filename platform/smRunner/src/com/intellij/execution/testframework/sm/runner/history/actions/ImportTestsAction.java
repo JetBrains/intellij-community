@@ -30,8 +30,10 @@ import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnab
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -41,6 +43,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
@@ -49,6 +53,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * 1. chooses file where test results were saved
@@ -59,6 +66,8 @@ import javax.swing.*;
  */
 public class ImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + ImportTestsAction.class.getName());
+  public static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
+  public static final String TEST_HISTORY_SIZE = "test_history_size";
   private SMTRunnerConsoleProperties myProperties;
 
   public ImportTestsAction() {
@@ -77,11 +86,17 @@ public class ImportTestsAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final FileChooserDescriptor xmlDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.XML);
-    xmlDescriptor.setTitle("Choose a File with Tests Result");
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
-    final VirtualFile file = FileChooser.chooseFile(xmlDescriptor, project, null);
+    final ImportTestResultsDialog dialog = new ImportTestResultsDialog(project);
+    if (!dialog.showAndGet()) {
+      return;
+    }
+    final String filePath = dialog.getFilePath();
+    if (filePath == null) {
+      return;
+    }
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file != null) {
       try {
         final ImportRunProfile profile = new ImportRunProfile(file, project);
@@ -98,6 +113,30 @@ public class ImportTestsAction extends AnAction {
       catch (ExecutionException e1) {
         Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
       }
+    }
+  }
+  
+  public static void adjustHistory() {
+    int historySize;
+    try {
+      historySize = Math.max(0, Integer.parseInt(PropertiesComponent.getInstance().getValue(TEST_HISTORY_SIZE, "5")));
+    }
+    catch (NumberFormatException e) {
+      historySize = 5;
+    }
+
+    final File[] files = TEST_HISTORY_PATH.listFiles();
+    if (files != null && files.length >= historySize) {
+      Arrays.sort(files, new Comparator<File>() {
+        @Override
+        public int compare(File o1, File o2) {
+          final long l1 = o1.lastModified();
+          final long l2 = o2.lastModified();
+          if (l1 == l2) return 0;
+          return l1 < l2 ? -1 : 1;
+        }
+      });
+      FileUtil.delete(files[0]);
     }
   }
 

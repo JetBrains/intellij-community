@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -28,7 +27,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -166,6 +165,7 @@ public class TestResultsXmlFormatter {
   }
 
   private void processNode(AbstractTestProxy node, final Filter filter) throws SAXException {
+    ProgressManager.checkCanceled();
     Map<String, String> attrs = new HashMap<String, String>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
