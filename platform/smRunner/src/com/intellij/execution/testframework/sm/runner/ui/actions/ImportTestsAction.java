@@ -17,14 +17,17 @@ package com.intellij.execution.testframework.sm.runner.ui.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.history.ImportedTestRunnableState;
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -42,19 +45,28 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 
+/**
+ * 1. chooses file where test results were saved
+ * 2. finds the configuration element saved during export
+ * 3. creates corresponding configuration with {@link SMTRunnerConsoleProperties} if configuration implements {@link SMRunnerConsolePropertiesProvider}
+ * 
+ * Without console properties no navigation, no rerun failed is possible.
+ */
 public class ImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + ImportTestsAction.class.getName());
-  private final SMTRunnerConsoleProperties myProperties;
+  private SMTRunnerConsoleProperties myProperties;
+
+  public ImportTestsAction() {
+    super("Import Test Results", "Import tests from file", AllIcons.ToolbarDecorator.Import);
+  }
 
   public ImportTestsAction(SMTRunnerConsoleProperties properties) {
-    super("Import Tests", "Import tests from file", AllIcons.ToolbarDecorator.Import);
+    this();
     myProperties = properties;
   }
 
@@ -72,7 +84,16 @@ public class ImportTestsAction extends AnAction {
     final VirtualFile file = FileChooser.chooseFile(xmlDescriptor, project, null);
     if (file != null) {
       try {
-        ExecutionEnvironmentBuilder.create(project, myProperties.getExecutor(), new ImportRunProfile(file, project)).buildAndExecute();
+        final ImportRunProfile profile = new ImportRunProfile(file, project);
+        SMTRunnerConsoleProperties properties = profile.getProperties();
+        if (properties == null) {
+          properties = myProperties;
+          LOG.info("Failed to detect test framework in " + file.getPath() +
+                   "; use " + (properties != null ? properties.getTestFrameworkName() + " from toolbar" : "no properties"));
+        }
+        final Executor executor = properties != null ? properties.getExecutor() 
+                                                     : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+        ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
       }
       catch (ExecutionException e1) {
         Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
@@ -80,13 +101,16 @@ public class ImportTestsAction extends AnAction {
     }
   }
 
-  private class ImportRunProfile implements RunProfile {
+  public static class ImportRunProfile implements RunProfile {
     private final VirtualFile myFile;
+    private final Project myProject;
     private RunnerAndConfigurationSettingsImpl mySettings;
     private boolean myImported;
+    private SMTRunnerConsoleProperties myProperties;
 
     public ImportRunProfile(VirtualFile file, Project project) {
       myFile = file;
+      myProject = project;
       try {
         final Document document = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(myFile));
         final Element config = document.getRootElement().getChild("config");
@@ -94,9 +118,17 @@ public class ImportTestsAction extends AnAction {
           mySettings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project));
           try {
             mySettings.readExternal(config);
+            final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+            if (executor != null) {
+              final RunConfiguration configuration = mySettings.getConfiguration();
+              if (configuration instanceof SMRunnerConsolePropertiesProvider) {
+                myProperties = ((SMRunnerConsolePropertiesProvider)configuration).createTestConsoleProperties(executor);
+              }
+            }
           }
           catch (InvalidDataException e) {
-            LOG.error(e);
+            LOG.info(e);
+            mySettings = null;
           }
         }
       }
@@ -109,12 +141,18 @@ public class ImportTestsAction extends AnAction {
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
       if (!myImported) {
         myImported = true;
-        return new ImportedTestRunnableState(myProperties, VfsUtilCore.virtualToIoFile(myFile));
+        return new ImportedTestRunnableState(this, VfsUtilCore.virtualToIoFile(myFile));
       }
       if (mySettings != null) {
-        return mySettings.getConfiguration().getState(executor, environment);
+        try {
+          return mySettings.getConfiguration().getState(executor, environment);
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+          throw new ExecutionException("Unable to run the configuration: settings are corrupted");
+        }
       }
-      throw new ExecutionException("Unable to run the configuration");
+      throw new ExecutionException("Unable to run the configuration: failed to detect test framework");
     }
 
     @Override
@@ -125,7 +163,15 @@ public class ImportTestsAction extends AnAction {
     @Nullable
     @Override
     public Icon getIcon() {
-      return myProperties.getConfiguration().getIcon();
+      return myProperties != null ? myProperties.getConfiguration().getIcon() : null;
+    }
+
+    public SMTRunnerConsoleProperties getProperties() {
+      return myProperties;
+    }
+
+    public Project getProject() {
+      return myProject;
     }
   }
 }

@@ -34,7 +34,6 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -315,12 +314,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
-  }
-
-  @NotNull
-  @Override
-  protected SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
-    return new JUnitConsoleProperties(getConfiguration(), executor);
   }
 
   @NotNull

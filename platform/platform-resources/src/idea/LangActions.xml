@@ -878,6 +878,11 @@
               text="Navigate to Test"/>
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
+    <group>
+      <action class="com.intellij.execution.testframework.sm.runner.ui.actions.ImportTestsAction"
+              text="Import Test Results" id="ImportTests"/>
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="editRunConfigurations"/>
+    </group>
 
     <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights to log">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>

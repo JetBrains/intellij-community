@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -93,7 +94,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   @NotNull
   protected GlobalSearchScope initScope() {
-    RunConfiguration configuration = getConfiguration();
+    RunProfile configuration = getConfiguration();
     if (!(configuration instanceof ModuleRunProfile)) {
       return GlobalSearchScope.allScope(myProject);
     }
@@ -163,7 +164,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     myListeners.clear();
   }
 
-  public abstract RunConfiguration getConfiguration();
+  public abstract RunProfile getConfiguration();
 
   /**
    * Allows to make console editable and disable/enable input sending in process stdin stream.

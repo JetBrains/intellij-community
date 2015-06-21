@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
@@ -56,10 +55,8 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(myProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(myProperties, false);
 
-    myResultsForm = new SMTestRunnerResultsForm(myProperties.getConfiguration(),
-                                                new JLabel(),
-                                                myProperties
-    ) {
+    myResultsForm = new SMTestRunnerResultsForm(new JLabel(),
+                                                myProperties) {
       @Override
       public void selectAndNotify(AbstractTestProxy testProxy) {
         super.selectAndNotify(testProxy);

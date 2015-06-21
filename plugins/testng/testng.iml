@@ -24,7 +24,7 @@
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="xml" scope="TEST" />
-    <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module" module-name="smRunner" exported="" />
   </component>
   <component name="copyright">
     <Base>
@@ -32,4 +32,3 @@
     </Base>
   </component>
 </module>
-

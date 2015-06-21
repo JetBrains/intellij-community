@@ -21,6 +21,8 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.ShowStatisticsAction;
@@ -41,6 +43,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.config.ToggleBooleanProperty;
 import com.intellij.util.config.ToggleInvertedBooleanProperty;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +53,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
-  private final ExportTestResultsAction myExportAction;
+  private @Nullable ExportTestResultsAction myExportAction;
 
   private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
 
@@ -115,8 +118,11 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       actionGroup.add(toggleModelAction);
     }
 
-    myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), properties.getConfiguration());
-    actionGroup.addAction(myExportAction);
+    final RunProfile configuration = properties.getConfiguration();
+    if (configuration instanceof RunConfiguration) {
+      myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), (RunConfiguration)configuration);
+      actionGroup.addAction(myExportAction);
+    }
 
     final AnAction importAction = properties.createImportAction();
     if (importAction != null) {
@@ -162,7 +168,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myScrollToSource.setModel(model);
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
-    myExportAction.setModel(model);
+    if (myExportAction != null) {
+      myExportAction.setModel(model);
+    }
     for (ToggleModelAction action : myActions) {
       action.setModel(model);
     }
@@ -212,6 +220,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
   public void dispose() {
     myScrollToSource.setModel(null);
-    myExportAction.setModel(null);
+    if (myExportAction != null) {
+      myExportAction.setModel(null);
+    }
   }
 }

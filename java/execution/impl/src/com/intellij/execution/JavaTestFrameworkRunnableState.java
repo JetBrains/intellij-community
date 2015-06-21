@@ -25,11 +25,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -57,7 +57,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -69,7 +68,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.Locale;
 
-public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends JavaCommandLineState {
+public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
   protected File myTempFile;
@@ -92,8 +91,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
 
-  @NotNull protected abstract SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor);
-
   public SearchForTestsTask createSearchingForTestsTask() {
     return null;
   }
@@ -110,7 +107,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     final RunnerSettings runnerSettings = getRunnerSettings();
 
-    final SMTRunnerConsoleProperties testConsoleProperties = createTestConsoleProperties(executor);
+    final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);

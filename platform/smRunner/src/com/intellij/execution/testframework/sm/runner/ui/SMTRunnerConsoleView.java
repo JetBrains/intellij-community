@@ -74,8 +74,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   @Override
   protected TestResultsPanel createTestResultsPanel() {
     // Results View
-    myResultsViewer = new SMTestRunnerResultsForm(myProperties.getConfiguration(),
-                                                  getConsole().getComponent(),
+    myResultsViewer = new SMTestRunnerResultsForm(getConsole().getComponent(),
                                                   getConsole().createConsoleActions(),
                                                   myProperties,
                                                   mySplitterProperty);

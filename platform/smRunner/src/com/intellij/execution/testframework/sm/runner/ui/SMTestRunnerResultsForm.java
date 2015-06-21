@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.*;
@@ -93,14 +92,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private Alarm myUpdateQueue;
   private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
 
-  public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
-                                 @NotNull final JComponent console,
+  public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
-    this(runConfiguration, console, AnAction.EMPTY_ARRAY, consoleProperties, null);
+    this(console, AnAction.EMPTY_ARRAY, consoleProperties, null);
   }
 
-  public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
-                                 @NotNull final JComponent console,
+  public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  AnAction[] consoleActions,
                                  final TestConsoleProperties consoleProperties,
                                  @Nullable String splitterPropertyName) {
@@ -108,7 +105,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           StringUtil.notNullize(splitterPropertyName, DEFAULT_SM_RUNNER_SPLITTER_PROPERTY), 0.2f);
     myConsoleProperties = consoleProperties;
 
-    myProject = runConfiguration.getProject();
+    myProject = consoleProperties.getProject();
 
     //Create tests common suite root
     //noinspection HardCodedStringLiteral

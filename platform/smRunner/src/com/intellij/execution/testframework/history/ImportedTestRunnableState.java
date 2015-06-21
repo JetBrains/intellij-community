@@ -19,6 +19,8 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
@@ -26,6 +28,7 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.ui.actions.ImportTestsAction;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +39,11 @@ import java.io.File;
 import java.io.OutputStream;
 
 public class ImportedTestRunnableState implements RunProfileState {
-  private SMTRunnerConsoleProperties myProperties;
+  private ImportTestsAction.ImportRunProfile myRunProfile;
   private File myFile;
 
-  public ImportedTestRunnableState(SMTRunnerConsoleProperties properties, File file) {
-    myProperties = properties;
+  public ImportedTestRunnableState(ImportTestsAction.ImportRunProfile profile, File file) {
+    myRunProfile = profile;
     myFile = file;
   }
 
@@ -48,7 +51,19 @@ public class ImportedTestRunnableState implements RunProfileState {
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     final MyEmptyProcessHandler handler = new MyEmptyProcessHandler();
-    ImportedTestConsoleProperties consoleProperties = new ImportedTestConsoleProperties(myProperties, myFile, handler);
+    final SMTRunnerConsoleProperties properties = myRunProfile.getProperties();
+    RunProfile configuration;
+    final String frameworkName;
+    if (properties != null) {
+      configuration = properties.getConfiguration();
+      frameworkName = properties.getTestFrameworkName();
+    }
+    else {
+      configuration = myRunProfile;
+      frameworkName = "Import Test Results";
+    }
+    final ImportedTestConsoleProperties consoleProperties = new ImportedTestConsoleProperties(properties, myFile, handler, myRunProfile.getProject(),
+                                                                                              configuration, frameworkName, executor);
     final BaseTestsOutputConsoleView console = SMTestRunnerConnectionUtil.createConsole(consoleProperties.getTestFrameworkName(), 
                                                                                         consoleProperties);
     final JComponent component = console.getComponent();

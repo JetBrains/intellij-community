@@ -15,7 +15,10 @@
  */
 package com.intellij.execution.testframework.history;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -34,14 +37,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class ImportedTestConsoleProperties extends SMTRunnerConsoleProperties implements SMCustomMessagesParsing {
-  private final SMTRunnerConsoleProperties myProperties;
+  private final @Nullable SMTRunnerConsoleProperties myProperties;
   private final File myFile;
   private final ProcessHandler myHandler;
 
-  public ImportedTestConsoleProperties(SMTRunnerConsoleProperties properties,
+  public ImportedTestConsoleProperties(@Nullable SMTRunnerConsoleProperties properties,
                                        File file,
-                                       ProcessHandler handler) {
-    super(properties.getConfiguration(), properties.getTestFrameworkName(), properties.getExecutor());
+                                       ProcessHandler handler,
+                                       Project project, RunProfile runConfiguration,
+                                       String frameworkName,
+                                       Executor executor) {
+    super(project, runConfiguration, frameworkName, executor);
     myProperties = properties;
     myFile = file;
     myHandler = handler;
@@ -67,40 +73,43 @@ public class ImportedTestConsoleProperties extends SMTRunnerConsoleProperties im
   @Override
   public Navigatable getErrorNavigatable(@NotNull Location<?> location,
                                          @NotNull String stacktrace) {
-    return myProperties.getErrorNavigatable(location, stacktrace);
+    return myProperties == null ? null : myProperties.getErrorNavigatable(location, stacktrace);
   }
 
+  @Nullable
   @Override
   public Navigatable getErrorNavigatable(@NotNull Project project,
                                          @NotNull String stacktrace) {
-    return myProperties.getErrorNavigatable(project, stacktrace);
+    return myProperties == null ? null : myProperties.getErrorNavigatable(project, stacktrace);
   }
 
   @Override
   public void addStackTraceFilter(Filter filter) {
-    myProperties.addStackTraceFilter(filter);
+    if (myProperties != null) {
+      myProperties.addStackTraceFilter(filter);
+    }
   }
 
   @Override
   public boolean fixEmptySuite() {
-    return myProperties.fixEmptySuite();
+    return myProperties != null && myProperties.fixEmptySuite();
   }
 
   @Override
   @Nullable
   public SMTestLocator getTestLocator() {
-    return myProperties.getTestLocator();
+    return myProperties == null ? null : myProperties.getTestLocator();
   }
 
   @Override
   @Nullable
   public TestProxyFilterProvider getFilterProvider() {
-    return myProperties.getFilterProvider();
+    return myProperties == null ? null : myProperties.getFilterProvider();
   }
 
   @Override
   @Nullable
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
-    return myProperties.createRerunFailedTestsAction(consoleView);
+    return myProperties == null ? null : myProperties.createRerunFailedTestsAction(consoleView);
   }
 }
