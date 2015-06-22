@@ -15,8 +15,4 @@ public class MockSchemesManagerFactory extends SchemesManagerFactory {
     //noinspection unchecked
     return EMPTY;
   }
-
-  @Override
-  public void updateConfigFilesFromStreamProviders() {
-  }
 }

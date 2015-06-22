@@ -67,6 +67,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
 
   private final ArrayList<T> mySchemes = new ArrayList<T>();
   private volatile T myCurrentScheme;
+  @Nullable
   private String myCurrentSchemeName;
 
   private final String myFileSpec;
@@ -270,6 +271,11 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       checkCurrentScheme(scheme);
     }
     return list;
+  }
+
+  public void reload() {
+    clearAllSchemes();
+    loadSchemes();
   }
 
   @NotNull
@@ -488,10 +494,6 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       fileName = fileName.subSequence(0, fileName.length() - DirectoryStorageData.DEFAULT_EXT.length());
     }
     return fileName.toString();
-  }
-
-  public void updateConfigFilesFromStreamProviders() {
-    // todo
   }
 
   private String getFileFullPath(@NotNull String subPath) {
@@ -827,7 +829,6 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     }
 
     schemeAdded(scheme);
-    checkCurrentScheme(scheme);
   }
 
   private void checkCurrentScheme(@NotNull Scheme scheme) {
@@ -887,8 +888,14 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
   @Override
   @Nullable
   public T getCurrentScheme() {
-    T currentScheme = myCurrentScheme;
-    return currentScheme == null ? null : findSchemeByName(currentScheme.getName());
+    T scheme = myCurrentScheme;
+    if (scheme == null && myCurrentSchemeName != null) {
+      scheme = findSchemeByName(myCurrentSchemeName);
+      if (scheme != null) {
+        myCurrentScheme = scheme;
+      }
+    }
+    return scheme;
   }
 
   @Override
