@@ -217,7 +217,7 @@ public class OutputChecker {
         result = result.replaceAll("\"(" + TEST_JDK_HOME_STR + ".*?)\"", "$1");
 
         // unquote extra params
-        result = result.replaceAll("\"(-D.*)\"", "$1");
+        //result = result.replaceAll("\"(-D.*)\"", "$1");
 
         result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
