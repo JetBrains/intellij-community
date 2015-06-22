@@ -57,11 +57,10 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   public VcsLogContentProvider(@NotNull Project project,
                                @NotNull ProjectLevelVcsManager manager,
-                               @NotNull VcsLogSettings settings,
                                @NotNull VcsLogUiProperties uiProperties) {
     myProject = project;
     myVcsManager = manager;
-    myLogManager = new VcsLogManager(project, settings, uiProperties);
+    myLogManager = new VcsLogManager(project, uiProperties);
   }
 
   @Nullable

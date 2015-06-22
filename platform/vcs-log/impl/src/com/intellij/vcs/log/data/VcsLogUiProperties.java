@@ -34,19 +34,23 @@ import java.util.*;
  */
 @State(name = "Vcs.Log.UiProperties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProperties.State> {
-
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
-
+  private final VcsLogSettings mySettings;
   private State myState = new State();
 
   public static class State {
     public boolean SHOW_DETAILS = true;
+    public boolean SHOW_BRANCHES_PANEL = false;
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
+  }
+
+  public VcsLogUiProperties(@NotNull VcsLogSettings settings) {
+    mySettings = settings;
   }
 
   @Nullable
@@ -58,6 +62,10 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
   @Override
   public void loadState(State state) {
     myState = state;
+    if (mySettings.isShowBranchesPanel()) {
+      myState.SHOW_BRANCHES_PANEL = true;
+      mySettings.setShowBranchesPanel(false);
+    }
   }
 
   /**
@@ -143,6 +151,14 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public void enableHighlighter(@NotNull String id, boolean value) {
     myState.HIGHLIGHTERS.put(id, value);
+  }
+
+  public boolean isShowBranchesPanel() {
+    return myState.SHOW_BRANCHES_PANEL;
+  }
+
+  public void setShowBranchesPanel(boolean show) {
+    myState.SHOW_BRANCHES_PANEL = show;
   }
 
   public static class UserGroup {

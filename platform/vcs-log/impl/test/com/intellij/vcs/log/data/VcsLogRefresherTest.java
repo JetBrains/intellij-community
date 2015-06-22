@@ -27,7 +27,10 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
 import org.jetbrains.annotations.NotNull;
@@ -202,9 +205,9 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myDataManager = new VcsLogDataManager(myProject, myProject, myLogProviders,
-                                         ServiceManager.getService(myProject, VcsLogSettings.class),
-                                         ServiceManager.getService(myProject, VcsLogUiProperties.class), Consumer.EMPTY_CONSUMER);
+    myDataManager =
+      new VcsLogDataManager(myProject, myProject, myLogProviders, ServiceManager.getService(myProject, VcsLogUiProperties.class),
+                            Consumer.EMPTY_CONSUMER);
     return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(), myTopDetailsCache,
                                    dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override

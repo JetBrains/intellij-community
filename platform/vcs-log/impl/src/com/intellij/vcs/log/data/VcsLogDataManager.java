@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -41,15 +42,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
-
   private static final Logger LOG = Logger.getInstance(VcsLogDataManager.class);
+  private static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
-  @NotNull private final VcsLogSettings mySettings;
 
   /**
    * Current user name, as specified in the VCS settings.
@@ -77,14 +77,12 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   public VcsLogDataManager(@NotNull Project project,
                            @NotNull Disposable parentDisposable,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                           @NotNull VcsLogSettings settings,
                            @NotNull VcsLogUiProperties uiProperties,
                            @NotNull Consumer<VisiblePack> visiblePackConsumer) {
     Disposer.register(parentDisposable, this);
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
-    mySettings = settings;
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
@@ -116,7 +114,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
                                     LOG.error(e);
                                   }
                                 }
-                              }, mySettings.getRecentCommitsCount());
+                              }, RECENT_COMMITS_COUNT);
   }
 
   @NotNull
@@ -207,11 +205,6 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   @NotNull
   public Collection<VcsLogProvider> getLogProviders() {
     return myLogProviders.values();
-  }
-
-  @NotNull
-  public VcsLogSettings getSettings() {
-    return mySettings;
   }
 
   @NotNull

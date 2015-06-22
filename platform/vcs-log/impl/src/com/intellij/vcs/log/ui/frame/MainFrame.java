@@ -75,7 +75,6 @@ public class MainFrame extends JPanel implements DataProvider {
   public MainFrame(@NotNull VcsLogDataManager logDataManager,
                    @NotNull VcsLogUiImpl vcsLogUI,
                    @NotNull Project project,
-                   @NotNull VcsLogSettings settings,
                    @NotNull VcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack) {
@@ -89,7 +88,7 @@ public class MainFrame extends JPanel implements DataProvider {
     myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataManager, initialDataPack);
     myBranchesPanel = new BranchesPanel(logDataManager, vcsLogUI, initialDataPack.getRefsModel());
     JComponent branchScrollPane = myBranchesPanel.createScrollPane();
-    branchScrollPane.setVisible(settings.isShowBranchesPanel());
+    branchScrollPane.setVisible(uiProperties.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logDataManager, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);

@@ -40,7 +40,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogUiProperties myUiProperties;
@@ -52,12 +51,10 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public VcsLogUiImpl(@NotNull VcsLogDataManager logDataManager,
                       @NotNull Project project,
-                      @NotNull VcsLogSettings settings,
                       @NotNull VcsLogColorManager manager,
                       @NotNull VcsLogUiProperties uiProperties,
                       @NotNull VcsLogFilterer filterer) {
     myProject = project;
-    mySettings = settings;
     myColorManager = manager;
     myUiProperties = uiProperties;
     Disposer.register(logDataManager, this);
@@ -65,7 +62,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myFilterer = filterer;
     myLog = new VcsLogImpl(logDataManager, this);
     myVisiblePack = VisiblePack.EMPTY;
-    myMainFrame = new MainFrame(logDataManager, this, project, settings, uiProperties, myLog, myVisiblePack);
+    myMainFrame = new MainFrame(logDataManager, this, project, uiProperties, myLog, myVisiblePack);
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logDataManager, this));
@@ -291,12 +288,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public void setBranchesPanelVisible(boolean visible) {
     myMainFrame.setBranchesPanelVisible(visible);
-    mySettings.setShowBranchesPanel(visible);
+    myUiProperties.setShowBranchesPanel(visible);
   }
 
   @Override
   public boolean isBranchesPanelVisible() {
-    return mySettings.isShowBranchesPanel();
+    return myUiProperties.isShowBranchesPanel();
   }
 
   @NotNull

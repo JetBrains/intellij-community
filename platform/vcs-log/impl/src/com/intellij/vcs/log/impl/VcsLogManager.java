@@ -39,7 +39,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -58,16 +57,13 @@ public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   private volatile VcsLogUiImpl myUi;
 
   public VcsLogManager(@NotNull Project project,
-                       @NotNull VcsLogSettings settings,
                        @NotNull VcsLogUiProperties uiProperties) {
     myProject = project;
-    mySettings = settings;
     myUiProperties = uiProperties;
   }
 
@@ -90,10 +86,9 @@ public class VcsLogManager implements Disposable {
           });
       }
     };
-    final VcsLogDataManager
-      logDataManager = new VcsLogDataManager(myProject, this, logProviders, mySettings, myUiProperties, visiblePackConsumer);
-    myUi = new VcsLogUiImpl(logDataManager, myProject, mySettings,
-                            new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, logDataManager.getFilterer());
+    final VcsLogDataManager logDataManager = new VcsLogDataManager(myProject, this, logProviders, myUiProperties, visiblePackConsumer);
+    myUi = new VcsLogUiImpl(logDataManager, myProject, new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties,
+                            logDataManager.getFilterer());
     myUi.addLogListener(logDataManager.getContainingBranchesGetter()); // TODO: remove this after VcslogDataManager vs VcsLoUi dependency cycle is solved
     VcsLogRefresher logRefresher;
     if (contentTabName != null) {
