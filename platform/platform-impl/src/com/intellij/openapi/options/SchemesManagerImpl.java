@@ -61,8 +61,12 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.*;
 
-public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
+public final class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends SchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
+
+  private final ArrayList<T> mySchemes = new ArrayList<T>();
+  private volatile T myCurrentScheme;
+  private String myCurrentSchemeName;
 
   private final String myFileSpec;
   private final SchemeProcessor<E> myProcessor;
@@ -728,9 +732,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
-  @Override
-  protected void schemeDeleted(@NotNull Scheme scheme) {
-    super.schemeDeleted(scheme);
+  private void schemeDeleted(@NotNull Scheme scheme) {
+    if (myCurrentScheme == scheme) {
+      myCurrentScheme = null;
+    }
 
     if (scheme instanceof ExternalizableScheme) {
       ExternalInfo info = mySchemeToInfo.get((ExternalizableScheme)scheme);
@@ -740,8 +745,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
-  @Override
-  protected void schemeAdded(@NotNull T scheme) {
+  private void schemeAdded(@NotNull T scheme) {
     if (!(scheme instanceof ExternalizableScheme)) {
       return;
     }
@@ -802,13 +806,125 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myCurrentSchemeName = myCurrentScheme == null ? null : myCurrentScheme.getName();
   }
 
-  protected void swapInfo(@NotNull ExternalizableScheme scheme, @NotNull ExternalizableScheme existingScheme) {
-    ExternalInfo newInfo = mySchemeToInfo.get(existingScheme);
-    if (newInfo == null || newInfo.getCurrentFileName() == null) {
-      ExternalInfo oldInfo = mySchemeToInfo.get(existingScheme);
-      if (oldInfo != null) {
-        getExternalInfo(scheme).setCurrentFileName(oldInfo.getCurrentFileName());
+  @Override
+  public void addNewScheme(@NotNull T scheme, boolean replaceExisting) {
+    int toReplace = -1;
+    for (int i = 0; i < mySchemes.size(); i++) {
+      T existingScheme = mySchemes.get(i);
+      if (existingScheme.getName().equals(scheme.getName())) {
+        toReplace = i;
+        if (replaceExisting && existingScheme instanceof ExternalizableScheme && scheme instanceof ExternalizableScheme) {
+          ExternalInfo newInfo = mySchemeToInfo.get((ExternalizableScheme)existingScheme);
+          if (newInfo == null || newInfo.getCurrentFileName() == null) {
+            ExternalInfo oldInfo = mySchemeToInfo.get((ExternalizableScheme)existingScheme);
+            if (oldInfo != null) {
+              getExternalInfo((ExternalizableScheme)scheme).setCurrentFileName(oldInfo.getCurrentFileName());
+            }
+          }
+        }
+        break;
       }
+    }
+    if (toReplace == -1) {
+      mySchemes.add(scheme);
+    }
+    else if (replaceExisting || !(scheme instanceof ExternalizableScheme)) {
+      mySchemes.set(toReplace, scheme);
+    }
+    else {
+      //noinspection unchecked
+      renameScheme((ExternalizableScheme)scheme, UniqueNameGenerator.generateUniqueName(scheme.getName(), collectExistingNames(mySchemes)));
+      mySchemes.add(scheme);
+    }
+
+    schemeAdded(scheme);
+    checkCurrentScheme(scheme);
+  }
+
+  private void checkCurrentScheme(@NotNull Scheme scheme) {
+    if (myCurrentScheme == null && scheme.getName().equals(myCurrentSchemeName)) {
+      //noinspection unchecked
+      myCurrentScheme = (T)scheme;
+    }
+  }
+
+  @NotNull
+  private Collection<String> collectExistingNames(@NotNull Collection<T> schemes) {
+    Set<String> result = new THashSet<String>(schemes.size());
+    for (T scheme : schemes) {
+      result.add(scheme.getName());
+    }
+    return result;
+  }
+
+  @Override
+  public void clearAllSchemes() {
+    doRemoveAll();
+  }
+
+  private void doRemoveAll() {
+    for (T myScheme : mySchemes) {
+      schemeDeleted(myScheme);
+    }
+    mySchemes.clear();
+  }
+
+  @Override
+  @NotNull
+  public List<T> getAllSchemes() {
+    return Collections.unmodifiableList(mySchemes);
+  }
+
+  @Override
+  @Nullable
+  public T findSchemeByName(@NotNull String schemeName) {
+    for (T scheme : mySchemes) {
+      if (scheme.getName().equals(schemeName)) {
+        return scheme;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void setCurrentSchemeName(@Nullable String schemeName) {
+    myCurrentSchemeName = schemeName;
+    myCurrentScheme = schemeName == null ? null : findSchemeByName(schemeName);
+  }
+
+  @Override
+  @Nullable
+  public T getCurrentScheme() {
+    T currentScheme = myCurrentScheme;
+    return currentScheme == null ? null : findSchemeByName(currentScheme.getName());
+  }
+
+  @Override
+  public void removeScheme(@NotNull T scheme) {
+    for (int i = 0, n = mySchemes.size(); i < n; i++) {
+      T s = mySchemes.get(i);
+      if (scheme.getName().equals(s.getName())) {
+        schemeDeleted(s);
+        mySchemes.remove(i);
+        break;
+      }
+    }
+  }
+
+  @Override
+  @NotNull
+  public Collection<String> getAllSchemeNames() {
+    List<String> names = new ArrayList<String>(mySchemes.size());
+    for (T scheme : mySchemes) {
+      names.add(scheme.getName());
+    }
+    return names;
+  }
+
+  private static void renameScheme(@NotNull ExternalizableScheme scheme, @NotNull String newName) {
+    if (!newName.equals(scheme.getName())) {
+      scheme.setName(newName);
+      LOG.assertTrue(newName.equals(scheme.getName()));
     }
   }
 }
