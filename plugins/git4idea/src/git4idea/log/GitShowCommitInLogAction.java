@@ -111,7 +111,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       showLogNotReadyMessage(project);
       return;
     }
-    VcsLogUiImpl logUi = logManager.getLogUi();
+    VcsLogUiImpl logUi = logManager.getMainLogUi();
     if (logUi == null) {
       showLogNotReadyMessage(project);
       return;
@@ -154,7 +154,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   private static VcsLog findLog(@NotNull Project project) {
     VcsLogManager manager = VcsLogContentProvider.findLogManager(project);
     if (manager != null) {
-      VcsLogUiImpl ui = manager.getLogUi();
+      VcsLogUiImpl ui = manager.getMainLogUi();
       if (ui != null) {
         return ui.getVcsLog();
       }

@@ -30,7 +30,6 @@ import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +104,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   private void initContentInternal() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myContainer.add(myLogManager.initContent(Arrays.asList(myVcsManager.getAllVcsRoots()), TAB_NAME), BorderLayout.CENTER);
+    myContainer.add(myLogManager.initMainLog(TAB_NAME), BorderLayout.CENTER);
   }
 
   @Override

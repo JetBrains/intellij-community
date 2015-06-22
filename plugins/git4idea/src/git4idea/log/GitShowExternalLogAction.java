@@ -129,14 +129,19 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     for (VirtualFile root : roots) {
       repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
     }
-    VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogUiProperties.class));
-    Collection<VcsRoot> vcsRoots = ContainerUtil.map(roots, new Function<VirtualFile, VcsRoot>() {
+    VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogUiProperties.class)) {
+      @NotNull
       @Override
-      public VcsRoot fun(VirtualFile root) {
-        return new VcsRoot(vcs, root);
+      protected Collection<VcsRoot> getVcsRoots() {
+        return ContainerUtil.map(roots, new Function<VirtualFile, VcsRoot>() {
+          @Override
+          public VcsRoot fun(VirtualFile root) {
+            return new VcsRoot(vcs, root);
+          }
+        });
       }
-    });
-    return new MyContentComponent(manager.initContent(vcsRoots, tabName), roots, new Disposable() {
+    };
+    return new MyContentComponent(manager.initMainLog(tabName), roots, new Disposable() {
       @Override
       public void dispose() {
         for (VirtualFile root : roots) {

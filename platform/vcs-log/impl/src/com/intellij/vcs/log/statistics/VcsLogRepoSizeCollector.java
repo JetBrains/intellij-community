@@ -74,7 +74,7 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
   @Nullable
   private static VisiblePack getDataPack(@Nullable VcsLogManager logManager) {
     if (logManager != null) {
-      final VcsLogUiImpl ui = logManager.getLogUi();
+      final VcsLogUiImpl ui = logManager.getMainLogUi();
       if (ui != null) {
         final Ref<VisiblePack> dataPack = Ref.create();
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
