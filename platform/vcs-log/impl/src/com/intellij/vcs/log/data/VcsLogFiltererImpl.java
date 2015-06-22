@@ -48,26 +48,34 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
   @NotNull private PermanentGraph.SortType mySortType;
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
+  @NotNull private List<Consumer<VisiblePack>> myConsumers = ContainerUtil.newArrayList();
 
   @Nullable private DataPack myDataPack;
 
+
   public VcsLogFiltererImpl(@NotNull final Project project,
-                     @NotNull VcsLogDataManager dataManager,
-                     @NotNull PermanentGraph.SortType initialSortType,
-                     @NotNull Consumer<VisiblePack> visiblePackConsumer) {
+                            @NotNull VcsLogDataManager dataManager,
+                            @NotNull PermanentGraph.SortType initialSortType) {
     myDataManager = dataManager;
     myVisiblePackBuilder = myDataManager.createVisiblePackBuilder();
     myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
-    myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePackConsumer) {
+    myTaskController = new SingleTaskController<Request, VisiblePack>(new Consumer<VisiblePack>() {
+      @Override
+      public void consume(VisiblePack visiblePack) {
+        for (Consumer<VisiblePack> consumer : myConsumers) {
+          consumer.consume(visiblePack);
+        }
+      }
+    }) {
       @Override
       protected void startNewBackgroundTask() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
-              new MyTask(project, "Applying filters..."));
+            ((ProgressManagerImpl)ProgressManager.getInstance())
+              .runProcessWithProgressAsynchronously(new MyTask(project, "Applying filters..."));
           }
         });
       }
@@ -80,6 +88,16 @@ public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
       }
     };
     myDataManager.addConsumer(myDataPackConsumer);
+  }
+
+  @Override
+  public void addConsumer(@NotNull Consumer<VisiblePack> consumer) {
+    myConsumers.add(consumer);
+  }
+
+  @Override
+  public void removeConsumer(@NotNull Consumer<VisiblePack> consumer) {
+    myConsumers.remove(consumer);
   }
 
   @Override

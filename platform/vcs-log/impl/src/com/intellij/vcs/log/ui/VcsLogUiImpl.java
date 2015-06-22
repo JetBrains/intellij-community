@@ -12,9 +12,11 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.Consumer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogFilterer;
@@ -47,6 +49,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogFilterer myFilterer;
 
   @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
+  private final Consumer<VisiblePack> myVisiblePackConsumer;
 
   @NotNull private VisiblePack myVisiblePack;
 
@@ -68,6 +71,21 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logDataManager, this));
     }
+
+    myVisiblePackConsumer = new Consumer<VisiblePack>() {
+      @Override
+      public void consume(final VisiblePack visiblePack) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (!Disposer.isDisposed(VcsLogUiImpl.this)) {
+              setVisiblePack(visiblePack);
+            }
+          }
+        });
+      }
+    };
+    myFilterer.addConsumer(myVisiblePackConsumer);
   }
 
   public void requestFocus() {
@@ -366,6 +384,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @Override
   public void dispose() {
+    myFilterer.removeConsumer(myVisiblePackConsumer);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;
   }

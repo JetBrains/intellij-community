@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.util.Consumer;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  */
 public interface VcsLogFilterer {
+
+  void addConsumer(@NotNull Consumer<VisiblePack> consumer);
+
+  void removeConsumer(@NotNull Consumer<VisiblePack> consumer);
 
   void onRefresh(@NotNull DataPack dataPack);
 

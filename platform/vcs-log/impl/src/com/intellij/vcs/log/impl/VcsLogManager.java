@@ -32,16 +32,13 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VcsLogFiltererImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -60,6 +57,7 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogUiProperties myUiProperties;
 
   private volatile VcsLogUiImpl myUi;
+  private VcsLogDataManager myDataManager;
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogUiProperties uiProperties) {
@@ -71,43 +69,33 @@ public class VcsLogManager implements Disposable {
   public JComponent initContent(@NotNull Collection<VcsRoot> roots, @Nullable String contentTabName) {
     Disposer.register(myProject, this);
 
-    final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-
-    Consumer<VisiblePack> visiblePackConsumer = new Consumer<VisiblePack>() {
-      @Override
-      public void consume(final VisiblePack pack) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if (myUi != null && !Disposer.isDisposed(myUi)) {
-                myUi.setVisiblePack(pack);
-              }
-            }
-          });
-      }
-    };
-    final VcsLogDataManager logDataManager = new VcsLogDataManager(myProject, this, logProviders);
-    VcsLogFiltererImpl vcsLogFilterer =
-      new VcsLogFiltererImpl(myProject, logDataManager, PermanentGraph.SortType.values()[myUiProperties.getBekSortType()],
-                             visiblePackConsumer);
-    myUi = new VcsLogUiImpl(logDataManager, myProject, new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, vcsLogFilterer);
+    Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
+    myDataManager = new VcsLogDataManager(myProject, this, logProviders);
     VcsLogRefresher logRefresher;
     if (contentTabName != null) {
-      logRefresher = new PostponableLogRefresher(myProject, logDataManager, contentTabName);
+      logRefresher = new PostponableLogRefresher(myProject, myDataManager, contentTabName);
     }
     else {
       logRefresher = new VcsLogRefresher() {
         @Override
         public void refresh(@NotNull VirtualFile root) {
-          logDataManager.refresh(Collections.singletonList(root));
+          myDataManager.refresh(Collections.singletonList(root));
         }
       };
     }
     refreshLogOnVcsEvents(logProviders, logRefresher);
-    logDataManager.initialize();
+    myDataManager.initialize();
 
+    myUi = createLogUi(logProviders);
     myUi.requestFocus();
     return myUi.getMainFrame().getMainComponent();
+  }
+
+  @NotNull
+  private VcsLogUiImpl createLogUi(Map<VirtualFile, VcsLogProvider> logProviders) {
+    return new VcsLogUiImpl(myDataManager, myProject, new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties,
+                            new VcsLogFiltererImpl(myProject, myDataManager,
+                                                   PermanentGraph.SortType.values()[myUiProperties.getBekSortType()]));
   }
 
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogRefresher refresher) {
