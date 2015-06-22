@@ -29,6 +29,4 @@ public abstract class SchemesManagerFactory {
   public static SchemesManagerFactory getInstance() {
     return ServiceManager.getService(SchemesManagerFactory.class);
   }
-
-  public abstract void updateConfigFilesFromStreamProviders();
 }

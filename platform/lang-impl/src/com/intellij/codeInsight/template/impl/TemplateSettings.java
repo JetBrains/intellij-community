@@ -355,7 +355,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
     if (group == null) {
       group = new TemplateGroup(groupName);
-      mySchemesManager.addNewScheme(group, true);
+      mySchemesManager.addScheme(group);
     }
     group.addElement(templateImpl);
   }

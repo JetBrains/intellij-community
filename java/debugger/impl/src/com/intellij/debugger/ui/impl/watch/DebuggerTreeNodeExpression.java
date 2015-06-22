@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: lex
@@ -147,8 +148,10 @@ public class DebuggerTreeNodeExpression {
       return false;
     }
 
-  public static PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
+  @Nullable
+  public static PsiExpression substituteThis(@Nullable PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
+    if (expressionWithThis == null) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();
 
     PsiClass thisClass = PsiTreeUtil.getContextOfType(result, PsiClass.class, true);

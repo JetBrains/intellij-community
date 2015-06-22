@@ -90,6 +90,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean myModified;
   private volatile boolean myInitialized;
 
+  private final Object myLock = new Object();
+
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile);
     myUninstalledInspectionsSettings.putAll(inspectionProfile.myUninstalledInspectionsSettings);
@@ -293,11 +295,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     super.serializeInto(element, preserveCompatibility);
 
-    if (!myInitialized) {
-      for (Element el : myUninstalledInspectionsSettings.values()) {
-        element.addContent(el.clone());
+    synchronized (myLock) {
+      if (!myInitialized) {
+        for (Element el : myUninstalledInspectionsSettings.values()) {
+          element.addContent(el.clone());
+        }
+        return;
       }
-      return;
     }
 
     Map<String, Boolean> diffMap = getDisplayLevelMap();
@@ -527,11 +531,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void initInspectionTools(@Nullable Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS) return;
-    if (myInitialized) {
-      return;
+    if (myInitialized) return;
+    synchronized (myLock) {
+      if (myInitialized) return;
+      myInitialized = initialize(project);
     }
-
-    myInitialized = initialize(project);
   }
 
   private boolean initialize(@Nullable Project project) {
@@ -927,14 +931,16 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (myBaseProfile == null) return null;
     if (myDisplayLevelMap == null) {
       // Synchronizing on myExternalInfo as initInspectionTools() synchronizes on it internally.
-      if (myDisplayLevelMap == null) {
-        initInspectionTools(null);
-        TreeMap<String, Boolean> map = new TreeMap<String, Boolean>();
-        for (String toolId : myTools.keySet()) {
-          map.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
+      synchronized (myLock) {
+        if (myDisplayLevelMap == null) {
+          initInspectionTools(null);
+          TreeMap<String,Boolean> map = new TreeMap<String, Boolean>();
+          for (String toolId : myTools.keySet()) {
+            map.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
+          }
+          myDisplayLevelMap = map;
+          return map;
         }
-        myDisplayLevelMap = map;
-        return map;
       }
     }
     return myDisplayLevelMap;

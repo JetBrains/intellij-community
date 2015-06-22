@@ -34,6 +34,12 @@ public class ListModelEditor<T> extends CollectionModelEditor<T, ListItemEditor<
       super.remove(index);
       helper.remove(item);
     }
+
+    @Override
+    public void removeAll() {
+      super.removeAll();
+      helper.clear();
+    }
   };
 
   private final ToolbarDecorator toolbarDecorator;
@@ -134,12 +140,16 @@ public class ListModelEditor<T> extends CollectionModelEditor<T, ListItemEditor<
       @Override
       public boolean execute(T newItem, T oldItem) {
         XmlSerializerUtil.copyBean(newItem, oldItem);
-        model.setElementAt(oldItem, ContainerUtil.indexOfIdentity(items, newItem));
+        int index = ContainerUtil.indexOfIdentity(items, newItem);
+        if (index == -1) {
+          LOG.error("Inconsistence model", newItem.toString());
+        }
+        model.setElementAt(oldItem, index);
         return true;
       }
     });
-
     helper.clear();
+
     return getItems();
   }
 

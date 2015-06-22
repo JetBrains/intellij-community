@@ -1109,7 +1109,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
    */
   private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<FileNameMatcher> matchers, boolean addScheme) {
     if (addScheme) {
-      mySchemesManager.addNewScheme(fileType, true);
+      mySchemesManager.addScheme(fileType);
     }
     for (FileNameMatcher matcher : matchers) {
       myPatternsTable.addAssociation(matcher, fileType);
@@ -1261,7 +1261,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     for (FileType fileType : fileTypes) {
-      mySchemesManager.addNewScheme(fileType, true);
+      mySchemesManager.addScheme(fileType);
       if (fileType instanceof AbstractFileType) {
         ((AbstractFileType)fileType).initSupport();
       }

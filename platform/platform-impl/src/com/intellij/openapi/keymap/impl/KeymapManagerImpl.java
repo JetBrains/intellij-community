@@ -54,7 +54,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   public static boolean ourKeymapManagerInitialized = false;
 
-  KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
+  KeymapManagerImpl(@NotNull DefaultKeymap defaultKeymap, @NotNull SchemesManagerFactory factory) {
     BaseSchemeProcessor<KeymapImpl> schemeProcessor = new BaseSchemeProcessor<KeymapImpl>() {
       @NotNull
       @Override
@@ -77,12 +77,11 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     };
     mySchemesManager = factory.createSchemesManager(KEYMAPS_DIR_PATH, schemeProcessor, RoamingType.PER_USER);
 
-    Keymap[] keymaps = defaultKeymap.getKeymaps();
     String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
                                  ? WelcomeWizardUtil.getWizardMacKeymap()
                                  : defaultKeymap.getDefaultKeymapName();
-    for (Keymap keymap : keymaps) {
-      mySchemesManager.addNewScheme(keymap, true);
+    for (Keymap keymap : defaultKeymap.getKeymaps()) {
+      mySchemesManager.addScheme(keymap);
       if (keymap.getName().equals(systemDefaultKeymap)) {
         setActiveKeymap(keymap);
       }

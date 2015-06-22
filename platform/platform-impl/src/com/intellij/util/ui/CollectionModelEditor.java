@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import gnu.trove.THashMap;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>> implements ElementProducer<T> {
+  protected static final Logger LOG = Logger.getInstance(CollectionModelEditor.class);
+
   protected final E itemEditor;
   protected final ModelHelper<T> helper = new ModelHelper<T>();
 
