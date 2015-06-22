@@ -58,6 +58,7 @@ public class VcsLogManager implements Disposable {
 
   private volatile VcsLogUiImpl myUi;
   private VcsLogDataManager myDataManager;
+  private VcsLogColorManagerImpl myColorManager;
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogUiProperties uiProperties) {
@@ -86,16 +87,19 @@ public class VcsLogManager implements Disposable {
     refreshLogOnVcsEvents(logProviders, logRefresher);
     myDataManager.initialize();
 
-    myUi = createLogUi(logProviders);
+    myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
+
+    myUi = createLogUi();
     myUi.requestFocus();
     return myUi.getMainFrame().getMainComponent();
   }
 
   @NotNull
-  private VcsLogUiImpl createLogUi(Map<VirtualFile, VcsLogProvider> logProviders) {
-    return new VcsLogUiImpl(myDataManager, myProject, new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties,
-                            new VcsLogFiltererImpl(myProject, myDataManager,
-                                                   PermanentGraph.SortType.values()[myUiProperties.getBekSortType()]));
+  public VcsLogUiImpl createLogUi() {
+    return new VcsLogUiImpl(myDataManager, myProject, myColorManager, myUiProperties, new VcsLogFiltererImpl(myProject, myDataManager,
+                                                                                                             PermanentGraph.SortType
+                                                                                                               .values()[myUiProperties
+                                                                                                               .getBekSortType()]));
   }
 
   private static void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogRefresher refresher) {
