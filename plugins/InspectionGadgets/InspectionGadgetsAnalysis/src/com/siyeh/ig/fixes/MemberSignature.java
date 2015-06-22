@@ -174,6 +174,14 @@ public class MemberSignature implements Comparable<MemberSignature> {
       if (internalType instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)internalType;
         PsiClass psiClass = classType.resolve();
+        if (psiClass instanceof PsiTypeParameter) {
+          final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
+          final PsiReferenceList extendsList = typeParameter.getExtendsList();
+          final PsiClassType[] types = extendsList.getReferencedTypes();
+          if (types.length > 0) {
+            psiClass = types[0].resolve();
+          }
+        }
         if (psiClass != null) {
           final StringBuilder postFix = new StringBuilder("");
           PsiClass containingClass = psiClass.getContainingClass();
