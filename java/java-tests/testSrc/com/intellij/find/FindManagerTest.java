@@ -195,8 +195,8 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   private List<UsageInfo> findUsages(@NotNull FindModel findModel) {
     PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
-    List<UsageInfo> result = new ArrayList<UsageInfo>();
-    final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>(result);
+    List<UsageInfo> result = new ArrayList<>();
+    final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<>(result);
     FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
     return result;
   }
@@ -447,27 +447,24 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   private  void initProject(String folderName, final String... sourceDirs) {
     final String testDir = JavaTestUtil.getJavaTestDataPath() + "/find/" + folderName;
-    ApplicationManager.getApplication().runWriteAction(new Runnable(){
-      @Override
-      public void run(){
-        try{
-          mySourceDirs = new VirtualFile[sourceDirs.length];
-          for (int i = 0; i < sourceDirs.length; i++){
-            String sourcePath = testDir + "/" + sourceDirs[i];
-            mySourceDirs[i] = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath));
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try{
+        mySourceDirs = new VirtualFile[sourceDirs.length];
+        for (int i = 0; i < sourceDirs.length; i++){
+          String sourcePath = testDir + "/" + sourceDirs[i];
+          mySourceDirs[i] = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(sourcePath));
+        }
 
-          VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(testDir));
-          Sdk jdk = IdeaTestUtil.getMockJdk17();
-          PsiTestUtil.removeAllRoots(myModule, jdk);
-          PsiTestUtil.addContentRoot(myModule, projectDir);
-          for (VirtualFile sourceDir : mySourceDirs) {
-            PsiTestUtil.addSourceRoot(myModule, sourceDir);
-          }
+        VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(testDir));
+        Sdk jdk = IdeaTestUtil.getMockJdk17();
+        PsiTestUtil.removeAllRoots(myModule, jdk);
+        PsiTestUtil.addContentRoot(myModule, projectDir);
+        for (VirtualFile sourceDir : mySourceDirs) {
+          PsiTestUtil.addSourceRoot(myModule, sourceDir);
         }
-        catch (Exception e){
-          throw new RuntimeException(e);
-        }
+      }
+      catch (Exception e){
+        throw new RuntimeException(e);
       }
     });
   }
@@ -494,16 +491,13 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     final List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
     assertNotNull(usages);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        for (Usage usage : usages) {
-          try {
-            ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
-          }
-          catch (FindManager.MalformedReplacementStringException e) {
-            throw new RuntimeException(e);
-          }
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      for (Usage usage : usages) {
+        try {
+          ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
+        }
+        catch (FindManager.MalformedReplacementStringException e) {
+          throw new RuntimeException(e);
         }
       }
     }, "", null);
@@ -553,12 +547,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       findModel.setMultipleFiles(true);
       findModel.setCustomScope(true);
 
-      ThrowableRunnable test = new ThrowableRunnable() {
-        @Override
-        public void run() throws Throwable {
-          assertSize(lineCount, findUsages(findModel));
-        }
-      };
+      ThrowableRunnable test = () -> assertSize(lineCount, findUsages(findModel));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
       PlatformTestUtil.startPerformanceTest("slow", 400, test).attempts(2).cpuBound().usesAllCPUCores().assertTiming();
