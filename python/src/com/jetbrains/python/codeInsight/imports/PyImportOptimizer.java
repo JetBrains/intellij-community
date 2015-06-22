@@ -15,14 +15,11 @@
  */
 package com.jetbrains.python.codeInsight.imports;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Ordering;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -69,16 +66,6 @@ public class PyImportOptimizer implements ImportOptimizer {
   }
 
   private static class ImportSorter {
-    public static final Ordering<PyImportStatementBase> BY_NAME_COMPARATOR =
-      Ordering.natural()
-              .nullsLast()
-              .onResultOf(new Function<PyImportStatementBase, QualifiedName>() {
-                @Nullable
-                @Override
-                public QualifiedName apply(@NotNull PyImportStatementBase importStatement) {
-                  return AddImportHelper.getImportFirstQualifiedName(importStatement);
-                }
-              });
 
     private final PyFile myFile;
     private final List<PyImportStatementBase> myBuiltinImports = new ArrayList<PyImportStatementBase>();
@@ -161,9 +148,9 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private void applyResults() {
-      Collections.sort(myBuiltinImports, BY_NAME_COMPARATOR);
-      Collections.sort(myThirdPartyImports, BY_NAME_COMPARATOR);
-      Collections.sort(myProjectImports, BY_NAME_COMPARATOR);
+      Collections.sort(myBuiltinImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      Collections.sort(myThirdPartyImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      Collections.sort(myProjectImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
 
       markGroupBegin(myThirdPartyImports);
       markGroupBegin(myProjectImports);

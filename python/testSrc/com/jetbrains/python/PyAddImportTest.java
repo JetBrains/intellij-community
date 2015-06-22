@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
@@ -35,12 +34,14 @@ public class PyAddImportTest extends PyTestCase {
     doAddImport("re", BUILTIN);
   }
 
-  public void testParens() {  // PY-7400
-    doAddImportFrom("urllib", "unquote_plus", BUILTIN);
+  // PY-7400
+  public void testParens() {
+    doAddOrUpdateFromImport("urllib", "unquote_plus", BUILTIN);
   }
 
-  public void testComment() {  // PY-8034
-    doAddImportFrom("urllib", "unquote_plus", BUILTIN);
+  // PY-8034
+  public void testComment() {
+    doAddOrUpdateFromImport("urllib", "unquote_plus", BUILTIN);
   }
 
   // PY-14765
@@ -73,6 +74,11 @@ public class PyAddImportTest extends PyTestCase {
     doAddImportWithResolveInProject("third_party", THIRD_PARTY);
   }
 
+  // PY-12018
+  public void testNewFromImportFromSameModule() {
+    doAddFromImport("mod", "b", BUILTIN);
+  }
+
   // PY-6020
   public void testLocalFromImport() {
     doAddLocalImport("foo", "package.module");
@@ -93,12 +99,23 @@ public class PyAddImportTest extends PyTestCase {
     testLocalImport();
   }
 
-  private void doAddImportFrom(final String path, final String name, final ImportPriority priority) {
+  private void doAddOrUpdateFromImport(final String path, final String name, final ImportPriority priority) {
     myFixture.configureByFile(getTestName(true) + ".py");
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
       @Override
       public void run() {
         AddImportHelper.addOrUpdateFromImportStatement(myFixture.getFile(), path, name, null, priority, null);
+      }
+    });
+    myFixture.checkResultByFile(getTestName(true) + ".after.py");
+  }
+
+  private void doAddFromImport(final String path, final String name, final ImportPriority priority) {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        AddImportHelper.addFromImportStatement(myFixture.getFile(), path, name, null, priority, null);
       }
     });
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
@@ -136,9 +153,9 @@ public class PyAddImportTest extends PyTestCase {
    */
   private void doAddLocalImport(@NotNull final String name, @Nullable final String qualifier) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    new WriteCommandAction(myFixture.getProject(), myFixture.getFile()) {
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
       @Override
-      protected void run(Result result) throws Throwable {
+      public void run() {
         final PsiPolyVariantReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
         if (qualifier != null) {
           AddImportHelper.addLocalFromImportStatement(reference.getElement(), qualifier, name);
@@ -147,7 +164,7 @@ public class PyAddImportTest extends PyTestCase {
           AddImportHelper.addLocalImportStatement(reference.getElement(), name);
         }
       }
-    }.execute();
+    });
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
 

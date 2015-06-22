@@ -21,7 +21,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -38,6 +37,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -49,6 +49,62 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  */
 public class AddImportHelper {
   private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
+
+  public static final Comparator<PyImportStatementBase> IMPORT_BY_NAME_COMPARATOR = new Comparator<PyImportStatementBase>() {
+    @Override
+    public int compare(@NotNull PyImportStatementBase import1, @NotNull PyImportStatementBase import2) {
+      final QualifiedName firstName1 = getImportFirstQualifiedName(import1);
+      final QualifiedName firstName2 = getImportFirstQualifiedName(import2);
+      // Broken imports go last
+      final int comparedByFirstName = compareNullsLast(firstName1, firstName2);
+      // In case of two "from imports" with the same source break tie by the first imported name
+      if (comparedByFirstName != 0 || !(import1 instanceof PyFromImportStatement && import2 instanceof PyFromImportStatement)) {
+        return comparedByFirstName;
+      }
+      // Star imports go first
+      if (((PyFromImportStatement)import1).isStarImport()) {
+        return -1;
+      }
+      if (((PyFromImportStatement)import2).isStarImport()) {
+        return 1;
+      }
+      final PyImportElement importedElem1 = ArrayUtil.getFirstElement(import1.getImportElements());
+      final PyImportElement importedElem2 = ArrayUtil.getFirstElement(import2.getImportElements());
+      return compareNullsLast(importedElem1 == null ? null : importedElem1.getImportedQName(),
+                              importedElem2 == null ? null : importedElem2.getImportedQName());
+    }
+
+    private <T> int compareNullsLast(@Nullable Comparable<? super T> comparable, @Nullable T comparedWith) {
+      if (comparable == null) {
+        return comparedWith == null ? 0 : 1;
+      }
+      else if (comparedWith == null) {
+        return -1;
+      }
+      return comparable.compareTo(comparedWith);
+    }
+
+    @Nullable
+    public QualifiedName getImportFirstQualifiedName(@NotNull PyImportStatementBase importStatement) {
+      if (importStatement instanceof PyFromImportStatement) {
+        return ((PyFromImportStatement)importStatement).getImportSourceQName();
+      }
+      else if (importStatement instanceof PyImportStatement) {
+        final PyImportElement importElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
+        if (importElement != null) {
+          return importElement.getImportedQName();
+        }
+      }
+      return null;
+    }
+  };
+
+  public enum ImportPriority {
+    FUTURE,
+    BUILTIN,
+    THIRD_PARTY,
+    PROJECT
+  }
 
   private AddImportHelper() {
   }
@@ -79,13 +135,6 @@ public class AddImportHelper {
   @Nullable
   public static PsiElement getLocalInsertPosition(@NotNull PsiElement anchor) {
     return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
-  }
-
-  public enum ImportPriority {
-    FUTURE,
-    BUILTIN,
-    THIRD_PARTY,
-    PROJECT
   }
 
   @Nullable
@@ -168,23 +217,7 @@ public class AddImportHelper {
     if (newImport == null) {
       return false;
     }
-    final QualifiedName existingImportName = getImportFirstQualifiedName(existingImport);
-    final QualifiedName newImportName = getImportFirstQualifiedName(newImport);
-    return Comparing.compare(newImportName, existingImportName) < 0;
-  }
-
-  @Nullable
-  public static QualifiedName getImportFirstQualifiedName(@NotNull PyImportStatementBase importStatement) {
-    if (importStatement instanceof PyFromImportStatement) {
-      return  ((PyFromImportStatement)importStatement).getImportSourceQName();
-    }
-    else if (importStatement instanceof PyImportStatement) {
-      final PyImportElement importElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
-      if (importElement != null) {
-        return importElement.getImportedQName();
-      }
-    }
-    return null;
+    return IMPORT_BY_NAME_COMPARATOR.compare(newImport, existingImport) < 0;
   }
 
   @NotNull
