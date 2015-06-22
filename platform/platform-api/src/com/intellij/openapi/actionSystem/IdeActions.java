@@ -33,6 +33,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_SPLIT = "EditorSplitLine";
   @NonNls String ACTION_EDITOR_TEXT_START = "EditorTextStart";
   @NonNls String ACTION_EDITOR_TEXT_END = "EditorTextEnd";
+  @NonNls String ACTION_EDITOR_FORWARD_PARAGRAPH = "EditorForwardParagraph";
+  @NonNls String ACTION_EDITOR_BACKWARD_PARAGRAPH = "EditorBackwardParagraph";
   @NonNls String ACTION_EDITOR_TEXT_START_WITH_SELECTION = "EditorTextStartWithSelection";
   @NonNls String ACTION_EDITOR_TEXT_END_WITH_SELECTION = "EditorTextEndWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_LINE_START = "EditorLineStart";

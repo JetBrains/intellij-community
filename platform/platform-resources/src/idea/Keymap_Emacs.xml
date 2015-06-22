@@ -277,7 +277,13 @@
     <action id="CommentByLineComment">
       <keyboard-shortcut first-keystroke="alt SEMICOLON"/>
     </action>
-    
+    <action id="EditorForwardParagraph">
+      <keyboard-shortcut first-keystroke="control DOWN"/>
+    </action>
+    <action id="EditorBackwardParagraph">
+      <keyboard-shortcut first-keystroke="control UP"/>
+    </action>
+
     <!--Disabled shortcuts-->
     <action id="CollapseAllRegions"/>
     <action id="ReformatCode"/>
@@ -291,5 +297,7 @@
     <action id="PreviousProjectWindow"/>
     <action id="Vcs.ShowMessageHistory"/>
     <action id="GotoImplementation"/>
+    <action id="EditorScrollUp"/>
+    <action id="EditorScrollDown"/>
   </keymap>
 </component>
