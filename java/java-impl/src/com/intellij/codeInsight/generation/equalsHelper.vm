@@ -47,3 +47,13 @@ if(this == $paramName) return true;
   Float.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0 ##
   #end
 #end
+#macro(addPrimitiveFieldComparisonConditionDirect $field)
+  $field.accessor == ${classInstanceName}.$field.accessor ##
+#end
+#macro(addDoubleFieldComparisonConditionDirect $field)
+  #if ($field.double)
+  Double.compare(${classInstanceName}.$field.accessor, $field.accessor) == 0 ##
+  #else
+  Float.compare(${classInstanceName}.$field.accessor, $field.accessor) == 0 ##
+  #end
+#end
