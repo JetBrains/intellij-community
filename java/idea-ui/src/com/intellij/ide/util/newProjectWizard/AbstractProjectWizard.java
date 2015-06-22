@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -50,12 +51,12 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public AbstractProjectWizard(String title, Project project, String defaultPath) {
     super(title, project);
-    myWizardContext = initContext(project, defaultPath);
+    myWizardContext = initContext(project, defaultPath, getDisposable());
   }
 
   public AbstractProjectWizard(String title, Project project, Component dialogParent) {
     super(title, dialogParent);
-    myWizardContext = initContext(project, null);
+    myWizardContext = initContext(project, null, getDisposable());
   }
 
   @Override
@@ -68,8 +69,8 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public abstract StepSequence getSequence();
 
-  private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath) {
-    WizardContext context = new WizardContext(project);
+  private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath, Disposable parentDisposable) {
+    WizardContext context = new WizardContext(project, parentDisposable);
     if (defaultPath != null) {
       context.setProjectFileDirectory(defaultPath);
       context.setProjectName(defaultPath.substring(FileUtil.toSystemIndependentName(defaultPath).lastIndexOf("/") + 1));
