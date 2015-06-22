@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessAdapter;
@@ -24,7 +23,6 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -95,40 +93,19 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().addAllFiles(classpath);
       rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().addAllFiles(platformClasspath);
+    }
 
-      final String sourceOption = getSourceOption(ApplicationManager.getApplication().runReadAction(new Computable<LanguageLevel>() {
-        public LanguageLevel compute() {
-          return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
-        }
-      }));
+    final JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
+    // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
+    if (buildRuntimeVersion != null && debuggeeVersion != null) {
+      final JavaSdkVersion minVersion = buildRuntimeVersion.ordinal() > debuggeeVersion.ordinal() ? debuggeeVersion : buildRuntimeVersion;
+      final String sourceOption = getSourceOption(minVersion.getMaxLanguageLevel());
       options.add("-source");
       options.add(sourceOption);
-
-      String target = CompilerConfiguration.getInstance(module.getProject()).getBytecodeTargetLevel(module);
-      if (target == null) {
-        target = sourceOption;
-      }
       options.add("-target");
-      options.add(target);
+      options.add(sourceOption);
     }
-    else {
-      if (debuggeeVersion != null) {
-        // if both module context and debuggee version are unknown, let source and target be the compiler's defaults
-        String sourceOption;
-        final JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
-        if (buildRuntimeVersion == null) {
-          sourceOption = getSourceOption(debuggeeVersion.getMaxLanguageLevel());
-        }
-        else {
-          final JavaSdkVersion minVersion = buildRuntimeVersion.ordinal() > debuggeeVersion.ordinal() ? debuggeeVersion : buildRuntimeVersion;
-          sourceOption = getSourceOption(minVersion.getMaxLanguageLevel());
-        }
-        options.add("-source");
-        options.add(sourceOption);
-        options.add("-target");
-        options.add(sourceOption);
-      }
-    }
+
     File sourceFile = null;
     final OutputCollector outputSink = new OutputCollector();
     try {
