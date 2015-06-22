@@ -52,14 +52,6 @@ public final class ExternalInfo {
     myContentHash = newHash;
   }
 
-  public boolean isRemote() {
-    return myRemote;
-  }
-
-  public void markRemote() {
-    myRemote = true;
-  }
-
   @Override
   public String toString() {
     return "file: " + myCurrentFileName + (myRemote ? ", remote" : "");

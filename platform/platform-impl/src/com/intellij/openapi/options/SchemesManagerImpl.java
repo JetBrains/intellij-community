@@ -47,6 +47,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
+import gnu.trove.TObjectProcedure;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -335,7 +336,6 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
         }
 
         loadScheme(scheme, false, fileName);
-        getExternalInfo(scheme).markRemote();
         result.put(scheme.getName(), scheme);
       }
       catch (Exception e) {
@@ -613,9 +613,20 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     // stream provider always use LF separator
     final BufferExposingByteArrayOutputStream byteOut = StorageUtil.writeToBytes(element, "\n");
 
+    String providerPath;
+    if (myProvider != null && myProvider.isEnabled()) {
+      providerPath = getFileFullPath(fileName);
+      if (!myProvider.isApplicable(providerPath, myRoamingType)) {
+        providerPath = null;
+      }
+    }
+    else {
+      providerPath = null;
+    }
+
     // if another new scheme uses old name of this scheme, so, we must not delete it (as part of rename operation)
     boolean renamed = currentFileNameWithoutExtension != null && fileNameWithoutExtension != currentFileNameWithoutExtension && nameGenerator.value(currentFileNameWithoutExtension);
-    if (!externalInfo.isRemote()) {
+    if (providerPath == null) {
       VirtualFile file = null;
       if (renamed) {
         file = myDir.findChild(currentFileNameWithoutExtension + mySchemeExtension);
@@ -659,11 +670,8 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     externalInfo.setPreviouslySavedName(scheme.getName());
     externalInfo.setCurrentFileName(createFileName(fileName));
 
-    if (myProvider != null && myProvider.isEnabled()) {
-      String fileSpec = getFileFullPath(fileName);
-      if (myProvider.isApplicable(fileSpec, myRoamingType)) {
-        myProvider.saveContent(fileSpec, byteOut.getInternalBuffer(), byteOut.size(), myRoamingType, true);
-      }
+    if (providerPath != null) {
+      myProvider.saveContent(providerPath, byteOut.getInternalBuffer(), byteOut.size(), myRoamingType, true);
     }
   }
 
@@ -732,49 +740,26 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     }
   }
 
-  private void schemeDeleted(@NotNull Scheme scheme) {
-    if (myCurrentScheme == scheme) {
-      myCurrentScheme = null;
-    }
-
-    if (scheme instanceof ExternalizableScheme) {
-      ExternalInfo info = mySchemeToInfo.get((ExternalizableScheme)scheme);
-      if (info != null) {
-        ContainerUtilRt.addIfNotNull(myFilesToDelete, info.getCurrentFileName());
-      }
-    }
-  }
-
   private void schemeAdded(@NotNull T scheme) {
     if (!(scheme instanceof ExternalizableScheme)) {
       return;
     }
 
-    ExternalInfo info = mySchemeToInfo.get((ExternalizableScheme)scheme);
-    if (info != null) {
-      String fileName = info.getCurrentFileName();
-      if (fileName != null) {
-        myFilesToDelete.remove(fileName);
-      }
-    }
-
-    // todo is flag "remote" really need?
-    if (myProvider != null && myProvider.isEnabled()) {
-      // do not save locally
-      getExternalInfo((ExternalizableScheme)scheme).markRemote();
+    String fileName = getCurrentFileName((ExternalizableScheme)scheme);
+    if (fileName != null) {
+      myFilesToDelete.remove(fileName);
     }
   }
 
   @Override
   public void setSchemes(@NotNull final List<T> schemes, @Nullable Condition<T> removeCondition) {
     if (removeCondition == null) {
-      doRemoveAll();
+      mySchemes.clear();
     }
     else {
-      for (int i = 0; i < schemes.size(); i++) {
+      for (int i = schemes.size() - 1; i >= 0; i--) {
         T scheme = schemes.get(i);
         if (removeCondition.value(scheme)) {
-          schemeDeleted(scheme);
           mySchemes.remove(i);
         }
       }
@@ -782,10 +767,14 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
 
     mySchemeToInfo.retainEntries(new TObjectObjectProcedure<ExternalizableScheme, ExternalInfo>() {
       @Override
-      public boolean execute(ExternalizableScheme scheme, ExternalInfo b) {
+      public boolean execute(ExternalizableScheme scheme, ExternalInfo info) {
         // yes, by equals, not by identity
         //noinspection SuspiciousMethodCalls
-        return schemes.contains(scheme);
+        boolean keep = schemes.contains(scheme);
+        if (!keep && info.getCurrentFileName() != null) {
+          myFilesToDelete.remove(info.getCurrentFileName());
+        }
+        return keep;
       }
     });
 
@@ -814,10 +803,10 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       if (existingScheme.getName().equals(scheme.getName())) {
         toReplace = i;
         if (replaceExisting && existingScheme instanceof ExternalizableScheme && scheme instanceof ExternalizableScheme) {
-          ExternalInfo newInfo = mySchemeToInfo.get((ExternalizableScheme)existingScheme);
+          ExternalInfo newInfo = mySchemeToInfo.get((ExternalizableScheme)scheme);
           if (newInfo == null || newInfo.getCurrentFileName() == null) {
-            ExternalInfo oldInfo = mySchemeToInfo.get((ExternalizableScheme)existingScheme);
-            if (oldInfo != null) {
+            ExternalInfo oldInfo = mySchemeToInfo.remove((ExternalizableScheme)existingScheme);
+            if (oldInfo != null && oldInfo.getCurrentFileName() != null) {
               getExternalInfo((ExternalizableScheme)scheme).setCurrentFileName(oldInfo.getCurrentFileName());
             }
           }
@@ -859,14 +848,17 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
 
   @Override
   public void clearAllSchemes() {
-    doRemoveAll();
-  }
+    mySchemeToInfo.forEachValue(new TObjectProcedure<ExternalInfo>() {
+      @Override
+      public boolean execute(ExternalInfo info) {
+        ContainerUtilRt.addIfNotNull(myFilesToDelete, info.getCurrentFileName());
+        return true;
+      }
+    });
 
-  private void doRemoveAll() {
-    for (T myScheme : mySchemes) {
-      schemeDeleted(myScheme);
-    }
+    myCurrentScheme = null;
     mySchemes.clear();
+    mySchemeToInfo.clear();
   }
 
   @Override
@@ -904,7 +896,16 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     for (int i = 0, n = mySchemes.size(); i < n; i++) {
       T s = mySchemes.get(i);
       if (scheme.getName().equals(s.getName())) {
-        schemeDeleted(s);
+        if (myCurrentScheme == s) {
+          myCurrentScheme = null;
+        }
+
+        if (s instanceof ExternalizableScheme) {
+          ExternalInfo info = mySchemeToInfo.remove((ExternalizableScheme)s);
+          if (info != null) {
+            ContainerUtilRt.addIfNotNull(myFilesToDelete, info.getCurrentFileName());
+          }
+        }
         mySchemes.remove(i);
         break;
       }
@@ -914,6 +915,10 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
   @Override
   @NotNull
   public Collection<String> getAllSchemeNames() {
+    if (mySchemes.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<String> names = new ArrayList<String>(mySchemes.size());
     for (T scheme : mySchemes) {
       names.add(scheme.getName());

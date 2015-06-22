@@ -152,7 +152,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @Override
-  public void addScheme(CodeStyleScheme scheme) {
+  public void addScheme(@NotNull CodeStyleScheme scheme) {
     mySchemesManager.addNewScheme(scheme, true);
   }
 }
