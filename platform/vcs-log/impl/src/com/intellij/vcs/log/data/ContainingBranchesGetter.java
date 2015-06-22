@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
  */
-public class ContainingBranchesGetter implements VcsLogListener {
+public class ContainingBranchesGetter {
 
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
@@ -70,21 +71,19 @@ public class ContainingBranchesGetter implements VcsLogListener {
         });
       }
     });
-  }
-
-  @Override
-  public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-    LOG.assertTrue(EventQueue.isDispatchThread());
-    if (refreshHappened) {
-      myRefs = dataPack.getRefs();
-      Collection<VcsRef> currentBranches = myRefs.getBranches();
-      int checksum = currentBranches.hashCode();
-      if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
-        clearCache();
+    myDataManager.addConsumer(new Consumer<DataPack>() {
+      @Override
+      public void consume(DataPack dataPack) {
+        myRefs = dataPack.getRefs();
+        Collection<VcsRef> currentBranches = myRefs.getBranches();
+        int checksum = currentBranches.hashCode();
+        if (myCurrentBranchesChecksum != 0 && myCurrentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
+          clearCache();
+        }
+        myCurrentBranchesChecksum = checksum;
+        myGraph = dataPack.getPermanentGraph();
       }
-      myCurrentBranchesChecksum = checksum;
-      myGraph = dataPack.getPermanentGraph();
-    }
+    });
   }
 
   private void clearCache() {

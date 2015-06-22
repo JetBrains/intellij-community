@@ -93,7 +93,6 @@ public class VcsLogManager implements Disposable {
       new VcsLogFiltererImpl(myProject, logDataManager, PermanentGraph.SortType.values()[myUiProperties.getBekSortType()],
                              visiblePackConsumer);
     myUi = new VcsLogUiImpl(logDataManager, myProject, new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, vcsLogFilterer);
-    myUi.addLogListener(logDataManager.getContainingBranchesGetter()); // TODO: remove this after VcslogDataManager vs VcsLoUi dependency cycle is solved
     VcsLogRefresher logRefresher;
     if (contentTabName != null) {
       logRefresher = new PostponableLogRefresher(myProject, logDataManager, contentTabName);
