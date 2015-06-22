@@ -272,6 +272,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     actionGroup.add(myEditButton);
     actionGroup.add(myRemoveButton);
     actionGroup.add(navigateAction);
+    actionGroup.add(new InlineModuleDependencyAction(this));
     actionGroup.add(new MyFindUsagesAction());
     actionGroup.add(new AnalyzeDependencyAction());
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL);

@@ -332,7 +332,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myName;
   }
 
-  private class ModifiableRootModelInvocationHandler implements InvocationHandler {
+  private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
       Arrays.asList("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
@@ -361,6 +361,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
           updateOrderEntriesInEditors();
         }
       }
+    }
+
+    @Override
+    public Object getDelegate() {
+      return myDelegateModel;
     }
   }
 
