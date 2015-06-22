@@ -34,4 +34,5 @@ public class AddSerialVersionUIDFixTest extends IGQuickFixesTestCase {
 
   public void testClassAccess() { doTest(); }
   public void testGenericParameter() { doTest(); }
+  public void testBridgeMethod() { doTest(); }
 }
