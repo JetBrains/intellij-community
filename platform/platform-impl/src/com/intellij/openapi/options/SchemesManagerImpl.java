@@ -274,7 +274,20 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
   }
 
   public void reload() {
-    clearAllSchemes();
+    // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
+    for (int i = mySchemes.size() - 1; i >= 0; i--) {
+      T scheme = mySchemes.get(i);
+      //noinspection unchecked
+      if (scheme instanceof ExternalizableScheme && getState(((E)scheme)) != BaseSchemeProcessor.State.NON_PERSISTENT) {
+        mySchemes.remove(i);
+        if (scheme == myCurrentScheme) {
+          myCurrentScheme = null;
+        }
+      }
+    }
+
+    retainExternalInfo(mySchemes);
+
     loadSchemes();
   }
 
@@ -509,15 +522,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       if (scheme instanceof ExternalizableScheme) {
         //noinspection CastConflictsWithInstanceof,unchecked
         E eScheme = (E)scheme;
-        BaseSchemeProcessor.State state;
-        if (myProcessor instanceof BaseSchemeProcessor) {
-          state = ((BaseSchemeProcessor<E>)myProcessor).getState(eScheme);
-        }
-        else {
-          //noinspection deprecation
-          state = myProcessor.shouldBeSaved(eScheme) ? BaseSchemeProcessor.State.POSSIBLY_CHANGED : BaseSchemeProcessor.State.NON_PERSISTENT;
-        }
-
+        BaseSchemeProcessor.State state = getState(eScheme);
         if (state == BaseSchemeProcessor.State.NON_PERSISTENT) {
           continue;
         }
@@ -586,6 +591,17 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     }
 
     CompoundRuntimeException.doThrow(errors);
+  }
+
+  @NotNull
+  private BaseSchemeProcessor.State getState(@NotNull E scheme) {
+    if (myProcessor instanceof BaseSchemeProcessor) {
+      return ((BaseSchemeProcessor<E>)myProcessor).getState(scheme);
+    }
+    else {
+      //noinspection deprecation
+      return myProcessor.shouldBeSaved(scheme) ? BaseSchemeProcessor.State.POSSIBLY_CHANGED : BaseSchemeProcessor.State.NON_PERSISTENT;
+    }
   }
 
   private void saveScheme(@NotNull E scheme, @NotNull UniqueNameGenerator nameGenerator) throws WriteExternalException, IOException {
@@ -767,18 +783,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       }
     }
 
-    mySchemeToInfo.retainEntries(new TObjectObjectProcedure<ExternalizableScheme, ExternalInfo>() {
-      @Override
-      public boolean execute(ExternalizableScheme scheme, ExternalInfo info) {
-        // yes, by equals, not by identity
-        //noinspection SuspiciousMethodCalls
-        boolean keep = schemes.contains(scheme);
-        if (!keep && info.getCurrentFileName() != null) {
-          myFilesToDelete.remove(info.getCurrentFileName());
-        }
-        return keep;
-      }
-    });
+    retainExternalInfo(schemes);
 
     mySchemes.ensureCapacity(schemes.size());
     for (T scheme : schemes) {
@@ -795,6 +800,21 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
 
     myCurrentScheme = mySchemes.isEmpty() ? null : mySchemes.get(0);
     myCurrentSchemeName = myCurrentScheme == null ? null : myCurrentScheme.getName();
+  }
+
+  private void retainExternalInfo(@NotNull final List<T> schemes) {
+    mySchemeToInfo.retainEntries(new TObjectObjectProcedure<ExternalizableScheme, ExternalInfo>() {
+      @Override
+      public boolean execute(ExternalizableScheme scheme, ExternalInfo info) {
+        // yes, by equals, not by identity
+        //noinspection SuspiciousMethodCalls
+        boolean keep = schemes.contains(scheme);
+        if (!keep && info.getCurrentFileName() != null) {
+          myFilesToDelete.remove(info.getCurrentFileName());
+        }
+        return keep;
+      }
+    });
   }
 
   @Override
