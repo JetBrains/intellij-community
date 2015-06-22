@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ZipperUpdater;
@@ -209,7 +210,9 @@ public class ChangelistConflictTracker {
 
   public void startTracking() {
     myChangeListManager.addChangeListListener(myChangeListListener);
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
+    if (!ProjectManagerImpl.isLight(getProject())) { // we don't want to collect all light documents in tests
+      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
+    }
   }
 
   public void stopTracking() {
