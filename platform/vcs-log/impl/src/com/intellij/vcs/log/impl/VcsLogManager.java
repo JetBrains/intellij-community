@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -46,7 +45,6 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,16 +106,7 @@ public class VcsLogManager implements Disposable {
     refreshLogOnVcsEvents(logProviders, logRefresher);
     logDataManager.initialize();
 
-    // todo fix selection
-    final VcsLogGraphTable graphTable = myUi.getTable();
-    if (graphTable.getRowCount() > 0) {
-      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(new Runnable() {
-        @Override
-        public void run() {
-          graphTable.setRowSelectionInterval(0, 0);
-        }
-      });
-    }
+    myUi.requestFocus();
     return myUi.getMainFrame().getMainComponent();
   }
 

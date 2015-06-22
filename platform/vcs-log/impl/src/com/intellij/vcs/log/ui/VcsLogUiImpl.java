@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,6 +67,19 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logDataManager, this));
+    }
+  }
+
+  public void requestFocus() {
+    // todo fix selection
+    final VcsLogGraphTable graphTable = myMainFrame.getGraphTable();
+    if (graphTable.getRowCount() > 0) {
+      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          graphTable.setRowSelectionInterval(0, 0);
+        }
+      });
     }
   }
 
