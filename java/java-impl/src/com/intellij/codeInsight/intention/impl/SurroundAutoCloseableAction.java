@@ -25,7 +25,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,7 +38,7 @@ import java.util.List;
 
 public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     if (!PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7)) return false;
 
@@ -52,18 +51,11 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     final PsiElement codeBlock = declaration.getParent();
     if (!(codeBlock instanceof PsiCodeBlock)) return false;
 
-    final PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) return false;
-    final PsiClass aClass = ((PsiClassType)type).resolve();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
-    if (!InheritanceUtil.isInheritorOrSelf(aClass, autoCloseable, true)) return false;
-
-    return true;
+    return InheritanceUtil.isInheritor(variable.getType(), CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
       return;
     }
