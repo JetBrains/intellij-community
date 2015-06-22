@@ -54,7 +54,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull private final SingleTaskController<RefreshRequest, DataPack> mySingleTaskController;
 
-  @NotNull private DataPack myDataPack = DataPack.EMPTY;
+  @NotNull private volatile DataPack myDataPack = DataPack.EMPTY;
 
   public VcsLogRefresherImpl(@NotNull final Project project,
                              @NotNull VcsLogHashMap hashMap,
@@ -72,14 +72,13 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     myExceptionHandler = exceptionHandler;
     myRecentCommitCount = recentCommitsCount;
 
-    Consumer<DataPack> dataPackUpdater = new Consumer<DataPack>() {
+    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(new Consumer<DataPack>() {
       @Override
       public void consume(@NotNull DataPack dataPack) {
         myDataPack = dataPack;
         dataPackUpdateHandler.consume(dataPack);
       }
-    };
-    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPackUpdater) {
+    }) {
       @Override
       protected void startNewBackgroundTask() {
         VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
@@ -95,6 +94,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask);
       }
     });
+  }
+
+  @NotNull
+  public DataPack requestCurrentData() {
+    return myDataPack;
   }
 
   @NotNull

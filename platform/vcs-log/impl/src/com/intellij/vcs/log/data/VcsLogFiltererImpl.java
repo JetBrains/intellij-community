@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -24,42 +25,38 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogHashMap;
-import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
-public class VcsLogFiltererImpl implements VcsLogFilterer {
+public class VcsLogFiltererImpl implements VcsLogFilterer, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogFiltererImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
+  @NotNull private final VcsLogDataManager myDataManager;
+  @NotNull private final Consumer<DataPack> myDataPackConsumer;
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
-  @Nullable private DataPack myDataPack;
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
 
-  VcsLogFiltererImpl(@NotNull final Project project,
-                     @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                     @NotNull VcsLogHashMap hashMap,
-                     @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
-                     @NotNull CommitDetailsGetter detailsGetter,
-                     @NotNull final PermanentGraph.SortType initialSortType,
-                     @NotNull final Consumer<VisiblePack> visiblePackConsumer) {
-    myVisiblePackBuilder = new VisiblePackBuilder(providers, hashMap, topCommitsDetailsCache, detailsGetter);
+  @Nullable private DataPack myDataPack;
+
+  public VcsLogFiltererImpl(@NotNull final Project project,
+                     @NotNull VcsLogDataManager dataManager,
+                     @NotNull PermanentGraph.SortType initialSortType,
+                     @NotNull Consumer<VisiblePack> visiblePackConsumer) {
+    myDataManager = dataManager;
+    myVisiblePackBuilder = myDataManager.createVisiblePackBuilder();
     myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
@@ -75,6 +72,14 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         });
       }
     };
+
+    myDataPackConsumer = new Consumer<DataPack>() {
+      @Override
+      public void consume(DataPack dataPack) {
+        onRefresh(dataPack);
+      }
+    };
+    myDataManager.addConsumer(myDataPackConsumer);
   }
 
   @Override
@@ -95,6 +100,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @Override
   public void moreCommitsNeeded(@NotNull Runnable onLoaded) {
     myTaskController.request(new MoreCommitsRequest(onLoaded));
+  }
+
+  @Override
+  public void dispose() {
+    myDataManager.removeConsumer(myDataPackConsumer);
   }
 
   private class MyTask extends Task.Backgroundable {

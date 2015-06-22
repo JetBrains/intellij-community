@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -31,13 +32,12 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -56,7 +56,6 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
    * It can be configured differently for different roots => store in a map.
    */
   private final Map<VirtualFile, VcsUser> myCurrentUser = ContainerUtil.newHashMap();
-  private final Consumer<DataPack> myDataPackUpdateHandler;
 
   /**
    * Cached details of the latest commits.
@@ -65,20 +64,15 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
   @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
-
-  private final VcsUserRegistryImpl myUserRegistry;
-
-  private final VcsLogHashMap myHashMap;
-  private final ContainingBranchesGetter myContainingBranchesGetter;
-
-  @NotNull private final VcsLogRefresher myRefresher;
-  private final VcsLogFiltererImpl myFilterer;
+  @NotNull private final VcsUserRegistryImpl myUserRegistry;
+  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
+  @NotNull private final VcsLogRefresherImpl myRefresher;
+  @NotNull private final List<Consumer<DataPack>> myConsumers = ContainerUtil.newArrayList();
 
   public VcsLogDataManager(@NotNull Project project,
                            @NotNull Disposable parentDisposable,
-                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                           @NotNull VcsLogUiProperties uiProperties,
-                           @NotNull Consumer<VisiblePack> visiblePackConsumer) {
+                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     Disposer.register(parentDisposable, this);
     myProject = project;
     myLogProviders = logProviders;
@@ -88,28 +82,23 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
     myHashMap = createLogHashMap();
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
-    myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
-
-    myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
-                                        PermanentGraph.SortType.values()[uiProperties.getBekSortType()], visiblePackConsumer);
-
-    myDataPackUpdateHandler = new Consumer<DataPack>() {
-      @Override
-      public void consume(DataPack dataPack) {
-        myFilterer.onRefresh(dataPack);
-      }
-    };
 
     myRefresher =
-      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache, myDataPackUpdateHandler,
-                              new Consumer<Exception>() {
-                                @Override
-                                public void consume(Exception e) {
-                                  if (!(e instanceof ProcessCanceledException)) {
-                                    LOG.error(e);
-                                  }
-                                }
-                              }, RECENT_COMMITS_COUNT);
+      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache, new Consumer<DataPack>() {
+        @Override
+        public void consume(DataPack dataPack) {
+          consumeDataPack(dataPack);
+        }
+      }, new Consumer<Exception>() {
+        @Override
+        public void consume(Exception e) {
+          if (!(e instanceof ProcessCanceledException)) {
+            LOG.error(e);
+          }
+        }
+      }, RECENT_COMMITS_COUNT);
+
+    myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
 
   @NotNull
@@ -125,9 +114,42 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
     return hashMap;
   }
 
+  private Collection<Consumer<DataPack>> getConsumers() {
+    Collection<Consumer<DataPack>> consumersCopy = ContainerUtil.newArrayList();
+    synchronized (myConsumers) {
+      consumersCopy.addAll(myConsumers);
+    }
+    return consumersCopy;
+  }
+
+  private void consumeDataPack(@NotNull DataPack dataPack) {
+    for (Consumer<DataPack> consumer : getConsumers()) {
+      consumer.consume(dataPack);
+    }
+  }
+
+  public void addConsumer(@NotNull final Consumer<DataPack> consumer) {
+    synchronized (myConsumers) {
+      myConsumers.add(consumer);
+    }
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        consumer.consume(myRefresher.requestCurrentData());
+      }
+    });
+  }
+
+  public void removeConsumer(@NotNull Consumer<DataPack> consumer) {
+    synchronized (myConsumers) {
+      myConsumers.remove(consumer);
+    }
+  }
+
   @NotNull
-  public VcsLogFilterer getFilterer() {
-    return myFilterer;
+  public VisiblePackBuilder createVisiblePackBuilder() {
+    return new VisiblePackBuilder(myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter);
   }
 
   @Override
@@ -156,7 +178,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
         resetState();
         readCurrentUser();
         DataPack dataPack = myRefresher.readFirstBlock();
-        myDataPackUpdateHandler.consume(dataPack);
+        consumeDataPack(dataPack);
         initSw.report();
       }
     }, "Loading History...");
@@ -249,11 +271,6 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
    */
   public void refresh(@NotNull Collection<VirtualFile> roots) {
     myRefresher.refresh(roots);
-  }
-
-  @Nullable
-  public VcsCommitMetadata getTopCommitDetails(@NotNull Integer commitId) {
-    return myTopCommitsDetailsCache.get(commitId);
   }
 
   public CommitDetailsGetter getCommitDetailsGetter() {

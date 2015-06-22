@@ -40,8 +40,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogDataManager;
+import com.intellij.vcs.log.data.VcsLogFiltererImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
@@ -86,9 +88,11 @@ public class VcsLogManager implements Disposable {
           });
       }
     };
-    final VcsLogDataManager logDataManager = new VcsLogDataManager(myProject, this, logProviders, myUiProperties, visiblePackConsumer);
-    myUi = new VcsLogUiImpl(logDataManager, myProject, new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties,
-                            logDataManager.getFilterer());
+    final VcsLogDataManager logDataManager = new VcsLogDataManager(myProject, this, logProviders);
+    VcsLogFiltererImpl vcsLogFilterer =
+      new VcsLogFiltererImpl(myProject, logDataManager, PermanentGraph.SortType.values()[myUiProperties.getBekSortType()],
+                             visiblePackConsumer);
+    myUi = new VcsLogUiImpl(logDataManager, myProject, new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, vcsLogFilterer);
     myUi.addLogListener(logDataManager.getContainingBranchesGetter()); // TODO: remove this after VcslogDataManager vs VcsLoUi dependency cycle is solved
     VcsLogRefresher logRefresher;
     if (contentTabName != null) {

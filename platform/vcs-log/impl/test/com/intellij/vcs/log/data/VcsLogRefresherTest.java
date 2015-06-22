@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -205,9 +204,7 @@ public class VcsLogRefresherTest extends VcsLogPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myDataManager =
-      new VcsLogDataManager(myProject, myProject, myLogProviders, ServiceManager.getService(myProject, VcsLogUiProperties.class),
-                            Consumer.EMPTY_CONSUMER);
+    myDataManager = new VcsLogDataManager(myProject, myProject, myLogProviders);
     return new VcsLogRefresherImpl(myProject, myDataManager.getHashMap(), myLogProviders, myDataManager.getUserRegistry(), myTopDetailsCache,
                                    dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override
