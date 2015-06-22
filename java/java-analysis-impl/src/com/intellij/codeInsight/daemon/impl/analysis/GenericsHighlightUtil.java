@@ -469,7 +469,7 @@ public class GenericsHighlightUtil {
               }
 
               if (isDefault || !isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                final String message = isDefault
+                final String message = isDefault && !isAbstract
                                        ? " inherits unrelated defaults for "
                                        : " inherits abstract and default for ";
                 final String inheritUnrelatedDefaultsMessage = HighlightUtil.formatClass(aClass) +
