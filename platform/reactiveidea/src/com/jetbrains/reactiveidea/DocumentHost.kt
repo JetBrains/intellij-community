@@ -97,12 +97,9 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       result
     }
 
-    val eventsList = reaction(true, "cast events to ListModel", reactiveModel.subscribe(lifetime, (path / "events"))) {
-      if (it != null) it as ListModel
-      else null
-    }
+    val listenToDocumentEvents = reaction(true, "listen to model events", reactiveModel.subscribe(lifetime, (path / "events"))) { model ->
+        val evts = model as ListModel?
 
-    val listenToDocumentEvents = reaction(true, "listen to model events", eventsList) { evts ->
       if (evts != null) {
         var timestamp = doc.getUserData(TIMESTAMP)
         if (timestamp == null) {

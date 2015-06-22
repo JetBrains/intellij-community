@@ -67,7 +67,7 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
+  public ProjectAbstractTreeStructureBase createStructure() {
     return myTestTreeStructure;
   }
 

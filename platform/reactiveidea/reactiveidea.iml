@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="editor-ui-api" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="editor-ui-ex" />
+    <orderEntry type="module" module-name="lang-impl" />
   </component>
 </module>

@@ -20,6 +20,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane
+import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,6 +32,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
@@ -38,7 +44,8 @@ import com.jetbrains.reactivemodel.util.Lifetime
 public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
   var bJavaHost: EditorHost? = null
-  var aTxtHost: EditorHost? = null
+  var viewHost: ProjectViewHost? = null
+  val startupManager = StartupManager.getInstance(project)
 
 
   override fun getComponentName(): String = "DocumentsSynchronizer"
@@ -46,7 +53,7 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   private val messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect()
 
   private val actionsMap = hashMapOf(
-      "invoke-action" to {args : MapModel ->
+      "invoke-action" to { args: MapModel ->
         val actionName = (args["name"] as PrimitiveModel<String>).value
         val contextHint = args["context"] as MapModel
         val anAction = ActionManager.getInstance().getAction(actionName)
@@ -68,45 +75,43 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   override fun initComponent() {
 
     UIUtil.invokeLaterIfNeeded {
-      val aTxt = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/A.txt")
-      val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled2/src/B.java")
+      val bJava = StandardFileSystems.local().findFileByPath("/home/serce/IdeaProjects/tst-react/src/TstReact.java")
+
+      val serverModel = serverModel(lifetime.lifetime, 12346) { model ->
+        model as MapModel
+        val action = (model["action"] as PrimitiveModel<String>).value
+        val handler = actionsMap[action]
+        if (handler != null) {
+          handler(model["args"] as MapModel)
+        } else {
+          println("unknown action $model")
+        }
+        println(model)
+      }
+
+      startupManager.runWhenProjectIsInitialized(Runnable {
+        val projectView = ProjectView.getInstance(project)
+        val viewPane = projectView.getProjectViewPaneById(ProjectViewPane.ID) as AbstractProjectViewPSIPane
+        val treeStructure = viewPane.createStructure()
+        viewHost = ProjectViewHost(projectView, lifetime.lifetime, serverModel, Path("project-view"), treeStructure, viewPane.getId())
+      })
+
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
               val editor = (FileEditorManager.getInstance(project).getAllEditors(file).first() as TextEditor).getEditor()
-              if (isClient()) {
-                if (file.equals(aTxt)) {
-                  val clientModel = clientModel("http://localhost:12346", Lifetime.Eternal)
-
-                  aTxtHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), editor, false)
-                }
-              } else {
-                if (file.equals(bJava)) {
-                  val serverModel = serverModel(lifetime.lifetime, 12346) { model ->
-                    model as MapModel
-                    val action = (model["action"] as PrimitiveModel<String>).value
-                    val handler = actionsMap[action]
-                    if (handler != null) {
-                      handler(model["args"] as MapModel)
-                    } else {
-                      println("unknown action $model")
-                    }
-                    println(model)
-                  }
-                  bJavaHost = EditorHost(lifetime.lifetime, serverModel, Path("editor"), editor, true)
-                }
+              if (file.equals(bJava)) {
+                bJavaHost = EditorHost(lifetime.lifetime, serverModel, Path("editor"), editor, true)
               }
             }
 
             override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-
             }
 
             override fun selectionChanged(event: FileEditorManagerEvent) {
-
             }
-
           })
+
     }
   }
 

@@ -212,7 +212,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   }
 
   @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
+  public ProjectAbstractTreeStructureBase createStructure() {
     final Project project = myProject;
     final String id = getId();
     return new ProjectTreeStructure(project, id) {

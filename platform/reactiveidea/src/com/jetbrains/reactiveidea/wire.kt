@@ -16,6 +16,7 @@
 package com.jetbrains.reactiveidea
 
 import com.corundumstudio.socketio.Configuration
+import com.corundumstudio.socketio.SocketConfig
 import com.corundumstudio.socketio.SocketIOClient
 import com.corundumstudio.socketio.SocketIOServer
 import com.corundumstudio.socketio.listener.ConnectListener
@@ -38,6 +39,9 @@ fun serverModel(lifetime: Lifetime, port: Int, actionsDispatcher: (Model) -> Uni
   val config = Configuration()
   config.setHostname("localhost")
   config.setPort(port)
+  val sockConfig = SocketConfig()
+  sockConfig.setReuseAddress(true)
+  config.setSocketConfig(sockConfig)
 
   val server = SocketIOServer(config)
 
