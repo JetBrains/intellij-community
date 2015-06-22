@@ -43,6 +43,7 @@ public class GCUtil {
   /**
    * Try to force VM to collect soft references if possible.
    * Method doesn't guarantee to succeed, and should not be used in the production code.
+   * Commits / hours optimized method code: 4 / 2
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
@@ -59,11 +60,11 @@ public class GCUtil {
       TimeoutUtil.sleep(10);
       long bytes = Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE / 2);
       list.add(new SoftReference<byte[]>(new byte[(int)bytes]));
-
-      // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
-      // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
-      list.ensureCapacity(list.size() + useReference(ref));
     }
+
+    // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
+    // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
+    list.ensureCapacity(list.size() + useReference(ref));
   }
 
   private static int useReference(SoftReference<Object> ref) {
