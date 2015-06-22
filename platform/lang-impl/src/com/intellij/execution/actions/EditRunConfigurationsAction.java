@@ -53,7 +53,7 @@ public class EditRunConfigurationsAction extends DumbAwareAction {
   public void update(final AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
-    presentation.setEnabled(project != null && !DumbService.isDumb(project));
+    presentation.setEnabled(project == null || !DumbService.isDumb(project));
     if (ActionPlaces.RUN_CONFIGURATIONS_COMBOBOX.equals(e.getPlace())) {
       presentation.setText(ExecutionBundle.message("edit.configuration.action"));
       presentation.setDescription(presentation.getText());
