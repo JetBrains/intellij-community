@@ -404,7 +404,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     }
 
     //noinspection unchecked
-    addNewScheme((T)scheme, true);
+    addScheme((T)scheme);
     ExternalInfo info = getExternalInfo(scheme);
     info.setPreviouslySavedName(scheme.getName());
     info.setCurrentFileName(fileNameWithoutExtension);

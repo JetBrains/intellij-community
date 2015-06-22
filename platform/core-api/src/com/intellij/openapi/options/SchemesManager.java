@@ -31,6 +31,10 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
 
   public abstract void addNewScheme(@NotNull T scheme, boolean replaceExisting);
 
+  public void addScheme(@NotNull T scheme) {
+    addNewScheme(scheme, true);
+  }
+
   /**
    * Consider to use {@link #setSchemes}
    */
