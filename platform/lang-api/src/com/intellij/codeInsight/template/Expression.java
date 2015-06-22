@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Expression {
-
   @Nullable
   public abstract Result calculateResult(ExpressionContext context);
 
@@ -35,4 +33,3 @@ public abstract class Expression {
     return null;
   }
 }
-

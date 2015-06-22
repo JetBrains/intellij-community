@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * A typical way to create lookup element is to use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}. 
+ * A typical way to create lookup element is to use {@link LookupElementBuilder}.
  * Another way is to subclass it. Use the latter way only if you need it to implement some additional interface, to modify equals/hashCode
  * or other advanced logic.
  *
@@ -94,7 +94,7 @@ public abstract class LookupElement extends UserDataHolderBase {
   }
 
   /**
-   * use {@link #as(com.intellij.openapi.util.ClassConditionKey)} instead
+   * use {@link #as(ClassConditionKey)} instead
    */
   @Deprecated
   @Nullable
@@ -102,6 +102,7 @@ public abstract class LookupElement extends UserDataHolderBase {
     return as(ClassConditionKey.create(aClass));
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   public <T> T as(ClassConditionKey<T> conditionKey) {
     return conditionKey.isInstance(this) ? (T) this : null;
