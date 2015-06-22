@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -129,7 +129,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
 
       UIUtil.dispatchAllInvocationEvents();
     }
-    System.out.println("Average among the N/3 median times: " + PlatformTestUtil.averageAmongMedians(time, 3) + "ms");
+    System.out.println("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
 
     //System.out.println("JobLauncher.COUNT   = " + JobLauncher.COUNT);
     //System.out.println("JobLauncher.TINY    = " + JobLauncher.TINY_COUNT);
@@ -205,7 +205,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     }
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
 
-    System.out.println("Average among the N/3 median times: " + PlatformTestUtil.averageAmongMedians(time, 3) + "ms");
+    System.out.println("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
   }
 
   public void testRandomEditingForUnused() throws Exception {
