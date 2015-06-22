@@ -2,6 +2,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 public class GenericKeymapManager extends DefaultKeymap {
   @Override
@@ -18,7 +19,7 @@ public class GenericKeymapManager extends DefaultKeymap {
   }
 
   @Override
-  public String getKeymapPresentableName(KeymapImpl keymap) {
+  public String getKeymapPresentableName(@NotNull KeymapImpl keymap) {
     final String name = keymap.getName();
 
     if (getDefaultKeymapName().equals(name)) {
