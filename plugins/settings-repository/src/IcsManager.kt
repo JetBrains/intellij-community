@@ -11,6 +11,8 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.options.SchemesManagerFactory
+import com.intellij.openapi.options.SchemesManagerFactoryImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -211,11 +213,11 @@ public class IcsManager : ApplicationLoadListener {
                 }
                 repositoryManager.push(indicator)
               }
-              SyncType.RESET_TO_THEIRS -> {
+              SyncType.OVERWRITE_LOCAL -> {
                 // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
                 updateResult = repositoryManager.resetToTheirs(indicator)
               }
-              SyncType.RESET_TO_MY -> {
+              SyncType.OVERWRITE_REMOTE -> {
                 updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
                 repositoryManager.push(indicator)
               }
@@ -223,16 +225,24 @@ public class IcsManager : ApplicationLoadListener {
           }
           catch (e: ProcessCanceledException) {
             LOG.debug("Canceled")
+            return
           }
           catch (e: Throwable) {
             if (e !is AuthenticationException && e !is NoRemoteRepositoryException) {
               LOG.error(e)
             }
             exception = e
+            return
           }
 
+          repositoryActive = true
           if (updateResult != null) {
             restartApplication = updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
+          }
+          if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
+            (SchemesManagerFactory.getInstance() as SchemesManagerFactoryImpl).process {
+              it.reload()
+            }
           }
         }
       })
@@ -475,8 +485,8 @@ private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages
 
 enum class SyncType {
   MERGE,
-  RESET_TO_THEIRS,
-  RESET_TO_MY
+  OVERWRITE_LOCAL,
+  OVERWRITE_REMOTE
 }
 
 class AuthenticationException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)

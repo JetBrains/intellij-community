@@ -55,7 +55,7 @@ private fun compareFiles(local: File, remote: File, expected: VirtualFile? = nul
   Arrays.sort(localFiles)
   Arrays.sort(remoteFiles)
 
-  if (localExcludes.size != 0) {
+  if (localExcludes.size() != 0) {
     for (localExclude in localExcludes) {
       localFiles = ArrayUtil.remove(localFiles, localExclude)
     }
@@ -76,12 +76,12 @@ private fun compareFiles(local: File, remote: File, expected: VirtualFile? = nul
       }
     })
 
-    for (i in 0..expectedFiles!!.size - 1) {
+    for (i in 0..expectedFiles.size() - 1) {
       assertThat(localFiles[i], equalTo(expectedFiles[i].getName()))
     }
   }
 
-  for (i in 0..localFiles.size - 1) {
+  for (i in 0..localFiles.size() - 1) {
     val localFile = File(local, localFiles[i])
     val remoteFile = File(remote, remoteFiles[i])
     val expectedFile: VirtualFile?

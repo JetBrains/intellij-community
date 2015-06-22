@@ -34,8 +34,8 @@ fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boole
 
 // we don't
 class MergeAction : SyncAction(SyncType.MERGE)
-class ResetToTheirsAction : SyncAction(SyncType.RESET_TO_THEIRS)
-class ResetToMyAction : SyncAction(SyncType.RESET_TO_MY)
+class ResetToTheirsAction : SyncAction(SyncType.OVERWRITE_LOCAL)
+class ResetToMyAction : SyncAction(SyncType.OVERWRITE_REMOTE)
 
 class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {

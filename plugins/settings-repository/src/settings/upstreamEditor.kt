@@ -38,7 +38,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
 
   return Array(3) {
     val syncType = syncTypes[it]
-    object : AbstractAction(IcsBundle.message("action." + (if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.RESET_TO_THEIRS) "ResetToTheirs" else "ResetToMy")) + "Settings.text")) {
+    object : AbstractAction(IcsBundle.message("action." + (if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.OVERWRITE_LOCAL) "ResetToTheirs" else "ResetToMy")) + "Settings.text")) {
       fun saveRemoteRepositoryUrl(): Boolean {
         val url = StringUtil.nullize(urlTextField.getText())
         if (url != null && !icsManager.repositoryService.checkUrl(url, dialogParent)) {
@@ -64,7 +64,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
           }
           upstreamSet = true
 
-          if (repositoryWillBeCreated && syncType != SyncType.RESET_TO_THEIRS) {
+          if (repositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
             ApplicationManager.getApplication().saveSettings()
 
             icsManager.sync(syncType, project, { copyLocalConfig() })

@@ -247,7 +247,7 @@ class GitTest {
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
   public Test fun resetToTheirsIfFirstMerge() {
     createLocalRepositoryAndCommit(null)
-    sync(SyncType.RESET_TO_THEIRS)
+    sync(SyncType.OVERWRITE_LOCAL)
     compareFiles(fs("\$APP_CONFIG$/remote.xml"))
   }
 
@@ -267,7 +267,7 @@ class GitTest {
     testRemote()
 
     addAndCommit("_mac/local2.xml")
-    sync(SyncType.RESET_TO_THEIRS)
+    sync(SyncType.OVERWRITE_LOCAL)
 
     compareFiles(fs.getRoot())
 
@@ -281,7 +281,7 @@ class GitTest {
 
   public Test fun resetToMyIfFirstMerge() {
     createLocalRepositoryAndCommit(null)
-    sync(SyncType.RESET_TO_MY)
+    sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
     compareFiles(fs("\$APP_CONFIG$/local.xml"))
   }
@@ -297,7 +297,7 @@ class GitTest {
 
     val local2FilePath = "_mac/local2.xml"
     addAndCommit(local2FilePath)
-    sync(SyncType.RESET_TO_MY)
+    sync(SyncType.OVERWRITE_REMOTE)
     restoreRemoteAfterPush()
 
     fs.findFileByPath(local2FilePath)
@@ -365,11 +365,11 @@ class GitTest {
   }
 
   public Test fun `reset to my, uninitialized upstream`() {
-    doSyncWithUninitializedUpstream(SyncType.RESET_TO_MY)
+    doSyncWithUninitializedUpstream(SyncType.OVERWRITE_REMOTE)
   }
 
   public Test fun `reset to theirs, uninitialized upstream`() {
-    doSyncWithUninitializedUpstream(SyncType.RESET_TO_THEIRS)
+    doSyncWithUninitializedUpstream(SyncType.OVERWRITE_LOCAL)
   }
 
   private fun doSyncWithUninitializedUpstream(syncType: SyncType) {
@@ -383,7 +383,7 @@ class GitTest {
     sync(syncType)
 
     val fs = MockVirtualFileSystem()
-    if (syncType != SyncType.RESET_TO_THEIRS) {
+    if (syncType != SyncType.OVERWRITE_LOCAL) {
       fs.findFileByPath(path)
     }
     restoreRemoteAfterPush();
