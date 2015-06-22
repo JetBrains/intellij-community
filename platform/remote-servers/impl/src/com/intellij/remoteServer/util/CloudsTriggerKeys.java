@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package testData.inspection.commentsWithMistakes.data.java.src;
+package com.intellij.remoteServer.util;
 
-/*
-@author shkate@jetbrains.com
-<li style="color;">some context</li> attribute's
-*/
-class SPITest1 {
-  /* boolean is Java keyword
-   <TYPO descr="Typo: In word 'commment'">commment</TYPO>
-  */
-  // single line <TYPO descr="Typo: In word 'upgade'">upgade</TYPO>
-  void method() {
-    /*
-    <TYPO descr="Typo: In word 'werty'">werty</TYPO> within method
-   */
-    // single line <TYPO descr="Typo: In word 'newss'">newss</TYPO> within method
-  }
+public interface CloudsTriggerKeys {
+  String UPLOAD_SSH_KEY = "clouds.upload.ssh.key";
 }
