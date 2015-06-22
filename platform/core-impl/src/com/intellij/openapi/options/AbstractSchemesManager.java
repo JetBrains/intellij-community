@@ -38,10 +38,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
       if (existingScheme.getName().equals(scheme.getName())) {
         toReplace = i;
         if (replaceExisting && existingScheme instanceof ExternalizableScheme && scheme instanceof ExternalizableScheme) {
-          ExternalInfo newInfo = ((ExternalizableScheme)scheme).getExternalInfo();
-          if (newInfo.getCurrentFileName() == null) {
-            newInfo.setCurrentFileName(((ExternalizableScheme)existingScheme).getExternalInfo().getCurrentFileName());
-          }
+          swapInfo((ExternalizableScheme)scheme, (ExternalizableScheme)existingScheme);
         }
         break;
       }
@@ -62,6 +59,9 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     checkCurrentScheme(scheme);
   }
 
+  protected void swapInfo(@NotNull ExternalizableScheme scheme, @NotNull ExternalizableScheme existingScheme) {
+  }
+
   protected void checkCurrentScheme(@NotNull Scheme scheme) {
     if (myCurrentScheme == null && scheme.getName().equals(myCurrentSchemeName)) {
       //noinspection unchecked
@@ -80,6 +80,10 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
 
   @Override
   public void clearAllSchemes() {
+    doRemoveAll();
+  }
+
+  protected void doRemoveAll() {
     for (T myScheme : mySchemes) {
       schemeDeleted(myScheme);
     }

@@ -16,8 +16,9 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.util.SmartFMap;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Map;
 
 /**
  * The presentation of an action in a specific place in the user interface.
@@ -34,7 +34,7 @@ import java.util.Map;
  * @see ActionPlaces
  */
 public final class Presentation implements Cloneable {
-  private Map<String, Object> myUserMap;
+  private SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
   /**
    * Defines tool tip for button at tool bar or text for element at menu
@@ -82,7 +82,7 @@ public final class Presentation implements Cloneable {
   public static final double HIGHER_WEIGHT = 42;
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
-  private PropertyChangeSupport myChangeSupport;
+  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private String myText;
   private String myDescription;
   private Icon myIcon;
@@ -91,31 +91,27 @@ public final class Presentation implements Cloneable {
   private Icon mySelectedIcon;
   private int myMnemonic;
   private int myDisplayedMnemonicIndex = -1;
-  private boolean myVisible;
-  private boolean myEnabled;
+  private boolean myVisible = true;
+  private boolean myEnabled = true;
   private double myWeight = DEFAULT_WEIGHT;
 
-  public Presentation(){
-    myChangeSupport = new PropertyChangeSupport(this);
-    myVisible = true;
-    myEnabled = true;
+  public Presentation() {
   }
 
-  public Presentation(final String text) {
-    this();
+  public Presentation(String text) {
     myText = text;
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener l){
+  public void addPropertyChangeListener(PropertyChangeListener l) {
     myChangeSupport.addPropertyChangeListener(l);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener l){
+  public void removePropertyChangeListener(PropertyChangeListener l) {
     myChangeSupport.removePropertyChangeListener(l);
   }
 
   @Nullable
-  public String getText(){
+  public String getText() {
     return myText;
   }
 
@@ -172,7 +168,7 @@ public final class Presentation implements Cloneable {
     }
   }
 
-  public void setText(String text){
+  public void setText(String text) {
     setText(text, true);
   }
 
@@ -199,31 +195,29 @@ public final class Presentation implements Cloneable {
     return text;
   }
 
-  public String getDescription(){
+  public String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(String description){
+  public void setDescription(String description) {
     String oldDescription = myDescription;
     myDescription = description;
     myChangeSupport.firePropertyChange(PROP_DESCRIPTION, oldDescription, myDescription);
   }
 
-  public Icon getIcon(){
+  public Icon getIcon() {
     return myIcon;
   }
 
   public void setIcon(@Nullable Icon icon) {
     Icon oldIcon = myIcon;
-    if (oldIcon == icon) {
-      return;
-    }
+    if (oldIcon == icon) return;
 
     myIcon = icon;
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, myIcon);
   }
 
-  public Icon getDisabledIcon(){
+  public Icon getDisabledIcon() {
     return myDisabledIcon;
   }
 
@@ -253,22 +247,22 @@ public final class Presentation implements Cloneable {
     myChangeSupport.firePropertyChange(PROP_SELECTED_ICON, old, mySelectedIcon);
   }
 
-  public int getMnemonic(){
+  public int getMnemonic() {
     return myMnemonic;
   }
 
-  public int getDisplayedMnemonicIndex(){
+  public int getDisplayedMnemonicIndex() {
     return myDisplayedMnemonicIndex;
   }
 
-  public boolean isVisible(){
+  public boolean isVisible() {
     return myVisible;
   }
 
-  public void setVisible(boolean visible){
+  public void setVisible(boolean visible) {
     boolean oldVisible = myVisible;
     myVisible = visible;
-    firePropertyChange(PROP_VISIBLE, oldVisible?Boolean.TRUE:Boolean.FALSE, myVisible?Boolean.TRUE:Boolean.FALSE);
+    firePropertyChange(PROP_VISIBLE, oldVisible ? Boolean.TRUE : Boolean.FALSE, myVisible ? Boolean.TRUE : Boolean.FALSE);
   }
 
   /**
@@ -276,7 +270,7 @@ public final class Presentation implements Cloneable {
    *
    * @return <code>true</code> if action is enabled, <code>false</code> otherwise
    */
-  public boolean isEnabled(){
+  public boolean isEnabled() {
     return myEnabled;
   }
 
@@ -287,10 +281,10 @@ public final class Presentation implements Cloneable {
    *
    * @param enabled <code>true</code> if you want to enable action, <code>false</code> otherwise
    */
-  public void setEnabled(boolean enabled){
+  public void setEnabled(boolean enabled) {
     boolean oldEnabled = myEnabled;
     myEnabled = enabled;
-    firePropertyChange(PROP_ENABLED, oldEnabled?Boolean.TRUE:Boolean.FALSE, myEnabled?Boolean.TRUE:Boolean.FALSE);
+    firePropertyChange(PROP_ENABLED, oldEnabled ? Boolean.TRUE : Boolean.FALSE, myEnabled ? Boolean.TRUE : Boolean.FALSE);
   }
 
   public final void setEnabledAndVisible(boolean enabled) {
@@ -303,15 +297,10 @@ public final class Presentation implements Cloneable {
   }
 
   @Override
-  public Presentation clone(){
-    try{
-      Presentation presentation = (Presentation)super.clone();
-      presentation.myChangeSupport = new PropertyChangeSupport(presentation);
-      return presentation;
-    }
-    catch(CloneNotSupportedException exc){
-      throw new RuntimeException(exc.getMessage());
-    }
+  public Presentation clone() {
+    Presentation presentation = new Presentation();
+    presentation.copyFrom(this);
+    return presentation;
   }
 
   public void copyFrom(Presentation presentation) {
@@ -325,17 +314,13 @@ public final class Presentation implements Cloneable {
 
   @Nullable
   public Object getClientProperty(@NonNls @NotNull String key) {
-    if (myUserMap == null) {
-      return null;
-    }
     return myUserMap.get(key);
   }
 
   public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {
-    if (myUserMap == null) {
-      myUserMap = new THashMap<String, Object>(1);
-    }
-    Object oldValue = myUserMap.put(key, value);
+    Object oldValue = myUserMap.get(key);
+    if (Comparing.equal(oldValue, value)) return;
+    myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
     myChangeSupport.firePropertyChange(key, oldValue, value);
   }
 

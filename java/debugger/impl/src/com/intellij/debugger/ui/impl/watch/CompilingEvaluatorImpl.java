@@ -157,6 +157,9 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         throw new EvaluateException(res.toString());
       }
     }
+    catch (EvaluateException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new EvaluateException(e.getMessage());
     }
@@ -236,7 +239,8 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   private static class DiagnosticCollector implements DiagnosticOutputConsumer {
     private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<Diagnostic<? extends JavaFileObject>>();
     public void outputLineAvailable(String line) {
-      // todo: do we need these messages?
+      // for debugging purposes uncomment this line
+      //System.out.println(line);
     }
 
     public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {

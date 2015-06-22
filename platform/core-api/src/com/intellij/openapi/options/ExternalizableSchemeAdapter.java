@@ -13,30 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.openapi.options;
 
-import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.border.Border;
-import javax.swing.plaf.UIResource;
-import java.awt.*;
-
-/**
- * @author Konstantin Bulenkov
- */
-public class MacIntelliJButtonBorder implements Border, UIResource {
+public abstract class ExternalizableSchemeAdapter implements ExternalizableScheme {
   @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-
-  }
-
-  @Override
-  public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3).asUIResource();
-  }
-
-  @Override
-  public boolean isBorderOpaque() {
-    return false;
+  @Nullable
+  public final ExternalInfo getExternalInfo() {
+    return null;
   }
 }

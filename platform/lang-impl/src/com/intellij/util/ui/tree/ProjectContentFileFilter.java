@@ -22,13 +22,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 
-public class NonContentFileFilter implements VirtualFileFilter {
+public class ProjectContentFileFilter implements VirtualFileFilter {
   private final Project project;
   private final VirtualFileFilter filter;
 
   private ProjectFileIndex fileIndex;
 
-  public NonContentFileFilter(@NotNull Project project, @NotNull VirtualFileFilter filter) {
+  public ProjectContentFileFilter(@NotNull Project project, @NotNull VirtualFileFilter filter) {
     this.project = project;
     this.filter = filter;
   }

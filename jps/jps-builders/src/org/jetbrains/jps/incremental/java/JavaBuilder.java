@@ -370,7 +370,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final int chunkSdkVersion = getChunkSdkVersion(chunk);
       
-      final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, chunkSdkVersion, options, compilingTool);
+      Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
       if (_platformCp == null) {
         context.processMessage(
           new CompilerMessage(
@@ -380,6 +380,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
         );
         return true;
       }
+
+      if (chunkSdkVersion >= 9 && !_platformCp.isEmpty()) {
+        // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
+        // because platform classes are stored in jimage binary files with unknown format.
+        // Because of this we are clearing platform classpath so that javac will resolve against its own bootclasspath
+        // and prepending additional jars from the JDK configuration to compilation classpath
+        final Collection<File> joined = new ArrayList<File>(_platformCp.size() + classpath.size());
+        joined.addAll(_platformCp);
+        joined.addAll(classpath);
+        classpath = joined;
+        _platformCp = Collections.emptyList();
+      }
+
       final boolean rc;
       if (!shouldForkCompilerProcess(context, chunkSdkVersion)) {
         rc = JavacMain.compile(
@@ -467,14 +480,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
-  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, final int chunkSdkVersion, List<String> options, JavaCompilingTool compilingTool) {
-    if (chunkSdkVersion >= 9) {
-      // if chunk's SDK is 9 or higher, there is no way to specify full classpath 
-      // because platform classes are stored in jimage binary files with unknown format
-      // returning empty path so that javac will resolve against its own bootclasspath 
-      return Collections.emptyList();
-    }
-    
+  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
     if (ourDefaultRtJar == null || !(compilingTool instanceof JavacCompilerTool)) {
       return platformCp;
     }

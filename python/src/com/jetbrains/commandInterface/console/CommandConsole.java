@@ -31,6 +31,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.command.CommandExecutor;
@@ -122,7 +123,16 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   private CommandConsole(@NotNull final Module module,
                          @NotNull final String title,
                          @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
-    super(module.getProject(), title, CommandLineLanguage.INSTANCE);
+    super(new Helper(module.getProject(), new LightVirtualFile(title, CommandLineLanguage.INSTANCE, "")) {
+      @Override
+      public void setupEditor(@NotNull EditorEx editor) {
+        super.setupEditor(editor);
+        // We do not need spaces here, because it leads to PY-15557
+        EditorSettings editorSettings = editor.getSettings();
+        editorSettings.setAdditionalLinesCount(0);
+        editorSettings.setAdditionalColumnsCount(0);
+      }
+    });
     myCommandsAndDefaultExecutor = commandsAndDefaultExecutor;
     myModule = module;
   }
@@ -297,12 +307,4 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     }
   }
 
-  @Override
-  protected void setupEditorDefault(@NotNull final EditorEx editor) {
-    super.setupEditorDefault(editor);
-    // We do not need spaces here, because it leads to PY-15557
-    final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setAdditionalLinesCount(0);
-    editorSettings.setAdditionalColumnsCount(0);
-  }
 }

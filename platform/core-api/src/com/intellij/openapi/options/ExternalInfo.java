@@ -35,11 +35,6 @@ public final class ExternalInfo {
     myCurrentFileName = currentFileName;
   }
 
-  @Deprecated
-  public void copy(@NotNull ExternalInfo externalInfo) {
-    myCurrentFileName = externalInfo.myCurrentFileName;
-  }
-
   @Nullable
   public String getPreviouslySavedName() {
     return myPreviouslySavedName;

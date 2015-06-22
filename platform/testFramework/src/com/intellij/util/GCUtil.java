@@ -15,12 +15,14 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 public class GCUtil {
@@ -44,6 +46,8 @@ public class GCUtil {
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
+    tryClearBeanInfoCache();
+
     ReferenceQueue<Object> q = new ReferenceQueue<Object>();
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
     ArrayList<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
@@ -65,5 +69,22 @@ public class GCUtil {
   private static int useReference(SoftReference<Object> ref) {
     Object o = ref.get();
     return o == null ? 0 : Math.abs(o.hashCode()) % 10;
+  }
+
+  private static final boolean ourHasBeanInfoCache = SystemInfo.isJavaVersionAtLeast("1.7");
+
+  private static void tryClearBeanInfoCache() {
+    if (ourHasBeanInfoCache) {
+      try {
+        Class<?> aClass = Class.forName("java.beans.ThreadGroupContext");
+        Method getContextMethod = aClass.getDeclaredMethod("getContext");
+        getContextMethod.setAccessible(true);
+        Object contextForThreadGroup = getContextMethod.invoke(null);
+        Method clearBeanInfoCacheMethod = contextForThreadGroup.getClass().getDeclaredMethod("clearBeanInfoCache");
+        clearBeanInfoCacheMethod.setAccessible(true);
+        clearBeanInfoCacheMethod.invoke(contextForThreadGroup);
+      }
+      catch (Throwable ignore) {}
+    }
   }
 }

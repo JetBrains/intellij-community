@@ -16,8 +16,8 @@
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -66,20 +66,11 @@ public class TestDataGuessByExistingFilesUtil {
    */
   @Nullable
   static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
-    String testName = getTestName(psiMethod);
-    if (testName == null) {
-      return null;
-    }
-    PsiFile psiFile = PsiTreeUtil.getParentOfType(psiMethod, PsiFile.class);
-    if (psiFile == null) {
-      return null;
-    }
     TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiMethod);
     if (descriptor == null || !descriptor.isComplete()) {
       return null;
     }
-
-    return descriptor.generate(testName);
+    return descriptor.generate();
   }
 
   static String guessTestDataName(PsiMethod method) {
@@ -87,14 +78,16 @@ public class TestDataGuessByExistingFilesUtil {
     if (testName == null) return null;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return null;
+    int count = 5;
     PsiMethod prev = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
-    while (prev != null) {
+    while (prev != null && count-- > 0) {
       String s = getFilePath(prev, testName);
       if (s != null) return s;
       prev = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
     }
+    count = 5;
     PsiMethod next = PsiTreeUtil.getNextSiblingOfType(method, PsiMethod.class);
-    while (next != null) {
+    while (next != null && count-- > 0) {
       String s = getFilePath(next, testName);
       if (s != null) return s;
       next = PsiTreeUtil.getPrevSiblingOfType(method, PsiMethod.class);
@@ -119,14 +112,7 @@ public class TestDataGuessByExistingFilesUtil {
       return null;
     }
 
-    TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
-    TestFramework framework = null;
-    for (TestFramework each : frameworks) {
-      if (each.isTestClass(psiClass)) {
-        framework = each;
-        break;
-      }
-    }
+    TestFramework framework = TestFrameworks.detectFramework(psiClass);
 
     if (framework == null || isUtilityMethod(method, psiClass, framework)) {
       return null;
@@ -234,7 +220,7 @@ public class TestDataGuessByExistingFilesUtil {
           break;
         }
     }
-    return new TestDataDescriptor(descriptors);
+    return new TestDataDescriptor(descriptors, test);
   }
 
   private static Collection<String> getAllFileNames(final String testName, final GotoFileModel model) {
@@ -374,11 +360,13 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestDataDescriptor {
-    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.<TestLocationDescriptor>emptyList());
+    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.<TestLocationDescriptor>emptyList(), null);
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<TestLocationDescriptor>();
+    private final String myTestName;
 
-    TestDataDescriptor(Collection<TestLocationDescriptor> descriptors) {
+    TestDataDescriptor(Collection<TestLocationDescriptor> descriptors, String testName) {
+      myTestName = testName;
       myDescriptors.addAll(descriptors);
     }
 
@@ -398,6 +386,11 @@ public class TestDataGuessByExistingFilesUtil {
     @NotNull
     public List<String> generate(@NotNull final String testName) {
       return generate(testName, null);
+    }
+
+    @NotNull
+    public List<String> generate() {
+      return generate(myTestName, null);
     }
 
     @NotNull

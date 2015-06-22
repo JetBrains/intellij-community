@@ -82,19 +82,22 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
 
   @Override
   public TerminalHandler addTerminal(@NotNull final String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
-    TerminalHandlerBase handler = getTerminalProvider().createTerminal(presentableName, myProject, terminalOutput, terminalInput);
+    TerminalHandlerBase handler = CloudTerminalProvider.getInstance().createTerminal(presentableName, myProject, terminalOutput,
+                                                                                     terminalInput);
     addAdditionalLoggingHandler(handler);
     return handler;
   }
-
-  private static CloudTerminalProvider getTerminalProvider() {
-    CloudTerminalProvider terminalProvider = ArrayUtil.getFirstElement(CloudTerminalProvider.EP_NAME.getExtensions());
-    return terminalProvider != null ? terminalProvider : ConsoleTerminalHandlerImpl.PROVIDER;
-  }
+  //
+  //private static CloudTerminalProvider getTerminalProvider() {
+  //  CloudTerminalProvider.getInstance()
+  //
+  //  CloudTerminalProvider terminalProvider = ArrayUtil.getFirstElement(CloudTerminalProvider.EP_NAME.getExtensions());
+  //  return terminalProvider != null ? terminalProvider : ConsoleTerminalHandlerImpl.PROVIDER;
+  //}
 
   @Override
   public boolean isTtySupported() {
-    return getTerminalProvider().isTtySupported();
+    return CloudTerminalProvider.getInstance().isTtySupported();
   }
 
   private void addAdditionalLoggingHandler(LoggingHandlerBase loggingHandler) {

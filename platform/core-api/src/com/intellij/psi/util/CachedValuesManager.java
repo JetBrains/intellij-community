@@ -31,13 +31,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * A service used to create and store {@link com.intellij.psi.util.CachedValue} objects.<p/>
+ * A service used to create and store {@link CachedValue} objects.<p/>
  *
- * By default cached values are stored in the user data of associated objects implementing {@link com.intellij.openapi.util.UserDataHolder}.
+ * By default cached values are stored in the user data of associated objects implementing {@link UserDataHolder}.
  *
  * @see #createCachedValue(CachedValueProvider, boolean)
- * @see #getCachedValue(com.intellij.psi.PsiElement, CachedValueProvider)
- * @see #getCachedValue(com.intellij.openapi.util.UserDataHolder, CachedValueProvider)
+ * @see #getCachedValue(PsiElement, CachedValueProvider)
+ * @see #getCachedValue(UserDataHolder, CachedValueProvider)
  */
 public abstract class CachedValuesManager {
   private static final NotNullLazyKey<CachedValuesManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(CachedValuesManager.class);
@@ -48,7 +48,7 @@ public abstract class CachedValuesManager {
 
   /**
    * Creates new CachedValue instance with given provider. If the return value is marked as trackable, it's treated as
-   * yet another dependency and must comply its specification. See {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems()} for
+   * yet another dependency and must comply its specification. See {@link CachedValueProvider.Result#getDependencyItems()} for
    * the details.
    *
    * @param provider computes values.
@@ -97,7 +97,7 @@ public abstract class CachedValuesManager {
   }
 
   /**
-   * Utility method storing created cached values in a {@link com.intellij.openapi.util.UserDataHolder}.
+   * Utility method storing created cached values in a {@link UserDataHolder}.
    *
    * @param dataHolder holder to store the cached value, e.g. a PsiElement.
    * @param key key to store the cached value.

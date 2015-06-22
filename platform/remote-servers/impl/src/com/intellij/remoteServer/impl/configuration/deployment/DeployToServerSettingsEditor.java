@@ -109,10 +109,6 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       }
     });
 
-    if (mySourceListModel.getSize() == 1) {
-      mySourceListModel.setSelectedItem(mySourceListModel.get(0));
-    }
-
     myDeploymentSettingsComponent = new JPanel(new BorderLayout());
     mySourceComboBox.addActionListener(new ActionListener() {
       @Override
