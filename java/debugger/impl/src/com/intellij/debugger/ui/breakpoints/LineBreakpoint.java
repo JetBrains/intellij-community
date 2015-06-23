@@ -236,7 +236,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         }
       }
     }
-    return PsiTreeUtil.getParentOfType(position.getElementAt(), PsiMethod.class, PsiLambdaExpression.class);
+    return DebuggerUtilsEx.getContainingMethod(position);
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {

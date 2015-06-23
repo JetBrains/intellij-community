@@ -55,7 +55,7 @@ public final class LookupElementBuilder extends LookupElement {
     myInsertHandler = insertHandler;
     myRenderer = renderer;
     myHardcodedPresentation = hardcodedPresentation;
-    myAllLookupStrings = allLookupStrings;
+    myAllLookupStrings = Collections.unmodifiableSet(allLookupStrings);
     myCaseSensitive = caseSensitive;
   }
 

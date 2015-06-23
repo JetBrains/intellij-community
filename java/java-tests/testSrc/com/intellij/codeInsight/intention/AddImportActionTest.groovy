@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.intention;
+package com.intellij.codeInsight.intention
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
+  private CodeStyleSettings settings
+
   public void testMap15() {
     IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
       myFixture.configureByText 'a.java', '''\
@@ -389,6 +394,57 @@ package com.rocket.test;
     assert myFixture.filterAvailableIntentions('Replace qualified name').isEmpty()
   }
 
+
+  public void "test keep methods formatting on add import"() {
+    settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
+
+    myFixture.configureByText 'Tq.java', '''
+class Tq {
+
+    private Li<caret>st<String> test = null;
+
+    private String varA = "AAA";
+    private String varBLonger = "BBB";
+
+
+    public String getA         () { return varA;       }
+
+    public String getVarBLonger() { return varBLonger; }
+
+}
+'''
+    importClass()
+    myFixture.checkResult '''import java.util.List;
+
+class Tq {
+
+    private List<String> test = null;
+
+    private String varA = "AAA";
+    private String varBLonger = "BBB";
+
+
+    public String getA         () { return varA;       }
+
+    public String getVarBLonger() { return varBLonger; }
+
+}
+'''
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    settings = new CodeStyleSettings()
+    CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings();
+    settings = null
+    super.tearDown();
+  }
 
   private def importClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Import class"))
