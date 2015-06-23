@@ -66,7 +66,7 @@ import java.util.Comparator;
  */
 public class ImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + ImportTestsAction.class.getName());
-  public static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
+  private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
   public static final String TEST_HISTORY_SIZE = "test_history_size";
   private SMTRunnerConsoleProperties myProperties;
 
@@ -77,6 +77,10 @@ public class ImportTestsAction extends AnAction {
   public ImportTestsAction(SMTRunnerConsoleProperties properties) {
     this();
     myProperties = properties;
+  }
+
+  public static File getTestHistoryRoot(Project project) {
+    return new File(TEST_HISTORY_PATH, FileUtil.sanitizeFileName(project.getName()));
   }
 
   @Override
@@ -116,7 +120,7 @@ public class ImportTestsAction extends AnAction {
     }
   }
   
-  public static void adjustHistory() {
+  public static void adjustHistory(Project project) {
     int historySize;
     try {
       historySize = Math.max(0, Integer.parseInt(PropertiesComponent.getInstance().getValue(TEST_HISTORY_SIZE, "5")));
@@ -125,7 +129,7 @@ public class ImportTestsAction extends AnAction {
       historySize = 5;
     }
 
-    final File[] files = TEST_HISTORY_PATH.listFiles();
+    final File[] files = getTestHistoryRoot(project).listFiles();
     if (files != null && files.length >= historySize) {
       Arrays.sort(files, new Comparator<File>() {
         @Override

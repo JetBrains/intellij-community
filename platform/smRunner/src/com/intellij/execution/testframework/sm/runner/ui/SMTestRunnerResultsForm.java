@@ -363,11 +363,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         public void onSuccess() {
           if (myOutput != null) {
             try {
-              ImportTestsAction.adjustHistory();
+              ImportTestsAction.adjustHistory(myProject);
               final String configurationNameIncludedDate = PathUtil.suggestFileName(configuration.getName()) + " " +
                                                            FileUtil.sanitizeFileName(new SimpleDateFormat().format(new Date()));
               final String presentableFileName = ExecutionBundle.message("export.test.results.filename", configurationNameIncludedDate);
-              FileUtil.writeToFile(new File(ImportTestsAction.TEST_HISTORY_PATH, presentableFileName + ".xml"), myOutput);
+              FileUtil.writeToFile(new File(ImportTestsAction.getTestHistoryRoot(myProject), presentableFileName + ".xml"), myOutput);
             }
             catch (IOException e) {
               LOG.info("Fail to write test history", e);

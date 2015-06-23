@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,16 +46,20 @@ public class ImportTestResultsDialog extends DialogWrapper {
   private final JRadioButton myFileRb = new JBRadioButton("From File:");
   private final JRadioButton myHistoryRb = new JBRadioButton("From History:");
   
-  
-  protected ImportTestResultsDialog(@Nullable Project project) {
+  @NotNull 
+  private final Project myProject;
+
+
+  protected ImportTestResultsDialog(@NotNull Project project) {
     super(project, false);
+    myProject = project;
     setTitle("Import Test Results");
     final FileChooserDescriptor xmlDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.XML);
     myFileFieldComp = new TextFieldWithBrowseButton();
     myFileFieldComp.addBrowseFolderListener("Choose a File with Tests Result", null, project, xmlDescriptor);
 
     final DefaultListModel model = new DefaultListModel();
-    final String[] historyFiles = ImportTestsAction.TEST_HISTORY_PATH.list();
+    final String[] historyFiles = ImportTestsAction.getTestHistoryRoot(project).list();
     if (historyFiles != null) {
       for (String fileName : historyFiles) {
         model.addElement(fileName);
@@ -129,12 +134,13 @@ public class ImportTestResultsDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     PropertiesComponent.getInstance().setValue(ImportTestsAction.TEST_HISTORY_SIZE, myHistorySizeField.getText().trim());
-    final String[] historyFiles = ImportTestsAction.TEST_HISTORY_PATH.list();
+    final File testHistoryRoot = ImportTestsAction.getTestHistoryRoot(myProject);
+    final String[] historyFiles = testHistoryRoot.list();
     final DefaultListModel model = (DefaultListModel)myList.getModel();
     final ArrayList<File> toDelete = new ArrayList<File>();
     for (String fileName : historyFiles) {
       if (!model.contains(fileName)) {
-        toDelete.add(new File(ImportTestsAction.TEST_HISTORY_PATH, fileName));
+        toDelete.add(new File(testHistoryRoot, fileName));
       }
     }
     for (File file : toDelete) {
@@ -147,6 +153,6 @@ public class ImportTestResultsDialog extends DialogWrapper {
   @Nullable
   public String getFilePath() {
     return myFileRb.isSelected() ? myFileFieldComp.getText() 
-                                 : FileUtil.toSystemIndependentName(ImportTestsAction.TEST_HISTORY_PATH.getPath()) + "/" + myList.getSelectedValue();
+                                 : FileUtil.toSystemIndependentName(ImportTestsAction.getTestHistoryRoot(myProject).getPath()) + "/" + myList.getSelectedValue();
   }
 }
