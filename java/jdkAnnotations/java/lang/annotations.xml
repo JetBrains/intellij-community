@@ -64,7 +64,7 @@
   <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.lang.Iterable Iterator&lt;T&gt; iterator()">
+  <item name="java.lang.Iterable java.lang.Iterator&lt;T&gt; iterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
