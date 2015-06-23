@@ -78,7 +78,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
       if (TestResultsXmlFormatter.STATUS_FAILED.equals(myStatus) || isError) {
         myProcessor.onTestFailure(new TestFailedEvent(myCurrentTest, "", currentText, isError, null, null));
       }
-      else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus)) {
+      else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus) || TestResultsXmlFormatter.STATUS_SKIPPED.equals(myStatus)) {
         myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText));
       }
       myProcessor.onTestFinished(new TestFinishedEvent(myCurrentTest, myDuration != null ? Long.parseLong(myDuration) : -1));

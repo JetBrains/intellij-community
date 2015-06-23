@@ -276,6 +276,9 @@ public class TestResultsXmlFormatter {
     switch (magnitude) {
       case 0:
         return STATUS_SKIPPED;
+      case 2:
+      case 4:
+        return STATUS_SKIPPED;
       case 5:
         return STATUS_IGNORED;
       case 1:
