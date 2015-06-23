@@ -32,8 +32,16 @@
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
+    <action class="com.intellij.vcs.log.ui.actions.CollapseGraphAction" id="Vcs.Log.CollapseAll"/>
+    <action class="com.intellij.vcs.log.ui.actions.ExpandGraphAction" id="Vcs.Log.ExpandAll"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
 
     <group id="Vcs.Log.Toolbar">
+      <reference id="Vcs.Log.CollapseAll"/>
+      <reference id="Vcs.Log.ExpandAll"/>
+      <reference id="Vcs.Log.ShowLongEdges"/>
+      <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.GoToRef" />
       <reference id="Vcs.Log.QuickSettings" />
     </group>

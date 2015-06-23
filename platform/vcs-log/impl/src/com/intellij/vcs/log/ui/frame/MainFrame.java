@@ -6,8 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -32,7 +30,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
-import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
@@ -40,7 +37,6 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +54,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUiImpl myUI;
-  @NotNull private final Project myProject;
-  @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
 
@@ -81,8 +75,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     // collect info
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
-    myProject = project;
-    myUiProperties = uiProperties;
     myLog = log;
     myFilterUi = new VcsLogClassicFilterUi(myUI, logDataHolder, uiProperties, initialDataPack);
 
@@ -110,7 +102,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     myDetailsSplitter = new Splitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(setupScrolledGraph());
-    setupDetailsSplitter(myUiProperties.isShowDetails());
+    setupDetailsSplitter(uiProperties.isShowDetails());
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
@@ -196,77 +188,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   private JComponent createActionsToolbar() {
-    AnAction collapseBranchesAction =
-      new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          myUI.collapseAll();
-        }
+    RefreshLogAction refreshLogAction = new RefreshLogAction();
+    refreshLogAction.registerShortcutOn(this);
 
-        @Override
-        public void update(AnActionEvent e) {
-          super.update(e);
-          if (!myFilterUi.getFilters().getDetailsFilters().isEmpty()) {
-            e.getPresentation().setEnabled(false);
-          }
-          if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
-            e.getPresentation().setIcon(VcsLogIcons.CollapseMerges);
-            e.getPresentation().setText("Collapse all merges");
-            e.getPresentation().setDescription("Collapse all merges");
-          }
-          else {
-            e.getPresentation().setIcon(VcsLogIcons.CollapseBranches);
-            e.getPresentation().setText("Collapse all linear branches");
-            e.getPresentation().setDescription("Collapse all linear branches");
-          }
-        }
-      };
-
-    AnAction expandBranchesAction = new GraphAction("Expand all branches", "Expand all branches", VcsLogIcons.ExpandBranches) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myUI.expandAll();
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
-        if (!myFilterUi.getFilters().getDetailsFilters().isEmpty()) {
-          e.getPresentation().setEnabled(false);
-        }
-        if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
-          e.getPresentation().setIcon(VcsLogIcons.ExpandMerges);
-          e.getPresentation().setText("Expand all merges");
-          e.getPresentation().setDescription("Expand all merges");
-        }
-        else {
-          e.getPresentation().setIcon(VcsLogIcons.ExpandBranches);
-          e.getPresentation().setText("Expand all linear branches");
-          e.getPresentation().setDescription("Expand all linear branches");
-        }
-      }
-    };
-
-    RefreshAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myLogDataHolder.refreshCompletely();
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(true);
-      }
-    };
-
-    AnAction showFullPatchAction = new ShowLongEdgesAction();
-    AnAction showDetailsAction = new ShowDetailsAction();
-
-    refreshAction.registerShortcutOn(this);
-
-    DefaultActionGroup toolbarGroup =
-      new DefaultActionGroup(collapseBranchesAction, expandBranchesAction, showFullPatchAction, refreshAction, showDetailsAction);
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
+    toolbarGroup.add(refreshLogAction, new Constraints(Anchor.AFTER, "Vcs.Log.ShowLongEdges"));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
     mainGroup.add(myFilterUi.createActionGroup());
@@ -430,60 +357,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private class ShowDetailsAction extends ToggleAction implements DumbAware {
-
-    public ShowDetailsAction() {
-      super("Show Details", "Display details panel", AllIcons.Actions.Preview);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return !myProject.isDisposed() && myUiProperties.isShowDetails();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      setupDetailsSplitter(state);
-      if (!myProject.isDisposed()) {
-        myUiProperties.setShowDetails(state);
-      }
-    }
-  }
-
-  private class ShowLongEdgesAction extends ToggleAction implements DumbAware {
-    public ShowLongEdgesAction() {
-      super("Show long edges", "Show long branch edges even if commits are invisible in the current view.", VcsLogIcons.ShowHideLongEdges);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return !myUI.getDataPack().getVisibleGraph().getActionController().areLongEdgesHidden();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myUI.setLongEdgeVisibility(state);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(areGraphActionsEnabled());
-    }
-  }
-
-  private abstract class GraphAction extends DumbAwareAction {
-
-    public GraphAction(String text, String description, Icon icon) {
-      super(text, description, icon);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(areGraphActionsEnabled());
-    }
-  }
-
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
     @NotNull
     @Override
@@ -492,4 +365,19 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     }
   }
 
+  private class RefreshLogAction extends RefreshAction {
+    public RefreshLogAction() {
+      super("Refresh", "Refresh", AllIcons.Actions.Refresh);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myLogDataHolder.refreshCompletely();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
+  }
 }
