@@ -2033,7 +2033,10 @@ def _locked_settrace(
         atexit.register(stoptrace)
 
         PyDBCommandThread(debugger).start()
-        CheckOutputThread(debugger).start()
+        if debugger.haveAliveThreads():
+            CheckOutputThread(debugger).start()
+        else:
+            PydevdLog(2, "Do not start CheckOutputThread in process", os.getpid())
         
         #Suspend as the last thing after all tracing is in place.
         if suspend:
