@@ -15,7 +15,7 @@ import java.io.File
 import java.util.Arrays
 import java.util.Comparator
 
-class GitTestWatcher : TestName() {
+class RespositoryHelper : TestName() {
   var repository: Repository? = null
 
   public fun getRepository(baseDir: File): Repository {

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -45,10 +44,10 @@ import javax.swing.SwingUtilities
 class GitTest {
   private var fixture: IdeaProjectTestFixture? = null
 
-  private val testHelper = GitTestWatcher()
+  private val testHelper = RespositoryHelper()
 
   Rule
-  public fun getTestWatcher(): GitTestWatcher = testHelper
+  public fun getTestWatcher(): RespositoryHelper = testHelper
 
   private val remoteRepository: Repository
     get() = testHelper.repository!!
@@ -58,7 +57,6 @@ class GitTest {
 
     init {
       Logger.setFactory(javaClass<TestLoggerFactory>())
-      PlatformTestCase.initPlatformLangPrefix()
     }
 
     private val repositoryManager: GitRepositoryManager
