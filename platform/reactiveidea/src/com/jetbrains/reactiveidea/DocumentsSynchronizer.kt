@@ -82,7 +82,7 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
         val projectView = ProjectView.getInstance(project)
         val viewPane = projectView.getProjectViewPaneById(ProjectViewPane.ID) as AbstractProjectViewPSIPane
         val treeStructure = viewPane.createStructure()
-        viewHost = ProjectViewHost(projectView, lifetime.lifetime, serverModel, Path("project-view"), treeStructure, viewPane.getId())
+        viewHost = ProjectViewHost(project, projectView, lifetime.lifetime, serverModel, Path("project-view"), treeStructure, viewPane)
       })
 
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
