@@ -59,9 +59,9 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -84,7 +84,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  private static final Key<List<Pair<VirtualFile, StateStorage>>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
+  private static final Key<MultiMap<StateStorage, VirtualFile>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
@@ -97,7 +97,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final SingleAlarm myChangedFilesAlarm;
-  private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
+  private final MultiMap<StateStorage, VirtualFile> myChangedApplicationFiles = MultiMap.createLinkedSet();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
 
   private final ProgressManager myProgressManager;
@@ -652,7 +652,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
         continue;
       }
 
-      List<Pair<VirtualFile, StateStorage>> changes = CHANGED_FILES_KEY.get(project);
+      MultiMap<StateStorage, VirtualFile> changes = CHANGED_FILES_KEY.get(project);
       if (changes == null) {
         continue;
       }
@@ -676,10 +676,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       return true;
     }
 
-    Set<Pair<VirtualFile, StateStorage>> causes = new THashSet<Pair<VirtualFile, StateStorage>>(myChangedApplicationFiles);
+    MultiMap<StateStorage, VirtualFile> changes = MultiMap.createLinkedSet();
+    changes.putAllValues(myChangedApplicationFiles);
     myChangedApplicationFiles.clear();
 
-    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(causes, ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore());
+    ReloadComponentStoreStatus status = ComponentStoreImpl.reloadStore(changes, ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore());
     if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
       ApplicationManagerEx.getApplicationEx().restart(true);
       return false;
@@ -743,20 +744,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       LOG.debug("[RELOAD] Registering project to reload: " + file, new Exception());
     }
 
+    MultiMap<StateStorage, VirtualFile> changes;
     if (project == null) {
-      myChangedApplicationFiles.add(Pair.create(file, storage));
+      changes = myChangedApplicationFiles;
     }
     else {
-      List<Pair<VirtualFile, StateStorage>> changes = CHANGED_FILES_KEY.get(project);
+      changes = CHANGED_FILES_KEY.get(project);
       if (changes == null) {
-        changes = new SmartList<Pair<VirtualFile, StateStorage>>();
+        changes = MultiMap.createLinkedSet();
         CHANGED_FILES_KEY.set(project, changes);
       }
+    }
 
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (changes) {
-        changes.add(Pair.create(file, storage));
-      }
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (changes) {
+      changes.putValue(storage, file);
     }
 
     if (storage instanceof StateStorageBase) {
