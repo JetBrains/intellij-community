@@ -26,6 +26,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -43,6 +44,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -188,7 +190,11 @@ public class ImportTestsAction extends AnAction {
       }
       if (mySettings != null) {
         try {
-          return mySettings.getConfiguration().getState(executor, environment);
+          final RunConfiguration configuration = mySettings.getConfiguration();
+          if (configuration instanceof UserDataHolder) {
+            ((UserDataHolder)configuration).putUserData(TestResultsXmlFormatter.SETTINGS, mySettings);
+          }
+          return configuration.getState(executor, environment);
         }
         catch (Throwable e) {
           LOG.info(e);

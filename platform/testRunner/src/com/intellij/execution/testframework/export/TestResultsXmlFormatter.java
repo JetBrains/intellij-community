@@ -28,7 +28,9 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
@@ -61,6 +63,8 @@ public class TestResultsXmlFormatter {
   public static final String STATUS_ERROR = "error";
   public static final String STATUS_IGNORED = "ignored";
   public static final String STATUS_SKIPPED = "skipped";
+  
+  public static final Key<RunnerAndConfigurationSettingsImpl> SETTINGS = Key.create("RUN_CONFIGURATION_SETTINGS");
 
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
@@ -114,8 +118,11 @@ public class TestResultsXmlFormatter {
       endElement(ELEM_COUNT);
     }
 
-    final RunnerAndConfigurationSettingsImpl settings =
+    RunnerAndConfigurationSettingsImpl settings =
       (RunnerAndConfigurationSettingsImpl)RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).getSettings(myRuntimeConfiguration);
+    if (settings == null && myRuntimeConfiguration instanceof UserDataHolder) {
+      settings = ((UserDataHolder)myRuntimeConfiguration).getUserData(SETTINGS);
+    }
     if (settings != null) {
       final Element config = new Element("config");
       try {
