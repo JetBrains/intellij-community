@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,6 +38,7 @@ import java.util.Set;
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
   private static final Set<String> POSIX_CHARACTER_CLASSES = ContainerUtil.newHashSet(
     "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "word", "xdigit");
+  private static final String ILLEGAL_CHARACTER_RANGE_TO_FROM = "Illegal character range (to < from)";
   private AnnotationHolder myHolder;
   private final RegExpLanguageHosts myLanguageHosts;
 
@@ -65,7 +67,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       final Character f = ((RegExpChar)from).getValue();
       if (t != null && f != null) {
         if (t < f) {
-          myHolder.createErrorAnnotation(range, "Illegal character range (to < from)");
+          if (handleSurrogates(range, f, t)) return;
+          myHolder.createErrorAnnotation(range, ILLEGAL_CHARACTER_RANGE_TO_FROM);
         }
         else if (t == f) {
           myHolder.createWarningAnnotation(range, "Redundant character range");
@@ -78,6 +81,30 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     else if (from.getText().equals(to.getText())) {
       myHolder.createWarningAnnotation(range, "Redundant character range");
     }
+  }
+
+  private boolean handleSurrogates(RegExpCharRange range, Character f, Character t) {
+    // \ud800\udc00-\udbff\udfff
+    PsiElement prevSibling = range.getPrevSibling();
+    PsiElement nextSibling = range.getNextSibling();
+
+    if (prevSibling instanceof RegExpChar && nextSibling instanceof RegExpChar) {
+      Character prevSiblingValue = ((RegExpChar)prevSibling).getValue();
+      Character nextSiblingValue = ((RegExpChar)nextSibling).getValue();
+
+      if (prevSiblingValue != null && nextSiblingValue != null) {
+        if (Character.isSurrogatePair(prevSiblingValue, f) && Character.isSurrogatePair(t, nextSiblingValue)) {
+          if (Character.toCodePoint(prevSiblingValue, f) > Character.toCodePoint(t, nextSiblingValue)) {
+            TextRange prevSiblingRange = prevSibling.getTextRange();
+            TextRange nextSiblingRange = nextSibling.getTextRange();
+            TextRange errorRange = new TextRange(prevSiblingRange.getStartOffset(), nextSiblingRange.getEndOffset());
+            myHolder.createErrorAnnotation(errorRange, ILLEGAL_CHARACTER_RANGE_TO_FROM);
+          }
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
