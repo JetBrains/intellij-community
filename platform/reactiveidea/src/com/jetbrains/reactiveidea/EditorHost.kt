@@ -62,15 +62,18 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
       if (!caretGuard.locked) {
         caretGuard.lock {
           CommandProcessor.getInstance().executeCommand(editor.getProject(), {
-            if (caret != null) {
-              editor.getCaretModel().moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
-            }
-            if (selection != null) {
-              editor.getSelectionModel().setSelection(
-                  (selection["startOffset"] as PrimitiveModel<Int>).value,
-                  (selection["endOffset"] as PrimitiveModel<Int>).value)
-            } else {
-              editor.getSelectionModel().removeSelection()
+            try {
+              if (caret != null) {
+                editor.getCaretModel().moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
+              }
+              if (selection != null) {
+                editor.getSelectionModel().setSelection(
+                    (selection["startOffset"] as PrimitiveModel<Int>).value,
+                    (selection["endOffset"] as PrimitiveModel<Int>).value)
+              } else {
+                editor.getSelectionModel().removeSelection()
+              }
+            } catch(e: Throwable) {
             }
           }, "Update caret and selection", DocCommandGroupId.noneGroupId(editor.getDocument()), UndoConfirmationPolicy.DEFAULT, editor.getDocument())
 
