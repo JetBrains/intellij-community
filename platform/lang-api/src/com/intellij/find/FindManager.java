@@ -126,7 +126,7 @@ public abstract class FindManager {
    *
    * @param model the model containing the settings of the replace operation.
    * @param title the title of the dialog to show.
-   * @param exception exception from {@link FindManager#getStringToReplace}
+   * @param exception exception from {@link FindManager#getStringToReplace(String, FindModel, int, CharSequence)}
    * @return the exit code of the dialog, as defined by the {@link PromptResult}
    * interface. May be only {@link PromptResult#CANCEL} or {@link PromptResult#SKIP} for bad replace operation
    */
@@ -144,14 +144,20 @@ public abstract class FindManager {
   }
 
   /**
+   * @deprecated Use {@link #getStringToReplace(String, FindModel, int, CharSequence)} instead. To be removed in IDEA 16.
+   */
+  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException;
+
+  /**
    * Gets the string to replace with, given the specified found string and find/replace
    * settings. Supports case-preserving and regular expression replaces.
    *
    * @param foundString the found string.
    * @param model       the search and replace settings, including the replace string.
+   * @param startOffset offset in the source text at which the string was found (matters for regex searches)
+   * @param documentText source text in which the string was found (matters for regex searches)
    * @return the string to replace the specified found string.
    */
-  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException;
   public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
                                             int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException;
 
