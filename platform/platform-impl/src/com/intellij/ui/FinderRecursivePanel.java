@@ -210,6 +210,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent event) {
+        if (event.getValueIsAdjusting()) return;
         if (isMergeListItemsRunning()) return;
         if (myUpdateSelectedPathModeActive.get()) return;
         updateRightComponent(true);
