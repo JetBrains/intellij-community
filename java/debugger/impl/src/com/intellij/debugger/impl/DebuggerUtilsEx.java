@@ -24,6 +24,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.LambdaMethodFilter;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
@@ -874,4 +875,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     return false;
   }
+
+  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = new Comparator<Method>() {
+    @Override
+    public int compare(Method m1, Method m2) {
+      return LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
+    }
+  };
 }

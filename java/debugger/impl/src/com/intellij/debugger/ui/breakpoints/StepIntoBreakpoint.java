@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.LambdaMethodFilter;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
@@ -79,11 +80,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             final LambdaMethodFilter lambdaFilter = (LambdaMethodFilter)myFilter;
             if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
               final Method[] candidates = methods.toArray(new Method[methodsFound]);
-              Arrays.sort(candidates, new Comparator<Method>() {
-                public int compare(Method m1, Method m2) {
-                  return LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
-                }
-              });
+              Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
               location = candidates[lambdaFilter.getLambdaOrdinal()].location();
             }
           }
