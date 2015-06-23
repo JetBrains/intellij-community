@@ -369,9 +369,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     PlaceInfo current = getCurrentPlaceInfo();
 
     while (!myForwardPlaces.isEmpty()) {
-      if (isSame(current, target)) {
+      if (current != null && isSame(current, target)) {
         target = myForwardPlaces.removeLast();
-      } else {
+      } 
+      else {
         break;
       }
     }
