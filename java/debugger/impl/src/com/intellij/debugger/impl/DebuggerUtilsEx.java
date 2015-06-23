@@ -875,10 +875,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
+  @Nullable
   public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
     return PsiTreeUtil.getParentOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
   }
 
+  @Nullable
   public static PsiElement getContainingMethod(@NotNull SourcePosition position) {
     return getContainingMethod(position.getElementAt());
   }
