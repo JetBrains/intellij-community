@@ -46,9 +46,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -365,9 +367,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
             try {
               ImportTestsAction.adjustHistory(myProject);
               final String configurationNameIncludedDate = PathUtil.suggestFileName(configuration.getName()) + " " +
-                                                           FileUtil.sanitizeFileName(new SimpleDateFormat().format(new Date()));
-              final String presentableFileName = ExecutionBundle.message("export.test.results.filename", configurationNameIncludedDate);
-              FileUtil.writeToFile(new File(ImportTestsAction.getTestHistoryRoot(myProject), presentableFileName + ".xml"), myOutput);
+                                                           new SimpleDateFormat("yyyy.MM.dd 'at' HH'h' mm'm' ss's'").format(new Date());
+              FileUtil.writeToFile(new File(ImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml"), myOutput);
             }
             catch (IOException e) {
               LOG.info("Fail to write test history", e);
