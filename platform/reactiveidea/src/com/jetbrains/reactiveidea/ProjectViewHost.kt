@@ -16,9 +16,12 @@
 package com.jetbrains.reactiveidea
 
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
+import com.intellij.openapi.project.Project
+import com.intellij.psi.*
 import com.jetbrains.reactivemodel.Model
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
@@ -30,25 +33,72 @@ import com.jetbrains.reactivemodel.util.Lifetime
 import java.util.HashMap
 
 
-public class ProjectViewHost(val projectView: ProjectView?, val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path,
-                             val treeStructure: AbstractTreeStructure, val id: String) {
-  val tags = id
-  val comp = GroupByTypeComparator(projectView, id)
+public class ProjectViewHost(val project: Project, val projectView: ProjectView?, val lifetime: Lifetime,
+                             val reactiveModel: ReactiveModel, val path: Path,
+                             val treeStructure: AbstractTreeStructure, val viewPane: AbstractProjectViewPSIPane) {
+
+  class PsiDirNode(val path: Path, val descriptor: AbstractTreeNode<*>, val index: Int)
+
+  val paneId = viewPane.getId()
+  val comp = GroupByTypeComparator(projectView, paneId)
+  val openDirs = HashMap<PsiDirectory, PsiDirNode>()
+
 
   init {
     reactiveModel.transaction { m ->
       val root = treeStructure.getRootElement();
       val descriptor = treeStructure.createDescriptor(root, null) as AbstractTreeNode<*>
-      val current = path / tags
+      val current = path / paneId
       val rootNode = createNode(descriptor, current, 0)
       current.putIn(m, MapModel(mapOf(root.toString() to rootNode)))
     }
+
+    val psiTreeChangeListener = object : PsiTreeChangeAdapter() {
+      override fun childAdded(event: PsiTreeChangeEvent) {
+        handle(event)
+      }
+
+      override fun childReplaced(event: PsiTreeChangeEvent) {
+        handle(event)
+      }
+
+      override fun childMoved(event: PsiTreeChangeEvent) {
+        handle(event)
+      }
+
+      override fun childRemoved(event: PsiTreeChangeEvent) {
+        handle(event)
+      }
+
+      override fun propertyChanged(event: PsiTreeChangeEvent) {
+        handle(event)
+      }
+
+      fun handle(event: PsiTreeChangeEvent) {
+        var parent = event.getParent()
+        if(parent !is PsiDirectory) {
+          parent = event.getFile()?.getParent()
+        }
+        if (parent is PsiDirectory) {
+          updateDir(parent)
+        }
+      }
+
+      fun updateDir(dir: PsiDirectory) {
+        val dirNode = openDirs[dir]
+        if (dirNode != null) {
+          updateChilds(dirNode.descriptor, dirNode.path, dirNode.index)
+        }
+      }
+    }
+    PsiManager.getInstance(project).addPsiTreeChangeListener(psiTreeChangeListener)
   }
 
   private fun createNode(descriptor: AbstractTreeNode<*>, path: Path, index: Int): Model {
     descriptor.update();
     val map = HashMap<String, Model>()
-    val state = if (descriptor.getChildren().isEmpty()) "leaf" else "closed"
+    val value = descriptor.getValue()
+    val state = if (value is PsiFileSystemItem && value.isDirectory() || descriptor.getChildren().isNotEmpty()) "closed" else "leaf"
     map.put("state", PrimitiveModel(state))
     map.put("order", PrimitiveModel(index))
     map.put("childs", MapModel())
@@ -57,26 +107,36 @@ public class ProjectViewHost(val projectView: ProjectView?, val lifetime: Lifeti
     reaction(true, "update state of project tree node", stateSignal) { state ->
       if (state != null) {
         state as MapModel
-        if ((state["state"] as PrimitiveModel<*>).value == "open" && (state["childs"] as MapModel).isEmpty()) {
-
-          reactiveModel.transaction { m ->
-            // need open
-            descriptor.update();
-            val children = HashMap<String, Model>()
-            val nodesPath = path / descriptor.toString() / "childs"
-            treeStructure.getChildElements(descriptor)
-                .map { child -> treeStructure.createDescriptor(child, null) as AbstractTreeNode<*> }
-                .sortBy(comp)
-                .forEachIndexed { idx, descr ->
-                  descr.update()
-                  val name = descr.toString()
-                  children[name] = createNode(descr, nodesPath, idx)
-                }
-            nodesPath.putIn(m, MapModel(children))
-          }
+        val openState = (state["state"] as PrimitiveModel<*>).value
+        if (openState == "open" && (state["childs"] as MapModel).isEmpty()) {
+          updateChilds(descriptor, path, index)
+        } else if (openState == "closed") {
+            if (descriptor.getValue() is PsiDirectory) {
+              openDirs.remove(descriptor.getValue())
+            }
         }
       }
     }
     return MapModel(map)
+  }
+
+  private fun updateChilds(descriptor: AbstractTreeNode<*>, path: Path, index: Int) {
+    reactiveModel.transaction { m ->
+      descriptor.update();
+      if (descriptor.getValue() is PsiDirectory) {
+        openDirs[descriptor.getValue() as PsiDirectory] = PsiDirNode(path, descriptor, index);
+      }
+      val children = HashMap<String, Model>()
+      val nodesPath = path / descriptor.toString() / "childs"
+      treeStructure.getChildElements(descriptor)
+          .map { child -> treeStructure.createDescriptor(child, null) as AbstractTreeNode<*> }
+          .filter { descr -> descr.update(); true }
+          .sortBy(comp)
+          .forEachIndexed { idx, descr ->
+            var name = descr.toString()
+            children[name] = createNode(descr, nodesPath, idx)
+          }
+      nodesPath.putIn(m, MapModel(children))
+    }
   }
 }

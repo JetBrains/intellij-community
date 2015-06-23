@@ -77,7 +77,7 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
     }
   }
 
-  server.addEventListener("action", javaClass<JsonNode>()) {client, json, ackRequest ->
+  server.addEventListener("action", javaClass<JsonNode>()) { client, json, ackRequest ->
     val action = toModel(JSONObject(json.toString()))
     UIUtil.invokeLaterIfNeeded {
       reactiveModel.dispatch(action)
@@ -195,7 +195,10 @@ fun toDiff(json: JSONObject): Diff<Model> =
       "primitive" -> PrimitiveDiff(json.get("newValue"))
       "list" -> ListDiff(toList(json.getJSONArray("list")).map { toModel(it as JSONObject) }, json.getInt("index"))
       "map" -> MapDiff(toMap(json).map { entry -> entry.getKey() to toDiff(entry.getValue()) }.toMap())
-      "value" -> ValueDiff(toModel(json.getJSONObject("newValue")))
+      "value" -> {
+        val newValue = json.get("newValue")
+        ValueDiff(if (newValue == JSONObject.NULL) AbsentModel() else toModel(newValue as JSONObject))
+      }
       else -> throw AssertionError("unknown diff type\n$json")
     }
 
@@ -227,11 +230,11 @@ fun pairsListToJSONObject(entries: List<Pair<String, Any>>): JSONObject {
 
 fun main(args: Array<String>) {
   val port = 12345
-//  val server = serverModel(Lifetime.Eternal, port, { model ->
-//    model.transaction { m ->
-//      Path("a").putIn(m, PrimitiveModel("abcd"))
-//    }
-//  })
+  //  val server = serverModel(Lifetime.Eternal, port, { model ->
+  //    model.transaction { m ->
+  //      Path("a").putIn(m, PrimitiveModel("abcd"))
+  //    }
+  //  })
 
   val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
 }
