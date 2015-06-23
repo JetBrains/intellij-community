@@ -68,7 +68,7 @@ public abstract class FindManager {
    *
    * @param model the model containing the settings of the replace operation.
    * @param title the title of the dialog to show.
-   * @return the exit code of the dialog, as defined by the {@link com.intellij.find.FindManager.PromptResult}
+   * @return the exit code of the dialog, as defined by the {@link FindManager.PromptResult}
    * interface.
    */
   @PromptResultValue
@@ -226,7 +226,7 @@ public abstract class FindManager {
    *
    * @param element the element to check the availability for.
    * @return true if Find Usages is available, false otherwise.
-   * @see com.intellij.lang.findUsages.FindUsagesProvider#canFindUsagesFor(com.intellij.psi.PsiElement)
+   * @see com.intellij.lang.findUsages.FindUsagesProvider#canFindUsagesFor(PsiElement)
    */
   public abstract boolean canFindUsages(@NotNull PsiElement element);
 
