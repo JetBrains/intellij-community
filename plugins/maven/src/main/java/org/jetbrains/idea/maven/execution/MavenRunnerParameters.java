@@ -147,7 +147,7 @@ public class MavenRunnerParameters implements Cloneable {
     myEnabledProfilesForXmlSerializer.clear();
 
     File workingDir = getWorkingDirFile();
-    if (MavenConstants.POM_XML.equals(workingDir.getName())) {
+    if ("pom.xml".equals(workingDir.getName())) {  // TODO this is deprecated so no need to fix polyglot pom file name?
       setWorkingDirPath(workingDir.getParent());
     }
   }

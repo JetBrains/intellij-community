@@ -36,6 +36,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   public PsiElement resolve() {
     VirtualFile baseDir = myPsiFile.getVirtualFile().getParent();
-    String relPath = FileUtil.toSystemIndependentName(myText + "/" + MavenConstants.POM_XML);
+    String relPath = FileUtil.toSystemIndependentName(myText + "/" + myProjectsManager.getGeneralSettings().getPolyglotType().getPomFile());
     VirtualFile file = baseDir.findFileByRelativePath(relPath);
 
     if (file == null) return null;
@@ -68,7 +69,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       if (Comparing.equal(eachVFile, myVirtualFile)) continue;
 
       PsiFile psiFile = eachDomFile.getFile();
-      String modulePath = calcRelativeModulePath(myVirtualFile, eachVFile);
+      String modulePath = calcRelativeModulePath(myProject, myVirtualFile, eachVFile);
 
       result.add(LookupElementBuilder.create(psiFile, modulePath).withPresentableText(modulePath));
     }
@@ -76,9 +77,10 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     return result.toArray();
   }
 
-  public static String calcRelativeModulePath(VirtualFile parentPom, VirtualFile modulePom) {
+  public static String calcRelativeModulePath(Project project, VirtualFile parentPom, VirtualFile modulePom) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     String result = MavenDomUtil.calcRelativePath(parentPom.getParent(), modulePom);
-    int to = result.length() - ("/" + MavenConstants.POM_XML).length();
+    int to = result.length() - ("/" + projectsManager.getGeneralSettings().getPolyglotType().getPomFile()).length();
     if (to < 0) {
       // todo IDEADEV-35440
       throw new RuntimeException("Filed to calculate relative path for:" +
@@ -143,7 +145,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       VirtualFile baseDir = myVirtualFile.getParent();
       String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myText);
       VirtualFile moduleDir = VfsUtil.createDirectories(modulePath);
-      return moduleDir.createChildData(this, MavenConstants.POM_XML);
+      return moduleDir.createChildData(this, myProjectsManager.getGeneralSettings().getPolyglotType().getPomFile());
     }
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
@@ -47,7 +46,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     if (result == null) {
       parentFile = projectFile.getParent().findFileByRelativePath(parentDesc.getParentRelativePath());
       if (parentFile != null && parentFile.isDirectory()) {
-        parentFile = parentFile.findFileByRelativePath(MavenConstants.POM_XML);
+        parentFile = parentFile.findFileByRelativePath(generalSettings.getPolyglotType().getPomFile());
       }
       if (parentFile != null) {
         result = processRelativeParent(parentFile);

@@ -110,9 +110,9 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
     dialog.setTitle(TasksBundle.message("maven.tasks.select.goal.title"));
 
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     if (task.getGoal() == null) {
       // just created empty task.
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       List<MavenProject> rootProjects = projectsManager.getRootProjects();
       if (rootProjects.size() > 0) {
         dialog.setSelectedMavenProject(rootProjects.get(0));
@@ -136,7 +136,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
       return false;
     }
 
-    task.setProjectPath(dialog.getWorkDirectory() + "/pom.xml");
+    task.setProjectPath(dialog.getWorkDirectory() + "/" + projectsManager.getGeneralSettings().getPolyglotType().getPomFile());
     task.setGoal(dialog.getGoals());
     return true;
   }

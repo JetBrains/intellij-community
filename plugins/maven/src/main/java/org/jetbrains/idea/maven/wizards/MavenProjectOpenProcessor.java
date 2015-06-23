@@ -23,12 +23,14 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,7 +41,11 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenPro
 
   @Nullable
   public String[] getSupportedExtensions() {
-    return new String[]{MavenConstants.POM_XML};
+    List<String> extensions = new ArrayList<String>();
+    for ( MavenExecutionOptions.PolyglotType polyglotType : MavenExecutionOptions.PolyglotType.values() ) {
+      extensions.add(polyglotType.getPomFile());
+    }
+    return ArrayUtil.toStringArray(extensions);
   }
 
   public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {

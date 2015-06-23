@@ -29,7 +29,7 @@
         <processorPath useClasspath="true" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="1.6">
+    <bytecodeTargetLevel target="1.7">
       <module name="annotations" target="1.5" />
       <module name="community-tests" target="1.8" />
       <module name="gradle-jps-plugin" target="1.6" />

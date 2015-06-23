@@ -39,7 +39,6 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenArchetype;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -93,7 +92,8 @@ public class MavenModuleBuilderHelper {
       protected void run(Result<VirtualFile> result) throws Throwable {
         VirtualFile file;
         try {
-          file = root.createChildData(this, MavenConstants.POM_XML);
+          MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+          file = root.createChildData(this, projectsManager.getGeneralSettings().getPolyglotType().getPomFile());
           MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
           result.setResult(file);
         }

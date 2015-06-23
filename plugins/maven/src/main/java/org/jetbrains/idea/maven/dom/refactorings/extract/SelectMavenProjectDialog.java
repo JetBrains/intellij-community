@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
@@ -36,6 +37,7 @@ import java.awt.event.ItemListener;
 import java.util.Set;
 
 public class SelectMavenProjectDialog extends DialogWrapper {
+  @NotNull private final Project myProject;
   private final Set<MavenDomProjectModel> myMavenDomProjectModels;
   private final boolean myHasExclusions;
 
@@ -53,6 +55,7 @@ public class SelectMavenProjectDialog extends DialogWrapper {
                                   @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
                                   @NotNull boolean hasExclusions) {
     super(project, true);
+    myProject = project;
     myMavenDomProjectModels = mavenDomProjectModels;
     myHasExclusions = hasExclusions;
 
@@ -111,7 +114,8 @@ public class SelectMavenProjectDialog extends DialogWrapper {
                                 projectName = mavenProject.getDisplayName();
                               }
                               if (StringUtil.isEmptyOrSpaces(projectName)) {
-                                projectName = "pom.xml";
+                                MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+                                projectName = projectsManager.getGeneralSettings().getPolyglotType().getPomFile();
                               }
                               return Pair.create(projectName, model);
                             }

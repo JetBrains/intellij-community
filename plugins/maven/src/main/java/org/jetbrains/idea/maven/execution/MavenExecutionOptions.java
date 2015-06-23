@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import org.jetbrains.idea.maven.polyglot.converter.*;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
 import org.jetbrains.idea.maven.server.MavenServerSettings;
 
@@ -111,6 +112,50 @@ public class MavenExecutionOptions {
 
     public MavenServerSettings.UpdatePolicy getServerPolicy() {
       return myServerPolicy;
+    }
+  }
+
+  public enum PolyglotType {
+    NONE("Standard (XML)", Converters.NONE),
+    GROOVY("Groovy", Converters.GROOVY);
+
+    private final String myDisplayString;
+    private final Converters myConverter;
+
+    PolyglotType(String displayString, Converters converter) {
+      myDisplayString = displayString;
+      myConverter = converter;
+    }
+
+    public static boolean isProjectFile(String name) {
+      for ( PolyglotType type : values() ) {
+        if ( type.getPomFile().equalsIgnoreCase(name) ) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public static PolyglotType fromPomFile(String pomFile) {
+      for ( PolyglotType type : values() ) {
+        if ( type.getPomFile().equalsIgnoreCase(pomFile) ) {
+          return type;
+        }
+      }
+      // TODO
+      return NONE;
+    }
+
+    public String getPomFile() {
+      return myConverter.getPomFile();
+    }
+
+    public String getDisplayString() {
+      return myDisplayString;
+    }
+
+    public MavenPolyglotConverter getConverter() {
+      return myConverter.getConverter();
     }
   }
 }

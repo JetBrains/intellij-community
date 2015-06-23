@@ -309,8 +309,8 @@ public def layoutCommunityPlugins(String home) {
       jar("maven30-server-impl.jar") {
         module("maven30-server-impl")
       }
-      jar("maven32-server-impl.jar") {
-        module("maven32-server-impl")
+      jar("maven33-server-impl.jar") {
+        module("maven33-server-impl")
       }
 
       jar("artifact-resolver-m2.jar") {

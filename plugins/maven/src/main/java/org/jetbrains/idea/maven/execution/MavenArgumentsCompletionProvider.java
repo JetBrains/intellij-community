@@ -26,7 +26,7 @@ public class MavenArgumentsCompletionProvider extends CommandLineCompletionProvi
     Options options = new Options();
     options.addOption(OptionBuilder.withLongOpt("help").withDescription("Display help information").create('h'));
     options.addOption(
-      OptionBuilder.withLongOpt("file").hasArg().withDescription("Force the use of an alternate POM file (or directory with pom.xml).")
+      OptionBuilder.withLongOpt("file").hasArg().withDescription("Force the use of an alternate POM file (or directory with pom file).")
         .create(
           'f'));
     options.addOption(OptionBuilder.withLongOpt("define").hasArg().withDescription("Define a system property").create('D'));

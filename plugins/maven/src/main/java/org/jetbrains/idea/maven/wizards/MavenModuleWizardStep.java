@@ -202,12 +202,13 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   }
 
   public MavenProject findPotentialParentProject(Project project) {
-    if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    if (!projectsManager.isMavenizedProject()) return null;
 
-    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myContext.getProjectFileDirectory(), "pom.xml"));
+    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myContext.getProjectFileDirectory(), projectsManager.getGeneralSettings().getPolyglotType().getPomFile()));
     if (parentPom == null) return null;
 
-    return MavenProjectsManager.getInstance(project).findProject(parentPom);
+    return projectsManager.findProject(parentPom);
   }
 
   private static void setTestIfEmpty(@NotNull JTextField artifactIdField, @Nullable String text) {

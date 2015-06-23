@@ -145,7 +145,7 @@ public class MavenProjectsManagerWatcher {
 
         if (file == null) return;
         boolean isMavenFile =
-          file.getName().equals(MavenConstants.POM_XML) || file.getName().equals(MavenConstants.PROFILES_XML) || isSettingsFile(file);
+          file.getName().equals(myGeneralSettings.getPolyglotType().getPomFile()) || file.getName().equals(MavenConstants.PROFILES_XML) || isSettingsFile(file);
         if (!isMavenFile) return;
 
         synchronized (myChangedDocuments) {
@@ -337,13 +337,13 @@ public class MavenProjectsManagerWatcher {
   }
 
   private boolean isPomFile(String path) {
-    if (!path.endsWith("/" + MavenConstants.POM_XML)) return false;
+    if (!path.endsWith("/" + myGeneralSettings.getPolyglotType().getPomFile())) return false;
     return myProjectsTree.isPotentialProject(path);
   }
 
   private boolean isProfilesFile(String path) {
     if (!path.endsWith("/" + MavenConstants.PROFILES_XML)) return false;
-    return myProjectsTree.isPotentialProject(path.substring(0, path.length() - MavenConstants.PROFILES_XML.length()) + MavenConstants.POM_XML);
+    return myProjectsTree.isPotentialProject(path.substring(0, path.length() - MavenConstants.PROFILES_XML.length()) + myGeneralSettings.getPolyglotType().getPomFile());
   }
 
   private boolean isSettingsFile(String path) {
@@ -444,7 +444,8 @@ public class MavenProjectsManagerWatcher {
     @Nullable
     private VirtualFile getPomFileProfilesFile(VirtualFile f) {
       if (!f.getName().equals(MavenConstants.PROFILES_XML)) return null;
-      return f.getParent().findChild(MavenConstants.POM_XML);
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+      return f.getParent().findChild(projectsManager.getGeneralSettings().getPolyglotType().getPomFile());
     }
 
     @Override

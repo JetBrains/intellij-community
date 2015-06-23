@@ -44,11 +44,13 @@ public class MavenProjectReader {
 
   private final Map<VirtualFile, RawModelReadResult> myRawModelsCache = new THashMap<VirtualFile, RawModelReadResult>();
   private SettingsProfilesCache mySettingsProfilesCache;
+  private MavenGeneralSettings myGeneralSettings;
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
                                               MavenExplicitProfiles explicitProfiles,
                                               MavenProjectReaderProjectLocator locator) {
+    myGeneralSettings = generalSettings;
     Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
       doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<VirtualFile>(), locator);
 
@@ -122,11 +124,11 @@ public class MavenProjectReader {
       parent = new MavenParent(new MavenId(MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId", UNKNOWN),
                                            MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.artifactId", UNKNOWN),
                                            MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.version", UNKNOWN)),
-                               MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.relativePath", "../pom.xml"));
+                               MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.relativePath", "../" + myGeneralSettings.getPolyglotType().getPomFile()));
       result.setParent(parent);
     }
     else {
-      parent = new MavenParent(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN), "../pom.xml");
+      parent = new MavenParent(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN), "../" + myGeneralSettings.getPolyglotType().getPomFile());
     }
 
     result.setMavenId(new MavenId(MavenJDOMUtil.findChildValueByPath(xmlProject, "groupId", parent.getMavenId().getGroupId()),

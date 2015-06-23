@@ -34,7 +34,7 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
       PlatformPatterns.psiElement(XmlTokenType.XML_DATA_CHARACTERS).withParent(
-        XmlPatterns.xmlText().inFile(XmlPatterns.xmlFile().withName("pom.xml"))
+        XmlPatterns.xmlText().inFile(XmlPatterns.xmlFile().withName("pom.xml")) // TODO Maven Polyglot
       ),
       new MavenPluginParamRefProvider());
   }

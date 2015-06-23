@@ -163,9 +163,10 @@ public class MavenRunConfigurationType implements ConfigurationType {
 
   @Nullable
   private static String getMavenProjectName(final Project project, final MavenRunnerParameters runnerParameters) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/" + projectsManager.getGeneralSettings().getPolyglotType().getPomFile());
     if (virtualFile != null) {
-      MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
+      MavenProject mavenProject = projectsManager.findProject(virtualFile);
       if (mavenProject != null) {
         if (!StringUtil.isEmptyOrSpaces(mavenProject.getMavenId().getArtifactId())) {
           return mavenProject.getMavenId().getArtifactId();

@@ -158,11 +158,12 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/maven-artifact-resolver-m3.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/maven-artifact-resolver-m3.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" group="plugins/maven" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-polyglot-converter/maven-polyglot-converter.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-polyglot-converter/maven-polyglot-converter.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-common/maven3-server-common.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-common/maven3-server-common.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven30-server-impl/maven30-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven30-server-impl/maven30-server-impl.iml" group="plugins/maven" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven32-server-impl/maven32-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven32-server-impl/maven32-server-impl.iml" group="plugins/maven" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven33-server-impl/maven33-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven33-server-impl/maven33-server-impl.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/ninepatch/ninepatch.iml" filepath="$PROJECT_DIR$/android/tools-base/ninepatch/ninepatch.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/openapi.iml" filepath="$PROJECT_DIR$/java/openapi/openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/perflib/perflib.iml" filepath="$PROJECT_DIR$/android/tools-base/perflib/perflib.iml" group="android/sdktools" />

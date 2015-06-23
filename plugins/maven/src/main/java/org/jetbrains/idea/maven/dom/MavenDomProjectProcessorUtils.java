@@ -554,7 +554,7 @@ public class MavenDomProjectProcessorUtils {
         String parentArtifactId = parent.getArtifactId().getStringValue();
         String parentVersion = parent.getVersion().getStringValue();
         String parentRelativePath = parent.getRelativePath().getStringValue();
-        if (StringUtil.isEmptyOrSpaces(parentRelativePath)) parentRelativePath = "../pom.xml";
+        if (StringUtil.isEmptyOrSpaces(parentRelativePath)) parentRelativePath = "../" + myManager.getGeneralSettings().getPolyglotType().getPomFile();
         MavenId parentId = new MavenId(parentGroupId, parentArtifactId, parentVersion);
         parentDesc = new MavenParentDesc(parentId, parentRelativePath);
       }

@@ -206,7 +206,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     final File[] files = baseDir.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        return FileUtil.namesEqual("pom.xml", name);
+        return FileUtil.namesEqual(getGeneralSettings().getPolyglotType().getPomFile(), name);
       }
     });
 
@@ -671,7 +671,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   public MavenProject findProject(@NotNull Module module) {
-    VirtualFile f = findPomFile(module, new MavenModelsProvider() {
+    VirtualFile f = findPomFile(getGeneralSettings(), module, new MavenModelsProvider() {
       public Module[] getModules() {
         throw new UnsupportedOperationException();
       }
@@ -703,9 +703,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Nullable
-  private static VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
+  private static VirtualFile findPomFile(@NotNull MavenGeneralSettings generalSettings, @NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      final VirtualFile virtualFile = root.findChild(MavenConstants.POM_XML);
+      final VirtualFile virtualFile = root.findChild(generalSettings.getPolyglotType().getPomFile());
       if (virtualFile != null) {
         return virtualFile;
       }
@@ -1189,7 +1189,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new THashMap<VirtualFile, Module>();
     for (Module each : modelsProvider.getModules()) {
-      VirtualFile f = findPomFile(each, modelsProvider);
+      VirtualFile f = findPomFile(getGeneralSettings(), each, modelsProvider);
       if (f != null) result.put(f, each);
     }
     return result;
@@ -1198,7 +1198,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private List<VirtualFile> collectAllAvailablePomFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
 
-    VirtualFile pom = myProject.getBaseDir().findChild(MavenConstants.POM_XML);
+    VirtualFile pom = myProject.getBaseDir().findChild(getGeneralSettings().getPolyglotType().getPomFile());
     if (pom != null) result.add(pom);
 
     return result;

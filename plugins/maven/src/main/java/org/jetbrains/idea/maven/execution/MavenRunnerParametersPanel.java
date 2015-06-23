@@ -32,7 +32,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
@@ -60,7 +59,8 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
         @Override
         public boolean isFileSelectable(VirtualFile file) {
           if (!super.isFileSelectable(file)) return false;
-          return file.findChild(MavenConstants.POM_XML) != null;
+          MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+          return file.findChild(manager.getGeneralSettings().getPolyglotType().getPomFile()) != null;
         }
       });
 

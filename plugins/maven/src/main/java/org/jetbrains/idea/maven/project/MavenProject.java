@@ -164,7 +164,7 @@ public class MavenProject {
 
     MavenModelPropertiesPatcher.patch(newState.myProperties, newState.myPlugins);
 
-    newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory());
+    newState.myModulesPathsAndNames = collectModulePathsAndNames(settings, model, getDirectory());
     Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
     if (resetProfiles || newState.myProfilesIds == null) {
       newState.myProfilesIds = newProfiles;
@@ -237,16 +237,16 @@ public class MavenProject {
     newState.myTestResources = model.getBuild().getTestResources();
   }
 
-  private static Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
+  private static Map<String, String> collectModulePathsAndNames(MavenGeneralSettings settings, MavenModel mavenModel, String baseDir) {
     String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<String, String>();
-    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel).entrySet()) {
+    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(settings, mavenModel).entrySet()) {
       result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
     }
     return result;
   }
 
-  private static Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel) {
+  private static Map<String, String> collectModulesRelativePathsAndNames(MavenGeneralSettings settings, MavenModel mavenModel) {
     LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
@@ -258,7 +258,7 @@ public class MavenProject {
 
       name = FileUtil.toSystemIndependentName(name);
       if (!name.endsWith("/")) name += "/";
-      name += MavenConstants.POM_XML;
+      name += settings.getPolyglotType().getPomFile();
 
       result.put(name, originalName);
     }

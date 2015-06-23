@@ -123,7 +123,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     if (pluginFileOrDir.isDirectory()) {
       File parentFile = getMavenPluginParentFile();
       myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
-      myBundledMaven3Home = new File(parentFile, "maven30-server-impl/lib/maven3");
+      myBundledMaven3Home = new File(parentFile, "maven33-server-impl/lib/maven33");
     }
     else {
       myBundledMaven2Home = new File(root, "maven2");
@@ -407,7 +407,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           classpath.add(new File(root, "maven30-server-impl"));
         }
         else {
-          classpath.add(new File(root, "maven32-server-impl"));
+          classpath.add(new File(root, "maven33-server-impl"));
+          classpath.add(new File(root, "maven-polyglot-converter"));
+          classpath.add(new File(root, "core-api"));
         }
       }
     }
@@ -426,7 +428,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           classpath.add(new File(root, "maven30-server-impl.jar"));
         }
         else {
-          classpath.add(new File(root, "maven32-server-impl.jar"));
+          classpath.add(new File(root, "maven33-server-impl.jar"));
+          classpath.add(new File(root, "maven-polyglot-converter.jar"));
+          classpath.add(new File(root, "core-api.jar"));
         }
       }
     }

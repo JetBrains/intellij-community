@@ -44,6 +44,7 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -76,7 +77,7 @@ public class MavenDomUtil {
     if (!(file instanceof XmlFile)) return false;
 
     String name = file.getName();
-    return name.equals(MavenConstants.POM_XML) ||
+    return MavenExecutionOptions.PolyglotType.isProjectFile(name) ||
            name.endsWith(".pom") ||
            name.equals(MavenConstants.SUPER_POM_XML);
   }

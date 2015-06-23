@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class FileFinder {
               }
             }
             else {
-              if (f.getName().equalsIgnoreCase(MavenConstants.POM_XML)) {
+              if (MavenExecutionOptions.PolyglotType.isProjectFile(f.getName())) {
                 result.add(f);
               }
             }

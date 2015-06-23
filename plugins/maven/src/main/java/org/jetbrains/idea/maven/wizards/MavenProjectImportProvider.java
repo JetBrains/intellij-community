@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +93,10 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
 
   @Override
   protected boolean canImportFromFile(VirtualFile file) {
+    if ( ProjectImportBuilder.getCurrentProject() != null ) {
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(ProjectImportBuilder.getCurrentProject());
+      return projectsManager.getGeneralSettings().getPolyglotType().getPomFile().equals(file.getName());
+    } // else TODO?
     return "pom.xml".equals(file.getName());
   }
 

@@ -65,7 +65,8 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
           root = roots[0];
         }
 
-        VirtualFile existingPom = root.findChild(MavenConstants.POM_XML);
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(model.getProject());
+        VirtualFile existingPom = root.findChild(projectsManager.getGeneralSettings().getPolyglotType().getPomFile());
         if (existingPom != null) {
           MavenProjectsManager.getInstance(module.getProject()).addManagedFilesOrUnignore(Collections.singletonList(existingPom));
         }

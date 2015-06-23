@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
 public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
@@ -25,7 +26,7 @@ public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
     String fileName = file.getName();
 
     // MavenDomUtil.isProjectFile(PsiFile)
-    if (fileName.equals(MavenConstants.POM_XML) || fileName.endsWith(".pom") || fileName.equals(MavenConstants.SUPER_POM_XML)) {
+    if (MavenExecutionOptions.PolyglotType.isProjectFile(fileName) || fileName.endsWith(".pom") || fileName.equals(MavenConstants.SUPER_POM_XML)) {
       return true;
     }
 

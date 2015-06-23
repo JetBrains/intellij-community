@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.IOException;
 
@@ -41,11 +42,12 @@ public class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
   @Nullable
   @Override
   protected String encodeFileText(final String content, final VirtualFile file, final Project project) throws IOException {
-    if ("pom.xml".equals(file.getName())) {
+    final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    if (projectsManager.getGeneralSettings().getPolyglotType().getPomFile().equals(file.getName())) {
       return ApplicationManager.getApplication().runReadAction(new ThrowableComputable<String, IOException>() {
         @Override
         public String compute() throws IOException {
-          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("pom.xml", XmlFileType.INSTANCE, content);
+          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(projectsManager.getGeneralSettings().getPolyglotType().getPomFile(), XmlFileType.INSTANCE, content); // TODO Maven do we need file types for each polyglot type?
           final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel.class);
           if (model == null) return null;
           String text = psiFile.getText();

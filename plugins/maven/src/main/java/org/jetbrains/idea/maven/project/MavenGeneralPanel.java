@@ -40,6 +40,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
   private JComboBox checksumPolicyCombo;
   private JComboBox failPolicyCombo;
   private JComboBox pluginUpdatePolicyCombo;
+  private JComboBox ployglotTypeCombo;
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
@@ -50,6 +51,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel pluginUpdatePolicyComboModel = new DefaultComboBoxModel();
+  private final DefaultComboBoxModel polyglotTypeComboModel = new DefaultComboBoxModel();
   private JComponent anchor;
 
   public MavenGeneralPanel() {
@@ -57,6 +59,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
     fillChecksumPolicyCombobox();
     fillFailureBehaviorCombobox();
     fillPluginUpdatePolicyCombobox();
+    fillPolyglotTypeCombobox();
 
     setAnchor(myMultiprojectBuildFailPolicyLabel);
   }
@@ -101,6 +104,16 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
                           });
   }
 
+  private void fillPolyglotTypeCombobox() {
+    ComboBoxUtil.setModel(ployglotTypeCombo, polyglotTypeComboModel,
+                          Arrays.asList(MavenExecutionOptions.PolyglotType.values()),
+                          new Function<MavenExecutionOptions.PolyglotType, Pair<String, ?>>() {
+                            public Pair<String, MavenExecutionOptions.PolyglotType> fun(MavenExecutionOptions.PolyglotType each) {
+                              return Pair.create(each.getDisplayString(), each);
+                            }
+                          });
+  }
+
   public JComponent createComponent() {
     mavenPathsForm.createComponent(); // have to initialize all listeners
     return panel;
@@ -123,6 +136,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
     data.setChecksumPolicy((MavenExecutionOptions.ChecksumPolicy)ComboBoxUtil.getSelectedValue(checksumPolicyComboModel));
     data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
     data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
+    data.setPolyglotType((MavenExecutionOptions.PolyglotType)ComboBoxUtil.getSelectedValue(polyglotTypeComboModel));
     data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
     data.setThreads(threadsEditor.getText());
 
@@ -144,6 +158,7 @@ public class MavenGeneralPanel implements  PanelWithAnchor {
     ComboBoxUtil.select(checksumPolicyComboModel, data.getChecksumPolicy());
     ComboBoxUtil.select(failPolicyComboModel, data.getFailureBehavior());
     ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
+    ComboBoxUtil.select(polyglotTypeComboModel, data.getPolyglotType());
   }
 
   @Nls

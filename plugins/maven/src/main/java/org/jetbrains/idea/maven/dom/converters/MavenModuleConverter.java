@@ -34,7 +34,7 @@ public class MavenModuleConverter extends MavenReferenceConverter<PsiFile> {
   @Override
   public String toString(@Nullable PsiFile psiFile, ConvertContext context) {
     VirtualFile file = context.getFile().getOriginalFile().getVirtualFile();
-    return MavenModulePsiReference.calcRelativeModulePath(file, psiFile.getVirtualFile());
+    return MavenModulePsiReference.calcRelativeModulePath(context.getProject(), file, psiFile.getVirtualFile());
   }
 
   protected PsiReference createReference(PsiElement element, String text, TextRange range) {

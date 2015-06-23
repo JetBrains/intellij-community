@@ -59,6 +59,7 @@
           <root url="jar://$MODULE_DIR$/lib-src/apache-maven-2.2.1-src.zip!/apache-maven-2.2.1/apache-maven/src/test/java" />
           <root url="jar://$MODULE_DIR$/lib-src/apache-maven-2.2.1-src.zip!/apache-maven-2.2.1/maven-project/src/main/java" />
           <root url="jar://$MODULE_DIR$/lib-src/apache-maven-2.2.1-src.zip!/apache-maven-2.2.1/maven-profile/src/main/java" />
+          <root url="jar://$USER_HOME$/.ideaLibSources/classworlds-1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -95,4 +96,3 @@
     <orderEntry type="module" module-name="maven" scope="TEST" />
   </component>
 </module>
-

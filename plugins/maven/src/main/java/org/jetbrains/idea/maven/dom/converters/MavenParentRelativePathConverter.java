@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -54,7 +53,8 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     VirtualFile f = contextFile.getParent().findFileByRelativePath(s);
     if (f == null) return null;
 
-    if (f.isDirectory()) f = f.findChild(MavenConstants.POM_XML);
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
+    if (f.isDirectory()) f = f.findChild(projectsManager.getGeneralSettings().getPolyglotType().getPomFile());
     if (f == null) return null;
 
     return context.getPsiManager().findFile(f);
@@ -119,10 +119,11 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
+    final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
     return new MavenPathReferenceConverter(new Condition<PsiFileSystemItem>() {
       @Override
       public boolean value(PsiFileSystemItem item) {
-        return item.isDirectory() || item.getName().equals("pom.xml");
+        return item.isDirectory() || item.getName().equals(projectsManager.getGeneralSettings().getPolyglotType().getPomFile());
       }
     }).createReferences(genericDomValue, element, context);
   }

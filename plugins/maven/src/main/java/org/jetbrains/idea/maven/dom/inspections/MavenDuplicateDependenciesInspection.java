@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomElementsInspection;
@@ -36,6 +37,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.*;
 
@@ -134,7 +136,8 @@ public class MavenDuplicateDependenciesInspection extends DomElementsInspection<
         return name;
       }
       else {
-        return "pom.xml"; // ?
+        MavenProjectsManager instance = MavenProjectsManager.getInstance(model.getUserData(IndexingDataKeys.PROJECT));
+        return instance.getGeneralSettings().getPolyglotType().getPomFile();
       }
     }
   }

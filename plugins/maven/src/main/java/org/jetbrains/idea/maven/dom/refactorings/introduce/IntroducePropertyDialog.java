@@ -39,6 +39,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
@@ -209,7 +210,8 @@ public class IntroducePropertyDialog extends DialogWrapper {
             projectName = mavenProject.getDisplayName();
           }
           if (StringUtil.isEmptyOrSpaces(projectName)) {
-            projectName = "pom.xml";
+            MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+            projectName = projectsManager.getGeneralSettings().getPolyglotType().getPomFile();
           }
           return Pair.create(projectName, model);
         }

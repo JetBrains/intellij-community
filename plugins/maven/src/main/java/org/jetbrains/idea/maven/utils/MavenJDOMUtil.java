@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 
 import java.io.IOException;
 import java.util.*;
@@ -53,7 +54,8 @@ public class MavenJDOMUtil {
       accessToken.finish();
     }
 
-    return doRead(text, handler);
+    MavenExecutionOptions.PolyglotType polyglotType = MavenExecutionOptions.PolyglotType.fromPomFile(file.getName());
+    return doRead(polyglotType.getConverter().convert(text), handler);
   }
 
   @Nullable
