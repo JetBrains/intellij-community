@@ -217,7 +217,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       if (!Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
         return null;
       }
-      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+      PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
       if (!StringUtil.isEmpty(myExpectedMethodName)) {
         if (method == null) {
           return null;
@@ -279,8 +279,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      PsiElement element = getElementAt();
-      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+      PsiElement method = DebuggerUtilsEx.getContainingMethod(this);
       if (method instanceof PsiLambdaExpression) {
         return method.getTextRange();
       }
