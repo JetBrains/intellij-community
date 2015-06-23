@@ -81,7 +81,12 @@ public class GCUtil {
 
   private static final boolean ourHasBeanInfoCache = SystemInfo.isJavaVersionAtLeast("1.7");
 
-  private static void tryClearBeanInfoCache() {
+  /**
+   * Using java beans (e.g. Groovy does it) results in all referenced class infos being cached in ThreadGroupContext. A valid fix
+   * would be to hold BeanInfo objects on soft references, but that should be done in JDK. So let's clear this cache manually for now, 
+   * in clients that are known to create bean infos. 
+   */
+  public static void tryClearBeanInfoCache() {
     if (ourHasBeanInfoCache) {
       try {
         Class<?> aClass = Class.forName("java.beans.ThreadGroupContext");
