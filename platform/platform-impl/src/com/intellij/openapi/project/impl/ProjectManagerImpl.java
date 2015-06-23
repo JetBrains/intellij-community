@@ -59,7 +59,6 @@ import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -85,6 +84,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
+  private static final Key<List<Pair<VirtualFile, StateStorage>>> CHANGED_FILES_KEY = Key.create("CHANGED_FILES_KEY");
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
@@ -96,7 +96,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private final Object lock = new Object();
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final MultiMap<Project, Pair<VirtualFile, StateStorage>> myChangedProjectFiles = MultiMap.createWeakSet(); //guarded by myChangedProjectFiles
   private final SingleAlarm myChangedFilesAlarm;
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new SmartList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
@@ -647,17 +646,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   }
 
   private void askToReloadProjectIfConfigFilesChangedExternally() {
-    Set<Project> projects;
-    synchronized (myChangedProjectFiles) {
-      if (myChangedProjectFiles.isEmpty()) {
-        return;
-      }
-      projects = new THashSet<Project>(myChangedProjectFiles.keySet());
-    }
-
     List<Project> projectsToReload = new SmartList<Project>();
-    for (Project project : projects) {
-      if (shouldReloadProject(project)) {
+    for (Project project : getOpenProjects()) {
+      if (project.isDisposed()) {
+        continue;
+      }
+
+      List<Pair<VirtualFile, StateStorage>> changes = CHANGED_FILES_KEY.get(project);
+      if (changes == null) {
+        continue;
+      }
+
+      CHANGED_FILES_KEY.set(project, null);
+      if (!changes.isEmpty() && ComponentStoreImpl.reloadStore(changes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED) {
         projectsToReload.add(project);
       }
     }
@@ -686,25 +687,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     else {
       return status == ReloadComponentStoreStatus.SUCCESS || status == ReloadComponentStoreStatus.RESTART_CANCELLED;
     }
-  }
-
-  private boolean shouldReloadProject(@NotNull Project project) {
-    if (project.isDisposed()) {
-      return false;
-    }
-
-    Collection<Pair<VirtualFile, StateStorage>> causes = new SmartList<Pair<VirtualFile, StateStorage>>();
-    synchronized (myChangedProjectFiles) {
-      Collection<Pair<VirtualFile, StateStorage>> changes = myChangedProjectFiles.remove(project);
-      if (!ContainerUtil.isEmpty(changes)) {
-        for (Pair<VirtualFile, StateStorage> change : changes) {
-          causes.add(change);
-        }
-      }
-    }
-
-    return !causes.isEmpty() &&
-           ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED;
   }
 
   @Override
@@ -765,8 +747,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       myChangedApplicationFiles.add(Pair.create(file, storage));
     }
     else {
-      synchronized (myChangedProjectFiles) {
-        myChangedProjectFiles.putValue(project, Pair.create(file, storage));
+      List<Pair<VirtualFile, StateStorage>> changes = CHANGED_FILES_KEY.get(project);
+      if (changes == null) {
+        changes = new SmartList<Pair<VirtualFile, StateStorage>>();
+        CHANGED_FILES_KEY.set(project, changes);
+      }
+
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (changes) {
+        changes.add(Pair.create(file, storage));
       }
     }
 
@@ -781,9 +770,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @Override
   public void reloadProject(@NotNull Project project) {
-    synchronized (myChangedProjectFiles) {
-      myChangedProjectFiles.remove(project);
-    }
+    CHANGED_FILES_KEY.set(project, null);
     doReloadProject(project);
   }
 
@@ -855,10 +842,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
         @Override
         public void run() {
           removeFromOpened(project);
-
-          synchronized (myChangedProjectFiles) {
-            myChangedProjectFiles.remove(project);
-          }
 
           fireProjectClosed(project);
 
