@@ -22,6 +22,7 @@ import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-final class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
+public final class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
   private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -48,14 +49,13 @@ final class SchemesManagerFactoryImpl extends SchemesManagerFactory implements S
     return manager;
   }
 
-  @Override
-  public void updateConfigFilesFromStreamProviders() {
-    for (SchemesManagerImpl registeredManager : myRegisteredManagers) {
+  public void process(@NotNull Consumer<SchemesManagerImpl> processor) {
+    for (SchemesManagerImpl manager : myRegisteredManagers) {
       try {
-        registeredManager.updateConfigFilesFromStreamProviders();
+        processor.consume(manager);
       }
       catch (Throwable e) {
-        LOG.error("Cannot reload settings for " + registeredManager.getClass().getName(), e);
+        LOG.error("Cannot reload settings for " + manager.getClass().getName(), e);
       }
     }
   }

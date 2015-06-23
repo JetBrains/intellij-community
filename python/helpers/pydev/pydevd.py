@@ -589,11 +589,11 @@ class PyDB:
                                     # add import hooks for matplotlib patches if only debug console was started
                                     try:
                                         self.init_matplotlib_in_debug_console()
-                                        self.mpl_hooks_in_debug_console = True
                                         self.mpl_in_use = True
                                     except:
-                                        pydev_log.error("Matplotlib support in debug console failed\n")
-                                        traceback.print_exc()
+                                        PydevdLog(2, "Matplotlib support in debug console failed", traceback.format_exc())
+                                    finally:
+                                        self.mpl_hooks_in_debug_console = True
 
                                 if int_cmd.canBeExecutedBy(curr_thread_id):
                                     PydevdLog(2, "processing internal command ", str(int_cmd))

@@ -276,7 +276,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testEmptyIf() throws Exception {
     doSingleFileTest();
   }
-  
+
+  public void testClassWithInnerStaticImport() throws Exception {
+    doTest("ClassWithInnerStaticImport");
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest((rootDir, rootAfter) -> {
       SafeDeleteTest.this.performAction(qClassName);

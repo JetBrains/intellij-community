@@ -120,7 +120,11 @@ public class UnknownRunConfiguration implements RunConfiguration {
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return null;
+    String factoryName = "";
+    if (myStoredElement != null) {
+      factoryName = myStoredElement.getAttributeValue("type");
+    }
+    throw new ExecutionException("Unknown run configuration type" + (factoryName.isEmpty() ? "" : " " + factoryName));
   }
 
   @Override

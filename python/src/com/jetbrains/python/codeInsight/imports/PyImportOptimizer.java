@@ -59,13 +59,14 @@ public class PyImportOptimizer implements ImportOptimizer {
       public void run() {
         visitor.optimizeImports();
         if (file instanceof PyFile) {
-          new ImportSorter((PyFile) file).run();
+          new ImportSorter((PyFile)file).run();
         }
       }
     };
   }
 
   private static class ImportSorter {
+
     private final PyFile myFile;
     private final List<PyImportStatementBase> myBuiltinImports = new ArrayList<PyImportStatementBase>();
     private final List<PyImportStatementBase> myThirdPartyImports = new ArrayList<PyImportStatementBase>();
@@ -92,19 +93,19 @@ public class PyImportOptimizer implements ImportOptimizer {
         if (importStatement instanceof PyImportStatement && importStatement.getImportElements().length > 1) {
           for (PyImportElement importElement : importStatement.getImportElements()) {
             myMissorted = true;
-            PsiElement toImport = importElement.resolve();
+            // getText() for ImportElement includes alias
             final PyImportStatement splitImport = myGenerator.createImportStatement(langLevel, importElement.getText(), null);
-            prioritize(splitImport, toImport);
+            prioritize(splitImport, importElement.resolve());
           }
         }
         else {
-          PsiElement toImport;
+          final PsiElement toImport;
           if (importStatement instanceof PyFromImportStatement) {
             toImport = ((PyFromImportStatement)importStatement).resolveImportSource();
           }
           else {
             final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
-            toImport = firstImportElement != null? firstImportElement.resolve() : null;
+            toImport = firstImportElement != null ? firstImportElement.resolve() : null;
           }
           prioritize(importStatement, toImport);
         }
@@ -147,13 +148,18 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private void applyResults() {
+      Collections.sort(myBuiltinImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      Collections.sort(myThirdPartyImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      Collections.sort(myProjectImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+
       markGroupBegin(myThirdPartyImports);
       markGroupBegin(myProjectImports);
+
       addImports(myBuiltinImports);
       addImports(myThirdPartyImports);
       addImports(myProjectImports);
-      PsiElement lastElement = myImportBlock.get(myImportBlock.size()-1);
-      PyImportStatementBase firstNonFutureImport = findFirstNonFutureImport();
+      final PsiElement lastElement = myImportBlock.get(myImportBlock.size() - 1);
+      final PyImportStatementBase firstNonFutureImport = findFirstNonFutureImport();
       if (firstNonFutureImport != null) {
         myFile.deleteChildRange(firstNonFutureImport, lastElement);
       }
@@ -163,7 +169,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private PyImportStatementBase findFirstNonFutureImport() {
-      for (PyImportStatementBase importStatement: myImportBlock) {
+      for (PyImportStatementBase importStatement : myImportBlock) {
         if (!(importStatement instanceof PyFromImportStatement && ((PyFromImportStatement)importStatement).isFromFuture())) {
           return importStatement;
         }
@@ -171,14 +177,14 @@ public class PyImportOptimizer implements ImportOptimizer {
       return null;
     }
 
-    private static void markGroupBegin(List<PyImportStatementBase> imports) {
+    private static void markGroupBegin(@NotNull List<PyImportStatementBase> imports) {
       if (imports.size() > 0) {
         imports.get(0).putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
       }
     }
 
     private void addImports(final List<PyImportStatementBase> imports) {
-      for (PyImportStatementBase newImport: imports) {
+      for (PyImportStatementBase newImport : imports) {
         myFile.addBefore(newImport, findFirstNonFutureImport());
       }
     }

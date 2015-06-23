@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,12 +184,13 @@ public class XValueHint extends AbstractValueHint {
               SimpleColoredComponent component = HintUtil.createInformationComponent();
               text.appendToComponent(component);
               if (myFullValueEvaluator != null) {
-                component.append(myFullValueEvaluator.getLinkText(), XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES, new Consumer<MouseEvent>() {
-                  @Override
-                  public void consume(MouseEvent event) {
-                    DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, getProject(), getEditor());
-                  }
-                });
+                component.append(myFullValueEvaluator.getLinkText(), XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
+                                 new Consumer<MouseEvent>() {
+                                   @Override
+                                   public void consume(MouseEvent event) {
+                                     DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, getProject(), getEditor());
+                                   }
+                                 });
                 LinkMouseListenerBase.installSingleTagOn(component);
               }
               showHint(component);
@@ -240,7 +241,9 @@ public class XValueHint extends AbstractValueHint {
             }
             HintManager.getInstance().showErrorHint(getEditor(), errorMessage, start,
                                                     end, HintManager.ABOVE,
-                                                    HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE,
+                                                    HintManager.HIDE_BY_ESCAPE
+                                                    | HintManager.HIDE_BY_TEXT_CHANGE
+                                                    | HintManager.HIDE_BY_SCROLLING,
                                                     0);
           }
         });

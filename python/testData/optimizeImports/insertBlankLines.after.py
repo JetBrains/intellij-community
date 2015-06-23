@@ -1,9 +1,9 @@
 from __future__ import with_statement
-import sys
 import datetime
+import sys
 
-import foo
 from bar import *
+import foo
 
 sys.path
 datetime.datetime

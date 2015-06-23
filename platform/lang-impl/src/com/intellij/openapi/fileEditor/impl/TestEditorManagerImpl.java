@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -52,13 +52,13 @@ import java.util.List;
 import java.util.Map;
 
 @NonNls
-public class TestEditorManagerImpl extends FileEditorManagerEx implements ApplicationComponent, ProjectComponent {
+public class TestEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
 
   private final Project myProject;
 
   private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<VirtualFile,Editor>();
-  private VirtualFile myActiveFile = null;
+  private VirtualFile myActiveFile;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
   public TestEditorManagerImpl(Project project) {
@@ -68,9 +68,21 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
 
   @Override
   @NotNull
-  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                        boolean focusEditor,
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
+                                                                        final boolean focusEditor,
                                                                         boolean searchForSplitter) {
+    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
+      public void run() {
+        result.set(openFileImpl3(file, focusEditor));
+      }
+    }, "", null);
+    return result.get();
+
+  }
+
+  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(VirtualFile file, boolean focusEditor) {
     // for non-text editors. uml, etc
     final FileEditorProvider provider = file.getUserData(FileEditorProvider.KEY);
     if (provider != null && provider.accept(getProject(), file)) {
@@ -329,7 +341,9 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
     if (editor != null){
       EditorFactory.getInstance().releaseEditor(editor);
     }
-    if (Comparing.equal(file, myActiveFile)) myActiveFile = null;
+    if (Comparing.equal(file, myActiveFile)) {
+      myActiveFile = null;
+    }
   }
 
   @Override

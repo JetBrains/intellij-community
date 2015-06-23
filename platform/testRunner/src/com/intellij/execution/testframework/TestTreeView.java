@@ -193,7 +193,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       Rectangle clip = g.getClipBounds();
       final int visibleRowCount = TreeUtil.getVisibleRowCountForFixedRowHeight(this);
       final int firstRow = getClosestRowForLocation(0, visibleRect.y);
-      for (int row = firstRow; row < Math.min(firstRow + visibleRowCount, getRowCount()); row++) {
+      for (int row = firstRow; row < Math.min(firstRow + visibleRowCount + 1, getRowCount()); row++) {
         if (isExpandableHandlerVisibleForCurrentRow(row)) {
           continue;
         }

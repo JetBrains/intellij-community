@@ -1,5 +1,4 @@
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 
 
 class Parent(object):

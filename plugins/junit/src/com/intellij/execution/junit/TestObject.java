@@ -34,9 +34,6 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -321,12 +318,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @NotNull
   @Override
-  protected SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
-    return new JUnitConsoleProperties(getConfiguration(), executor);
-  }
-
-  @NotNull
-  @Override
   protected String getForkMode() {
     return getConfiguration().getForkMode();
   }
@@ -450,12 +441,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected String getFrameworkName() {
     return JUNIT_TEST_FRAMEWORK_NAME;
-  }
-
-  @NotNull
-  protected AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties,
-                                                                        ConsoleView consoleView) {
-    return new RerunFailedTestsAction(consoleView, testConsoleProperties);
   }
 
   @NotNull

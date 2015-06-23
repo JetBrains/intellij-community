@@ -64,7 +64,7 @@ public abstract class CodeStyleSchemes {
 
   public abstract CodeStyleScheme getDefaultScheme();
 
-  public abstract void addScheme(CodeStyleScheme currentScheme);
+  public abstract void addScheme(@NotNull CodeStyleScheme currentScheme);
 
   public abstract void setSchemes(@NotNull List<CodeStyleScheme> schemes);
 }

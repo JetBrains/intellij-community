@@ -116,7 +116,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         alarm.cancelAllRequests();
       }
     }, "", false, getProject(), null, "");
-    long averageDelay = PlatformTestUtil.averageAmongMedians(times.toNativeArray(), 5);
+    long averageDelay = ArrayUtil.averageAmongMedians(times.toNativeArray(), 5);
     System.out.println("averageDelay = " + averageDelay);
     assertTrue(averageDelay < CoreProgressManager.CHECK_CANCELED_DELAY_MILLIS *3);
   }

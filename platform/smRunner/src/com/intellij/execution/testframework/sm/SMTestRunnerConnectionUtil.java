@@ -95,17 +95,27 @@ public class SMTestRunnerConnectionUtil {
                                                                   @NotNull ProcessHandler processHandler,
                                                                   @NotNull TestConsoleProperties consoleProperties,
                                                                   ExecutionEnvironment environment) throws ExecutionException {
-    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, environment);
+    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties);
     console.attachToProcess(processHandler);
     return console;
   }
 
   @NotNull
   public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
+                                                         @NotNull TestConsoleProperties consoleProperties) {
+    return createConsole(testFrameworkName, consoleProperties, null);
+  }
+
+  /**
+   * @deprecated use {@link SMTestRunnerConnectionUtil#createConsole(String, TestConsoleProperties)} instead
+   * (to be removed in IDEA 16)
+   */
+  @NotNull
+  public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
                                                          @NotNull TestConsoleProperties consoleProperties,
                                                          ExecutionEnvironment environment) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
-    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, environment, splitterPropertyName);
+    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, splitterPropertyName);
     initConsoleView(consoleView, testFrameworkName);
     return consoleView;
   }
@@ -231,6 +241,7 @@ public class SMTestRunnerConnectionUtil {
       @Override
       public void startNotified(final ProcessEvent event) {
         eventsProcessor.onStartTesting();
+        outputConsumer.onStartTesting();
       }
 
       @Override
@@ -264,7 +275,7 @@ public class SMTestRunnerConnectionUtil {
     }
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
   @SuppressWarnings({"unused", "deprecation"})
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                           @NotNull TestConsoleProperties consoleProperties,
@@ -273,7 +284,7 @@ public class SMTestRunnerConnectionUtil {
     return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, locator, false, null);
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
   @SuppressWarnings({"unused", "deprecation"})
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
@@ -282,7 +293,7 @@ public class SMTestRunnerConnectionUtil {
                                                                     boolean idBasedTreeConstruction,
                                                                     @Nullable TestProxyFilterProvider filterProvider) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
-    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, environment, splitterPropertyName);
+    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, splitterPropertyName);
     initConsoleView(consoleView, testFrameworkName, locator, idBasedTreeConstruction, filterProvider);
     return consoleView;
   }
@@ -332,13 +343,13 @@ public class SMTestRunnerConnectionUtil {
     return createAndAttachConsole(testFrameworkName, processHandler, consoleProperties, commandLineState.getEnvironment());
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
   @SuppressWarnings("unused")
   public static ConsoleView createConsole(@NotNull String testFrameworkName,
                                           @NotNull CommandLineState commandLineState,
                                           @NotNull ModuleRunConfiguration config,
                                           @NotNull Executor executor) throws ExecutionException {
     TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName, executor);
-    return createConsole(testFrameworkName, consoleProperties, commandLineState.getEnvironment());
+    return createConsole(testFrameworkName, consoleProperties);
   }
 }

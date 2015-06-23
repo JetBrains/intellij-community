@@ -202,9 +202,10 @@ public class ExtensionsRootType extends RootType {
     Enumeration<URL> urlEnumeration = plugin != null ? cl.getResources(resourcesPath) : null;
     if (urlEnumeration == null) return ContainerUtil.emptyList();
 
+    PluginId corePluginId = PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID);
     Set<URL> excludedUrls = ContainerUtil.newHashSet();
-    if (!plugin.getUseIdeaClassLoader()) {
-      IdeaPluginDescriptor corePlugin = PluginManager.getPlugin(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
+    if (!plugin.getUseIdeaClassLoader() && !pluginId.equals(corePluginId)) {
+      IdeaPluginDescriptor corePlugin = PluginManager.getPlugin(corePluginId);
       ClassLoader ideaClassLoader = ObjectUtils.assertNotNull(corePlugin).getPluginClassLoader();
       Enumeration<URL> resources = ideaClassLoader.getResources(resourcesPath);
       while (resources.hasMoreElements()) {

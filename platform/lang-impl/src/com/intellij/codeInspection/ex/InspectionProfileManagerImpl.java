@@ -229,7 +229,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public void updateProfile(@NotNull Profile profile) {
-    mySchemesManager.addNewScheme(profile, true);
+    mySchemesManager.addScheme(profile);
     updateProfileImpl(profile);
   }
 
@@ -323,7 +323,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
 
   @Override
   public void addProfile(@NotNull final Profile profile) {
-    mySchemesManager.addNewScheme(profile, true);
+    mySchemesManager.addScheme(profile);
   }
 
   @Override

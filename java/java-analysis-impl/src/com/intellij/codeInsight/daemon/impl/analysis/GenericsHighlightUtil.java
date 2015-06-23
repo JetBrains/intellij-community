@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -469,7 +469,7 @@ public class GenericsHighlightUtil {
               }
 
               if (isDefault || !isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                final String message = isDefault
+                final String message = isDefault && !isAbstract
                                        ? " inherits unrelated defaults for "
                                        : " inherits abstract and default for ";
                 final String inheritUnrelatedDefaultsMessage = HighlightUtil.formatClass(aClass) +
@@ -912,18 +912,15 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkOverrideAnnotation(PsiMethod method, final LanguageLevel languageLevel) {
-    PsiModifierList list = method.getModifierList();
-    final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
-    if (overrideAnnotation == null) {
-      return null;
-    }
+  static HighlightInfo checkOverrideAnnotation(@NotNull PsiMethod method,
+                                               @NotNull PsiAnnotation overrideAnnotation,
+                                               @NotNull LanguageLevel languageLevel) {
     try {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superMethod != null && method.getContainingClass().isInterface()) {
         final PsiMethod psiMethod = superMethod.getMethod();
         final PsiClass containingClass = psiMethod.getContainingClass();
-        if (containingClass != null && 
+        if (containingClass != null &&
             CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
             psiMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
           superMethod = null;

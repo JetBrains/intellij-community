@@ -10,4 +10,4 @@ interface A5 {
   Iterator  iterator();
 }
 
-abstract class <error descr="B inherits unrelated defaults for iterator() from types A5 and A4">B</error> implements A5, A4 {}
+abstract class <error descr="B inherits abstract and default for iterator() from types A5 and A4">B</error> implements A5, A4 {}

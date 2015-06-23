@@ -169,6 +169,7 @@ public class ApplicationImplTest extends PlatformTestCase {
       anotherReadActionStarted[i] = new AtomicBoolean();
       anotherThreadStarted[i] = new AtomicBoolean();
     }
+    final StringBuffer LOG = new StringBuffer();
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -176,7 +177,7 @@ public class ApplicationImplTest extends PlatformTestCase {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              System.out.println("inside read action");
+              LOG.append("inside read action\n");
               readStarted = true;
               while (!tryingToStartWriteAction);
               TimeoutUtil.sleep(100);
@@ -186,12 +187,12 @@ public class ApplicationImplTest extends PlatformTestCase {
                 new Thread(new Runnable() {
                   @Override
                   public void run() {
-                    System.out.println("another thread started "+finalI);
+                    LOG.append("\nanother thread started " + finalI);
                     anotherThreadStarted[finalI].set(true);
                     ApplicationManager.getApplication().runReadAction(new Runnable() {
                       @Override
                       public void run() {
-                        System.out.println("inside another thread read action " + finalI);
+                        LOG.append("\ninside another thread read action " + finalI);
                         anotherReadActionStarted[finalI].set(true);
                         try {
                           Thread.sleep(100);
@@ -200,10 +201,10 @@ public class ApplicationImplTest extends PlatformTestCase {
                           throw new RuntimeException(e);
                         }
                         anotherReadActionStarted[finalI].set(false);
-                        System.out.println("finished another thread read action " + finalI);
+                        LOG.append("\nfinished another thread read action " + finalI);
                       }
                     });
-                    System.out.println("another thread finished " + finalI);
+                    LOG.append("\nanother thread finished " + finalI);
                   }
                 },"another read action "+i).start();
               }
@@ -218,7 +219,7 @@ public class ApplicationImplTest extends PlatformTestCase {
                 }
                 TimeoutUtil.sleep(20);
               }
-              System.out.println("finished read action");
+              LOG.append("\nfinished read action");
             }
           });
         }
@@ -231,18 +232,21 @@ public class ApplicationImplTest extends PlatformTestCase {
 
     while (!readStarted);
     tryingToStartWriteAction = true;
-    System.out.println("write about to start");
+    LOG.append("\nwrite about to start");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        System.out.println("inside write action");
+        LOG.append("\ninside write action");
         for (AtomicBoolean readStarted : anotherReadActionStarted) {
           assertThat(!readStarted.get(), "must not start another read action while write is running");
         }
-        System.out.println("finished write action");
+        LOG.append("\nfinished write action");
       }
     });
-    if (exception != null) throw exception;
+    if (exception != null) {
+      System.err.println(LOG);
+      throw exception;
+    }
   }
 
   private void assertThat(boolean condition, String msg) {

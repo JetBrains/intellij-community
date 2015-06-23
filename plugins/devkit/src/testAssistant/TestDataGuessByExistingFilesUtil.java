@@ -302,6 +302,7 @@ public class TestDataGuessByExistingFilesUtil {
     }
 
     public void populate(@NotNull String testName, @NotNull VirtualFile matched) {
+      if (testName.isEmpty()) return;
       final String withoutExtension = FileUtil.getNameWithoutExtension(testName);
       boolean excludeExtension = !withoutExtension.equals(testName);
       testName = withoutExtension;

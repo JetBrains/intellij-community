@@ -490,7 +490,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             }
           }
           LOG.assertTrue(element.getTextRange() != null);
-          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, isInNonStaticImport(element)));
+          final PsiFile containingFile = psiClass.getContainingFile();
+          final boolean sameFileWithSingleClass = containingFile instanceof PsiClassOwner &&
+                                                  ((PsiClassOwner)containingFile).getClasses().length == 1 &&
+                                                  element.getContainingFile() == containingFile;
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, sameFileWithSingleClass || isInNonStaticImport(element)));
         }
         return true;
       }

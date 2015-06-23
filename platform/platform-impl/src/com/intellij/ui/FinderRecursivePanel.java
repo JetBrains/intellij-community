@@ -210,6 +210,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent event) {
+        if (event.getValueIsAdjusting()) return;
         if (isMergeListItemsRunning()) return;
         if (myUpdateSelectedPathModeActive.get()) return;
         updateRightComponent(true);
@@ -537,32 +538,35 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     });
   }
 
-  protected <T> void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList list, @NotNull List<T> newItems) {
+  protected void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList list, @NotNull List<T> newItems) {
     setMergeListItemsRunning(true);
 
-    if (listModel.getSize() == 0) {
-      listModel.add(newItems);
-    }
-    else if (newItems.size() == 0) {
-      listModel.removeAll();
-    } else {
-
-      int newSelectedIndex = -1;
-
-      T selection = (T)list.getSelectedValue();
-      if (selection != null) {
-        newSelectedIndex = newItems.indexOf(selection);
+    try {
+      if (listModel.getSize() == 0) {
+        listModel.add(newItems);
       }
+      else if (newItems.size() == 0) {
+        listModel.removeAll();
+      }
+      else {
+
+        int newSelectedIndex = -1;
+
+        T selection = (T)list.getSelectedValue();
+        if (selection != null) {
+          newSelectedIndex = newItems.indexOf(selection);
+        }
 
 
-      listModel.removeAll();
-      listModel.add(newItems);
+        listModel.removeAll();
+        listModel.add(newItems);
 
-      list.setSelectedIndex(newSelectedIndex);
+        list.setSelectedIndex(newSelectedIndex);
+      }
     }
-
-
-    setMergeListItemsRunning(false);
+    finally {
+      setMergeListItemsRunning(false);
+    }
   }
 
   public boolean isMergeListItemsRunning() {

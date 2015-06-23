@@ -475,7 +475,8 @@ public class JVMNameUtil {
   }
 
   @Nullable
-  public static String getClassVMName(PsiClass containingClass) {
+  public static String getClassVMName(@Nullable PsiClass containingClass) {
+    if (containingClass == null) return null;
     if (containingClass instanceof PsiAnonymousClass) {
       return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) +
              JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);

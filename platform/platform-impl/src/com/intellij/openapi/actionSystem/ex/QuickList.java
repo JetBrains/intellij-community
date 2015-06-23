@@ -98,6 +98,11 @@ public class QuickList extends ExternalizableSchemeAdapter {
     return 29 * myName.hashCode() + Comparing.hashcode(myDescription);
   }
 
+  @Override
+  public String toString() {
+    return getName() + " " + getDescription();
+  }
+
   @NotNull
   public String getActionId() {
     return QUICK_LIST_PREFIX + getName();
