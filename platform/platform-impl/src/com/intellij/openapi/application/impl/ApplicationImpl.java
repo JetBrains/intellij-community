@@ -33,10 +33,10 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
-import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -167,7 +167,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void bootstrapPicoContainer(@NotNull String name) {
     super.bootstrapPicoContainer(name);
-    getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
+    getPicoContainer().registerComponentImplementation(IComponentStore.class, ApplicationStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }
 
