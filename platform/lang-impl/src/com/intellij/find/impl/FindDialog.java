@@ -677,7 +677,8 @@ public class FindDialog extends DialogWrapper {
 
     if (myResultsPreviewTable != null &&
         myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX &&
-        myResultsPreviewTable.getSelectedRowCount() != 0
+        myResultsPreviewTable.getSelectedRowCount() != 0 &&
+        !myModel.isReplaceState()
        ) {
       navigateToSelectedUsage(myResultsPreviewTable);
       return;
