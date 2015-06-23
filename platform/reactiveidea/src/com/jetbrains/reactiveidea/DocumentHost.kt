@@ -19,28 +19,21 @@ package com.jetbrains.reactiveidea
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentAdapter
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.impl.event.MarkupModelListener
-import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.ui.ColorUtil
 import com.jetbrains.reactivemodel.*
-import com.jetbrains.reactivemodel.models.*
+import com.jetbrains.reactivemodel.models.ListModel
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.signals.Signal
 import com.jetbrains.reactivemodel.signals.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
-import java.awt.Color
-import java.util.HashMap
 
 public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document, project: Project?, providesMarkup: Boolean, caretGuard: Guard) {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
@@ -108,7 +101,7 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
         doc.putUserData(TIMESTAMP, evts.size())
 
         ApplicationManager.getApplication().runWriteAction {
-          CommandProcessor.getInstance().executeCommand(null, {
+          CommandProcessor.getInstance().executeCommand(project, {
             caretGuard.lock {
               if (!recursionGuard.locked) {
                 recursionGuard.lock {
@@ -119,7 +112,7 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
                 }
               }
             }
-          }, null, null)
+          }, "doc sync", DocCommandGroupId.noneGroupId(doc))
         }
 
       }
