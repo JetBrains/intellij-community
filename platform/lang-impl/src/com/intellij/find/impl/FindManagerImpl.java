@@ -65,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -303,10 +304,12 @@ public class FindManagerImpl extends FindManager {
     private final VirtualFile myFile;
     private final FindModel myFindModel;
     private final TreeMap<Integer, Integer> mySkipRangesSet;
+    private final CharSequence myText;
 
     private FindExceptCommentsOrLiteralsData(VirtualFile file, FindModel model, CharSequence text) {
       myFile = file;
       myFindModel = model.clone();
+      myText = ImmutableCharSequence.asImmutable(text);
 
       TreeMap<Integer, Integer> result = new TreeMap<Integer, Integer>();
 
@@ -340,8 +343,11 @@ public class FindManagerImpl extends FindManager {
       }
     }
 
-    boolean isAcceptableFor(FindModel model, VirtualFile file) {
-      return Comparing.equal(myFile, file) && myFindModel.equals(model);
+    boolean isAcceptableFor(FindModel model, VirtualFile file, CharSequence text) {
+      return Comparing.equal(myFile, file) &&
+             myFindModel.equals(model) &&
+             Comparing.equal(myText, text)
+        ;
     }
 
     @Override
@@ -367,7 +373,7 @@ public class FindManagerImpl extends FindManager {
     }
 
     FindExceptCommentsOrLiteralsData data = model.getUserData(ourExceptCommentsOrLiteralsDataKey);
-    if (data == null || !data.isAcceptableFor(model, file)) {
+    if (data == null || !data.isAcceptableFor(model, file, text)) {
       model.putUserData(ourExceptCommentsOrLiteralsDataKey, data = new FindExceptCommentsOrLiteralsData(file, model, text));
     }
 

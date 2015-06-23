@@ -243,15 +243,15 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       else {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(runnable);
       }
-    }
-    try {
-      return (T)future.get();
-    }
-    catch (InterruptedException e) {
-      throw new ProcessCanceledException(e);
-    }
-    catch (ExecutionException e) {
-      throw (E) e.getCause();
+      try {
+        return (T)future.get();
+      }
+      catch (InterruptedException e) {
+        throw new ProcessCanceledException(e);
+      }
+      catch (ExecutionException e) {
+        throw (E) e.getCause();
+      }
     }
   }
 

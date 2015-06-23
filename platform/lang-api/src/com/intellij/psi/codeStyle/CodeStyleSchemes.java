@@ -18,6 +18,9 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.List;
 
 public abstract class CodeStyleSchemes {
   public static CodeStyleSchemes getInstance(){
@@ -32,6 +35,7 @@ public abstract class CodeStyleSchemes {
 
   public abstract CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme);
 
+  @TestOnly
   public abstract void deleteScheme(CodeStyleScheme scheme);
 
   @Nullable
@@ -60,6 +64,8 @@ public abstract class CodeStyleSchemes {
 
   public abstract CodeStyleScheme getDefaultScheme();
 
-  public abstract void addScheme(CodeStyleScheme currentScheme);
+  public abstract void addScheme(@NotNull CodeStyleScheme currentScheme);
+
+  public abstract void setSchemes(@NotNull List<CodeStyleScheme> schemes);
 }
 

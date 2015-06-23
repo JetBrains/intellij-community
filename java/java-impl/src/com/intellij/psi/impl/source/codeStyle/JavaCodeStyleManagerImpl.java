@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
 
     final boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
-    final boolean incompleteCode = (flags & UNCOMPLETE_CODE) != 0;
+    final boolean incompleteCode = (flags & INCOMPLETE_CODE) != 0;
 
     final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
     if (adjuster != null) {

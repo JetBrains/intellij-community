@@ -30,6 +30,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
@@ -46,6 +48,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
@@ -56,7 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
+  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
@@ -418,5 +421,10 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public boolean collectOutputFromProcessHandler() {
     return false;
+  }
+
+  @Override
+  public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
+    return new TestNGConsoleProperties(this, executor);
   }
 }

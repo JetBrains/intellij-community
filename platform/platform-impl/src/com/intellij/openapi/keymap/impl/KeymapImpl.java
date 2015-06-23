@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.ExternalInfo;
-import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -49,7 +48,7 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class KeymapImpl implements Keymap, ExternalizableScheme {
+public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapImpl");
 
   @NonNls private static final String KEY_MAP = "keymap";
@@ -60,7 +59,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   @NonNls private static final String KEYSTROKE_ATTRIBUTE = "keystroke";
   @NonNls private static final String FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke";
   @NonNls private static final String SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke";
-  @NonNls private static final String ABBREVIATION = "abbreviation";
   @NonNls private static final String ACTION = "action";
   @NonNls private static final String VERSION_ATTRIBUTE = "version";
   @NonNls private static final String PARENT_ATTRIBUTE = "parent";
@@ -76,7 +74,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   @NonNls private static final String VIRTUAL_KEY_PREFIX = "VK_";
   @NonNls private static final String EDITOR_ACTION_PREFIX = "Editor";
 
-  private String myName;
   private KeymapImpl myParent;
   private boolean myCanModify = true;
 
@@ -99,7 +96,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private KeymapManagerEx myKeymapManager;
-  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   static {
     ourNamesForKeycodes = new HashMap<Integer, String>();
@@ -118,30 +114,17 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return myName;
-  }
-
   @Override
   public String getPresentableName() {
     return getName();
   }
 
-  @Override
-  public void setName(@NotNull String name) {
-    myName = name;
-  }
-
-
   public KeymapImpl deriveKeymap() {
     if (canModify()) {
-      return copy(false);
+      return copy();
     }
     else {
       KeymapImpl newKeymap = new KeymapImpl();
-
       newKeymap.myParent = this;
       newKeymap.myName = null;
       newKeymap.myCanModify = canModify();
@@ -149,7 +132,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
   }
 
-  public KeymapImpl copy(boolean copyExternalInfo) {
+  @NotNull
+  public KeymapImpl copy() {
     KeymapImpl newKeymap = new KeymapImpl();
     newKeymap.myParent = myParent;
     newKeymap.myName = myName;
@@ -158,15 +142,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     newKeymap.cleanShortcutsCache();
 
     for (Map.Entry<String, LinkedHashSet<Shortcut>> entry : myActionId2ListOfShortcuts.entrySet()) {
-      LinkedHashSet<Shortcut> list = entry.getValue();
-      String key = entry.getKey();
-      newKeymap.myActionId2ListOfShortcuts.put(key, new LinkedHashSet<Shortcut>(list));
+      newKeymap.myActionId2ListOfShortcuts.put(entry.getKey(), new LinkedHashSet<Shortcut>(entry.getValue()));
     }
-
-    if (copyExternalInfo) {
-      newKeymap.myExternalInfo.copy(myExternalInfo);
-    }
-
     return newKeymap;
   }
 
@@ -978,12 +955,6 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   @Override
   public void removeAbbreviation(String actionId, String abbreviation) {
 
-  }
-
-  @Override
-  @NotNull
-  public ExternalInfo getExternalInfo() {
-    return myExternalInfo;
   }
 
   @Override

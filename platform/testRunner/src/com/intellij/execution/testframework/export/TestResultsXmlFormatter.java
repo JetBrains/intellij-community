@@ -18,6 +18,8 @@ package com.intellij.execution.testframework.export;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
@@ -25,8 +27,14 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -38,17 +46,25 @@ import java.util.*;
 public class TestResultsXmlFormatter {
 
   private static final String ELEM_RUN = "testrun";
-  private static final String ELEM_TEST = "test";
-  private static final String ELEM_SUITE = "suite";
-  private static final String ATTR_NAME = "name";
-  private static final String ATTR_DURATION = "duration";
-  private static final String ELEM_COUNT = "count";
-  private static final String ATTR_VALUE = "value";
-  private static final String ELEM_OUTPUT = "output";
-  private static final String ATTR_OUTPUT_TYPE = "type";
-  private static final String ATTR_STATUS = "status";
-  private static final String TOTAL_STATUS = "total";
+  public static final String ELEM_TEST = "test";
+  public static final String ELEM_SUITE = "suite";
+  public static final String ATTR_NAME = "name";
+  public static final String ATTR_DURATION = "duration";
+  public static final String ATTR_LOCATION = "locationUrl";
+  public static final String ELEM_COUNT = "count";
+  public static final String ATTR_VALUE = "value";
+  public static final String ELEM_OUTPUT = "output";
+  public static final String ATTR_OUTPUT_TYPE = "type";
+  public static final String ATTR_STATUS = "status";
+  public static final String TOTAL_STATUS = "total";
   private static final String ATTR_FOORTER_TEXT = "footerText";
+  public static final String STATUS_PASSED = "passed";
+  public static final String STATUS_FAILED = "failed";
+  public static final String STATUS_ERROR = "error";
+  public static final String STATUS_IGNORED = "ignored";
+  public static final String STATUS_SKIPPED = "skipped";
+  
+  public static final Key<RunnerAndConfigurationSettingsImpl> SETTINGS = Key.create("RUN_CONFIGURATION_SETTINGS");
 
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
@@ -102,6 +118,20 @@ public class TestResultsXmlFormatter {
       endElement(ELEM_COUNT);
     }
 
+    RunnerAndConfigurationSettingsImpl settings =
+      (RunnerAndConfigurationSettingsImpl)RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).getSettings(myRuntimeConfiguration);
+    if (settings == null && myRuntimeConfiguration instanceof UserDataHolder) {
+      settings = ((UserDataHolder)myRuntimeConfiguration).getUserData(SETTINGS);
+    }
+    if (settings != null) {
+      final Element config = new Element("config");
+      try {
+        settings.writeExternal(config);
+      }
+      catch (WriteExternalException ignore) {}
+      processJDomElement(config);
+    }
+
     CompositeFilter f = new CompositeFilter(myRuntimeConfiguration.getProject());
     for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
       Filter[] filters = eachProvider.getDefaultFilters(myRuntimeConfiguration.getProject());
@@ -123,18 +153,36 @@ public class TestResultsXmlFormatter {
     myResultHandler.endDocument();
   }
 
+  private void processJDomElement(Element config) throws SAXException {
+    final String name = config.getName();
+    final LinkedHashMap<String, String> attributes = new LinkedHashMap<String, String>();
+    for (Attribute attribute : config.getAttributes()) {
+      attributes.put(attribute.getName(), attribute.getValue());
+    }
+    startElement(name, attributes);
+    for (Element child : config.getChildren()) {
+      processJDomElement(child);
+    }
+    endElement(name);
+  }
+
   private static void increment(Map<String, Integer> counts, String status) {
     Integer count = counts.get(status);
     counts.put(status, count != null ? count + 1 : 1);
   }
 
   private void processNode(AbstractTestProxy node, final Filter filter) throws SAXException {
+    ProgressManager.checkCanceled();
     Map<String, String> attrs = new HashMap<String, String>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
     Long duration = node.getDuration();
     if (duration != null) {
       attrs.put(ATTR_DURATION, String.valueOf(duration));
+    }
+    String locationUrl = node.getLocationUrl();
+    if (locationUrl != null) {
+      attrs.put(ATTR_LOCATION, locationUrl);
     }
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
     startElement(elemName, attrs);
@@ -227,17 +275,20 @@ public class TestResultsXmlFormatter {
     // TODO enumeration!
     switch (magnitude) {
       case 0:
-        return "skipped";
+        return STATUS_SKIPPED;
+      case 2:
+      case 4:
+        return STATUS_SKIPPED;
       case 5:
-        return "ignored";
+        return STATUS_IGNORED;
       case 1:
-        return "passed";
+        return STATUS_PASSED;
       case 6:
-        return "failed";
+        return STATUS_FAILED;
       case 8:
-        return "error";
+        return STATUS_ERROR;
       default:
-        return node.isPassed() ? "passed" : "failed";
+        return node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
     }
   }
 

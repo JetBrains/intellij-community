@@ -603,13 +603,15 @@ public class UIUtil {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     Stroke oldStroke = g.getStroke();
     try {
-      g.setStroke(new BasicStroke(0.7F));
-      double cycle = 4;
-      final double wavedAt = rectangle.y + (double)rectangle.height /2 - .5;
+      float thickness = 0.7f;
+      g.setStroke(new BasicStroke(thickness));
+      double height = 1;
+      double cycle = 4*height;
+      final double wavedAt = rectangle.y + rectangle.height - thickness - height;
       GeneralPath wavePath = new GeneralPath();
-      wavePath.moveTo(rectangle.x, wavedAt -  Math.cos(rectangle.x * 2 * Math.PI / cycle));
-      for (int x = rectangle.x + 1; x <= rectangle.x + rectangle.width; x++) {
-        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle) );
+      wavePath.moveTo(rectangle.x, wavedAt - Math.cos(rectangle.x * 2 * Math.PI / cycle)*height);
+      for (int x = rectangle.x + 1; x < rectangle.x + rectangle.width; x++) {
+        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle)*height);
       }
       g.draw(wavePath);
     }
@@ -1289,7 +1291,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaBasedLookAndFeel() {
-    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
+    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

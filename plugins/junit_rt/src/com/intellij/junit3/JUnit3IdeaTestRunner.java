@@ -18,8 +18,6 @@ package com.intellij.junit3;
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
@@ -179,7 +177,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
       final Map attrs = new HashMap();
       attrs.put("name", getMethodName(test));
       attrs.put("message", failureMessage != null ? failureMessage : "");
-      System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+      System.out.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_FAILED, attrs));
     }
 
     private static String getMethodName(Test test) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public class LeafPsiElement extends LeafElement implements PsiElement, NavigationItem {
@@ -89,10 +90,10 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   public PsiFile getContainingFile() {
     final PsiFile file = SharedImplUtil.getContainingFile(this);
     if (file == null || !file.isValid()) invalid();
-    //noinspection ConstantConditions
     return file;
   }
 
+  @Contract("-> fail")
   private void invalid() {
     ProgressIndicatorProvider.checkCanceled();
 
@@ -259,7 +260,6 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   public Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) invalid();
-    //noinspection ConstantConditions
     return manager.getProject();
   }
 

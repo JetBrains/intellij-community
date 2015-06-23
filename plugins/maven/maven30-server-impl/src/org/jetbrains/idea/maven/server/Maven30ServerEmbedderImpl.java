@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -163,6 +164,14 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
       else if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DISABLED) {
         commandLineOptions.add("-q");
+      }
+
+      String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+      if (mavenEmbedderCliOptions != null) {
+        commandLineOptions.addAll(StringUtil.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
+      }
+      if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
+        myAlwaysUpdateSnapshots = true;
       }
 
       //noinspection unchecked
@@ -316,7 +325,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       myBuildStartTime = new Date();
 
-      myAlwaysUpdateSnapshots = alwaysUpdateSnapshots;
+      myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
 
       setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
     }

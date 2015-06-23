@@ -230,6 +230,7 @@ public class TargetOptionsComponent extends JPanel {
     @Override
     public void removeRow(int idx) {
       myItems.remove(idx);
+      fireTableRowsDeleted(idx, idx);
     }
 
     public void setItems(Map<Module, String> items) {

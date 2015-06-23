@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -58,19 +57,11 @@ public class GotoImplementationTest extends CodeInsightTestCase {
     VirtualFile projectFile = vfsRoot.findChild("test.ipr");
     myProject = ProjectManagerEx.getInstanceEx().loadProject(projectFile.getPath());
 
-    simulateProjectOpen();
     ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    ((ModuleManagerImpl)ModuleManager.getInstance(myProject)).projectClosed();
-    super.tearDown();
-  }
-
   public void test() throws Exception {
-
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
     Module[] modules = moduleManager.getModules();
     assertEquals(3, modules.length);

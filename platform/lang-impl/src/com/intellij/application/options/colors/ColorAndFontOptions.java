@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
@@ -59,9 +58,9 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nls;
@@ -75,9 +74,11 @@ import java.util.*;
 import java.util.List;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
+  private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
+
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
 
-  private HashMap<String,MyColorScheme> mySchemes;
+  private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
   public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
@@ -96,7 +97,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private boolean myApplyCompleted = false;
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.colors.ColorAndFontOptions");
 
   @Override
   public boolean isModified() {
@@ -199,7 +199,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     resetSchemesCombo(null);
   }
 
-  public void addImportedScheme(@NotNull final EditorColorsScheme imported) {
+  public void addImportedScheme(@NotNull EditorColorsScheme imported) {
     MyColorScheme newScheme = new MyColorScheme(imported);
     initScheme(newScheme);
 
@@ -232,25 +232,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     if (myApplyCompleted) {
       return;
     }
+
     try {
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
-      myColorsManager.removeAllSchemes();
+      List<EditorColorsScheme> result = new ArrayList<EditorColorsScheme>(mySchemes.values().size());
       for (MyColorScheme scheme : mySchemes.values()) {
         if (!scheme.isDefault()) {
           scheme.apply();
-          myColorsManager.addColorsScheme(scheme.getOriginalScheme());
         }
+        result.add(scheme.getOriginalScheme());
       }
+      myColorsManager.setSchemes(result);
 
       EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
       myColorsManager.setGlobalScheme(originalScheme);
       if (originalScheme != null && DarculaLaf.NAME.equals(originalScheme.getName()) && !UIUtil.isUnderDarcula()) {
-        int ok = Messages.showYesNoDialog(
+        if (Messages.showYesNoDialog(
           "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
           "Darcula Look and Feel",
-          Messages.getQuestionIcon());
-        if (ok == Messages.YES) {
+          Messages.getQuestionIcon()) == Messages.YES) {
           LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
           DarculaInstaller.install();
         }
@@ -469,11 +470,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private void initAll() {
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    EditorColorsScheme[] allSchemes = colorsManager.getAllSchemes();
-
-    mySchemes = new HashMap<String, MyColorScheme>();
-    for (EditorColorsScheme allScheme : allSchemes) {
+    mySchemes = new THashMap<String, MyColorScheme>();
+    for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
       initScheme(schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
@@ -648,7 +646,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   public synchronized void reset() {
     if (!myInitResetInvoked) {
       try {
-        super.reset();
         if (!myInitResetCompleted) {
           ensureSchemesPanel();
 
@@ -663,12 +660,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       finally {
         myInitResetInvoked = true;
       }
-
     }
     else {
       revertChanges();
     }
-
   }
 
   public synchronized void resetFromChild() {
@@ -983,7 +978,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static class MyColorScheme extends EditorColorsSchemeImpl {
-
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String                            myName;
     private boolean myIsNew = false;
@@ -999,9 +993,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
-      if (parentScheme instanceof ExternalizableScheme) {
-        getExternalInfo().copy(((ExternalizableScheme)parentScheme).getExternalInfo());
-      }
       initFonts();
     }
 

@@ -207,4 +207,11 @@ public class OrderEntryUtil {
     }
   }
 
+  public static DependencyScope intersectScopes(DependencyScope scope1, DependencyScope scope2) {
+    if (scope1 == scope2) return scope1;
+    if (scope1 == DependencyScope.COMPILE) return scope2;
+    if (scope2 == DependencyScope.COMPILE) return scope1;
+    if (scope1 == DependencyScope.TEST || scope2 == DependencyScope.TEST) return DependencyScope.TEST;
+    return scope1;
+  }
 }

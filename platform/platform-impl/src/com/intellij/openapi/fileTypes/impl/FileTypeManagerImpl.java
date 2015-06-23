@@ -304,12 +304,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static boolean toLog() {
-    return RE_DETECT_ASYNC && ApplicationManager.getApplication().isUnitTestMode();
+  boolean toLog;
+  private boolean toLog() {
+    return toLog;
   }
 
   private static void log(@SuppressWarnings("UnusedParameters") String message) {
-    //System.out.println(message);
+    System.out.println(message);
   }
 
   private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("File type re-detect", Conditions.alwaysFalse(), -1, new Processor<Collection<VirtualFile>>() {
@@ -425,7 +426,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return type == null ? UnknownFileType.INSTANCE : type;
   }
 
-  public static void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
+  public void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
     file.putUserData(FILE_TYPE_KEY, fileType);
     if (toLog()) {
       log("F: Cached file type for "+file.getName()+" to "+(fileType == null ? null : fileType.getName()));
@@ -1108,7 +1109,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
    */
   private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<FileNameMatcher> matchers, boolean addScheme) {
     if (addScheme) {
-      mySchemesManager.addNewScheme(fileType, true);
+      mySchemesManager.addScheme(fileType);
     }
     for (FileNameMatcher matcher : matchers) {
       myPatternsTable.addAssociation(matcher, fileType);
@@ -1260,7 +1261,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     for (FileType fileType : fileTypes) {
-      mySchemesManager.addNewScheme(fileType, true);
+      mySchemesManager.addScheme(fileType);
       if (fileType instanceof AbstractFileType) {
         ((AbstractFileType)fileType).initSupport();
       }

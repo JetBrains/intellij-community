@@ -6,9 +6,6 @@
 
     <extensionPoint name="remoteServer.util.CloudDeploymentRuntimeProvider"
                     interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
-
-    <extensionPoint name="remoteServer.CloudTerminalProvider"
-                    interface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -31,6 +28,8 @@
     <projectService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager"
                     serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationManagerImpl"/>
     <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.log.ConsoleTerminalProvider"/>
   </extensions>
   <application-components>
     <component>

@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="maven-server-api" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" name="commons-logging" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="Maven3">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/maven3/boot/plexus-classworlds-2.4.jar!/" />

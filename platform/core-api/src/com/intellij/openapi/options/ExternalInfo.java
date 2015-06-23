@@ -35,10 +35,6 @@ public final class ExternalInfo {
     myCurrentFileName = currentFileName;
   }
 
-  public void copy(@NotNull ExternalInfo externalInfo) {
-    myCurrentFileName = externalInfo.myCurrentFileName;
-  }
-
   @Nullable
   public String getPreviouslySavedName() {
     return myPreviouslySavedName;
@@ -54,14 +50,6 @@ public final class ExternalInfo {
 
   public void setHash(int newHash) {
     myContentHash = newHash;
-  }
-
-  public boolean isRemote() {
-    return myRemote;
-  }
-
-  public void markRemote() {
-    myRemote = true;
   }
 
   @Override

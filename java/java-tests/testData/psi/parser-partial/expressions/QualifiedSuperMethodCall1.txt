@@ -6,6 +6,8 @@ PsiJavaFile:QualifiedSuperMethodCall1.java
           <empty list>
         PsiIdentifier:d('d')
       PsiJavaToken:DOT('.')
+      PsiReferenceParameterList
+        <empty list>
       PsiKeyword:super('super')
     PsiExpressionList
       PsiJavaToken:LPARENTH('(')

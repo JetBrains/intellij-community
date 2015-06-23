@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,10 @@ public class UpDownHandler {
         lookup = null;
       }
 
-      e.getPresentation().setEnabled(lookup == null);
+      JComboBox comboBox = UIUtil.findComponentOfType(myInput, JComboBox.class);
+      boolean popupMenuVisible = comboBox != null && comboBox.isPopupVisible();
+
+      e.getPresentation().setEnabled(lookup == null && !popupMenuVisible);
     }
   }
 }

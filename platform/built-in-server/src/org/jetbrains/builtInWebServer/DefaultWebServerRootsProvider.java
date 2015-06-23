@@ -47,19 +47,22 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     @NotNull
     @Override
     protected OrderRootType[] compute() {
-      OrderRootType javaDocRootType;
-      try {
-        javaDocRootType = JavadocOrderRootType.getInstance();
-      }
-      catch (Throwable e) {
-        javaDocRootType = null;
-      }
-
+      OrderRootType javaDocRootType = getJavadocOrderRootType();
       return javaDocRootType == null
              ? new OrderRootType[]{OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES}
              : new OrderRootType[]{javaDocRootType, OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES};
     }
   };
+
+  @Nullable
+  private static OrderRootType getJavadocOrderRootType() {
+    try {
+      return JavadocOrderRootType.getInstance();
+    }
+    catch (Throwable e) {
+      return null;
+    }
+  }
 
   @Nullable
   @Override
@@ -250,7 +253,7 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
 
   @Nullable
   private static PathInfo getInfoForDocJar(@NotNull final VirtualFile file, @NotNull final Project project) {
-    final OrderRootType javaDocRootType = JavadocOrderRootType.getInstance();
+    final OrderRootType javaDocRootType = getJavadocOrderRootType();
     if (javaDocRootType == null) {
       return null;
     }

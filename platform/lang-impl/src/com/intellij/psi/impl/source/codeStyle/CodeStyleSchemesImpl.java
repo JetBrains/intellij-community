@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   protected static final String DEFAULT_SCHEME_NAME = "Default";
@@ -135,6 +136,11 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @Override
+  public void setSchemes(@NotNull List<CodeStyleScheme> schemes) {
+    mySchemesManager.setSchemes(schemes);
+  }
+
+  @Override
   public CodeStyleScheme getDefaultScheme() {
     return findSchemeByName(DEFAULT_SCHEME_NAME);
   }
@@ -146,7 +152,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @Override
-  public void addScheme(CodeStyleScheme scheme) {
-    mySchemesManager.addNewScheme(scheme, true);
+  public void addScheme(@NotNull CodeStyleScheme scheme) {
+    mySchemesManager.addScheme(scheme);
   }
 }

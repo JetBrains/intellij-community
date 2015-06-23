@@ -78,7 +78,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private final InspectionToolRegistrar myRegistrar;
   @NotNull
   private final Map<String, Element> myUninstalledInspectionsSettings;
-  private final ExternalInfo myExternalInfo = new ExternalInfo();
   protected InspectionProfileImpl mySource;
   private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
   private volatile Map<String, Boolean> myDisplayLevelMap;
@@ -90,6 +89,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private String myDescription;
   private boolean myModified;
   private volatile boolean myInitialized;
+
+  private final Object myLock = new Object();
 
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile);
@@ -294,7 +295,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     super.serializeInto(element, preserveCompatibility);
 
-    synchronized (myExternalInfo) {
+    synchronized (myLock) {
       if (!myInitialized) {
         for (Element el : myUninstalledInspectionsSettings.values()) {
           element.addContent(el.clone());
@@ -531,7 +532,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void initInspectionTools(@Nullable Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS) return;
     if (myInitialized) return;
-    synchronized (myExternalInfo) {
+    synchronized (myLock) {
       if (myInitialized) return;
       myInitialized = initialize(project);
     }
@@ -664,9 +665,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   @NotNull
   public ModifiableModel getModifiableModel() {
-    InspectionProfileImpl modifiableModel = new InspectionProfileImpl(this);
-    modifiableModel.myExternalInfo.copy(myExternalInfo);
-    return modifiableModel;
+    return new InspectionProfileImpl(this);
   }
 
   @Override
@@ -802,8 +801,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myTools = model.myTools;
     myProfileManager = model.getProfileManager();
 
-    myExternalInfo.copy(model.getExternalInfo());
-
     InspectionProfileManager.getInstance().fireProfileChanged(model);
   }
 
@@ -872,9 +869,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
-  @NotNull
+  @Nullable
   public ExternalInfo getExternalInfo() {
-    return myExternalInfo;
+    return null;
   }
 
   @NotNull
@@ -934,7 +931,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (myBaseProfile == null) return null;
     if (myDisplayLevelMap == null) {
       // Synchronizing on myExternalInfo as initInspectionTools() synchronizes on it internally.
-      synchronized (myExternalInfo) {
+      synchronized (myLock) {
         if (myDisplayLevelMap == null) {
           initInspectionTools(null);
           TreeMap<String,Boolean> map = new TreeMap<String, Boolean>();
@@ -1012,13 +1009,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public static <T> T initAndDo(@NotNull Computable<T> runnable) {
-    boolean old = InspectionProfileImpl.INIT_INSPECTIONS;
+    boolean old = INIT_INSPECTIONS;
     try {
-      InspectionProfileImpl.INIT_INSPECTIONS = true;
+      INIT_INSPECTIONS = true;
       return runnable.compute();
     }
     finally {
-      InspectionProfileImpl.INIT_INSPECTIONS = old;
+      INIT_INSPECTIONS = old;
     }
   }
 }

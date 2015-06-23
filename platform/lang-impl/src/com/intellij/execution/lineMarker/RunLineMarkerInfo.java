@@ -21,22 +21,18 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionPopupMenuImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,51 +56,65 @@ public class RunLineMarkerInfo extends LineMarkerInfo<PsiElement> {
         return true;
       }
 
+      @NotNull
+      @Override
+      public ActionGroup getPopupMenuActions() {
+        List<AnAction> actions = new ArrayList<AnAction>();
+        Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
+        actions.addAll(ContainerUtil.mapNotNull(executors,
+                                                new Function<Executor, AnAction>() {
+                                                  @Override
+                                                  public AnAction fun(Executor executor) {
+                                                    return new ActionWrapper(ActionManager.getInstance().getAction(executor.getContextActionId()));
+                                                  }
+                                                }));
+        actions.add(Separator.getInstance());
+        actions.addAll(ContainerUtil.mapNotNull(RunLineMarkerContributor.EXTENSION.allForLanguage(myElement.getLanguage()),
+                                                new NullableFunction<RunLineMarkerContributor, AnAction>() {
+                                                  @Nullable
+                                                  @Override
+                                                  public AnAction fun(RunLineMarkerContributor contributor) {
+                                                    AnAction action = contributor.getAdditionalAction(myElement);
+                                                    return action != null ? new ActionWrapper(action) : null;
+                                                  }
+                                                }));
+
+        return new DefaultActionGroup(actions);
+      }
+
       @Override
       public AnAction getClickAction() {
-        return new AnAction() {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            List<AnAction> actions = new ArrayList<AnAction>();
-            Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-            actions.addAll(ContainerUtil.mapNotNull(executors,
-                                                    new Function<Executor, AnAction>() {
-                                                      @Override
-                                                      public AnAction fun(Executor executor) {
-                                                        return ActionManager.getInstance().getAction(executor.getContextActionId());
-                                                      }
-                                                    }));
-            actions.add(Separator.getInstance());
-            actions.addAll(ContainerUtil.mapNotNull(RunLineMarkerContributor.EXTENSION.allForLanguage(myElement.getLanguage()),
-                                                    new NullableFunction<RunLineMarkerContributor, AnAction>() {
-                                                      @Nullable
-                                                      @Override
-                                                      public AnAction fun(RunLineMarkerContributor contributor) {
-                                                        return contributor.getAdditionalAction(myElement);
-                                                      }
-                                                    }));
-            ActionPopupMenuImpl
-              popupMenu = (ActionPopupMenuImpl)ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP,
-                                                                                                 new DefaultActionGroup(actions));
-            final MouseEvent me = (MouseEvent)e.getInputEvent();
-            final Component c = me.getComponent();
-            if (c != null && c.isShowing()) {
-              final DataContext delegate = DataManager.getInstance().getDataContext(c, me.getX(), me.getY());
-              final DataContext dataContext = new MyDataContext(delegate);
-              popupMenu.setDataContextProvider(new Getter<DataContext>() {
-                @Override
-                public DataContext get() {
-                  return dataContext;
-                }
-              });
-              popupMenu.getComponent().show(c, me.getX(), me.getY());
-            }
-          }
-        };
+        return null;
       }
     };
   }
 
+  private class ActionWrapper extends AnAction {
+
+    private final AnAction myOrigin;
+
+    public ActionWrapper(@NotNull AnAction origin) {
+      myOrigin = origin;
+      copyFrom(origin);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      myOrigin.update(createEvent(e));
+    }
+
+    @NotNull
+    private AnActionEvent createEvent(AnActionEvent e) {
+      return new AnActionEvent(
+        e.getInputEvent(), new MyDataContext(e.getDataContext()), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myOrigin.actionPerformed(createEvent(e));
+    }
+  }
+  
   private class MyDataContext extends UserDataHolderBase implements DataContext {
     private final DataContext myDelegate;
 

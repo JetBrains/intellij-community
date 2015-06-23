@@ -56,7 +56,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   }
 
   protected TestResultsPanel createTestResultsPanel() {
-    testNGResults = new TestNGResults(getConsole().getComponent(), myConfiguration, this, myEnvironment);
+    testNGResults = new TestNGResults(getConsole().getComponent(), myConfiguration, this);
     return testNGResults;
   }
 

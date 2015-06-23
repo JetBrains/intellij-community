@@ -109,7 +109,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.swing.*;
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
@@ -232,21 +233,23 @@ public class BuildManager implements ApplicationComponent{
           return pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName());
         }
       });
-      final Date now = new Date();
-      for (File buildDataProjectDir : dirs) {
-        final File usageFile = getUsageFile(buildDataProjectDir);
-        if (usageFile.exists()) {
-          final Pair<Date, File> usageData = readUsageFile(usageFile);
-          if (usageData != null) {
-            final File projectFile = usageData.second;
-            if ((projectFile != null && !projectFile.exists()) || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
-              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir.getPath());
-              FileUtil.delete(buildDataProjectDir);
+      if (dirs != null) {
+        final Date now = new Date();
+        for (File buildDataProjectDir : dirs) {
+          final File usageFile = getUsageFile(buildDataProjectDir);
+          if (usageFile.exists()) {
+            final Pair<Date, File> usageData = readUsageFile(usageFile);
+            if (usageData != null) {
+              final File projectFile = usageData.second;
+              if ((projectFile != null && !projectFile.exists()) || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
+                LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir.getPath());
+                FileUtil.delete(buildDataProjectDir);
+              }
             }
           }
-        }
-        else {
-          updateUsageFile(null, buildDataProjectDir); // set usage stamp to start countdown
+          else {
+            updateUsageFile(null, buildDataProjectDir); // set usage stamp to start countdown
+          }
         }
       }
     }
@@ -916,6 +919,58 @@ public class BuildManager implements ApplicationComponent{
     return "com.intellij.compiler.server.BuildManager";
   }
 
+  @NotNull
+  public static Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(Project project) {
+    Sdk projectJdk = null;
+    int sdkMinorVersion = 0;
+    JavaSdkVersion sdkVersion = null;
+
+    final Set<Sdk> candidates = new HashSet<Sdk>();
+    final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
+      candidates.add(defaultSdk);
+    }
+
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+        candidates.add(sdk);
+      }
+    }
+
+    // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
+    final JavaSdk javaSdkType = JavaSdk.getInstance();
+    for (Sdk candidate : candidates) {
+      final String vs = candidate.getVersionString();
+      if (vs != null) {
+        final JavaSdkVersion candidateVersion = javaSdkType.getVersion(vs);
+        if (candidateVersion != null) {
+          final int candidateMinorVersion = getMinorVersion(vs);
+          if (projectJdk == null) {
+            sdkVersion = candidateVersion;
+            sdkMinorVersion = candidateMinorVersion;
+            projectJdk = candidate;
+          }
+          else {
+            final int result = candidateVersion.compareTo(sdkVersion);
+            if (result > 0 || (result == 0 && candidateMinorVersion > sdkMinorVersion)) {
+              sdkVersion = candidateVersion;
+              sdkMinorVersion = candidateMinorVersion;
+              projectJdk = candidate;
+            }
+          }
+        }
+      }
+    }
+
+    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+      projectJdk = internalJdk;
+      sdkVersion = javaSdkType.getVersion(internalJdk);
+    }
+    return Pair.create(projectJdk, sdkVersion);
+  }
+
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, SequentialTaskExecutor projectTaskQueue) throws Exception {
     ensureListening();
 
@@ -953,52 +1008,11 @@ public class BuildManager implements ApplicationComponent{
 
     if (StringUtil.isEmptyOrSpaces(forcedCompiledJdkHome)) {
       // choosing sdk with which the build process should be run
-      Sdk projectJdk = null;
-      int sdkMinorVersion = 0;
-
-      final Set<Sdk> candidates = new HashSet<Sdk>();
-      final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
-        candidates.add(defaultSdk);
-      }
-
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-          candidates.add(sdk);
-        }
-      }
-
-      // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
-      final JavaSdk javaSdkType = JavaSdk.getInstance();
-      for (Sdk candidate : candidates) {
-        final String vs = candidate.getVersionString();
-        if (vs != null) {
-          final JavaSdkVersion candidateVersion = javaSdkType.getVersion(vs);
-          if (candidateVersion != null) {
-            final int candidateMinorVersion = getMinorVersion(vs);
-            if (projectJdk == null) {
-              sdkVersion = candidateVersion;
-              sdkMinorVersion = candidateMinorVersion;
-              projectJdk = candidate;
-            }
-            else {
-              final int result = candidateVersion.compareTo(sdkVersion);
-              if (result > 0 || (result == 0 && candidateMinorVersion > sdkMinorVersion)) {
-                sdkVersion = candidateVersion;
-                sdkMinorVersion = candidateMinorVersion;
-                projectJdk = candidate;
-              }
-            }
-          }
-        }
-      }
+      final Pair<Sdk, JavaSdkVersion> pair = getBuildProcessRuntimeSdk(project);
+      final Sdk projectJdk = pair.first;
+      sdkVersion = pair.second;
 
       final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-      if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
-        projectJdk = internalJdk;
-      }
-
       // validate tools.jar presence
       final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
       if (FileUtil.pathsEqual(projectJdk.getHomePath(), internalJdk.getHomePath())) {
@@ -1443,6 +1457,7 @@ public class BuildManager implements ApplicationComponent{
 
     @Override
     public void projectOpened(final Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {

@@ -64,6 +64,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     myProcessor = processor;
   }
 
+  protected GeneralTestEventsProcessor getProcessor() {
+    return myProcessor;
+  }
+
   public void dispose() {
     setProcessor(null);
   }
@@ -307,6 +311,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       LOG.error(getTFrameworkPrefix(myTestFrameworkName) + " @NotNull value is expected.");
     }
   }
+
+  public void onStartTesting() {}
 
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
     @NonNls public static final String KEY_TESTS_COUNT = "testCount";

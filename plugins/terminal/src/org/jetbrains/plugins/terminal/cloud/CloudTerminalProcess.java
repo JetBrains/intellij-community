@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.terminal.cloud;
 
+import com.intellij.util.concurrency.Semaphore;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -23,11 +25,13 @@ public class CloudTerminalProcess extends Process {
   private final OutputStream myOutputStream;
   private final InputStream myInputStream;
 
-  private boolean myRunning = true;
+  private final Semaphore mySemaphore;
 
   public CloudTerminalProcess(OutputStream terminalInput, InputStream terminalOutput) {
     myOutputStream = terminalInput;
     myInputStream = terminalOutput;
+    mySemaphore = new Semaphore();
+    mySemaphore.down();
   }
 
   @Override
@@ -47,9 +51,7 @@ public class CloudTerminalProcess extends Process {
 
   @Override
   public int waitFor() throws InterruptedException {
-    while (myRunning) {
-      Thread.sleep(100);
-    }
+    mySemaphore.waitFor();
     return exitValue();
   }
 
@@ -60,6 +62,6 @@ public class CloudTerminalProcess extends Process {
 
   @Override
   public void destroy() {
-    myRunning = true;
+    mySemaphore.up();
   }
 }

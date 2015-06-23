@@ -22,6 +22,6 @@ class AmbiguityRawGenerics {
     <Z> void foo(I3<Z> s) { }
 
     void bar() {
-        foo<error descr="Ambiguous method call: both 'AmbiguityRawGenerics.foo(I1)' and 'AmbiguityRawGenerics.foo(I2)' match">(()-> { throw new RuntimeException(); })</error>;
+        <error descr="Ambiguous method call: both 'AmbiguityRawGenerics.foo(I1)' and 'AmbiguityRawGenerics.foo(I2)' match">foo</error>(()-> { throw new RuntimeException(); });
     }
 }

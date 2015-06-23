@@ -45,12 +45,10 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.service.SharedThreadPool;
-import org.jetbrains.jps.service.ThreadExecutor;
 
 import javax.tools.Diagnostic;
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -66,22 +64,26 @@ public class ExternalJavacManager {
   public static final String STDOUT_LINE_PREFIX = "JAVAC_PROCESS[STDOUT]";
   public static final String STDERR_LINE_PREFIX = "JAVAC_PROCESS[STDERR]";
   private static final AttributeKey<JavacProcessDescriptor> SESSION_DESCRIPTOR = AttributeKey.valueOf("ExternalJavacServer.JavacProcessDescriptor");
-  private final File mySystemRoot;
-  private final ThreadExecutor myThreadExecutor;
-
-  private ChannelRegistrar myChannelRegistrar;
+  @NotNull
+  private final File myWorkingDir;
+  @NotNull
+  private final ChannelRegistrar myChannelRegistrar;
   private final Map<UUID, JavacProcessDescriptor> myMessageHandlers = new HashMap<UUID, JavacProcessDescriptor>();
   private int myListenPort = DEFAULT_SERVER_PORT;
 
-  public ExternalJavacManager(final File systemRoot, @NotNull ThreadExecutor threadExecutor) {
-    mySystemRoot = systemRoot;
-    myThreadExecutor = threadExecutor;
+  public ExternalJavacManager(@NotNull final File workingDir) {
+    myWorkingDir = workingDir;
+    myChannelRegistrar = new ChannelRegistrar();
+  }
+
+  @NotNull
+  public File getWorkingDir() {
+    return myWorkingDir;
   }
 
   public void start(int listenPort) {
     final ServerBootstrap bootstrap = new ServerBootstrap().group(new NioEventLoopGroup(1, SharedThreadPool.getInstance())).channel(NioServerSocketChannel.class);
     bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
-    myChannelRegistrar = new ChannelRegistrar();
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
@@ -117,7 +119,7 @@ public class ExternalJavacManager {
     }
     try {
       final ExternalJavacProcessHandler processHandler = launchExternalJavacProcess(
-        uuid, javaHome, heapSize, myListenPort, mySystemRoot, vmOptions, compilingTool
+        uuid, javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool
       );
       processHandler.addProcessListener(new ProcessAdapter() {
         public void onTextAvailable(ProcessEvent event, Key outputType) {
@@ -200,11 +202,14 @@ public class ExternalJavacManager {
     //appendParam(cmdLine, "-XX:MaxPermSize=150m");
     //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
     appendParam(cmdLine, "-Djava.awt.headless=true");
-    final int xms = heapSize / 2;
-    if (xms > 32) {
-      appendParam(cmdLine, "-Xms" + xms + "m");
+    if (heapSize > 0) {
+      // if the value is zero or negative, use JVM default memory settings
+      final int xms = heapSize / 2;
+      if (xms > 32) {
+        appendParam(cmdLine, "-Xms" + xms + "m");
+      }
+      appendParam(cmdLine, "-Xmx" + heapSize + "m");
     }
-    appendParam(cmdLine, "-Xmx" + heapSize + "m");
 
     // debugging
     //appendParam(cmdLine, "-XX:+HeapDumpOnOutOfMemoryError");
@@ -268,7 +273,11 @@ public class ExternalJavacManager {
     builder.directory(workingDir);
 
     final Process process = builder.start();
-    return new ExternalJavacProcessHandler(process, myThreadExecutor);
+    return createProcessHandler(process);
+  }
+
+  protected ExternalJavacProcessHandler createProcessHandler(Process process) {
+    return new ExternalJavacProcessHandler(process);
   }
 
   private static void appendParam(List<String> cmdLine, String param) {
@@ -287,25 +296,17 @@ public class ExternalJavacManager {
     return sdkHome + "/bin/java";
   }
 
-  private static class ExternalJavacProcessHandler extends BaseOSProcessHandler {
-    @NotNull
-    private final ThreadExecutor myExecutorService;
+  protected static class ExternalJavacProcessHandler extends BaseOSProcessHandler {
     private volatile int myExitCode;
 
-    ExternalJavacProcessHandler(Process process, @NotNull ThreadExecutor executorService) {
+    public ExternalJavacProcessHandler(Process process) {
       super(process, null, null);
-      myExecutorService = executorService;
       addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(ProcessEvent event) {
           myExitCode = event.getExitCode();
         }
       });
-    }
-
-    @Override
-    protected Future<?> executeOnPooledThread(Runnable task) {
-      return myExecutorService.executeOnPooledThread(task);
     }
 
     public int getExitCode() {

@@ -71,4 +71,29 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
                           "\t}\n" +
                           "}\n");
   }
+
+  public void testWhenTabsDetected_SetContinuationIndentSizeToDoubleTabSize() {
+    CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
+
+    assert indentOptions != null;
+
+    indentOptions.INDENT_SIZE = 1;
+    indentOptions.TAB_SIZE = 2;
+    indentOptions.CONTINUATION_INDENT_SIZE = 8;
+
+    myFixture.configureByText(JavaFileType.INSTANCE,
+                              "public class T {\n" +
+                              "\tvoid run() {\n" +
+                              "\t\tint a = 2 <caret>+ 2;\n" +
+                              "\t}\n" +
+                              "}\n");
+    myFixture.type('\n');
+    myFixture.checkResult("public class T {\n" +
+                          "\tvoid run() {\n" +
+                          "\t\tint a = 2 \n" +
+                          "\t\t\t\t<caret>+ 2;\n" +
+                          "\t}\n" +
+                          "}\n");
+  }
 }

@@ -318,6 +318,7 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
 binding.setVariable("commonJvmArgsForTests", {
   def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
   if (debugPort != null) jdwp += ",address=$debugPort"
+
   return [
     "-ea",
     "-Dio.netty.leakDetectionLevel=PARANOID",
@@ -822,7 +823,10 @@ binding.setVariable("bundledJDKs"){
   requireProperty("jdk.bundled.mac", "1.8")
   requireProperty("jdk.custom.mac", "true")
 
-  setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
+  if (p("jdk.bundled.win") != "false") {
+    setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
+    extractRedistJre(winJDK, "${paths.sandbox}/bundled.win.jdk")
+  }
   if (p("jdk.bundled.linux") != "false"){
     setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
     extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk")

@@ -16,8 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ExternalInfo;
-import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -27,15 +26,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableScheme {
+public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private String myName;
   private Element myRootElement;
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
-  private final ExternalInfo myExternalInfo = new ExternalInfo();
 
   public CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, Element rootElement) {
     myName = name;
@@ -89,18 +86,8 @@ public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableSchem
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return myName;
-  }
-
-  @Override
   public boolean isDefault() {
     return myIsDefault;
-  }
-
-  public String toString() {
-    return getName();
   }
 
   public void writeExternal(Element element) throws WriteExternalException{
@@ -109,16 +96,5 @@ public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableSchem
 
   public void readExternal(Element element) throws InvalidDataException{
     myCodeStyleSettings.readExternal(element);
-  }
-
-  @Override
-  public void setName(@NotNull final String name) {
-    myName = name;
-  }
-
-  @Override
-  @NotNull
-  public ExternalInfo getExternalInfo() {
-    return myExternalInfo;
   }
 }

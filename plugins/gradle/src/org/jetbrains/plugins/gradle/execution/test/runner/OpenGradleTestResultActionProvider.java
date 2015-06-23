@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ToggleModelAction;
@@ -57,7 +58,7 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
 
     @Override
     public void setModel(TestFrameworkRunningModel model) {
-      final RunConfiguration runConfiguration = model.getProperties().getConfiguration();
+      final RunProfile runConfiguration = model.getProperties().getConfiguration();
       if(runConfiguration instanceof ExternalSystemRunConfiguration) {
         mySystemId = ((ExternalSystemRunConfiguration)runConfiguration).getSettings().getExternalSystemId();
       }

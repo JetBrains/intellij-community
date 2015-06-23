@@ -22,7 +22,6 @@ import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.StateEvent;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.openapi.project.Project;
@@ -37,9 +36,8 @@ public class JUnitToolbarPanel extends ToolbarPanel {
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
 
   public JUnitToolbarPanel(final TestConsoleProperties properties,
-                           final ExecutionEnvironment environment,
                            final JComponent parentComponent) {
-    super(properties, environment, parentComponent);
+    super(properties, parentComponent);
   }
 
 

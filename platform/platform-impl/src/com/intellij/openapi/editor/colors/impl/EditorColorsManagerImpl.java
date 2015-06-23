@@ -196,19 +196,22 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public void addColorsScheme(@NotNull EditorColorsScheme scheme) {
     if (!isDefaultScheme(scheme) && !StringUtil.isEmpty(scheme.getName())) {
-      mySchemesManager.addNewScheme(scheme, true);
+      mySchemesManager.addScheme(scheme);
     }
   }
 
   @Override
   public void removeAllSchemes() {
-    mySchemesManager.clearAllSchemes();
-    addDefaultSchemes();
+  }
+
+  @Override
+  public void setSchemes(@NotNull List<EditorColorsScheme> schemes) {
+    mySchemesManager.setSchemes(schemes);
   }
 
   private void addDefaultSchemes() {
     for (DefaultColorsScheme defaultScheme : myDefaultColorSchemesManager.getAllSchemes()) {
-      mySchemesManager.addNewScheme(defaultScheme, true);
+      mySchemesManager.addScheme(defaultScheme);
     }
   }
 

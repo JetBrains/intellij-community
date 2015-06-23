@@ -66,7 +66,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class StorageUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
+  static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
@@ -320,10 +320,10 @@ public class StorageUtil {
   /**
    * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
    */
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type, boolean async) throws IOException {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
     BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
-    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
+    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type);
   }
 
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {

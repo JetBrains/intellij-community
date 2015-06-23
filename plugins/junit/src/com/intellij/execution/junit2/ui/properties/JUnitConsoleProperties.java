@@ -17,14 +17,17 @@ package com.intellij.execution.junit2.ui.properties;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -56,13 +59,19 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
 
   @Override
   protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                         ExecutionEnvironment environment, JComponent parent) {
-    super.appendAdditionalActions(actionGroup, environment, parent);
+                                         JComponent parent) {
+    super.appendAdditionalActions(actionGroup, parent);
     actionGroup.add(createIncludeNonStartedInRerun());
   }
 
   @Override
   public SMTestLocator getTestLocator() {
     return JavaTestLocator.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
+    return new RerunFailedTestsAction(consoleView, this);
   }
 }

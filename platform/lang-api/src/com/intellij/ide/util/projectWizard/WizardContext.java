@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,7 @@ public class WizardContext extends UserDataHolderBase {
    */
   @Nullable
   private final Project myProject;
+  private final Disposable myDisposable;
   private String myProjectFileDirectory;
   private String myProjectName;
   private String myCompilerOutputDirectory;
@@ -71,16 +73,29 @@ public class WizardContext extends UserDataHolderBase {
     myModulesProvider = modulesProvider;
   }
 
+  public Disposable getDisposable() {
+    return myDisposable;
+  }
+
   public interface Listener {
     void buttonsUpdateRequested();
     void nextStepRequested();
   }
 
-  public WizardContext(@Nullable Project project) {
+  public WizardContext(@Nullable Project project, Disposable parentDisposable) {
     myProject = project;
+    myDisposable = parentDisposable;
     if (myProject != null){
       myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
+  }
+
+  /**
+   * Use {@link #WizardContext(Project, Disposable)}.
+   */
+  @Deprecated
+  public WizardContext(@Nullable Project project) {
+    this(project, null);
   }
 
   @Nullable

@@ -22,7 +22,7 @@ class Test {
   }
 
   public void test() {
-    foo<error descr="Ambiguous method call: both 'Test.foo(RunnableX)' and 'Test.foo(Callable<List<?>>)' match">(()->  new ArrayList<Void>() )</error>;
+    <error descr="Ambiguous method call: both 'Test.foo(RunnableX)' and 'Test.foo(Callable<List<?>>)' match">foo</error>(()->  new ArrayList<Void>() );
   }
 
 }

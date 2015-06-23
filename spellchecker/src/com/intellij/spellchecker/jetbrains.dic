@@ -16,6 +16,7 @@ arquillian
 asensitive
 aspectj
 async
+atomikos
 attr
 attlist
 auth
@@ -60,6 +61,7 @@ captcha
 ccflags
 cdata
 cglib
+changelog
 changelist
 charset
 charsets
@@ -76,6 +78,7 @@ clojure
 cloneable
 closable
 closeable
+cloudfoundry
 cmake
 cmdline
 codebase
@@ -99,6 +102,7 @@ covariant
 cron
 ctrl
 customizer
+customizers
 cyclomatic
 cygwin
 datafile
@@ -198,7 +202,10 @@ hardcoded
 hardlink
 hardlinks
 hashcode
+hateoas
 haxe
+hazelcast
+hdiv
 helvetica
 holdability
 hostname
@@ -219,6 +226,8 @@ incrementer
 indextype
 indices
 infile
+infinispan
+informix
 init
 initializer
 initrans
@@ -275,6 +284,7 @@ linestring
 linkplain
 lldb
 llvm
+logback
 localhost
 localtime
 localtimestamp
@@ -321,6 +331,7 @@ mongodb
 monospaced
 multi
 multilinestring
+multipart
 multipoint
 multipolygon
 multiset
@@ -644,6 +655,8 @@ viewports
 vtlvariable
 watchlist
 wchar
+webjar
+webjars
 webpack
 webservice
 whitespace

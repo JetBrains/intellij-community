@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -179,25 +180,21 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     SourcePosition sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
     int lambdaOrdinal = -1;
     if (LambdaMethodFilter.isLambdaName(method.name())) {
-      List<Location> lambdas = ContainerUtil.filter(locationsOfLine(location.declaringType(), sourcePosition), new Condition<Location>() {
-        @Override
-        public boolean value(Location location) {
-          return LambdaMethodFilter.isLambdaName(location.method().name());
-        }
-      });
+      Set<Method> lambdas =
+        ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), new Function<Location, Method>() {
+          @Override
+          public Method fun(Location location) {
+            Method method = location.method();
+            if (LambdaMethodFilter.isLambdaName(method.name())) {
+              return method;
+            }
+            return null;
+          }
+        });
       if (lambdas.size() > 1) {
-        Collections.sort(lambdas, new Comparator<Location>() {
-          @Override
-          public int compare(Location o1, Location o2) {
-            return LambdaMethodFilter.getLambdaOrdinal(o1.method().name()) - LambdaMethodFilter.getLambdaOrdinal(o2.method().name());
-          }
-        });
-        lambdaOrdinal = ContainerUtil.indexOf(lambdas, new Condition<Location>() {
-          @Override
-          public boolean value(Location location) {
-            return location.method().equals(method);
-          }
-        });
+        ArrayList<Method> lambdasList = new ArrayList<Method>(lambdas);
+        Collections.sort(lambdasList, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
+        lambdaOrdinal = lambdasList.indexOf(method);
       }
     }
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);

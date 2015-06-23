@@ -18,6 +18,7 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -68,7 +69,12 @@ public class TestsUIUtil {
       }
     }
     if (Location.DATA_KEY.is(dataId)) return testProxy.getLocation(project, properties.getScope());
-    if (RunConfiguration.DATA_KEY.is(dataId)) return properties.getConfiguration();
+    if (RunConfiguration.DATA_KEY.is(dataId)) {
+      final RunProfile configuration = properties.getConfiguration();
+      if (configuration instanceof RunConfiguration) {
+        return configuration;
+      }
+    }
     return null;
   }
 

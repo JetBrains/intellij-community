@@ -24,7 +24,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +98,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
+  private String[] myEssentialPluginsIds;
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
@@ -175,6 +179,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final String STEPS_PROVIDER = "provider";
   private static final String ELEMENT_EVALUATION = "evaluation";
   private static final String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
+  private static final String ESSENTIAL_PLUGIN = "essential-plugin";
 
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
@@ -751,6 +756,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myPluginChooserPages.add(new PluginChooserPageImpl((Element) child));
     }
 
+    List<Element> essentialPluginsElements = JDOMUtil.getChildren(parentNode, ESSENTIAL_PLUGIN);
+    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
+      @Override
+      public String fun(Element element) {
+        String id = element.getTextTrim();
+        return StringUtil.isNotEmpty(id) ? id : null;
+      }
+    });
+    myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
+
     Element statisticsElement = parentNode.getChild(ELEMENT_STATISTICS);
     if (statisticsElement != null) {
       myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
@@ -818,6 +833,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public List<PluginChooserPage> getPluginChooserPages() {
     return myPluginChooserPages;
+  }
+
+  @Override
+  public boolean isEssentialPlugin(@NotNull String pluginId) {
+    return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
   }
 
   @Override

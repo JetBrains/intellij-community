@@ -53,6 +53,7 @@ public class TestPackage extends TestObject {
     super(configuration, environment);
   }
 
+  @Nullable
   @Override
   public SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();

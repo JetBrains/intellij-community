@@ -13,7 +13,7 @@ import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.SyncScrollSupport;
-import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
+import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -69,8 +69,6 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     myWrapperRequest = request;
     myDiffChanges = diffChanges;
 
-    assert getEditor1() != null && getEditor2() != null;
-
     for (EditorEx editor : getEditors()) {
       if (editor == null) continue;
       EditorSettings settings = editor.getSettings();
@@ -91,12 +89,11 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     }
 
     for (DiffChange change : myDiffChanges) {
-      DiffDrawUtil.createBorderLineMarker(getEditor1(), change.myEndLine1, SeparatorPlacement.TOP);
-      DiffDrawUtil.createBorderLineMarker(getEditor2(), change.myEndLine2, SeparatorPlacement.TOP);
+      DiffDrawUtil.createBorderLineMarker(getEditor(Side.LEFT), change.myEndLine1, SeparatorPlacement.TOP);
+      DiffDrawUtil.createBorderLineMarker(getEditor(Side.RIGHT), change.myEndLine2, SeparatorPlacement.TOP);
     }
 
     DiffSplitter splitter = myContentPanel.getSplitter();
-    assert splitter != null;
     splitter.setDividerWidth(120);
     splitter.setShowDividerIcon(false);
   }
@@ -105,12 +102,6 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
-  }
-
-  @NotNull
-  @Override
-  protected boolean[] checkForceReadOnly() {
-    return new boolean[]{true, true};
   }
 
   @NotNull
@@ -147,20 +138,20 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     return new Runnable() {
       @Override
       public void run() {
-        assert getEditor1() != null && getEditor2() != null;
         for (DiffChange change : myDiffChanges) {
-          setupHighlighting(getEditor1(), change, Side.LEFT);
-          setupHighlighting(getEditor2(), change, Side.RIGHT);
+          setupHighlighting(change, Side.LEFT);
+          setupHighlighting(change, Side.RIGHT);
         }
       }
     };
   }
 
-  private static void setupHighlighting(@NotNull EditorEx editor, @NotNull DiffChange change, @NotNull Side side) {
+  private void setupHighlighting(@NotNull DiffChange change, @NotNull Side side) {
     PropertyRecord record = change.getRecord();
     List<? extends LineFragment> fragments = change.getFragments();
     assert fragments != null;
 
+    EditorEx editor = getEditor(side);
     DocumentEx document = editor.getDocument();
     int shift = document.getLineStartOffset(change.getStartLine(side));
 
@@ -206,7 +197,6 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
-      assert getEditor1() != null && getEditor2() != null;
       Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, getEditor1().getComponent());
       Rectangle clip = gg.getClipBounds();
       if (clip == null) return;
@@ -214,23 +204,26 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       gg.setColor(DiffDrawUtil.getDividerColor());
       gg.fill(clip);
 
-      JComponent header1 = getEditor1().getHeaderComponent();
-      JComponent header2 = getEditor2().getHeaderComponent();
+      EditorEx editor1 = getEditor1();
+      EditorEx editor2 = getEditor2();
+
+      JComponent header1 = editor1.getHeaderComponent();
+      JComponent header2 = editor2.getHeaderComponent();
       int headerOffset1 = header1 == null ? 0 : header1.getHeight();
       int headerOffset2 = header2 == null ? 0 : header2.getHeight();
 
       // TODO: painting is ugly if shift1 != shift2 (ex: search field is opened for one of editors)
-      int shift1 = getEditor1().getScrollingModel().getVerticalScrollOffset() - headerOffset1;
-      int shift2 = getEditor2().getScrollingModel().getVerticalScrollOffset() - headerOffset2;
+      int shift1 = editor1.getScrollingModel().getVerticalScrollOffset() - headerOffset1;
+      int shift2 = editor2.getScrollingModel().getVerticalScrollOffset() - headerOffset2;
       double rotate = shift1 == shift2 ? 0 : Math.atan2(shift2 - shift1, clip.width);
 
-      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), false, rotate == 0, getEditor1(), getEditor2(), this);
+      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), false, rotate == 0, editor1, editor2, this);
 
       for (DiffChange change : myDiffChanges) {
-        int y1 = getEditor1().logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;
-        int y2 = getEditor2().logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.RIGHT), 0)).y - shift2;
-        int endY1 = getEditor1().logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.LEFT), 0)).y - shift1;
-        int endY2 = getEditor2().logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.RIGHT), 0)).y - shift2;
+        int y1 = editor1.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;
+        int y2 = editor2.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.RIGHT), 0)).y - shift2;
+        int endY1 = editor1.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.LEFT), 0)).y - shift1;
+        int endY2 = editor2.logicalPositionToXY(new LogicalPosition(change.getEndLine(Side.RIGHT), 0)).y - shift2;
 
         AffineTransform oldTransform = gg.getTransform();
         gg.translate(0, y1);
@@ -439,6 +432,8 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       myContent1 = DiffContentFactory.getInstance().create(null, document1);
       myContent2 = DiffContentFactory.getInstance().create(null, document2);
       myEmbedded = embedded;
+
+      putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
     }
 
     @NotNull

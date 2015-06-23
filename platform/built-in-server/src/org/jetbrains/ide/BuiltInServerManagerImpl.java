@@ -1,5 +1,6 @@
 package org.jetbrains.ide;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -84,20 +85,15 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
     return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        int defaultPort = getDefaultPort();
-        int workerCount = 1;
-        // if user set special port number for some service (eg built-in web server), we should slightly increase worker count
-        if (Runtime.getRuntime().availableProcessors() > 1) {
-          for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
-            if (customPortServerManager.getPort() != defaultPort) {
-              workerCount = 2;
-              break;
-            }
-          }
-        }
-
         try {
-          server = BuiltInServer.start(workerCount, defaultPort, PORTS_COUNT, true);
+          BuiltInServer mainServer = StartupUtil.getServer();
+          if (mainServer == null && ApplicationManager.getApplication().isUnitTestMode()) {
+            server = BuiltInServer.start(1, getDefaultPort(), PORTS_COUNT, false, null);
+          }
+          else {
+            LOG.assertTrue(mainServer != null);
+            server = BuiltInServer.start(mainServer.getEventLoopGroup(), false, getDefaultPort(), PORTS_COUNT, true, null);
+          }
           bindCustomPorts(server);
         }
         catch (Throwable e) {

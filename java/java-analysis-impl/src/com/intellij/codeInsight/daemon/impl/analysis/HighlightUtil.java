@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1019,89 +1019,90 @@ public class HighlightUtil extends HighlightUtilBase {
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
         if (text.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
-          final String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
         if (text.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
-          final String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
         if (value == null || text.equals(PsiLiteralExpressionImpl._2_IN_31)) {
-          final String message = JavaErrorMessages.message("integer.number.too.large");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("integer.number.too.large");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
       }
     }
     else if (type == JavaTokenType.LONG_LITERAL) {
-      final String mText = text.endsWith("l") ? text.substring(0, text.length() - 1) : text;
+      String mText = text.endsWith("l") ? text.substring(0, text.length() - 1) : text;
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
       if (!(mText.equals(PsiLiteralExpressionImpl._2_IN_63) &&
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
         if (mText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
-          final String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
         if (mText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
-          final String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
         if (value == null || mText.equals(PsiLiteralExpressionImpl._2_IN_63)) {
-          final String message = JavaErrorMessages.message("long.number.too.large");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("long.number.too.large");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
       }
     }
     else if (isFP) {
       if (value == null) {
-        final String message = JavaErrorMessages.message("malformed.floating.point.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        String message = JavaErrorMessages.message("malformed.floating.point.literal");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      // todo[r.sh] clean this mess up
       if (value != null) {
         if (!StringUtil.endsWithChar(text, '\'')) {
-          final String message = JavaErrorMessages.message("unclosed.char.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("unclosed.char.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
       }
       else {
-        if (!StringUtil.startsWithChar(text, '\'')) return null;
+        if (!StringUtil.startsWithChar(text, '\'')) {
+          return null;
+        }
         if (StringUtil.endsWithChar(text, '\'')) {
           if (text.length() == 1) {
-            final String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+            String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
           text = text.substring(1, text.length() - 1);
         }
         else {
-          final String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
+
         StringBuilder chars = new StringBuilder();
-        final boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
+        boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
         if (!success) {
-          final String message = JavaErrorMessages.message("illegal.escape.character.in.character.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("illegal.escape.character.in.character.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
         int length = chars.length();
         if (length > 1) {
-          final String message = JavaErrorMessages.message("too.many.characters.in.character.literal");
-          final HighlightInfo info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("too.many.characters.in.character.literal");
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertToStringLiteralAction());
           return info;
         }
         else if (length == 0) {
-          final String message = JavaErrorMessages.message("empty.character.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("empty.character.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
       }
     }
     else if (type == JavaTokenType.STRING_LITERAL) {
       if (value == null) {
-        for (final PsiElement element : expression.getChildren()) {
+        for (PsiElement element : expression.getChildren()) {
           if (element instanceof OuterLanguageElement) {
             return null;
           }
@@ -1110,44 +1111,45 @@ public class HighlightUtil extends HighlightUtilBase {
         if (!StringUtil.startsWithChar(text, '\"')) return null;
         if (StringUtil.endsWithChar(text, '\"')) {
           if (text.length() == 1) {
-            final String message = JavaErrorMessages.message("illegal.line.end.in.string.literal");
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+            String message = JavaErrorMessages.message("illegal.line.end.in.string.literal");
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
           }
           text = text.substring(1, text.length() - 1);
         }
         else {
-          final String message = JavaErrorMessages.message("illegal.line.end.in.string.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("illegal.line.end.in.string.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
+
         StringBuilder chars = new StringBuilder();
         boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
         if (!success) {
-          final String message = JavaErrorMessages.message("illegal.escape.character.in.string.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+          String message = JavaErrorMessages.message("illegal.escape.character.in.string.literal");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
       }
     }
 
     if (value instanceof Float) {
-      final Float number = (Float)value;
+      Float number = (Float)value;
       if (number.isInfinite()) {
-        final String message = JavaErrorMessages.message("floating.point.number.too.large");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        String message = JavaErrorMessages.message("floating.point.number.too.large");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
       if (number.floatValue() == 0 && !TypeConversionUtil.isFPZero(text)) {
-        final String message = JavaErrorMessages.message("floating.point.number.too.small");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        String message = JavaErrorMessages.message("floating.point.number.too.small");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
     }
     else if (value instanceof Double) {
-      final Double number = (Double)value;
+      Double number = (Double)value;
       if (number.isInfinite()) {
-        final String message = JavaErrorMessages.message("floating.point.number.too.large");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        String message = JavaErrorMessages.message("floating.point.number.too.large");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
       if (number.doubleValue() == 0 && !TypeConversionUtil.isFPZero(text)) {
-        final String message = JavaErrorMessages.message("floating.point.number.too.small");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        String message = JavaErrorMessages.message("floating.point.number.too.small");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
     }
 
@@ -1749,22 +1751,21 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkExpressionRequired(@NotNull PsiReferenceExpression expression,
-                                               @NotNull JavaResolveResult resultForIncompleteCode) {
+  static HighlightInfo checkExpressionRequired(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult resultForIncompleteCode) {
     if (expression.getNextSibling() instanceof PsiErrorElement) return null;
+
     PsiElement resolved = resultForIncompleteCode.getElement();
-    if (resolved == null) return null;
+    if (resolved == null || resolved instanceof PsiVariable) return null;
+
     PsiElement parent = expression.getParent();
     // String.class or String() are both correct
     if (parent instanceof PsiReferenceExpression || parent instanceof PsiMethodCallExpression) return null;
-    if (resolved instanceof PsiVariable) return null;
+
     String description = JavaErrorMessages.message("expression.expected");
-    final HighlightInfo info =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, new QuickFixActionRegistrarImpl(info));
     return info;
   }
-
 
   @Nullable
   static HighlightInfo checkArrayInitializerApplicable(@NotNull PsiArrayInitializerExpression expression) {
@@ -1782,8 +1783,7 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     String description = JavaErrorMessages.message("array.initializer.not.allowed");
-    HighlightInfo info =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddNewArrayExpressionFix(expression));
     return info;
   }

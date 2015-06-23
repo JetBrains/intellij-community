@@ -34,4 +34,11 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
   public void setLambdaOrdinal(Integer lambdaOrdinal) {
     myLambdaOrdinal = lambdaOrdinal;
   }
+
+  @Override
+  public void loadState(JavaLineBreakpointProperties state) {
+    super.loadState(state);
+
+    myLambdaOrdinal = state.myLambdaOrdinal;
+  }
 }

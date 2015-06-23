@@ -57,7 +57,6 @@ setProperty("maySkipAndroidPlugin", true)
 
 target(compile: "Compile project") {
   loadProject()
-  bundledJDKs()
   projectBuilder.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
 
@@ -67,6 +66,7 @@ target(compile: "Compile project") {
 
   projectBuilder.targetFolder = "$out/classes"
   projectBuilder.cleanOutput()
+  bundledJDKs()
   projectBuilder.buildProduction()
   projectBuilder.makeModuleTests(findModule("jps-builders"))
 }
@@ -159,7 +159,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   layoutMac(args, home, paths)
   layoutUnix(args, home, paths)
 
-  buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin])
+  buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/bundled.win.jdk"])
   buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
                         paths.distWin, paths.distUnix, paths.distMac)
 

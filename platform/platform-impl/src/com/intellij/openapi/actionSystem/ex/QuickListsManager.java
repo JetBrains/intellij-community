@@ -27,8 +27,6 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConvertor;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -36,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class QuickListsManager implements ExportableApplicationComponent {
@@ -66,6 +65,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
                                                                   RoamingType.PER_USER);
   }
 
+  @NotNull
   public static QuickListsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(QuickListsManager.class);
   }
@@ -102,11 +102,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
         mySchemesManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
           @Override
           public QuickList convert(Element element) throws Throwable {
-            QuickList item = createItem(element);
-            item.getExternalInfo().setHash(JDOMUtil.getTreeHash(element, true));
-            item.getExternalInfo().setPreviouslySavedName(item.getName());
-            item.getExternalInfo().setCurrentFileName(PathUtilRt.getFileName(path));
-            return item;
+            return createItem(element);
           }
         });
       }
@@ -117,6 +113,11 @@ public class QuickListsManager implements ExportableApplicationComponent {
 
   @Override
   public void disposeComponent() {
+  }
+
+  @NotNull
+  public List<QuickList> getQuickLists() {
+    return mySchemesManager.getAllSchemes();
   }
 
   @NotNull
@@ -142,12 +143,9 @@ public class QuickListsManager implements ExportableApplicationComponent {
     }
   }
 
-  public void setQuickLists(@NotNull QuickList[] quickLists) {
-    mySchemesManager.clearAllSchemes();
+  public void setQuickLists(@NotNull List<QuickList> quickLists) {
     unregisterActions();
-    for (QuickList quickList : quickLists) {
-      mySchemesManager.addNewScheme(quickList, true);
-    }
+    mySchemesManager.setSchemes(quickLists);
     registerActions();
   }
 

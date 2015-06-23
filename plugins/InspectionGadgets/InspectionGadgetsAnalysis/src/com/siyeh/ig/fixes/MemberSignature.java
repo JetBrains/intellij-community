@@ -37,26 +37,18 @@ public class MemberSignature implements Comparable<MemberSignature> {
   private final String signature;
 
   public MemberSignature(PsiField field) {
-    super();
     modifiers = calculateModifierBitmap(field.getModifierList());
     name = field.getName();
     signature = createTypeSignature(field.getType());
   }
 
   public MemberSignature(PsiMethod method) {
-    super();
     modifiers = calculateModifierBitmap(method.getModifierList());
     signature = createMethodSignature(method).replace('/', '.');
-    if (method.isConstructor()) {
-      name = CONSTRUCTOR_NAME;
-    }
-    else {
-      name = method.getName();
-    }
+    name = method.isConstructor() ? CONSTRUCTOR_NAME : method.getName();
   }
 
   public MemberSignature(@NonNls String name, int modifiers, @NonNls String signature) {
-    super();
     this.name = name;
     this.modifiers = modifiers;
     this.signature = signature;
@@ -132,39 +124,37 @@ public class MemberSignature implements Comparable<MemberSignature> {
     return signatureBuffer.toString();
   }
 
-  public static String createPrimitiveType(PsiPrimitiveType primitiveType) {
-    @NonNls final String primitypeTypeSignature;
+  public static String createPrimitiveTypeSignature(PsiPrimitiveType primitiveType) {
     if (primitiveType.equals(PsiType.INT)) {
-      primitypeTypeSignature = "I";
+      return "I";
     }
     else if (primitiveType.equals(PsiType.BYTE)) {
-      primitypeTypeSignature = "B";
+      return "B";
     }
     else if (primitiveType.equals(PsiType.LONG)) {
-      primitypeTypeSignature = "J";
+      return "J";
     }
     else if (primitiveType.equals(PsiType.FLOAT)) {
-      primitypeTypeSignature = "F";
+      return "F";
     }
     else if (primitiveType.equals(PsiType.DOUBLE)) {
-      primitypeTypeSignature = "D";
+      return "D";
     }
     else if (primitiveType.equals(PsiType.SHORT)) {
-      primitypeTypeSignature = "S";
+      return "S";
     }
     else if (primitiveType.equals(PsiType.CHAR)) {
-      primitypeTypeSignature = "C";
+      return "C";
     }
     else if (primitiveType.equals(PsiType.BOOLEAN)) {
-      primitypeTypeSignature = "Z";
+      return "Z";
     }
     else if (primitiveType.equals(PsiType.VOID)) {
-      primitypeTypeSignature = "V";
+      return "V";
     }
     else {
       throw new InternalError();
     }
-    return primitypeTypeSignature;
   }
 
   public static String createTypeSignature(PsiType type) {
@@ -177,16 +167,23 @@ public class MemberSignature implements Comparable<MemberSignature> {
     }
     if (internalType instanceof PsiPrimitiveType) {
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)internalType;
-      final String primitypeTypeSignature = createPrimitiveType(primitiveType);
-      buffer.append(primitypeTypeSignature);
+      buffer.append(createPrimitiveTypeSignature(primitiveType));
     }
     else {
       buffer.append('L');
       if (internalType instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)internalType;
         PsiClass psiClass = classType.resolve();
+        if (psiClass instanceof PsiTypeParameter) {
+          final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
+          final PsiReferenceList extendsList = typeParameter.getExtendsList();
+          final PsiClassType[] types = extendsList.getReferencedTypes();
+          if (types.length > 0) {
+            psiClass = types[0].resolve();
+          }
+        }
         if (psiClass != null) {
-          final StringBuffer postFix = new StringBuffer("");
+          final StringBuilder postFix = new StringBuilder("");
           PsiClass containingClass = psiClass.getContainingClass();
           while (containingClass != null) {
             // construct name for inner classes
@@ -200,8 +197,7 @@ public class MemberSignature implements Comparable<MemberSignature> {
             buffer.append(CommonClassNames.JAVA_LANG_OBJECT);
           }
           else {
-            buffer.append(qualifiedName.replace('.', '/'));
-            buffer.append(postFix);
+            buffer.append(qualifiedName.replace('.', '/')).append(postFix);
           }
         }
       }
@@ -221,10 +217,10 @@ public class MemberSignature implements Comparable<MemberSignature> {
              signature.equals(other.signature) &&
              modifiers == other.modifiers;
     }
-    catch (ClassCastException e) {
+    catch (ClassCastException ignored) {
       return false;
     }
-    catch (NullPointerException e) {
+    catch (NullPointerException ignored) {
       return false;
     }
   }

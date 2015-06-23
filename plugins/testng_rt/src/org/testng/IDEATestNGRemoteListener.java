@@ -1,9 +1,6 @@
 package org.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
-import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.testng.internal.IResultListener;
 import org.testng.xml.XmlTest;
 
@@ -166,7 +163,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       notification = null;
     }
     ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
-    myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+    myPrintStream.println(MapSerializerUtil.asString("testFailed", attrs));
     onTestFinished(result);
   }
 

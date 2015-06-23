@@ -321,6 +321,8 @@ public class FileTypesTest extends PlatformTestCase {
       }
     };
     Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).registerExtension(detector);
+    myFileTypeManager.toLog = true;
+
     try {
       log("T: ------");
       File f = createTempFile("xx.asfdasdfas", "akjdhfksdjgf");
@@ -341,6 +343,7 @@ public class FileTypesTest extends PlatformTestCase {
     }
     finally {
       Extensions.getRootArea().getExtensionPoint(FileTypeRegistry.FileTypeDetector.EP_NAME).unregisterExtension(detector);
+      myFileTypeManager.toLog = false;
     }
   }
 

@@ -115,6 +115,14 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
 
   @Nullable
   private static PsiMethod findTargetMethod(@NotNull DataContext context) {
+    final Location<?> location = Location.DATA_KEY.getData(context);
+    if (location != null) {
+      final PsiElement element = location.getPsiElement();
+      PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+      if (method != null) {
+        return method;
+      }
+    }
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file != null && editor != null) {
@@ -122,13 +130,6 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 
-    final Location<?> location = Location.DATA_KEY.getData(context);
-    if (location != null) {
-      final PsiElement element = location.getPsiElement();
-      if (element instanceof PsiMethod) {
-        return (PsiMethod)element;
-      }
-    }
     return null;
   }
 

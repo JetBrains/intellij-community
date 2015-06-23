@@ -569,12 +569,13 @@ public class HighlightMethodUtil {
 
   @Nullable
   static HighlightInfo checkAmbiguousMethodCallArguments(@NotNull PsiReferenceExpression referenceToMethod,
-                                                @NotNull JavaResolveResult[] resolveResults,
-                                                @NotNull PsiExpressionList list,
-                                                final PsiElement element,
-                                                @NotNull JavaResolveResult resolveResult,
-                                                @NotNull PsiMethodCallExpression methodCall,
-                                                @NotNull PsiResolveHelper resolveHelper) {
+                                                         @NotNull JavaResolveResult[] resolveResults,
+                                                         @NotNull PsiExpressionList list,
+                                                         final PsiElement element,
+                                                         @NotNull JavaResolveResult resolveResult,
+                                                         @NotNull PsiMethodCallExpression methodCall,
+                                                         @NotNull PsiResolveHelper resolveHelper, 
+                                                         @NotNull PsiElement elementToHighlight) {
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     for (JavaResolveResult result : resolveResults) {
@@ -594,7 +595,6 @@ public class HighlightMethodUtil {
 
     String description;
     String toolTip;
-    PsiElement elementToHighlight;
     HighlightInfoType highlightInfoType = HighlightInfoType.ERROR;
     if (methodCandidate2 != null) {
       PsiMethod element1 = methodCandidate1.getElement();
@@ -617,7 +617,6 @@ public class HighlightMethodUtil {
       }
       description = JavaErrorMessages.message("ambiguous.method.call", m1, m2);
       toolTip = createAmbiguousMethodHtmlTooltip(new MethodCandidateInfo[]{methodCandidate1, methodCandidate2});
-      elementToHighlight = list;
     }
     else {
       if (element != null && !resolveResult.isAccessible()) {
@@ -631,9 +630,6 @@ public class HighlightMethodUtil {
         description = JavaErrorMessages.message("cannot.resolve.method", methodName);
         if (candidates.length == 0) {
           return null;
-        }
-        else {
-          elementToHighlight = list;
         }
       }
       toolTip = XmlStringUtil.escapeString(description);

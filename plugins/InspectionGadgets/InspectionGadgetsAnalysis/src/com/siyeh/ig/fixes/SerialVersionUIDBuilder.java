@@ -18,9 +18,12 @@ package com.siyeh.ig.fixes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -76,16 +79,22 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
     };
 
   private SerialVersionUIDBuilder(PsiClass clazz) {
-    super();
     this.clazz = clazz;
     nonPrivateMethods = new HashSet<MemberSignature>();
     final PsiMethod[] methods = clazz.getMethods();
     for (final PsiMethod method : methods) {
-      if (!method.isConstructor() &&
-          !method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        final MemberSignature methodSignature =
-          new MemberSignature(method);
+      if (!method.isConstructor() && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        final MemberSignature methodSignature = new MemberSignature(method);
         nonPrivateMethods.add(methodSignature);
+        SuperMethodsSearch.search(method, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
+          @Override
+          public boolean process(MethodSignatureBackedByPsiMethod method) {
+            final MemberSignature superSignature = new MemberSignature(methodSignature.getName(), methodSignature.getModifiers(),
+                                                                       MemberSignature.createMethodSignature(method.getMethod()));
+            nonPrivateMethods.add(superSignature);
+            return true;
+          }
+        });
       }
     }
     nonPrivateFields = new HashSet<MemberSignature>();
