@@ -47,7 +47,7 @@ public class GCUtil {
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
-    long started = System.nanoTime();
+    //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<Object>();
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
     ArrayList<SoftReference<?>> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
@@ -71,7 +71,7 @@ public class GCUtil {
 
     // do not leave a chance for our created SoftReference's content to lie around until next full GC's
     for(SoftReference createdReference:list) createdReference.clear();
-    System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
+    //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }
 
   private static int useReference(SoftReference<Object> ref) {
