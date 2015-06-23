@@ -52,18 +52,6 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
 
   private val messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect()
 
-  private val actionsMap = hashMapOf(
-      "invoke-action" to { args: MapModel ->
-        val actionName = (args["name"] as PrimitiveModel<String>).value
-        val contextHint = args["context"] as MapModel
-        val anAction = ActionManager.getInstance().getAction(actionName)
-        if (anAction != null) {
-          val dataContext = guessDataContext(contextHint)
-          anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
-        } else {
-          println("can't find idea action $args")
-        }
-      })
 
   private fun guessDataContext(contextHint: MapModel): DataContext? {
     //todo: look at the hint!
@@ -75,18 +63,19 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   override fun initComponent() {
 
     UIUtil.invokeLaterIfNeeded {
-      val bJava = StandardFileSystems.local().findFileByPath("/home/serce/IdeaProjects/tst-react/src/TstReact.java")
+      val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled2/src/B.java")
 
-      val serverModel = serverModel(lifetime.lifetime, 12346) { model ->
-        model as MapModel
-        val action = (model["action"] as PrimitiveModel<String>).value
-        val handler = actionsMap[action]
-        if (handler != null) {
-          handler(model["args"] as MapModel)
+      val serverModel = serverModel(lifetime.lifetime, 12346)
+      serverModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel ->
+        val actionName = (args["name"] as PrimitiveModel<String>).value
+        val contextHint = args["context"] as MapModel
+        val anAction = ActionManager.getInstance().getAction(actionName)
+        if (anAction != null) {
+          val dataContext = guessDataContext(contextHint)
+          anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
         } else {
-          println("unknown action $model")
+          println("can't find idea action $args")
         }
-        println(model)
       }
 
       startupManager.runWhenProjectIsInitialized(Runnable {

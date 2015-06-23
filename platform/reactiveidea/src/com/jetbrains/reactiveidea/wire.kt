@@ -35,7 +35,7 @@ import org.json.JSONObject
 import java.util.ArrayList
 import java.util.HashMap
 
-fun serverModel(lifetime: Lifetime, port: Int, actionsDispatcher: (Model) -> Unit = {}): ReactiveModel {
+fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   val config = Configuration()
   config.setHostname("localhost")
   config.setPort(port)
@@ -52,7 +52,7 @@ fun serverModel(lifetime: Lifetime, port: Int, actionsDispatcher: (Model) -> Uni
 
     val jsonNode = ObjectMapper().readTree(jsonStr)
     server.getBroadcastOperations().sendEvent("diff", jsonNode)
-  }, actionsDispatcher)
+  })
 
   server.addConnectListener(object : ConnectListener {
     override fun onConnect(client: SocketIOClient) {

@@ -15,18 +15,20 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-public interface LookupUi {
-  void setCalculating(boolean calculating);
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 
-  void refreshUi(boolean selectionVisible, boolean itemsChanged, boolean reused, boolean onExplicitAction);
+public class DefaultLookupUiFactory extends LookupUiFactory {
+  @Override
+  public boolean isAvailable(@NotNull Editor editor) {
+    return true;
+  }
 
-  boolean isPositionedAboveCaret();
-
-  void lookupDisposed();
-
-  void show();
-
-  void updateLocation();
-
-  boolean isAvailableToUser();
+  @NotNull
+  @Override
+  public LookupUi createLookupUi(@NotNull LookupImpl lookup, @NotNull Advertiser advertiser, @NotNull JBList list, @NotNull Project project) {
+    return new LookupUiImpl(lookup, advertiser, list, project);
+  }
 }

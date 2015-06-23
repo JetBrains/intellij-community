@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.event.CaretAdapter
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
@@ -35,13 +36,19 @@ import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 
 public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val editor: Editor, val providesMarkup: Boolean) {
-  val tags = "@@@--^tags"
+  companion object {
+    val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
+    val tags = "@@@--^tags"
+
+    public fun getHost(editor: Editor) : EditorHost? = editor.getUserData(editorHostKey)
+  }
 
   val caretGuard = Guard()
 
   val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
 
   init {
+    editor.putUserData(editorHostKey, this)
     reactiveModel.transaction { m -> (path / tags).putIn(m, ListModel(arrayListOf(PrimitiveModel("editor")))) }
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")

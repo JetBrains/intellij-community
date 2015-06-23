@@ -289,9 +289,12 @@
     <extensionPoint name="refactoring.moveInnerClassUsagesHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
     </extensionPoint>
+
+    <extensionPoint name="codeInsight.lookupUiFactory" interface="com.intellij.codeInsight.lookup.impl.LookupUiFactory"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lookupUiFactory implementation = "com.jetbrains.reactiveidea.ModelLookupUiFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
 

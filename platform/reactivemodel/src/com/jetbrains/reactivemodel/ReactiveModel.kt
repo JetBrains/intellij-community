@@ -8,11 +8,12 @@ import java.util.ArrayDeque
 import java.util.HashMap
 import java.util.Queue
 
-public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}, val actionsDispatcher: (Model) -> Unit = {}) {
+public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
   public var root: MapModel = MapModel()
   private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
   private val transactionGuard = Guard()
+  private val actionToHandler: MutableMap<String, (MapModel) -> Unit> = HashMap()
 
   private inner class ModelSignal(val path: Path, override val lifetime: Lifetime) : Signal<Model?> {
     override val value: Model?
@@ -66,8 +67,21 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     }
   }
 
-  fun dispatch(action: Model) {
-    actionsDispatcher(action)
+  public fun registerHandler(l: Lifetime, action: String, handler : (MapModel) -> Unit) {
+    actionToHandler[action] = handler
+    l += {actionToHandler.remove(action)}
+  }
+
+  fun dispatch(model: Model) {
+    model as MapModel
+    val actionName = (model["action"] as PrimitiveModel<String>).value
+    val handler = actionToHandler[actionName]
+    if (handler != null) {
+      handler(model["args"] as MapModel)
+    } else {
+      println("unknown action $model")
+    }
+    println(model)
   }
 }
 
