@@ -43,6 +43,12 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   private static final Icon LEFT_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonLeft.png");
   private static final Icon RIGHT_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonRight.png");
   private static final Icon MIDDLE_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonMiddle.png");
+  private static final Icon LEFT_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedButtonLeft.png");
+  private static final Icon RIGHT_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedButtonRight.png");
+  private static final Icon MIDDLE_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedButtonMiddle.png");
+  private static final Icon LEFT_SELECTED_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedSelectedButtonLeft.png");
+  private static final Icon RIGHT_SELECTED_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedSelectedButtonRight.png");
+  private static final Icon MIDDLE_SELECTED_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedSelectedButtonMiddle.png");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -72,31 +78,35 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
       final Border border = c.getBorder();
 
-      if (b.isFocusPainted() && b.hasFocus()) {
-        if (border instanceof MacIntelliJBorder) {
-          border.paintBorder(b, g, 1, 1, b.getWidth()-2, b.getHeight()-4);
-        }
-      }
+      //if (b.isFocusPainted() && b.hasFocus()) {
+      //  if (border instanceof MacIntelliJBorder) {
+      //    border.paintBorder(b, g, 1, 1, b.getWidth()-2, b.getHeight()-4);
+      //  }
+      //}
 
       boolean isDefault = b instanceof JButton && ((JButton)b).isDefaultButton();
+      boolean isFocused = c.hasFocus();
       //final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       final boolean square = isSquare(c);
-      int x = 3;
-      int y = (h - viewRect.height) / 2;
+      int x = isFocused ? 0 : 2;
+      int y = isFocused ? 0 : (h - viewRect.height) / 2;
       Icon icon;
-      icon = isDefault ? LEFT_SELECTED : LEFT;
+      icon = isDefault ? isFocused ? LEFT_SELECTED_FOCUSED : LEFT_SELECTED
+                       : isFocused ? LEFT_FOCUSED : LEFT;
       icon.paintIcon(b, g, x, y);
       x+=icon.getIconWidth();
-      int stop = w - 3 - RIGHT.getIconWidth();
+      int stop = w - (isFocused ? 0 : 2) - (isFocused ? RIGHT_FOCUSED.getIconWidth() : RIGHT.getIconWidth());
       Graphics gg = g.create(0,0,w,h);
       gg.setClip(x, y, stop - x, h);
-      icon = isDefault ? MIDDLE_SELECTED : MIDDLE;
+      icon = isDefault ? isFocused ? MIDDLE_SELECTED_FOCUSED : MIDDLE_SELECTED
+                       : isFocused ? MIDDLE_FOCUSED : MIDDLE;
       while (x < stop) {
         icon.paintIcon(b, gg, x, y);
         x+=icon.getIconWidth();
       }
       gg.dispose();
-      icon = isDefault ? RIGHT_SELECTED : RIGHT;
+      icon = isDefault ? isFocused ? RIGHT_SELECTED_FOCUSED : RIGHT_SELECTED
+                       : isFocused ? RIGHT_FOCUSED : RIGHT;
       icon.paintIcon(b, g, stop, y);
       //config.restore();
 
