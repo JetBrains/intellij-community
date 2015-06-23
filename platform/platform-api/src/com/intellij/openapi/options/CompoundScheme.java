@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchemeAdapter {
-  protected String myName;
   private final List<T> myElements = new ArrayList<T>();
 
   public CompoundScheme(final String name) {
@@ -45,12 +44,6 @@ public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchem
 
   public List<T> getElements() {
     return Collections.unmodifiableList(new ArrayList<T>(myElements));
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return myName;
   }
 
   @Override
@@ -93,11 +86,6 @@ public class CompoundScheme<T extends SchemeElement> extends ExternalizableSchem
       result.addElement((T)element.copy());
     }
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return getName();
   }
 
   public boolean contains(@NotNull T element) {

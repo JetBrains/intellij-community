@@ -156,8 +156,7 @@ public class ApplicationStoreTest extends LightPlatformTestCase {
     public void saveContent(@NotNull String fileSpec,
                             @NotNull byte[] content,
                             int size,
-                            @NotNull RoamingType roamingType,
-                            boolean async) {
+                            @NotNull RoamingType roamingType) {
       getMap(roamingType).put(fileSpec, new String(content, 0, size, CharsetToolkit.UTF8_CHARSET));
     }
 

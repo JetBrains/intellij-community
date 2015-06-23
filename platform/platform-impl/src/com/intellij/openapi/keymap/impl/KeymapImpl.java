@@ -74,7 +74,6 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   @NonNls private static final String VIRTUAL_KEY_PREFIX = "VK_";
   @NonNls private static final String EDITOR_ACTION_PREFIX = "Editor";
 
-  private String myName;
   private KeymapImpl myParent;
   private boolean myCanModify = true;
 
@@ -115,22 +114,10 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     }
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return myName;
-  }
-
   @Override
   public String getPresentableName() {
     return getName();
   }
-
-  @Override
-  public void setName(@NotNull String name) {
-    myName = name;
-  }
-
 
   public KeymapImpl deriveKeymap() {
     if (canModify()) {

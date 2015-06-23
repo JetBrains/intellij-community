@@ -228,10 +228,10 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
     private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @Nullable BufferExposingByteArrayOutputStream content) throws IOException {
       if (content == null) {
-        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType, true);
+        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType);
       }
       else {
-        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType, true);
+        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType);
       }
     }
   }
