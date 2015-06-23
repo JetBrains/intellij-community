@@ -59,6 +59,7 @@ import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
@@ -127,6 +128,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                      getConfiguration().getConfigurationModule().getModule());
   }
 
+  @Nullable
   public SourceScope getSourceScope() {
     return SourceScope.modulesWithDependencies(getConfiguration().getModules());
   }

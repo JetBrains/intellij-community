@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -46,6 +47,7 @@ class TestDirectory extends TestPackage {
     super(configuration, environment);
   }
 
+  @Nullable
   @Override
   public SourceScope getSourceScope() {
     final String dirName = getConfiguration().getPersistentData().getDirName();
