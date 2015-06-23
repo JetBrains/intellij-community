@@ -49,7 +49,8 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       return ((Module)object).getName();
     }
     else if (object instanceof PsiFile) {
-      return ((PsiFile)object).getName();
+      VirtualFile file = ((PsiFile)object).getVirtualFile();
+      return file != null ? file.getPresentableName() : ((PsiFile)object).getName();
     }
     else if (object instanceof PsiDirectory) {
       return ((PsiDirectory)object).getVirtualFile().getName();
