@@ -266,7 +266,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_OR_PACKAGE_NAME_KIND:
       case CLASS_IN_QUALIFIED_NEW_KIND:
         JavaResolveResult[] results = PsiImplUtil.multiResolveImpl(containingFile.getProject(), containingFile, this, false, OurGenericsResolver.INSTANCE);
-        final PsiElement target = results.length == 1 ? results[0].getElement() : null;
+        PsiElement target = results.length == 1 ? results[0].getElement() : null;
         if (target instanceof PsiClass) {
           PsiClass aClass = (PsiClass)target;
           StringBuilder buffer = new StringBuilder();
@@ -626,7 +626,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     switch (getKind(containingFile)) {
       case CLASS_OR_PACKAGE_NAME_KIND:
         if (resolve() instanceof PsiPackage) return true;
-        //noinspection fallthrough
+        break;
       case CLASS_NAME_KIND:
         break;
 
@@ -687,7 +687,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
 
       case CLASS_OR_PACKAGE_NAME_KIND:
-        //        if (lastChild.type != IDENTIFIER) return false;
         if (element instanceof PsiPackage) {
           final String qName = ((PsiPackage)element).getQualifiedName();
           return qName.equals(getCanonicalText(false, null, containingFile));
