@@ -89,10 +89,10 @@ public class LookupHost(val reactiveModel: ReactiveModel, val path: Path, val lo
   }
 
   private fun marshalItems(path: Path): Map<String, Model> {
-    val listModel = lookup.getList().getModel() as javax.swing.ListModel<LookupElement>
+    val listModel = lookup.getList().getModel()
     val result: MutableMap<String, Model> = hashMapOf()
     for (i in (0..listModel.getSize()-1)) {
-      val el = listModel.getElementAt(i)
+      val el = listModel.getElementAt(i) as LookupElement
       val presentation = LookupElementPresentation()
       el.renderElement(presentation)
       result.put("$i", marshalItem(presentation))
