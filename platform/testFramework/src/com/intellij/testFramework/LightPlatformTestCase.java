@@ -297,8 +297,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         updateModel(ourModule, new Consumer<ModifiableRootModel>() {
           @Override
           public void consume(ModifiableRootModel model) {
-            if (descriptor.getSdk() != null) {
-              model.setSdk(descriptor.getSdk());
+            final Sdk sdk = descriptor.getSdk();
+            if (sdk != null) {
+              model.setSdk(sdk);
             }
 
             ContentEntry contentEntry = model.addContentEntry(ourSourceRoot);
