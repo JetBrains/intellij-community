@@ -41,7 +41,8 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
 
   val paneId = viewPane.getId()
   val comp = GroupByTypeComparator(projectView, paneId)
-  val openDirs = HashMap<PsiDirectory, PsiDirNode>()
+  val openDirs = HashMap<SmartPsiElementPointer<PsiDirectory>, PsiDirNode>()
+  val ptrManager = SmartPointerManager.getInstance(project)
 
 
   init {
@@ -85,7 +86,7 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
       }
 
       fun updateDir(dir: PsiDirectory) {
-        val dirNode = openDirs[dir]
+        val dirNode = openDirs[ptrManager.createSmartPsiElementPointer(dir)]
         if (dirNode != null) {
           updateChilds(dirNode.descriptor, dirNode.path, dirNode.index)
         }
@@ -111,8 +112,9 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
         if (openState == "open" && (state["childs"] as MapModel).isEmpty()) {
           updateChilds(descriptor, path, index)
         } else if (openState == "closed") {
-            if (descriptor.getValue() is PsiDirectory) {
-              openDirs.remove(descriptor.getValue())
+          val value = descriptor.getValue()
+          if (value is PsiDirectory) {
+              openDirs.remove(ptrManager.createSmartPsiElementPointer(value))
             }
         }
       }
@@ -124,7 +126,8 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
     reactiveModel.transaction { m ->
       descriptor.update();
       if (descriptor.getValue() is PsiDirectory) {
-        openDirs[descriptor.getValue() as PsiDirectory] = PsiDirNode(path, descriptor, index);
+        val ptr = ptrManager.createSmartPsiElementPointer(descriptor.getValue() as PsiDirectory)
+        openDirs[ptr] = PsiDirNode(path, descriptor, index);
       }
       val children = HashMap<String, Model>()
       val nodesPath = path / descriptor.toString() / "childs"
