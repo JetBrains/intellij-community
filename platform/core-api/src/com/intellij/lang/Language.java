@@ -181,6 +181,9 @@ public abstract class Language extends UserDataHolderBase {
     return this == another;
   }
 
+  /**
+   * @return whether identifiers in this language are case-sensitive. By default, delegates to the base language (if present) or returns false (otherwise).
+   */
   public boolean isCaseSensitive() {
     return myBaseLanguage != null && myBaseLanguage.isCaseSensitive();
   }
