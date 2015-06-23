@@ -15,43 +15,43 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiModificationTracker.SERVICE;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Caches context by their constraints (to prevent context cache loss). Flushes cache every PSI change.
+ * Caches context by their constraints (to prevent context cache loss). Flushes cache every PSI change or low memory conditions.
  * Class is thread safe.
- * See {@link #getContext(com.intellij.openapi.project.Project, TypeEvalContext)}
+ * See {@link #getContext(Project, TypeEvalContext)}
  *
  * @author Ilya.Kazakevich
  */
-class TypeEvalContextCache {
-  /**
-   * Cache itself.
-   */
-  @NotNull
-  private final Map<TypeEvalConstraints, TypeEvalContext> myCache = new HashMap<TypeEvalConstraints, TypeEvalContext>();
-  /**
-   * Current PSI modification count
-   */
-  private long myModificationCount = -1;
+final class TypeEvalContextCache implements CachedValueProvider<Map<TypeEvalConstraints, TypeEvalContext>>, Disposable {
   /**
    * Lock to sync
    */
   @NotNull
   private final Object myLock = new Object();
 
+  /**
+   * {@link CachedValue} to store/create map [constraints, context]
+   */
+  private volatile CachedValue<Map<TypeEvalConstraints, TypeEvalContext>> myCachedMapStorage;
 
   /**
    * Returns context from cache (if exist) or returns the one you provided (and puts it into cache).
    * To use this method, do the following:
    * <ol>
-   * <li>Instantiate {@link com.jetbrains.python.psi.types.TypeEvalContext} you want to use</li>
+   * <li>Instantiate {@link TypeEvalContext} you want to use</li>
    * <li>Pass its instance here as argument</li>
    * <li>Use result</li>
    * </ol>
@@ -62,25 +62,40 @@ class TypeEvalContextCache {
    */
   @NotNull
   TypeEvalContext getContext(@NotNull final Project project, @NotNull final TypeEvalContext standard) {
-    final PsiModificationTracker tracker = SERVICE.getInstance(project);
-    synchronized (myLock) {
-      final long currentCount = tracker.getModificationCount();
-      if (currentCount == myModificationCount) {
-        // Cache is valid, use it
-        final TypeEvalContext valueFromCache = myCache.get(standard.getConstraints());
-        if (valueFromCache != null) {
-          // We have element in cache, return it
-          return valueFromCache;
+
+    // Double check here to prevent useless sync
+    if (myCachedMapStorage == null) {
+      final CachedValuesManager manager = CachedValuesManager.getManager(project);
+      synchronized (myLock) { // Create storage if not exists. Should be created at first launch only
+        if (myCachedMapStorage == null) {
+          myCachedMapStorage = manager.createCachedValue(this, false);
+          Disposer.register(project, this); // To nullify property on project close
         }
       }
-      else {
-        // Cache is invalid, flush it and store current count
-        myCache.clear();
-        myModificationCount = currentCount;
+    }
+    // Map is not thread safe nor "getValue" is.
+    synchronized (myLock) {
+      final Map<TypeEvalConstraints, TypeEvalContext> map = myCachedMapStorage.getValue();
+      final TypeEvalContext context = map.get(standard.getConstraints());
+      if (context != null) { // Context already in cache, return it
+        return context;
       }
-      // We do not have value in cache (or cache is invalid), put it
-      myCache.put(standard.getConstraints(), standard);
+      map.put(standard.getConstraints(), standard); // Put this context to cache
       return standard;
     }
+  }
+
+  @Nullable
+  @Override
+  public Result<Map<TypeEvalConstraints, TypeEvalContext>> compute() {
+    // This method is called if cache is empty. Create new map for it.
+    final HashMap<TypeEvalConstraints, TypeEvalContext> map = new HashMap<TypeEvalConstraints, TypeEvalContext>();
+    return new Result<Map<TypeEvalConstraints, TypeEvalContext>>(map, PsiModificationTracker.MODIFICATION_COUNT);
+  }
+
+  @Override
+  public void dispose() {
+    // On project close
+    myCachedMapStorage = null;
   }
 }
