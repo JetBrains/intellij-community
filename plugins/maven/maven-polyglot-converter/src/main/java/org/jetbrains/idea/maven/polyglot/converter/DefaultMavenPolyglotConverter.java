@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The Maven polyglot code is highly incompatible with the Maven code embedded in IntelliJ. So
+ * load it all manually via reflection and run it manually
+ */
 public class DefaultMavenPolyglotConverter implements MavenPolyglotConverter {
   private final Method myReadMethod;
   private final Method myDefaultModelWriteMethod;
