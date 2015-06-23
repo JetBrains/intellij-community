@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -86,33 +87,39 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
       boolean isDefault = b instanceof JButton && ((JButton)b).isDefaultButton();
       boolean isFocused = c.hasFocus();
-      //final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      final boolean square = isSquare(c);
-      int x = isFocused ? 0 : 2;
-      int y = isFocused ? 0 : (h - viewRect.height) / 2;
-      Icon icon;
-      icon = isDefault ? isFocused ? LEFT_SELECTED_FOCUSED : LEFT_SELECTED
-                       : isFocused ? LEFT_FOCUSED : LEFT;
-      icon.paintIcon(b, g, x, y);
-      x+=icon.getIconWidth();
-      int stop = w - (isFocused ? 0 : 2) - (isFocused ? RIGHT_FOCUSED.getIconWidth() : RIGHT.getIconWidth());
-      Graphics gg = g.create(0,0,w,h);
-      gg.setClip(x, y, stop - x, h);
-      icon = isDefault ? isFocused ? MIDDLE_SELECTED_FOCUSED : MIDDLE_SELECTED
-                       : isFocused ? MIDDLE_FOCUSED : MIDDLE;
-      while (x < stop) {
-        icon.paintIcon(b, gg, x, y);
-        x+=icon.getIconWidth();
+      if (isSquare(c)) {
+        //final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+        g.setColor(Color.WHITE);
+        g.fillRect(1, 1, w-2, h-2);
+        g.setColor(Gray.xB4);
+        g.drawRect(1, 1, w-2, h-2);
+        //config.restore();
+      } else {
+        int x = isFocused ? 0 : 2;
+        int y = isFocused ? 0 : (h - viewRect.height) / 2;
+        Icon icon;
+        icon = isDefault ? isFocused ? LEFT_SELECTED_FOCUSED : LEFT_SELECTED
+                         : isFocused ? LEFT_FOCUSED : LEFT;
+        icon.paintIcon(b, g, x, y);
+        x += icon.getIconWidth();
+        int stop = w - (isFocused ? 0 : 2) - (isFocused ? RIGHT_FOCUSED.getIconWidth() : RIGHT.getIconWidth());
+        Graphics gg = g.create(0, 0, w, h);
+        gg.setClip(x, y, stop - x, h);
+        icon = isDefault ? isFocused ? MIDDLE_SELECTED_FOCUSED : MIDDLE_SELECTED
+                         : isFocused ? MIDDLE_FOCUSED : MIDDLE;
+        while (x < stop) {
+          icon.paintIcon(b, gg, x, y);
+          x += icon.getIconWidth();
+        }
+        gg.dispose();
+        icon = isDefault ? isFocused ? RIGHT_SELECTED_FOCUSED : RIGHT_SELECTED
+                         : isFocused ? RIGHT_FOCUSED : RIGHT;
+        icon.paintIcon(b, g, stop, y);
+        //config.restore();
+
+
+        clearTextShiftOffset();
       }
-      gg.dispose();
-      icon = isDefault ? isFocused ? RIGHT_SELECTED_FOCUSED : RIGHT_SELECTED
-                       : isFocused ? RIGHT_FOCUSED : RIGHT;
-      icon.paintIcon(b, g, stop, y);
-      //config.restore();
-
-
-      clearTextShiftOffset();
-
       // perform UI specific press action, e.g. Windows L&F shifts text
       //if (model.isArmed() && model.isPressed()) {
       //  paintButtonPressed(g,b);
