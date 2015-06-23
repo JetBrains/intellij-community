@@ -14,8 +14,8 @@ private fun getOsFolderName() = when {
   else -> "_unknown"
 }
 
-fun buildPath(filePath: String, roamingType: RoamingType, projectKey: String?) = when {
-  projectKey != null -> PROJECTS_DIR_NAME + projectKey + '/' + filePath
-  roamingType == RoamingType.PER_PLATFORM -> getOsFolderName() + '/' + filePath
-  else -> filePath
+fun buildPath(path: String, roamingType: RoamingType, projectKey: String?) = when {
+  projectKey != null -> PROJECTS_DIR_NAME + projectKey + '/' + path
+  roamingType == RoamingType.PER_PLATFORM -> getOsFolderName() + '/' + path
+  else -> path
 }

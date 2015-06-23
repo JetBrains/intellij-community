@@ -2,6 +2,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
@@ -12,10 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
 import org.jetbrains.annotations.TestOnly
-import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 import java.util.Arrays
 
 public abstract class BaseRepositoryManager() : RepositoryManager {
@@ -29,6 +27,43 @@ public abstract class BaseRepositoryManager() : RepositoryManager {
       return listOf()
     }
     return listOf(*files)
+  }
+
+  override fun processChildren(path: String, filter: Condition<String>, processor: (name: String, inputStream: InputStream) -> Boolean) {
+    var files: Array<out File>? = null
+    synchronized (lock) {
+      files = File(dir, path).listFiles(object: FilenameFilter {
+        override fun accept(dir: File, name: String) = filter.value(name)
+      })
+    }
+
+    if (files == null || files!!.isEmpty()) {
+      return
+    }
+
+    for (file in files!!) {
+      if (file.isDirectory() || file.isHidden()) {
+        continue;
+      }
+
+      // we ignore empty files as well - delete if corrupted
+      if (file.length() == 0L) {
+        if (file.exists()) {
+          try {
+            LOG.warn("File $path is empty (length 0), will be removed")
+            delete(file, path)
+          }
+          catch (e: Exception) {
+            LOG.error(e)
+          }
+        }
+        continue;
+      }
+
+      if (!processor(file.name, file.inputStream())) {
+        break;
+      }
+    }
   }
 
   override fun deleteRepository() {

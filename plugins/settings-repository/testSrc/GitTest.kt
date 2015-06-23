@@ -1,155 +1,33 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.StreamProvider
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.PathUtilRt
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Repository
 import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.empty
-import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.deletePath
-import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.AM
 import org.jetbrains.settingsRepository.SyncType
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.resetHard
 import org.jetbrains.settingsRepository.icsManager
-import org.junit.After
 import org.junit.Assert.assertThat
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import javax.swing.SwingUtilities
 
-class GitTest {
-  private var fixture: IdeaProjectTestFixture? = null
-
-  private val testHelper = RespositoryHelper()
-
-  Rule
-  public fun getTestWatcher(): RespositoryHelper = testHelper
-
-  private val remoteRepository: Repository
-    get() = testHelper.repository!!
-
-  companion object {
-    private var ICS_DIR: File? = null
-
-    init {
-      Logger.setFactory(javaClass<TestLoggerFactory>())
-    }
-
-    private val repositoryManager: GitRepositoryManager
-      get() = icsManager.repositoryManager as GitRepositoryManager
-
-    private val repository: Repository
-      get() = repositoryManager.repository
-
-    private val testDataPath: String = PathManager.getHomePath() + "/settings-repository/testData"
-
-    // BeforeClass doesn't work in Kotlin
-    public fun setIcsDir() {
-      val icsDirPath = System.getProperty("ics.settingsRepository")
-      if (icsDirPath == null) {
-        // we must not create file (i.e. this file doesn't exist)
-        ICS_DIR = FileUtilRt.generateRandomTemporaryPath()
-        System.setProperty("ics.settingsRepository", ICS_DIR!!.getAbsolutePath())
-      }
-      else {
-        ICS_DIR = File(FileUtil.expandUserHome(icsDirPath))
-        FileUtil.delete(ICS_DIR!!)
-      }
-    }
-
-    private fun delete(data: ByteArray, directory: Boolean) {
-      val addedFile = "\$APP_CONFIG$/remote.xml"
-      getProvider().saveContent(addedFile, data, data.size(), RoamingType.PER_USER, true)
-      getProvider().delete(if (directory) "\$APP_CONFIG$" else addedFile, RoamingType.PER_USER)
-
-      val diff = repository.computeIndexDiff()
-      assertThat(diff.diff(), equalTo(false))
-      assertThat(diff.getAdded(), empty())
-      assertThat(diff.getChanged(), empty())
-      assertThat(diff.getRemoved(), empty())
-      assertThat(diff.getModified(), empty())
-      assertThat(diff.getUntracked(), empty())
-      assertThat(diff.getUntrackedFolders(), empty())
-    }
-
-    private fun getProvider(): StreamProvider {
-      val provider = (ApplicationManager.getApplication() as ApplicationImpl).getStateStore().getStateStorageManager().getStreamProvider()
-      assertThat(provider, notNullValue())
-      return provider!!
-    }
-
-    private fun addAndCommit(path: String): FileInfo {
-      val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
-      getProvider().saveContent(path, data, data.size(), RoamingType.PER_USER, false)
-      repositoryManager.commit(EmptyProgressIndicator())
-      return FileInfo(path, data)
-    }
-  }
-
-  Before
-  public fun setUp() {
-    if (ICS_DIR == null) {
-      setIcsDir()
-    }
-
-    fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture()
-    SwingUtilities.invokeAndWait(object : Runnable {
-      override fun run() {
-        fixture!!.setUp()
-      }
-    })
-
-    (icsManager.repositoryManager as GitRepositoryManager).createRepositoryIfNeed()
-    icsManager.repositoryActive = true
-  }
-
-  After
-  public fun tearDown() {
-    icsManager.repositoryActive = false
-    try {
-      if (fixture != null) {
-        SwingUtilities.invokeAndWait(object : Runnable {
-          override fun run() {
-            fixture!!.tearDown()
-          }
-        })
-      }
-    }
-    finally {
-      if (ICS_DIR != null) {
-        FileUtil.delete(ICS_DIR!!)
-      }
-    }
-  }
-
+class GitTest : TestCase() {
   public Test fun add() {
     val data = FileUtil.loadFileBytes(File(testDataPath, "remote.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
-    getProvider().saveContent(addedFile, data, data.size(), RoamingType.PER_USER, false)
+    save(addedFile, data)
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
@@ -166,8 +44,8 @@ class GitTest {
     val data2 = FileUtil.loadFileBytes(File(testDataPath, "local.xml"))
     val addedFile = "\$APP_CONFIG$/remote.xml"
     val addedFile2 = "\$APP_CONFIG$/local.xml"
-    getProvider().saveContent(addedFile, data, data.size(), RoamingType.PER_USER, false)
-    getProvider().saveContent(addedFile2, data2, data2.size(), RoamingType.PER_USER, false)
+    save(addedFile, data)
+    save(addedFile2, data2)
 
     val diff = repository.computeIndexDiff()
     assertThat(diff.diff(), equalTo(true))
@@ -313,7 +191,7 @@ class GitTest {
     createLocalRepository(null)
 
     val data = AM.MARKER_ACCEPT_MY
-    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size(), RoamingType.PER_USER, false)
+    save("\$APP_CONFIG$/remote.xml", data)
 
     sync(SyncType.MERGE)
 
@@ -327,7 +205,7 @@ class GitTest {
     sync(SyncType.MERGE)
 
     val data = AM.MARKER_ACCEPT_THEIRS
-    getProvider().saveContent("\$APP_CONFIG$/remote.xml", data, data.size(), RoamingType.PER_USER, false)
+    save("\$APP_CONFIG$/remote.xml", data)
     repositoryManager.commit(EmptyProgressIndicator())
 
     val remoteRepository = testHelper.repository!!
@@ -376,7 +254,7 @@ class GitTest {
 
     val path = "\$APP_CONFIG$/local.xml"
     val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
-    getProvider().saveContent(path, data, data.size(), RoamingType.PER_USER, false)
+    save(path, data)
 
     sync(syncType)
 
@@ -404,23 +282,5 @@ class GitTest {
     SwingUtilities.invokeAndWait {
       icsManager.sync(syncType, fixture!!.getProject())
     }
-  }
-
-  private fun createFileRemote(branchName: String? = null, initialCommit: Boolean = true): File {
-    val repository = testHelper.getRepository(ICS_DIR!!)
-    if (branchName != null) {
-      // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
-      repository.commit("")
-      Git(repository).checkout().setCreateBranch(true).setName(branchName).call()
-    }
-
-    val workTree: File = repository.getWorkTree()
-    if (initialCommit) {
-      val addedFile = "\$APP_CONFIG$/remote.xml"
-      FileUtil.copy(File(testDataPath, "remote.xml"), File(workTree, addedFile))
-      repository.edit(AddFile(addedFile))
-      repository.commit("")
-    }
-    return workTree
   }
 }

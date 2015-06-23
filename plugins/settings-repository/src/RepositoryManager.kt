@@ -2,6 +2,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Condition
 import gnu.trove.THashSet
 import java.io.InputStream
 import java.util.Collections
@@ -35,6 +36,8 @@ public interface RepositoryManager {
   public fun delete(path: String)
 
   public fun listSubFileNames(path: String): Collection<String>
+
+  public fun processChildren(path: String, filter: Condition<String>, processor: (name: String, inputStream: InputStream) -> Boolean)
 
   /**
    * Not all implementations support progress indicator (will not be updated on progress)
