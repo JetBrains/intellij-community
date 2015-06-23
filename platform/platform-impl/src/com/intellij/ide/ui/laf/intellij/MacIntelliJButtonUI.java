@@ -21,7 +21,6 @@ import com.intellij.ui.Gray;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
@@ -65,32 +64,17 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
     } else {
-
       AbstractButton b = (AbstractButton) c;
-
-
-      ButtonModel model = b.getModel();
-
       String text = layout(b, SwingUtilities2.getFontMetrics(b, g),
                            b.getWidth(), b.getHeight());
-
-      final Border border = c.getBorder();
-
-      //if (b.isFocusPainted() && b.hasFocus()) {
-      //  if (border instanceof MacIntelliJBorder) {
-      //    border.paintBorder(b, g, 1, 1, b.getWidth()-2, b.getHeight()-4);
-      //  }
-      //}
 
       boolean isDefault = b instanceof JButton && ((JButton)b).isDefaultButton();
       boolean isFocused = c.hasFocus();
       if (isSquare(c)) {
-        //final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        g.setColor(Color.WHITE);
+        g.setColor(Gray.xFF);
         g.fillRect(1, 1, w - 2, h - 2);
         g.setColor(Gray.xB4);
         g.drawRect(1, 1, w - 2, h - 2);
-        //config.restore();
       } else {
         int x = isFocused ? 0 : 2;
         int y = isFocused ? 0 : (h - viewRect.height) / 2;
@@ -112,22 +96,16 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         icon = isDefault ? isFocused ? RIGHT_SELECTED_FOCUSED : RIGHT_SELECTED
                          : isFocused ? RIGHT_FOCUSED : RIGHT;
         icon.paintIcon(b, g, stop, y);
-        //config.restore();
-
 
         clearTextShiftOffset();
       }
-      // perform UI specific press action, e.g. Windows L&F shifts text
-      //if (model.isArmed() && model.isPressed()) {
-      //  paintButtonPressed(g,b);
-      //}
 
       // Paint the Icon
       if(b.getIcon() != null) {
         paintIcon(g,c,iconRect);
       }
 
-      if (text != null && !text.equals("")){
+      if (text != null && !text.isEmpty()){
         View v = (View) c.getClientProperty(BasicHTML.propertyKey);
         if (v != null) {
           v.paint(g, textRect);
@@ -158,40 +136,9 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       b.getText() == null ? 0 : b.getIconTextGap());
   }
 
-
-  @Override
-  protected Color getButtonColor1() {
-    return super.getButtonColor1();
-  }
-
-  @Override
-  protected Color getButtonColor2() {
-    return super.getButtonColor2();
-  }
-
-  @Override
-  protected Color getSelectedButtonColor1() {
-    return new Color(0x6cb3fa);
-  }
-
-  @Override
-  protected Color getSelectedButtonColor2() {
-    return new Color(0x077eff);
-  }
-
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
     return new Dimension(size.width + 16, 27);
-  }
-
-  @Override
-  public Dimension getMaximumSize(JComponent c) {
-    return super.getMaximumSize(c);
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    return super.getMinimumSize(c);
   }
 }
