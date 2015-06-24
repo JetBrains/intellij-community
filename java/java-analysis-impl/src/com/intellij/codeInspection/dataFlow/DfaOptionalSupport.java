@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author anet, peter
  */
-class DfaOptionalSupport {
+public class DfaOptionalSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaOptionalSupport");
   private static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
 
@@ -77,8 +77,8 @@ class DfaOptionalSupport {
   }
 
   @Nullable
-  static PsiMethod resolveOfNullable(PsiCallExpression expression) {
-    String name = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName();
+  public static PsiMethod resolveOfNullable(@NotNull PsiMethodCallExpression expression) {
+    String name = expression.getMethodExpression().getReferenceName();
     if ("ofNullable".equals(name) || "fromNullable".equals(name)) {
       PsiMethod method = expression.resolveMethod();
       PsiClass psiClass = method == null ? null : method.getContainingClass();

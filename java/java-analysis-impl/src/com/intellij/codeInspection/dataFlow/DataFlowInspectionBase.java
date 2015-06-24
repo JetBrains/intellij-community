@@ -270,7 +270,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
     }
 
-    reportOptionalOfNullableImprovements(holder, visitor, reportedAnchors);
+    reportOptionalOfNullableImprovements(holder, reportedAnchors, runner.getInstructions());
 
 
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
@@ -278,18 +278,26 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  private static void reportOptionalOfNullableImprovements(ProblemsHolder holder,
-                                                           DataFlowInstructionVisitor visitor,
-                                                           HashSet<PsiElement> reportedAnchors) {
-    for (PsiElement expr : visitor.getProblems(NullabilityProblem.passingNullToOptional)) {
-      if (!reportedAnchors.add(expr)) continue;
-      holder.registerProblem(expr, "Passing <code>null</code> argument to Optional",
-                             DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(expr));
-    }
-    for (PsiElement expr : visitor.getProblems(NullabilityProblem.passingNotNullToOptional)) {
-      if (!reportedAnchors.add(expr)) continue;
-      holder.registerProblem(expr, "Passing a non-null argument to Optional",
-                             DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix());
+  private static void reportOptionalOfNullableImprovements(ProblemsHolder holder, Set<PsiElement> reportedAnchors, Instruction[] instructions) {
+    for (Instruction instruction : instructions) {
+      if (instruction instanceof MethodCallInstruction) {
+        final PsiExpression[] args = ((MethodCallInstruction)instruction).getArgs();
+        if (args.length != 1) continue;
+
+        final PsiExpression expr = args[0];
+
+        if (((MethodCallInstruction)instruction).isOptionalAlwaysNullProblem()) {
+          if (!reportedAnchors.add(expr)) continue;
+          holder.registerProblem(expr, "Passing <code>null</code> argument to <code>Optional</code>",
+                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(expr));
+        }
+        else if (((MethodCallInstruction)instruction).isOptionalAlwaysNotNullProblem()) {
+          if (!reportedAnchors.add(expr)) continue;
+          holder.registerProblem(expr, "Passing a non-null argument to <code>Optional</code>",
+                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix());
+        }
+        
+      }
     }
   }
 
