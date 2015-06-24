@@ -392,6 +392,12 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     return callback;
   }
 
+  @Override
+  public void dispose() {
+    UISettings.getInstance().removeUISettingsListener(this);
+    super.dispose();
+  }
+
   public void exitFullScreenAndDispose() {
 
     LOG.assertTrue(isInFullScreen());
