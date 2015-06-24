@@ -28,7 +28,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -38,7 +41,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
-import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -200,7 +202,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
   }
 
-  private static class JavaSourcePosition extends RemappedSourcePosition implements ExecutionPointHighlighter.HighlighterProvider {
+  private static class JavaSourcePosition extends RemappedSourcePosition {
     private final String myExpectedClassName;
     private final String myExpectedMethodName;
     private final int myLambdaOrdinal;
@@ -274,16 +276,6 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return original;
         }
       });
-    }
-
-    @Nullable
-    @Override
-    public TextRange getHighlightRange() {
-      PsiElement method = DebuggerUtilsEx.getContainingMethod(this);
-      if (method instanceof PsiLambdaExpression) {
-        return method.getTextRange();
-      }
-      return null;
     }
   }
 

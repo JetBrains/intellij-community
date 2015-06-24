@@ -22,10 +22,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.LambdaMethodFilter;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -752,10 +749,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      if (mySourcePosition instanceof ExecutionPointHighlighter.HighlighterProvider) {
-        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).getHighlightRange();
-      }
-      return null;
+      return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
   }
 
