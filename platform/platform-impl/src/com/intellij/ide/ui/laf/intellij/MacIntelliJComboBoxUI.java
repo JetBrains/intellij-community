@@ -36,9 +36,9 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
-  private static final Icon COMBOBOX = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxMac.png");
-  private static final Icon COMBOBOX_LEFT = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxLeft.png");
-  private static final Icon COMBOBOX_TOP_BOTTOM = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxTopBottom.png");
+  private static final Icon COMBOBOX = DarculaLaf.loadIcon("comboboxMac.png");
+  private static final Icon COMBOBOX_LEFT = DarculaLaf.loadIcon("comboboxLeft.png");
+  private static final Icon COMBOBOX_TOP_BOTTOM = DarculaLaf.loadIcon("comboboxTopBottom.png");
   private final JComboBox myComboBox;
 
   public MacIntelliJComboBoxUI(JComboBox comboBox) {

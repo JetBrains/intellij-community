@@ -34,20 +34,20 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   private static Rectangle textRect = new Rectangle();
   private static Rectangle iconRect = new Rectangle();
 
-  private static final Icon LEFT = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/buttonLeft.png");
-  private static final Icon RIGHT = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/buttonRight.png");
-  private static final Icon MIDDLE = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/buttonMiddle.png");
-  private static final Icon LEFT_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonLeft.png");
-  private static final Icon RIGHT_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonRight.png");
-  private static final Icon MIDDLE_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonMiddle.png");
-  private static final Icon LEFT_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedButtonLeft.png");
-  private static final Icon RIGHT_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedButtonRight.png");
-  private static final Icon MIDDLE_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedButtonMiddle.png");
-  private static final Icon LEFT_SELECTED_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedSelectedButtonLeft.png");
-  private static final Icon RIGHT_SELECTED_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedSelectedButtonRight.png");
-  private static final Icon MIDDLE_SELECTED_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedSelectedButtonMiddle.png");
-  private static final Icon HELP_BUTTON = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/helpButton.png");
-  private static final Icon HELP_BUTTON_FOCUSED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/focusedHelpButton.png");
+  private static final Icon LEFT = DarculaLaf.loadIcon("buttonLeft.png");
+  private static final Icon RIGHT = DarculaLaf.loadIcon("buttonRight.png");
+  private static final Icon MIDDLE = DarculaLaf.loadIcon("buttonMiddle.png");
+  private static final Icon LEFT_SELECTED = DarculaLaf.loadIcon("selectedButtonLeft.png");
+  private static final Icon RIGHT_SELECTED = DarculaLaf.loadIcon("selectedButtonRight.png");
+  private static final Icon MIDDLE_SELECTED = DarculaLaf.loadIcon("selectedButtonMiddle.png");
+  private static final Icon LEFT_FOCUSED = DarculaLaf.loadIcon("focusedButtonLeft.png");
+  private static final Icon RIGHT_FOCUSED = DarculaLaf.loadIcon("focusedButtonRight.png");
+  private static final Icon MIDDLE_FOCUSED = DarculaLaf.loadIcon("focusedButtonMiddle.png");
+  private static final Icon LEFT_SELECTED_FOCUSED = DarculaLaf.loadIcon("focusedSelectedButtonLeft.png");
+  private static final Icon RIGHT_SELECTED_FOCUSED = DarculaLaf.loadIcon("focusedSelectedButtonRight.png");
+  private static final Icon MIDDLE_SELECTED_FOCUSED = DarculaLaf.loadIcon("focusedSelectedButtonMiddle.png");
+  private static final Icon HELP_BUTTON = DarculaLaf.loadIcon("helpButton.png");
+  private static final Icon HELP_BUTTON_FOCUSED = DarculaLaf.loadIcon("focusedHelpButton.png");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
