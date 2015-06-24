@@ -66,7 +66,7 @@ fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER) 
     config.unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName)
   }
   else {
-    LOG.debug("Set remote " + url)
+    LOG.debug("Set remote $url")
     config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_KEY_URL, url)
     // http://git-scm.com/book/en/Git-Internals-The-Refspec
     config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION, '+' + Constants.R_HEADS + branchName + ':' + Constants.R_REMOTES + remoteName + '/' + branchName)

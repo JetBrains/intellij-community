@@ -14,6 +14,9 @@
   <item name='org.eclipse.jgit.api.CheckoutCommand org.eclipse.jgit.api.CheckoutResult getResult()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.api.CloneCommand org.eclipse.jgit.api.CloneCommand setURI(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.api.CommitCommand org.eclipse.jgit.api.CommitCommand setAuthor(org.eclipse.jgit.lib.PersonIdent)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

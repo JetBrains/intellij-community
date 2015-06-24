@@ -28,9 +28,6 @@ public interface RepositoryManager {
 
   public fun read(path: String): InputStream?
 
-  /**
-   * @param async Write postpone or immediately
-   */
   public fun write(path: String, content: ByteArray, size: Int)
 
   public fun delete(path: String)

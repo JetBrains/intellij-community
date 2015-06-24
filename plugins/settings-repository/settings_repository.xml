@@ -8,9 +8,7 @@
             <element id="module-output" name="settings-repository" />
           </element>
           <element id="file-copy" path="$PROJECT_DIR$/community/build/kotlinc/lib/kotlin-runtime.jar" />
-          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/org.eclipse.jgit-3.7.0-SNAPSHOT.jar" />
-          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/slf4j-api-1.7.10.jar" />
-          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/slf4j-log4j12-1.7.10.jar" />
+          <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/org.eclipse.jgit-3.7.2-SNAPSHOT.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/jackson-annotations-2.5.1.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/jackson-core-2.5.1.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/jackson-databind-2.5.1.jar" />
