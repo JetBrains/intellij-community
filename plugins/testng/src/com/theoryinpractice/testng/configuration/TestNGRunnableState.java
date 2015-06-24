@@ -16,6 +16,7 @@
 
 package com.theoryinpractice.testng.configuration;
 
+import com.beust.jcommander.JCommander;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.*;
@@ -174,7 +175,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(AfterClass.class));
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JCommander.class));
 
     super.configureClasspath(javaParameters);
   }

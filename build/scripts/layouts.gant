@@ -440,6 +440,7 @@ public def layoutCommunityPlugins(String home) {
 
         fileset(dir: "$home/plugins/testng/lib") {
           include(name: "testng.jar")
+          include(name: "jcommander.jar")
         }
       }
     }
