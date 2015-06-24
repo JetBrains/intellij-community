@@ -192,7 +192,10 @@ public abstract class AbstractValueHint {
     return myType;
   }
 
+  private boolean myInsideShow = false;
+
   protected boolean showHint(final JComponent component) {
+    myInsideShow = true;
     if (myCurrentHint != null) {
       myCurrentHint.hide();
     }
@@ -213,7 +216,7 @@ public abstract class AbstractValueHint {
     myCurrentHint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(EventObject event) {
-        if (myHideRunnable != null) {
+        if (myHideRunnable != null && !myInsideShow) {
           myHideRunnable.run();
         }
         onHintHidden();
@@ -231,6 +234,7 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true));
+    myInsideShow = false;
     return true;
   }
 
