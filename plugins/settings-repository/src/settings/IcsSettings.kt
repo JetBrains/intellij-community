@@ -75,7 +75,7 @@ class IcsSettings {
 }
 
 JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
-class ReadonlySource(var active: Boolean = true, var url: String? = null) {
+class ReadonlySource(var url: String? = null, var active: Boolean = true) {
   JsonIgnore
   val path: String?
     get() {

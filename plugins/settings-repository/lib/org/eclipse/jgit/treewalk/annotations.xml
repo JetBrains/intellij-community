@@ -2,6 +2,9 @@
   <item name='org.eclipse.jgit.treewalk.TreeWalk byte[] getRawPath()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.treewalk.TreeWalk java.lang.String getNameString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.jgit.treewalk.TreeWalk java.lang.String getPathString()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

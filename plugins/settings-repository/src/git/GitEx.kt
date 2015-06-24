@@ -1,6 +1,7 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
 import org.eclipse.jgit.api.CommitCommand
@@ -19,6 +20,7 @@ import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.settingsRepository.AuthenticationException
 import org.jetbrains.settingsRepository.LOG
@@ -209,8 +211,53 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
   return null
 }
 
+public fun Repository.processChildren(path: String, filter: Condition<String>? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
+  val lastCommitId = resolve(Constants.HEAD) ?: return
+  val reader = newObjectReader()
+  try {
+    val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).getTree()) ?: return
+    if (!treeWalk.isSubtree()) {
+      // not a directory
+      LOG.warn("File $path is not a directory")
+      return
+    }
+
+    treeWalk.setFilter(TreeFilter.ALL)
+    treeWalk.enterSubtree()
+
+    while (treeWalk.next()) {
+      val fileMode = treeWalk.getFileMode(0)
+      if (fileMode == FileMode.REGULAR_FILE || fileMode == FileMode.SYMLINK || fileMode == FileMode.EXECUTABLE_FILE) {
+        val fileName = treeWalk.getNameString()
+        if (filter != null && !filter.value(fileName)) {
+          continue
+        }
+
+        val objectLoader = reader.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB)
+        // we ignore empty files
+        if (objectLoader.getSize() == 0L) {
+          LOG.warn("File $path skipped because empty (length 0)")
+          continue
+        }
+
+        if (!processor(fileName, objectLoader.openStream())) {
+          break;
+        }
+      }
+    }
+  }
+  finally {
+    reader.release()
+  }
+}
+
 public fun Repository.read(path: String): InputStream? {
-  val lastCommitId = resolve(Constants.HEAD) ?: return null
+  val lastCommitId = resolve(Constants.HEAD)
+  if (lastCommitId == null) {
+    LOG.warn("Repository ${getDirectory().getName()} doesn't have HEAD")
+    return null
+  }
+
   val reader = newObjectReader()
   var releaseReader = true
   try {

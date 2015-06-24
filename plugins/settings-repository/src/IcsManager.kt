@@ -38,6 +38,7 @@ import org.jetbrains.keychain.OsXCredentialsStore
 import org.jetbrains.keychain.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
+import org.jetbrains.settingsRepository.git.processChildren
 import java.io.File
 import java.io.InputStream
 import java.util.LinkedHashSet
@@ -77,6 +78,8 @@ public class IcsManager : ApplicationLoadListener {
       LOG.error(e)
     }
   }
+
+  val readOnlySourcesManager = ReadOnlySourcesManager(settings)
 
   public val repositoryService: RepositoryService = GitRepositoryService()
 
@@ -410,8 +413,12 @@ public class IcsManager : ApplicationLoadListener {
     override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: Condition<String>, processor: StreamProvider.ChildrenProcessor) {
-      repositoryManager.processChildren(buildPath(path, roamingType, null), filter) {name, input ->
-        processor.process(name, input)
+      val fullPath = buildPath(path, roamingType, null)
+      val adaptedProcessor: (String, InputStream) -> Boolean = { name, input -> processor.process(name, input) }
+      repositoryManager.processChildren(fullPath, filter, adaptedProcessor)
+
+      for (repository in readOnlySourcesManager.repositories) {
+        repository.processChildren(fullPath, filter, adaptedProcessor)
       }
     }
 

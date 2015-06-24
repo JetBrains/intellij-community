@@ -42,7 +42,7 @@ private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<Reado
 
 private fun createReadOnlySourcesEditor(dialogParent: Component, project: Project?): Configurable {
   val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource>() {
-    override fun clone(item: ReadonlySource, forInPlaceEditing: Boolean) = ReadonlySource(item.active, item.url)
+    override fun clone(item: ReadonlySource, forInPlaceEditing: Boolean) = ReadonlySource(item.url, item.active)
 
     override fun getItemClass() = javaClass<ReadonlySource>()
 
@@ -93,7 +93,6 @@ private fun createReadOnlySourcesEditor(dialogParent: Component, project: Projec
       val toCheckout = THashSet<ReadonlySource>()
 
       val newList = editor.apply()
-      icsManager.settings.readOnlySources = newList
       for (newSource in newList) {
         val path = newSource.path
         if (path != null && !toDelete.remove(path)) {
@@ -137,6 +136,8 @@ private fun createReadOnlySourcesEditor(dialogParent: Component, project: Projec
               }
             }
           }
+
+          icsManager.readOnlySourcesManager.setSources(newList)
         }
       })
     }
