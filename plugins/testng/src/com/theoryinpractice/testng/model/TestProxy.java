@@ -239,6 +239,11 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Override
+  public boolean hasPassedTests() {
+    return isPassed();
+  }
+
+  @Override
   public boolean isIgnored() {
     return resultMessage != null && MessageHelper.SKIPPED_TEST == resultMessage.getResult();
   }

@@ -48,6 +48,8 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract boolean isInterrupted();
 
+  public abstract boolean hasPassedTests();
+
   public abstract boolean isIgnored();
 
   public abstract boolean isPassed();

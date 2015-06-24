@@ -182,11 +182,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Override
-  public boolean isInterrupted() {
-    return myState.wasTerminated();
-  }
-
-  boolean hasPassedTests() {
+  public boolean hasPassedTests() {
     if (myHasPassedTestsCached) {
       return myHasPassedTests;
     }
@@ -197,6 +193,11 @@ public class SMTestProxy extends AbstractTestProxy {
       myHasPassedTestsCached = true;
     }
     return hasPassedTests;
+
+  }
+  @Override
+  public boolean isInterrupted() {
+    return myState.wasTerminated();
   }
 
   private boolean calcPassedTests() {
@@ -213,8 +214,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Override
   public boolean isIgnored() {
-    return !hasPassedTests() &&
-           myState.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX;
+    return myState.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX;
   }
 
   public boolean isPassed() {

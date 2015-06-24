@@ -173,6 +173,11 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Override
+  public boolean hasPassedTests() {
+    return isPassed();
+  }
+
+  @Override
   public boolean isIgnored() {
     return myState instanceof IgnoredState;
   }
