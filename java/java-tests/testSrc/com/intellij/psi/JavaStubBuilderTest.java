@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -517,14 +517,6 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     long t2 = System.nanoTime();
     final StubElement lighterTree2 = NEW_BUILDER.buildStubTree(file);  // build over AST
     t2 = Math.max((System.nanoTime() - t2)/1000, 1);
-
-    file.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        assert !(element instanceof PsiErrorElement) : element;
-        super.visitElement(element);
-      }
-    });
 
     final String lightStr = DebugUtil.stubTreeToString(lighterTree);
     final String lightStr2 = DebugUtil.stubTreeToString(lighterTree2);
