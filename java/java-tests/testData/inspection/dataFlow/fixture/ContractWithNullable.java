@@ -41,3 +41,21 @@ class Foo {
 
 }
 
+class Test {
+  @NotNull
+  String getName() {
+    return "";
+  }
+
+  @Nullable
+  @Contract("!null -> !null")
+  String convert(@Nullable String name) {
+    return name;
+  }
+
+
+  @NotNull
+  String test() {
+    return convert(getName());
+  }
+}
