@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -38,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -50,6 +52,8 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ThreadDeathRequest;
 import com.sun.jdi.request.ThreadStartRequest;
+
+import java.util.List;
 
 /**
  * @author lex
@@ -406,6 +410,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
         if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
           final String message = "Method <b>" + ((NamedMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
           XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+        }
+        if (hint.wasStepTargetMethodMatched() && hint.isResetIgnoreFilters()) {
+          List<ClassFilter> activeFilters = getActiveFilters();
+          String currentClassName = getCurrentClassName(suspendContext.getThread());
+          if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
+            mySession.resetIgnoreStepFiltersFlag();
+          }
         }
       }
     }

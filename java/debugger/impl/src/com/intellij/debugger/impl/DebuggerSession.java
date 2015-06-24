@@ -41,7 +41,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -322,12 +321,17 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  private void resetIgnoreStepFiltersFlag() {
+  public void resetIgnoreStepFiltersFlag() {
     myIgnoreFiltersFrameCountThreshold = 0;
   }
 
   public void setIgnoreStepFiltersFlag(int currentStackFrameCount) {
-    myIgnoreFiltersFrameCountThreshold = currentStackFrameCount;
+    if (myIgnoreFiltersFrameCountThreshold <= 0) {
+      myIgnoreFiltersFrameCountThreshold = currentStackFrameCount;
+    }
+    else {
+      myIgnoreFiltersFrameCountThreshold = Math.min(myIgnoreFiltersFrameCountThreshold, currentStackFrameCount);
+    }
   }
 
   public boolean shouldIgnoreSteppingFilters() {

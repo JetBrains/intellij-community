@@ -235,12 +235,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
-  public static boolean isFiltered(String qName, ClassFilter[] classFilters) {
+  public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
     return isFiltered(qName, Arrays.asList(classFilters));
   }
   
-  public static boolean isFiltered(String qName, List<ClassFilter> classFilters) {
-    if(qName.indexOf('[') != -1) {
+  public static boolean isFiltered(@NotNull String qName, List<ClassFilter> classFilters) {
+    if (qName.indexOf('[') != -1) {
       return false; //is array
     }
 
