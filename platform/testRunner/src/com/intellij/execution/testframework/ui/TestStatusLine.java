@@ -39,12 +39,11 @@ public class TestStatusLine extends JPanel {
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
   private final JPanel myProgressPanel;
 
-  public TestStatusLine(TestConsoleProperties properties) {
+  public TestStatusLine() {
     super(new BorderLayout());
     myProgressPanel = new JPanel(new GridBagLayout());
     add(myProgressPanel, BorderLayout.WEST);
     myProgressBar.setMaximum(100);
-    setPreferredSize(properties);
     myProgressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                                               new Insets(2, 8, 0, 8), 0, 0));
     setStatusColor(ColorProgressBar.GREEN);
@@ -122,8 +121,8 @@ public class TestStatusLine extends JPanel {
     myProgressBar.setValue(fraction);
   }
 
-  public void setPreferredSize(TestConsoleProperties properties) {
-    final Dimension size = new JBDimension(TestConsoleProperties.SPLIT_VERTICALLY.value(properties) ? 150 : 450 , -1);
+  public void setPreferredSize(boolean orientation) {
+    final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
     myProgressPanel.setMaximumSize(size);
     myProgressPanel.setMinimumSize(size);
     myProgressPanel.setPreferredSize(size);
