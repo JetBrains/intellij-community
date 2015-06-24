@@ -16,7 +16,9 @@ import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
-class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
+class IcsSettingsEditor(private val project: Project?) : DialogWrapper(project, true) {
+  val upstreamEditor = IcsSettingsPanel(project, getContentPane()!!, { doOKAction() })
+
   init {
     setTitle(IcsBundle.message("settings.panel.title"))
     init()
@@ -25,7 +27,6 @@ class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
   private var currentConfigurable: Configurable? = null
 
   override fun createCenterPanel(): JComponent? {
-    val upstreamEditor = IcsSettingsPanel(null, getContentPane()!!, { doOKAction() })
     upstreamEditor.panel.setBorder(DialogWrapper.ourDefaultBorder)
 
     val tabbedPane = JBTabsPaneImpl(null, SwingConstants.TOP, myDisposable)
@@ -37,7 +38,7 @@ class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
       actions = ArrayUtil.reverseArray(actions)
     }
 
-    val readOnlySourcesEditor = createReadOnlySourcesEditor(getContentPane())
+    val readOnlySourcesEditor = createReadOnlySourcesEditor(getContentPane(), project)
 
     tabs.addTab(TabInfo(wrap(upstreamEditor.panel, upstreamEditor.createActions())).setText("Upstream"))
     tabs.addTab(TabInfo(wrap(readOnlySourcesEditor.getComponent(), actions)).setText("Read-only Sources").setObject(readOnlySourcesEditor))
@@ -49,6 +50,10 @@ class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
       }
     })
     return tabbedPane.getComponent()
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return upstreamEditor.urlTextField
   }
 
   override fun doOKAction() {

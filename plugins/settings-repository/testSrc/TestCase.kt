@@ -134,9 +134,7 @@ abstract class TestCase {
       }
     }
     finally {
-      if (ICS_DIR != null) {
-        FileUtil.delete(ICS_DIR!!)
-      }
+      repositoryManager.deleteRepository()
     }
   }
 

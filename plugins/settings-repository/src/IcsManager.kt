@@ -47,7 +47,23 @@ val PLUGIN_NAME: String = "Settings Repository"
 
 val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
 
-public val icsManager: IcsManager = ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())!!
+val icsManager by lazy(LazyThreadSafetyMode.NONE) {
+  ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())
+}
+
+val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
+  override fun compute(): CredentialsStore {
+    if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
+      try {
+        return OsXCredentialsStore("IntelliJ Platform Settings Repository")
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
+    return FileCredentialsStore(File(getPluginSystemDir(), ".git_auth"))
+  }
+}
 
 public class IcsManager : ApplicationLoadListener {
   val settings: IcsSettings
@@ -64,19 +80,7 @@ public class IcsManager : ApplicationLoadListener {
 
   public val repositoryService: RepositoryService = GitRepositoryService()
 
-  val repositoryManager: RepositoryManager = GitRepositoryManager(object : AtomicNotNullLazyValue<CredentialsStore>() {
-    override fun compute(): CredentialsStore {
-      if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
-        try {
-          return OsXCredentialsStore("IntelliJ Platform Settings Repository")
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
-      }
-      return FileCredentialsStore(File(getPluginSystemDir(), ".git_auth"))
-    }
-  })
+  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore)
 
   private val commitAlarm = SingleAlarm(object : Runnable {
     override fun run() {

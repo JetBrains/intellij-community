@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.Time
 import java.io.File
@@ -73,4 +74,7 @@ class IcsSettings {
 }
 
 JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
-class ReadonlySource(var active: Boolean = true, var url: String? = null)
+class ReadonlySource(var active: Boolean = true, var url: String? = null) {
+  val path: String?
+    get() = if (url == null) null else PathUtilRt.getFileName(url!!) + Integer.toHexString(url!!.hashCode())
+}

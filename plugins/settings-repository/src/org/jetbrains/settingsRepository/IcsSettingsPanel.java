@@ -17,7 +17,7 @@ import java.awt.*;
 
 public class IcsSettingsPanel {
   JPanel panel;
-  private TextFieldWithBrowseButton urlTextField;
+  TextFieldWithBrowseButton urlTextField;
   private final Action[] syncActions;
 
   public IcsSettingsPanel(@Nullable final Project project, @NotNull Container dialogParent, @NotNull Function0<Unit> okAction) {
@@ -33,6 +33,7 @@ public class IcsSettingsPanel {
       }
     });
 
+    urlTextField.requestFocusInWindow();
     SettingsRepositoryPackage.updateSyncButtonState(StringUtil.nullize(urlTextField.getText()), syncActions);
   }
 

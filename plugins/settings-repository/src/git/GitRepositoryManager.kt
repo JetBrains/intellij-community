@@ -23,56 +23,53 @@ import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.File
 import java.io.IOException
-import kotlin.properties.Delegates
 
-class GitRepositoryService : RepositoryService {
-  override fun isValidRepository(file: File): Boolean {
-    if (File(file, Constants.DOT_GIT).exists()) {
-      return true
+class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: File = File(getPluginSystemDir(), "repository")) : BaseRepositoryManager(dir) {
+  val repository: Repository
+    get() {
+      var r = _repository
+      if (r == null) {
+        r = FileRepositoryBuilder().setWorkTree(dir).build()
+        _repository = r
+      }
+      return r!!
     }
 
-    // existing bare repository
-    try {
-      FileRepositoryBuilder().setGitDir(file).setMustExist(true).build()
-    }
-    catch (e: IOException) {
-      return false
-    }
+  // we must recreate repository if dir changed because repository stores old state and cannot be reinitialized (so, old instance cannot be reused and we must instantiate new one)
+  var _repository: Repository? = null
 
-    return true
-  }
-}
-
-class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>) : BaseRepositoryManager() {
-  var repository: Repository
-    private set
-
-  val credentialsProvider: CredentialsProvider by Delegates.lazy {
+  val credentialsProvider: CredentialsProvider by lazy {
     JGitCredentialsProvider(credentialsStore, repository)
-  };
+  }
 
   init {
-    $repository = FileRepositoryBuilder().setWorkTree(dir).build()
-
     if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {
       ShutDownTracker.getInstance().registerShutdownTask(object: Runnable {
         override fun run() {
-          if (dir.exists()) {
-            repository.close()
-          }
+          _repository?.close()
         }
       })
     }
   }
 
   override fun createRepositoryIfNeed(): Boolean {
-    if (dir.exists()) {
+    if (isRepositoryExists()) {
       return false
     }
 
-    $repository = createRepository(dir)
+    repository.create()
     repository.disableAutoCrLf()
     return true
+  }
+
+  override fun deleteRepository() {
+    super.deleteRepository()
+
+    val r = _repository
+    if (r != null) {
+      _repository = null
+      r.close()
+    }
   }
 
   override fun getUpstream(): String? {
@@ -87,7 +84,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     return repository.commit(message, reflogComment)
   }
 
-  override fun isRepositoryExists() = dir.exists()
+  override fun isRepositoryExists() = repository.getObjectDatabase().exists()
 
   override fun hasUpstream() = getUpstream() != null
 
@@ -190,5 +187,23 @@ fun printMessages(fetchResult: OperationResult) {
     if (!StringUtil.isEmptyOrSpaces(messages)) {
       LOG.debug(messages)
     }
+  }
+}
+
+class GitRepositoryService : RepositoryService {
+  override fun isValidRepository(file: File): Boolean {
+    if (File(file, Constants.DOT_GIT).exists()) {
+      return true
+    }
+
+    // existing bare repository
+    try {
+      FileRepositoryBuilder().setGitDir(file).setMustExist(true).build()
+    }
+    catch (e: IOException) {
+      return false
+    }
+
+    return true
   }
 }

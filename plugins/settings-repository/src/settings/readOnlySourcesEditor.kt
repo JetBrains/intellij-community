@@ -1,15 +1,24 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.Function
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
+import gnu.trove.THashSet
+import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import java.awt.Component
+import java.io.File
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
@@ -30,7 +39,7 @@ private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<Reado
       }
     })
 
-private fun createReadOnlySourcesEditor(dialogParent:Component): Configurable {
+private fun createReadOnlySourcesEditor(dialogParent: Component, project: Project?): Configurable {
   val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource>() {
     override fun clone(item: ReadonlySource, forInPlaceEditing: Boolean) = ReadonlySource(item.active, item.url)
 
@@ -74,7 +83,60 @@ private fun createReadOnlySourcesEditor(dialogParent:Component): Configurable {
     override fun isModified() = editor.isModified(icsManager.settings.readOnlySources)
 
     override fun apply() {
-      icsManager.settings.readOnlySources = editor.apply()
+      val oldList = icsManager.settings.readOnlySources
+      val toDelete = THashSet<String>(oldList.size())
+      for (oldSource in oldList) {
+        ContainerUtil.addIfNotNull(toDelete, oldSource.path)
+      }
+
+      val toCheckout = THashSet<ReadonlySource>()
+
+      val newList = editor.apply()
+      icsManager.settings.readOnlySources = newList
+      for (newSource in newList) {
+        val path = newSource.path
+        if (path != null && !toDelete.remove(path)) {
+          toCheckout.add(newSource)
+        }
+      }
+
+      if (toDelete.isEmpty() && toCheckout.isEmpty()) {
+        return
+      }
+
+      ProgressManager.getInstance().run(object : Task.Modal(project, IcsBundle.message("task.sync.title"), true) {
+        override fun run(indicator: ProgressIndicator) {
+          indicator.setIndeterminate(true)
+
+          val root = getPluginSystemDir()
+
+          if (toDelete.isNotEmpty()) {
+            indicator.setText("Deleting old repositories")
+            for (path in toDelete) {
+              try {
+                indicator.setText2(path)
+                FileUtil.delete(File(root, path))
+              }
+              catch (e: Exception) {
+                LOG.error(e)
+              }
+            }
+          }
+
+          if (toCheckout.isNotEmpty()) {
+            for (source in toCheckout) {
+              try {
+                indicator.setText("Cloning ${StringUtil.trimMiddle(source.url!!, 255)}")
+                val repoManager = GitRepositoryManager(credentialsStore, File(root, source.path!!))
+                repoManager.pull(indicator)
+              }
+              catch (e: Exception) {
+                LOG.error(e)
+              }
+            }
+          }
+        }
+      })
     }
 
     override fun reset() {

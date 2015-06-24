@@ -65,10 +65,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       LOG.warn(MessageFormat.format(JGitText.get().cannotPullOnARepoWithState, repositoryState.name()))
     }
 
-    val refToMerge = prefetchedRefToMerge ?: fetch()
-    if (refToMerge == null) {
-      return null
-    }
+    val refToMerge = prefetchedRefToMerge ?: fetch() ?: return null
 
     val mergeResult = merge(refToMerge, mergeStrategy, commitMessage = commitMessage)
     val mergeStatus = mergeResult.mergeStatus
@@ -78,7 +75,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
     if (mergeStatus == MergeStatus.CONFLICTING) {
       val mergedCommits = mergeResult.mergedCommits
-      assert(mergedCommits.size == 2)
+      assert(mergedCommits.size() == 2)
       val conflicts = mergeResult.conflicts!!
       var unresolvedFiles = conflictsToVirtualFiles(conflicts)
       val mergeProvider = JGitMergeProvider(repository, mergedCommits[0]!!, mergedCommits[1]!!, conflicts)
@@ -91,7 +88,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
           mergedFiles.add(file.getPath())
         }
 
-        if (resolvedFiles.size == unresolvedFiles.size) {
+        if (resolvedFiles.size() == unresolvedFiles.size()) {
           break
         }
         else {
@@ -150,7 +147,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     for (fetchRefSpec in remoteConfig.getFetchRefSpecs()) {
       val refUpdate = fetchResult.getTrackingRefUpdate(fetchRefSpec.getDestination())
       if (refUpdate == null) {
-        LOG.debug("No ref update for " + fetchRefSpec)
+        LOG.debug("No ref update for $fetchRefSpec")
         continue
       }
 
@@ -180,11 +177,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       return null
     }
 
-    val refToMerge = fetchResult.getAdvertisedRef(config.getRemoteBranchFullName())
-    if (refToMerge == null) {
-      throw IllegalStateException("Could not get advertised ref")
-    }
-    return refToMerge
+    return fetchResult.getAdvertisedRef(config.getRemoteBranchFullName()) ?: throw IllegalStateException("Could not get advertised ref")
   }
 
   protected fun checkCancelled() {
@@ -200,10 +193,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             commitMessage: String? = null): MergeResultEx {
     indicator.checkCanceled()
 
-    val head = repository.getRef(Constants.HEAD)
-    if (head == null) {
-      throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
-    }
+    val head = repository.getRef(Constants.HEAD) ?: throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
 
     // Check for FAST_FORWARD, ALREADY_UP_TO_DATE
     val revWalk = RevWalk(repository)
@@ -221,8 +211,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       if (headId == null) {
         revWalk.parseHeaders(srcCommit)
         dirCacheCheckout = DirCacheCheckout(repository, repository.lockDirCache(), srcCommit.getTree())
-        dirCacheCheckout!!.setFailOnConflict(true)
-        dirCacheCheckout!!.checkout()
+        dirCacheCheckout.setFailOnConflict(true)
+        dirCacheCheckout.checkout()
         val refUpdate = repository.updateRef(head.getTarget().getName())
         refUpdate.setNewObjectId(objectId)
         refUpdate.setExpectedOldObjectId(null)
@@ -230,7 +220,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         if (refUpdate.update() != RefUpdate.Result.NEW) {
           throw NoHeadException(JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported)
         }
-        return MergeResultEx(srcCommit, MergeStatus.FAST_FORWARD, arrayOf<ObjectId?>(null, srcCommit), ImmutableUpdateResult(dirCacheCheckout!!.getUpdated().keySet(), dirCacheCheckout!!.getRemoved()))
+        return MergeResultEx(srcCommit, MergeStatus.FAST_FORWARD, arrayOf<ObjectId?>(null, srcCommit), ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved()))
         //return MergeResult(srcCommit, srcCommit, array(null, srcCommit), MergeStatus.FAST_FORWARD, mergeStrategy, null)
       }
 
@@ -246,8 +236,8 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         // FAST_FORWARD detected: skip doing a real merge but only update HEAD
         refLogMessage.append(": ").append(MergeStatus.FAST_FORWARD)
         dirCacheCheckout = DirCacheCheckout(repository, headCommit.getTree(), repository.lockDirCache(), srcCommit.getTree())
-        dirCacheCheckout!!.setFailOnConflict(true)
-        dirCacheCheckout!!.checkout()
+        dirCacheCheckout.setFailOnConflict(true)
+        dirCacheCheckout.checkout()
 //        var msg: String? = null
         val newHead: ObjectId
 //        val base: ObjectId
@@ -266,7 +256,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
           newHead = srcCommit
           mergeStatus = MergeStatus.FAST_FORWARD
         }
-        return MergeResultEx(newHead, mergeStatus, arrayOf<ObjectId?>(headCommit, srcCommit), ImmutableUpdateResult(dirCacheCheckout!!.getUpdated().keySet(), dirCacheCheckout!!.getRemoved()))
+        return MergeResultEx(newHead, mergeStatus, arrayOf<ObjectId?>(headCommit, srcCommit), ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved()))
         //return MergeResult(newHead, base, array(headCommit, srcCommit), mergeStatus, mergeStrategy, null, msg)
       }
       else {
@@ -319,9 +309,9 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
           // ResolveMerger does checkout
           if (merger !is ResolveMerger) {
             dirCacheCheckout = DirCacheCheckout(repository, headCommit.getTree(), repository.lockDirCache(), merger.getResultTreeId())
-            dirCacheCheckout!!.setFailOnConflict(true)
-            dirCacheCheckout!!.checkout()
-            result = ImmutableUpdateResult(dirCacheCheckout!!.getUpdated().keySet(), dirCacheCheckout!!.getRemoved())
+            dirCacheCheckout.setFailOnConflict(true)
+            dirCacheCheckout.checkout()
+            result = ImmutableUpdateResult(dirCacheCheckout.getUpdated().keySet(), dirCacheCheckout.getRemoved())
           }
 
 //          var msg: String? = null
@@ -362,7 +352,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       }
     }
     catch (e: org.eclipse.jgit.errors.CheckoutConflictException) {
-      throw CheckoutConflictException(if (dirCacheCheckout == null) listOf<String>() else dirCacheCheckout!!.getConflicts(), e)
+      throw CheckoutConflictException(if (dirCacheCheckout == null) listOf<String>() else dirCacheCheckout.getConflicts(), e)
     }
     finally {
       revWalk.release()

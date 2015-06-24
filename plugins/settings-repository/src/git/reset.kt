@@ -2,10 +2,10 @@ package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.merge.MergeStrategy
-import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.jgit.dirCache.deleteAllFiles
-import org.jetbrains.settingsRepository.UpdateResult
+import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.MutableUpdateResult
+import org.jetbrains.settingsRepository.UpdateResult
 
 class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
@@ -27,7 +27,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
       if (firstMergeResult == null) {
         // nothing to merge, so, we merge latest origin commit
         val fetchRefSpecs = remoteConfig.getFetchRefSpecs()
-        assert(fetchRefSpecs.size == 1)
+        assert(fetchRefSpecs.size() == 1)
 
         val latestUpstreamCommit = repository.getRef(fetchRefSpecs[0].getDestination()!!)
         if (latestUpstreamCommit == null) {

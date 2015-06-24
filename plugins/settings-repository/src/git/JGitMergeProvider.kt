@@ -17,7 +17,7 @@ import java.nio.CharBuffer
 import java.util.ArrayList
 
 private fun conflictsToVirtualFiles(map: Map<String, org.eclipse.jgit.merge.MergeResult<*>>): MutableList<VirtualFile> {
-  val result = ArrayList<VirtualFile>(map.size)
+  val result = ArrayList<VirtualFile>(map.size())
   for (path in map.keySet()) {
     result.add(RepositoryVirtualFile(path))
   }
@@ -43,7 +43,7 @@ class JGitMergeProvider(private val repository: Repository, private val myCommit
   }
 
   // cannot be private due to Kotlin bug
-  fun addFile(bytes: ByteArray, file: VirtualFile, size: Int = bytes.size) {
+  fun addFile(bytes: ByteArray, file: VirtualFile, size: Int = bytes.size()) {
     repository.writePath(file.getPath(), bytes, size)
   }
 

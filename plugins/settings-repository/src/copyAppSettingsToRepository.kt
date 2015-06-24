@@ -1,14 +1,14 @@
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ide.actions.ExportSettingsAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import java.io.File
 import com.intellij.openapi.components.ExportableComponent
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.util.io.FileUtil
+import java.io.File
 
 fun copyLocalConfig() {
   val stateStorageManager = (ApplicationManager.getApplication()!! as ApplicationImpl).getStateStore().getStateStorageManager()
@@ -29,7 +29,7 @@ fun copyLocalConfig() {
     val roamingType = getRoamingType(fileToComponents.get(file))
     if (file.isFile()) {
       val fileBytes = FileUtil.loadFileBytes(file)
-      streamProvider.doSave(fileSpec, fileBytes, fileBytes.size, roamingType)
+      streamProvider.doSave(fileSpec, fileBytes, fileBytes.size(), roamingType)
     }
     else {
       saveDirectory(file, fileSpec, roamingType, streamProvider)
@@ -44,7 +44,7 @@ private fun saveDirectory(parent: File, parentFileSpec: String, roamingType: Roa
       val childFileSpec = parentFileSpec + '/' + file.getName()
       if (file.isFile()) {
         val fileBytes = FileUtil.loadFileBytes(file)
-        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
+        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size(), roamingType)
       }
       else {
         saveDirectory(file, childFileSpec, roamingType, streamProvider)
@@ -61,9 +61,9 @@ private fun getRoamingType(components: Collection<ExportableComponent>): Roaming
     else if (component is PersistentStateComponent<*>) {
       val stateAnnotation = component.javaClass.getAnnotation(javaClass<State>())
       if (stateAnnotation != null) {
-        val storages = stateAnnotation.storages()
+        val storages = stateAnnotation.storages
         if (!storages.isEmpty()) {
-          return storages[0].roamingType()
+          return storages[0].roamingType
         }
       }
     }

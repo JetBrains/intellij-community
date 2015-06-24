@@ -1,16 +1,16 @@
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
+import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.PathEdit
-import com.intellij.util.SmartList
+import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
-import org.jetbrains.jgit.dirCache.edit
-import org.jetbrains.jgit.dirCache.AddFile
-import com.intellij.util.PathUtilRt
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import java.net.InetAddress
 
 fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator): Boolean {
@@ -32,11 +32,11 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator): Boolean
         if (edits == null) {
           edits = SmartList()
         }
-        edits!!.add(AddFile(path))
+        edits.add(AddFile(path))
       }
     }
     if (edits != null) {
-      manager.repository.edit(edits!!)
+      manager.repository.edit(edits)
     }
   }
 

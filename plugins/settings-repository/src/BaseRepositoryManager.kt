@@ -16,9 +16,7 @@ import org.jetbrains.annotations.TestOnly
 import java.io.*
 import java.util.Arrays
 
-public abstract class BaseRepositoryManager() : RepositoryManager {
-  protected var dir: File = File(getPluginSystemDir(), "repository")
-
+public abstract class BaseRepositoryManager(protected val dir: File) : RepositoryManager {
   protected val lock: Any = Object();
 
   override fun listSubFileNames(path: String): Collection<String> {
