@@ -29,14 +29,15 @@ import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +55,7 @@ import java.util.List;
  */
 public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor");
-  
+
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
 
@@ -139,24 +140,13 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(false);
 
-      boolean dvcsIsUsed = false;
-
-      if (ProjectLevelVcsManager.getInstance(myProject).dvcsUsedInProject()) {
-        for (Change change : changes) {
-          final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
-          if (vcs != null && VcsType.distributed.equals(vcs.getType())) {
-            dvcsIsUsed = true;
-            break;
-          }
+      myPanel.setChanges(ContainerUtil.filter(changes, new Condition<Change>() {
+        @Override
+        public boolean value(Change change) {
+          return change.getBeforeRevision() != null && change.getAfterRevision() != null;
         }
-      }
-      final List<Change> modified = new ArrayList<Change>();
-      for (Change change : changes) {
-        if (change.getBeforeRevision() == null || change.getAfterRevision() == null) continue;
-        modified.add(change);
-      }
-      myPanel.setChanges(modified);
-      myPanel.showTextStoreOption(dvcsIsUsed);
+      }));
+      myPanel.showTextStoreOption();
       return myPanel.getPanel();
     }
 
@@ -258,7 +248,8 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         LOG.info(ex);
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
-            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());
+            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()),
+                                     CommonBundle.getErrorTitle());
           }
         }, null, myProject);
       }

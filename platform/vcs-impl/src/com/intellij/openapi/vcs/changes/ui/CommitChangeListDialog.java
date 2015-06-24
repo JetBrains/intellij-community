@@ -653,12 +653,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return;
     }
     boolean isOK = true;
-    if (SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage())!= null) {
+    final JComponent configurationUI = SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage());
+    if (configurationUI != null) {
       DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
                                                       getProject(),
                                                       session,
                                                       getIncludedChanges(),
-                                                      getCommitMessage());
+                                                      getCommitMessage(), configurationUI);
       isOK = sessionDialog.showAndGet();
     }
     if (isOK) {
