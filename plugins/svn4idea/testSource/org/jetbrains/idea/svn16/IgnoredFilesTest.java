@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn16;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -93,9 +92,6 @@ public class IgnoredFilesTest extends Svn16TestCase {
           myVcsManager.unregisterVcs(myVcs);
           myVcsManager = null;
           myVcs = null;
-
-          ((ProjectComponent)myChangeListManager).projectClosed();
-          ((ProjectComponent)myVcsDirtyScopeManager).projectClosed();
 
           tearDownProject();
           if (myTempDirFixture != null) {

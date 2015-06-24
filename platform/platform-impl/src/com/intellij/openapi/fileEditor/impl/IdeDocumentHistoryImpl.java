@@ -371,7 +371,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     while (!myForwardPlaces.isEmpty()) {
       if (current != null && isSame(current, target)) {
         target = myForwardPlaces.removeLast();
-      } 
+      }
       else {
         break;
       }
