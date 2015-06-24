@@ -36,17 +36,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
@@ -66,18 +61,18 @@ import java.util.Comparator;
  * 
  * Without console properties no navigation, no rerun failed is possible.
  */
-public class ImportTestsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#" + ImportTestsAction.class.getName());
+public abstract class AbstractImportTestsAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#" + AbstractImportTestsAction.class.getName());
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
   public static final String TEST_HISTORY_SIZE = "test_history_size";
   private SMTRunnerConsoleProperties myProperties;
 
-  public ImportTestsAction() {
-    super("Import Test Results", "Import tests from file", AllIcons.ToolbarDecorator.Import);
+  public AbstractImportTestsAction(@Nullable String text, @Nullable String description) {
+    super(text, description, null);
   }
 
-  public ImportTestsAction(SMTRunnerConsoleProperties properties) {
-    this();
+  public AbstractImportTestsAction(SMTRunnerConsoleProperties properties, @Nullable String text, @Nullable String description) {
+    this(text, description);
     myProperties = properties;
   }
 
@@ -90,19 +85,14 @@ public class ImportTestsAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
+  @Nullable
+  public abstract VirtualFile getFile(@NotNull Project project);
+  
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
-    final ImportTestResultsDialog dialog = new ImportTestResultsDialog(project);
-    if (!dialog.showAndGet()) {
-      return;
-    }
-    final String filePath = dialog.getFilePath();
-    if (filePath == null) {
-      return;
-    }
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+    final VirtualFile file = getFile(project);
     if (file != null) {
       try {
         final ImportRunProfile profile = new ImportRunProfile(file, project);
@@ -125,7 +115,7 @@ public class ImportTestsAction extends AnAction {
   public static void adjustHistory(Project project) {
     int historySize;
     try {
-      historySize = Math.max(0, Integer.parseInt(PropertiesComponent.getInstance().getValue(TEST_HISTORY_SIZE, "5")));
+      historySize = Math.max(0, Integer.parseInt(PropertiesComponent.getInstance().getValue(TEST_HISTORY_SIZE, "10")));
     }
     catch (NumberFormatException e) {
       historySize = 5;

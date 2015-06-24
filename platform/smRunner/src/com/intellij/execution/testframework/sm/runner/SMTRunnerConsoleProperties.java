@@ -26,7 +26,8 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
-import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -47,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
- * Use {@link SMRunnerConsolePropertiesProvider} so importer {@link ImportTestsAction.ImportRunProfile#ImportRunProfile(VirtualFile, Project)}
+ * Use {@link SMRunnerConsolePropertiesProvider} so importer {@link AbstractImportTestsAction.ImportRunProfile#ImportRunProfile(VirtualFile, Project)}
  * would be able to create properties by read configuration and test navigation, rerun failed tests etc. would work on imported results
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
@@ -99,7 +100,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Nullable
   @Override
   protected AnAction createImportAction() {
-    return new ImportTestsAction(this);
+    return new ImportTestsGroup(this);
   }
 
   public boolean isIdBasedTestTree() {

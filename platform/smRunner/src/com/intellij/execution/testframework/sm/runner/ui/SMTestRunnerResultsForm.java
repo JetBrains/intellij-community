@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.*;
@@ -23,7 +22,7 @@ import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
@@ -46,11 +45,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -365,10 +362,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         public void onSuccess() {
           if (myOutput != null) {
             try {
-              ImportTestsAction.adjustHistory(myProject);
+              AbstractImportTestsAction.adjustHistory(myProject);
               final String configurationNameIncludedDate = PathUtil.suggestFileName(configuration.getName()) + " " +
                                                            new SimpleDateFormat("yyyy.MM.dd 'at' HH'h' mm'm' ss's'").format(new Date());
-              FileUtil.writeToFile(new File(ImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml"), myOutput);
+              FileUtil.writeToFile(new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml"), myOutput);
             }
             catch (IOException e) {
               LOG.info("Fail to write test history", e);

@@ -27,7 +27,7 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +38,10 @@ import java.io.File;
 import java.io.OutputStream;
 
 public class ImportedTestRunnableState implements RunProfileState {
-  private ImportTestsAction.ImportRunProfile myRunProfile;
+  private AbstractImportTestsAction.ImportRunProfile myRunProfile;
   private File myFile;
 
-  public ImportedTestRunnableState(ImportTestsAction.ImportRunProfile profile, File file) {
+  public ImportedTestRunnableState(AbstractImportTestsAction.ImportRunProfile profile, File file) {
     myRunProfile = profile;
     myFile = file;
   }
