@@ -67,6 +67,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TLongArrayList;
+import gnu.trove.TLongProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -531,6 +533,24 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ourThreadExecutorsService.shutdownNow();
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
+
+    if (LOG.isDebugEnabled()) {
+      final long[] sum = {0};
+      writePauses.forEach(new TLongProcedure() {
+        @Override
+        public boolean execute(long value) {
+          sum[0] += value;
+          return true;
+        }
+      });
+      LOG.debug("write action Statistics:\n" +
+                "\nTotal write actions: " + writePauses.size() +
+                "\nTotal write pauses : " + sum[0] + "ms"+
+                "\nAverage write pause: " + sum[0] / writePauses.size() + "ms" +
+                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms" +
+                ""
+      );
+    }
   }
 
   @NotNull
@@ -1201,11 +1221,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private void startWrite(Class clazz) {
+  private final TLongArrayList writePauses = new TLongArrayList();
+  private void startWrite(@Nullable Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
-
+    long start = System.currentTimeMillis();
     try {
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
@@ -1242,10 +1263,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     myWriteActionsStack.push(clazz);
+    if (LOG.isDebugEnabled()) {
+      long end = System.currentTimeMillis();
+      writePauses.add(end - start);
+    }
     fireWriteActionStarted(clazz);
   }
 
-  private void endWrite(Class clazz) {
+  private void endWrite(@Nullable Class clazz) {
     try {
       myWriteActionsStack.pop();
       fireWriteActionFinished(clazz);
@@ -1257,14 +1282,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  public AccessToken acquireWriteActionLock(Class clazz) {
+  public AccessToken acquireWriteActionLock(@Nullable Class clazz) {
     return new WriteAccessToken(clazz);
   }
 
   private class WriteAccessToken extends AccessToken {
+    @Nullable
     private final Class clazz;
 
-    public WriteAccessToken(Class clazz) {
+    public WriteAccessToken(@Nullable Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
@@ -1392,15 +1418,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().applicationExiting();
   }
 
-  private void fireBeforeWriteActionStart(Class action) {
+  private void fireBeforeWriteActionStart(@Nullable Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
-  private void fireWriteActionStarted(Class action) {
+  private void fireWriteActionStarted(@Nullable Class action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
-  private void fireWriteActionFinished(Class action) {
+  private void fireWriteActionFinished(@Nullable Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 
