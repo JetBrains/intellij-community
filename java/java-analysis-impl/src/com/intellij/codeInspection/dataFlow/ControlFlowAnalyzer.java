@@ -1239,7 +1239,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
-      PsiElement psiAnchor = expression.isPhysical() ? expression : null;
+      PsiElement psiAnchor = i == operands.length - 1 && expression.isPhysical() ? expression : null;
       addInstruction(new BinopInstruction(JavaTokenType.NE, psiAnchor, expression.getProject()));
     }
   }

@@ -267,6 +267,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   
   public void testNotEqualsTypo() { doTest(); }
   public void testAndEquals() { doTest(); }
+  public void testXor() { doTest(); }
 
   public void testUnusedCallDoesNotMakeUnknown() { doTest(); }
   public void testEmptyCallDoesNotMakeNullable() { doTest(); }
