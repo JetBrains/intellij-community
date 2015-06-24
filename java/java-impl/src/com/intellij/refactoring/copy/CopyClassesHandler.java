@@ -484,10 +484,11 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
 
   private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<PsiElement> rebindExpressions) {
+    final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<PsiJavaCodeReferenceElement, PsiElement>();
     element.accept(new JavaRecursiveElementVisitor(){
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        decodeRef(expression, oldToNewMap, rebindExpressions);
+        decodeRef(expression, oldToNewMap, rebindMap);
         super.visitReferenceExpression(expression);
       }
 
@@ -495,7 +496,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       public void visitNewExpression(PsiNewExpression expression) {
         final PsiJavaCodeReferenceElement referenceElement = expression.getClassReference();
         if (referenceElement != null) {
-          decodeRef(referenceElement, oldToNewMap, rebindExpressions);
+          decodeRef(referenceElement, oldToNewMap, rebindMap);
         }
         super.visitNewExpression(expression);
       }
@@ -504,22 +505,25 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       public void visitTypeElement(PsiTypeElement type) {
         final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
         if (referenceElement != null) {
-          decodeRef(referenceElement, oldToNewMap, rebindExpressions);
+          decodeRef(referenceElement, oldToNewMap, rebindMap);
         }
         super.visitTypeElement(type);
       }
     });
+    for (Map.Entry<PsiJavaCodeReferenceElement, PsiElement> entry : rebindMap.entrySet()) {
+      rebindExpressions.add(entry.getKey().bindToElement(entry.getValue()));
+    }
     rebindExternalReferences(element, oldToNewMap, rebindExpressions);
   }
 
   private static void decodeRef(final PsiJavaCodeReferenceElement expression,
                                 final Map<PsiClass, PsiElement> oldToNewMap,
-                                Set<PsiElement> rebindExpressions) {
+                                Map<PsiJavaCodeReferenceElement, PsiElement> rebindExpressions) {
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)resolved;
       if (oldToNewMap.containsKey(psiClass)) {
-        rebindExpressions.add(expression.bindToElement(oldToNewMap.get(psiClass)));
+        rebindExpressions.put(expression, oldToNewMap.get(psiClass));
       }
     }
   }
