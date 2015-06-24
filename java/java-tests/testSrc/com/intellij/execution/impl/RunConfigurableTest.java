@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,12 +75,16 @@ public class RunConfigurableTest extends LightIdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myConfigurable.disposeUIResources();
-    myConfigurable = null;
-    myTree = null;
-    myRoot = null;
-    myModel = null;
-    super.tearDown();
+    try {
+      if (myConfigurable != null) myConfigurable.disposeUIResources();
+      myConfigurable = null;
+      myTree = null;
+      myRoot = null;
+      myModel = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testDND() throws Exception {
