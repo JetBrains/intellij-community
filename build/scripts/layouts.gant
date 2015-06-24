@@ -18,6 +18,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 target('default': "Developers update") {
+  loadProjectFromPath(home)
   def patchedDescriptorDir = patchAppDescriptor(deploy)
   layoutFull(home, deploy, patchedDescriptorDir)
   ant.delete(dir: patchedDescriptorDir)
@@ -261,7 +262,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
   printUnusedModules(info.usedModules)
 
-  //reorder(targetDirectory)
+  reorder(home, targetDirectory)
   return info
 }
 
@@ -681,17 +682,15 @@ def moduleOptional(String name, Closure init) {
 }
 
 def reorder(String home, String targetDirectory) {
-  if (findModule("util") != null) {
-    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
-      arg(value: "$home/build/order.txt")
-      arg(value: targetDirectory)
-      arg(value: targetDirectory)
-      arg(value: "$home/lib")
-      classpath {
-        pathelement(location: projectBuilder.moduleOutput(findModule("util")))
-        pathelement(location: projectBuilder.moduleOutput(findModule("util-rt")))
-        pathelement(location: "$home/lib/jna.jar")
-        pathelement(location: "$home/lib/trove4j.jar")
+  projectBuilder.info("Reordering JARs in $targetDirectory")
+  ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: true, failonerror: true) {
+    arg(value: "${home}/build/order.txt")
+    arg(value: targetDirectory)
+    arg(value: targetDirectory)
+    arg(value: "${home}/lib")
+    classpath {
+      projectBuilder.moduleRuntimeClasspath(findModule("util"), false).each {
+        pathelement(location: it)
       }
     }
   }
