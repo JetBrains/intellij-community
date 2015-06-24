@@ -620,6 +620,22 @@
       <expected>ERR</expected>
     </test>
     <test>
+      <pattern><![CDATA[[<error descr="Illegal character range (to < from)">\udbff\udfff-\ud800\udc00</error>]]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>[\ud800\udc00-\udbff\udfff]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern><![CDATA[[<error descr="Illegal character range (to < from)">z-a</error>]]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>[a-z]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
       <pattern>a\Qabc?*+.))]][]\Eb</pattern>
       <expected>OK</expected>
     </test>
