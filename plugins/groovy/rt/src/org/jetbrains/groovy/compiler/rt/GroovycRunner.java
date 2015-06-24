@@ -97,10 +97,12 @@ public class GroovycRunner {
     final boolean forStubs = "stubs".equals(args[1]);
     String argPath = args[2];
 
-    return intMain2(indy, optimize, forStubs, argPath, null);
+    String configScript = System.getProperty(GroovyRtConstants.GROOVYC_CONFIG_SCRIPT);
+
+    return intMain2(indy, optimize, forStubs, argPath, configScript, null);
   }
 
-  public static int intMain2(boolean indy, boolean optimize, boolean forStubs, String argPath, Queue mailbox) {
+  public static int intMain2(boolean indy, boolean optimize, boolean forStubs, String argPath, String configScript, Queue mailbox) {
     if (indy) {
       System.setProperty("groovy.target.indy", "true");
     }
@@ -128,8 +130,8 @@ public class GroovycRunner {
 
     try {
       Class<?> aClass = Class.forName("org.jetbrains.groovy.compiler.rt.DependentGroovycRunner", true, loader);
-      Method method = aClass.getDeclaredMethod("runGroovyc", boolean.class, String.class, Queue.class);
-      method.invoke(null, forStubs, argPath, mailbox);
+      Method method = aClass.getDeclaredMethod("runGroovyc", boolean.class, String.class, String.class, Queue.class);
+      method.invoke(null, forStubs, argPath, configScript, mailbox);
     }
     catch (Throwable e) {
       while (e.getCause() != null) {
