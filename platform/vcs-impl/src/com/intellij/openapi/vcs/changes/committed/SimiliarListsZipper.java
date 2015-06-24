@@ -15,12 +15,20 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.google.common.collect.Iterables;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 public class SimiliarListsZipper {
-  private final LinkedList<SubSequence<CommittedChangeList>> myLists;
+
+  private final Collection<List<CommittedChangeList>> myLists;
+  private final Comparator<CommittedChangeList> myComparator;
   private final List<CommittedChangeList> myResult;
   private final VcsCommittedListsZipper myZipper;
   private final RepositoryLocationGroup myGroup;
@@ -34,128 +42,43 @@ public class SimiliarListsZipper {
                              final VcsCommittedListsZipper zipper, final RepositoryLocationGroup group) {
     myZipper = zipper;
     myGroup = group;
-    myLists = new LinkedList<SubSequence<CommittedChangeList>>();
+    myLists = lists;
     myResult = new ArrayList<CommittedChangeList>();
-    
-    for (List<CommittedChangeList> list : lists) {
-      if (! list.isEmpty()) {
-        myLists.add(new SubSequence<CommittedChangeList>(list));
+    myComparator = new Comparator<CommittedChangeList>() {
+      @Override
+      public int compare(CommittedChangeList o1, CommittedChangeList o2) {
+        return Comparing.compare(zipper.getNumber(o1), zipper.getNumber(o2));
       }
-    }
+    };
   }
 
   public void zip() {
-    Collections.sort(myLists);
-    
-    while (! myLists.isEmpty()) {
-      // check for equality of first n things
-      if (tryZipFirstN()) {
-        continue;
+    List<CommittedChangeList> equalLists = new ArrayList<CommittedChangeList>();
+    CommittedChangeList previousList = null;
+
+    for (CommittedChangeList list : Iterables.mergeSorted(myLists, myComparator)) {
+      if (previousList != null && myComparator.compare(previousList, list) != 0) {
+        myResult.add(zip(equalLists));
+        equalLists.clear();
       }
-      if (! usualStep()) {
-        break;
-      }
+      equalLists.add(list);
+      previousList = list;
+    }
+    if (!equalLists.isEmpty()) {
+      myResult.add(zip(equalLists));
     }
   }
 
-  private boolean usualStep() {
-    while (! myLists.isEmpty()) {
-      final SubSequence<CommittedChangeList> sequence = myLists.removeFirst();
-      myResult.add(sequence.getCurrentList());
-
-      if (sequence.hasNext()) {
-        sequence.next();
-        insert(sequence);
-        return true;
-      }
+  @NotNull
+  private CommittedChangeList zip(@NotNull List<CommittedChangeList> equalLists) {
+    if (equalLists.isEmpty()) {
+      throw new IllegalArgumentException("equalLists can not be empty");
     }
-    return false;
-  }
-  
-  private boolean tryZipFirstN() {
-    final SubSequence<CommittedChangeList> firstSequence = myLists.getFirst();
-    List<SubSequence<CommittedChangeList>> removed = null;
-    List<CommittedChangeList> toBeZipped = null;
-    
-    for (ListIterator<SubSequence<CommittedChangeList>> iterator = myLists.listIterator(1); iterator.hasNext();) {
-      final SubSequence<CommittedChangeList> sequence = iterator.next();
-      if (sequence.compareTo(firstSequence) != 0) {
-        break;
-      }
-      if (removed == null) {
-        removed = new ArrayList<SubSequence<CommittedChangeList>>();
-        toBeZipped = new ArrayList<CommittedChangeList>();
-      }
-      iterator.remove();
-      removed.add(sequence);
-      toBeZipped.add(sequence.getCurrentList());
-    }
-    if (removed != null) {
-      // also remove first
-      myLists.removeFirst();
-      // and add to equal collection
-      removed.add(firstSequence);
-      toBeZipped.add(firstSequence.getCurrentList());
 
-      final CommittedChangeList zippedList = myZipper.zip(myGroup, toBeZipped);
-      myResult.add(zippedList);
-
-      for (SubSequence<CommittedChangeList> sequence : removed) {
-        if (sequence.hasNext()) {
-          sequence.next();
-          insert(sequence);
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
-  private void insert(final SubSequence<CommittedChangeList> firstSequence) {
-    for (ListIterator<SubSequence<CommittedChangeList>> iterator = myLists.listIterator(); iterator.hasNext();) {
-      final SubSequence<CommittedChangeList> currentSequence = iterator.next();
-      if (currentSequence.compareTo(firstSequence) > 0) {
-        iterator.previous();
-        iterator.add(firstSequence);
-        return;
-      }
-    }
-    myLists.addLast(firstSequence);
+    return equalLists.size() > 1 ? myZipper.zip(myGroup, equalLists) : equalLists.get(0);
   }
 
   public List<CommittedChangeList> getResult() {
     return myResult;
-  }
-
-  private class SubSequence<T extends CommittedChangeList> implements Comparable<SubSequence<T>> {
-    private int myIdx;
-    private long myCachedNumber;
-    private final List<T> myList;
-
-    private SubSequence(final List<T> list) {
-      myList = list;
-      myIdx = 0;
-      myCachedNumber = myZipper.getNumber(myList.get(0));
-    }
-
-    boolean hasNext() {
-      return myIdx < (myList.size() - 1);
-    }
-
-    public int compareTo(final SubSequence<T> other) {
-      final long sign = myCachedNumber - other.myCachedNumber;
-      return sign == 0 ? 0 : ((sign < 0) ? -1 : 1);
-    }
-
-    void next() {
-      if (hasNext()) {
-        ++ myIdx;
-        myCachedNumber = myZipper.getNumber(myList.get(myIdx));
-      }
-    }
-
-    T getCurrentList() {
-      return myList.get(myIdx);
-    }
   }
 }
