@@ -23,7 +23,10 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -90,6 +93,9 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     Point point = e.getMouseEvent().getPoint();
     if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
       hideHint();
+    }
+    else if (type == ValueHintType.MOUSE_OVER_HINT && myRequest != null && !myRequest.isHintHidden() && myRequest.isInsideCurrentRange(editor, point)) {
+      return;
     }
 
     for (DebuggerSupport support : mySupports) {
