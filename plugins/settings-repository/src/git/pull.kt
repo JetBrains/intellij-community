@@ -1,6 +1,5 @@
 package org.jetbrains.settingsRepository.git
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode
@@ -11,7 +10,6 @@ import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.dircache.DirCacheCheckout
-import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.merge.MergeMessageFormatter
@@ -20,32 +18,12 @@ import org.eclipse.jgit.merge.ResolveMerger
 import org.eclipse.jgit.merge.SquashMessageFormatter
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevWalkUtils
-import org.eclipse.jgit.transport.FetchResult
 import org.eclipse.jgit.transport.RemoteConfig
-import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.jetbrains.settingsRepository.*
 import java.io.IOException
 import java.text.MessageFormat
 import java.util.ArrayList
-
-fun wrapIfNeedAndReThrow(e: TransportException) {
-  if (e.getStatus() == TransportException.Status.CANNOT_RESOLVE_REPO) {
-    throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
-  }
-
-  val message = e.getMessage()!!
-  if (e.getStatus() == TransportException.Status.NOT_AUTHORIZED || e.getStatus() == TransportException.Status.NOT_PERMITTED ||
-      message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
-    throw AuthenticationException(e)
-  }
-  else if (e.getStatus() == TransportException.Status.CANCELLED || message == "Download cancelled") {
-    throw ProcessCanceledException()
-  }
-  else {
-    throw e
-  }
-}
 
 open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndicator) {
   val repository = manager.repository
@@ -113,26 +91,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
 
     val repository = manager.repository
 
-    val transport = Transport.open(repository, remoteConfig)
-    val fetchResult: FetchResult
-    try {
-      transport.setCredentialsProvider(manager.credentialsProvider)
-      fetchResult = transport.fetch(indicator.asProgressMonitor(), null)
-    }
-    catch (e: TransportException) {
-      val message = e.getMessage()!!
-      if (message.startsWith("Remote does not have ")) {
-        LOG.info(message)
-        // "Remote does not have refs/heads/master available for fetch." - remote repository is not initialized
-        return null
-      }
-
-      wrapIfNeedAndReThrow(e)
-      return null
-    }
-    finally {
-      transport.close()
-    }
+    val fetchResult = repository.fetch(remoteConfig, manager.credentialsProvider, indicator.asProgressMonitor()) ?: return null
 
     if (LOG.isDebugEnabled()) {
       printMessages(fetchResult)
@@ -178,10 +137,6 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
     }
 
     return fetchResult.getAdvertisedRef(config.getRemoteBranchFullName()) ?: throw IllegalStateException("Could not get advertised ref")
-  }
-
-  protected fun checkCancelled() {
-    indicator.checkCanceled()
   }
 
   fun merge(unpeeledRef: Ref,

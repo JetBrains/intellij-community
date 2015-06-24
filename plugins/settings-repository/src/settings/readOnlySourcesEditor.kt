@@ -16,7 +16,8 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
 import gnu.trove.THashSet
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
+import org.jetbrains.settingsRepository.git.asProgressMonitor
+import org.jetbrains.settingsRepository.git.cloneBare
 import java.awt.Component
 import java.io.File
 import javax.swing.JTextField
@@ -113,6 +114,7 @@ private fun createReadOnlySourcesEditor(dialogParent: Component, project: Projec
           if (toDelete.isNotEmpty()) {
             indicator.setText("Deleting old repositories")
             for (path in toDelete) {
+              indicator.checkCanceled()
               try {
                 indicator.setText2(path)
                 FileUtil.delete(File(root, path))
@@ -125,10 +127,10 @@ private fun createReadOnlySourcesEditor(dialogParent: Component, project: Projec
 
           if (toCheckout.isNotEmpty()) {
             for (source in toCheckout) {
+              indicator.checkCanceled()
               try {
                 indicator.setText("Cloning ${StringUtil.trimMiddle(source.url!!, 255)}")
-                val repoManager = GitRepositoryManager(credentialsStore, File(root, source.path!!))
-                repoManager.pull(indicator)
+                cloneBare(source.url!!, File(root, source.path!!), credentialsStore, indicator.asProgressMonitor()).close()
               }
               catch (e: Exception) {
                 LOG.error(e)

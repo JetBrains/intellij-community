@@ -500,5 +500,4 @@ enum class SyncType {
   OVERWRITE_REMOTE
 }
 
-class AuthenticationException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
 class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)

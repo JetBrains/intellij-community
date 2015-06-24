@@ -117,3 +117,5 @@ public fun UpdateResult?.concat(result: UpdateResult?): UpdateResult? {
     return MutableUpdateResult(changed, deleted).add(result!!)
   }
 }
+
+public class AuthenticationException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)

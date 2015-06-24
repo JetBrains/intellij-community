@@ -1,5 +1,6 @@
 package org.jetbrains.settingsRepository
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
@@ -75,6 +76,20 @@ class IcsSettings {
 
 JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
 class ReadonlySource(var active: Boolean = true, var url: String? = null) {
+  JsonIgnore
   val path: String?
-    get() = if (url == null) null else PathUtilRt.getFileName(url!!) + Integer.toHexString(url!!.hashCode())
+    get() {
+      if (url == null) {
+        return null
+      }
+      else {
+        var fileName = PathUtilRt.getFileName(url!!)
+        val suffix = ".git"
+        if (fileName.endsWith(suffix)) {
+          fileName = fileName.substring(0, fileName.length() - suffix.length())
+        }
+        // the convention is that the .git extension should be used for bare repositories
+        return "${FileUtil.sanitizeName(fileName)}.${Integer.toHexString(url!!.hashCode())}.git"
+      }
+    }
 }

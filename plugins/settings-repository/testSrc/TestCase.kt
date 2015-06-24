@@ -139,12 +139,7 @@ abstract class TestCase {
   }
 
   fun createFileRemote(branchName: String? = null, initialCommit: Boolean = true): File {
-    val repository = testHelper.getRepository(ICS_DIR!!)
-    if (branchName != null) {
-      // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
-      repository.commit("")
-      Git(repository).checkout().setCreateBranch(true).setName(branchName).call()
-    }
+    val repository = getRemoteRepository(branchName)
 
     val workTree: File = repository.getWorkTree()
     if (initialCommit) {
@@ -154,5 +149,15 @@ abstract class TestCase {
       repository.commit("")
     }
     return workTree
+  }
+
+  fun getRemoteRepository(branchName: String? = null): Repository {
+    val repository = testHelper.getRepository(ICS_DIR!!)
+    if (branchName != null) {
+      // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
+      repository.commit("")
+      Git(repository).checkout().setCreateBranch(true).setName(branchName).call()
+    }
+    return repository
   }
 }

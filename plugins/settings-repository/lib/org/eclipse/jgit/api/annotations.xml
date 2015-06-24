@@ -76,4 +76,7 @@
   <item name='org.eclipse.jgit.api.ResetCommand org.eclipse.jgit.lib.Ref call()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.jgit.api.TransportCommand C setCredentialsProvider(org.eclipse.jgit.transport.CredentialsProvider) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
 </root>
