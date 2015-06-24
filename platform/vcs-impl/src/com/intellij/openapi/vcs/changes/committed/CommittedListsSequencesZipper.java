@@ -15,53 +15,72 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 public class CommittedListsSequencesZipper {
-  private final VcsCommittedListsZipper myVcsPartner;
-  private final List<RepositoryLocation> myInLocations;
-  private final Map<String, List<CommittedChangeList>> myInLists;
 
-  public CommittedListsSequencesZipper(final VcsCommittedListsZipper vcsPartner) {
+  @NotNull private final VcsCommittedListsZipper myVcsPartner;
+  @NotNull private final List<RepositoryLocation> myInLocations;
+  @NotNull private final Map<String, List<CommittedChangeList>> myInLists;
+  @NotNull private final Comparator<CommittedChangeList> myComparator;
+
+  public CommittedListsSequencesZipper(@NotNull VcsCommittedListsZipper vcsPartner) {
     myVcsPartner = vcsPartner;
-    myInLocations = new ArrayList<RepositoryLocation>();
-    myInLists = new HashMap<String, List<CommittedChangeList>>();
+    myInLocations = ContainerUtil.newArrayList();
+    myInLists = ContainerUtil.newHashMap();
+    myComparator = new Comparator<CommittedChangeList>() {
+      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
+        return Comparing.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
+      }
+    };
   }
 
-  public void add(final RepositoryLocation location, final List<CommittedChangeList> lists) {
+  public void add(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> lists) {
     myInLocations.add(location);
-    Collections.sort(lists, new Comparator<CommittedChangeList>() {
-      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-        final long num1 = myVcsPartner.getNumber(o1);
-        final long num2 = myVcsPartner.getNumber(o2);
-        return num1 == num2 ? 0 : (num1 < num2) ? -1 : 1;
-      }
-    });
+    Collections.sort(lists, myComparator);
     myInLists.put(location.toPresentableString(), lists);
   }
 
+  @NotNull
   public List<CommittedChangeList> execute() {
-    final Pair<List<RepositoryLocationGroup>,List<RepositoryLocation>> groupingResult = myVcsPartner.groupLocations(myInLocations);
-    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupingResult = myVcsPartner.groupLocations(myInLocations);
+    List<CommittedChangeList> result = ContainerUtil.newArrayList();
 
-    for (RepositoryLocation location : groupingResult.getSecond()) {
-      result.addAll(myInLists.get(location.toPresentableString()));
-    }
-
+    result.addAll(ContainerUtil.flatten(collectChangeLists(groupingResult.getSecond())));
     for (RepositoryLocationGroup group : groupingResult.getFirst()) {
-      final List<RepositoryLocation> locations = group.getLocations();
-      final List<List<CommittedChangeList>> lists = new ArrayList<List<CommittedChangeList>>(locations.size());
-      for (RepositoryLocation location : locations) {
-        lists.add(myInLists.get(location.toPresentableString()));
-      }
-      final SimiliarListsZipper zipper = new SimiliarListsZipper(lists, myVcsPartner, group);
-      zipper.zip();
-      result.addAll(zipper.getResult());
+      result.addAll(mergeLocationGroupChangeLists(group));
     }
+
     return result;
+  }
+
+  @NotNull
+  private List<List<CommittedChangeList>> collectChangeLists(@NotNull List<RepositoryLocation> locations) {
+    List<List<CommittedChangeList>> result = ContainerUtil.newArrayListWithCapacity(locations.size());
+
+    for (RepositoryLocation location : locations) {
+      result.add(myInLists.get(location.toPresentableString()));
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private List<CommittedChangeList> mergeLocationGroupChangeLists(@NotNull RepositoryLocationGroup group) {
+    SimiliarListsZipper zipper = new SimiliarListsZipper(collectChangeLists(group.getLocations()), myVcsPartner, group);
+
+    zipper.zip();
+
+    return zipper.getResult();
   }
 }
