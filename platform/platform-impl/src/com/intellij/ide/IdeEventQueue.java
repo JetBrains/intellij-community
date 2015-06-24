@@ -61,6 +61,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Vladimir Kondratyev
@@ -790,22 +791,43 @@ public class IdeEventQueue extends EventQueue {
     return peekEvent(WindowEvent.WINDOW_OPENED) != null;
   }
 
+  private static AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
+
   private static boolean processAppActivationEvents(AWTEvent e) {
     Application app = ApplicationManager.getApplication();
     if (!(app instanceof ApplicationImpl)) return false;
-    ApplicationImpl appImpl = (ApplicationImpl)app;
+    final ApplicationImpl appImpl = (ApplicationImpl)app;
 
     if (e instanceof WindowEvent) {
-      WindowEvent we = (WindowEvent)e;
-      if (we.getID() == WindowEvent.WINDOW_GAINED_FOCUS && we.getWindow() != null) {
-        if (we.getOppositeWindow() == null && !appImpl.isActive()) {
+      final WindowEvent we = (WindowEvent)e;
+
+      // Only Dialogs and Frames get window activated events.
+      // Let's handle Windows this way.
+
+      if (we.getID() == WindowEvent.WINDOW_ACTIVATED || we.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+        appImpl.myCancelDeactivation = true;
+        if (!appImpl.isActive()) {
           appImpl.tryToApplyActivationState(true, we.getWindow());
         }
       }
-      else if (we.getID() == WindowEvent.WINDOW_LOST_FOCUS && we.getWindow() != null) {
-        if (we.getOppositeWindow() == null && appImpl.isActive()) {
-          appImpl.tryToApplyActivationState(false, we.getWindow());
-        }
+      else if (we.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+        requestToDeactivateTime.getAndSet(System.currentTimeMillis());
+
+        // We do not know for sure that application is going to be inactive,
+        // we could just be showing a popup or another transient window.
+        // So let's postpone the application deactivation for a while
+        appImpl.myCancelDeactivation = false;
+
+        Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
+          public void actionPerformed(ActionEvent evt) {
+            if (appImpl.isActive() && !appImpl.isDeactivationCanceled()) {
+              appImpl.tryToApplyActivationState(false, we.getWindow());
+            }
+          }
+        });
+
+        timer.setRepeats(false);
+        timer.start();
       }
     }
 

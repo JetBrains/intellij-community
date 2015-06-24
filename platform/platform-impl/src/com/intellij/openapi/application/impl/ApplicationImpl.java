@@ -128,7 +128,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean myLoaded;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private Boolean myActive;
+  private volatile boolean myActive;
+  public volatile boolean myCancelDeactivation;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
@@ -1170,6 +1171,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
+  public boolean isDeactivationCanceled() {
+    return myCancelDeactivation;
+  }
+
   public boolean tryToApplyActivationState(boolean active, Window window) {
     final Component frame = UIUtil.findUltimateParent(window);
 
@@ -1177,7 +1182,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       final IdeFrame ideFrame = (IdeFrame)frame;
       if (isActive() != active) {
         myActive = active;
-        System.setProperty("idea.active", myActive.toString());
+        System.setProperty("idea.active", String.valueOf(myActive));
         ApplicationActivationListener publisher = getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC);
         if (active) {
           publisher.applicationActivated(ideFrame);
@@ -1194,14 +1199,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isUnitTestMode()) return true;
+   if (isUnitTestMode()) return true;
 
-    if (myActive == null) {
-      Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      return active != null;
-    }
-
-    return myActive;
+   return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null || myActive;
   }
 
   @NotNull
