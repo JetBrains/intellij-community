@@ -70,6 +70,24 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     myElementType = node.getElementType();
   }
 
+  /**
+   * This constructor is created to allow inheriting from this class in JVM languages which doesn't support multiple constructors (e.g. Scala).
+   * If your language does support multiple constructors use {@link #StubBasedPsiElementBase(StubElement, IStubElementType)} and
+   * {@link #StubBasedPsiElementBase(ASTNode)} instead.
+   */
+  public StubBasedPsiElementBase(T stub, IElementType nodeType, ASTNode node) {
+    if (stub != null) {
+      LOG.assertTrue(nodeType != null && node == null);
+      myStub = stub;
+      myElementType = nodeType;
+    }
+    else {
+      LOG.assertTrue(nodeType == null && node != null);
+      myNode = node;
+      myElementType = node.getElementType();
+    }
+  }
+
   @Override
   @NotNull
   public ASTNode getNode() {
