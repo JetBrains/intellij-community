@@ -70,7 +70,6 @@ public class RunConfigurableTest extends LightIdeaTestCase {
     myTree = myConfigurable.myTree;
     myRoot = myConfigurable.myRoot;
     myModel = myConfigurable.myTreeModel;
-    doExpand();
   }
 
   @Override
@@ -88,6 +87,7 @@ public class RunConfigurableTest extends LightIdeaTestCase {
   }
 
   public void testDND() throws Exception {
+    doExpand();
     int[] never = {-1, 0, 14, 22, 23, 999};
     for (int i = -1; i < 17; i++) {
       for (int j : never) {
@@ -165,6 +165,7 @@ public class RunConfigurableTest extends LightIdeaTestCase {
   }
 
   public void testMoveUpDown() {
+    doExpand();
     checkPositionToMove(0, 1, null);
     checkPositionToMove(2, 1, Trinity.create(2, 3, BELOW));
     checkPositionToMove(2, -1, null);
