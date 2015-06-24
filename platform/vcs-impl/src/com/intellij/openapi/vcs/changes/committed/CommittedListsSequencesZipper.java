@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -77,10 +78,31 @@ public class CommittedListsSequencesZipper {
 
   @NotNull
   private List<CommittedChangeList> mergeLocationGroupChangeLists(@NotNull RepositoryLocationGroup group) {
-    SimiliarListsZipper zipper = new SimiliarListsZipper(collectChangeLists(group.getLocations()), myVcsPartner, group);
+    List<CommittedChangeList> result = ContainerUtil.newArrayList();
+    List<CommittedChangeList> equalLists = ContainerUtil.newArrayList();
+    CommittedChangeList previousList = null;
 
-    zipper.zip();
+    for (CommittedChangeList list : Iterables.mergeSorted(collectChangeLists(group.getLocations()), myComparator)) {
+      if (previousList != null && myComparator.compare(previousList, list) != 0) {
+        result.add(zip(group, equalLists));
+        equalLists.clear();
+      }
+      equalLists.add(list);
+      previousList = list;
+    }
+    if (!equalLists.isEmpty()) {
+      result.add(zip(group, equalLists));
+    }
 
-    return zipper.getResult();
+    return result;
+  }
+
+  @NotNull
+  private CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<CommittedChangeList> equalLists) {
+    if (equalLists.isEmpty()) {
+      throw new IllegalArgumentException("equalLists can not be empty");
+    }
+
+    return equalLists.size() > 1 ? myVcsPartner.zip(group, equalLists) : equalLists.get(0);
   }
 }
