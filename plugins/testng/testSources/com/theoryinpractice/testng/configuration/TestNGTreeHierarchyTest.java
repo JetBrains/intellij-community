@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class TestNGTreeHierarchyTest {
@@ -386,6 +387,16 @@ public class TestNGTreeHierarchyTest {
     @Override
     public List<String> getTestHierarchy() {
       return Collections.singletonList(myClassName);
+    }
+
+    @Override
+    public String getFileName() {
+      return null;
+    }
+
+    @Override
+    public String getXmlTestName() {
+      return null;
     }
 
     @Override
