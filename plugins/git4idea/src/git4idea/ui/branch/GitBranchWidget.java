@@ -165,7 +165,9 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
     myText = StringUtil.shortenTextWithEllipsis(GitBranchUtil.getDisplayableBranchText(repo), maxLength, 5);
     myTooltip = getDisplayableBranchTooltip(repo);
-    myStatusBar.updateWidget(ID());
+    if (myStatusBar != null) {
+      myStatusBar.updateWidget(ID());
+    }
     mySettings.setRecentRoot(repo.getRoot().getPath());
   }
 
