@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -46,6 +47,7 @@ import java.util.List;
  * @author peter
  */
 public class GroovyCompilerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  private final Project myProject;
   private JTextField myHeapSize;
   private JPanel myMainPanel;
   private JPanel myExcludesPanel;
@@ -56,6 +58,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   private final GroovyCompilerConfiguration myConfig;
 
   public GroovyCompilerConfigurable(Project project) {
+    myProject = project;
     myConfig = GroovyCompilerConfiguration.getInstance(project);
     myExcludes = createExcludedConfigurable(project);
 
@@ -129,6 +132,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     myConfig.setHeapSize(myHeapSize.getText());
     myConfig.setInvokeDynamic(myInvokeDynamicSupportCB.isSelected());
     myConfig.setConfigScript(getExternalizableConfigScript());
+    BuildManager.getInstance().clearState(myProject);
   }
 
   @Override
