@@ -16,16 +16,18 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.navigation.ChooseByNameContributorEx;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -79,8 +81,19 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull final Processor<NavigationItem> _processor,
                                       @NotNull FindSymbolParameters parameters) {
+    final boolean globalSearch = parameters.getSearchScope().isSearchInLibraries();
+    final Processor<PsiFileSystemItem> processor = new Processor<PsiFileSystemItem>() {
+      @Override
+      public boolean process(PsiFileSystemItem item) {
+        if (!globalSearch && ProjectUtil.isProjectOrWorkspaceFile(item.getVirtualFile())) {
+          return true;
+        }
+        return _processor.process(item);
+      }
+    };
+    
     String completePattern = parameters.getCompletePattern();
     final boolean includeDirs = completePattern.endsWith("/") || completePattern.endsWith("\\") ||
                                 completePattern.startsWith("/") || completePattern.startsWith("\\");

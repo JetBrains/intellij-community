@@ -119,6 +119,13 @@ class Intf {
     assert elements == [m, mod]
   }
 
+  public void "test consider dot-idea files out of project"() {
+    def outside = myFixture.addFileToProject(".idea/workspace.xml", "")
+    def inside = myFixture.addFileToProject("workspace.txt", "")
+    assert getPopupElements(new GotoFileModel(project), "work", false) == [inside]
+    assert getPopupElements(new GotoFileModel(project), "work", true) == [inside, outside]
+  }
+
   public void "test prefer better path matches"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")

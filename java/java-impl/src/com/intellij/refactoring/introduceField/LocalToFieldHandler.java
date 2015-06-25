@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
@@ -202,6 +203,7 @@ public abstract class LocalToFieldHandler {
     } else {
       assignment = (PsiStatement)body.add(assignment);
     }
+    appendComments(local, assignment);
     local.delete();
     return assignment;
   }
@@ -227,14 +229,18 @@ public abstract class LocalToFieldHandler {
               continue;
             }
             if ("super".equals(text) && enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+              final PsiStatement statement = (PsiStatement)body.addAfter(assignment, first);
+              appendComments(local, statement);
               local.delete();
-              return (PsiStatement)body.addAfter(assignment, first);
+              return statement;
             }
           }
         }
         if (enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+          final PsiStatement statement = (PsiStatement)body.addBefore(assignment, first);
+          appendComments(local, statement);
           local.delete();
-          return (PsiStatement)body.addBefore(assignment, first);
+          return statement;
         }
       }
 
@@ -251,7 +257,10 @@ public abstract class LocalToFieldHandler {
       }
     }
 
-    if (enclosingConstructor == null) local.delete();
+    if (enclosingConstructor == null) {
+      appendComments(assignment, local);
+      local.delete();
+    }
     return assignment;
   }
 
@@ -318,11 +327,13 @@ public abstract class LocalToFieldHandler {
 
         switch (finalInitializerPlace) {
           case IN_FIELD_DECLARATION:
+            appendComments(declarationStatement, myField);
             declarationStatement.delete();
             break;
 
           case IN_CURRENT_METHOD:
             PsiExpressionStatement statement = createAssignment(myLocal, myFieldName, factory);
+            appendComments(declarationStatement, declarationStatement);
             if (declarationStatement instanceof PsiDeclarationStatement) {
               declarationStatement.replace(statement);
             } else {
@@ -361,6 +372,14 @@ public abstract class LocalToFieldHandler {
 
     public PsiField getField() {
       return myField;
+    }
+  }
+
+  private static void appendComments(PsiElement declarationStatement, PsiElement element) {
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(declarationStatement, PsiComment.class);
+    final PsiElement parent = element.getParent();
+    for (PsiComment comment : comments) {
+      parent.addBefore(comment, element);
     }
   }
 }

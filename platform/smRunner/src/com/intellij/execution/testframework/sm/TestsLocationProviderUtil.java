@@ -81,7 +81,8 @@ public class TestsLocationProviderUtil {
     if (fileName == null) {
       return Collections.emptyList();
     }
-    return findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
+    final List<VirtualFile> target = findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
+    return target.isEmpty() && file != null ? Collections.singletonList(file) : target;
   }
 
   /**

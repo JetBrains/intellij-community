@@ -20,13 +20,10 @@ import com.intellij.openapi.components.StateStorageOperation;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 public class ModuleStateStorageManager extends StateStorageManagerImpl {
@@ -52,20 +49,11 @@ public class ModuleStateStorageManager extends StateStorageManagerImpl {
       @NotNull
       @Override
       public List<StateStorage.SaveSession> createSaveSessions() {
-        final ModuleStoreImpl.ModuleFileData data = myModule.getStateStore().getMainStorageData();
-        List<StateStorage.SaveSession> sessions = super.createSaveSessions();
-        if (!data.isDirty()) {
-          return sessions;
+        if (myModule.getStateStore().getMainStorageData().isDirty()) {
+          // force XmlElementStorageSaveSession creation
+          getExternalizationSession(myModule.getStateStore().getMainStorage());
         }
-
-        return ContainerUtil.concat(sessions, Collections.singletonList(new StateStorage.SaveSession() {
-          @Override
-          public void save() throws IOException {
-            if (data.isDirty()) {
-              myModule.getStateStore().getMainStorage().forceSave();
-            }
-          }
-        }));
+        return super.createSaveSessions();
       }
     };
   }
