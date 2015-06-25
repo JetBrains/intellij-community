@@ -88,14 +88,6 @@ public class VersionCompareTest extends TestCase {
     assertEquals(-1, compareVersions("1.0", "1.0.1"));
     assertEquals(-1, compareVersions("1", "1.0.1"));
 
-    assertTrue(compareVersions("1.0.a", "1.0") > 0);
-    assertTrue(compareVersions("1.0.a", "1") > 0);
-    assertTrue(compareVersions("1.0", "1.0.a") < 0);
-    assertTrue(compareVersions("1", "1.0.a") < 0);
-
-    assertTrue(compareVersions("1.0.+", "1.0") > 0);
-    assertTrue(compareVersions("1.0", "1.0.+") < 0);
-
     assertTrue(compareVersions("1.0.00", "1.0") == 0);
     assertTrue(compareVersions("1.0.01", "1") > 0);
   }
