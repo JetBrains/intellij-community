@@ -19,6 +19,7 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,10 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     setPopup(true);
     myTextSettings = settings;
     myEditors = editors;
+
+    for (Editor editor : myEditors) {
+      ((EditorGutterComponentEx)editor.getGutter()).setGutterPopupGroup(this);
+    }
 
     myActions = new EditorSettingToggleAction[]{
       new EditorSettingToggleAction("EditorToggleShowWhitespaces") {

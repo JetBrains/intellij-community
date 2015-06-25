@@ -112,6 +112,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable private TIntFunction myAdditionalLineNumberConvertor;
   private TIntFunction myLineNumberAreaWidthFunction;
   private boolean myShowDefaultGutterPopup = true;
+  @Nullable private ActionGroup myCustomGutterPopupGroup;
   private TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<Color>();
   private boolean myPaintBackground = true;
 
@@ -1516,6 +1517,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
+  public void setGutterPopupGroup(@Nullable ActionGroup group) {
+    myCustomGutterPopupGroup = group;
+  }
+
+  @Override
   public void setPaintBackground(boolean value) {
     myPaintBackground = value;
   }
@@ -1567,8 +1573,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       else {
-        if (myShowDefaultGutterPopup) {
-          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        ActionGroup group = myCustomGutterPopupGroup;
+        if (group == null && myShowDefaultGutterPopup) {
+          group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        }
+        if (group != null) {
           ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
         }
