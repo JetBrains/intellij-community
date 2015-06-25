@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -33,7 +32,7 @@ import java.util.Map;
  *
  * @author Ilya.Kazakevich
  */
-final class TypeEvalContextCacheImpl  implements TypeEvalContextCache {
+final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
 
   /**
    * Producer to create map to store cache
@@ -47,14 +46,11 @@ final class TypeEvalContextCacheImpl  implements TypeEvalContextCache {
   @NotNull
   private final Object myLock = new Object();
 
-  /**
-   * {@link CachedValue} to store/create map [constraints, context]
-   */
+  @NotNull
   private final CachedValue<Map<TypeEvalConstraints, TypeEvalContext>> myCachedMapStorage;
 
 
-  TypeEvalContextCacheImpl(@NotNull final Project project) {
-    final CachedValuesManager manager = CachedValuesManager.getManager(project);
+  TypeEvalContextCacheImpl(@NotNull final CachedValuesManager manager) {
     myCachedMapStorage = manager.createCachedValue(MAP_CREATOR, false);
   }
 
