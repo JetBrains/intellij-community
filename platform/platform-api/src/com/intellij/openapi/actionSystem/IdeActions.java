@@ -267,6 +267,7 @@ public interface IdeActions {
   @NonNls String ACTION_GOTO_DECLARATION = "GotoDeclaration";
   @NonNls String ACTION_GOTO_TYPE_DECLARATION = "GotoTypeDeclaration";
   @NonNls String ACTION_GOTO_IMPLEMENTATION = "GotoImplementation";
+  @NonNls String ACTION_GOTO_SUPER = "GotoSuperMethod";
 
   @NonNls String MODULE_SETTINGS = "ModuleSettings";
 
