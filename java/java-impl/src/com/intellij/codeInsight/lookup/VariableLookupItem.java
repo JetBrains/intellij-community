@@ -159,6 +159,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         final PsiReferenceExpression
           ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
         if (ref != null) {
+          if (ref.isQualified()) {
+            return; // shouldn't happen, but sometimes we see exceptions because of this
+          }
           ref.bindToElementViaStaticImport(((PsiField)variable).getContainingClass());
           PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
         }
