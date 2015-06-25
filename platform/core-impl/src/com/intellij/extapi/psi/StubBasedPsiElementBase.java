@@ -77,12 +77,14 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    */
   public StubBasedPsiElementBase(T stub, IElementType nodeType, ASTNode node) {
     if (stub != null) {
-      LOG.assertTrue(nodeType != null && node == null);
+      if (nodeType == null) throw new IllegalArgumentException("null cannot be passed to 'nodeType' when 'stub' is non-null");
+      if (node != null) throw new IllegalArgumentException("null must be passed to 'node' parameter when 'stub' is non-null");
       myStub = stub;
       myElementType = nodeType;
     }
     else {
-      LOG.assertTrue(nodeType == null && node != null);
+      if (node == null) throw new IllegalArgumentException("'stub' and 'node' parameters cannot be null both");
+      if (nodeType != null) throw new IllegalArgumentException("null must be passed to 'nodeType' parameter when 'node' is non-null");
       myNode = node;
       myElementType = node.getElementType();
     }

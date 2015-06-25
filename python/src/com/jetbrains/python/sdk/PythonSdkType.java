@@ -86,7 +86,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -670,13 +669,7 @@ public class PythonSdkType extends SdkType {
           for (String s : inside) {
             if (PYTHON_NN_RE.matcher(s).matches()) {
               File py_lib_root = new File(lib_root, s);
-              String[] flag_files = py_lib_root.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File file, String s) {
-                  return "no-global-site-packages.txt".equals(s);
-                }
-              });
-              if (flag_files != null) return; // don't add hardcoded paths
+              if (new File(py_lib_root, "no-global-site-packages.txt").exists()) return; // don't add hardcoded paths
             }
           }
         }

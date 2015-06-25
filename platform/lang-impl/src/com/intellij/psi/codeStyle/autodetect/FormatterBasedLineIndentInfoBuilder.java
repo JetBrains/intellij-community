@@ -77,7 +77,6 @@ public class FormatterBasedLineIndentInfoBuilder {
 
   @NotNull
   private List<Block> getBlocksStartingNewLine() {
-    PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myDocument);
     FormattingModel model = myFormattingModelBuilder.createModel(myFile, mySettings);
     Block root = model.getRootBlock();
     NewLineBlocksIterator newLineBlocksIterator = new NewLineBlocksIterator(root, myDocument);

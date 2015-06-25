@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -81,7 +82,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private boolean myProcessChangedTextOnly;
 
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
-  private List<FileFilter> myFilters = ContainerUtil.newArrayList();
+  private List<VirtualFileFilter> myFilters = ContainerUtil.newArrayList();
 
   private LayoutCodeInfoCollector myInfoCollector;
 
@@ -202,7 +203,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  public void addFileFilter(@NotNull FileFilter filter) {
+  public void addFileFilter(@NotNull VirtualFileFilter filter) {
     myFilters.add(filter);
   }
 
@@ -610,7 +611,7 @@ public abstract class AbstractLayoutCodeProcessor {
       return false;
     }
 
-    for (FileFilter filter : myFilters) {
+    for (VirtualFileFilter filter : myFilters) {
       if (!filter.accept(file.getVirtualFile())) {
         return false;
       }

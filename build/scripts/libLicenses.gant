@@ -244,7 +244,7 @@ libraryLicense(name: "Sonatype Nexus Indexer Artifact", libraryName: "nexus-inde
 libraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "1.7.11", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "Sequence", libraryName: "sequence-library.jar", version: "bundled with SVNKit", license: "BSD (see LICENSE.txt in sequence-library.jar)", url:"http://www.syntevo.com")
 libraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
-libraryLicense(name: "TestNG", version: "5.7 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/", licenseUrl: "http://code.google.com/p/testng/")
+libraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/", licenseUrl: "http://code.google.com/p/testng/")
 libraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213 and 217", license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/")
 libraryLicense(name: "Trove4j", version: "1.1 (with patches by JetBrains)", license: "LGPL", url: "http://trove4j.sourceforge.net/", licenseUrl: "http://trove4j.sourceforge.net/html/license.html")
 libraryLicense(name: "Velocity", version: "1.7", license: "Apache 2.0", url: "http://velocity.apache.org/", licenseUrl: "http://velocity.apache.org/index.html")

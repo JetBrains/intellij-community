@@ -64,7 +64,6 @@ import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -203,15 +202,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
-    final File[] files = baseDir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return FileUtil.namesEqual("pom.xml", name);
-      }
-    });
+    File pomXml = new File(baseDir, "pom.xml");
 
-    if (files != null && files.length != 0) {
-      final VirtualFile file = VfsUtil.findFileByIoFile(files[0], true);
+    if (pomXml.exists()) {
+      final VirtualFile file = VfsUtil.findFileByIoFile(pomXml, true);
       if (file == null) return;
 
       showBalloon(

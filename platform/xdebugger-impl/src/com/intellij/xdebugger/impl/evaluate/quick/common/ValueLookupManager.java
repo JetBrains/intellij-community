@@ -94,9 +94,6 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
       hideHint();
     }
-    else if (type == ValueHintType.MOUSE_OVER_HINT && myRequest != null && !myRequest.isHintHidden() && myRequest.isInsideCurrentRange(editor, point)) {
-      return;
-    }
 
     for (DebuggerSupport support : mySupports) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
@@ -119,12 +116,20 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
               showHint(handler, editor, point, type);
             }
           }
-        }, handler.getValueLookupDelay(myProject));
+        }, getDelay(handler));
       }
     }
     else {
       showHint(handler, editor, point, type);
     }
+  }
+
+  private int getDelay(QuickEvaluateHandler handler) {
+    int delay = handler.getValueLookupDelay(myProject);
+    if (myRequest != null && !myRequest.isHintHidden()) {
+      delay = Math.max(100, delay); // if hint is showing, delay should not be too small, see IDEA-141464
+    }
+    return delay;
   }
 
   public void hideHint() {

@@ -149,8 +149,12 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
     DiffContent content1 = contents.get(0);
     DiffContent content2 = contents.get(1);
 
-    if (content1 instanceof EmptyContent && factory.wantShowContent(content2, context)) return true;
-    if (content2 instanceof EmptyContent && factory.wantShowContent(content1, context)) return true;
+    if (content1 instanceof EmptyContent) {
+      return factory.canShowContent(content2, context) && factory.wantShowContent(content2, context);
+    }
+    if (content2 instanceof EmptyContent) {
+      return factory.canShowContent(content1, context) && factory.wantShowContent(content1, context);
+    }
     return false;
   }
 }

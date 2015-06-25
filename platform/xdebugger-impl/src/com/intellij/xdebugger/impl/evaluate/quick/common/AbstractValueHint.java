@@ -301,4 +301,28 @@ public abstract class AbstractValueHint {
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
     DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, getEditor(), myPoint, getProject());
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AbstractValueHint hint = (AbstractValueHint)o;
+
+    if (!myProject.equals(hint.myProject)) return false;
+    if (!myEditor.equals(hint.myEditor)) return false;
+    if (myType != hint.myType) return false;
+    if (myCurrentRange != null ? !myCurrentRange.equals(hint.myCurrentRange) : hint.myCurrentRange != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myProject.hashCode();
+    result = 31 * result + myEditor.hashCode();
+    result = 31 * result + myType.hashCode();
+    result = 31 * result + (myCurrentRange != null ? myCurrentRange.hashCode() : 0);
+    return result;
+  }
 }
