@@ -190,12 +190,16 @@ public class PluginDownloader {
     return true;
   }
 
-  public static int compareVersionsSkipBroken(IdeaPluginDescriptor descriptor, String newPluginVersion) {
-    int state = StringUtil.compareVersionNumbers(newPluginVersion, descriptor.getVersion());
+  public static int compareVersionsSkipBroken(@NotNull IdeaPluginDescriptor descriptor, String newPluginVersion) {
+    int state = comparePluginVersions(newPluginVersion, descriptor.getVersion());
     if (PluginManagerCore.isBrokenPlugin(descriptor) && state < 0) {
       state = 1;
     }
     return state;
+  }
+
+  public static int comparePluginVersions(String newPluginVersion, String oldPluginVersion) {
+    return StringUtil.compareVersionNumbers(newPluginVersion, oldPluginVersion);
   }
 
   @Nullable

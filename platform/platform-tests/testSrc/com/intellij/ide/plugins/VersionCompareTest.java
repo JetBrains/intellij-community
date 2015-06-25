@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
@@ -26,11 +27,15 @@ import junit.framework.TestCase;
  * To change this template use Options | File Templates.
  */
 public class VersionCompareTest extends TestCase {
+  private static int compareVersions(String v1, String v2) {
+    return PluginDownloader.comparePluginVersions(v1, v2);
+  }
+
   public void testEqual () {
     String v1 = "0.0.1";
     String v2 = "0.0.1";
 
-    assertTrue("Version is not equal", StringUtil.compareVersionNumbers(v1, v2) == 0);
+    assertTrue("Version is not equal", compareVersions(v1, v2) == 0);
   }
 
   public void testGreat () {
@@ -38,7 +43,7 @@ public class VersionCompareTest extends TestCase {
     String v2 = "0.0.1";
 
     assertTrue("Version 1 is not great than Version 2",
-               StringUtil.compareVersionNumbers(v1, v2) > 0);
+               compareVersions(v1, v2) > 0);
   }
 
   public void testLess () {
@@ -46,7 +51,7 @@ public class VersionCompareTest extends TestCase {
     String v2 = "0.0.2";
 
     assertTrue("Version 1 is not less than Version 2",
-               StringUtil.compareVersionNumbers(v1, v2) < 0);
+               compareVersions(v1, v2) < 0);
   }
 
   public void testGreatDiff () {
@@ -54,7 +59,7 @@ public class VersionCompareTest extends TestCase {
     String v2 = "0.0.1.0";
 
     assertTrue("Version 1 is not great than Version 2",
-               StringUtil.compareVersionNumbers(v1, v2) > 0);
+               compareVersions(v1, v2) > 0);
   }
 
   public void testLessDiff () {
@@ -62,37 +67,37 @@ public class VersionCompareTest extends TestCase {
     String v2 = "0.0.2.0";
 
     assertTrue("Version 1 is not less than Version 2",
-               StringUtil.compareVersionNumbers(v1, v2) < 0);
+               compareVersions(v1, v2) < 0);
   }
 
   public void testDifferentNumberOfParts() {
-    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1.0"));
-    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1"));
+    assertEquals(0, compareVersions("1.0.0", "1.0"));
+    assertEquals(0, compareVersions("1.0.0", "1"));
 
-    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1.0."));
-    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1."));
+    assertEquals(0, compareVersions("1.0.0", "1.0."));
+    assertEquals(0, compareVersions("1.0.0", "1."));
     
-    assertEquals(0, StringUtil.compareVersionNumbers("1.0.", "1.0.0"));
-    assertEquals(0, StringUtil.compareVersionNumbers("1.", "1.0.0"));
+    assertEquals(0, compareVersions("1.0.", "1.0.0"));
+    assertEquals(0, compareVersions("1.", "1.0.0"));
 
-    assertEquals(0, StringUtil.compareVersionNumbers("1.0", "1.0.0"));
-    assertEquals(0, StringUtil.compareVersionNumbers("1", "1.0.0"));
+    assertEquals(0, compareVersions("1.0", "1.0.0"));
+    assertEquals(0, compareVersions("1", "1.0.0"));
 
-    assertEquals(1, StringUtil.compareVersionNumbers("1.0.1", "1.0"));
-    assertEquals(1, StringUtil.compareVersionNumbers("1.0.1", "1"));
-    assertEquals(-1, StringUtil.compareVersionNumbers("1.0", "1.0.1"));
-    assertEquals(-1, StringUtil.compareVersionNumbers("1", "1.0.1"));
+    assertEquals(1, compareVersions("1.0.1", "1.0"));
+    assertEquals(1, compareVersions("1.0.1", "1"));
+    assertEquals(-1, compareVersions("1.0", "1.0.1"));
+    assertEquals(-1, compareVersions("1", "1.0.1"));
 
-    assertTrue(StringUtil.compareVersionNumbers("1.0.a", "1.0") > 0);
-    assertTrue(StringUtil.compareVersionNumbers("1.0.a", "1") > 0);
-    assertTrue(StringUtil.compareVersionNumbers("1.0", "1.0.a") < 0);
-    assertTrue(StringUtil.compareVersionNumbers("1", "1.0.a") < 0);
+    assertTrue(compareVersions("1.0.a", "1.0") > 0);
+    assertTrue(compareVersions("1.0.a", "1") > 0);
+    assertTrue(compareVersions("1.0", "1.0.a") < 0);
+    assertTrue(compareVersions("1", "1.0.a") < 0);
 
-    assertTrue(StringUtil.compareVersionNumbers("1.0.+", "1.0") > 0);
-    assertTrue(StringUtil.compareVersionNumbers("1.0", "1.0.+") < 0);
+    assertTrue(compareVersions("1.0.+", "1.0") > 0);
+    assertTrue(compareVersions("1.0", "1.0.+") < 0);
 
-    assertTrue(StringUtil.compareVersionNumbers("1.0.00", "1.0") == 0);
-    assertTrue(StringUtil.compareVersionNumbers("1.0.01", "1") > 0);
+    assertTrue(compareVersions("1.0.00", "1.0") == 0);
+    assertTrue(compareVersions("1.0.01", "1") > 0);
   }
 
   public void testWord () {
@@ -100,7 +105,7 @@ public class VersionCompareTest extends TestCase {
     String v2 = "0.0.2";
 
     assertTrue("Version 1 is not less than Version 2",
-               StringUtil.compareVersionNumbers(v1, v2) < 0);
+               compareVersions(v1, v2) < 0);
   }
 
   public void testNewest () {
@@ -108,12 +113,12 @@ public class VersionCompareTest extends TestCase {
     String userVer = "1.0.9";
 
     assertTrue("Server version is not great than user version",
-               StringUtil.compareVersionNumbers(serverVer, userVer) > 0);
+               compareVersions(serverVer, userVer) > 0);
   }
 
   public void testJira() {
-    assertTrue(StringUtil.compareVersionNumbers("3.6.2", "3.7") < 0);
-    assertTrue(StringUtil.compareVersionNumbers("3.7.1", "3.13.4") < 0);
+    assertTrue(compareVersions("3.6.2", "3.7") < 0);
+    assertTrue(compareVersions("3.7.1", "3.13.4") < 0);
   }
 }
 
