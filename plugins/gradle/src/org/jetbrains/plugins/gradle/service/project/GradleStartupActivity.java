@@ -31,11 +31,9 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenResourceCompilerConfigurationGenerator;
 import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder;
@@ -46,7 +44,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.io.FilenameFilter;
 
 /**
  * @author Vladislav.Soroka
@@ -92,14 +89,8 @@ public class GradleStartupActivity implements StartupActivity {
     }
 
     File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
-    final File[] files = baseDir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return FileUtil.namesEqual(GradleConstants.DEFAULT_SCRIPT_NAME, name);
-      }
-    });
-
-    if (files != null && files.length != 0) {
+    final File gradleFile = new File(baseDir, GradleConstants.DEFAULT_SCRIPT_NAME);
+    if (gradleFile.exists()) {
       String message = String.format("%s<br>\n%s",
                                      GradleBundle.message("gradle.notifications.unlinked.project.found.msg", IMPORT_EVENT_DESCRIPTION),
                                      GradleBundle.message("gradle.notifications.do.not.show"));
@@ -114,7 +105,7 @@ public class GradleStartupActivity implements StartupActivity {
               final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
               GradleProjectImportBuilder gradleProjectImportBuilder = new GradleProjectImportBuilder(projectDataManager);
               final GradleProjectImportProvider gradleProjectImportProvider = new GradleProjectImportProvider(gradleProjectImportBuilder);
-              AddModuleWizard wizard = new AddModuleWizard(null, files[0].getPath(), gradleProjectImportProvider);
+              AddModuleWizard wizard = new AddModuleWizard(null, gradleFile.getPath(), gradleProjectImportProvider);
               if ((wizard.getStepCount() <= 0 || wizard.showAndGet())) {
                 ImportModuleAction.createFromWizard(project, wizard);
               }
