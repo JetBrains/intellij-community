@@ -2,6 +2,8 @@
 
 Available for all IntelliJ Platform based products (build number greater than 139.69/140.2). Settings | Plugins | Browse repositories -> type in Settings Repository.
 
+Since version 0.2.11 Java 8 is required (IntelliJ IDEA 15 EAP bundled with Java 8). Use IDE builds \*-custom-jdk-bundled.*.
+
 Don't try to install plugin from disk — otherwise you have to be aware of compatibility.
 
 # Configuration

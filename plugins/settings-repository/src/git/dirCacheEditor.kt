@@ -143,7 +143,7 @@ class AddFile(private val pathString: String) : PathEdit(encodePath(pathString))
       inserter.flush()
     }
     finally {
-      inserter.release()
+      inserter.close()
       input.close()
     }
   }
@@ -161,7 +161,7 @@ class AddLoadedFile(path: String, private val content: ByteArray, private val si
       inserter.flush()
     }
     finally {
-      inserter.release()
+      inserter.close()
     }
   }
 }

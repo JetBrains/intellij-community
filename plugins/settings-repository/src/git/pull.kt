@@ -310,7 +310,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
       throw CheckoutConflictException(if (dirCacheCheckout == null) listOf<String>() else dirCacheCheckout.getConflicts(), e)
     }
     finally {
-      revWalk.release()
+      revWalk.close()
     }
   }
 }

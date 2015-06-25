@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
@@ -17,11 +17,11 @@
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.7.2-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-4.0.2-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.7.2-SNAPSHOT-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-4.0.2-SNAPSHOT-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

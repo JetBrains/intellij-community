@@ -183,7 +183,7 @@ public fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<
     commit = rewWalk.parseCommit(head.getObjectId())
   }
   finally {
-    rewWalk.release()
+    rewWalk.close()
   }
 
   val u = repository.updateRef(Constants.HEAD, !head.getName().startsWith(Constants.R_HEADS))
@@ -247,7 +247,7 @@ public fun Repository.processChildren(path: String, filter: Condition<String>? =
     }
   }
   finally {
-    reader.release()
+    reader.close()
   }
 }
 
@@ -275,7 +275,7 @@ public fun Repository.read(path: String): InputStream? {
   }
   finally {
     if (releaseReader) {
-      reader.release()
+      reader.close()
     }
   }
 }
@@ -310,7 +310,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
       delegate.close()
     }
     finally {
-      reader.release();
+      reader.close();
     }
   }
 }
