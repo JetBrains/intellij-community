@@ -15,6 +15,8 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 class UsageNodeTreeBuilder {
   private final GroupNode myRoot;
+  private final Project myProject;
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
@@ -38,11 +41,13 @@ class UsageNodeTreeBuilder {
   UsageNodeTreeBuilder(@NotNull UsageTarget[] targets,
                        @NotNull UsageGroupingRule[] groupingRules,
                        @NotNull UsageFilteringRule[] filteringRules,
-                       @NotNull GroupNode root) {
+                       @NotNull GroupNode root, 
+                       @NotNull Project project) {
     myTargets = targets;
     myGroupingRules = groupingRules;
     myFilteringRules = filteringRules;
     myRoot = root;
+    myProject = project;
   }
 
   public void setGroupingRules(@NotNull UsageGroupingRule[] rules) {
@@ -73,9 +78,13 @@ class UsageNodeTreeBuilder {
   UsageNode appendUsage(@NotNull Usage usage, @NotNull Consumer<Runnable> edtQueue) {
     if (!isVisible(usage)) return null;
 
+    final boolean dumb = DumbService.isDumb(myProject);
+
     GroupNode lastGroupNode = myRoot;
     for (int i = 0; i < myGroupingRules.length; i++) {
       final UsageGroupingRule rule = myGroupingRules[i];
+      if (dumb && !DumbService.isDumbAware(rule)) continue;
+      
       final UsageGroup group;
       if (rule instanceof UsageGroupingRuleEx) {
         group = ((UsageGroupingRuleEx) rule).groupUsage(usage, myTargets);

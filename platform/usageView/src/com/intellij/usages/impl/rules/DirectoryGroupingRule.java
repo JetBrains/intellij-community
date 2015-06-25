@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -43,7 +44,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class DirectoryGroupingRule implements UsageGroupingRule {
+public class DirectoryGroupingRule implements UsageGroupingRule, DumbAware {
   public static DirectoryGroupingRule getInstance(Project project) {
     return ServiceManager.getService(project, DirectoryGroupingRule.class);
   }
