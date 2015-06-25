@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   private String myFileName;
   
   public ImportTestsFromHistoryAction(SMTRunnerConsoleProperties properties, String name) {
-    super(properties, name, name);
+    super(properties, FileUtil.getNameWithoutExtension(name), FileUtil.getNameWithoutExtension(name));
     myFileName = name;
   }
 

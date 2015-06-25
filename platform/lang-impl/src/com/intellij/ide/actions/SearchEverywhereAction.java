@@ -260,7 +260,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void updateComponents() {
     myRenderer = new MyListRenderer();
-    myList = new JBList() {
+    myList = new JBList(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
       @Override
       public Dimension getPreferredSize() {

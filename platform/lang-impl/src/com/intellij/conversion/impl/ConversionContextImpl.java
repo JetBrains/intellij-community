@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -48,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -351,12 +351,7 @@ public class ConversionContextImpl implements ConversionContext {
         myRunManagerSettings = new RunManagerSettingsImpl(myWorkspaceFile, myProjectFile, null, this);
       }
       else {
-        final File[] files = new File(mySettingsBaseDir, "runConfigurations").listFiles(new FileFilter() {
-          @Override
-          public boolean accept(File file) {
-            return !file.isDirectory() && file.getName().endsWith(".xml");
-          }
-        });
+        final File[] files = new File(mySettingsBaseDir, "runConfigurations").listFiles(FileFilters.filesWithExtension("xml"));
         myRunManagerSettings = new RunManagerSettingsImpl(myWorkspaceFile, null, files, this);
       }
     }
@@ -489,11 +484,6 @@ public class ConversionContextImpl implements ConversionContext {
   @NotNull
   private File[] getSettingsXmlFiles(@NotNull String dirName) {
     final File librariesDir = new File(mySettingsBaseDir, dirName);
-    return librariesDir.exists() ? librariesDir.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        return !file.isDirectory() && file.getName().endsWith(".xml");
-      }
-    }) : ArrayUtil.EMPTY_FILE_ARRAY;
+    return librariesDir.exists() ? librariesDir.listFiles(FileFilters.filesWithExtension("xml")) : ArrayUtil.EMPTY_FILE_ARRAY;
   }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,12 +63,7 @@ public class JavaSdkUtil {
       jarDirs = new File[]{libEndorsedDir, libDir, libExtDir};
     }
 
-    FileFilter jarFileFilter = new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File f) {
-        return !f.isDirectory() && f.getName().endsWith(".jar");
-      }
-    };
+    FileFilter jarFileFilter = FileFilters.filesWithExtension("jar");
     Set<String> pathFilter = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
     List<File> rootFiles = ContainerUtil.newArrayList();
     for (File jarDir : jarDirs) {

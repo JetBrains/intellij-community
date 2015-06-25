@@ -11,12 +11,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
@@ -40,7 +42,6 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   @NonNls
   public static final String ID = "RemoteServers";
-  public static final String TYPE_NAME_DELIMITER = ", ";
 
   private final RemoteServersManager myServersManager;
   @Nullable private final ServerType<?> myServerType;
@@ -59,10 +60,13 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Nullable
   @Override
   protected String getEmptySelectionString() {
-    final StringBuilder typeNames = new StringBuilder();
-    for (ServerType type : Extensions.getExtensions(ServerType.EP_NAME)) {
-      typeNames.append(type.getPresentableName()).append(TYPE_NAME_DELIMITER);
-    }
+    final String typeNames = StringUtil.join(Extensions.getExtensions(ServerType.EP_NAME),
+                    new Function<ServerType, String>() {
+                      @Override
+                      public String fun(ServerType type) {
+                        return type.getPresentableName();
+                      }
+                    }, ", ");
 
     if (typeNames.length() > 0) {
       return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);

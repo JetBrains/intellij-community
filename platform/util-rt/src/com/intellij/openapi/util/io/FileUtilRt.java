@@ -182,14 +182,15 @@ public class FileUtilRt {
     return fileName.subSequence(index + 1, fileName.length());
   }
 
-  public static boolean extensionEquals(@NotNull String fileName, @NotNull String extension) {
+  public static boolean extensionEquals(@NotNull String filePath, @NotNull String extension) {
     int extLen = extension.length();
     if (extLen == 0) {
-      return fileName.indexOf('.') == -1;
+      int lastSlash = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+      return filePath.indexOf('.', lastSlash+1) == -1;
     }
-    int extStart = fileName.length() - extLen;
-    return extStart >= 1 && fileName.charAt(extStart-1) == '.'
-           && fileName.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
+    int extStart = filePath.length() - extLen;
+    return extStart >= 1 && filePath.charAt(extStart-1) == '.'
+           && filePath.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
   }
 
   @NotNull

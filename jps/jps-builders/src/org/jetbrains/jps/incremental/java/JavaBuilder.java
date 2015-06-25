@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -61,8 +61,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -78,7 +77,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = "java";
-  private static final String DOT_JAVA_EXTENSION = "." + JAVA_EXTENSION;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
@@ -91,18 +89,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
-  public static final FileFilter JAVA_SOURCES_FILTER =
-    SystemInfo.isFileSystemCaseSensitive?
-    new FileFilter() {
-      public boolean accept(File file) {
-        return file.getPath().endsWith(DOT_JAVA_EXTENSION);
-      }
-    } :
-    new FileFilter() {
-      public boolean accept(File file) {
-        return StringUtil.endsWithIgnoreCase(file.getPath(), DOT_JAVA_EXTENSION);
-      }
-    };
+  public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
   private static final String RT_JAR_PATH_SUFFIX = File.separator + "rt.jar";
 
   private final Executor myTaskRunner;
