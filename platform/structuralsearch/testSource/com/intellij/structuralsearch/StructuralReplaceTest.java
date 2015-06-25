@@ -1857,6 +1857,23 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       final String by2 = "new java.util.AbstractMap.SimpleEntry(\"\", \"\")";
       final String expected3 = "import static java.util.AbstractMap.SimpleEntry;class X {{ new SimpleEntry(\"\", \"\"); }}";
       assertEquals("", expected3, replacer.testReplace(in, what, by2, options, true));
+
+      final String in3 = "import java.util.Collections;" +
+                         "class X {" +
+                         "  void m() {" +
+                         "    System.out.println(Collections.<String>emptyList());" +
+                         "  }" +
+                         "}";
+      final String what3 = "'_q.'_method:[regex( println )]('a)";
+      final String by3 = "$q$.$method$($a$)";
+      final String expected4 = "import java.util.Collections;" +
+                               "import static java.lang.System.out;" +
+                               "class X {" +
+                               "  void m() {" +
+                               "    out.println(Collections.<String>emptyList());" +
+                               "  }" +
+                               "}";
+      assertEquals("don't break references with type parameters", expected4, replacer.testReplace(in3, what3, by3, options, true));
     } finally {
       options.setToUseStaticImport(save);
     }
