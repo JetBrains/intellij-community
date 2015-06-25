@@ -513,7 +513,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals("select", newSelect.getName());
   }
 
-  public void testInXml2() {
+  public void _testInXml2() {
     final PsiFile file = configureByText(HtmlFileType.INSTANCE,
                                          "<!DOCTYPE html>\n" +
                                          "<html>\n" +
