@@ -143,7 +143,7 @@ public class StorageUtil {
       LOG.warn("Content equals, but it must be handled not on this level: " + result.getName());
     }
     else {
-      if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
+      if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
         DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
       }
       doWrite(requestor, result, content, lineSeparatorIfPrependXmlProlog);
@@ -158,7 +158,9 @@ public class StorageUtil {
                               @NotNull final VirtualFile file,
                               @NotNull final BufferExposingByteArrayOutputStream content,
                               @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
-    LOG.debug("Save " + file.getPresentableUrl());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Save " + file.getPresentableUrl());
+    }
     AccessToken token = WriteAction.start();
     try {
       OutputStream out = file.getOutputStream(requestor);
