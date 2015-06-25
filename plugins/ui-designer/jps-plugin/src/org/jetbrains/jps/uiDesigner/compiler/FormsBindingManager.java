@@ -17,8 +17,8 @@ package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -257,7 +257,7 @@ public class FormsBindingManager extends FormsBuilder {
     if (containingDirectory == null) {
       return Collections.emptyList();
     }
-    final File[] files = containingDirectory.listFiles(FileUtilRt.createFilterByExtension("java"));
+    final File[] files = containingDirectory.listFiles(FileFilters.withExtension("java"));
     if (files == null || files.length == 0) {
       return Collections.emptyList();
     }

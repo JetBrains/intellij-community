@@ -168,15 +168,6 @@ public class FileUtilRt {
     }
   }
 
-  public static FileFilter createFilterByExtension(@NotNull final String extension) {
-    return new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        return extensionEquals(pathname.getPath(), extension);
-      }
-    };
-  }
-
   @NotNull
   public static String getExtension(@NotNull String fileName) {
     int index = fileName.lastIndexOf('.');

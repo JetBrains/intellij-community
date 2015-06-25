@@ -19,8 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -89,7 +89,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
-  public static final FileFilter JAVA_SOURCES_FILTER = FileUtilRt.createFilterByExtension(JAVA_EXTENSION);
+  public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
   private static final String RT_JAR_PATH_SUFFIX = File.separator + "rt.jar";
 
   private final Executor myTaskRunner;

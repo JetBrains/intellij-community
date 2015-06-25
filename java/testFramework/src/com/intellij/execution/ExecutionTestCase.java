@@ -23,8 +23,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -263,7 +263,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
       args.add(junitLibRoot);
     }
     
-    final File[] files = new File(appPath, SRC).listFiles(FileUtilRt.createFilterByExtension("java"));
+    final File[] files = new File(appPath, SRC).listFiles(FileFilters.withExtension("java"));
     if (files == null) return 0; // Nothing to compile
 
     for (File file : files) {
