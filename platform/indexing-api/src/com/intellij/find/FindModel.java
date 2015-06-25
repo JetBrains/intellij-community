@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -944,5 +945,21 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
 
     return pattern;
+  }
+
+  public String getStateDescription() {
+    ArrayList<String> state = new ArrayList<String>();
+    if (isCaseSensitive()) state.add("Match Case");
+    if (isRegularExpressions()) state.add("Regex");
+    if (isWholeWordsOnly()) state.add("Words");
+    if (isInCommentsOnly()) state.add("In Comments Only");
+    if (isInStringLiteralsOnly()) state.add("In Literals Only");
+    if (isExceptComments()) state.add("Except Comments");
+    if (isExceptStringLiterals()) state.add("Except Literals");
+    if (isExceptCommentsAndStringLiterals()) state.add("Except Comments and Literals");
+    if (isPreserveCase()) state.add("Preserve Case");
+    if (!isGlobal()) state.add("In Selection");
+    String join = StringUtil.join(state, ", ");
+    return join.isEmpty()? "" : "(" + join+")";
   }
 }

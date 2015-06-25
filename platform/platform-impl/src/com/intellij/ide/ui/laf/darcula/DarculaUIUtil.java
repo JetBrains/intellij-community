@@ -41,6 +41,9 @@ public class DarculaUIUtil {
   }
 
   public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds) {
+    paintSearchFocusRing(g, bounds, -1);
+  }
+  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, int maxArcSize) {
     int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
     final Color[] colors = new Color[]{
       ColorUtil.toAlpha(getGlow(), 180 - correction),
@@ -58,22 +61,26 @@ public class DarculaUIUtil {
 
 
     final Rectangle r = new Rectangle(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6);
+    int arcSize = r.height - 1;
+    if (maxArcSize>0) arcSize = Math.min(maxArcSize, arcSize);
+    if (arcSize %2 == 1) arcSize--;
+
 
     g.setColor(colors[0]);
-    g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, r.height - 5, r.height - 5);
+    g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize-4, arcSize-4);
 
     g.setColor(colors[1]);
-    g.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, r.height - 3, r.height - 3);
+    g.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, arcSize-2, arcSize-2);
 
     g.setColor(colors[2]);
-    g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, r.height - 1, r.height - 1);
+    g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, arcSize, arcSize);
 
 
     g.setColor(colors[3]);
-    g.drawRoundRect(r.x+3, r.y+3, r.width - 7, r.height - 7, r.height - 7, r.height - 7);
+    g.drawRoundRect(r.x+3, r.y+3, r.width - 7, r.height - 7, arcSize-6, arcSize-6);
 
     g.setColor(colors[4]);
-    g.drawRoundRect(r.x+4, r.y+4, r.width - 9, r.height - 9, r.height - 9, r.height - 9);
+    g.drawRoundRect(r.x+4, r.y+4, r.width - 9, r.height - 9, arcSize-8, arcSize-8);
 
     // restore rendering hints
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasingValue);
