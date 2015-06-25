@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -113,7 +112,7 @@ public interface HighlightInfoType {
     private final TextAttributesKey myAttributesKey;
 
     //read external only
-    HighlightInfoTypeImpl(@NotNull Element element) throws InvalidDataException {
+    HighlightInfoTypeImpl(@NotNull Element element) {
       mySeverity = new HighlightSeverity(element);
       myAttributesKey = new TextAttributesKey(element);
     }
