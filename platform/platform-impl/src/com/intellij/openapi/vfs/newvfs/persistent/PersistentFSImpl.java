@@ -919,7 +919,18 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       VirtualFileSystemEntry root = myRoots.get(rootUrl);
       if (root != null) return root;
 
-      VfsData.initFile(rootId, segment, -1, directoryData);
+      try {
+        VfsData.initFile(rootId, segment, -1, directoryData);
+      }
+      catch (AssertionError e) {
+        for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
+          final VirtualFileSystemEntry existingRoot = entry.getValue();
+          if (Math.abs(existingRoot.getId()) == rootId) {
+            throw new RuntimeException("Duplicate FS roots: " + rootUrl + " and " + entry.getKey() + ", id=" + rootId + ", valid=" + existingRoot.isValid(), e);
+          }
+        }
+        throw new RuntimeException("No root duplication", e);
+      }
       incStructuralModificationCount();
       mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
 
