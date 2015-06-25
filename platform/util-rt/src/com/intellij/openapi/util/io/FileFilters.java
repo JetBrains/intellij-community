@@ -35,4 +35,13 @@ public class FileFilters {
       }
     };
   }
+
+  public static FileFilter filesWithExtension(@NotNull final String extension) {
+    return new FileFilter() {
+      @Override
+      public boolean accept(File pathname) {
+        return FileUtilRt.extensionEquals(pathname.getPath(), extension) && pathname.isFile();
+      }
+    };
+  }
 }
