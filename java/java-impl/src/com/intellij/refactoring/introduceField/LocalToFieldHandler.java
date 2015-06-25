@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
@@ -318,12 +319,14 @@ public abstract class LocalToFieldHandler {
 
         switch (finalInitializerPlace) {
           case IN_FIELD_DECLARATION:
+            appendComments(declarationStatement);
             declarationStatement.delete();
             break;
 
           case IN_CURRENT_METHOD:
             PsiExpressionStatement statement = createAssignment(myLocal, myFieldName, factory);
             if (declarationStatement instanceof PsiDeclarationStatement) {
+              appendComments(declarationStatement);
               declarationStatement.replace(statement);
             } else {
               myLocal.replace(statement.getExpression());
@@ -361,6 +364,14 @@ public abstract class LocalToFieldHandler {
 
     public PsiField getField() {
       return myField;
+    }
+  }
+
+  private static void appendComments(PsiElement declarationStatement) {
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(declarationStatement, PsiComment.class);
+    final PsiElement parent = declarationStatement.getParent();
+    for (PsiComment comment : comments) {
+      parent.addBefore(comment, declarationStatement);
     }
   }
 }
