@@ -94,9 +94,6 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     if (myRequest != null && !myRequest.isKeepHint(editor, point)) {
       hideHint();
     }
-    else if (type == ValueHintType.MOUSE_OVER_HINT && myRequest != null && !myRequest.isHintHidden() && myRequest.isInsideCurrentRange(editor, point)) {
-      return;
-    }
 
     for (DebuggerSupport support : mySupports) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
