@@ -541,6 +541,12 @@ public class JavaSdkImpl extends JavaSdk {
         result.add(vFile);
       }
     }
+    Collections.sort(result, new Comparator<VirtualFile>() {
+      @Override
+      public int compare(VirtualFile o1, VirtualFile o2) {
+        return o1.getPath().compareTo(o2.getPath());
+      }
+    });
     return result;
   }
 
