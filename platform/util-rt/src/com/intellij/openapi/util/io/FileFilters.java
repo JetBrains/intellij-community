@@ -27,6 +27,9 @@ public class FileFilters {
   private FileFilters() {
   }
 
+  /**
+   * Returns file filter which accepts files and directories with the given {@code extension}
+   */
   public static FileFilter withExtension(@NotNull final String extension) {
     return new FileFilter() {
       @Override
