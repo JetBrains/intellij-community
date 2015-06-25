@@ -320,7 +320,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Nullable
-    private StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStorage) {
+    protected final StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStorage) {
       StateStorage.ExternalizationSession session = mySessions.get(stateStorage);
       if (session == null) {
         session = stateStorage.startExternalization();
