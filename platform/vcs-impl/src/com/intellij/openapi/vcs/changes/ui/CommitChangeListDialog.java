@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -68,6 +69,7 @@ import java.util.List;
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private final static String outCommitHelpId = "reference.dialogs.vcs.commit";
   private static final int LAYOUT_VERSION = 2;
+  private static final Logger LOG = Logger.getInstance(CommitChangeListDialog.class);
   private final CommitContext myCommitContext;
   private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
@@ -692,7 +694,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                      commitExecutor.getActionText());
 
             for (CheckinHandler handler : myHandlers) {
-              handler.checkinFailed(Arrays.asList(new VcsException(e)));
+              handler.checkinFailed(Collections.singletonList(new VcsException(e)));
             }
           }
           finally {
@@ -707,8 +709,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
         }
       }, commitExecutor);
-
-
     }
     else {
       session.executionCanceled();

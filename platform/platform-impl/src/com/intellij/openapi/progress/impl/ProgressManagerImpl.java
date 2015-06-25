@@ -108,9 +108,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
-                                                               @NotNull final ProgressIndicator progressIndicator,
-                                                               @Nullable final Runnable continuation,
-                                                               @NotNull final ModalityState modalityState) {
+                                                        @NotNull final ProgressIndicator progressIndicator,
+                                                        @Nullable final Runnable continuation,
+                                                        @NotNull final ModalityState modalityState) {
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
