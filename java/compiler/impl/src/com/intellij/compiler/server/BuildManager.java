@@ -103,6 +103,7 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
+import org.jetbrains.platform.loader.impl.repository.RepositoryConstants;
 
 import javax.swing.*;
 import javax.tools.*;
@@ -1139,6 +1140,7 @@ public class BuildManager implements Disposable {
     if (!Registry.is("compiler.process.use.memory.temp.cache")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=false");
     }
+    cmdLine.addParameter("-D" + RepositoryConstants.CHECK_DEVELOPMENT_REPOSITORY_UP_TO_DATE_PROPERTY + "=false");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     cmdLine.setCharset(mySystemCharset);

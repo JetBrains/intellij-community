@@ -244,6 +244,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       jar("jps-builders.jar") {
         module("jps-builders")
       }
+      jar("platform-loader.jar") {
+        module("platform-loader")
+      }
 
       fileset(dir: "$home/jps/lib") {
         include(name: "optimizedFileManager.jar")
@@ -589,6 +592,11 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     layoutPlugin("devkit") {
       jar("devkit-jps-plugin.jar") {
         module("devkit-jps-plugin")
+      }
+      dir("jps") {
+        jar("platform-module-descriptors-generator.jar") {
+          module("platform-module-descriptors-generator")
+        }
       }
       fileset(dir: "${home}/plugins/devkit/lib") {
         include(name: "**/*.jar")

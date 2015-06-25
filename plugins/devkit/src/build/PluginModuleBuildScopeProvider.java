@@ -16,18 +16,22 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.impl.BuildTargetScopeProvider;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+import org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorsTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,7 +41,7 @@ public class PluginModuleBuildScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
-                                                         @NotNull Project project, boolean forceBuild) {
+                                                         @NotNull final Project project, boolean forceBuild) {
     List<String> pluginArtifactTargetIds = new ArrayList<String>();
     for (Module module : baseScope.getAffectedModules()) {
       if (PluginModuleType.isOfType(module)) {
@@ -45,9 +49,18 @@ public class PluginModuleBuildScopeProvider extends BuildTargetScopeProvider {
       }
     }
 
-    if (pluginArtifactTargetIds.isEmpty()) {
-      return Collections.emptyList();
+    List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    if (!pluginArtifactTargetIds.isEmpty()) {
+      scopes.add(CmdlineProtoUtil.createTargetsScope(ArtifactBuildTargetType.INSTANCE.getTypeId(), pluginArtifactTargetIds, forceBuild));
     }
-    return Collections.singletonList(CmdlineProtoUtil.createTargetsScope(ArtifactBuildTargetType.INSTANCE.getTypeId(), pluginArtifactTargetIds, forceBuild));
+    //noinspection UnresolvedPropertyKey
+    if (Registry.is("ide.new.loader.generate.dependencies", true) && new ReadAction<Boolean>() {
+      protected void run(final Result<Boolean> result) {
+        result.setResult(PsiUtil.isIdeaProject(project));
+      }
+    }.execute().getResultObject()) {
+      scopes.add(CmdlineProtoUtil.createAllTargetsScope(RuntimeModuleDescriptorsTarget.TARGET_TYPE, forceBuild));
+    }
+    return scopes;
   }
 }

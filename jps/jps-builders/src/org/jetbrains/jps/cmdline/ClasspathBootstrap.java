@@ -38,6 +38,7 @@ import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.platform.loader.PlatformLoader;
 
 import javax.tools.*;
 import java.io.File;
@@ -132,6 +133,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(BuildMain.class));
 
     cp.addAll(PathManager.getUtilClassPath()); // util
+    cp.add(getResourcePath(PlatformLoader.class)); // platform-loader
     cp.add(getResourcePath(Message.class)); // protobuf
     cp.add(getResourcePath(NetUtil.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
