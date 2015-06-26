@@ -190,7 +190,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
                                   "GotoNextError", "NextProjectWindow", "EditorSwapSelectionBoundaries", "SplitVertically",
                                   "SplitHorizontally", "UnsplitAll", "Switcher", "$SelectAll"},
     { "control UP",               "EditorBackwardParagraph", "EditorLookupUp"},
-    { "control DOWN",             "EditorForwardParagraph", "EditorLookupUp"},
+    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown"},
     { "control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "MethodDown", "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
