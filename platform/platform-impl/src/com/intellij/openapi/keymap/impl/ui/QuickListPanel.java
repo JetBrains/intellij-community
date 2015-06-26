@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 class QuickListPanel {
+  private final CollectionListModel<Object> actionsModel;
   private JPanel myPanel;
   private final JBList myActionsList;
   JTextField myDisplayName;
@@ -41,7 +42,8 @@ class QuickListPanel {
   QuickList item;
 
   public QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
-    myActionsList = new JBList(new DefaultListModel());
+    actionsModel = new CollectionListModel<Object>();
+    myActionsList = new JBList(actionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
     myActionsList.setEnabled(true);
@@ -65,14 +67,14 @@ class QuickListPanel {
                             for (String id : ids) {
                               includeActionId(id);
                             }
-                            DefaultListModel listModel = (DefaultListModel)myActionsList.getModel();
-                            int size = listModel.getSize();
+                            java.util.List<Object> list = actionsModel.getItems();
+                            int size = list.size();
                             ListSelectionModel selectionModel = myActionsList.getSelectionModel();
                             if (size > 0) {
                               selectionModel.removeIndexInterval(0, size - 1);
                             }
                             for (String id1 : ids) {
-                              int idx = listModel.lastIndexOf(id1);
+                              int idx = list.lastIndexOf(id1);
                               if (idx >= 0) {
                                 selectionModel.addSelectionInterval(idx, idx);
                               }
@@ -83,8 +85,7 @@ class QuickListPanel {
                       .addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
                         @Override
                         public void actionPerformed(@Nullable AnActionEvent e) {
-                          //noinspection unchecked
-                          ((DefaultListModel)myActionsList.getModel()).addElement(QuickList.SEPARATOR_ID);
+                          actionsModel.add(QuickList.SEPARATOR_ID);
                         }
                       })
                       .setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down")
@@ -126,7 +127,7 @@ class QuickListPanel {
     myDisplayName.setText(this.item.getName());
     myDescription.setText(item.getDescription());
 
-    ((DefaultListModel)myActionsList.getModel()).clear();
+    actionsModel.removeAll();
     for (String id : item.getActionIds()) {
       includeActionId(id);
     }
@@ -137,7 +138,7 @@ class QuickListPanel {
   private void excludeSelectionAction() {
     int[] ids = myActionsList.getSelectedIndices();
     for (int i = ids.length - 1; i >= 0; i--) {
-      ((DefaultListModel)myActionsList.getModel()).remove(ids[i]);
+      actionsModel.remove(ids[i]);
     }
   }
 
@@ -154,10 +155,8 @@ class QuickListPanel {
   }
 
   private void includeActionId(@NotNull String id) {
-    DefaultListModel model = (DefaultListModel)myActionsList.getModel();
-    if (QuickList.SEPARATOR_ID.equals(id) || !model.contains(id)) {
-      //noinspection unchecked
-      model.addElement(id);
+    if (QuickList.SEPARATOR_ID.equals(id) || actionsModel.getElementIndex(id) == -1) {
+      actionsModel.add(id);
     }
   }
 

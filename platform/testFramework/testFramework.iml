@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="relaxng" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="images" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="RegExpSupport" exported="" scope="RUNTIME" />
+    <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

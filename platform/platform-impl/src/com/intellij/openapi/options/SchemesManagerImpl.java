@@ -47,10 +47,7 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.text.UniqueNameGenerator;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectObjectProcedure;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.*;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Parent;
@@ -85,7 +82,9 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
 
   private final Set<String> filesToDelete = new THashSet<String>();
 
-  private final THashMap<ExternalizableScheme, ExternalInfo> schemeToInfo = new THashMap<ExternalizableScheme, ExternalInfo>();
+  // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
+  @SuppressWarnings("unchecked")
+  private final THashMap<ExternalizableScheme, ExternalInfo> schemeToInfo = new THashMap<ExternalizableScheme, ExternalInfo>(TObjectHashingStrategy.IDENTITY);
 
   public SchemesManagerImpl(@NotNull String fileSpec,
                             @NotNull SchemeProcessor<E> processor,
@@ -231,7 +230,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       T scheme = convertor.convert(element);
 
       if (scheme instanceof ExternalizableScheme) {
-        String fileName = PathUtilRt.getFileName(resourceName);
+        String fileName = PathUtilRt.getFileName(url.getPath());
         String extension = getFileExtension(fileName, true);
         ExternalInfo info = new ExternalInfo(fileName.substring(0, fileName.length() - extension.length()), extension);
         info.hash = JDOMUtil.getTreeHash(element, true);
@@ -762,13 +761,14 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     schemeToInfo.retainEntries(new TObjectObjectProcedure<ExternalizableScheme, ExternalInfo>() {
       @Override
       public boolean execute(ExternalizableScheme scheme, ExternalInfo info) {
-        // yes, by equals, not by identity
-        //noinspection SuspiciousMethodCalls
-        boolean keep = schemes.contains(scheme);
-        if (!keep) {
-          scheduleDelete(info);
+        for (T t : schemes) {
+          if (t == scheme) {
+            return true;
+          }
         }
-        return keep;
+
+        scheduleDelete(info);
+        return false;
       }
     });
   }
@@ -939,5 +939,10 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     public String toString() {
       return fileNameWithoutExtension;
     }
+  }
+
+  @Override
+  public String toString() {
+    return myFileSpec;
   }
 }
