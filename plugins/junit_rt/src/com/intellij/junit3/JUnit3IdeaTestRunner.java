@@ -21,7 +21,10 @@ import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
+import org.junit.runner.notification.Failure;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
@@ -171,15 +174,45 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
 
   private static class SMTestListener implements TestListener {
     private String myClassName;
-    
+    private long myCurrentTestStart;
+
     public void addError(Test test, Throwable e) {
-      final String failureMessage = e.getMessage();
-      final Map attrs = new HashMap();
-      attrs.put("name", getMethodName(test));
-      attrs.put("message", failureMessage != null ? failureMessage : "");
-      System.out.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_FAILED, attrs));
+      testFailure(e, MapSerializerUtil.TEST_FAILED, getMethodName(test));
     }
 
+    private void testFailure(Throwable failure, String messageName, String methodName) {
+      final Map attrs = new HashMap();
+      attrs.put("name", methodName);
+      final long duration = System.currentTimeMillis() - myCurrentTestStart;
+      if (duration > 0) {
+        attrs.put("duration", Long.toString(duration));
+      }
+      try {
+        final String trace = getTrace(failure);
+        ComparisonFailureData notification = null;
+        if (failure instanceof ComparisonFailure || failure.getClass().getName().equals("org.junit.ComparisonFailure")) {
+          notification = new ComparisonFailureData(ComparisonDetailsExtractor.getExpected(failure), ComparisonDetailsExtractor.getActual(failure));
+        }
+        ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, failure);
+      }
+      catch (Throwable e) {
+        final StringWriter stringWriter = new StringWriter();
+        final PrintWriter writer = new PrintWriter(stringWriter);
+        e.printStackTrace(writer);
+        ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
+      }
+      finally {
+        System.out.println(MapSerializerUtil.asString(messageName, attrs));
+      }
+    }
+
+    public String getTrace(Throwable failure) {
+      StringWriter stringWriter = new StringWriter();
+      PrintWriter writer = new PrintWriter(stringWriter);
+      failure.printStackTrace(writer);
+      return stringWriter.toString();
+    }
+    
     private static String getMethodName(Test test) {
       final String toString = test.toString();
       final int braceIdx = toString.indexOf("(");
@@ -197,10 +230,13 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     }
 
     public void endTest(Test test) {
-      System.out.println("\n##teamcity[testFinished name=\'" + getMethodName(test) + "\']");
+      final long duration = System.currentTimeMillis() - myCurrentTestStart;
+      System.out.println("\n##teamcity[testFinished name=\'" + getMethodName(test) + 
+                         (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
     }
 
     public void startTest(Test test) {
+      myCurrentTestStart = System.currentTimeMillis();
       final String className = getClassName(test);
       if (className != null && !className.equals(myClassName)) {
         finishSuite();
