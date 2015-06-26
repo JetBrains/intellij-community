@@ -35,7 +35,7 @@ import javax.swing.*;
 
 public final class GroovyConsoleRootType extends ConsoleRootType {
 
-  public static final AnAction executeAction = new GrExecuteCommandAction();
+  public static final AnAction EXECUTE_ACTION = new GrExecuteCommandAction();
   public static final String CONTENT_ID = "groovy_console";
 
   @NotNull
@@ -84,11 +84,11 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
       if (!(fileEditor instanceof TextEditor)) continue;
       final Editor editor = ((TextEditor)fileEditor).getEditor();
       final JPanel panel = new EditorHeaderComponent();
-      final DefaultActionGroup actionGroup = new DefaultActionGroup(new GrSelectModuleAction(projectConsole, file));
+      final DefaultActionGroup actionGroup = new DefaultActionGroup(EXECUTE_ACTION, new GrSelectModuleAction(projectConsole, file));
       final ActionToolbar menu = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
       panel.add(menu.getComponent());
       editor.setHeaderComponent(panel);
-      executeAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
+      EXECUTE_ACTION.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
     }
   }
 }
