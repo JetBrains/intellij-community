@@ -152,7 +152,7 @@ public class DocumentEventImpl extends DocumentEvent {
 
   @Override
   public boolean isWholeTextReplaced() {
-    return myIsWholeDocReplaced || super.isWholeTextReplaced();
+    return myIsWholeDocReplaced;
   }
 
   public int translateLineViaDiff(int line) throws FilesTooBigForDiffException {

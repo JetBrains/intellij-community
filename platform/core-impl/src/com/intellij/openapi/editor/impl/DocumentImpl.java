@@ -530,6 +530,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       endOffset--;
     }
 
+    if (startOffset == 0 && endOffset == getTextLength()) {
+      wholeTextReplaced = true;
+    }
+
     CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
     CharSequence sToDelete = myText.subtext(startOffset, endOffset);
     RangeMarker guard = getRangeGuard(startOffset, endOffset);
