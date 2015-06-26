@@ -75,7 +75,10 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNam
       return "";
     }
     final PsiType lType = lhs.getType();
-    final PsiType rType = rhs.getType();
+    PsiType rType = rhs.getType();
+    if (TypeConversionUtil.isNumericType(rType)) {
+      rType = TypeConversionUtil.binaryNumericPromotion(lType, rType);
+    }
     if (lType == null || rType == null ||
         TypeConversionUtil.isAssignable(lType, rType) || !TypeConversionUtil.areTypesConvertible(lType, rType)) {
       return "";
