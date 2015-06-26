@@ -1122,7 +1122,8 @@ public class EditorWindow {
     if (closeNonModifiedFilesFirst) {
       // Search in history
       for (final VirtualFile file : histFiles) {
-        if (isFileModified(findFileComposite(file), file)) {
+        EditorWithProviderComposite composite = findFileComposite(file);
+        if (composite != null && !myOwner.getManager().isChanged(composite)) {
           // we found non modified file
           closingOrder.add(file);
         }
@@ -1131,7 +1132,7 @@ public class EditorWindow {
       // Search in tabbed pane
       for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
         final VirtualFile file = getFileAt(i);
-        if (isFileModified(getEditorAt(i), file)) {
+        if (!myOwner.getManager().isChanged(getEditorAt(i))) {
           // we found non modified file
           closingOrder.add(file);
         }
@@ -1165,10 +1166,6 @@ public class EditorWindow {
     Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
     if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
     return !myOwner.getManager().isChanged(composite);
-  }
-
-  private static boolean isFileModified(EditorComposite composite, VirtualFile file) {
-    return composite != null && (composite.getInitialFileTimeStamp() == file.getTimeStamp() || composite.isModified());
   }
 
   private boolean areAllTabsPinned(VirtualFile fileToIgnore) {
