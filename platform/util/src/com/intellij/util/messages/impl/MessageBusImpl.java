@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -32,7 +31,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -80,12 +81,7 @@ public class MessageBusImpl implements MessageBus {
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     myOwner = owner.toString() + " of " + owner.getClass();
     myParentBus = (MessageBusImpl)parentBus;
-    myParentBus.onChildBusCreated(this, new Consumer<List<Integer>>() {
-      @Override
-      public void consume(List<Integer> integers) {
-        myOrderRef.set(integers);
-      }
-    });
+    myParentBus.onChildBusCreated(this, myOrderRef);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
     LOG.assertTrue(myOrderRef.get() != null);
   }
@@ -129,10 +125,10 @@ public class MessageBusImpl implements MessageBus {
    * Thread-safe.
    *
    * @param childBus            newly created child bus
-   * @param childOrderConsumer  callback which applies {@link #myOrderRef order} to apply to the given child bus (calculated by
-   *                            the current (parent) bus during this method processing
+   * @param childOrderRef       given child bus' {@link #myOrderRef order} holder (the order is calculated by
+   *                            the current (parent) bus during this method processing)
    */
-  private void onChildBusCreated(final MessageBusImpl childBus, @NotNull Consumer<List<Integer>> childOrderConsumer) {
+  private void onChildBusCreated(final MessageBusImpl childBus, @NotNull AtomicReference<List<Integer>> childOrderRef) {
     LOG.assertTrue(childBus.myParentBus == this);
 
     // It's possible that new child bus objects are created concurrently, i.e. current method is called at the same
@@ -170,7 +166,7 @@ public class MessageBusImpl implements MessageBus {
         break;
       }
     }
-    childOrderConsumer.consume(childOrder);
+    childOrderRef.set(childOrder);
     myChildBuses.add(childBus);
     getRootBus().clearSubscriberCache();
   }
