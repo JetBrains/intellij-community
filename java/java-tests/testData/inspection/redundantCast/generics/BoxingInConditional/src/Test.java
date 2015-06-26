@@ -8,3 +8,15 @@ public class Test {
     return s == null ? i : (Integer)2;
   }
 }
+
+class RedundantCastTest {
+
+  public static void main(String[] args) {
+    Integer foo = 5;
+    Integer bar = null;
+    print(args == null || args.length == 0 ? bar : (Integer) 1);
+    int i = args == null || args.length == 0 ? bar : (Integer) 1;
+  }
+
+  private static void print(Integer i) {}
+}
