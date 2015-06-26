@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 Bas Leijdekkers
+ * Copyright 2006-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -50,8 +51,7 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
     return new OverloadedVarargMethodVisitor();
   }
 
-  private static class OverloadedVarargMethodVisitor
-    extends BaseInspectionVisitor {
+  private static class OverloadedVarargMethodVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -63,10 +63,9 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
         return;
       }
       final String methodName = method.getName();
-      final PsiMethod[] sameNameMethods =
-        aClass.findMethodsByName(methodName, true);
+      final PsiMethod[] sameNameMethods = aClass.findMethodsByName(methodName, true);
       for (PsiMethod sameNameMethod : sameNameMethods) {
-        if (!sameNameMethod.equals(method)) {
+        if (!MethodSignatureUtil.areSignaturesEqual(sameNameMethod, method)) {
           registerMethodError(method, method);
           return;
         }
