@@ -95,7 +95,7 @@ public class MultipleJdksMoveClassTest extends RefactoringTestCase {
     final PsiFile[] files = myFixture.configureByFiles("java7/p/Main.java", "java8/p/Foo.java");
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     RefactoringConflictsUtil.analyzeModuleConflicts(files[0].getProject(), Collections.singletonList(files[0]), 
-                                                    UsageInfo.EMPTY_ARRAY, files[1].getVirtualFile(), new MultiMap<>());
+                                                    UsageInfo.EMPTY_ARRAY, files[1].getVirtualFile(), conflicts);
     
     assertEmpty(conflicts.keySet());
   }
