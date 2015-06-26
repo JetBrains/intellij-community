@@ -292,7 +292,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     @NotNull private final List<String> myPatches;
 
     public MyPatchModel(@NotNull List<String> names) {
-      myPatches = names;
+      myPatches = ContainerUtil.newArrayList(names);
       readMqPatchesDetails();
     }
 
