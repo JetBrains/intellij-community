@@ -13,7 +13,7 @@ class UnsupportedFeatures {
     List<error descr="Generics are not supported at this language level"><String></error> list =
       new ArrayList<error descr="Generics are not supported at this language level"><></error>();
 
-    <error descr="For-each loops are not supported at this language level">for (String s : list) {}</error>
+    <error descr="For-each loops are not supported at this language level">for (Object s : list) {}</error>
     Arrays.asList<error descr="'asList(java.lang.String...)' in 'java.util.Arrays' cannot be applied to '(java.lang.String)'">("")</error>;
     <error descr="Incompatible types. Found: 'boolean', required: 'java.lang.Boolean'">Boolean b = true;</error>
     <error descr="Incompatible types. Found: 'java.lang.Boolean', required: 'boolean'">boolean b1 = Boolean.TRUE;</error>

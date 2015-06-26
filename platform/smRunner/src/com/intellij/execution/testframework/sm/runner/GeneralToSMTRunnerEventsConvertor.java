@@ -185,6 +185,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       public void run() {
         final String testName = testStartedEvent.getName();
         final String locationUrl = testStartedEvent.getLocationUrl();
+        final boolean isConfig = testStartedEvent.isConfig();
         final String fullName = getFullTestName(testName);
 
         if (myRunningTestsFullNameToProxy.containsKey(fullName)) {
@@ -200,6 +201,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         if (testProxy == null) {
           // creates test
           testProxy = new SMTestProxy(testName, false, locationUrl);
+          testProxy.setConfig(isConfig);
 
           if (myLocator != null) {
             testProxy.setLocator(myLocator);

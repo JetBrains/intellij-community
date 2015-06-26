@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
     return this;
   }
 
@@ -89,7 +89,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   }
 
   @Override
-  protected final void performRefactoring(final UsageInfo[] usages) {
+  protected final void performRefactoring(@NotNull final UsageInfo[] usages) {
     final Collection<PyClass> destinations = new ArrayList<PyClass>(usages.length);
     for (final UsageInfo usage : usages) {
       if (!(usage instanceof PyUsageInfo)) {
@@ -119,7 +119,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElements(myTo);
     return data;

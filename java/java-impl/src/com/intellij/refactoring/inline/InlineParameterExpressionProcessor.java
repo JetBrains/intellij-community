@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new InlineViewDescriptor(myParameter);
   }
 
@@ -171,7 +171,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   @Override
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final UsageInfo[] usages = refUsages.get();
     final InaccessibleExpressionsDetector detector = new InaccessibleExpressionsDetector(conflicts);
@@ -214,7 +214,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   @Override
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{myInitializer});
     final Set<PsiVariable> varsUsedInInitializer = new HashSet<PsiVariable>();
     final Set<PsiJavaCodeReferenceElement> paramRefsToInline = new HashSet<PsiJavaCodeReferenceElement>();

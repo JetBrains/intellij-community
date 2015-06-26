@@ -127,6 +127,13 @@ public abstract class Filter<T extends AbstractTestProxy> {
     }
   });
 
+  public static final Filter SUCCESSFUL_CONFIGS = new Filter() {
+    @Override
+    public boolean shouldAccept(AbstractTestProxy test) {
+      return !test.isConfig() || !test.isPassed();
+    }
+  };
+
   private static class AndFilter extends Filter {
     private final Filter myFilter1;
     private final Filter myFilter2;

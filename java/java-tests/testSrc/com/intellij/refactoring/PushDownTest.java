@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +95,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), currentClass,
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
-      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
+      protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
           fail(failure ? "Conflict was not detected" : "False conflict was detected");
         }
@@ -118,7 +119,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     new PushDownProcessor(getProject(), members.toArray(new MemberInfo[members.size()]), currentClass,
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
-      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
+      protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         return true;
       }
     }.run();

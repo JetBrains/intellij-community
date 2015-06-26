@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TestStartedEvent extends BaseStartedNodeEvent {
 
+  private boolean myConfig;
+
   public TestStartedEvent(@NotNull TestStarted testStarted,
                           @Nullable String locationUrl) {
     super(testStarted.getTestName(),
@@ -37,5 +39,13 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
 
   public TestStartedEvent(@NotNull String name, @Nullable String locationUrl) {
     super(name, -1, -1, locationUrl, null, null, true);
+  }
+
+  public void setConfig(boolean config) {
+    myConfig = config;
+  }
+
+  public boolean isConfig() {
+    return myConfig;
   }
 }
