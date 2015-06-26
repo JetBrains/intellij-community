@@ -69,6 +69,10 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    TestConsoleProperties.HIDE_PASSED_TESTS.set(myProperties, true);
+    TestConsoleProperties.HIDE_IGNORED_TEST.set(myProperties, false);
+    TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.set(myProperties, false);
+
     Disposer.dispose(myResultsViewer);
     Disposer.dispose(myResultsForm);
     super.tearDown();
