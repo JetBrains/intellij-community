@@ -108,7 +108,7 @@ public class RuntimeModuleDescriptorsTarget extends BuildTarget<BuildRootDescrip
       }
       File output = JpsJavaExtensionService.getInstance().getOutputDirectory(module, false);
       if (output != null) {
-        RuntimeModuleId moduleId = RuntimeModuleId.ideaModule(module.getName());
+        RuntimeModuleId moduleId = RuntimeModuleId.module(module.getName());
         outputFiles.add(new File(output, RepositoryConstants.getModuleDescriptorRelativePath(moduleId)));
       }
     }
