@@ -67,7 +67,7 @@ class TeamcityDocTestResult(TeamcityTestResult):
 
   def addError(self, test, err = ''):
     self.messages.testError(self.getTestName(test),
-      message='Error', details=err)
+      message='Error', details=err, duration=self.__getDuration(test))
 
   def stopTest(self, test):
     duration = self.__getDuration(test)

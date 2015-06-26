@@ -111,7 +111,7 @@ class TeamcityTestResult(TestResult):
 
     self.messages.testStarted(self.getTestName(test), location=location)
     self.messages.testError(self.getTestName(test),
-                            message='Error', details=err)
+                            message='Error', details=err, duration=self.__getDuration(test))
 
   def find_error_value(self, err):
     error_value = traceback.extract_tb(err)

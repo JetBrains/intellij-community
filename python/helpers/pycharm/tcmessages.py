@@ -40,6 +40,7 @@ class TeamcityServiceMessages:
 
     def testIgnored(self, testName, message=''):
         self.message('testIgnored', name=testName, message=message)
+        self.testFinished(testName)
 
 
     def testFailed(self, testName, message='', details='', expected='', actual='', duration=None):
@@ -55,8 +56,9 @@ class TeamcityServiceMessages:
             self.message('testFailed', name=testName, message=message, details=details)
         self.testFinished(testName, int(duration) if duration else None)
 
-    def testError(self, testName, message='', details=''):
+    def testError(self, testName, message='', details='', duration=None):
         self.message('testFailed', name=testName, message=message, details=details, error="true")
+        self.testFinished(testName, int(duration) if duration else None)
 
     def testStdOut(self, testName, out):
         self.message('testStdOut', name=testName, out=out)

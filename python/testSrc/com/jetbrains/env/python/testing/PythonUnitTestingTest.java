@@ -25,6 +25,22 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * Ensures that skipped and erroneous tests do not lead to suite ignorance
+   */
+  public void testUTSkippedAndIgnored() {
+    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
+
+      @Override
+      public void after() {
+        assertEquals(4, allTestsCount());
+        assertEquals(2, passedTestsCount());
+        assertEquals(2, failedTestsCount());
+        Assert.assertFalse("Suite is not finished", myTestProxy.isInterrupted());
+      }
+    });
+  }
+
   public void testUTRunner2() {
     runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test2.py") {
 
