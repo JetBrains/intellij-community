@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="built-in-server-api" exported="" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
   </component>
 </module>

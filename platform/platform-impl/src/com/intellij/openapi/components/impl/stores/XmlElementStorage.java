@@ -211,7 +211,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
     protected abstract void doSave(@Nullable Element element) throws IOException;
 
-    protected void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
+    protected final void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
       if (!myStreamProvider.isApplicable(myFileSpec, myRoamingType)) {
         return;
       }
