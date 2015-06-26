@@ -37,7 +37,7 @@ public abstract class PlatformLoader {
   public abstract PlatformRepository getRepository();
 
   public static void main(String[] args) {
-    RuntimeModuleDescriptor module = getInstance().getRepository().getRequiredModule(RuntimeModuleId.ideaModule("lang-api"));
+    RuntimeModuleDescriptor module = getInstance().getRepository().getRequiredModule(RuntimeModuleId.module("lang-api"));
     System.out.println(module.getModuleRoots());
     System.exit(0);
   }

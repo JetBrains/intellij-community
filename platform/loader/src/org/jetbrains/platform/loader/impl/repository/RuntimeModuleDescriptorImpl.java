@@ -43,7 +43,7 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
   @NotNull
   @Override
   public RuntimeModuleId getModuleId() {
-    return RuntimeModuleId.ideaModule(myId);
+    return RuntimeModuleId.module(myId);
   }
 
   @Override
@@ -64,7 +64,7 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
   public List<RuntimeModuleId> getDependencies() {
     List<RuntimeModuleId> moduleIds = new ArrayList<RuntimeModuleId>();
     for (String dependency : myDependencies) {
-      moduleIds.add(RuntimeModuleId.ideaModule(dependency));
+      moduleIds.add(RuntimeModuleId.module(dependency));
     }
     return moduleIds;
   }

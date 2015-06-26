@@ -33,12 +33,16 @@ public final class RuntimeModuleId {
     return myStringId;
   }
 
-  public static RuntimeModuleId ideaModule(@NotNull String moduleName) {
+  public static RuntimeModuleId module(@NotNull String moduleName) {
     return new RuntimeModuleId(moduleName);
   }
 
-  public static RuntimeModuleId ideaLibrary(@NotNull String libraryName) {
+  public static RuntimeModuleId projectLibrary(@NotNull String libraryName) {
     return new RuntimeModuleId(LIB_NAME_PREFIX + libraryName);
+  }
+
+  public static RuntimeModuleId moduleLibrary(@NotNull String moduleName, @NotNull String libraryName) {
+    return new RuntimeModuleId(LIB_NAME_PREFIX + moduleName + "." + libraryName);
   }
 
   @Override

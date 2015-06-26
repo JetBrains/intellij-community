@@ -287,7 +287,7 @@ public class RuntimeModuleDescriptorsGenerator {
   @NotNull
   private static RuntimeModuleId getRuntimeModuleName(JpsModule module, boolean tests) {
     String moduleName = module.getName();
-    return RuntimeModuleId.ideaModule(tests ? moduleName + ".tests" : moduleName);
+    return RuntimeModuleId.module(tests ? moduleName + ".tests" : moduleName);
   }
 
   @NotNull
@@ -344,9 +344,9 @@ public class RuntimeModuleDescriptorsGenerator {
       if (name.startsWith("#") && files.size() == 1) {
         name = files.get(0).getName();
       }
-      name = ((JpsModule)element).getName() + "." + name;
+      return RuntimeModuleId.moduleLibrary(((JpsModule)element).getName(), name);
     }
-    return RuntimeModuleId.ideaLibrary(name);
+    return RuntimeModuleId.projectLibrary(name);
   }
 
   private void generateDescriptorsZip(File outputDir, List<RuntimeModuleDescriptor> descriptors) {
