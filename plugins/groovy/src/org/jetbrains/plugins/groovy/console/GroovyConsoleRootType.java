@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import javax.swing.*;
 public final class GroovyConsoleRootType extends ConsoleRootType {
 
   public static final AnAction executeAction = new GrExecuteCommandAction();
+  public static final String CONTENT_ID = "groovy_console";
 
   @NotNull
   public static GroovyConsoleRootType getInstance() {
@@ -56,10 +58,21 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
     return !GroovyConsoleStateService.getInstance(project).isProjectConsole(element);
   }
 
+  @NotNull
+  @Override
+  public String getContentPathName(@NotNull String id) {
+    assert id == CONTENT_ID;
+    return CONTENT_ID;
+  }
+
   @Nullable
   @Override
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
-    return GroovyConsoleStateService.getInstance(project).getSelectedModuleTitle(file);
+    final String name = file.getName();
+    final String moduleTitle = GroovyConsoleStateService.getInstance(project).getSelectedModuleTitle(file);
+    return name.startsWith(CONTENT_ID)
+           ? StringUtil.replace(name, CONTENT_ID, moduleTitle == null ? "unknown" : moduleTitle)
+           : String.format("%s-%s", moduleTitle, name);
   }
 
   @Override
