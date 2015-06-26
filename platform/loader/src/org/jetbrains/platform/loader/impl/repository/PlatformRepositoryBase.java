@@ -28,6 +28,8 @@ import javax.xml.stream.XMLInputFactory;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -96,5 +98,15 @@ public abstract class PlatformRepositoryBase implements PlatformRepository {
       throw new PlatformLoaderException("Cannot find module '" + moduleName.getStringId() + "' in " + this);
     }
     return dependency;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getModuleRootPaths(@NotNull RuntimeModuleId id) {
+    List<String> paths = new ArrayList<String>();
+    for (File file : getRequiredModule(id).getModuleRoots()) {
+      paths.add(file.getAbsolutePath());
+    }
+    return paths;
   }
 }

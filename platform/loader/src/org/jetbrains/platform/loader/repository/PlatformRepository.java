@@ -18,6 +18,8 @@ package org.jetbrains.platform.loader.repository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -27,4 +29,7 @@ public interface PlatformRepository {
 
   @NotNull
   RuntimeModuleDescriptor getRequiredModule(@NotNull RuntimeModuleId moduleName);
+
+  @NotNull
+  List<String> getModuleRootPaths(@NotNull RuntimeModuleId id);
 }
