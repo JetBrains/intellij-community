@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
  * @author Roman.Chernyatchik
  */
 public class TextFieldWithAutoCompletionContributor<T> extends CompletionContributor implements DumbAware {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TextFieldWithAutoCompletionContributor");
   private static final Key<TextFieldWithAutoCompletionListProvider> KEY = Key.create("text field simple completion available");
   private static final Key<Boolean> AUTO_POPUP_KEY = Key.create("text Field simple completion auto-popup");
 
@@ -139,6 +141,11 @@ public class TextFieldWithAutoCompletionContributor<T> extends CompletionContrib
                                                   : AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
     int grouping = index;
     for (final T item : items) {
+      if (item == null) {
+        LOG.error("Null item from " + listProvider);
+        continue;
+      }
+
       LookupElementBuilder builder = listProvider.createLookupBuilder(item);
 
       result.addElement(PrioritizedLookupElement.withGrouping(builder.withAutoCompletionPolicy(completionPolicy), grouping--));
