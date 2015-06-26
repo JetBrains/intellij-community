@@ -456,8 +456,15 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <E> Set<E> immutableSet(@NotNull E ... elements) {
-    return Collections.unmodifiableSet(new THashSet<E>(Arrays.asList(elements)));
+  public static <E> Set<E> immutableSet(@NotNull E... elements) {
+    switch (elements.length) {
+      case 0:
+        return Collections.emptySet();
+      case 1:
+        return Collections.singleton(elements[0]);
+      default:
+        return Collections.unmodifiableSet(new THashSet<E>(Arrays.asList(elements)));
+    }
   }
 
   @NotNull
