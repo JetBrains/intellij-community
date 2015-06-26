@@ -51,7 +51,14 @@ public class TestFrameworkActions {
     final Filter hidePassedFilter = shouldFilterPassed ? Filter.NOT_PASSED.or(Filter.DEFECT) : Filter.NO_FILTER;
 
     final boolean shouldFilterIgnored = TestConsoleProperties.HIDE_IGNORED_TEST.value(properties);
-    final Filter hideIgnoredFilter = shouldFilterIgnored ? Filter.IGNORED.not() : Filter.NO_FILTER;
+    final Filter hideIgnoredFilter;
+    if (shouldFilterIgnored) {
+      final Filter ignoredFilter = Filter.IGNORED.not();
+      hideIgnoredFilter = !shouldFilterPassed ? ignoredFilter.or(Filter.HAS_PASSED) : ignoredFilter;
+    }
+    else {
+      hideIgnoredFilter = Filter.NO_FILTER;
+    }
     return hidePassedFilter.and(hideIgnoredFilter);
   }
 

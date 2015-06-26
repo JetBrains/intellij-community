@@ -64,7 +64,6 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
   public static final BooleanProperty SHOW_INLINE_STATISTICS = new BooleanProperty("showInlineStatistics", true);
   public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
-  public static final BooleanProperty SPLIT_VERTICALLY = new BooleanProperty("splitVertically", false);
 
   private final Project myProject;
   private final Executor myExecutor;

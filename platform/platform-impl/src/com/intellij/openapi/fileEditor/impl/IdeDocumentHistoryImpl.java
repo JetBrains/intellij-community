@@ -145,8 +145,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myCmdProcessor.addCommandListener(myCommandListener,myProject);
   }
 
-  static class RecentlyChangedFilesState {
-    private List<String> CHANGED_PATHS = new ArrayList<String>();
+  public static class RecentlyChangedFilesState {
+    // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
+    public List<String> CHANGED_PATHS = new ArrayList<String>();
 
     public void register(VirtualFile file) {
       final String path = file.getPath();
@@ -368,9 +369,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     PlaceInfo current = getCurrentPlaceInfo();
 
     while (!myForwardPlaces.isEmpty()) {
-      if (isSame(current, target)) {
+      if (current != null && isSame(current, target)) {
         target = myForwardPlaces.removeLast();
-      } else {
+      }
+      else {
         break;
       }
     }

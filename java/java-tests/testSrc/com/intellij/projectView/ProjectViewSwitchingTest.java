@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.projectView;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.testFramework.TestSourceBasedTestCase;
@@ -25,19 +24,6 @@ public class ProjectViewSwitchingTest extends TestSourceBasedTestCase {
   @Override
   protected String getTestPath() {
     return "projectView";
-  }
-
-  @Override
-  protected void runStartupActivities() {
-    FavoritesManager.getInstance(getProject()).projectOpened();
-    super.runStartupActivities();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    FavoritesManager.getInstance(getProject()).projectClosed();
-
-    super.tearDown();
   }
 
   public void testSelectProject() {

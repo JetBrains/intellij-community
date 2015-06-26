@@ -970,6 +970,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
+  @NotNull 
   public Editor getEditor() {
     return myEditor;
   }

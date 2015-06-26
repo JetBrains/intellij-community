@@ -47,6 +47,10 @@ public class CopyClassTest extends CodeInsightTestCase {
   public void testReplaceAllOccurrences() throws Exception {
     doTest("Foo", "Bar");
   }
+  
+  public void testReplaceAllOccurrences1() throws Exception {
+    doTest("Foo", "Bar");
+  }
 
   public void testLibraryClass() throws Exception {  // IDEADEV-28791
     JavaCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCustomSettings(JavaCodeStyleSettings.class);

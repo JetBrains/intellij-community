@@ -44,7 +44,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
@@ -670,14 +669,10 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void doOKAction(boolean findAll) {
-    if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Find in Path is not available while indexing is in progress", "Indexing", null);
-      return;
-    }
-
     if (myResultsPreviewTable != null &&
         myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX &&
-        myResultsPreviewTable.getSelectedRowCount() != 0
+        myResultsPreviewTable.getSelectedRowCount() != 0 &&
+        !myModel.isReplaceState()
        ) {
       navigateToSelectedUsage(myResultsPreviewTable);
       return;

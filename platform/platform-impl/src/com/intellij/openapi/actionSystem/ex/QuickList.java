@@ -36,7 +36,6 @@ public class QuickList extends ExternalizableSchemeAdapter {
   private static final String DISPLAY_NAME_TAG = "display";
   private static final String DESCRIPTION_TAG = "description";
 
-  private String myName;
   private String myDescription;
   private String[] myActionIds = ArrayUtil.EMPTY_STRING_ARRAY;
   private boolean myReadonly;
@@ -53,12 +52,6 @@ public class QuickList extends ExternalizableSchemeAdapter {
     myDescription = StringUtil.nullize(description);
     myActionIds = actionIds;
     myReadonly = isReadonly;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return myName;
   }
 
   public boolean isReadonly() {
@@ -132,10 +125,5 @@ public class QuickList extends ExternalizableSchemeAdapter {
     for (int i = 0, n = actionElements.size(); i < n; i++) {
       myActionIds[i] = actionElements.get(i).getAttributeValue(ID_TAG);
     }
-  }
-
-  @Override
-  public void setName(@NotNull String newName) {
-    myName = newName;
   }
 }

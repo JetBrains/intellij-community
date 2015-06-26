@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.ide.ui.laf.intellij;
 
-public class StoresFactory {
-  private StoresFactory() {
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.util.ui.JBUI;
+
+import java.awt.*;
+
+/**
+ * @author Konstantin Bulenkov
+ */
+public class MacIntelliJTextBorder extends DarculaTextBorder {
+  @Override
+  public Insets getBorderInsets(Component c) {
+    return JBUI.insets(2).asUIResource();
   }
 
-  public static Class getProjectStoreClass(final boolean aDefault) {
-    return aDefault ? DefaultProjectStoreImpl.class : ProjectStoreImpl.class;
+  @Override
+  public boolean isBorderOpaque() {
+    return false;
   }
 
-  public static Class getApplicationStoreClass() {
-    return ApplicationStoreImpl.class;
+  @Override
+  public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
+
   }
 }

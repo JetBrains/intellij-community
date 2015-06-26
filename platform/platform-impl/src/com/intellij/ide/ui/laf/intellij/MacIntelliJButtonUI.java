@@ -15,15 +15,12 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.Gray;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
@@ -37,12 +34,20 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   private static Rectangle textRect = new Rectangle();
   private static Rectangle iconRect = new Rectangle();
 
-  private static final Icon LEFT = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/buttonLeft.png");
-  private static final Icon RIGHT = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/buttonRight.png");
-  private static final Icon MIDDLE = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/buttonMiddle.png");
-  private static final Icon LEFT_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonLeft.png");
-  private static final Icon RIGHT_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonRight.png");
-  private static final Icon MIDDLE_SELECTED = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/selectedButtonMiddle.png");
+  private static final Icon LEFT = DarculaLaf.loadIcon("buttonLeft.png");
+  private static final Icon RIGHT = DarculaLaf.loadIcon("buttonRight.png");
+  private static final Icon MIDDLE = DarculaLaf.loadIcon("buttonMiddle.png");
+  private static final Icon LEFT_SELECTED = DarculaLaf.loadIcon("selectedButtonLeft.png");
+  private static final Icon RIGHT_SELECTED = DarculaLaf.loadIcon("selectedButtonRight.png");
+  private static final Icon MIDDLE_SELECTED = DarculaLaf.loadIcon("selectedButtonMiddle.png");
+  private static final Icon LEFT_FOCUSED = DarculaLaf.loadIcon("focusedButtonLeft.png");
+  private static final Icon RIGHT_FOCUSED = DarculaLaf.loadIcon("focusedButtonRight.png");
+  private static final Icon MIDDLE_FOCUSED = DarculaLaf.loadIcon("focusedButtonMiddle.png");
+  private static final Icon LEFT_SELECTED_FOCUSED = DarculaLaf.loadIcon("focusedSelectedButtonLeft.png");
+  private static final Icon RIGHT_SELECTED_FOCUSED = DarculaLaf.loadIcon("focusedSelectedButtonRight.png");
+  private static final Icon MIDDLE_SELECTED_FOCUSED = DarculaLaf.loadIcon("focusedSelectedButtonMiddle.png");
+  private static final Icon HELP_BUTTON = DarculaLaf.loadIcon("helpButton.png");
+  private static final Icon HELP_BUTTON_FOCUSED = DarculaLaf.loadIcon("focusedHelpButton.png");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -54,66 +59,53 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (isHelpButton(c)) {
-      ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
-      int off = JBUI.scale(22);
-      int x = (w - off) / 2;
-      int y = (h - off) / 2;
-      g.fillOval(x, y, off, off);
-      AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
+      Icon icon = c.hasFocus() ? HELP_BUTTON_FOCUSED : HELP_BUTTON;
+      int x = (w - icon.getIconWidth()) / 2;
+      int y = (h - icon.getIconHeight()) / 2;
+      icon.paintIcon(c, g, x, y);
     } else {
-
       AbstractButton b = (AbstractButton) c;
-
-
-      ButtonModel model = b.getModel();
-
       String text = layout(b, SwingUtilities2.getFontMetrics(b, g),
                            b.getWidth(), b.getHeight());
 
-      final Border border = c.getBorder();
-
-      if (b.isFocusPainted() && b.hasFocus()) {
-        if (border instanceof MacIntelliJBorder) {
-          border.paintBorder(b, g, 1, 1, b.getWidth()-2, b.getHeight()-4);
-        }
-      }
-
       boolean isDefault = b instanceof JButton && ((JButton)b).isDefaultButton();
-      //final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      final boolean square = isSquare(c);
-      int x = 3;
-      int y = (h - viewRect.height) / 2;
-      Icon icon;
-      icon = isDefault ? LEFT_SELECTED : LEFT;
-      icon.paintIcon(b, g, x, y);
-      x+=icon.getIconWidth();
-      int stop = w - 3 - RIGHT.getIconWidth();
-      Graphics gg = g.create(0,0,w,h);
-      gg.setClip(x, y, stop - x, h);
-      icon = isDefault ? MIDDLE_SELECTED : MIDDLE;
-      while (x < stop) {
-        icon.paintIcon(b, gg, x, y);
-        x+=icon.getIconWidth();
+      boolean isFocused = c.hasFocus();
+      if (isSquare(c)) {
+        g.setColor(Gray.xFF);
+        g.fillRect(1, 1, w - 2, h - 2);
+        g.setColor(Gray.xB4);
+        g.drawRect(1, 1, w - 2, h - 2);
+      } else {
+        int x = isFocused ? 0 : 2;
+        int y = isFocused ? 0 : (h - viewRect.height) / 2;
+        Icon icon;
+        icon = isDefault ? isFocused ? LEFT_SELECTED_FOCUSED : LEFT_SELECTED
+                         : isFocused ? LEFT_FOCUSED : LEFT;
+        icon.paintIcon(b, g, x, y);
+        x += icon.getIconWidth();
+        int stop = w - (isFocused ? 0 : 2) - (isFocused ? RIGHT_FOCUSED.getIconWidth() : RIGHT.getIconWidth());
+        Graphics gg = g.create(0, 0, w, h);
+        gg.setClip(x, y, stop - x, h);
+        icon = isDefault ? isFocused ? MIDDLE_SELECTED_FOCUSED : MIDDLE_SELECTED
+                         : isFocused ? MIDDLE_FOCUSED : MIDDLE;
+        while (x < stop) {
+          icon.paintIcon(b, gg, x, y);
+          x += icon.getIconWidth();
+        }
+        gg.dispose();
+        icon = isDefault ? isFocused ? RIGHT_SELECTED_FOCUSED : RIGHT_SELECTED
+                         : isFocused ? RIGHT_FOCUSED : RIGHT;
+        icon.paintIcon(b, g, stop, y);
+
+        clearTextShiftOffset();
       }
-      gg.dispose();
-      icon = isDefault ? RIGHT_SELECTED : RIGHT;
-      icon.paintIcon(b, g, stop, y);
-      //config.restore();
-
-
-      clearTextShiftOffset();
-
-      // perform UI specific press action, e.g. Windows L&F shifts text
-      //if (model.isArmed() && model.isPressed()) {
-      //  paintButtonPressed(g,b);
-      //}
 
       // Paint the Icon
       if(b.getIcon() != null) {
         paintIcon(g,c,iconRect);
       }
 
-      if (text != null && !text.equals("")){
+      if (text != null && !text.isEmpty()){
         View v = (View) c.getClientProperty(BasicHTML.propertyKey);
         if (v != null) {
           v.paint(g, textRect);
@@ -144,40 +136,9 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       b.getText() == null ? 0 : b.getIconTextGap());
   }
 
-
-  @Override
-  protected Color getButtonColor1() {
-    return super.getButtonColor1();
-  }
-
-  @Override
-  protected Color getButtonColor2() {
-    return super.getButtonColor2();
-  }
-
-  @Override
-  protected Color getSelectedButtonColor1() {
-    return new Color(0x6cb3fa);
-  }
-
-  @Override
-  protected Color getSelectedButtonColor2() {
-    return new Color(0x077eff);
-  }
-
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
     return new Dimension(size.width + 16, 27);
-  }
-
-  @Override
-  public Dimension getMaximumSize(JComponent c) {
-    return super.getMaximumSize(c);
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    return super.getMinimumSize(c);
   }
 }

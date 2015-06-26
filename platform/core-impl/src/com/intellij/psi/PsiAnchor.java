@@ -328,7 +328,7 @@ public abstract class PsiAnchor {
 
     @Override
     public int hashCode() {
-      return 31 * myFile.hashCode() + (myLanguage.hashCode());
+      return 31 * myFile.hashCode() + myLanguage.hashCode();
     }
   }
   
@@ -436,15 +436,15 @@ public abstract class PsiAnchor {
     private final int myIndex;
     private final Language myLanguage;
     private final IStubElementType myElementType;
-    private final long myCreationModCount;
+    private final int myCreationModCount;
 
-    public StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, IStubElementType elementType) {
+    private StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, IStubElementType elementType) {
       myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
       myProject = file.getProject();
       myIndex = index;
-      myCreationModCount = file.getManager().getModificationTracker().getModificationCount();
+      myCreationModCount = (int)file.getManager().getModificationTracker().getModificationCount();
     }
 
     @Override
@@ -523,14 +523,14 @@ public abstract class PsiAnchor {
     @Override
     public int getStartOffset() {
       final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType.toString() + "; " + myVirtualFile);
+      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType + "; " + myVirtualFile);
       return resolved.getTextRange().getStartOffset();
     }
 
     @Override
     public int getEndOffset() {
       final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType.toString() + "; " + myVirtualFile);
+      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType + "; " + myVirtualFile);
       return resolved.getTextRange().getEndOffset();
     }
 
@@ -538,6 +538,7 @@ public abstract class PsiAnchor {
       return myVirtualFile;
     }
 
+    @NotNull
     public Project getProject() {
       return myProject;
     }

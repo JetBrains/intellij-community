@@ -52,9 +52,11 @@ public class ImportedTestContentHandler extends DefaultHandler {
       myDuration = attributes.getValue(TestResultsXmlFormatter.ATTR_DURATION);
       myStatus = attributes.getValue(TestResultsXmlFormatter.ATTR_STATUS);
       myProcessor.onTestStarted(new TestStartedEvent(name, attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION)));
+      currentValue.setLength(0);
     }
     else if (TestResultsXmlFormatter.ELEM_OUTPUT.equals(qName)) {
       myErrorOutput = Comparing.equal(attributes.getValue(TestResultsXmlFormatter.ATTR_OUTPUT_TYPE), "stderr");
+      currentValue.setLength(0);
     }
   }
 
@@ -78,7 +80,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
       if (TestResultsXmlFormatter.STATUS_FAILED.equals(myStatus) || isError) {
         myProcessor.onTestFailure(new TestFailedEvent(myCurrentTest, "", currentText, isError, null, null));
       }
-      else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus)) {
+      else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus) || TestResultsXmlFormatter.STATUS_SKIPPED.equals(myStatus)) {
         myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText));
       }
       myProcessor.onTestFinished(new TestFinishedEvent(myCurrentTest, myDuration != null ? Long.parseLong(myDuration) : -1));

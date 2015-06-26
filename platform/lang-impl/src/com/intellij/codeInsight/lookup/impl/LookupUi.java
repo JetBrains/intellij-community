@@ -125,7 +125,7 @@ class LookupUi {
     mySortingLabel.setOpaque(true);
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
-    myModalityState = ModalityState.stateForComponent(myLookup.getComponent());
+    myModalityState = ModalityState.stateForComponent(lookup.getEditor().getComponent());
 
     addListeners();
 

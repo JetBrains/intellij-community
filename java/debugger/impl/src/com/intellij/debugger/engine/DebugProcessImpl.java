@@ -390,22 +390,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
-        final List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
-        DebuggerSettings settings = DebuggerSettings.getInstance();
-        if (settings.TRACING_FILTERS_ENABLED) {
-          for (ClassFilter filter : settings.getSteppingFilters()) {
-            if (filter.isEnabled()) {
-              activeFilters.add(filter);
-            }
-          }
-        }
-        for (DebuggerClassFilterProvider provider : Extensions.getExtensions(DebuggerClassFilterProvider.EP_NAME)) {
-          for (ClassFilter filter : provider.getFilters()) {
-            if (filter.isEnabled()) {
-              activeFilters.add(filter);
-            }
-          }
-        }
+        List<ClassFilter> activeFilters = getActiveFilters();
 
         if (!activeFilters.isEmpty()) {
           final String currentClassName = getCurrentClassName(stepThread);
@@ -434,6 +419,27 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @NotNull
+  static List<ClassFilter> getActiveFilters() {
+    List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
+    DebuggerSettings settings = DebuggerSettings.getInstance();
+    if (settings.TRACING_FILTERS_ENABLED) {
+      for (ClassFilter filter : settings.getSteppingFilters()) {
+        if (filter.isEnabled()) {
+          activeFilters.add(filter);
+        }
+      }
+    }
+    for (DebuggerClassFilterProvider provider : Extensions.getExtensions(DebuggerClassFilterProvider.EP_NAME)) {
+      for (ClassFilter filter : provider.getFilters()) {
+        if (filter.isEnabled()) {
+          activeFilters.add(filter);
+        }
+      }
+    }
+    return activeFilters;
+  }
+
   void deleteStepRequests(@Nullable final ThreadReference stepThread) {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     List<StepRequest> stepRequests = requestManager.stepRequests();
@@ -456,7 +462,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Nullable
-  private static String getCurrentClassName(ThreadReferenceProxyImpl thread) {
+  static String getCurrentClassName(ThreadReferenceProxyImpl thread) {
     try {
       if (thread != null && thread.frameCount() > 0) {
         StackFrameProxyImpl stackFrame = thread.frame(0);
@@ -1507,6 +1513,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final RequestHint hint = mySmartStepFilter != null?
                                new RequestHint(stepThread, suspendContext, mySmartStepFilter) :
                                new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
+      hint.setResetIgnoreFilters(mySmartStepFilter != null && !mySession.shouldIgnoreSteppingFilters());
       if (myForcedIgnoreFilters) {
         try {
           mySession.setIgnoreStepFiltersFlag(stepThread.frameCount());

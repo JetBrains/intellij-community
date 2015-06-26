@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private String myName;
   private Element myRootElement;
   private String myParentSchemeName;
   private final boolean myIsDefault;
@@ -87,18 +86,8 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return myName;
-  }
-
-  @Override
   public boolean isDefault() {
     return myIsDefault;
-  }
-
-  public String toString() {
-    return getName();
   }
 
   public void writeExternal(Element element) throws WriteExternalException{
@@ -107,10 +96,5 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
 
   public void readExternal(Element element) throws InvalidDataException{
     myCodeStyleSettings.readExternal(element);
-  }
-
-  @Override
-  public void setName(@NotNull final String name) {
-    myName = name;
   }
 }

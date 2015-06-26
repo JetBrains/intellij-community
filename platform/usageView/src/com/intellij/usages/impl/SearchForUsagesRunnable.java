@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -288,7 +287,7 @@ class SearchForUsagesRunnable implements Runnable {
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
           final UsageViewImpl finalUsageView = usageView;
-          DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
               finalUsageView.appendUsage(firstUsage);

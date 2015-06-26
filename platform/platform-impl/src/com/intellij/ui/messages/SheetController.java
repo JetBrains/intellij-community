@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -189,12 +190,12 @@ public class SheetController {
   }
 
   void requestFocus() {
-    if (myFocusedComponent == null) return; // it might be we have only one button. it is a default one in that case
-    if (SystemInfo.isAppleJvm) {
-      myFocusedComponent.requestFocus();
-    } else {
-      myFocusedComponent.requestFocusInWindow();
-    }
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        myFocusedComponent.requestFocus();
+      }
+    });
   }
 
   JPanel getPanel(final JDialog w) {

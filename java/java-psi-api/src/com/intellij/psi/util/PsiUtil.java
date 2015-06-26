@@ -1142,7 +1142,7 @@ public final class PsiUtil extends PsiUtilCore {
     final PsiClass autoCloseable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, ProjectScope.getLibrariesScope(project));
     if (autoCloseable == null) return null;
 
-    if (!InheritanceUtil.isInheritorOrSelf(resourceClass, autoCloseable, true)) return null;
+    if (JavaClassSupers.getInstance().getSuperClassSubstitutor(autoCloseable, resourceClass, resourceType.getResolveScope(), PsiSubstitutor.EMPTY) == null) return null;
 
     final PsiMethod[] closes = autoCloseable.findMethodsByName("close", false);
     return closes.length == 1 ? resourceClass.findMethodBySignature(closes[0], true) : null;

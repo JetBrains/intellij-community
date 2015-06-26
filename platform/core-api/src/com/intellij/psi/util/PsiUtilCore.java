@@ -25,7 +25,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -39,6 +41,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.Contract;
@@ -501,6 +504,10 @@ public class PsiUtilCore {
     FileType fileType = file.getFileType();
     FileViewProvider viewProvider = psiManager.findViewProvider(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
+    boolean ignored = !(file instanceof LightVirtualFile) && FileTypeRegistry.getInstance().isFileIgnored(file);
+    VirtualFile vDir = file.getParent();
+    PsiDirectory psiDir = vDir == null ? null : PsiManager.getInstance(project).findDirectory(vDir);
+    FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
     StringBuilder sb = new StringBuilder();
     sb.append("valid=").append(file.isValid()).
       append(" isDirectory=").append(file.isDirectory()).
@@ -510,6 +517,9 @@ public class PsiUtilCore {
       append(" default=").append(project.isDefault()).
       append(" open=").append(project.isOpen());;
     sb.append("\nfileType=").append(fileType.getName()).append("/").append(fileType.getClass().getName());
+    sb.append("\nisIgnored=").append(ignored);
+    sb.append(" inLibrary=").append(indexFacade.isInLibrarySource(file) || indexFacade.isInLibraryClasses(file));
+    sb.append(" parentDir=").append(vDir != null ? "has-vfs" : "no-vfs").append("/").append(psiDir != null ? "has-psi" : "no-psi");
     sb.append("\nviewProvider=").append(viewProvider == null ? "null" : viewProvider.getClass().getName());
     if (viewProvider != null) {
       List<PsiFile> files = viewProvider.getAllFiles();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,20 +70,24 @@ public class RunConfigurableTest extends LightIdeaTestCase {
     myTree = myConfigurable.myTree;
     myRoot = myConfigurable.myRoot;
     myModel = myConfigurable.myTreeModel;
-    doExpand();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myConfigurable.disposeUIResources();
-    myConfigurable = null;
-    myTree = null;
-    myRoot = null;
-    myModel = null;
-    super.tearDown();
+    try {
+      if (myConfigurable != null) myConfigurable.disposeUIResources();
+      myConfigurable = null;
+      myTree = null;
+      myRoot = null;
+      myModel = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testDND() throws Exception {
+    doExpand();
     int[] never = {-1, 0, 14, 22, 23, 999};
     for (int i = -1; i < 17; i++) {
       for (int j : never) {
@@ -161,6 +165,7 @@ public class RunConfigurableTest extends LightIdeaTestCase {
   }
 
   public void testMoveUpDown() {
+    doExpand();
     checkPositionToMove(0, 1, null);
     checkPositionToMove(2, 1, Trinity.create(2, 3, BELOW));
     checkPositionToMove(2, -1, null);

@@ -16,10 +16,11 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 
 /**
  * If {@link com.intellij.execution.configurations.RunConfiguration} uses SMRunner and implements this interface,
- * {@link com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction} would work from Main Menu.
+ * {@link AbstractImportTestsAction} would work from Main Menu.
  */
 public interface SMRunnerConsolePropertiesProvider {
   SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor);

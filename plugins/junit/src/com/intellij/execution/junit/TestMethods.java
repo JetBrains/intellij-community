@@ -24,8 +24,11 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -57,7 +60,8 @@ public class TestMethods extends TestMethod {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
     final Project project = module.getProject();
-    final GlobalSearchScope searchScope = getConfiguration().getConfigurationModule().getSearchScope();
+    final SourceScope scope = getSourceScope();
+    final GlobalSearchScope searchScope = scope != null ? scope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
     addClassesListToJavaParameters(myFailedTests, new Function<AbstractTestProxy, String>() {
       @Override
       public String fun(AbstractTestProxy testInfo) {
@@ -66,6 +70,11 @@ public class TestMethods extends TestMethod {
     }, data.getPackageName(), true, javaParameters);
 
     return javaParameters;
+  }
+
+  @Override
+  protected boolean configureByModule(Module module) {
+    return super.configureByModule(module) && getConfiguration().getPersistentData().getScope() != TestSearchScope.WHOLE_PROJECT;
   }
 
   @Nullable

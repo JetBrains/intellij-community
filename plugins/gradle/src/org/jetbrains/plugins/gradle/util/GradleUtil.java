@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -204,12 +205,7 @@ public class GradleUtil {
       return null;
     }
 
-    File[] candidates = wrapperDir.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File candidate) {
-        return candidate.isFile() && candidate.getName().endsWith(".properties");
-      }
-    });
+    File[] candidates = wrapperDir.listFiles(FileFilters.filesWithExtension("properties"));
     if (candidates == null) {
       GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir.getAbsolutePath());
       return null;

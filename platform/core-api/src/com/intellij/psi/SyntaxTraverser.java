@@ -2,9 +2,11 @@ package com.intellij.psi;
 
 import com.intellij.lang.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import com.intellij.util.UnmodifiableIterator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteredTraverser;
@@ -60,11 +62,22 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
   @Nullable
   public abstract T parent(@NotNull T node);
 
-  public Condition<T> wrapTypeCondition(final Condition<? super IElementType> condition) {
-    return new Condition<T>() {
+  @NotNull
+  public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> condition) {
+    return super.expand(Conditions.compose(NODE_TYPE(), condition));
+  }
+
+  @NotNull
+  public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> condition) {
+    return super.filter(Conditions.compose(NODE_TYPE(), condition));
+  }
+
+  @NotNull
+  public Function<T, IElementType> NODE_TYPE() {
+    return new Function<T, IElementType>() {
       @Override
-      public boolean value(@Nullable T input) {
-        return input != null && condition.value(nodeType(input));
+      public IElementType fun(T t) {
+        return nodeType(t);
       }
     };
   }

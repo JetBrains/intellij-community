@@ -38,8 +38,8 @@ class JUnitStatusLine extends TestStatusLine {
   private final StateInfo myStateInfo = new StateInfo();
   private boolean myTestsBuilt = false;
 
-  JUnitStatusLine(TestConsoleProperties properties) {
-    super(properties);
+  JUnitStatusLine() {
+    super();
   }
 
   public void setModel(final JUnitRunningModel model) {

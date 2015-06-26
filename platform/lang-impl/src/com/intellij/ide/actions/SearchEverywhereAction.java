@@ -200,18 +200,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      protected void paintComponent(Graphics g) {
-        if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
-          final Gradient gradient = getGradientColors();
-          ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
-          g.fillRect(0,0,getWidth(), getHeight());
-        } else {
-          super.paintComponent(g);
-        }
-      }
-    };
+    JPanel panel = JBUI.Panels.simplePanel();
     panel.setOpaque(false);
 
     final JLabel label = new JBLabel(AllIcons.Actions.FindPlain) {
@@ -231,7 +220,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
         label.setToolTipText(null);
         IdeTooltipManager.getInstance().hideCurrentNow(false);
-        label.setIcon(AllIcons.Actions.FindWhite);
         actionPerformed(null, e);
       }
 
@@ -272,7 +260,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void updateComponents() {
     myRenderer = new MyListRenderer();
-    myList = new JBList() {
+    myList = new JBList(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
       @Override
       public Dimension getPreferredSize() {
@@ -788,21 +776,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     Component parent = UIUtil.findUltimateParent(window);
     registerDataProvider(panel, project);
     final RelativePoint showPoint;
-    if (me != null) {
-      final Component label = me.getComponent();
-      final Component button = label.getParent();
-      assert button != null;
-      showPoint = new RelativePoint(button, new Point(button.getWidth() - panel.getPreferredSize().width, button.getHeight()));
-    } else {
-      if (parent != null) {
-        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
-        if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
-          height -= 20;
-        }
-        showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width)/ 2, height));
-      } else {
-        showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
+    if (parent != null) {
+      int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
+      if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
+        height -= 20;
       }
+      showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width) / 2, height));
+    } else {
+      showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     }
     myList.setFont(UIUtil.getListFont());
     myBalloon.show(showPoint);
@@ -2109,7 +2090,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                       if (component != null) {
                         final JLabel label = UIUtil.getParentOfType(JLabel.class, component);
                         if (label != null) {
-                          label.setIcon(AllIcons.Actions.FindPlain);
+                          SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                              label.setIcon(AllIcons.Actions.FindPlain);
+                            }
+                          });
                         }
                       }
                     }

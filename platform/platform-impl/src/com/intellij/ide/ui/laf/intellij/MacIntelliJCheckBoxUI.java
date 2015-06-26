@@ -27,8 +27,8 @@ import java.awt.*;
  */
 public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   public static final Icon DEFAULT_ICON = EmptyIcon.create(14);
-  public static final Icon CHECKED_ICON = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/checkboxSelectedMac.png");
-  public static final Icon UNCHECKED_ICON = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/checkboxMac.png");
+  public static final Icon CHECKED_ICON = DarculaLaf.loadIcon("checkboxSelectedMac.png");
+  public static final Icon UNCHECKED_ICON = DarculaLaf.loadIcon("checkboxMac.png");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

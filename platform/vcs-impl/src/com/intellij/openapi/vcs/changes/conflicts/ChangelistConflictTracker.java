@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ZipperUpdater;
@@ -83,12 +83,12 @@ public class ChangelistConflictTracker {
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (Boolean.TRUE.equals(application.runReadAction(new Computable<Boolean>() {
+        if (application.runReadAction(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
-            return (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen());
+            return application.isDisposed() || myProject.isDisposed() || !myProject.isOpen();
           }
-        }))) {
+        })) {
           return;
         }
         final Set<VirtualFile> localSet;
@@ -107,11 +107,13 @@ public class ChangelistConflictTracker {
           return;
         }
         Document document = e.getDocument();
-        final VirtualFile file = myDocumentManager.getFile(document);
-        synchronized (myCheckSetLock) {
-          myCheckSet.add(file);
+        VirtualFile file = myDocumentManager.getFile(document);
+        if (ProjectUtil.guessProjectForFile(file) == myProject) {
+          synchronized (myCheckSetLock) {
+            myCheckSet.add(file);
+          }
+          zipperUpdater.queue(runnable);
         }
-        zipperUpdater.queue(runnable);
       }
     };
 
@@ -144,6 +146,7 @@ public class ChangelistConflictTracker {
 
   private void checkFiles(final Collection<VirtualFile> files) {
     myChangeListManager.invokeAfterUpdate(new Runnable() {
+      @Override
       public void run() {
         final LocalChangeList list = myChangeListManager.getDefaultChangeList();
         for (VirtualFile file : files) {
@@ -164,9 +167,8 @@ public class ChangelistConflictTracker {
 
     String path = file.getPath();
     boolean newConflict = false;
-    Conflict conflict;
     synchronized (myConflicts) {
-      conflict = myConflicts.get(path);
+      Conflict conflict = myConflicts.get(path);
       if (conflict == null) {
         conflict = new Conflict();
         myConflicts.put(path, conflict);
@@ -210,9 +212,7 @@ public class ChangelistConflictTracker {
 
   public void startTracking() {
     myChangeListManager.addChangeListListener(myChangeListListener);
-    if (!ProjectManagerImpl.isLight(getProject())) { // we don't want to collect all light documents in tests
-      EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
-    }
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myProject);
   }
 
   public void stopTracking() {
@@ -265,6 +265,7 @@ public class ChangelistConflictTracker {
 
   public Collection<String> getIgnoredConflicts() {
     return ContainerUtil.mapNotNull(myConflicts.entrySet(), new NullableFunction<Map.Entry<String, Conflict>, String>() {
+      @Override
       public String fun(Map.Entry<String, Conflict> entry) {
         return entry.getValue().ignored ? entry.getKey() : null;
       }

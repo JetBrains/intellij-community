@@ -28,16 +28,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
-import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -179,31 +182,27 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     SourcePosition sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
     int lambdaOrdinal = -1;
     if (LambdaMethodFilter.isLambdaName(method.name())) {
-      List<Location> lambdas = ContainerUtil.filter(locationsOfLine(location.declaringType(), sourcePosition), new Condition<Location>() {
-        @Override
-        public boolean value(Location location) {
-          return LambdaMethodFilter.isLambdaName(location.method().name());
-        }
-      });
+      Set<Method> lambdas =
+        ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), new Function<Location, Method>() {
+          @Override
+          public Method fun(Location location) {
+            Method method = location.method();
+            if (LambdaMethodFilter.isLambdaName(method.name())) {
+              return method;
+            }
+            return null;
+          }
+        });
       if (lambdas.size() > 1) {
-        Collections.sort(lambdas, new Comparator<Location>() {
-          @Override
-          public int compare(Location o1, Location o2) {
-            return LambdaMethodFilter.getLambdaOrdinal(o1.method().name()) - LambdaMethodFilter.getLambdaOrdinal(o2.method().name());
-          }
-        });
-        lambdaOrdinal = ContainerUtil.indexOf(lambdas, new Condition<Location>() {
-          @Override
-          public boolean value(Location location) {
-            return location.method().equals(method);
-          }
-        });
+        ArrayList<Method> lambdasList = new ArrayList<Method>(lambdas);
+        Collections.sort(lambdasList, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
+        lambdaOrdinal = lambdasList.indexOf(method);
       }
     }
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
   }
 
-  private static class JavaSourcePosition extends RemappedSourcePosition implements ExecutionPointHighlighter.HighlighterProvider {
+  private static class JavaSourcePosition extends RemappedSourcePosition {
     private final String myExpectedClassName;
     private final String myExpectedMethodName;
     private final int myLambdaOrdinal;
@@ -220,7 +219,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       if (!Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
         return null;
       }
-      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+      PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
       if (!StringUtil.isEmpty(myExpectedMethodName)) {
         if (method == null) {
           return null;
@@ -277,17 +276,6 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return original;
         }
       });
-    }
-
-    @Nullable
-    @Override
-    public TextRange getHighlightRange() {
-      PsiElement element = getElementAt();
-      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
-      if (method instanceof PsiLambdaExpression) {
-        return method.getTextRange();
-      }
-      return null;
     }
   }
 

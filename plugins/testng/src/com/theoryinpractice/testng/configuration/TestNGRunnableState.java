@@ -16,12 +16,17 @@
 
 package com.theoryinpractice.testng.configuration;
 
+import com.beust.jcommander.JCommander;
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -45,7 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
-import org.testng.annotations.AfterClass;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.SerializedMessageSender;
@@ -174,7 +178,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(AfterClass.class));
+    javaParameters.getClassPath().addTail(PathUtil.getJarPathForClass(JCommander.class));
 
     super.configureClasspath(javaParameters);
   }

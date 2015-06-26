@@ -41,7 +41,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
 
   private enum SearchAction {POPUP, CLEAR}
 
-  private final JTextField myTextField;
+  protected final JTextField myTextField;
   protected JLabel myClearIcon;
   protected JLabel myRecentIcon;
 
@@ -162,48 +162,56 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
 
     final Border border = c.getBorder();
     if (isSearchField(c)) {
-      g.setColor(c.getBackground());
-      final boolean noBorder = c.getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE;
-      int radius = r.height-1;
-      g.fillRoundRect(r.x, r.y+1, r.width, r.height - (noBorder ? 2 : 1), radius, radius);
-      g.setColor(c.isEnabled() ? Gray._100 : Gray._83);
-      if (!noBorder) {
-        if (c.hasFocus()) {
-            DarculaUIUtil.paintSearchFocusRing(g, r);
-        } else {
-          g.drawRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
-        }
-      }
-      Point p = getSearchIconCoord();
-      Icon searchIcon = myTextField.getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
-      if (searchIcon == null) {
-        searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
-      }
-      searchIcon.paintIcon(null, g, p.x, p.y);
-      if (hasText()) {
-        p = getClearIconCoord();
-        Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
-        if (clearIcon == null) {
-          clearIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
-        }
-        clearIcon.paintIcon(null, g, p.x, p.y);
-      }
+      paintSearchField(g, c, r);
     } else if (border instanceof DarculaTextBorder) {
-      if (c.isEnabled() && c.isEditable()) {
-        g.setColor(c.getBackground());
-      }
-      final int width = c.getWidth();
-      final int height = c.getHeight();
-      final Insets i = border.getBorderInsets(c);
-      if (c.hasFocus()) {
-        g.fillRoundRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6), JBUI.scale(5), JBUI.scale(5));
-      } else {
-        g.fillRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(12), height - i.top - i.bottom + JBUI.scale(6));
-      }
+      paintDarculaBackground(g, c, border);
     } else {
       super.paintBackground(g);
     }
     config.restore();
+  }
+
+  protected void paintDarculaBackground(Graphics2D g, JTextComponent c, Border border) {
+    if (c.isEnabled() && c.isEditable()) {
+      g.setColor(c.getBackground());
+    }
+    final int width = c.getWidth();
+    final int height = c.getHeight();
+    final Insets i = border.getBorderInsets(c);
+    if (c.hasFocus()) {
+      g.fillRoundRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6), JBUI.scale(5), JBUI.scale(5));
+    } else {
+      g.fillRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(12), height - i.top - i.bottom + JBUI.scale(6));
+    }
+  }
+
+  protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {
+    g.setColor(c.getBackground());
+    final boolean noBorder = c.getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE;
+    int radius = r.height-1;
+    g.fillRoundRect(r.x, r.y+1, r.width, r.height - (noBorder ? 2 : 1), radius, radius);
+    g.setColor(c.isEnabled() ? Gray._100 : Gray._83);
+    if (!noBorder) {
+      if (c.hasFocus()) {
+          DarculaUIUtil.paintSearchFocusRing(g, r);
+      } else {
+        g.drawRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
+      }
+    }
+    Point p = getSearchIconCoord();
+    Icon searchIcon = myTextField.getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
+    if (searchIcon == null) {
+      searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
+    }
+    searchIcon.paintIcon(null, g, p.x, p.y);
+    if (hasText()) {
+      p = getClearIconCoord();
+      Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
+      if (clearIcon == null) {
+        clearIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+      }
+      clearIcon.paintIcon(null, g, p.x, p.y);
+    }
   }
 
   @Override

@@ -29,6 +29,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -746,5 +747,18 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     model.setPromptOnReplace(false);
     FindUtil.replace(myProject, myEditor, 0, model);
     assertEquals("soMething\telse", myEditor.getDocument().getText());
+  }
+
+  public void testSearchInDumbMode() throws Exception {
+    createFile("a.java", "foo bar foo true");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("true");
+    findModel.setWholeWordsOnly(true);
+    DumbServiceImpl.getInstance(getProject()).setDumb(true);
+    try {
+      assertSize(1, findUsages(findModel));
+    }
+    finally {
+      DumbServiceImpl.getInstance(getProject()).setDumb(false);
+    }
   }
 }

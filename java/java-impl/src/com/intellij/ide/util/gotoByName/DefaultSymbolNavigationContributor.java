@@ -86,7 +86,8 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   }
 
   private static boolean isOpenable(PsiMember member) {
-    return member.getContainingFile().getVirtualFile() != null;
+    final PsiFile file = member.getContainingFile();
+    return file != null && file.getVirtualFile() != null;
   }
 
   private static boolean hasSuperMethodCandidates(final PsiMethod method,

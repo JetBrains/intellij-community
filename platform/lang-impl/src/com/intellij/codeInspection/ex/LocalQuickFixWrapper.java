@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,14 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -156,7 +154,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     }
   }
 
-  private void ignore(@NotNull Set<PsiElement> ignoredElements,
+  private void ignore(@NotNull Collection<PsiElement> ignoredElements,
                       @NotNull CommonProblemDescriptor descriptor,
                       @Nullable QuickFix fix,
                       @NotNull GlobalInspectionContextImpl context) {
@@ -165,7 +163,10 @@ public class LocalQuickFixWrapper extends QuickFixAction {
       presentation.ignoreProblem(descriptor, fix);
     }
     if (descriptor instanceof ProblemDescriptor) {
-      ignoredElements.add(((ProblemDescriptor)descriptor).getPsiElement());
+      PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+      if (element != null) {
+        ignoredElements.add(element);
+      }
     }
   }
 }

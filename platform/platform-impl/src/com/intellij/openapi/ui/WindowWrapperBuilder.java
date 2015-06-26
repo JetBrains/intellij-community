@@ -214,6 +214,12 @@ public class WindowWrapperBuilder {
 
       @Nullable
       @Override
+      protected JComponent createSouthPanel() {
+        return null;
+      }
+
+      @Nullable
+      @Override
       protected String getDimensionServiceKey() {
         return myDimensionServiceKey;
       }

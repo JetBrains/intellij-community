@@ -37,6 +37,7 @@ public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
   public static final boolean DEFAULT_INVOKE_DYNAMIC = false;
   public static final boolean DEFAULT_TRANSFORMS_OK = false;
 
+  public String configScript = "";
   public String heapSize = DEFAULT_HEAP_SIZE;
   public boolean invokeDynamic = DEFAULT_INVOKE_DYNAMIC;
 
@@ -48,9 +49,10 @@ public class JpsGroovySettings extends JpsElementBase<JpsGroovySettings> {
   public JpsGroovySettings() {
   }
 
-  public JpsGroovySettings(JpsGroovySettings original) {
+  private JpsGroovySettings(JpsGroovySettings original) {
     heapSize = original.heapSize;
     invokeDynamic = original.invokeDynamic;
+    configScript = original.configScript;
   }
 
   void initExcludes() {

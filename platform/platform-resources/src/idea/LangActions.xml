@@ -879,8 +879,8 @@
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
     <group>
-      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction"
-              text="Import Test Results" id="ImportTests"/>
+      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup"
+              text="Import Test Results" icon="AllIcons.ToolbarDecorator.Import" id="ImportTests"/>
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="editRunConfigurations"/>
     </group>
 

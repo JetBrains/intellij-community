@@ -1,15 +1,17 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 /**
@@ -29,7 +31,7 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
   public ShowHistoryAction(final Getter<JTextComponent> textField, EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
     myTextField = textField;
-    getTemplatePresentation().setIcon(AllIcons.Actions.Search);
+    getTemplatePresentation().setIcon(IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true));
     final String s = getTextField() == getEditorSearchComponent().getSearchField() ? "Search" : "Replace";
     getTemplatePresentation().setDescription(s + " history");
     getTemplatePresentation().setText(s + " History");
@@ -51,7 +53,7 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    getEditorSearchComponent().showHistory(e.getInputEvent() instanceof MouseEvent, getTextField());
+    getEditorSearchComponent().showHistory(false, getTextField());
   }
 
 

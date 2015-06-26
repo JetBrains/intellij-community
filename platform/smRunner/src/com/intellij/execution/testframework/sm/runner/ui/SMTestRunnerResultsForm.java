@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.*;
@@ -23,10 +22,11 @@ import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -115,7 +115,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private AbstractTestProxy myLastSelected;
   private Alarm myUpdateQueue;
   private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
-  private BackgroundableProcessIndicator mySaveToHistoryIndicator;
 
   public SMTestRunnerResultsForm(@NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties) {
@@ -328,55 +327,25 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount, myTotalTestCount - myFinishedTestCount, myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myConsoleProperties.getProject(), testsRoot, myConsoleProperties, presentation);
-    addToHistory(testsRoot);
+    addToHistory(testsRoot, myConsoleProperties, this);
   }
 
-  private void addToHistory(final SMTestProxy.SMRootTestProxy root) {
-    final RunProfile configuration = myConsoleProperties.getConfiguration();
-    if (configuration instanceof RunConfiguration && !(myConsoleProperties instanceof ImportedTestConsoleProperties)) {
-      final Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Save Test Results", true) {
-
-        private String myOutput;
-
+  private static void addToHistory(final SMTestProxy.SMRootTestProxy root,
+                                   TestConsoleProperties consoleProperties,
+                                   Disposable parentDisposable) {
+    final RunProfile configuration = consoleProperties.getConfiguration();
+    if (configuration instanceof RunConfiguration && !(consoleProperties instanceof ImportedTestConsoleProperties)) {
+      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, configuration);
+      final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
+      Disposer.register(parentDisposable, new Disposable() {
         @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
-            TransformerHandler handler = transformerFactory.newTransformerHandler();
-            handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
-            handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-            StringWriter w = new StringWriter();
-            handler.setResult(new StreamResult(w));
-            TestResultsXmlFormatter.execute(root, (RunConfiguration)configuration, handler);
-            myOutput = w.toString();
-          }
-          catch (ProcessCanceledException ignore) {
-            //canceled by user or frame dispose
-          }
-          catch (Exception e) {
-            LOG.info("Export to history failed", e);
-          }
+        public void dispose() {
+          processIndicator.cancel();
+          backgroundable.dispose();
         }
-
-        @Override
-        public void onSuccess() {
-          if (myOutput != null) {
-            try {
-              ImportTestsAction.adjustHistory();
-              final String configurationNameIncludedDate = PathUtil.suggestFileName(configuration.getName()) + " " +
-                                                           FileUtil.sanitizeFileName(new SimpleDateFormat().format(new Date()));
-              final String presentableFileName = ExecutionBundle.message("export.test.results.filename", configurationNameIncludedDate);
-              FileUtil.writeToFile(new File(ImportTestsAction.TEST_HISTORY_PATH, presentableFileName + ".xml"), myOutput);
-            }
-            catch (IOException e) {
-              LOG.info("Fail to write test history", e);
-            }
-          }
-        }
-      };
-      mySaveToHistoryIndicator = new BackgroundableProcessIndicator(backgroundable);
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, mySaveToHistoryIndicator);
+      });
+      Disposer.register(parentDisposable, processIndicator);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, processIndicator);
     }
   }
 
@@ -539,9 +508,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
     myStatisticsPane.doDispose();
-    if (mySaveToHistoryIndicator != null) {
-      mySaveToHistoryIndicator.cancel();
-    }
   }
 
   public void showStatisticsForSelectedProxy() {
@@ -793,5 +759,65 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private boolean isModeConsistent(boolean isCustomMessage) {
     // check that we are in consistent mode
     return isCustomMessage != (myCurrentCustomProgressCategory == null);
+  }
+
+  private static class MySaveHistoryTask extends Task.Backgroundable {
+
+    private SMTestProxy.SMRootTestProxy myRoot;
+    private RunProfile myConfiguration;
+    private String myOutput;
+
+    public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunProfile configuration) {
+      super(consoleProperties.getProject(), "Save Test Results", true);
+      myRoot = root;
+      myConfiguration = configuration;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      try {
+        SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+        TransformerHandler handler = transformerFactory.newTransformerHandler();
+        handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
+        handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+        StringWriter w = new StringWriter();
+        handler.setResult(new StreamResult(w));
+        final SMTestProxy.SMRootTestProxy root = myRoot;
+        final RunConfiguration configuration = (RunConfiguration)myConfiguration;
+        if (root != null && configuration != null) {
+          TestResultsXmlFormatter.execute(root, configuration, handler);
+        }
+        myOutput = w.toString();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.info("Export to history failed", e);
+      }
+    }
+
+    @Override
+    public void onSuccess() {
+      if (myOutput != null) {
+        try {
+          AbstractImportTestsAction.adjustHistory(myProject);
+          final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " " +
+                                                       new SimpleDateFormat("yyyy.MM.dd 'at' HH'h' mm'm' ss's'").format(new Date());
+          FileUtil.writeToFile(new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml"),
+                               myOutput);
+        }
+        catch (IOException e) {
+          LOG.info("Fail to write test history", e);
+        }
+      }
+    }
+    
+    public void dispose() {
+      myConfiguration = null;
+      myRoot = null;
+      myOutput = null;
+    }
   }
 }

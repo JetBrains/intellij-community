@@ -205,10 +205,7 @@ public class FileManagerImpl implements FileManager {
     assert !file.isDirectory();
     FileViewProvider viewProvider = findCachedViewProvider(file);
     if (viewProvider != null) return viewProvider;
-    viewProvider = myVFileToViewProviderMap.get(file);
-    if(viewProvider == null) {
-      viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file, true));
-    }
+    viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file, true));
     return viewProvider;
   }
 

@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,5 +30,6 @@ import java.util.List;
 public interface PyKeywordArgumentProvider {
   ExtensionPointName<PyKeywordArgumentProvider> EP_NAME = ExtensionPointName.create("Pythonid.keywordArgumentProvider");
 
+  @NotNull
   List<String> getKeywordArguments(PyFunction function, PyCallExpression callExpr);
 }

@@ -18,14 +18,20 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class DataFlowInspection8Test extends LightCodeInsightFixtureTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -67,12 +73,9 @@ public class DataFlowInspection8Test extends LightCodeInsightFixtureTestCase {
     final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNotNulls("foo.NotNull");
     nnnManager.setNullables("foo.Nullable");
-    Disposer.register(myTestRootDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        nnnManager.setNotNulls();
-        nnnManager.setNullables();
-      }
+    Disposer.register(myTestRootDisposable, () -> {
+      nnnManager.setNotNulls();
+      nnnManager.setNullables();
     });
   }
 
@@ -91,4 +94,8 @@ public class DataFlowInspection8Test extends LightCodeInsightFixtureTestCase {
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
+
+
+  public void testOptionalOfNullable() { doTest(); }
+
 }

@@ -1064,7 +1064,7 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection"/>
+                     implementationClass="com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection" cleanupTool="true"/>
 
     <!--group.names.initialization.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AbstractMethodCallInConstructor" bundle="com.siyeh.InspectionGadgetsBundle"

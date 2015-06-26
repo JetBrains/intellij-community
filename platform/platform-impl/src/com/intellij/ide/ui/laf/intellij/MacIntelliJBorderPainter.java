@@ -25,14 +25,14 @@ import java.awt.*;
  */
 @SuppressWarnings("UnnecessaryLocalVariable")
 public class MacIntelliJBorderPainter {
-  private static final Icon L = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderLeft.png");
-  private static final Icon R = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderRight.png");
-  private static final Icon T = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderTop.png");
-  private static final Icon B = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderBottom.png");
-  private static final Icon TL = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderTopLeft.png");
-  private static final Icon TR = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderTopRight.png");
-  private static final Icon BL = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderBottomLeft.png");
-  private static final Icon BR = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/macBorderBottomRight.png");
+  private static final Icon L = DarculaLaf.loadIcon("macBorderLeft.png");
+  private static final Icon R = DarculaLaf.loadIcon("macBorderRight.png");
+  private static final Icon T = DarculaLaf.loadIcon("macBorderTop.png");
+  private static final Icon B = DarculaLaf.loadIcon("macBorderBottom.png");
+  private static final Icon TL = DarculaLaf.loadIcon("macBorderTopLeft.png");
+  private static final Icon TR = DarculaLaf.loadIcon("macBorderTopRight.png");
+  private static final Icon BL = DarculaLaf.loadIcon("macBorderBottomLeft.png");
+  private static final Icon BR = DarculaLaf.loadIcon("macBorderBottomRight.png");
 
   public static void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     g = g.create(x,y,width,height);

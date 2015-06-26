@@ -171,7 +171,8 @@ public layoutCommunity(String classesPath, Set usedJars) {
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher64.exe", launcher64,
                    appInfo, "$pythonCommunityHome/build/pycharm64_community_launcher.properties", system_selector, resourcePaths)
 
-  buildWinZip("${paths.artifacts}/pycharmPC-${buildNumber}.zip", [paths.distAll, paths.distWin, "${home}/out/pycharm/bundled.win.jdk"])
+  List pathsDist = new File("${home}/out/pycharm/bundled.win.jdk/jre").exists() ? [paths.distAll, paths.distWin, "${home}/out/pycharm/bundled.win.jdk"] : [paths.distAll, paths.distWin]
+  buildWinZip("${paths.artifacts}/pycharmPC-${buildNumber}.zip", pathsDist)
 
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix])

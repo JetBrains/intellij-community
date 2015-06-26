@@ -15,12 +15,10 @@
  */
 package com.intellij.execution.testframework.ui;
 
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ToolbarPanel;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -28,11 +26,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.config.ToggleBooleanProperty;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,9 +80,18 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     JComponent testTreeView = createTestTreeView();
     myToolbarPanel = createToolbarPanel();
     Disposer.register(this, myToolbarPanel);
+    final String windowId = myProperties.getExecutor().getToolWindowId();
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProperties.getProject()).getToolWindow(windowId);
+    boolean splitVertically = false;
+    if (toolWindow != null) {
+      final ToolWindowAnchor anchor = toolWindow.getAnchor();
+      splitVertically = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
+    }
+    myStatusLine.setPreferredSize(splitVertically);
+    
     mySplitter = createSplitter(mySplitterProportionProperty,
                                 mySplitterDefaultProportion,
-                                TestConsoleProperties.SPLIT_VERTICALLY.value(myProperties));
+                                splitVertically);
     Disposer.register(this, new Disposable(){
       @Override
       public void dispose() {
@@ -134,7 +143,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   }
 
   protected TestStatusLine createStatusLine() {
-    return new TestStatusLine(myProperties);
+    return new TestStatusLine();
   }
 
   protected abstract JComponent createTestTreeView();
@@ -162,23 +171,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     console.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
                                          new SideBorder(editorBackground, SideBorder.LEFT)));
     outputTab.add(console, BorderLayout.CENTER);
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
-    final ToggleBooleanProperty property = new ToggleBooleanProperty("Layout Vertically",
-                                                                     "Layout console under the tests tree",
-                                                                     null, myProperties,
-                                                                     TestConsoleProperties.SPLIT_VERTICALLY) {
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        super.setSelected(e, state);
-        myStatusLine.setPreferredSize(myProperties);
-        mySplitter.setOrientation(state);
-      }
-    };
-    final DefaultActionGroup settingsGroup = new DefaultActionGroup(property);
-    settingsGroup.setPopup(true);
-    settingsGroup.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
-    actionGroup.add(settingsGroup);
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(consoleActions), false);
     outputTab.add(toolbar.getComponent(), BorderLayout.EAST);
     return outputTab;
   }
