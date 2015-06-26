@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.awt.event.ActionEvent;
 
 //TODO: review title and text!!!
 class SuperMethodWarningDialog extends DialogWrapper {
-  public static final int NO_EXIT_CODE=NEXT_USER_EXIT_CODE+1;
+  static final int NO_EXIT_CODE=NEXT_USER_EXIT_CODE+1;
   private final String myName;
   private final String[] myClassNames;
   private final String myActionString;
@@ -36,13 +36,13 @@ class SuperMethodWarningDialog extends DialogWrapper {
   private final boolean myIsParentInterface;
   private final boolean myIsContainedInInterface;
 
-  public SuperMethodWarningDialog(Project project,
-                                  String name,
-                                  String actionString,
-                                  boolean isSuperAbstract,
-                                  boolean isParentInterface,
-                                  boolean isContainedInInterface,
-                                  String... classNames) {
+  SuperMethodWarningDialog(@NotNull Project project,
+                           @NotNull String name,
+                           @NotNull String actionString,
+                           boolean isSuperAbstract,
+                           boolean isParentInterface,
+                           boolean isContainedInInterface,
+                           @NotNull String... classNames) {
     super(project, true);
     myName = name;
     myClassNames = classNames;
@@ -51,24 +51,23 @@ class SuperMethodWarningDialog extends DialogWrapper {
     myIsParentInterface = isParentInterface;
     myIsContainedInInterface = isContainedInInterface;
     setTitle(IdeBundle.message("title.warning"));
-    setButtonsAlignment(SwingUtilities.CENTER);
+    setButtonsAlignment(SwingConstants.CENTER);
     setOKButtonText(CommonBundle.getYesButtonText());
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction(),new NoAction(),getCancelAction()};
   }
 
+  @Override
   public JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-    Icon icon = Messages.getWarningIcon();
-    if (icon != null){
-      JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
-      panel.add(iconLabel, BorderLayout.WEST);
-    }
+    JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
+    panel.add(iconLabel, BorderLayout.WEST);
     JPanel labelsPanel = new JPanel(new GridLayout(0, 1, 0, 0));
     labelsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
     String classType = myIsParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class");
@@ -79,7 +78,8 @@ class SuperMethodWarningDialog extends DialogWrapper {
       labelsPanel.add(new JLabel(myIsContainedInInterface || !myIsSuperAbstract
                                  ? IdeBundle.message("label.overrides.method.of_class_or_interface.name", methodString, classType, className)
                                  : IdeBundle.message("label.implements.method.of_class_or_interface.name", methodString, classType, className)));
-    } else {
+    }
+    else {
       final JLabel multLabel = new JLabel(IdeBundle.message("label.implements.method.of_interfaces"));
       multLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
       labelsPanel.add(multLabel);
@@ -89,8 +89,7 @@ class SuperMethodWarningDialog extends DialogWrapper {
       }
     }
  
-    final JLabel doYouWantLabel = new JLabel(
-      IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", myActionString, myClassNames.length > 1 ? 2 : 1));
+    JLabel doYouWantLabel = new JLabel(IdeBundle.message("prompt.do.you.want.to.action_verb.the.method.from_class", myActionString, myClassNames.length));
     doYouWantLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
     labelsPanel.add(doYouWantLabel);
     panel.add(labelsPanel, BorderLayout.CENTER);
@@ -101,16 +100,18 @@ class SuperMethodWarningDialog extends DialogWrapper {
     return Character.toUpperCase(text.charAt(0)) + text.substring(1);
   }
 
+  @Override
   public JComponent createCenterPanel() {
     return null;
   }
 
   private class NoAction extends AbstractAction {
-    public NoAction() {
+    private NoAction() {
       super(CommonBundle.getNoButtonText());
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull ActionEvent e) {
       close(NO_EXIT_CODE);
     }
   }

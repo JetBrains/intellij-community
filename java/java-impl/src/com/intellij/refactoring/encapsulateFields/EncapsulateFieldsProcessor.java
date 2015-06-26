@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
     RefactoringEventData data = new RefactoringEventData();
     List<PsiElement> elements = new ArrayList<PsiElement>();
     if (myNameToGetter != null) {
@@ -107,7 +107,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     FieldDescriptor[] fields = new FieldDescriptor[myFieldDescriptors.length];
     System.arraycopy(myFieldDescriptors, 0, fields, 0, myFieldDescriptors.length);
     return new EncapsulateFieldsViewDescriptor(fields);
@@ -117,7 +117,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("encapsulate.fields.command.name", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     checkExistingMethods(conflicts, true);
@@ -261,7 +261,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected void refreshElements(PsiElement[] elements) {
+  protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == myFieldDescriptors.length);
 
     for (int idx = 0; idx < elements.length; idx++) {
@@ -275,7 +275,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myClass = myFieldDescriptors[0].getField().getContainingClass();
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     updateFieldVisibility();
     generateAccessors();
     processUsagesPerFile(usages);

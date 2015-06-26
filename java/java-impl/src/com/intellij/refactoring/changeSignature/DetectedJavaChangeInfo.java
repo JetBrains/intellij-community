@@ -188,7 +188,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       }
     }) {
       @Override
-      protected void performRefactoring(UsageInfo[] usages) {
+      protected void performRefactoring(@NotNull UsageInfo[] usages) {
         super.performRefactoring(usages);
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
         final PsiParameter[] parameters = method.getParameterList().getParameters();
