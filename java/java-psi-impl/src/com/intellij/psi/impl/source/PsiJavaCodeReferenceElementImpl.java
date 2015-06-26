@@ -623,11 +623,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   private boolean isFullyQualified(@NotNull PsiFile containingFile) {
-    switch (getKind(containingFile)) {
+    int kind = getKind(containingFile);
+    switch (kind) {
       case CLASS_OR_PACKAGE_NAME_KIND:
         if (resolve() instanceof PsiPackage) return true;
         break;
       case CLASS_NAME_KIND:
+      case CLASS_IN_QUALIFIED_NEW_KIND:
         break;
 
       case PACKAGE_NAME_KIND:
@@ -636,15 +638,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return true;
 
       default:
-        LOG.assertTrue(false);
+        LOG.error(kind);
         return true;
     }
 
-    final ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
+    ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
     if (qualifier == null) return false;
 
     LOG.assertTrue(qualifier.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
-    final PsiElement refElement = SourceTreeToPsiMap.<PsiJavaCodeReferenceElement>treeToPsiNotNull(qualifier).resolve();
+    PsiElement refElement = SourceTreeToPsiMap.<PsiJavaCodeReferenceElement>treeToPsiNotNull(qualifier).resolve();
     if (refElement instanceof PsiPackage) return true;
 
     return SourceTreeToPsiMap.<PsiJavaCodeReferenceElementImpl>treeToPsiNotNull(qualifier).isFullyQualified(containingFile);
