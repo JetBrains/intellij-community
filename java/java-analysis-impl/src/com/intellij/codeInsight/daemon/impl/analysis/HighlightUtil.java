@@ -2445,6 +2445,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  @SuppressWarnings("StringContatenationInLoop")
   static HighlightInfo createIncompatibleTypeHighlightInfo(final PsiType lType,
                                                            final PsiType rType,
                                                            @NotNull final TextRange textRange,
