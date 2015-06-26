@@ -78,7 +78,7 @@ public class GroovyConsole {
     myProcessHandler = handler;
   }
 
-  public void execute(@NotNull String command) {
+  private void doExecute(@NotNull String command) {
     // dirty hack
     if (first) {
       first = false;
@@ -92,6 +92,10 @@ public class GroovyConsole {
     myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     myConsoleView.print("Result: ", ConsoleViewContentType.SYSTEM_OUTPUT);
     send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"));
+  }
+
+  public void execute(@NotNull String command) {
+    if (!StringUtil.isEmptyOrSpaces(command)) doExecute(command);
     ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(defaultExecutor, myContentDescriptor);
   }
 
