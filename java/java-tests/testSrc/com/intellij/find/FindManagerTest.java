@@ -423,6 +423,22 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(text, getEditor().getDocument().getText());
   }
 
+  public void testReplaceWithLocalLowerCase() {
+    doTestRegexpReplace("SOMETHING", "ome", "\\l$0", "SoMETHING");
+  }
+
+  public void testReplaceWithLocalUpperCase() {
+    doTestRegexpReplace("something", "ome", "\\u$0", "sOmething");
+  }
+
+  public void testReplaceWithRegionLowerCase() {
+    doTestRegexpReplace("SOMETHING", "ome", "\\L$0\\E", "SomeTHING");
+  }
+
+  public void testReplaceWithRegionUpperCase() {
+    doTestRegexpReplace("something", "ome", "\\U$0\\E", "sOMEthing");
+  }
+
   public void testReplaceRegexpWithNewLine() {
     FindModel findModel = new FindModel();
     findModel.setStringToFind("xxx");
@@ -749,5 +765,16 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     finally {
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
     }
+  }
+
+  private void doTestRegexpReplace(String initialText, String searchString, String replaceString, String expectedResult) {
+    configureByText(FileTypes.PLAIN_TEXT, initialText);
+    FindModel model = new FindModel();
+    model.setRegularExpressions(true);
+    model.setStringToFind(searchString);
+    model.setStringToReplace(replaceString);
+    model.setPromptOnReplace(false);
+    assertTrue(FindUtil.replace(myProject, myEditor, 0, model));
+    assertEquals(expectedResult, myEditor.getDocument().getText());
   }
 }
