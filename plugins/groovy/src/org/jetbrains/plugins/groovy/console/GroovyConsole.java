@@ -92,6 +92,7 @@ public class GroovyConsole {
     myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     myConsoleView.print("Result: ", ConsoleViewContentType.SYSTEM_OUTPUT);
     send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"));
+    ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(defaultExecutor, myContentDescriptor);
   }
 
   public boolean stop() {
