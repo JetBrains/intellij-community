@@ -15,7 +15,8 @@
  */
 package org.jetbrains.idea.devkit.references;
 
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.pom.PomNamedTarget;
 import org.jetbrains.annotations.NotNull;
@@ -23,21 +24,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class IdeaModulePomTarget implements PomNamedTarget {
-  private Module myModule;
+public class IdeaLibraryPomTarget implements PomNamedTarget {
+  private final Project myProject;
+  private final Library myLibrary;
 
-  public IdeaModulePomTarget(@NotNull Module module) {
-    myModule = module;
+  public IdeaLibraryPomTarget(@NotNull Project project, @NotNull Library library) {
+    myProject = project;
+    myLibrary = library;
   }
 
   @Override
   public String getName() {
-    return myModule.getName();
-  }
-
-  @NotNull
-  public Module getModule() {
-    return myModule;
+    return myLibrary.getName();
   }
 
   @Override
@@ -47,12 +45,12 @@ public class IdeaModulePomTarget implements PomNamedTarget {
 
   @Override
   public void navigate(boolean requestFocus) {
-    ProjectSettingsService.getInstance(myModule.getProject()).openModuleSettings(myModule);
+    ProjectSettingsService.getInstance(myProject).openLibrary(myLibrary);
   }
 
   @Override
   public boolean canNavigate() {
-    return ProjectSettingsService.getInstance(myModule.getProject()).canOpenModuleSettings();
+    return true;
   }
 
   @Override

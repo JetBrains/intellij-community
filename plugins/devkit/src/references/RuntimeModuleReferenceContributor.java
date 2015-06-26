@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.references;
 
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
@@ -29,12 +30,37 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 public class RuntimeModuleReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    PsiMethodPattern methodPattern = psiMethod().withName("ideaModule").definedInClass(RuntimeModuleId.class.getName());
-    registrar.registerReferenceProvider(literalExpression().methodCallParameter(0, methodPattern), new PsiReferenceProvider() {
+    PsiMethodPattern moduleMethod = psiMethod().withName("module", "moduleLibrary").definedInClass(RuntimeModuleId.class.getName());
+    registrar.registerReferenceProvider(literalExpression().methodCallParameter(0, moduleMethod), new PsiReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-        return new PsiReference[]{new RuntimeModuleReference(element)};
+        return new PsiReference[]{new IdeaModuleReference(element)};
+      }
+    });
+
+    PsiMethodPattern projectLibraryMethod = psiMethod().withName("projectLibrary").definedInClass(RuntimeModuleId.class.getName());
+    registrar.registerReferenceProvider(literalExpression().methodCallParameter(0, projectLibraryMethod), new PsiReferenceProvider() {
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+        return new PsiReference[]{new ProjectLibraryReference(element)};
+      }
+    });
+
+    PsiMethodPattern moduleLibraryMethod = psiMethod().withName("moduleLibrary").definedInClass(RuntimeModuleId.class.getName());
+    registrar.registerReferenceProvider(literalExpression().methodCallParameter(1, moduleLibraryMethod), new PsiReferenceProvider() {
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+        PsiMethodCallExpression parent = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+        if (parent != null) {
+          PsiExpression[] expressions = parent.getArgumentList().getExpressions();
+          if (expressions.length > 0 && expressions[0] instanceof PsiLiteralExpression) {
+            return new PsiReference[]{new ModuleLibraryReference(element, (PsiLiteralExpression)expressions[0])};
+          }
+        }
+        return PsiReference.EMPTY_ARRAY;
       }
     });
   }

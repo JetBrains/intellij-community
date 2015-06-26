@@ -23,7 +23,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.references.RuntimeModuleReference;
+import org.jetbrains.idea.devkit.references.IdeaModuleReference;
+import org.jetbrains.idea.devkit.references.RuntimeModuleReferenceBase;
 
 /**
  * @author nik
@@ -36,9 +37,10 @@ public class RuntimeModuleReferencesInspection extends BaseJavaLocalInspectionTo
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         for (PsiReference reference : expression.getReferences()) {
-          if (reference instanceof RuntimeModuleReference && reference.resolve() == null) {
-            RuntimeModuleReference moduleReference = (RuntimeModuleReference)reference;
-            holder.registerProblem(expression, "Cannot resolve runtime module '" + moduleReference.getValue() + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+          if (reference instanceof RuntimeModuleReferenceBase && reference.resolve() == null) {
+            RuntimeModuleReferenceBase moduleReference = (RuntimeModuleReferenceBase)reference;
+            String kind = moduleReference instanceof IdeaModuleReference ? "module" : "library";
+            holder.registerProblem(expression, "Cannot resolve runtime " + kind + " '" + moduleReference.getValue() + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                    reference.getRangeInElement());
           }
         }

@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +29,8 @@ import java.util.List;
 /**
  * @author nik
  */
-public class RuntimeModuleReference extends PsiReferenceBase<PsiElement> {
-  public RuntimeModuleReference(@NotNull PsiElement element) {
+public class IdeaModuleReference extends RuntimeModuleReferenceBase {
+  public IdeaModuleReference(@NotNull PsiElement element) {
     super(element);
   }
 
