@@ -822,21 +822,22 @@ binding.setVariable("bundledJDKs"){
   requireProperty("jdk.bundled.linux", "false")
   requireProperty("jdk.bundled.mac", "1.8")
   requireProperty("jdk.custom.mac", "true")
-
-  if (p("jdk.bundled.win") != "false") {
-    setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
-    extractRedistJre(winJDK, "${paths.sandbox}/bundled.win.jdk/jre")
-  }
-  if (p("jdk.bundled.linux") != "false"){
-    setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
-    extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk/jre")
-  }
-  if (p("jdk.bundled.mac") != "false"){
-    setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
-  }
-  def customJdkDir = new File("${home}/build/jdk/custom")
-  if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())){
-    setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+  if (new File("${home}/build/jdk").exists()) {
+    if (p("jdk.bundled.win") != "false") {
+      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
+      extractRedistJre(winJDK, "${paths.sandbox}/bundled.win.jdk/jre")
+    }
+    if (p("jdk.bundled.linux") != "false") {
+      setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
+      extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk/jre")
+    }
+    if (p("jdk.bundled.mac") != "false") {
+      setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
+    }
+    def customJdkDir = new File("${home}/build/jdk/custom")
+    if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
+      setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+    }
   }
 }
 
