@@ -119,7 +119,7 @@ public class IcsManager : ApplicationLoadListener {
         throw IllegalStateException("Delete is prohibited now")
       }
 
-      repositoryManager.delete(buildPath(fileSpec, roamingType, null))
+      repositoryManager.delete(buildPath(fileSpec, roamingType))
       scheduleCommit()
     }
   }

@@ -113,28 +113,21 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
 
   override fun delete(path: String) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Remove " + path)
+      LOG.debug("Remove $path")
     }
 
-    try {
-      synchronized (lock) {
-        val file = File(dir, path)
-        // delete could be called for non-existent file
-        if (!file.exists()) {
-          return
-        }
-
+    synchronized (lock) {
+      val file = File(dir, path)
+      // delete could be called for non-existent file
+      if (file.exists()) {
         delete(file, path)
       }
-    }
-    catch (e: Exception) {
-      LOG.error(e)
     }
   }
 
   private fun delete(file: File, path: String) {
     val isFile = file.isFile()
-    removeFileAndParentDirectoryIfEmpty(file, dir, isFile)
+    file.removeWithParentsIfEmpty(dir, isFile)
     deleteFromIndex(path, isFile)
   }
 
@@ -147,13 +140,12 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
   }
 }
 
-fun removeFileAndParentDirectoryIfEmpty(file: File, root: File, isFile: Boolean = true) {
-  FileUtil.delete(file)
+fun File.removeWithParentsIfEmpty(root: File, isFile: Boolean = true) {
+  FileUtil.delete(this)
 
   if (isFile) {
     // remove empty directories
-    var parent: File? = file.getParentFile()
-    //noinspection FileEqualsUsage
+    var parent = this.getParentFile()
     while (parent != null && parent != root && parent.delete()) {
       parent = parent.getParentFile()
     }
