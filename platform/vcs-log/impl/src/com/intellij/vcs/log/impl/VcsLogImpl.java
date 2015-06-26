@@ -24,7 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public CommitId get(int index) {
-        return ((GraphTableModel)myUi.getTable().getModel()).getCommitIdAtRow(rows[index]);
+        return getTable().getGraphTableModel().getCommitIdAtRow(rows[index]);
       }
 
       @Override
@@ -57,6 +57,10 @@ public class VcsLogImpl implements VcsLog {
         return rows.length;
       }
     };
+  }
+
+  private VcsLogGraphTable getTable() {
+    return myUi.getTable();
   }
 
   @NotNull
@@ -67,7 +71,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public VcsFullCommitDetails get(int index) {
-        return myDataManager.getCommitDetailsGetter().getCommitData(rows[index], (GraphTableModel)myUi.getTable().getModel());
+        return getTable().getGraphTableModel().getFullDetails(rows[index]);
       }
 
       @Override
@@ -80,7 +84,7 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
-    myDataManager.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
+    myDataManager.getCommitDetailsGetter().loadCommitsData(getTable().getGraphTableModel().convertToHashesAndRoots(rowsList), consumer, indicator);
   }
 
   @Nullable

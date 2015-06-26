@@ -4,18 +4,22 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogDataManager;
 import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -24,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.*;
 
 public class GraphTableModel extends AbstractTableModel {
@@ -37,8 +44,11 @@ public class GraphTableModel extends AbstractTableModel {
   private static final int COLUMN_COUNT = DATE_COLUMN + 1;
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
-  @NotNull protected final VcsLogUiImpl myUi;
+  private static final int UP_PRELOAD_COUNT = 20;
+  private static final int DOWN_PRELOAD_COUNT = 40;
+
   @NotNull private final VcsLogDataManager myLogDataManager;
+  @NotNull protected final VcsLogUiImpl myUi;
 
   @NotNull protected VisiblePack myDataPack;
 
@@ -169,7 +179,7 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = myLogDataManager.getMiniDetailsGetter().getCommitData(rowIndex, this);
+    VcsShortCommitDetails data = getShortDetails(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
@@ -227,5 +237,61 @@ public class GraphTableModel extends AbstractTableModel {
 
   public VisiblePack getVisiblePack() {
     return myDataPack;
+  }
+
+  @NotNull
+  public VcsFullCommitDetails getFullDetails(int row) {
+    return getDetails(row, myLogDataManager.getCommitDetailsGetter());
+  }
+
+  @NotNull
+  public VcsShortCommitDetails getShortDetails(int row) {
+    return getDetails(row, myLogDataManager.getMiniDetailsGetter());
+  }
+
+  @NotNull
+  private <T extends VcsShortCommitDetails> T getDetails(int row, DataGetter<T> dataGetter) {
+    Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
+    return dataGetter.getCommitData(getIdAtRow(row), iterable);
+  }
+
+  private Iterable<Integer> createRowsIterable(final int row, final int above, final int below, final int maxRows) {
+    return new Iterable<Integer>() {
+      @NotNull
+      @Override
+      public Iterator<Integer> iterator() {
+        return new Iterator<Integer>() {
+          private int myRowIndex = Math.max(0, row - above);
+
+          @Override
+          public boolean hasNext() {
+            return myRowIndex < row + below && myRowIndex < maxRows;
+          }
+
+          @Override
+          public Integer next() {
+            int nextRow = myRowIndex;
+            myRowIndex++;
+            return getIdAtRow(nextRow);
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException("Removing elements is not supported.");
+          }
+        };
+      }
+    };
+  }
+
+  @NotNull
+  public List<Integer> convertToHashesAndRoots(@NotNull List<Integer> rows) {
+    return ContainerUtil.map(rows, new NotNullFunction<Integer, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Integer row) {
+        return getIdAtRow(row);
+      }
+    });
   }
 }

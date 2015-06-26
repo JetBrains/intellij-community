@@ -22,7 +22,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +44,6 @@ import java.util.List;
 abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Disposable, DataGetter<T> {
   private static final Logger LOG = Logger.getInstance(AbstractDataGetter.class);
 
-  private static final int UP_PRELOAD_COUNT = 20;
-  private static final int DOWN_PRELOAD_COUNT = 40;
   private static final int MAX_LOADING_TASKS = 10;
 
   @NotNull protected final VcsLogHashMap myHashMap;
@@ -97,60 +94,29 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @Override
   @NotNull
-  public T getCommitData(int row, @NotNull GraphTableModel tableModel) {
+  public T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes) {
     assert EventQueue.isDispatchThread();
-    Integer hash = tableModel.getIdAtRow(row);
     T details = getFromCache(hash);
     if (details != null) {
       return details;
     }
 
-    runLoadCommitsData(tableModel, createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, tableModel.getRowCount()));
+    runLoadCommitsData(neighbourHashes);
 
     T result = myCache.get(hash);
     assert result != null; // now it is in the cache as "Loading Details" (runLoadCommitsData puts it there)
     return result;
   }
 
-  private static Iterable<Integer> createRowsIterable(final int row, final int above, final int below, final int maxRows) {
-    return new Iterable<Integer>() {
-      @NotNull
-      @Override
-      public Iterator<Integer> iterator() {
-        return new Iterator<Integer>() {
-          private int myIndex = Math.max(0, row - above);
-
-          @Override
-          public boolean hasNext() {
-            return myIndex < row + below && myIndex < maxRows;
-          }
-
-          @Override
-          public Integer next() {
-            int next = myIndex;
-            myIndex++;
-            return next;
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException("Removing elements is not supported.");
-          }
-        };
-      }
-    };
-  }
-
   @Override
-  public void loadCommitsData(@NotNull List<Integer> rows,
-                              @NotNull GraphTableModel tableModel,
+  public void loadCommitsData(@NotNull List<Integer> hashes,
                               @NotNull Consumer<List<T>> consumer,
                               @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();
-    loadCommitsData(getCommitsForRows(rows, tableModel), consumer, indicator);
+    loadCommitsData(getCommitsMap(hashes), consumer, indicator);
   }
 
-  private void loadCommitsData(@NotNull final Map<Pair<VirtualFile, Integer>, Integer> commits,
+  private void loadCommitsData(@NotNull final Map<Integer, Integer> commits,
                                @NotNull final Consumer<List<T>> consumer,
                                @Nullable ProgressIndicator indicator) {
     final List<T> result = ContainerUtil.newArrayList();
@@ -158,13 +124,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
     long taskNumber = myCurrentTaskIndex++;
 
-    for (Pair<VirtualFile, Integer> rootAndCommit : commits.keySet()) {
-      VirtualFile root = rootAndCommit.getFirst();
-      Integer commitId = rootAndCommit.getSecond();
-      T details = getFromCache(commitId);
+    for (Integer id : commits.keySet()) {
+      VirtualFile root = myHashMap.getCommitId(id).getRoot();
+      T details = getFromCache(id);
       if (details == null || details instanceof LoadingDetails) {
-        toLoad.putValue(root, commitId);
-        cacheCommit(commitId, root, taskNumber);
+        toLoad.putValue(root, id);
+        cacheCommit(id, root, taskNumber);
       }
       else {
         result.add(details);
@@ -205,12 +170,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
   }
 
-  private void sortCommitsByRow(@NotNull List<T> result, @NotNull final Map<Pair<VirtualFile, Integer>, Integer> rowsForCommits) {
+  private void sortCommitsByRow(@NotNull List<T> result, @NotNull final Map<Integer, Integer> rowsForCommits) {
     ContainerUtil.sort(result, new Comparator<T>() {
       @Override
       public int compare(T details1, T details2) {
-        Integer row1 = rowsForCommits.get(Pair.create(details1.getRoot(), myHashMap.getCommitIndex(details1.getId(), details1.getRoot())));
-        Integer row2 = rowsForCommits.get(Pair.create(details2.getRoot(), myHashMap.getCommitIndex(details2.getId(), details2.getRoot())));
+        Integer row1 = rowsForCommits.get(myHashMap.getCommitIndex(details1.getId(), details1.getRoot()));
+        Integer row2 = rowsForCommits.get(myHashMap.getCommitIndex(details2.getId(), details2.getRoot()));
         return Comparing.compare(row1, row2);
       }
     });
@@ -244,17 +209,16 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Nullable
   protected abstract T getFromAdditionalCache(int commitId);
 
-  private void runLoadCommitsData(@NotNull GraphTableModel tableModel, @NotNull Iterable<Integer> rows) {
+  private void runLoadCommitsData(@NotNull Iterable<Integer> hashes) {
     long taskNumber = myCurrentTaskIndex++;
-    Map<Pair<VirtualFile, Integer>, Integer> commits = getCommitsForRows(rows, tableModel);
+    Map<Integer, Integer> commits = getCommitsMap(hashes);
     MultiMap<VirtualFile, Integer> toLoad = MultiMap.create();
 
-    for (Pair<VirtualFile, Integer> rootAndCommit : commits.keySet()) {
-      VirtualFile root = rootAndCommit.getFirst();
-      Integer commitId = rootAndCommit.getSecond();
+    for (Integer id : commits.keySet()) {
+      VirtualFile root = myHashMap.getCommitId(id).getRoot();
 
-      cacheCommit(commitId, root, taskNumber);
-      toLoad.putValue(root, commitId);
+      cacheCommit(id, root, taskNumber);
+      toLoad.putValue(root, id);
     }
 
     myLoader.queue(new TaskDescriptor(toLoad));
@@ -275,13 +239,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @NotNull
-  private static Map<Pair<VirtualFile, Integer>, Integer> getCommitsForRows(@NotNull Iterable<Integer> rows,
-                                                                            @NotNull GraphTableModel model) {
-    Map<Pair<VirtualFile, Integer>, Integer> commits = ContainerUtil.newHashMap();
-    for (int row : rows) {
-      Integer commitId = model.getIdAtRow(row);
-      VirtualFile root = model.getRoot(row);
-      commits.put(Pair.create(root, commitId), row);
+  private static Map<Integer, Integer> getCommitsMap(@NotNull Iterable<Integer> hashes) {
+    Map<Integer, Integer> commits = ContainerUtil.newHashMap();
+    int row = 0;
+    for (Integer commitId: hashes) {
+      commits.put(commitId, row);
+      row++;
     }
     return commits;
   }
@@ -319,7 +282,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @NotNull
-  protected abstract List<? extends T> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
+  protected abstract List<? extends T> readDetails(@NotNull VcsLogProvider logProvider,
+                                                   @NotNull VirtualFile root,
                                                    @NotNull List<String> hashes) throws VcsException;
 
   /**

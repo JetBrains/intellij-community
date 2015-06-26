@@ -431,7 +431,7 @@ public class VcsLogGraphTable extends JBTable implements DataProvider, CopyProvi
       details = myLogDataManager.getMiniDetailsGetter().getCommitDataIfAvailable(commit);
     }
     else {
-      details = myLogDataManager.getMiniDetailsGetter().getCommitData(row, getGraphTableModel());
+      details = getGraphTableModel().getShortDetails(row);
     }
     String balloonText;
     if (details != null && !(details instanceof LoadingDetails)) {
