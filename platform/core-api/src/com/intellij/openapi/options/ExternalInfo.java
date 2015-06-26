@@ -18,14 +18,13 @@ package com.intellij.openapi.options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated
 public final class ExternalInfo {
   // we keep it to detect rename
   private String myPreviouslySavedName;
   private String myCurrentFileName;
 
   private int myContentHash;
-
-  private boolean myRemote;
 
   public String getCurrentFileName() {
     return myCurrentFileName;
@@ -54,6 +53,6 @@ public final class ExternalInfo {
 
   @Override
   public String toString() {
-    return "file: " + myCurrentFileName + (myRemote ? ", remote" : "");
+    return "file: " + myCurrentFileName;
   }
 }
