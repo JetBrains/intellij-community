@@ -94,6 +94,7 @@ class JUnitStatusLine extends TestStatusLine {
     }
 
     public void updateLabel(final SimpleColoredComponent label) {
+      label.clear();
       final StringBuilder buffer = new StringBuilder();
       if (myDoneEvent != null && myTerminated) {
         String termMessage = generateTermMessage(getTestCount(0));
