@@ -360,7 +360,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * @param testProxy Proxy
    */
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    updateOnTestStarted(false);
+    if (!testProxy.isConfig()) {
+      updateOnTestStarted(false);
+    }
     _addTestOrSuite(testProxy);
     fireOnTestNodeAdded(testProxy);
   }
@@ -376,6 +378,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
     updateOnTestFailed(false);
+    if (test.isConfig()) {
+      myStartedTestCount++;
+      myFinishedTestCount++;
+    }
     updateIconProgress(false);
   }
 
@@ -413,7 +419,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   public void onTestFinished(@NotNull final SMTestProxy test) {
-    updateOnTestFinished(false);
+    if (!test.isConfig()) {
+      updateOnTestFinished(false);
+    }
     updateIconProgress(false);
   }
 

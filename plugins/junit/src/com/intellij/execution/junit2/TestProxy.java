@@ -117,6 +117,11 @@ public class TestProxy extends AbstractTestProxy {
     return getInfo().getName();
   }
 
+  @Override
+  public boolean isConfig() {
+    return false;
+  }
+
   public boolean isInProgress() {
     return getState().isInProgress();
   }

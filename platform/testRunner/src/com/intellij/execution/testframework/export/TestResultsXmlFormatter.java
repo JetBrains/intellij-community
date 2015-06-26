@@ -229,6 +229,10 @@ public class TestResultsXmlFormatter {
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
+        if (child.isConfig() && child.isPassed()) {
+          //ignore configurations during export
+          continue;
+        }
         processNode(child, filter);
       }
     }

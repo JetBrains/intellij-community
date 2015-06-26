@@ -37,6 +37,7 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
 
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myProperties, false);
     TestConsoleProperties.HIDE_IGNORED_TEST.set(myProperties, false);
+    TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.set(myProperties, true);
     myResultsForm = new SMTestRunnerResultsForm(new JLabel(), myProperties);
     Disposer.register(myResultsForm, myProperties);
     myResultsForm.initUI();
@@ -51,6 +52,12 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
     final SMTestProxy testPassed1 = createTestProxy("testPassed1", testsSuite);
     testPassed1.setStarted();
     testPassed1.setFinished();
+    
+    // passed config
+    final SMTestProxy testConfig1 = createTestProxy("testConfig1", testsSuite);
+    testConfig1.setConfig(true);
+    testConfig1.setStarted();
+    testConfig1.setFinished();
 
     //ignored test
     final SMTestProxy testIgnored1 = createTestProxy("testIgnored1", testsSuite);
