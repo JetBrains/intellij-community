@@ -16,24 +16,39 @@
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   private String myFileName;
   
   public ImportTestsFromHistoryAction(SMTRunnerConsoleProperties properties, String name) {
-    super(properties, FileUtil.getNameWithoutExtension(name), FileUtil.getNameWithoutExtension(name));
+    super(properties, getPresentableText(name), getPresentableText(name));
     myFileName = name;
+  }
+
+  private static String getPresentableText(String name) {
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
+    final int lastIndexOf = nameWithoutExtension.lastIndexOf(" - ");
+    if (lastIndexOf > 0) {
+      final String date = nameWithoutExtension.substring(lastIndexOf + 3);
+      try {
+        final Date creationDate = new SimpleDateFormat(SMTestRunnerResultsForm.HISTORY_DATE_FORMAT).parse(date);
+        return nameWithoutExtension.substring(0, lastIndexOf) + " (" + DateFormatUtil.formatDateTime(creationDate) + ")";
+      }
+      catch (ParseException ignore) {}
+    }
+    return nameWithoutExtension;
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -25,26 +24,7 @@ import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNamedIntention {
-
-  private static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>();
-
-  static {
-    tokenMap.put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
-    tokenMap.put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
-    tokenMap.put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
-    tokenMap.put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
-    tokenMap.put(JavaTokenType.ANDEQ, JavaTokenType.AND);
-    tokenMap.put(JavaTokenType.OREQ, JavaTokenType.OR);
-    tokenMap.put(JavaTokenType.XOREQ, JavaTokenType.XOR);
-    tokenMap.put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
-    tokenMap.put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
-    tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
-    tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
-  }
 
   @Override
   @NotNull
@@ -70,18 +50,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNam
     final String newOperator = operator.substring(0, operator.length() - 1);
     final String lhsText = lhs.getText();
     final String rhsText = (rhs == null) ? "" : rhs.getText();
-    final boolean parentheses;
-    if (rhs instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)rhs;
-      final int precedence1 = ParenthesesUtils.getPrecedenceForOperator(binaryExpression.getOperationTokenType());
-      final IElementType signTokenType = sign.getTokenType();
-      final IElementType newOperatorToken = tokenMap.get(signTokenType);
-      final int precedence2 = ParenthesesUtils.getPrecedenceForOperator(newOperatorToken);
-      parentheses = precedence1 >= precedence2 || !ParenthesesUtils.isCommutativeOperator(newOperatorToken);
-    }
-    else {
-      parentheses = false;
-    }
+    final boolean parentheses = ParenthesesUtils.areParenthesesNeeded(sign, rhs);
     final String cast = getCastString(lhs, rhs);
     final StringBuilder newExpression = new StringBuilder(lhsText);
     newExpression.append('=').append(cast);
@@ -102,8 +71,14 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNam
   }
 
   private static String getCastString(PsiExpression lhs, PsiExpression rhs) {
+    if (lhs == null || rhs == null) {
+      return "";
+    }
     final PsiType lType = lhs.getType();
-    final PsiType rType = rhs.getType();
+    PsiType rType = rhs.getType();
+    if (TypeConversionUtil.isNumericType(rType)) {
+      rType = TypeConversionUtil.binaryNumericPromotion(lType, rType);
+    }
     if (lType == null || rType == null ||
         TypeConversionUtil.isAssignable(lType, rType) || !TypeConversionUtil.areTypesConvertible(lType, rType)) {
       return "";

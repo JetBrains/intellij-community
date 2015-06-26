@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,7 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
     return element instanceof PropertiesFile;
   }
 
-  public NonCodeUsageSearchInfo findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, final List<UsageInfo> result) {
+  public NonCodeUsageSearchInfo findUsages(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete, @NotNull final List<UsageInfo> result) {
     PropertiesFile file = (PropertiesFile) element;
     List<PsiElement> elements = new ArrayList<PsiElement>();
     elements.add(file.getContainingFile());
@@ -52,16 +53,16 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
     return new NonCodeUsageSearchInfo(SafeDeleteProcessor.getDefaultInsideDeletedCondition(allElementsToDelete), elements);
   }
 
-  public Collection<PsiElement> getElementsToSearch(final PsiElement element, final Collection<PsiElement> allElementsToDelete) {
+  public Collection<PsiElement> getElementsToSearch(@NotNull final PsiElement element, @NotNull final Collection<PsiElement> allElementsToDelete) {
     return Collections.singletonList(element);
   }
 
-  public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element, final Collection<PsiElement> allElementsToDelete,
+  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element, @NotNull final Collection<PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     return null;
   }
 
-  public Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete) {
+  public Collection<String> findConflicts(@NotNull final PsiElement element, @NotNull final PsiElement[] allElementsToDelete) {
     return null;
   }
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -73,6 +74,9 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
         return p.getEffectiveSearchScope();
       }
     });
+    if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
+      return;
+    }
 
     if (isConstructor[0]) {
       new ConstructorReferencesSearchHelper(psiManager[0]).

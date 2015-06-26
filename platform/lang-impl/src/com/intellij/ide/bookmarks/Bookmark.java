@@ -59,7 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class Bookmark implements Navigatable {
+public class Bookmark implements Navigatable, Comparable<Bookmark> {
   public static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
   private final VirtualFile myFile;
@@ -78,6 +78,17 @@ public class Bookmark implements Navigatable {
     myTarget = new OpenFileDescriptor(project, file, line, -1, true);
 
     addHighlighter();
+  }
+
+  @Override
+  public int compareTo(Bookmark o) {
+    int i = myMnemonic != 0 ? o.myMnemonic != 0 ? myMnemonic - o.myMnemonic : -1: o.myMnemonic != 0 ? 1 : 0;
+    if (i != 0) return i;
+    i = myProject.getName().compareTo(o.myProject.getName());
+    if (i != 0) return i;
+    i = myFile.getName().compareTo(o.getFile().getName());
+    if (i != 0) return i;
+    return myTarget.compareTo(o.myTarget);
   }
 
   public void updateHighlighter() {

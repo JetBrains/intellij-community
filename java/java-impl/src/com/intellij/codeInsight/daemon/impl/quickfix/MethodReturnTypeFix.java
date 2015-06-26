@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -299,7 +299,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
 
     @Override
-    protected void performRefactoring(final UsageInfo[] usages) {
+    protected void performRefactoring(@NotNull final UsageInfo[] usages) {
       super.performRefactoring(usages);
 
       for (UsageInfo usage : usages) {

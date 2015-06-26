@@ -499,7 +499,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
-    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), startOffset == 0 && endOffset == getTextLength());
+    replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), false);
   }
 
   private void replaceString(int startOffset, int endOffset, @NotNull CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
@@ -528,6 +528,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
            s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)) {
       newEndInString--;
       endOffset--;
+    }
+
+    if (startOffset == 0 && endOffset == getTextLength()) {
+      wholeTextReplaced = true;
     }
 
     CharSequence changedPart = s.subSequence(newStartInString, newEndInString);

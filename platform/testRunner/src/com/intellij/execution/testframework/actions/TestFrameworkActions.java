@@ -31,19 +31,14 @@ import com.intellij.util.config.AbstractProperty;
 public class TestFrameworkActions {
   public static void installFilterAction(final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
-    final TestFrameworkPropertyListener<Boolean> hidePropertyListener = new TestFrameworkPropertyListener<Boolean>() {
+    final TestFrameworkPropertyListener<Boolean> propertyListener = new TestFrameworkPropertyListener<Boolean>() {
         public void onChanged(final Boolean value) {
           model.setFilter(getFilter(properties));
         }
       };
-    addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, hidePropertyListener, model, true);
-
-    final TestFrameworkPropertyListener<Boolean> ignorePropertyListener = new TestFrameworkPropertyListener<Boolean>() {
-      public void onChanged(final Boolean value) {
-        model.setFilter(getFilter(properties));
-      }
-    };
-    addPropertyListener(TestConsoleProperties.HIDE_IGNORED_TEST, ignorePropertyListener, model, true);
+    addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, propertyListener, model, true);
+    addPropertyListener(TestConsoleProperties.HIDE_IGNORED_TEST, propertyListener, model, true);
+    addPropertyListener(TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG, propertyListener, model, true);
   }
 
   private static Filter getFilter(TestConsoleProperties properties) {
@@ -59,7 +54,11 @@ public class TestFrameworkActions {
     else {
       hideIgnoredFilter = Filter.NO_FILTER;
     }
-    return hidePassedFilter.and(hideIgnoredFilter);
+
+    final boolean hideSuccessfulConfigs = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
+    final Filter hideConfigsFilter = hideSuccessfulConfigs ? Filter.SUCCESSFUL_CONFIGS : Filter.NO_FILTER;
+
+    return hidePassedFilter.and(hideIgnoredFilter).and(hideConfigsFilter);
   }
 
   public static void addPropertyListener(final AbstractProperty<Boolean> property,

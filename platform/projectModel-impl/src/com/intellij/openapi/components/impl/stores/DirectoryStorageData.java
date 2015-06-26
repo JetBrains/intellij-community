@@ -190,8 +190,8 @@ public class DirectoryStorageData extends StorageDataBase {
 
     if (fileToState == null) {
       fileToState = new StateMap();
-      myStates.put(componentName, fileToState);
       fileToState.put(fileName, newState);
+      myStates.put(componentName, fileToState);
     }
     else {
       Object oldState = fileToState.get(fileName);
@@ -254,13 +254,12 @@ public class DirectoryStorageData extends StorageDataBase {
     }
 
     if (splitter instanceof StateSplitterEx) {
-      StateSplitterEx splitterEx = (StateSplitterEx)splitter;
       for (String fileName : fileToState.keys()) {
         Element subState = fileToState.getStateAndArchive(fileName);
         if (subState == null) {
           return null;
         }
-        splitterEx.mergeStateInto(state, subState);
+        ((StateSplitterEx)splitter).mergeStateInto(state, subState);
       }
     }
     else {

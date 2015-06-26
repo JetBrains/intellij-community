@@ -55,6 +55,8 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   public abstract boolean isPassed();
 
   public abstract String getName();
+  
+  public abstract boolean isConfig();
 
   public abstract Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope);
 

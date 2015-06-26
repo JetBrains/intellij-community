@@ -154,10 +154,10 @@ public class TestsUIUtil {
     return new TestResultPresentation(proxy).getPresentation().getText();
   }
 
-  public static void showIconProgress(Project project, int n, final int maximum, final int problemsCounter) {
+  public static void showIconProgress(Project project, int n, final int maximum, final int problemsCounter, boolean updateWithAttention) {
     AppIcon icon = AppIcon.getInstance();
-    if (n < maximum) {
-      if (icon.setProgress(project, TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)maximum, problemsCounter == 0)) {
+    if (n < maximum || !updateWithAttention) {
+      if (!updateWithAttention || icon.setProgress(project, TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)maximum, problemsCounter == 0)) {
         if (problemsCounter > 0) {
           icon.setErrorBadge(project, String.valueOf(problemsCounter));
         }

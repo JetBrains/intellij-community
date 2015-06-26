@@ -25,6 +25,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
+
 public class ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
@@ -42,11 +46,17 @@ public class ImportTestsGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     final Project project = e.getProject();
-    final String[] files = AbstractImportTestsAction.getTestHistoryRoot(project).list();
+    final File[] files = AbstractImportTestsAction.getTestHistoryRoot(project).listFiles();
     if (files == null) return EMPTY_ARRAY;
+    Arrays.sort(files, new Comparator<File>() {
+      @Override
+      public int compare(File f1, File f2) {
+        return f1.lastModified() > f2.lastModified() ? -1 : 1;
+      }
+    });
     final AnAction[] actions = new AnAction[files.length + 2];
     for (int i = 0; i < files.length; i++) {
-      actions[i] = new ImportTestsFromHistoryAction(myProperties, files[i]);
+      actions[i] = new ImportTestsFromHistoryAction(myProperties, files[i].getName());
     }
     actions[files.length] = Separator.getInstance();
     actions[files.length + 1] = new ImportTestsFromFileAction(myProperties); 

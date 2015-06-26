@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
@@ -41,10 +42,14 @@ public abstract class PsiAugmentProvider {
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
     List<Psi> result = Collections.emptyList();
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      List<Psi> augments = provider.getAugments(element, type);
-      if (!augments.isEmpty()) {
-        if (result.isEmpty()) result = new ArrayList<Psi>(augments.size());
-        result.addAll(augments);
+      try {
+        List<Psi> augments = provider.getAugments(element, type);
+        if (!augments.isEmpty()) {
+          if (result.isEmpty()) result = new ArrayList<Psi>(augments.size());
+          result.addAll(augments);
+        }
+      }
+      catch (IndexNotReadyException ignore) {
       }
     }
 

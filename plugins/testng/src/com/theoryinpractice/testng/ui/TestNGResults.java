@@ -23,7 +23,6 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -310,7 +309,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     myStatusLine.setFraction((double)count / total);
     updateStatusLine();
-    TestsUIUtil.showIconProgress(project, count, total, failed.size());
+    TestsUIUtil.showIconProgress(project, count, total, failed.size(), false);
   }
 
   private TestProxy getPackageClassNodeFor(final TestResultMessage result) {

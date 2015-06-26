@@ -345,7 +345,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual) {
-    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
+    if (!prepareToMapping()) {
       return myEditor.visualToLogicalPosition(visual, false);
     }
     myActive++;
@@ -361,7 +361,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
+    if (!prepareToMapping()) {
       return myEditor.offsetToLogicalPosition(offset, false);
     }
     myActive++;
@@ -376,7 +376,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition logicalPosition) {
-    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
+    if (!prepareToMapping()) {
       return myEditor.logicalPositionToOffset(logicalPosition, false);
     }
     myActive++;
@@ -391,7 +391,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @NotNull
   public LogicalPosition adjustLogicalPosition(LogicalPosition defaultLogical, int offset) {
-    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
+    if (!prepareToMapping()) {
       return defaultLogical;
     }
 
@@ -408,7 +408,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @Override
   @NotNull
   public VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual) {
-    if (myBulkUpdateInProgress || myUpdateInProgress || !prepareToMapping()) {
+    if (!prepareToMapping()) {
       return defaultVisual;
     }
 
@@ -432,9 +432,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * @return      <code>true</code> if soft wraps-aware processing should be used; <code>false</code> otherwise
    */
   private boolean prepareToMapping() {
-    boolean useSoftWraps = myActive <= 0 && isSoftWrappingEnabled() && myEditor.getDocument().getTextLength() > 0;
-
-    if (!useSoftWraps) {
+    if (myUpdateInProgress || myBulkUpdateInProgress ||
+        myActive > 0 || !isSoftWrappingEnabled() || myEditor.getDocument().getTextLength() <= 0) {
       return false;
     }
 

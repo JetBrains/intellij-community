@@ -33,10 +33,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -550,7 +547,12 @@ public abstract class AbstractLayoutCodeProcessor {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              performFileProcessing(file);
+              DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+                @Override
+                public void run() {
+                  performFileProcessing(file);
+                }
+              });
             }
           });
         }

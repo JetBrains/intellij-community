@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new InlineViewDescriptor(myClass);
   }
 
@@ -99,12 +99,12 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
-  protected void refreshElements(PsiElement[] elements) {
+  protected void refreshElements(@NotNull PsiElement[] elements) {
     assert elements.length == 1;
     myClass = (PsiClass) elements [0];
   }
 
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
+  protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     for(UsageInfo usage: usages) {
       if (isForcePreview(usage)) {
@@ -127,7 +127,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
       return showConflicts(conflicts, refUsages.get());
@@ -202,7 +202,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     final PsiClassType superType = getSuperType(myClass);
     LOG.assertTrue(superType != null);
     List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();

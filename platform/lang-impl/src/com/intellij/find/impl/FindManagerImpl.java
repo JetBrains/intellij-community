@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -756,13 +756,10 @@ public class FindManagerImpl extends FindManager {
   }
 
   private static String getStringToReplaceByRegexp(@NotNull final FindModel model, Matcher matcher) throws MalformedReplacementStringException{
-    StringBuffer replaced = new StringBuffer();
     if (matcher == null) return null;
     try {
-      String toReplace = StringUtil.unescapeStringCharacters(model.getStringToReplace());
-      matcher.appendReplacement(replaced, toReplace);
-
-      return replaced.substring(matcher.start());
+      String toReplace = model.getStringToReplace();
+      return new RegExReplacementBuilder(matcher).createReplacement(toReplace);
     }
     catch (Exception e) {
       throw createMalformedReplacementException(model, e);

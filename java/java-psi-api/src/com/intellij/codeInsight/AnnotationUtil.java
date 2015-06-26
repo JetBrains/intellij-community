@@ -212,7 +212,10 @@ public class AnnotationUtil {
         List<T> list = new ArrayList<T>();
         //noinspection unchecked
         list.addAll((Collection<? extends T>)result);
-        return Result.create(list, PsiModificationTracker.MODIFICATION_COUNT);
+        
+        List<Object> dependencies = ContainerUtil.<Object>newArrayList(result);
+        dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
+        return Result.create(list, dependencies);
       }
     });
   }

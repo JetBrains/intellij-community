@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class OpenFileDescriptor implements Navigatable {
+public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescriptor> {
   /**
    * Tells descriptor to navigate in specific editor rather than file editor in main IDEA window.
    * For example if you want to navigate in editor embedded into modal dialog, you should provide this data.
@@ -276,5 +276,20 @@ public class OpenFileDescriptor implements Navigatable {
     if (myRangeMarker != null) {
       myRangeMarker.dispose();
     }
+  }
+
+  @Override
+  public int compareTo(OpenFileDescriptor o) {
+    int i = myProject.getName().compareTo(o.myProject.getName());
+    if (i != 0) return i;
+    i = myFile.getName().compareTo(o.myFile.getName());
+    if (i != 0) return i;
+    if (myRangeMarker != null) {
+      if (o.myRangeMarker == null) return 1;
+      i = myRangeMarker.getStartOffset() - o.myRangeMarker.getStartOffset();
+      if (i != 0) return i;
+      return myRangeMarker.getEndOffset() - o.myRangeMarker.getEndOffset();
+    }
+    return o.myRangeMarker == null ? 0 : -1;
   }
 }

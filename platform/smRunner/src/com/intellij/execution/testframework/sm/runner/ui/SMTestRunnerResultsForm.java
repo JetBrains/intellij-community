@@ -77,6 +77,7 @@ import java.util.List;
  */
 public class SMTestRunnerResultsForm extends TestResultsPanel
   implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
+  @NonNls public static final String HISTORY_DATE_FORMAT = "yyyy.MM.dd 'at' HH'h' mm'm' ss's'";
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
@@ -291,7 +292,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     updateStatusLabel(true);
-    updateIconProgress();
+    updateIconProgress(true);
 
     myAnimator.stopMovie();
     myTreeBuilder.updateFromRoot();
@@ -360,7 +361,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * @param testProxy Proxy
    */
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    updateOnTestStarted(false);
+    if (!testProxy.isConfig()) {
+      updateOnTestStarted(false);
+    }
     _addTestOrSuite(testProxy);
     fireOnTestNodeAdded(testProxy);
   }
@@ -376,7 +379,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
     updateOnTestFailed(false);
-    updateIconProgress();
+    if (test.isConfig()) {
+      myStartedTestCount++;
+      myFinishedTestCount++;
+    }
+    updateIconProgress(false);
   }
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
@@ -413,8 +420,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   public void onTestFinished(@NotNull final SMTestProxy test) {
-    updateOnTestFinished(false);
-    updateIconProgress();
+    if (!test.isConfig()) {
+      updateOnTestFinished(false);
+    }
+    updateIconProgress(false);
   }
 
   public void onSuiteFinished(@NotNull final SMTestProxy suite) {
@@ -658,7 +667,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.performUpdate();
   }
 
-  private void updateIconProgress() {
+  private void updateIconProgress(boolean updateWithAttention) {
     final int totalTestCount, doneTestCount;
     if (myTotalTestCount == 0) {
       totalTestCount = 2;
@@ -668,7 +677,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       totalTestCount = myTotalTestCount;
       doneTestCount = myFinishedTestCount;
     }
-    TestsUIUtil.showIconProgress(myProject, doneTestCount, totalTestCount, myFailedTestCount);
+    TestsUIUtil.showIconProgress(myProject, doneTestCount, totalTestCount, myFailedTestCount, updateWithAttention);
   }
 
   /**
@@ -803,8 +812,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       if (myOutput != null) {
         try {
           AbstractImportTestsAction.adjustHistory(myProject);
-          final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " " +
-                                                       new SimpleDateFormat("yyyy.MM.dd 'at' HH'h' mm'm' ss's'").format(new Date());
+          final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
+                                                       new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
           FileUtil.writeToFile(new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml"),
                                myOutput);
         }

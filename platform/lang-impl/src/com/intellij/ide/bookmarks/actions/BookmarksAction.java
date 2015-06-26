@@ -69,8 +69,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(editDescriptionAction);
     actions.add(new DeleteBookmarkAction(project, list));
-    actions.add(new MoveBookmarkUpAction(project, list));
-    actions.add(new MoveBookmarkDownAction(project, list));
 
     myPopup = new MasterDetailPopupBuilder(project).
       setList(list).

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MigrationUsagesViewDescriptor(myMigrationMap, false);
   }
 
@@ -73,7 +73,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(PsiElement[] elements) {
+  protected void refreshElements(@NotNull PsiElement[] elements) {
     myPsiMigration = startMigration(myProject);
   }
 
@@ -106,7 +106,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     return usagesVector.toArray(new MigrationUsageInfo[usagesVector.size()]);
   }
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
       Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), REFACTORING_NAME);
       return false;
@@ -115,7 +115,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     final PsiMigration psiMigration = PsiMigrationManager.getInstance(myProject).startMigration();
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
 

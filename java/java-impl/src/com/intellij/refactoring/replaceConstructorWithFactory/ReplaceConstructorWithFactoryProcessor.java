@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author dsl
@@ -78,7 +81,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   }
 
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     if (myConstructor != null) {
       return new ReplaceConstructorWithFactoryViewDescriptor(myConstructor);
     }
@@ -128,7 +131,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
 
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
@@ -185,7 +188,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     }
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
 
     try {
       PsiReferenceExpression classReferenceExpression =

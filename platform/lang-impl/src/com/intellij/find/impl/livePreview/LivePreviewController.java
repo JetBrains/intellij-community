@@ -155,7 +155,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       return null;
     }
     String foundString = editor.getDocument().getText(findResult);
-    String documentText = editor.getDocument().getText();
+    CharSequence documentText = editor.getDocument().getImmutableCharSequence();
     FindModel currentModel = mySearchResults.getFindModel();
     String stringToReplace = null;
 

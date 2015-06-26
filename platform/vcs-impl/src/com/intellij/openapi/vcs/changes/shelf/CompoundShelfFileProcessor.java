@@ -158,7 +158,7 @@ public class CompoundShelfFileProcessor {
         copyFileContentToProviders(newFilePath, serverStreamProvider, file);
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.info(e);
     }
   }

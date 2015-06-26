@@ -23,10 +23,12 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
@@ -1515,4 +1517,23 @@ class Bar {
   }
   
   public void testIndentingForSwitchCase() { doTest() }
+
+  public void testIncrementalCopyReparse() {
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
+    
+    myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
+    def items = myFixture.completeBasic()
+    PsiClass c1 = items[0].object
+    assert !c1.physical
+    assert CompletionUtil.getOriginalElement(c1)
+    
+    getLookup().hide()
+    myFixture.type('x')
+    items = myFixture.completeBasic()
+    PsiClass c2 = items[0].object
+    assert !c2.physical
+    assert CompletionUtil.getOriginalElement(c2)
+
+    assert c1.is(c2)
+  }
 }

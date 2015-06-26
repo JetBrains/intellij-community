@@ -135,7 +135,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   }
 
   @NotNull
-  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) {
+  public static VirtualFile createDir(@NotNull File ioDir, @NotNull Object requestor) throws IOException {
     //noinspection ResultOfMethodCallIgnored
     ioDir.mkdirs();
     String parentFile = ioDir.getParent();
@@ -147,18 +147,15 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   }
 
   @NotNull
-  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parentVirtualFile, @NotNull Object requestor) {
-    VirtualFile file = parentVirtualFile.findChild(fileName);
+  public static VirtualFile getFile(@NotNull String fileName, @NotNull VirtualFile parent, @NotNull Object requestor) throws IOException {
+    VirtualFile file = parent.findChild(fileName);
     if (file != null) {
       return file;
     }
 
     AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
     try {
-      return parentVirtualFile.createChildData(requestor, fileName);
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
+      return parent.createChildData(requestor, fileName);
     }
     finally {
       token.finish();

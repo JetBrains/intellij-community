@@ -22,8 +22,11 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
+import com.intellij.diagnostic.LogEventException;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -36,6 +39,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -274,5 +279,16 @@ public class CompletionUtil {
 
     result.addAll(sorted);
     return result;
+  }
+
+  public static List<String> getImmutableLookupStrings(@NotNull LookupElement element) {
+    try {
+      return ContainerUtil.newArrayList(element.getAllLookupStrings());
+    }
+    catch (ConcurrentModificationException e) {
+      final Attachment dump = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+      throw new LogEventException("Error while traversing lookup strings of " + element + " of " + element.getClass(),
+                                  ExceptionUtil.getThrowableText(e), dump);
+    }
   }
 }

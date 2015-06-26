@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
@@ -44,7 +45,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean isStartMatch(LookupElement element) {
-    for (String s : element.getAllLookupStrings()) {
+    for (String s : CompletionUtil.getImmutableLookupStrings(element)) {
       FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
       if (ranges == null) continue;
       if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {

@@ -54,7 +54,7 @@ public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
 
   @Nullable
-  public static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
+  static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
     PsiReference ref = pair.getReference();
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
@@ -106,7 +106,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkMemberValueType(@Nullable PsiAnnotationMemberValue value, PsiType expectedType) {
+  static HighlightInfo checkMemberValueType(@Nullable PsiAnnotationMemberValue value, PsiType expectedType) {
     if (value == null) return null;
 
     if (expectedType instanceof PsiClassType && expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
@@ -256,7 +256,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkMissingAttributes(PsiAnnotation annotation) {
+  static HighlightInfo checkMissingAttributes(PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
     PsiClass aClass = (PsiClass)nameRef.resolve();
@@ -307,7 +307,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkConstantExpression(PsiExpression expression) {
+  static HighlightInfo checkConstantExpression(PsiExpression expression) {
     final PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
@@ -320,7 +320,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkValidAnnotationType(final PsiTypeElement typeElement) {
+  static HighlightInfo checkValidAnnotationType(final PsiTypeElement typeElement) {
     PsiType type = typeElement.getType();
     if (type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
@@ -441,7 +441,7 @@ public class AnnotationsHighlightUtil {
     return ref;
   }
 
-  public static HighlightInfo checkForeignInnerClassesUsed(final PsiAnnotation annotation) {
+  static HighlightInfo checkForeignInnerClassesUsed(final PsiAnnotation annotation) {
     final HighlightInfo[] infos = new HighlightInfo[1];
     final PsiAnnotationOwner owner = annotation.getOwner();
     if (owner instanceof PsiModifierList) {
@@ -490,7 +490,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkAnnotationType(PsiAnnotation annotation) {
+  static HighlightInfo checkAnnotationType(PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
     if (nameReferenceElement != null) {
       PsiElement resolved = nameReferenceElement.resolve();
@@ -503,7 +503,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkCyclicMemberType(PsiTypeElement typeElement, PsiClass aClass) {
+  static HighlightInfo checkCyclicMemberType(PsiTypeElement typeElement, PsiClass aClass) {
     LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
     final Set<PsiClass> checked = new HashSet<PsiClass>();
@@ -529,7 +529,7 @@ public class AnnotationsHighlightUtil {
     return false;
   }
 
-  public static HighlightInfo checkClashesWithSuperMethods(@NotNull PsiAnnotationMethod psiMethod) {
+  static HighlightInfo checkClashesWithSuperMethods(@NotNull PsiAnnotationMethod psiMethod) {
     final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
     if (nameIdentifier != null) {
       final PsiMethod[] methods = psiMethod.findDeepestSuperMethods();
@@ -548,7 +548,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkAnnotationDeclaration(final PsiElement parent, final PsiReferenceList list) {
+  static HighlightInfo checkAnnotationDeclaration(final PsiElement parent, final PsiReferenceList list) {
     if (PsiUtil.isAnnotationMethod(parent)) {
       PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
       if (list == method.getThrowsList()) {
@@ -567,7 +567,7 @@ public class AnnotationsHighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkPackageAnnotationContainingFile(final PsiPackageStatement statement) {
+  static HighlightInfo checkPackageAnnotationContainingFile(final PsiPackageStatement statement) {
     if (statement.getAnnotationList() == null) {
       return null;
     }
@@ -583,7 +583,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkTargetAnnotationDuplicates(PsiAnnotation annotation) {
+  static HighlightInfo checkTargetAnnotationDuplicates(PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
 
@@ -614,7 +614,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
+  static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       final PsiAnnotationOwner owner = annotation.getOwner();
       if (owner instanceof PsiModifierList) {
@@ -631,7 +631,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkRepeatableAnnotation(PsiAnnotation annotation) {
+  static HighlightInfo checkRepeatableAnnotation(PsiAnnotation annotation) {
     String qualifiedName = annotation.getQualifiedName();
     if (!CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE.equals(qualifiedName)) return null;
 
@@ -761,7 +761,7 @@ public class AnnotationsHighlightUtil {
   private static class DeleteAnnotationAction implements IntentionAction {
     private final PsiAnnotation myAnnotation;
 
-    public DeleteAnnotationAction(PsiAnnotation annotation) {
+    private DeleteAnnotationAction(PsiAnnotation annotation) {
       myAnnotation = annotation;
     }
 

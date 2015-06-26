@@ -777,7 +777,7 @@ public class CodeCompletionHandlerBase {
         Document originalDocument = file.getViewProvider().getDocument();
         assert originalDocument != null;
         assert originalDocument.getTextLength() == file.getTextLength() : originalDocument;
-        document.setText(originalDocument.getImmutableCharSequence());
+        document.replaceString(0, document.getTextLength(), originalDocument.getImmutableCharSequence());
         return copy;
       }
     }
