@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
@@ -60,26 +61,20 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   public void addElement(LookupElement added, ProcessingContext context) {
     myCount++;
 
-    final Set<String> strings = added.getAllLookupStrings();
-    try {
-      for (String string : strings) {
-        if (string.length() == 0) continue;
-  
-        myElements.putValue(string, added);
-        mySortedStrings.add(string);
-        final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
-        for (String s : after) {
-          if (!s.startsWith(string)) {
-            break;
-          }
-          for (LookupElement longer : myElements.get(s)) {
-            updateLongerItem(added, longer);
-          }
+    for (String string : CompletionUtil.getImmutableLookupStrings(added)) {
+      if (string.length() == 0) continue;
+
+      myElements.putValue(string, added);
+      mySortedStrings.add(string);
+      final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
+      for (String s : after) {
+        if (!s.startsWith(string)) {
+          break;
+        }
+        for (LookupElement longer : myElements.get(s)) {
+          updateLongerItem(added, longer);
         }
       }
-    }
-    catch (ConcurrentModificationException e) {
-      throw new RuntimeException("Error while traversing lookup strings of " + added + " of " + added.getClass(), e);
     }
     myNext.addElement(added, context);
 
@@ -102,21 +97,16 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   private void calculateToLift(LookupElement element) {
     boolean hasChanges = false;
-    try {
-      for (String string : element.getAllLookupStrings()) {
-        for (int len = 1; len < string.length(); len++) {
-          String prefix = string.substring(0, len);
-          for (LookupElement shorterElement : myElements.get(prefix)) {
-            if (myCondition.shouldLift(shorterElement, element)) {
-              hasChanges = true;
-              myToLift.putValue(element, shorterElement);
-            }
+    for (String string : CompletionUtil.getImmutableLookupStrings(element)) {
+      for (int len = 1; len < string.length(); len++) {
+        String prefix = string.substring(0, len);
+        for (LookupElement shorterElement : myElements.get(prefix)) {
+          if (myCondition.shouldLift(shorterElement, element)) {
+            hasChanges = true;
+            myToLift.putValue(element, shorterElement);
           }
         }
       }
-    }
-    catch (ConcurrentModificationException e) {
-      throw new RuntimeException("Error while traversing lookup strings of " + element + " of " + element.getClass(), e);
     }
     if (hasChanges) {
       internListToLift(element);
