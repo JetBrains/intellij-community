@@ -14,6 +14,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntentionTest extends IPPTes
   public void testPrecedence() { doTest(); }
   public void testPolyadicAssignment() { doTest(IntentionPowerPackBundle.message("replace.operator.assignment.with.assignment.intention.name", "*=")); }
   public void testConditionalAssignment() { doTest(IntentionPowerPackBundle.message("replace.operator.assignment.with.assignment.intention.name", "*=")); }
+  public void testIncomplete() { doTest(); }
 
   @Override
   protected String getIntentionName() {

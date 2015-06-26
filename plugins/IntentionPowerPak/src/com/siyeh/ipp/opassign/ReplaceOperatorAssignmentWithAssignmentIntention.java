@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,9 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNam
   }
 
   private static String getCastString(PsiExpression lhs, PsiExpression rhs) {
+    if (lhs == null || rhs == null) {
+      return "";
+    }
     final PsiType lType = lhs.getType();
     final PsiType rType = rhs.getType();
     if (lType == null || rType == null ||
