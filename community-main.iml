@@ -109,5 +109,6 @@
     <orderEntry type="module" module-name="json" />
     <orderEntry type="module" module-name="json-tests" scope="TEST" />
     <orderEntry type="module" module-name="typeMigration" />
+    <orderEntry type="module" module-name="platform-tests" />
   </component>
 </module>
