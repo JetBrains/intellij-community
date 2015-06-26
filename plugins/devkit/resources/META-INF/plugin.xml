@@ -129,6 +129,9 @@
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection" />
+    <localInspection language="JAVA" shortName="RuntimeModuleReferences" displayName="Runtime module references"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RuntimeModuleReferencesInspection"/>
     <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful Extension"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
@@ -163,6 +166,7 @@
     <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
+    <psi.referenceContributor language="JAVA" implementation="org.jetbrains.idea.devkit.references.RuntimeModuleReferenceContributor"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
   </extensions>
 
