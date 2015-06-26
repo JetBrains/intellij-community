@@ -55,22 +55,20 @@ public class MessageBusImpl implements MessageBus {
    */
   private final AtomicReference<List<Integer>> myOrderRef = new AtomicReference<List<Integer>>();
 
-  private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
-  private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
+  private final ConcurrentMap<Topic, Object> mySyncPublishers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic, Object> myAsyncPublishers = ContainerUtil.newConcurrentMap();
 
   /**
    * This bus's subscribers
    */
-  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers =
-    new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = ContainerUtil.newConcurrentMap();
 
   /**
    * Caches subscribers for this bus and its children or parent, depending on the topic's broadcast policy
    */
-  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscriberCache =
-    new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
   private final Deque<MessageBusImpl> myChildBuses = new LinkedBlockingDeque<MessageBusImpl>();
-  private final Set<List<Integer>> myChildOrders = Collections.newSetFromMap(new ConcurrentHashMap<List<Integer>, Boolean>());
+  private final ConcurrentMap<List<Integer>, Boolean> myChildOrders = ContainerUtil.newConcurrentMap();
 
   private static final Object NA = new Object();
   private MessageBusImpl myParentBus;
@@ -119,8 +117,38 @@ public class MessageBusImpl implements MessageBus {
     return super.toString() + "; owner=" + myOwner + (myDisposed ? "; disposed" : "");
   }
 
+  /**
+   * Notifies current bus that a child bus is created. Has two responsibilities:
+   * <ul>
+   *   <li>stores given child bus in {@link #myChildBuses} collection</li>
+   *   <li>
+   *     calculates {@link #myOrderRef} for the given child bus
+   *   </li>
+   * </ul>
+   * <p/>
+   * Thread-safe.
+   *
+   * @param childBus            newly created child bus
+   * @param childOrderConsumer  callback which applies {@link #myOrderRef order} to apply to the given child bus (calculated by
+   *                            the current (parent) bus during this method processing
+   */
   private void onChildBusCreated(final MessageBusImpl childBus, @NotNull Consumer<List<Integer>> childOrderConsumer) {
     LOG.assertTrue(childBus.myParentBus == this);
+
+    // It's possible that new child bus objects are created concurrently, i.e. current method is called at the same
+    // time from different threads for different child bus objects. We had a race condition with that which resulted
+    // in NPE - https://youtrack.jetbrains.com/issue/UP-4322.
+    //
+    // The general idea is that we keep child buses orders in a concurrent set (myChildOrders) and use it as a synchronization
+    // point on new child registration, i.e. the algorithm is as follows:
+    //     1.   Calculate an order for the given child bus on the currently registered buses basis;
+    //     2.   Store given order in the myChildOrders if it doesn't contain such order yet;
+    //     3.1. Failure (such order is already there) - another child is being registered at the same time and the same order
+    //          was calculated for it. Retry (go to 1.);
+    //     3.2. Success - store given bus at child buses collection.
+    // Note: it's important to respect that order on bus de-registration (onChildBusDisposed()) - first remove child bus
+    // from the buses collection, second remove its order from child orders.
+
     List<Integer> childOrder = new ArrayList<Integer>(myOrderRef.get().size() + 1);
     childOrder.addAll(myOrderRef.get());
     childOrder.add(1); // Dummy holder, just to be able to call set(index) later
@@ -138,7 +166,7 @@ public class MessageBusImpl implements MessageBus {
         LOG.error("Too many child buses");
       }
       childOrder.set(childOrder.size() - 1, lastChildIndex + 1);
-      if (myChildOrders.add(childOrder)) {
+      if (myChildOrders.putIfAbsent(childOrder, Boolean.TRUE) == null) {
         break;
       }
     }
@@ -147,7 +175,7 @@ public class MessageBusImpl implements MessageBus {
     getRootBus().clearSubscriberCache();
   }
 
-  private void notifyChildBusDisposed(final MessageBusImpl childBus) {
+  private void onChildBusDisposed(final MessageBusImpl childBus) {
     boolean removed = myChildBuses.remove(childBus);
     myChildOrders.remove(childBus.myOrderRef.get());
     Map<MessageBusImpl, Integer> map = getRootBus().myWaitingBuses.get();
@@ -238,7 +266,7 @@ public class MessageBusImpl implements MessageBus {
     }
     myMessageQueue.remove();
     if (myParentBus != null) {
-      myParentBus.notifyChildBusDisposed(this);
+      myParentBus.onChildBusDisposed(this);
       myParentBus = null;
     } else {
       asRoot().myWaitingBuses.remove();
