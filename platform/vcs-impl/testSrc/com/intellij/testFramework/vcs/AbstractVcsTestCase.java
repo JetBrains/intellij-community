@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -96,11 +95,6 @@ public abstract class AbstractVcsTestCase {
 
     projectCreated();
 
-    if (myInitChangeListManager) {
-      ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
-    }
-    ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -165,10 +159,7 @@ public abstract class AbstractVcsTestCase {
 
   protected void tearDownProject() throws Exception {
     if (myProject != null) {
-      ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectClosed();
-      ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectClosed();
       ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
-      ((ProjectComponent)ProjectLevelVcsManager.getInstance(myProject)).projectClosed();
       myProject = null;
     }
     if (myProjectFixture != null) {
