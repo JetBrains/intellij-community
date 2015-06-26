@@ -81,7 +81,7 @@ public class MessageBusImpl implements MessageBus {
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     myOwner = owner.toString() + " of " + owner.getClass();
     myParentBus = (MessageBusImpl)parentBus;
-    myParentBus.onChildBusCreated(this, myOrderRef);
+    myParentBus.onChildBusCreated(this);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
     LOG.assertTrue(myOrderRef.get() != null);
   }
@@ -125,10 +125,8 @@ public class MessageBusImpl implements MessageBus {
    * Thread-safe.
    *
    * @param childBus            newly created child bus
-   * @param childOrderRef       given child bus' {@link #myOrderRef order} holder (the order is calculated by
-   *                            the current (parent) bus during this method processing)
    */
-  private void onChildBusCreated(final MessageBusImpl childBus, @NotNull AtomicReference<List<Integer>> childOrderRef) {
+  private void onChildBusCreated(final MessageBusImpl childBus) {
     LOG.assertTrue(childBus.myParentBus == this);
 
     // It's possible that new child bus objects are created concurrently, i.e. current method is called at the same
@@ -166,7 +164,7 @@ public class MessageBusImpl implements MessageBus {
         break;
       }
     }
-    childOrderRef.set(childOrder);
+    childBus.myOrderRef.set(childOrder);
     myChildBuses.add(childBus);
     getRootBus().clearSubscriberCache();
   }
