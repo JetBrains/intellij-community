@@ -68,7 +68,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
 
   private final VcsUserRegistryImpl myUserRegistry;
 
-  private final VcsLogHashMapImpl myHashMap;
+  private final VcsLogHashMap myHashMap;
   private final ContainingBranchesGetter myContainingBranchesGetter;
 
   @NotNull private final VcsLogRefresher myRefresher;
@@ -85,12 +85,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
-    try {
-      myHashMap = new VcsLogHashMapImpl(myProject, logProviders);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
-    }
+    myHashMap = createLogHashMap();
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
@@ -118,6 +113,19 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
+  private VcsLogHashMap createLogHashMap() {
+    VcsLogHashMap hashMap;
+    try {
+      hashMap = new VcsLogHashMapImpl(myProject, myLogProviders);
+    }
+    catch (IOException e) {
+      hashMap = new InMemoryHashMap();
+      LOG.error("Falling back to in-memory hashes", e);
+    }
+    return hashMap;
+  }
+
+  @NotNull
   public VcsLogFilterer getFilterer() {
     return myFilterer;
   }
@@ -134,7 +142,7 @@ public class VcsLogDataManager implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public VcsLogHashMapImpl getHashMap() {
+  public VcsLogHashMap getHashMap() {
     return myHashMap;
   }
 

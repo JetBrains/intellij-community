@@ -31,10 +31,12 @@ public interface VcsLogHashMap {
   CommitId getCommitId(int commitIndex);
 
   /**
-   * Iterates over known commid id to find the first one which satisfies given condition.
+   * Iterates over known commit ids to find the first one which satisfies given condition.
    *
    * @return
    */
   @Nullable
   CommitId findCommitId(@NotNull Condition<CommitId> condition);
+
+  void flush();
 }

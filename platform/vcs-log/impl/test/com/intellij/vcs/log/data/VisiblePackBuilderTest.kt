@@ -238,6 +238,9 @@ class VisiblePackBuilderTest {
     override fun getCommitId(commitIndex: Int) = CommitId(reverseMap[commitIndex]!!, root)
 
     override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
+
+    override fun flush() {
+    }
   }
 }
 
