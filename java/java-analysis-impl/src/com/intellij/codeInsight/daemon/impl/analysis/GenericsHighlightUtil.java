@@ -689,10 +689,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  @Nullable
-  public static HighlightInfo checkForeachLoopParameterType(PsiForeachStatement statement) {
-    final PsiParameter parameter = statement.getIterationParameter();
-    final PsiExpression expression = statement.getIteratedValue();
+  static HighlightInfo checkForeachExpressionTypeIsIterable(PsiExpression expression) {
     if (expression == null || expression.getType() == null) return null;
     final PsiType itemType = JavaGenericsUtil.getCollectionItemType(expression);
     if (itemType == null) {
@@ -700,13 +697,20 @@ public class GenericsHighlightUtil {
                                                      JavaHighlightUtil.formatType(expression.getType()));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     }
-    final int start = parameter.getTextRange().getStartOffset();
-    final int end = expression.getTextRange().getEndOffset();
+    return null;
+  }
+
+  static HighlightInfo checkForEachParameterType(@NotNull PsiForeachStatement statement, @NotNull PsiParameter parameter) {
+    final PsiExpression expression = statement.getIteratedValue();
+    final PsiType itemType = expression == null ? null : JavaGenericsUtil.getCollectionItemType(expression);
+    if (itemType == null) return null;
+
     final PsiType parameterType = parameter.getType();
-    HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end), 0);
-    if (highlightInfo != null) {
-      HighlightUtil.registerChangeVariableTypeFixes(parameter, itemType, expression, highlightInfo);
+    if (TypeConversionUtil.isAssignable(parameterType, itemType)) {
+      return null;
     }
+    HighlightInfo highlightInfo = HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, parameterType, parameter.getTextRange(), 0);
+    HighlightUtil.registerChangeVariableTypeFixes(parameter, itemType, expression, highlightInfo);
     return highlightInfo;
   }
 
