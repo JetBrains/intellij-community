@@ -22,9 +22,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
@@ -69,7 +69,15 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
       @Override
       public void run() {
-        config.selectProjectOrGlobalLibrary(library, true);
+        if (library.getTable() != null) {
+          config.selectProjectOrGlobalLibrary(library, true);
+        }
+        else if (library instanceof LibraryImpl) {
+          Module module = ((LibraryImpl)library).getModule();
+          if (module != null) {
+            config.selectOrderEntry(module, OrderEntryUtil.findLibraryOrderEntry(ModuleRootManager.getInstance(module), library));
+          }
+        }
       }
     });
   }
