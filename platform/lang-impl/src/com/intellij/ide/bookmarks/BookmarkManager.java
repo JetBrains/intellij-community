@@ -184,6 +184,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.isValid()) answer.add(bookmark);
     }
+    Collections.sort(answer);
     return answer;
   }
 
@@ -317,50 +318,6 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
       element.addContent(bookmarkElement);
     }
-  }
-
-  /**
-   * Try to move bookmark one position up in the list
-   *
-   * @return bookmark list after moving
-   */
-  @NotNull
-  public List<Bookmark> moveBookmarkUp(@NotNull Bookmark bookmark) {
-    final int index = myBookmarks.indexOf(bookmark);
-    if (index > 0) {
-      Collections.swap(myBookmarks, index, index - 1);
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index - 1));
-        }
-      });
-    }
-    return myBookmarks;
-  }
-
-
-  /**
-   * Try to move bookmark one position down in the list
-   *
-   * @return bookmark list after moving
-   */
-  @NotNull
-  public List<Bookmark> moveBookmarkDown(@NotNull Bookmark bookmark) {
-    final int index = myBookmarks.indexOf(bookmark);
-    if (index < myBookmarks.size() - 1) {
-      Collections.swap(myBookmarks, index, index + 1);
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
-          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index + 1));
-        }
-      });
-    }
-
-    return myBookmarks;
   }
 
   @Nullable
