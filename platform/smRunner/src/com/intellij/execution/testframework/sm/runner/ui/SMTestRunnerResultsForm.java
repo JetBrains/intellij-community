@@ -77,6 +77,7 @@ import java.util.List;
  */
 public class SMTestRunnerResultsForm extends TestResultsPanel
   implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
+  @NonNls public static final String HISTORY_DATE_FORMAT = "yyyy.MM.dd 'at' HH'h' mm'm' ss's'";
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
@@ -811,8 +812,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       if (myOutput != null) {
         try {
           AbstractImportTestsAction.adjustHistory(myProject);
-          final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " " +
-                                                       new SimpleDateFormat("yyyy.MM.dd 'at' HH'h' mm'm' ss's'").format(new Date());
+          final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
+                                                       new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
           FileUtil.writeToFile(new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml"),
                                myOutput);
         }
