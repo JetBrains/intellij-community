@@ -16,11 +16,11 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 /**
@@ -43,21 +43,17 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   }
 
   @Override
-  protected void paintBackground(Graphics g) {
-    JTextField c = myTextField;
-    int w = c.getWidth();
-    int h = c.getHeight();
-    if (c.hasFocus()) {
-      MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, w, h);
+  protected void paintBackground(Graphics graphics) {
+    Graphics2D g = (Graphics2D)graphics;
+    final JTextComponent c = getComponent();
+    final Rectangle r = getDrawingRect();
+    if (c.isOpaque()) {
+      g.setColor(c.getBackground());
+      g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
-    g.setColor(Gray.xBF);
-    g.drawRect(2,2,w-4,h-4);
-    g.setColor(c.getBackground());
-    g.fillRect(3,3,w-6,h-6);
-  }
 
-  @Override
-  protected void paintSafely(Graphics g) {
-    super.paintSafely(g);
+    if (isSearchField(c)) {
+      paintSearchField(g, c, r);
+    }
   }
 }
