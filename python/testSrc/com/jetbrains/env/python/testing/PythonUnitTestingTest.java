@@ -1,6 +1,7 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.env.PyEnvTaskRunner;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestTask;
 import com.jetbrains.env.ut.PyUnitTestTask;
@@ -30,6 +31,14 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
    */
   public void testUTSkippedAndIgnored() {
     runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
+
+      @Override
+      public void runTestOn(final String sdkHome) throws Exception {
+        if (!PyEnvTaskRunner.isJython(sdkHome)) {
+          // Temporary Crunch to disable this test on Jython
+          super.runTestOn(sdkHome);
+        }
+      }
 
       @Override
       public void after() {
