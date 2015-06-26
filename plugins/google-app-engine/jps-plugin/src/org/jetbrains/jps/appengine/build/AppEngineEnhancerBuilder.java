@@ -16,7 +16,6 @@
 package org.jetbrains.jps.appengine.build;
 
 import com.intellij.appengine.rt.EnhancerRunner;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import gnu.trove.THashSet;
@@ -40,6 +39,8 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,7 +113,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
 
     List<String> classpath = new ArrayList<String>();
     classpath.add(extension.getToolsApiJarPath());
-    classpath.add(PathManager.getJarPathForClass(EnhancerRunner.class));
+    classpath.addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("appEngine-runtime")));
     boolean removeOrmJars = Boolean.parseBoolean(System.getProperty("jps.appengine.enhancer.remove.orm.jars", "true"));
     for (File file : JpsJavaExtensionService.dependencies(module).recursively().compileOnly().productionOnly().classes().getRoots()) {
       if (removeOrmJars && FileUtil.isAncestor(new File(extension.getOrmLibPath()), file, true)) {

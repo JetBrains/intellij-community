@@ -21,21 +21,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ComparatorUtil;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtil.skipNulls;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.skipNulls;
 
 public class PathUtilEx {
   @NonNls private static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
@@ -56,18 +57,15 @@ public class PathUtilEx {
   }
 
   public static void addRtJar(PathsList pathsList) {
-    final String ideaRtJarPath = getIdeaRtJarPath();
-    if (Boolean.getBoolean(IDEA_PREPEND_RTJAR)) {
-      pathsList.addFirst(ideaRtJarPath);
+    List<String> rootPaths = PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("java-runtime"));
+    for (String path : rootPaths) {
+      if (Boolean.getBoolean(IDEA_PREPEND_RTJAR)) {
+        pathsList.addFirst(path);
+      }
+      else {
+        pathsList.addTail(path);
+      }
     }
-    else {
-      pathsList.addTail(ideaRtJarPath);
-    }
-  }
-
-  public static String getIdeaRtJarPath() {
-    final Class aClass = JavacRunner.class;
-    return PathUtil.getJarPathForClass(aClass);
   }
 
   public static Sdk getAnyJdk(Project project) {

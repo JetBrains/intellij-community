@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,6 +50,8 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,8 +143,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       classpath.addAll(options.getAdditionalClasspath());
       classpath.addAll(antInstallation.getClasspath());
       JpsAntInstallationImpl.addAllJarsFromDirectory(classpath, new File(SystemProperties.getUserHome(), ".ant/lib"));
-      classpath.add(PathManager.getJarPathForClass(AntMain2.class));
-
+      classpath.addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("java-runtime")));
       List<String> vmParams = new ArrayList<String>();
       vmParams.add("-Xmx" + options.getMaxHeapSize() + "m");
       vmParams.add("-Xss" + options.getMaxStackSize() + "m");
