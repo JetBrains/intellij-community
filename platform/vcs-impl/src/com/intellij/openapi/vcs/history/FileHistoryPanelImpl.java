@@ -921,9 +921,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     protected void executeAction(AnActionEvent e) {
       if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
       final VcsFileRevision revision = getFirstSelectedRevision();
-      if (getVirtualFile() != null) {
+      VirtualFile virtualFile = getVirtualFile();
+      if (virtualFile != null) {
         if (!new ReplaceFileConfirmationDialog(myVcs.getProject(), VcsBundle.message("acton.name.get.revision"))
-          .confirmFor(new VirtualFile[]{getVirtualFile()})) {
+          .confirmFor(new VirtualFile[]{virtualFile})) {
           return;
         }
       }
@@ -1042,17 +1043,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     private void write(byte[] revision) throws IOException {
-      if (getVirtualFile() == null) {
+      VirtualFile virtualFile = getVirtualFile();
+      if (virtualFile == null) {
         writeContentToIOFile(revision);
       }
       else {
         Document document = null;
-        VirtualFile virtualFile = myFilePath.getVirtualFile();
-        if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
+        if (!virtualFile.getFileType().isBinary()) {
           document = FileDocumentManager.getInstance().getDocument(virtualFile);
         }
         if (document == null) {
-          writeContentToFile(revision);
+          virtualFile.setBinaryContent(revision);
         }
         else {
           writeContentToDocument(document, revision);
@@ -1068,10 +1069,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       finally {
         outputStream.close();
       }
-    }
-
-    private void writeContentToFile(final byte[] revision) throws IOException {
-      getVirtualFile().setBinaryContent(revision);
     }
 
     private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {
@@ -1106,10 +1103,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
       VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
       if (file == null || file.isDirectory()) return null;
-
-      VirtualFile localVirtualFile = getVirtualFile();
-      if (localVirtualFile.getFileType().isBinary() && myFilePath.getFileType().isBinary()) return null;
-
+      if (myFilePath.getFileType().isBinary()) return null;
       return file;
     }
 
@@ -1173,13 +1167,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return myFilePath.getIOFile();
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      if (getVirtualFile() == null) return null;
-      if (getVirtualFile().isValid()) {
-        return getVirtualFile();
-      }
-      else {
-        return null;
-      }
+      VirtualFile virtualFile = getVirtualFile();
+      return virtualFile == null || !virtualFile.isValid() ? null : virtualFile;
     }
     else if (VcsDataKeys.FILE_HISTORY_PANEL.is(dataId)) {
       return this;
@@ -1523,6 +1512,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return myFilePath;
   }
 
+  @Nullable
   public VirtualFile getVirtualFile() {
     return myFilePath.getVirtualFile();
   }
