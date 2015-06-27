@@ -28,7 +28,7 @@ public class MacIntelliJLabelUI extends BasicLabelUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    c.setBorder(JBUI.Borders.emptyTop(1).asUIResource());
+    c.setBorder(JBUI.Borders.empty(1, 3, 0, 0).asUIResource());
     return new MacIntelliJLabelUI();
   }
 }
