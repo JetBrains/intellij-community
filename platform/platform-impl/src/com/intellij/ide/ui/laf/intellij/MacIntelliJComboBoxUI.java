@@ -20,7 +20,6 @@ import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
@@ -88,7 +87,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     return getSizeWithIcon(super.getMinimumSize(c));
   }
 
-  private Dimension getSizeWithIcon(Dimension d) {
+  private static Dimension getSizeWithIcon(Dimension d) {
     return new Dimension(Math.max(d.width + 7, COMBOBOX.getIconWidth()), Math.max(d.height, COMBOBOX.getIconHeight()));
   }
 
@@ -106,6 +105,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
           return new JTextField() {
             {
               setOpaque(false);
+              setBorder(JBUI.Borders.empty(1, 0));
             }
 
             public void setText(String s) {
@@ -113,10 +113,6 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
                 return;
               }
               super.setText(s);
-            }
-
-            public void setBorder(Border b) {
-                super.setBorder(b);
             }
 
             @Override
