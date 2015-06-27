@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -58,9 +59,9 @@ public class MacIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
     return DEFAULT_ICON;
   }
 
-  protected class MacCheckBoxBorder extends EmptyBorder implements UIResource {
+  protected static class MacCheckBoxBorder extends EmptyBorder implements UIResource {
     public MacCheckBoxBorder() {
-      super(3, 7, 3, 7);
+      super(JBUI.insets(3, 7));
     }
   }
 }
