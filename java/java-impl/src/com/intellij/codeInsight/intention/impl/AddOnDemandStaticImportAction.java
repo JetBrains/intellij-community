@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,9 +198,6 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   }
 
   private static boolean isParameterizedReference(final PsiJavaCodeReferenceElement expression) {
-    if (expression.getParameterList() == null) {
-      return false;
-    }
     PsiReferenceParameterList parameterList = expression.getParameterList();
     return parameterList != null && parameterList.getFirstChild() != null;
   }
