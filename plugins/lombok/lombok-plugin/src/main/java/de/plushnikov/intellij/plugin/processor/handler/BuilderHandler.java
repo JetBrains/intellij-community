@@ -21,6 +21,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import de.plushnikov.intellij.plugin.processor.handler.singular.AbstractSingularHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
@@ -87,14 +88,15 @@ public class BuilderHandler {
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
       result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
           validateExistingBuilderClass(builderClassName, psiClass, problemBuilder) &&
-          validateSingularVariables(psiClass, problemBuilder);
+          validateSingular(psiClass, problemBuilder);
     }
     return result;
   }
 
-  private boolean validateSingularVariables(@NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
+  private boolean validateSingular(@NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
     boolean result = true;
 
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
     final Collection<PsiField> builderFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet());
     for (PsiVariable builderVariable : builderFields) {
       final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(builderVariable, Singular.class);
@@ -103,6 +105,12 @@ public class BuilderHandler {
         if (SingularHandlerFactory.isInvalidSingularType(qualifiedName)) {
           problemBuilder.addError("Lombok does not know how to create the singular-form builder methods for type '%s'; " +
               "they won't be generated.", qualifiedName != null ? qualifiedName : builderVariable.getType().getCanonicalText());
+          result = false;
+        }
+
+        final String variableName = builderVariable.getName();
+        if (!AbstractSingularHandler.validateSingularName(singularAnnotation, accessorsInfo.removePrefix(variableName))) {
+          problemBuilder.addError("Can't singularize this name: \"%s\"; please specify the singular explicitly (i.e. @Singular(\"sheep\"))", variableName);
           result = false;
         }
       }

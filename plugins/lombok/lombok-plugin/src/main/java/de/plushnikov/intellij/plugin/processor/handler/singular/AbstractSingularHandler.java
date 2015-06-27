@@ -46,7 +46,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   @Override
   public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
     final String psiFieldName = psiVariable.getName();
-    final String singularName = createSingularName(singularAnnotation, psiFieldName);
+    final String singularName = createSingularName(singularAnnotation, accessorsInfo.removePrefix(psiFieldName));
 
     final PsiType psiFieldType = psiVariable.getType();
 
@@ -84,13 +84,20 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   protected String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
     String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");
     if (StringUtil.isEmptyOrSpaces(singularName)) {
-      //TODO remove accessors prefix
       singularName = Singulars.autoSingularize(psiFieldName);
       if (singularName == null) {
-        //TODO addError("Can't singularize this name; please specify the singular explicitly (i.e. @Singular(\"sheep\"))");
         singularName = psiFieldName;
       }
     }
     return singularName;
+  }
+
+  public static boolean validateSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
+    String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");
+    if (StringUtil.isEmptyOrSpaces(singularName)) {
+      singularName = Singulars.autoSingularize(psiFieldName);
+      return singularName != null;
+    }
+    return true;
   }
 }
