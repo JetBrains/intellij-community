@@ -51,7 +51,6 @@ import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
-import git4idea.util.GitFreezingProcess;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +80,6 @@ public class GitUpdateProcess {
   private final GitChangesSaver mySaver;
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
-  private GitUpdateResult myResult;
 
   public GitUpdateProcess(@NotNull Project project,
                           @NotNull GitPlatformFacade platformFacade,
@@ -135,19 +133,17 @@ public class GitUpdateProcess {
     if (!fetchAndNotify()) {
       return GitUpdateResult.NOT_READY;
     }
-    new GitFreezingProcess(myProject, myPlatformFacade, "update", new Runnable() {
-      public void run() {
-        AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-        try {
-          myResult = updateImpl(updateMethod);
-        }
-        finally {
-          DvcsUtil.workingTreeChangeFinished(myProject, token);
-        }
-      }
-    }).execute();
+
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
+    GitUpdateResult result;
+    try {
+      result = updateImpl(updateMethod);
+    }
+    finally {
+      DvcsUtil.workingTreeChangeFinished(myProject, token);
+    }
     myProgressIndicator.setText(oldText);
-    return myResult;
+    return result;
   }
 
   @NotNull
