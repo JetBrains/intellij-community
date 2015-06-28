@@ -42,10 +42,6 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     myItems = ContainerUtilRt.newArrayList(items);
   }
 
-  public CollectionListModel() {
-    myItems = new ArrayList<T>();
-  }
-
   @Override
   public int getSize() {
     return myItems.size();
