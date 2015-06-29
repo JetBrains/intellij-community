@@ -101,6 +101,40 @@ class Test implements A {
 """
   }
 
+  public void testTypeAnnotationsInImplementedMethod() {
+    myFixture.addClass """\
+      import java.lang.annotation.*;
+      @Target(ElementType.TYPE_USE)
+      public @interface TA { }""".stripIndent()
+
+    myFixture.configureByText "test.java", """\
+      import java.util.*;
+
+      interface I {
+          @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent()
+
+    invokeAction(true)
+
+    myFixture.checkResult """\
+      import java.util.*;
+
+      interface I {
+          @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
+      }
+
+      class C implements I {
+          @Override
+          public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] @TA(3) [] p2) throws @TA IllegalArgumentException {
+              return null;
+          }
+      }""".stripIndent()
+  }
+
   private void doTest(boolean toImplement) {
     String name = getTestName(false)
     myFixture.configureByFile("before${name}.java")

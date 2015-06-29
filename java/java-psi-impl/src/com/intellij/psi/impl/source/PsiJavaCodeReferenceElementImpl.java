@@ -268,13 +268,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         JavaResolveResult[] results = PsiImplUtil.multiResolveImpl(containingFile.getProject(), containingFile, this, false, OurGenericsResolver.INSTANCE);
         PsiElement target = results.length == 1 ? results[0].getElement() : null;
         if (target instanceof PsiClass) {
-          PsiClass aClass = (PsiClass)target;
           StringBuilder buffer = new StringBuilder();
 
+          PsiClass aClass = (PsiClass)target;
           PsiElement qualifier = getQualifier();
+
           String prefix = null;
           if (qualifier instanceof PsiJavaCodeReferenceElementImpl) {
-            prefix = ((PsiJavaCodeReferenceElementImpl)qualifier).getCanonicalText(annotated, null, containingFile);
+            prefix = ((PsiJavaCodeReferenceElementImpl)qualifier).getCanonicalText(annotated, annotations, containingFile);
+            annotations = null;
           }
           else {
             String fqn = aClass.getQualifiedName();
