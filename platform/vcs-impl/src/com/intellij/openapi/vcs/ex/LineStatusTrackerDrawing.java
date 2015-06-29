@@ -91,23 +91,22 @@ public class LineStatusTrackerDrawing {
     final int x = r.x + r.width - 3;
     final int endX = gutter.getWhitespaceSeparatorOffset();
 
-    if (range.getInnerRanges() == null) { // actual painter
-      if (r.height > 0) {
-        paintRect(g, gutterColor, borderColor, x, r.y, endX, r.y + r.height);
+    final int y = lineToY(editor, range.getLine1());
+    final int endY = lineToY(editor, range.getLine2());
+
+    if (range.getInnerRanges() == null) { // Mode.DEFAULT
+      if (y != endY) {
+        paintRect(g, gutterColor, borderColor, x, y, endX, endY);
       }
       else {
-        paintTriangle(g, gutterColor, borderColor, x, endX, r.y);
+        paintTriangle(g, gutterColor, borderColor, x, endX, y);
       }
     }
-    else { // registry: diff.status.tracker.smart
-      if (range.getType() == Range.DELETED) {
-        final int y = lineToY(editor, range.getLine1());
+    else { // Mode.SMART
+      if (y == endY) {
         paintTriangle(g, gutterColor, borderColor, x, endX, y);
       }
       else {
-        final int y = lineToY(editor, range.getLine1());
-        int endY = lineToY(editor, range.getLine2());
-
         List<Range.InnerRange> innerRanges = range.getInnerRanges();
         for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() == Range.DELETED) continue;
