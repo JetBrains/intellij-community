@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
  * @author Max Medvedev
  */
 public class NotAndParenthesesSurrounder extends GroovyExpressionSurrounder {
+
   @Override
   protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
-    GrUnaryExpression result = (GrUnaryExpression)GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("!(a)", context);
-    GroovyExpressionSurrounder.replaceToOldExpression(((GrParenthesizedExpression)result.getOperand()).getOperand(), expression);
-    result = (GrUnaryExpression)expression.replaceWithExpression(result, true);
-    return new TextRange(result.getTextRange().getEndOffset(), result.getTextRange().getEndOffset());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
+    final GrUnaryExpression template = (GrUnaryExpression)factory.createExpressionFromText("!(a)", context);
+    assert template.getOperand() != null;
+    GroovyExpressionSurrounder.replaceToOldExpression(((GrParenthesizedExpression)template.getOperand()).getOperand(), expression);
+    final GrExpression result = expression.replaceWithExpression(template, true);
+    final int endOffset = result.getTextRange().getEndOffset();
+    return new TextRange(endOffset, endOffset);
   }
 
   @Override
