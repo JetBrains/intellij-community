@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -44,7 +45,7 @@ import java.io.Writer;
 import java.util.Map;
 import java.util.Set;
 
-final class ClasspathSaveSession implements StateStorage.ExternalizationSession, StateStorage.SaveSession {
+final class ClasspathSaveSession implements StateStorage.ExternalizationSession, StateStorage.SaveSession, SafeWriteRequestor {
   private final Map<String, Element> modifiedContent = new THashMap<String, Element>();
   private final Set<String> deletedContent = new THashSet<String>();
 
