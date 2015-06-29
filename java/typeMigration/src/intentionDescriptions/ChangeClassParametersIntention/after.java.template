@@ -5,6 +5,6 @@ public class X {
             public int compareTo(String o) {
               return 0;
             }
-        }
+        };
     }
 }
