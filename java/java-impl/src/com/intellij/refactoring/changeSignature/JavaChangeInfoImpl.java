@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * created at Sep 17, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,11 +30,14 @@ import java.util.*;
 
 import static com.intellij.refactoring.changeSignature.ChangeSignatureUtil.deepTypeEqual;
 
+/**
+ * @author Jeka
+ * @since Sep 17, 2001
+ */
 public class JavaChangeInfoImpl implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
 
-  @PsiModifier.ModifierConstant
-  final String newVisibility;
+  @PsiModifier.ModifierConstant final String newVisibility;
   private PsiMethod method;
   String oldName;
   final String oldType;
@@ -64,7 +62,6 @@ public class JavaChangeInfoImpl implements JavaChangeInfo {
   final boolean obtainsVarags;
   final boolean arrayToVarargs;
   PsiIdentifier newNameIdentifier;
-//  PsiType newTypeElement;
   final PsiExpression[] defaultValues;
 
   final boolean isGenerateDelegate;
@@ -101,6 +98,8 @@ public class JavaChangeInfoImpl implements JavaChangeInfo {
                             Set<PsiMethod> propagateParametersMethods,
                             Set<PsiMethod> propagateExceptionsMethods,
                             String oldName) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+
     this.newVisibility = newVisibility;
     this.method = method;
     this.newName = newName;
@@ -108,18 +107,21 @@ public class JavaChangeInfoImpl implements JavaChangeInfo {
     this.newParms = newParms;
     wasVararg = method.isVarArgs();
 
-    this.isGenerateDelegate =generateDelegate;
-    this.propagateExceptionsMethods=propagateExceptionsMethods;
-    this.propagateParametersMethods=propagateParametersMethods;
+    this.isGenerateDelegate = generateDelegate;
+    this.propagateExceptionsMethods = propagateExceptionsMethods;
+    this.propagateParametersMethods = propagateParametersMethods;
 
     this.oldName = oldName;
-    final PsiManager manager = method.getManager();
+
     if (!method.isConstructor()){
-      oldType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(method.getReturnType()).getText();
+      PsiType type = method.getReturnType();
+      assert type != null : method;
+      oldType = factory.createTypeElement(type).getText();
     }
     else{
       oldType = null;
     }
+
     fillOldParams(method);
 
     isVisibilityChanged = !method.hasModifierProperty(newVisibility);
@@ -162,7 +164,6 @@ public class JavaChangeInfoImpl implements JavaChangeInfo {
       toRemoveParm[info.oldParameterIndex] = false;
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     defaultValues = new PsiExpression[newParms.length];
     for(int i = 0; i < newParms.length; i++){
       ParameterInfoImpl info = newParms[i];
@@ -327,7 +328,7 @@ public class JavaChangeInfoImpl implements JavaChangeInfo {
   }
 
   public Language getLanguage() {
-    return StdLanguages.JAVA;
+    return JavaLanguage.INSTANCE;
   }
 
   public boolean isExceptionSetChanged() {
@@ -423,12 +424,16 @@ public class JavaChangeInfoImpl implements JavaChangeInfo {
     if (!newName.equals(that.newName)) return false;
     if (newNameIdentifier != null ? !newNameIdentifier.equals(that.newNameIdentifier) : that.newNameIdentifier != null) return false;
     if (!Arrays.equals(newParms, that.newParms)) return false;
-    if (newReturnType != null ? that.newReturnType == null || !Comparing.strEqual(newReturnType.getTypeText(), that.newReturnType.getTypeText()) : that.newReturnType != null) return false;
+    if (newReturnType != null
+        ? that.newReturnType == null || !Comparing.strEqual(newReturnType.getTypeText(), that.newReturnType.getTypeText())
+        : that.newReturnType != null) {
+      return false;
+    }
     if (newVisibility != null ? !newVisibility.equals(that.newVisibility) : that.newVisibility != null) return false;
     if (!oldName.equals(that.oldName)) return false;
     if (!Arrays.equals(oldParameterNames, that.oldParameterNames)) return false;
     if (!Arrays.equals(oldParameterTypes, that.oldParameterTypes)) return false;
-    if (oldType != null ? !oldType.equals(that.oldType): that.oldType != null) return false;
+    if (oldType != null ? !oldType.equals(that.oldType) : that.oldType != null) return false;
     if (!propagateExceptionsMethods.equals(that.propagateExceptionsMethods)) return false;
     if (!propagateParametersMethods.equals(that.propagateParametersMethods)) return false;
     if (!Arrays.equals(toRemoveParm, that.toRemoveParm)) return false;
@@ -443,7 +448,7 @@ public class JavaChangeInfoImpl implements JavaChangeInfo {
       result = 31 * result + method.hashCode();
     }
     result = 31 * result + oldName.hashCode();
-    result = 31 * result +(oldType != null ? oldType.hashCode() : 0);
+    result = 31 * result + (oldType != null ? oldType.hashCode() : 0);
     result = 31 * result + Arrays.hashCode(oldParameterNames);
     result = 31 * result + Arrays.hashCode(oldParameterTypes);
     result = 31 * result + newName.hashCode();
