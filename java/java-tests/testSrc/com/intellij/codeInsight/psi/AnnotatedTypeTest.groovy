@@ -24,7 +24,7 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
   private PsiElementFactory factory
   private PsiElement context
 
-  public void setUp() throws Exception {
+  public void setUp() {
     super.setUp()
 
     factory = myFixture.javaFacade.elementFactory
@@ -35,6 +35,10 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
 
       @interface A { }
       @Target(ElementType.TYPE_USE) @interface TA { int value() default 42; }
+
+      class O {
+        class I { }
+      }
 
       class E1 extends Exception { }
       class E2 extends Exception { }""".stripIndent())
@@ -54,6 +58,14 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
 
   public void testQualifiedClassReferenceType() {
     doTest("@A java.lang.@TA(1) String s", "java.lang.@pkg.TA(1) String", "java.lang.String")
+  }
+
+  public void testQualifiedPackageClassReferenceType() {
+    doTest("@A @TA java.lang.String s", "java.lang.String", "java.lang.String")  // packages cannot have type annotations
+  }
+
+  public void testPartiallyQualifiedClassReferenceType() {
+    doTest("@TA(1) O.@TA(2) I i", "pkg.@pkg.TA(1) O.@pkg.TA(2) I", "pkg.O.I")
   }
 
   public void testCStyleArrayType() {

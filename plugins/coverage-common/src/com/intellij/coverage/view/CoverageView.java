@@ -32,6 +32,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -301,7 +303,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
   }
   
-  private class GoUpAction extends AnAction {
+  private class GoUpAction extends DumbAwareAction {
 
     private final CoverageViewTreeStructure myTreeStructure;
 

@@ -1,6 +1,7 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -101,13 +102,26 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
             if (!brokenOff) {
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               try {
-                final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
+                final PsiType targetParam = elementFactory.createTypeFromText(myNewType, typeElement);
+                if (!(targetParam instanceof PsiClassType)) {
+                  HintManager.getInstance().showErrorHint(editor,
+                                                          JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type"));
+                  return;
+                }
+                final PsiClassType classType = (PsiClassType)targetParam;
+                final PsiClass target = classType.resolve();
+                if (target == null) {
+                  HintManager.getInstance().showErrorHint(editor, JavaErrorMessages.message("cannot.resolve.symbol",
+                                                                                            classType.getPresentableText()));
+                  return;
+                }
                 final TypeMigrationRules myRules = new TypeMigrationRules(((PsiAnonymousClass)aClass).getBaseClassType());
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
                 myRules.setMigrationRootType(targetClassType);
                 myRules.setBoundScope(new LocalSearchScope(aClass));
-                new TypeMigrationProcessor(project, ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), myRules).run();
+                TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, myRules,
+                                                                    ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList());
               }
               catch (IncorrectOperationException e) {
                 HintManager.getInstance().showErrorHint(editor, "Incorrect type");

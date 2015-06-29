@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -550,17 +551,14 @@ public class GenerateMembersUtil {
     PsiModifierList targetModifierList = targetParam.getModifierList();
 
     if (sourceModifierList != null && targetModifierList != null) {
-      if (sourceParam.getLanguage() == targetParam.getLanguage()) {
-        targetModifierList = (PsiModifierList)targetModifierList.replace(sourceModifierList);
-      }
-      else {
-        JVMElementFactory factory = JVMElementFactories.requireFactory(targetParam.getLanguage(), targetParam.getProject());
-        for (PsiAnnotation annotation : sourceModifierList.getAnnotations()) {
+      JVMElementFactory factory = JVMElementFactories.requireFactory(targetParam.getLanguage(), targetParam.getProject());
+      for (PsiAnnotation annotation : sourceModifierList.getAnnotations()) {
+        if (!PsiImplUtil.isTypeAnnotation(annotation)) {
           targetModifierList.add(factory.createAnnotationFromText(annotation.getText(), sourceParam));
         }
-        for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
-          targetModifierList.setModifierProperty(m, sourceParam.hasModifierProperty(m));
-        }
+      }
+      for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
+        targetModifierList.setModifierProperty(m, sourceParam.hasModifierProperty(m));
       }
 
       filterAnnotations(sourceModifierList.getProject(), targetModifierList, targetModifierList.getResolveScope());
@@ -568,13 +566,13 @@ public class GenerateMembersUtil {
   }
 
   private static void filterAnnotations(Project project, PsiModifierList modifierList, GlobalSearchScope moduleScope) {
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final Set<String> toRemove = new HashSet<String>();
+    Set<String> toRemove = new HashSet<String>();
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      final String qualifiedName = annotation.getQualifiedName();
+      String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
         for (OverrideImplementsAnnotationsHandler handler : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
-          final String[] annotations2Remove = handler.annotationsToRemove(project, qualifiedName);
+          String[] annotations2Remove = handler.annotationsToRemove(project, qualifiedName);
           Collections.addAll(toRemove, annotations2Remove);
           if (moduleScope != null && psiFacade.findClass(qualifiedName, moduleScope) == null) {
             toRemove.add(qualifiedName);
@@ -583,13 +581,12 @@ public class GenerateMembersUtil {
       }
     }
     for (String fqn : toRemove) {
-      final PsiAnnotation psiAnnotation = modifierList.findAnnotation(fqn);
+      PsiAnnotation psiAnnotation = modifierList.findAnnotation(fqn);
       if (psiAnnotation != null) {
         psiAnnotation.delete();
       }
     }
   }
-
 
   //java bean getters/setters
   public static PsiMethod generateSimpleGetterPrototype(@NotNull PsiField field) {

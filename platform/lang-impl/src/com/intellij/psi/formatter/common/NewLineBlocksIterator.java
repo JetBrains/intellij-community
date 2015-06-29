@@ -71,19 +71,18 @@ public class NewLineBlocksIterator implements Iterator<Block> {
   }
 
   private void popUntilTopBlockStartOffsetGreaterOrEqual(final int lineStartOffset) {
-    if (myStack.isEmpty()) return;
-
-    Block current = myStack.peek();
-    TextRange range = current.getTextRange();
-    int currentStartOffset = range.getStartOffset();
-    int currentEndOffset = range.getEndOffset();
-
-    if (currentStartOffset < lineStartOffset) {
-      myStack.pop();
-      if (currentEndOffset > lineStartOffset) {
-        pushAll(current);
+    while (!myStack.isEmpty()) {
+      Block current = myStack.peek();
+      TextRange range = current.getTextRange();
+      if (range.getStartOffset() < lineStartOffset) {
+        myStack.pop();
+        if (range.getEndOffset() > lineStartOffset) {
+          pushAll(current);
+        }
       }
-      popUntilTopBlockStartOffsetGreaterOrEqual(lineStartOffset);
+      else {
+        break;
+      }
     }
   }
 

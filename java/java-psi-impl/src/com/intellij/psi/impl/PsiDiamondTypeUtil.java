@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,15 +118,11 @@ public class PsiDiamondTypeUtil {
     if (!(parent instanceof PsiJavaCodeReferenceElement)) {
       return parent;
     }
-    final PsiJavaCodeReferenceElement javaCodeReferenceElement =
-            (PsiJavaCodeReferenceElement) parent;
-    final PsiReferenceParameterList referenceParameterList =
-            (PsiReferenceParameterList) element;
+    final PsiJavaCodeReferenceElement javaCodeReferenceElement = (PsiJavaCodeReferenceElement) parent;
     final StringBuilder text = new StringBuilder();
     text.append(javaCodeReferenceElement.getQualifiedName());
     text.append('<');
-    final PsiTypeElement[] typeElements = referenceParameterList.getTypeParameterElements();
-    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(typeElements[0], PsiNewExpression.class);
+    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
     final PsiDiamondType.DiamondInferenceResult result = PsiDiamondTypeImpl.resolveInferredTypesNoCheck(newExpression, newExpression);
     text.append(StringUtil.join(result.getInferredTypes(), new Function<PsiType, String>() {
       @Override
@@ -135,10 +131,8 @@ public class PsiDiamondTypeUtil {
       }
     }, ","));
     text.append('>');
-    final PsiElementFactory elementFactory =
-            JavaPsiFacade.getElementFactory(element.getProject());
-    final PsiJavaCodeReferenceElement newReference =
-            elementFactory.createReferenceFromText(text.toString(), element);
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
+    final PsiJavaCodeReferenceElement newReference = elementFactory.createReferenceFromText(text.toString(), element);
     return CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(javaCodeReferenceElement.replace(newReference));
   }
 
