@@ -17,13 +17,12 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -153,7 +152,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       return file;
     }
 
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+    AccessToken token = WriteAction.start();
     try {
       return parent.createChildData(requestor, fileName);
     }
@@ -282,7 +281,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
 
     private void deleteFiles(@NotNull VirtualFile dir) throws IOException {
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      AccessToken token = WriteAction.start();
       try {
         for (VirtualFile file : dir.getChildren()) {
           if (removedFileNames.contains(file.getName())) {

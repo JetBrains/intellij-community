@@ -29,7 +29,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -238,7 +237,7 @@ public class StorageUtil {
   }
 
   public static void deleteFile(@NotNull Object requestor, @NotNull VirtualFile virtualFile) throws IOException {
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+    AccessToken token = WriteAction.start();
     try {
       virtualFile.delete(requestor);
     }

@@ -27,7 +27,6 @@ import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -589,7 +588,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       if (renamed) {
         file = dir.findChild(externalInfo.fileNameWithoutExtension + externalInfo.fileExtension);
         if (file != null) {
-          AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+          AccessToken token = WriteAction.start();
           try {
             file.rename(this, fileName);
           }
@@ -603,7 +602,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
         file = DirectoryBasedStorage.getFile(fileName, dir, this);
       }
 
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      AccessToken token = WriteAction.start();
       try {
         OutputStream out = file.getOutputStream(this);
         try {
@@ -670,7 +669,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
         for (VirtualFile file : dir.getChildren()) {
           if (filesToDelete.contains(file.getName())) {
             if (token == null) {
-              token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+              token = WriteAction.start();
             }
 
             try {
