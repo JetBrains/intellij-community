@@ -18,7 +18,9 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 target('default': "Developers update") {
-  loadProjectFromPath(home)
+  //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
+  String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
+  loadProjectFromPath(projectHome)
   def patchedDescriptorDir = patchAppDescriptor(deploy)
   layoutFull(home, deploy, patchedDescriptorDir)
   ant.delete(dir: patchedDescriptorDir)

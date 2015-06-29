@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,6 +256,9 @@ public class CompletionUtil {
 
   public static LinkedHashSet<String> sortMatching(final PrefixMatcher matcher, Collection<String> _names) {
     ProgressManager.checkCanceled();
+    if (matcher.getPrefix().isEmpty()) {
+      return ContainerUtil.newLinkedHashSet(_names);
+    }
 
     List<String> sorted = new ArrayList<String>();
     for (String name : _names) {
