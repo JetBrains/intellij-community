@@ -15,6 +15,7 @@
  */
 package org.jetbrains.platform.loader.impl.repository;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.platform.loader.impl.ModuleDescriptorsGenerationRunner;
@@ -47,10 +48,16 @@ public class DevelopmentRepository extends PlatformRepositoryBase {
   @Nullable
   protected RuntimeModuleDescriptor findModule(RuntimeModuleId moduleName) {
     String name = moduleName.getStringId();
-    if (name.startsWith("lib")) {
+    if (name.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
       return myLibraryModules.get(moduleName);
     }
-    File root = new File(myOutputRoot, "production/" + name);
+    File root;
+    if (name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX)) {
+      root = new File(myOutputRoot, "test/" + StringUtil.trimEnd(name, RuntimeModuleId.TESTS_NAME_SUFFIX));
+    }
+    else {
+      root = new File(myOutputRoot, "production/" + name);
+    }
     if (root.isDirectory()) {
       return ModuleXmlParser.loadFromFile(root, moduleName);
     }

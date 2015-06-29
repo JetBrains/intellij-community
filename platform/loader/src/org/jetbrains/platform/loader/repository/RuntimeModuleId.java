@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class RuntimeModuleId {
   public static final String LIB_NAME_PREFIX = "lib.";
+  public static final String TESTS_NAME_SUFFIX = ".tests";
   private final String myStringId;
 
   private RuntimeModuleId(@NotNull String stringId) {
@@ -38,7 +39,7 @@ public final class RuntimeModuleId {
   }
 
   public static RuntimeModuleId moduleTests(@NotNull String moduleName) {
-    return new RuntimeModuleId(moduleName + ".tests");
+    return new RuntimeModuleId(moduleName + TESTS_NAME_SUFFIX);
   }
 
   public static RuntimeModuleId projectLibrary(@NotNull String libraryName) {
