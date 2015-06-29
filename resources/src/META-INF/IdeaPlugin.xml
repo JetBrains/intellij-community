@@ -985,7 +985,7 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction</className>
-      <category>Declaration</category>
+      <category>Try Statements</category>
     </intentionAction>
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
