@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 public class NotAndParenthesesSurrounder extends GroovyExpressionSurrounder {
 
   @Override
-  protected TextRange surroundExpression(GrExpression expression, PsiElement context) {
+  protected TextRange surroundExpression(@NotNull GrExpression expression, @NotNull PsiElement context) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
     final GrUnaryExpression template = (GrUnaryExpression)factory.createExpressionFromText("!(a)", context);
     assert template.getOperand() != null;
