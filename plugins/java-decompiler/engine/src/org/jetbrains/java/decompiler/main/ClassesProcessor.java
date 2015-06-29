@@ -148,7 +148,7 @@ public class ClassesProcessor {
         // root class?
         if (!mapInnerClasses.containsKey(ent.getKey())) {
 
-          HashSet<String> setVisited = new HashSet<String>();
+          Set<String> setVisited = new HashSet<String>();
           LinkedList<String> stack = new LinkedList<String>();
 
           stack.add(ent.getKey());
@@ -157,12 +157,12 @@ public class ClassesProcessor {
           while (!stack.isEmpty()) {
 
             String superClass = stack.removeFirst();
-            ClassNode supernode = mapRootClasses.get(superClass);
+            ClassNode superNode = mapRootClasses.get(superClass);
 
-            HashSet<String> setNestedClasses = mapNestedClassReferences.get(superClass);
+            Set<String> setNestedClasses = mapNestedClassReferences.get(superClass);
             if (setNestedClasses != null) {
 
-              StructClass scl = supernode.classStruct;
+              StructClass scl = superNode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
               for (int i = 0; i < inner.getStringEntries().size(); i++) {
                 String nestedClass = inner.getStringEntries().get(i)[0];
@@ -216,8 +216,8 @@ public class ClassesProcessor {
                   nestednode.access &= (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_FINAL);
                 }
 
-                supernode.nested.add(nestednode);
-                nestednode.parent = supernode;
+                superNode.nested.add(nestednode);
+                nestednode.parent = superNode;
 
                 nestednode.enclosingClasses.addAll(mapEnclosingClassReferences.get(nestedClass));
 

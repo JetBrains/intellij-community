@@ -82,8 +82,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     }
     final ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
                                                                                       processHandler,
-                                                                                      consoleProperties,
-                                                                                      getEnvironment());
+                                                                                      consoleProperties);
     addTracebackFilter(project, consoleView, processHandler);
     return consoleView;
   }
