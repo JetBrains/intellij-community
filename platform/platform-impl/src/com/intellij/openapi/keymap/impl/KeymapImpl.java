@@ -135,16 +135,21 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   @NotNull
   public KeymapImpl copy() {
     KeymapImpl newKeymap = new KeymapImpl();
-    newKeymap.myParent = myParent;
-    newKeymap.myName = myName;
-    newKeymap.myCanModify = canModify();
+    return copyTo(newKeymap);
+  }
 
-    newKeymap.cleanShortcutsCache();
+  @NotNull
+  public KeymapImpl copyTo(@NotNull KeymapImpl otherKeymap) {
+    otherKeymap.myParent = myParent;
+    otherKeymap.myName = myName;
+    otherKeymap.myCanModify = canModify();
+
+    otherKeymap.cleanShortcutsCache();
 
     for (Map.Entry<String, LinkedHashSet<Shortcut>> entry : myActionId2ListOfShortcuts.entrySet()) {
-      newKeymap.myActionId2ListOfShortcuts.put(entry.getKey(), new LinkedHashSet<Shortcut>(entry.getValue()));
+      otherKeymap.myActionId2ListOfShortcuts.put(entry.getKey(), new LinkedHashSet<Shortcut>(entry.getValue()));
     }
-    return newKeymap;
+    return otherKeymap;
   }
 
   public boolean equals(Object object) {

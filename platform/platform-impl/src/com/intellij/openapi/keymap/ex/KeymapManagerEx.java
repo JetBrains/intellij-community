@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.options.SchemesManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -35,7 +36,7 @@ public abstract class KeymapManagerEx extends KeymapManager {
    */
   public abstract Keymap[] getAllKeymaps();
 
-  public abstract void setActiveKeymap(Keymap activeKeymap);
+  public abstract void setActiveKeymap(@Nullable Keymap keymap);
 
   /**
    * Instructs the manager that one action should use shortcut of another one (<code>'use-shortcut-of'</code> attribute at
