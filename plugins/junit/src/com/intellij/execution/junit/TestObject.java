@@ -50,10 +50,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.rt.execution.junit.IDEAJUnitListener;
-import com.intellij.rt.execution.junit.JUnitForkedStarter;
-import com.intellij.rt.execution.junit.JUnitStarter;
-import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.rt.execution.junit.*;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
@@ -467,7 +464,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
     getJavaParameters().getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {
-      getJavaParameters().getProgramParametersList().add(JUnitForkedStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
+      getJavaParameters().getProgramParametersList().add(ForkedStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
     }
   }
 }
