@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElementFinder;
+import org.jetbrains.plugins.groovy.util.SdkHomeBean;
 import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
 
 /**
@@ -30,11 +33,23 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
     }
 )
 public class GantSettings extends SdkHomeSettings {
+  private final Project myProject;
+
   public GantSettings(Project project) {
     super(project);
+    myProject = project;
   }
 
   public static GantSettings getInstance(Project project) {
     return ServiceManager.getService(project, GantSettings.class);
+  }
+
+  @Override
+  public void loadState(SdkHomeBean state) {
+    SdkHomeBean oldState = getState();
+    super.loadState(state);
+    if (oldState != null) {
+      Extensions.findExtension(PsiElementFinder.EP_NAME, myProject, GantClassFinder.class).clearCache();
+    }
   }
 }
