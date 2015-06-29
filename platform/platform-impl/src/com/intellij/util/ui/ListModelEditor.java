@@ -18,30 +18,13 @@ package com.intellij.util.ui;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
-public class ListModelEditor<T> extends CollectionModelEditor<T, ListItemEditor<T>> {
-  private final CollectionListModel<T> model = new CollectionListModel<T>() {
-    @Override
-    public void remove(int index) {
-      T item = getElementAt(index);
-      super.remove(index);
-      helper.remove(item);
-    }
-
-    @Override
-    public void removeAll() {
-      super.removeAll();
-      helper.clear();
-    }
-  };
-
+public class ListModelEditor<T> extends ListModelEditorBase<T> {
   private final ToolbarDecorator toolbarDecorator;
 
   private JBList list = new JBList(model);
@@ -69,23 +52,6 @@ public class ListModelEditor<T> extends CollectionModelEditor<T, ListItemEditor<
           ListScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), item));
         }
       });
-        //.setRemoveAction(new AnActionButtonRunnable() {
-      //  @Override
-      //  public void run(AnActionButton button) {
-      //    ListUtil.removeSelectedItems(myEditor.getList());
-      //    myEditor.getList().repaint();
-      //    myKeymapListener.processCurrentKeymapChanged(currentQuickListsToArray());
-      //  }
-      //})
-  }
-
-  @NotNull
-  public T getMutable(@NotNull T item) {
-    T mutable = helper.getMutable(item, itemEditor);
-    if (mutable != item) {
-      model.setElementAt(mutable, ContainerUtil.indexOfIdentity(model.getItems(), item));
-    }
-    return mutable;
   }
 
   @NotNull
@@ -98,11 +64,6 @@ public class ListModelEditor<T> extends CollectionModelEditor<T, ListItemEditor<
     return list;
   }
 
-  @NotNull
-  public CollectionListModel<T> getModel() {
-    return model;
-  }
-
   @Nullable
   public T getSelected() {
     //noinspection unchecked
@@ -110,7 +71,8 @@ public class ListModelEditor<T> extends CollectionModelEditor<T, ListItemEditor<
   }
 
   public void reset(@NotNull List<T> items) {
-    model.replaceAll(items);
+    super.reset(items);
+
     // todo should we really do this?
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
@@ -123,42 +85,19 @@ public class ListModelEditor<T> extends CollectionModelEditor<T, ListItemEditor<
     });
   }
 
-  @NotNull
-  @Override
-  protected List<T> getItems() {
-    return model.getItems();
-  }
-
-  @NotNull
-  public List<T> apply() {
-    final List<T> items = getItems();
-    if (!helper.hasModifiedItems()) {
-      return items;
-    }
-
-    helper.process(new TObjectObjectProcedure<T, T>() {
-      @Override
-      public boolean execute(T newItem, T oldItem) {
-        XmlSerializerUtil.copyBean(newItem, oldItem);
-        int index = ContainerUtil.indexOfIdentity(items, newItem);
-        if (index == -1) {
-          LOG.error("Inconsistence model", newItem.toString());
-        }
-        model.setElementAt(oldItem, index);
-        return true;
-      }
-    });
-    helper.clear();
-
-    return getItems();
-  }
-
   private class MyListCellRenderer extends ColoredListCellRenderer {
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setBackground(UIUtil.getListBackground(selected));
-      //noinspection unchecked
-      append((itemEditor.getName(((T)value))));
+      if (value != null) {
+        //noinspection unchecked
+        append((itemEditor.getName(((T)value))));
+      }
     }
+  }
+
+  @Override
+  protected void removeEmptyItem(int i) {
+    ListUtil.removeIndices(getList(), new int[]{i});
   }
 }

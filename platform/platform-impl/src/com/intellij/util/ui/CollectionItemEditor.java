@@ -20,9 +20,9 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CollectionItemEditor<T> {
   @NotNull
   /**
-   * Class must have empty constructor.
+   * Class must have an empty constructor.
    */
-  public abstract Class<T> getItemClass();
+  public abstract Class<? extends T> getItemClass();
 
   /**
    * Used for "copy" and "in place edit" actions.

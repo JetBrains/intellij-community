@@ -51,7 +51,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   private final TableView<T> table;
   private final ToolbarDecorator toolbarDecorator;
 
-  private final MyListTableModel<T> model;
+  private final MyListTableModel model;
 
   public TableModelEditor(@NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
     this(Collections.<T>emptyList(), columns, itemEditor, emptyText);
@@ -65,7 +65,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
     super(itemEditor);
 
-    model = new MyListTableModel<T>(columns, new ArrayList<T>(items), this, helper);
+    model = new MyListTableModel(columns, new ArrayList<T>(items));
     table = new TableView<T>(model);
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setStriped(true);
@@ -118,7 +118,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
             mutator = new Function<T, T>() {
               @Override
               public T fun(T item) {
-                return model.getMutable(selectedRow, item);
+                return helper.getMutable(item, selectedRow);
               }
             };
           }
@@ -203,23 +203,18 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     return newItem;
   }
 
-  private static final class MyListTableModel<T> extends ListTableModel<T> {
+  private final class MyListTableModel extends ListTableModel<T> {
     private List<T> items;
-    private final TableModelEditor<T> editor;
-    private final ModelHelper<T> helper;
     private DataChangedListener<T> dataChangedListener;
 
-    public MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items, @NotNull TableModelEditor<T> editor, @NotNull ModelHelper<T> helper) {
+    public MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items) {
       super(columns, items);
 
       this.items = items;
-      this.editor = editor;
-      this.helper = helper;
     }
 
     @Override
     public void setItems(@NotNull List<T> items) {
-      helper.clear();
       this.items = items;
       super.setItems(items);
     }
@@ -241,20 +236,12 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
             ? !Comparing.strEqual(((String)oldValue), ((String)newValue))
             : !Comparing.equal(oldValue, newValue)) {
 
-          column.setValue(getMutable(rowIndex, item), newValue);
+          column.setValue(helper.getMutable(item, rowIndex), newValue);
           if (dataChangedListener != null) {
             dataChangedListener.dataChanged(column, rowIndex);
           }
         }
       }
-    }
-
-    private T getMutable(int rowIndex, T item) {
-      T mutable = helper.getMutable(item, editor.itemEditor);
-      if (mutable != item) {
-        items.set(rowIndex, mutable);
-      }
-      return mutable;
     }
   }
 
@@ -352,11 +339,12 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
       }
     });
 
-    helper.clear();
+    helper.reset(model.items);
     return model.items;
   }
 
   public void reset(@NotNull List<T> items) {
+    super.reset(items);
     model.setItems(new ArrayList<T>(items));
   }
 
