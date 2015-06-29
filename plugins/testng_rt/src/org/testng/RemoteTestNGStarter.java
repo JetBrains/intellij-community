@@ -21,6 +21,7 @@
 package org.testng;
 
 import com.beust.jcommander.JCommander;
+import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 
@@ -39,13 +40,21 @@ public class RemoteTestNGStarter {
   public static void main(String[] args) throws Exception {
     int i = 0;
     String param = null;
+    String commandFileName = null;
+    String workingDirs = null;
     Vector resultArgs = new Vector();
     for (; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith("@name")) {
         param = arg.substring(5);
         continue;
-      } else if (arg.startsWith(SOCKET)) {
+      } else if (arg.startsWith("@w@")) {
+        workingDirs = arg.substring(3);
+        continue;
+      } else if (arg.startsWith("@@@")) {
+        commandFileName = arg.substring(3);
+        continue;
+      }  else if (arg.startsWith(SOCKET)) {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
@@ -99,6 +108,12 @@ public class RemoteTestNGStarter {
     }
 
     if (SM_RUNNER) {
+      if (commandFileName != null) {
+        if (workingDirs != null && new File(workingDirs).length() > 0) {
+          System.exit(new TestNGForkedStarter().startForkedVMs(workingDirs, args, param, System.out, System.err, commandFileName));
+          return;
+        }
+      }
       final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
       CommandLineArgs cla = new CommandLineArgs();
       RemoteArgs ra = new RemoteArgs();
