@@ -47,6 +47,10 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -207,6 +211,7 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
     if (request instanceof ContentDiffRequest) {
       ContentDiffRequest requestEx = (ContentDiffRequest)request;
       if (requestEx.getContents().size() != 2) return null;
+
       DiffContent content = side.select(requestEx.getContents());
       if (content instanceof FileContent) {
         final VirtualFile file = ((FileContent)content).getFile();
@@ -222,6 +227,28 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
             return annotationProvider.annotate(file);
           }
         };
+      }
+
+      VcsFileRevision[] fileRevisions = request.getUserData(VcsHistoryUtil.REVISIONS_KEY);
+      if (fileRevisions != null && fileRevisions.length == 2) {
+        VcsFileRevision fileRevision = side.select(fileRevisions);
+        if (fileRevision instanceof VcsFileRevisionEx) {
+          final FilePath path = ((VcsFileRevisionEx)fileRevision).getPath();
+          final VcsRevisionNumber revisionNumber = fileRevision.getRevisionNumber();
+
+          AbstractVcs vcs = VcsUtil.getVcsFor(project, path);
+          if (vcs == null) return null;
+
+          final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+          if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
+
+          return new FileAnnotationLoader(vcs, true) {
+            @Override
+            public FileAnnotation compute() throws VcsException {
+              return ((AnnotationProviderEx)annotationProvider).annotate(path, revisionNumber);
+            }
+          };
+        }
       }
     }
 
