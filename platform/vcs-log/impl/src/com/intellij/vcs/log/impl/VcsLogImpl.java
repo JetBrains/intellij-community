@@ -18,7 +18,7 @@ package com.intellij.vcs.log.impl;
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.table.JBTable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -90,8 +90,8 @@ public class VcsLogImpl implements VcsLog {
 
   @Nullable
   @Override
-  public Collection<String> getContainingBranches(@NotNull Hash commitHash) {
-    return null;
+  public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
+    return myDataHolder.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
   }
 
   @NotNull

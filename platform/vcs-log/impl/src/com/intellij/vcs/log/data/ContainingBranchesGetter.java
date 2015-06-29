@@ -133,6 +133,11 @@ public class ContainingBranchesGetter implements VcsLogListener {
     return refs;
   }
 
+  public List<String> getContainingBranchesFromCache(@NotNull VirtualFile root, @NotNull Hash hash) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
+    return myCache.get(hash);
+  }
+
   @NotNull
   public Condition<CommitId> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
@@ -146,9 +151,8 @@ public class ContainingBranchesGetter implements VcsLogListener {
     if (branchRef == null) return Conditions.alwaysFalse();
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
-      condition =
-        new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))),
-                          branchName);
+      condition = new ContainedInBranchCondition(myGraph.getContainedInBranchCondition(
+        Collections.singleton(myDataHolder.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
       myConditions.put(root, condition);
     }
     return condition;

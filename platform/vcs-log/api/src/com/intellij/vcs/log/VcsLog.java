@@ -16,6 +16,7 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public interface VcsLog {
    * Returns names of branches which contain the given commit, or null if this information is unavailable.
    */
   @Nullable
-  Collection<String> getContainingBranches(@NotNull Hash commitHash);
+  Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root);
 
   /**
    * Returns all {@link VcsRef commit references} available in the log.

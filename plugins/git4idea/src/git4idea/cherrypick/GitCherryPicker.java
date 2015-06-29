@@ -560,7 +560,7 @@ public class GitCherryPicker extends VcsCherryPicker {
       }
       for (Hash commit : commits.get(root)) {
         GitLocalBranch currentBranch = repository.getCurrentBranch();
-        Collection<String> containingBranches = log.getContainingBranches(commit);
+        Collection<String> containingBranches = log.getContainingBranches(commit, root);
         if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
           // already is contained in the current branch
           return false;
