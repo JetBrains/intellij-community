@@ -64,8 +64,13 @@ public class MarkerType {
     myTooltip = tooltip;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
-      public void navigate(MouseEvent e, PsiElement elt) {
-        navigator.browse(e, elt);
+      public void navigate(final MouseEvent e, final PsiElement elt) {
+        DumbService.getInstance(elt.getProject()).withAlternativeResolveEnabled(new Runnable() {
+          @Override
+          public void run() {
+            navigator.browse(e, elt);
+          }
+        });
       }
     };
   }
