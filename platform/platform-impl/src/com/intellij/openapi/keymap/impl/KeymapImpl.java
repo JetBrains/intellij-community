@@ -762,7 +762,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    * @return string representation of passed keystroke.
    */
   public static String getKeyShortcutString(KeyStroke keyStroke) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     int modifiers = keyStroke.getModifiers();
     if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
       buf.append(SHIFT);
@@ -795,7 +795,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    *         be used only for serializing of the <code>MouseShortcut</code>
    */
   private static String getMouseShortcutString(MouseShortcut shortcut) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     // modifiers
 
@@ -945,7 +945,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
   @Override
   public String[] getAbbreviations() {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override
