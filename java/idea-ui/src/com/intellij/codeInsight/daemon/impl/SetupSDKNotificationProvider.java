@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Danila Ponomarenko
  */
-public class SetupSDKNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+public class SetupSDKNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("Setup SDK");
 
   private final Project myProject;

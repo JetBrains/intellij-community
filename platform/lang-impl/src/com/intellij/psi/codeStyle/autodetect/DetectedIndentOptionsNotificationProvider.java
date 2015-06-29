@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -40,7 +41,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 /**
  * @author Rustam Vishnyakov
  */
-public class DetectedIndentOptionsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+public class DetectedIndentOptionsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("indent.options.notification.provider");
   private static final Key<Boolean> NOTIFIED_FLAG = Key.create("indent.options.notification.provider.status");
   protected static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");

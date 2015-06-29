@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-public class FileChangedNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+public class FileChangedNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(FileChangedNotificationProvider.class);
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.changed.notification.panel");
 

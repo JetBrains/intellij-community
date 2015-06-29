@@ -3,6 +3,7 @@ package org.editorconfig.plugincomponents;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public class EditorConfigNotifierProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+public class EditorConfigNotifierProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("editor.config.notification.panel");
   private static final String EDITOR_CONFIG_ACCEPTED = "editor.config.accepted";
 
