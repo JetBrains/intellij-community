@@ -162,6 +162,12 @@ public class ClassesProcessor {
 
               StructClass scl = superNode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
+
+              if (inner == null || inner.getStringEntries().isEmpty()) {
+                DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);
+                continue;
+              }
+
               for (int i = 0; i < inner.getStringEntries().size(); i++) {
                 String nestedClass = inner.getStringEntries().get(i)[0];
                 if (!setNestedClasses.contains(nestedClass)) {
