@@ -21,11 +21,11 @@ import com.intellij.diff.tools.util.base.DiffPanelBase;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 import static com.intellij.diff.util.DiffUtil.createMessagePanel;
 
@@ -43,13 +43,8 @@ public class UnifiedDiffPanel extends DiffPanelBase {
                           @NotNull DataProvider provider,
                           @NotNull DiffContext context) {
     super(project, provider, context);
-
     myBusyIcon = new AsyncProcessIcon.Big("UnifiedDiff");
-
-    JPanel centerPanel = new JPanel(new BorderLayout());
-    centerPanel.add(myNotificationsPanel, BorderLayout.NORTH);
-    centerPanel.add(content, BorderLayout.CENTER);
-
+    JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel);
     myContentPanel.add(centerPanel, GOOD_CONTENT);
     myContentPanel.add(myBusyIcon, LOADING_CONTENT);
     myContentPanel.add(createMessagePanel("Can not calculate diff. " + DiffTooBigException.MESSAGE), TOO_BIG_CONTENT);
