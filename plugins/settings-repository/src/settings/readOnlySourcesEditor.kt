@@ -81,7 +81,7 @@ private fun createReadOnlySourcesEditor(dialogParent: Component, project: Projec
   val editor = TableModelEditor(COLUMNS, itemEditor, "No sources configured")
   editor.reset(icsManager.settings.readOnlySources)
   return object : Configurable {
-    override fun isModified() = editor.isModified(icsManager.settings.readOnlySources)
+    override fun isModified() = editor.isModified()
 
     override fun apply() {
       val oldList = icsManager.settings.readOnlySources
