@@ -585,7 +585,7 @@
     <intentionAction>
       <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.constant.ConstantExpressionIntention</className>
