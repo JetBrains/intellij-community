@@ -18,6 +18,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
@@ -35,10 +36,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathUtilRt;
@@ -146,7 +144,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
         public void fileCreated(@NotNull VirtualFileEvent event) {
           if (event.getRequestor() == null) {
             if (event.getFile().isDirectory()) {
-              VirtualFile dir = getVirtualDir();
+              VirtualFile dir = getDirectory();
               if (event.getFile().equals(dir)) {
                 for (VirtualFile file : dir.getChildren()) {
                   if (isMy(file)) {
@@ -292,7 +290,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       });
     }
     else {
-      VirtualFile dir = getVirtualDir();
+      VirtualFile dir = getDirectory();
       VirtualFile[] files = dir == null ? null : dir.getChildren();
       if (files != null) {
         for (VirtualFile file : files) {
@@ -488,43 +486,42 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
       }
     }
 
-    VirtualFile dir = getVirtualDir();
+    VirtualFile dir = getDirectory();
     errors = deleteFiles(dir, errors);
 
     if (!hasSchemes && dir != null) {
-      LOG.info("No schemes to save, directory " + dir.getName() + " will be removed");
-
-      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
-      try {
-        boolean remove = true;
-        for (VirtualFile file : dir.getChildren()) {
-          if (StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension)) {
-            LOG.info("Directory " + dir.getName() + " cannot be removed - scheme " + file.getName() + " exists");
-            remove = false;
-            break;
-          }
-        }
-
-        if (remove) {
-          LOG.info("Remove schemes directory " + dir.getName());
-          try {
-            StorageUtil.deleteFile(this, dir);
-            myDir = null;
-          }
-          catch (Throwable e) {
-            if (errors == null) {
-              errors = new SmartList<Throwable>();
-            }
-            errors.add(e);
-          }
-        }
-      }
-      finally {
-        token.finish();
-      }
+      errors = removeDirectoryIfEmpty(dir, errors);
     }
 
     CompoundRuntimeException.doThrow(errors);
+  }
+
+  @Nullable
+  private List<Throwable> removeDirectoryIfEmpty(@NotNull VirtualFile dir, @Nullable List<Throwable> errors) {
+    for (VirtualFile file : dir.getChildren()) {
+      if (!file.is(VFileProperty.HIDDEN)) {
+        LOG.info("Directory " + dir.getNameSequence() + " is not deleted: at least one file " + file.getNameSequence() + " exists");
+        return errors;
+      }
+    }
+
+    LOG.info("Remove schemes directory " + dir.getNameSequence());
+    myDir = null;
+
+    AccessToken token = WriteAction.start();
+    try {
+      dir.delete(this);
+    }
+    catch (Throwable e) {
+      if (errors == null) {
+        errors = new SmartList<Throwable>();
+      }
+      errors.add(e);
+    }
+    finally {
+      token.finish();
+    }
+    return errors;
   }
 
   @NotNull
@@ -583,7 +580,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
     boolean renamed = externalInfo != null && fileNameWithoutExtension != currentFileNameWithoutExtension && nameGenerator.value(currentFileNameWithoutExtension);
     if (providerPath == null) {
       VirtualFile file = null;
-      VirtualFile dir = getVirtualDir();
+      VirtualFile dir = getDirectory();
       if (dir == null || !dir.isValid()) {
         dir = DirectoryBasedStorage.createDir(myIoDir, this);
         myDir = dir;
@@ -700,12 +697,13 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
   }
 
   @Nullable
-  private VirtualFile getVirtualDir() {
-    VirtualFile virtualFile = myDir;
-    if (virtualFile == null) {
-      myDir = virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myIoDir);
+  private VirtualFile getDirectory() {
+    VirtualFile result = myDir;
+    if (result == null) {
+      result = LocalFileSystem.getInstance().findFileByIoFile(myIoDir);
+      myDir = result;
     }
-    return virtualFile;
+    return result;
   }
 
   @Override
