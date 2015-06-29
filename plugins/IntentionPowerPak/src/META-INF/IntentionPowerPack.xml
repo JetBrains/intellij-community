@@ -530,7 +530,7 @@
     <intentionAction>
       <className>com.siyeh.ipp.exceptions.ObscureThrownExceptionsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplaceWithOperatorAssignmentIntention</className>
@@ -575,12 +575,12 @@
     <intentionAction>
       <className>com.siyeh.ipp.asserttoif.AssertToIfIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.asserttoif.IfToAssertionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>

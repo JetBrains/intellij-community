@@ -763,22 +763,22 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
-      <category>Control Flow</category>
+      <category>Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationIntention</className>
-      <category>Control Flow</category>
+      <category>Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationIntention</className>
-      <category>Control Flow</category>
+      <category>Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.dataFlow.EditContractIntention</className>
-      <category>Control Flow</category>
+      <category>Annotations</category>
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
@@ -787,7 +787,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>
-      <category>Control Flow</category>
+      <category>Annotations</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateSwitchIntention</className>
@@ -876,7 +876,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOverrideAnnotationAction</className>
-      <category>Declaration</category>
+      <category>Annotations</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
@@ -961,7 +961,7 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
-      <category>Other</category>
+      <category>Strings</category>
     </intentionAction>
 
 
