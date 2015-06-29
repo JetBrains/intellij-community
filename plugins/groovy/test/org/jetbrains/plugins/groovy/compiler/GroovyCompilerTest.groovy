@@ -26,7 +26,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -43,7 +42,9 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
-import org.jetbrains.annotations.NotNull
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.platform.loader.PlatformLoader
+import org.jetbrains.platform.loader.repository.RuntimeModuleId
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
@@ -862,7 +863,7 @@ class AppTest {
        "}"
     );
 
-    File annotations = new File(PathManager.getJarPathForClass(NotNull.class));
+    File annotations = new File(ContainerUtil.getFirstItem(PlatformLoader.instance.repository.getModuleRootPaths(RuntimeModuleId.module("annotations"))));
     PsiTestUtil.addLibrary(myModule, "annotations", annotations.getParent(), annotations.getName());
 
     assertEmpty(make());

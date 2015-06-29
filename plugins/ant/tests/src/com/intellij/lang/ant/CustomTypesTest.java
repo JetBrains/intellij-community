@@ -80,13 +80,6 @@ public class CustomTypesTest extends LightCodeInsightFixtureTestCase {
     String text = FileUtil.loadFile(new File(fullName)).trim();
     text = StringUtil.convertLineSeparators(text);
     final String root = PathUtil.getJarPathForClass(this.getClass());
-    final String placeholder = "<_classpath_>";
-    final int index = text.indexOf(placeholder);
-    if (index > 0) {
-      final String before = text.substring(0, index);
-      final String after = text.substring(index + placeholder.length());
-      text = before + FileUtil.toSystemIndependentName(root) + after;
-    }
-    return text;
+    return text.replace("<_classpath_>", FileUtil.toSystemIndependentName(root));
   }
 }
