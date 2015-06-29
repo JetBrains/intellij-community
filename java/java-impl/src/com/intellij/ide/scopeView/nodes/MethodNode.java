@@ -16,6 +16,7 @@
 
 package com.intellij.ide.scopeView.nodes;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -33,6 +34,8 @@ public class MethodNode extends BasePsiNode<PsiMethod> {
   public String toString() {
     final PsiMethod method = (PsiMethod)getPsiElement();
     if (method == null || !method.isValid()) return "";
+    if (DumbService.isDumb(myProject)) return method.getName();
+    
     String name = PsiFormatUtil.formatMethod(
       method,
       PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
