@@ -5,6 +5,8 @@
       <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-reflect.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-runtime-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
