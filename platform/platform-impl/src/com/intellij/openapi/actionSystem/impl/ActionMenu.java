@@ -16,9 +16,12 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -34,7 +37,10 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.plaf.MenuItemUI;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -48,6 +54,7 @@ public final class ActionMenu extends JMenu {
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myTopLevel;
+  private final Disposable myDisposable;
 
   public ActionMenu(final DataContext context,
                     @NotNull final String place,
@@ -74,6 +81,11 @@ public final class ActionMenu extends JMenu {
     if (UIUtil.isUnderIntelliJLaF()) {
       setOpaque(true);
     }
+    myDisposable = new Disposable() {
+      @Override
+      public void dispose() {
+      }
+    };
   }
 
   public void updateContext(DataContext context) {
@@ -97,6 +109,7 @@ public final class ActionMenu extends JMenu {
   public void removeNotify() {
     uninstallSynchronizer();
     super.removeNotify();
+    Disposer.dispose(myDisposable);
   }
 
   private void uninstallSynchronizer() {
@@ -227,11 +240,15 @@ public final class ActionMenu extends JMenu {
     }
 
     public void menuDeselected(MenuEvent e) {
+      Disposer.dispose(myDisposable);
       clearItems();
       addStubItem();
     }
 
     public void menuSelected(MenuEvent e) {
+      if (ActionPlaces.isPopupPlace(myPlace)) {
+        new UsabilityHelper(ActionMenu.this, myDisposable);
+      }
       fillMenu();
     }
   }
@@ -305,6 +322,70 @@ public final class ActionMenu extends JMenu {
       else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
         updateIcon();
       }
+    }
+  }
+
+  private static class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
+
+    private Component myComponent;
+    private Point myLastMousePoint = null;
+    private Point myUpperTargetPoint = null;
+    private Point myLowerTargetPoint = null;
+
+    private UsabilityHelper(Component component, @NotNull Disposable disposable) {
+      Disposer.register(disposable, this);
+      myComponent = component;
+      PointerInfo info = MouseInfo.getPointerInfo();
+      myLastMousePoint = info != null ? info.getLocation() : null;
+      if (myLastMousePoint != null) {
+        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK);
+        IdeEventQueue.getInstance().addDispatcher(this, this);
+      }
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      if (event instanceof ComponentEvent) {
+        ComponentEvent componentEvent = (ComponentEvent)event;
+        Component component = componentEvent.getComponent();
+        if (event.getID() == ComponentEvent.COMPONENT_SHOWN &&
+            component instanceof JWindow &&
+            component.getParent() == SwingUtilities.windowForComponent(myComponent)) {
+          Rectangle bounds = component.getBounds();
+          myUpperTargetPoint = new Point(bounds.x, bounds.y);
+          myLowerTargetPoint = new Point(bounds.x, bounds.y + bounds.height);
+          if (myLastMousePoint.x > bounds.x) {
+            myUpperTargetPoint.translate(bounds.width, 0);
+            myLowerTargetPoint.translate(bounds.width, 0);
+          }
+        }
+      }
+    }
+
+    @Override
+    public boolean dispatch(AWTEvent e) {
+      if (e instanceof MouseEvent && myUpperTargetPoint != null && myLowerTargetPoint != null) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
+          return false;
+        }
+        Point point = ((MouseEvent)e).getLocationOnScreen();
+
+        boolean result = new Polygon(
+          new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
+          new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
+          3).contains(point);
+
+        myLastMousePoint = point;
+        return result;
+      }
+      return false;
+    }
+
+    @Override
+    public void dispose() {
+      myComponent = null;
+      myLastMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
+      Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     }
   }
 }
