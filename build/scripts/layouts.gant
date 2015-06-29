@@ -696,7 +696,6 @@ def reorder(String home, String targetDirectory) {
     arg(value: "${home}/lib")
     classpath {
       projectBuilder.moduleRuntimeClasspath(findModule("util"), false).each {
-        println(it)
         pathelement(location: it)
       }
     }

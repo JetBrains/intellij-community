@@ -12,6 +12,7 @@
   </target>
 
   <target name="download" depends="check_present" unless="kotlin.path">
+    <delete dir="${basedir}" includes="kotlin-plugin*.zip"/>
     <loadresource property="kotlin.build.number">
       <url url="https://teamcity.jetbrains.com/guestAuth/app/rest/buildTypes/id:${kotlin.build.type.id}/builds/status:SUCCESS,count:1/number"/>
     </loadresource>
