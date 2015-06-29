@@ -511,6 +511,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return getKeymapManager().getActionBinding(actionId);
   }
 
+  @NotNull
   @Override
   public Shortcut[] getShortcuts(String actionId) {
     LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
@@ -874,7 +875,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
 
   @Override
-  public HashMap<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
+  public Map<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
     HashMap<String, ArrayList<KeyboardShortcut>> result = new HashMap<String, ArrayList<KeyboardShortcut>>();
 
     String[] actionIds = getActionIds(keyboardShortcut.getFirstKeyStroke());
