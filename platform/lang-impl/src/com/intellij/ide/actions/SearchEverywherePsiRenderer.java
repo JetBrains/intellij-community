@@ -89,7 +89,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     if (in) text = text.substring(3);
     final FontMetrics fm = myList.getFontMetrics(myList.getFont());
     final int maxWidth = myList.getWidth() - fm.stringWidth(name) - 16 - myRightComponentWidth - 20;
-    String left = "(" + (in ? "in " : " ");
+    String left = in ? "(in " : "(";
     String right = ")";
 
     if (fm.stringWidth(left + text + right) < maxWidth) return left + text + right;
