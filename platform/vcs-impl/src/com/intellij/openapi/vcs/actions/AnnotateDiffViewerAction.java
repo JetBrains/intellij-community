@@ -186,80 +186,79 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
   private static FileAnnotationLoader createAnnotationsLoader(@NotNull Project project, @NotNull DiffRequest request, @NotNull Side side) {
     Change change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY);
     if (change != null) {
-      final ContentRevision revision = side.select(change.getBeforeRevision(), change.getAfterRevision());
-      if (revision == null) return null;
-      AbstractVcs vcs = ChangesUtil.getVcsForChange(change, project);
-      if (vcs == null) return null;
+      ContentRevision revision = side.select(change.getBeforeRevision(), change.getAfterRevision());
+      if (revision != null) {
+        AbstractVcs vcs = ChangesUtil.getVcsForChange(change, project);
 
-      final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
-      if (annotationProvider == null) return null;
-
-      if (revision instanceof CurrentContentRevision) {
-        return new FileAnnotationLoader(vcs, false) {
-          @Override
-          public FileAnnotation compute() throws VcsException {
-            final VirtualFile file = ((CurrentContentRevision)revision).getVirtualFile();
-            if (file == null) throw new VcsException("Failed to annotate: file not found");
-            return annotationProvider.annotate(file);
-          }
-        };
-      }
-      else {
-        if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
-        return new FileAnnotationLoader(vcs, true) {
-          @Override
-          public FileAnnotation compute() throws VcsException {
-            return ((AnnotationProviderEx)annotationProvider).annotate(revision.getFile(), revision.getRevisionNumber());
-          }
-        };
+        if (revision instanceof CurrentContentRevision) {
+          VirtualFile file = ((CurrentContentRevision)revision).getVirtualFile();
+          FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, file);
+          if (loader != null) return loader;
+        }
+        else {
+          FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, revision.getFile(), revision.getRevisionNumber());
+          if (loader != null) return loader;
+        }
       }
     }
 
     if (request instanceof ContentDiffRequest) {
       ContentDiffRequest requestEx = (ContentDiffRequest)request;
-      if (requestEx.getContents().size() != 2) return null;
+      if (requestEx.getContents().size() == 2) {
 
-      DiffContent content = side.select(requestEx.getContents());
-      if (content instanceof FileContent) {
-        final VirtualFile file = ((FileContent)content).getFile();
-        AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
-        if (vcs == null) return null;
+        DiffContent content = side.select(requestEx.getContents());
+        if (content instanceof FileContent) {
+          VirtualFile file = ((FileContent)content).getFile();
+          AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
+          FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, file);
+          if (loader != null) return loader;
+        }
 
-        final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
-        if (annotationProvider == null) return null;
-
-        return new FileAnnotationLoader(vcs, false) {
-          @Override
-          public FileAnnotation compute() throws VcsException {
-            return annotationProvider.annotate(file);
+        VcsFileRevision[] fileRevisions = request.getUserData(VcsHistoryUtil.REVISIONS_KEY);
+        if (fileRevisions != null && fileRevisions.length == 2) {
+          VcsFileRevision fileRevision = side.select(fileRevisions);
+          if (fileRevision instanceof VcsFileRevisionEx) {
+            FilePath filePath = ((VcsFileRevisionEx)fileRevision).getPath();
+            AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
+            FileAnnotationLoader loader = doCreateAnnotationsLoader(vcs, filePath, fileRevision.getRevisionNumber());
+            if (loader != null) return loader;
           }
-        };
-      }
-
-      VcsFileRevision[] fileRevisions = request.getUserData(VcsHistoryUtil.REVISIONS_KEY);
-      if (fileRevisions != null && fileRevisions.length == 2) {
-        VcsFileRevision fileRevision = side.select(fileRevisions);
-        if (fileRevision instanceof VcsFileRevisionEx) {
-          final FilePath path = ((VcsFileRevisionEx)fileRevision).getPath();
-          final VcsRevisionNumber revisionNumber = fileRevision.getRevisionNumber();
-
-          AbstractVcs vcs = VcsUtil.getVcsFor(project, path);
-          if (vcs == null) return null;
-
-          final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
-          if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
-
-          return new FileAnnotationLoader(vcs, true) {
-            @Override
-            public FileAnnotation compute() throws VcsException {
-              return ((AnnotationProviderEx)annotationProvider).annotate(path, revisionNumber);
-            }
-          };
         }
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  private static FileAnnotationLoader doCreateAnnotationsLoader(@Nullable AbstractVcs vcs, @Nullable final VirtualFile file) {
+    if (vcs == null || file == null) return null;
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    if (annotationProvider == null) return null;
+
+    // TODO: cache them too, listening for ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener() ?
+    return new FileAnnotationLoader(vcs, false) {
+      @Override
+      public FileAnnotation compute() throws VcsException {
+        return annotationProvider.annotate(file);
+      }
+    };
+  }
+
+  @Nullable
+  private static FileAnnotationLoader doCreateAnnotationsLoader(@Nullable AbstractVcs vcs,
+                                                                @Nullable final FilePath path,
+                                                                @Nullable final VcsRevisionNumber revisionNumber) {
+    if (vcs == null || path == null || revisionNumber == null) return null;
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
+
+    return new FileAnnotationLoader(vcs, true) {
+      @Override
+      public FileAnnotation compute() throws VcsException {
+        return ((AnnotationProviderEx)annotationProvider).annotate(path, revisionNumber);
+      }
+    };
   }
 
   private static void putDataToCache(@NotNull DiffViewerBase viewer, @NotNull Side side, @NotNull AnnotationData data) {
