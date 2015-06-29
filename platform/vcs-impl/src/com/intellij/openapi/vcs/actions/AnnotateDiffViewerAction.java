@@ -32,12 +32,15 @@ import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -74,6 +77,7 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
 
   public AnnotateDiffViewerAction() {
     super("Annotate", null, AllIcons.Actions.Annotate);
+    setEnabledInModalContext(true);
   }
 
   @Override
@@ -145,8 +149,8 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
 
     // TODO: show progress in diff viewer
     // TODO: we can abort loading on DiffViewer.dispose(). But vcs can't stop gracefully anyway.
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true,
-                                                              BackgroundFromStartOption.getInstance()) {
+    Task.Backgroundable task = new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true,
+                                                       BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
         loader.run();
       }
@@ -172,7 +176,10 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
           putDataToCache(viewer, side, loader.getResult());
         }
       }
-    });
+    };
+    ProgressIndicator indicator = new BackgroundableProcessIndicator(task);
+    ProgressManagerImpl progressManager = (ProgressManagerImpl)ProgressManager.getInstance();
+    progressManager.runProcessWithProgressAsynchronously(task, indicator, null, ModalityState.current());
   }
 
   @Nullable
