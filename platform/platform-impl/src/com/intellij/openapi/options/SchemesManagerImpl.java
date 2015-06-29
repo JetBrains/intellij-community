@@ -58,7 +58,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.*;
 
-public final class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends SchemesManager<T, E> {
+public final class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends SchemesManager<T, E> implements SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
   private final ArrayList<T> mySchemes = new ArrayList<T>();
