@@ -148,7 +148,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
     Color color = list.getForeground();
-    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
+    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
     renderer.append(item + " ", nameAttributes);
     ItemPresentation itemPresentation = item.getPresentation();
@@ -157,7 +157,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
 
     String locationString = itemPresentation.getLocationString();
     if (!StringUtil.isEmpty(locationString)) {
-      renderer.append(locationString, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
+      renderer.append(locationString, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }
     return true;
   }
