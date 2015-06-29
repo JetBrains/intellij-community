@@ -50,7 +50,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     @Override
     public QuickList clone(@NotNull QuickList item, boolean forInPlaceEditing) {
-      return new QuickList(item.getName(), item.getDescription(), item.getActionIds(), false);
+      return new QuickList(item.getName(), item.getDescription(), item.getActionIds());
     }
 
     @Override

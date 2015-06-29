@@ -2048,6 +2048,16 @@ public class UIUtil {
     return null;
   }
 
+  public static <T extends JComponent> T findParentByClass(@NotNull Component c, Class<T> cls) {
+    for (Component component = c; component != null; component = component.getParent()) {
+      if (cls.isAssignableFrom(component.getClass())) {
+        @SuppressWarnings({"unchecked"}) final T t = (T)component;
+        return t;
+      }
+    }
+    return null;
+  }
+
   @NonNls
   public static String getCssFontDeclaration(final Font font) {
     return getCssFontDeclaration(font, null, null, null);

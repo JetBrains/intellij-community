@@ -246,9 +246,7 @@ public final class ActionMenu extends JMenu {
     }
 
     public void menuSelected(MenuEvent e) {
-      if (ActionPlaces.isPopupPlace(myPlace)) {
-        new UsabilityHelper(ActionMenu.this, myDisposable);
-      }
+      new UsabilityHelper(ActionMenu.this, myDisposable);
       fillMenu();
     }
   }
@@ -348,15 +346,18 @@ public final class ActionMenu extends JMenu {
       if (event instanceof ComponentEvent) {
         ComponentEvent componentEvent = (ComponentEvent)event;
         Component component = componentEvent.getComponent();
-        if (event.getID() == ComponentEvent.COMPONENT_SHOWN &&
-            component instanceof JWindow &&
-            component.getParent() == SwingUtilities.windowForComponent(myComponent)) {
-          Rectangle bounds = component.getBounds();
-          myUpperTargetPoint = new Point(bounds.x, bounds.y);
-          myLowerTargetPoint = new Point(bounds.x, bounds.y + bounds.height);
-          if (myLastMousePoint.x > bounds.x) {
-            myUpperTargetPoint.translate(bounds.width, 0);
-            myLowerTargetPoint.translate(bounds.width, 0);
+        JPopupMenu popup = UIUtil.findParentByClass(component, JPopupMenu.class);
+        if (popup != null && popup.getInvoker() == myComponent) {
+          Rectangle bounds = popup.getBounds();
+          if (bounds.isEmpty()) return;
+          bounds.setLocation(popup.getLocationOnScreen());
+          if (myLastMousePoint.x < bounds.x) {
+            myUpperTargetPoint = new Point(bounds.x, bounds.y);
+            myLowerTargetPoint = new Point(bounds.x, bounds.y + bounds.height);
+          }
+          if (myLastMousePoint.x > bounds.x + bounds.width) {
+            myUpperTargetPoint = new Point(bounds.x + bounds.width, bounds.y);
+            myLowerTargetPoint = new Point(bounds.x + bounds.width, bounds.y + bounds.height);
           }
         }
       }
