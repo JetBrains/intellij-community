@@ -25,6 +25,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +56,7 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
 public class PathManagerEx {
+  private static final Logger LOG = Logger.getInstance(PathManagerEx.class);
 
   /**
    * All IDEA project files may be logically divided by the following criteria:
@@ -450,5 +454,13 @@ public class PathManagerEx {
       }
     }
     return TestDataLookupStrategy.ULTIMATE;
+  }
+
+  @NotNull
+  public static File getClassesRoot(RuntimeModuleId id) {
+    List<String> roots = PlatformLoader.getInstance().getRepository().getModuleRootPaths(id);
+    String first = ContainerUtil.getFirstItem(roots);
+    LOG.assertTrue(first != null, "Cannot find classes root for " + id.getStringId());
+    return new File(first);
   }
 }

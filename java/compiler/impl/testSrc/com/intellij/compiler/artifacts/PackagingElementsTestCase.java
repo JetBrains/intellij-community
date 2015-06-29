@@ -15,9 +15,9 @@
  */
 package com.intellij.compiler.artifacts;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
@@ -34,6 +34,7 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 
@@ -88,7 +89,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected static VirtualFile getJDomJar() {
-    return getJarFromLibDirectory("jdom.jar");
+    return getJarFromLibDirectory(RuntimeModuleId.projectLibrary("JDOM"));
   }
 
   protected static String getLocalJarPath(VirtualFile jarEntry) {
@@ -96,11 +97,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected static String getJUnitJarPath() {
-    return getLocalJarPath(getJarFromLibDirectory("junit.jar"));
+    return getLocalJarPath(getJarFromLibDirectory(RuntimeModuleId.projectLibrary("JUnit3")));
   }
 
-  private static VirtualFile getJarFromLibDirectory(final String relativePath) {
-    final File file = PathManager.findFileInLibDirectory(relativePath);
+  private static VirtualFile getJarFromLibDirectory(final RuntimeModuleId id) {
+    final File file = PathManagerEx.getClassesRoot(id);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     assertNotNull(file.getAbsolutePath() + " not found", virtualFile);
     final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
