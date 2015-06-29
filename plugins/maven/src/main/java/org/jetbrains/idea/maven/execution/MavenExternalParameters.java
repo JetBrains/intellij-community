@@ -46,13 +46,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -60,6 +58,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -213,22 +213,23 @@ public class MavenExternalParameters {
 
   private static String getArtifactResolverJar(@Nullable String mavenVersion) throws IOException {
     boolean isMaven3;
-    Class marker;
+    RuntimeModuleId resolverModule;
 
     if (mavenVersion != null && mavenVersion.compareTo("3.1.0") >= 0) {
       isMaven3 = true;
-      marker = MavenArtifactResolvedM31RtMarker.class;
+      resolverModule = RuntimeModuleId.module("maven-artifact-resolver-m31");
     }
     else if (mavenVersion != null && mavenVersion.compareTo("3.0.0") >= 0) {
       isMaven3 = true;
-      marker = MavenArtifactResolvedM3RtMarker.class;
+      resolverModule = RuntimeModuleId.module("maven-artifact-resolver-m3");
     }
     else {
       isMaven3 = false;
-      marker = MavenArtifactResolvedM2RtMarker.class;
+      resolverModule = RuntimeModuleId.module("maven-artifact-resolver-m2");
+
     }
 
-    File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
+    File classDirOrJar = new File(ContainerUtil.getFirstItem(PlatformLoader.getInstance().getRepository().getModuleRootPaths(resolverModule)));
 
     if (!classDirOrJar.isDirectory()) {
       return classDirOrJar.getAbsolutePath(); // it's a jar in IDEA installation.

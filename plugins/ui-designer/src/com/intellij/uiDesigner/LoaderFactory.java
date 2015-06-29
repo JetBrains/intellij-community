@@ -30,12 +30,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.uiDesigner.core.Spacer;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import javax.swing.*;
 import java.io.File;
@@ -127,7 +127,9 @@ public final class LoaderFactory {
     }
 
     try {
-      urls.add(new File(PathUtil.getJarPathForClass(Spacer.class)).toURI().toURL());
+      for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("forms_rt"))) {
+        urls.add(new File(path).toURI().toURL());
+      }
     }
     catch (MalformedURLException ignored) {
       // ignore
