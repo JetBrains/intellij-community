@@ -264,20 +264,22 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #createAndAttachConsole(String, ProcessHandler, TestConsoleProperties)} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "deprecation"})
   public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                                   @NotNull ProcessHandler processHandler,
                                                                   @NotNull TestConsoleProperties consoleProperties,
                                                                   ExecutionEnvironment environment) throws ExecutionException {
-    return createAndAttachConsole(testFrameworkName, processHandler, consoleProperties);
+    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, environment);
+    console.attachToProcess(processHandler);
+    return console;
   }
 
   /** @deprecated use {@link SMTestRunnerConnectionUtil#createConsole(String, TestConsoleProperties)} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "deprecation"})
   public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
                                                          @NotNull TestConsoleProperties consoleProperties,
                                                          ExecutionEnvironment environment) {
-    return createConsole(testFrameworkName, consoleProperties);
+    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, null);
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
@@ -338,23 +340,23 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #createAndAttachConsole(String, ProcessHandler, TestConsoleProperties)} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "deprecation"})
   public static ConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                    @NotNull ProcessHandler processHandler,
                                                    @NotNull CommandLineState commandLineState,
                                                    @NotNull ModuleRunConfiguration config,
                                                    @NotNull Executor executor) throws ExecutionException {
     TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName, executor);
-    return createAndAttachConsole(testFrameworkName, processHandler, consoleProperties);
+    return createAndAttachConsole(testFrameworkName, processHandler, consoleProperties, commandLineState.getEnvironment());
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "deprecation"})
   public static ConsoleView createConsole(@NotNull String testFrameworkName,
                                           @NotNull CommandLineState commandLineState,
                                           @NotNull ModuleRunConfiguration config,
                                           @NotNull Executor executor) throws ExecutionException {
     TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName, executor);
-    return createConsole(testFrameworkName, consoleProperties);
+    return createConsole(testFrameworkName, consoleProperties, commandLineState.getEnvironment());
   }
 }
