@@ -170,6 +170,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     rect.height=Math.min(rect.height, COMBOBOX.getIconHeight()-8);
     rect.y+=4;
     rect.x+=8;
+    rect.width-=8;
     return rect;
   }
 
