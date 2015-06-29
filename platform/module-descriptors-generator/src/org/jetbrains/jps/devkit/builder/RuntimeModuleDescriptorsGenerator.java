@@ -287,7 +287,7 @@ public class RuntimeModuleDescriptorsGenerator {
   @NotNull
   private static RuntimeModuleId getRuntimeModuleName(JpsModule module, boolean tests) {
     String moduleName = module.getName();
-    return RuntimeModuleId.module(tests ? moduleName + ".tests" : moduleName);
+    return tests ? RuntimeModuleId.moduleTests(moduleName) : RuntimeModuleId.module(moduleName);
   }
 
   @NotNull

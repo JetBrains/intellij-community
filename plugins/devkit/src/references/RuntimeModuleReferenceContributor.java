@@ -30,7 +30,7 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 public class RuntimeModuleReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    PsiMethodPattern moduleMethod = psiMethod().withName("module", "moduleLibrary").definedInClass(RuntimeModuleId.class.getName());
+    PsiMethodPattern moduleMethod = psiMethod().withName("module", "moduleLibrary", "moduleTests").definedInClass(RuntimeModuleId.class.getName());
     registrar.registerReferenceProvider(literalExpression().methodCallParameter(0, moduleMethod), new PsiReferenceProvider() {
       @NotNull
       @Override

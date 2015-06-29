@@ -37,6 +37,10 @@ public final class RuntimeModuleId {
     return new RuntimeModuleId(moduleName);
   }
 
+  public static RuntimeModuleId moduleTests(@NotNull String moduleName) {
+    return new RuntimeModuleId(moduleName + ".tests");
+  }
+
   public static RuntimeModuleId projectLibrary(@NotNull String libraryName) {
     return new RuntimeModuleId(LIB_NAME_PREFIX + libraryName);
   }
