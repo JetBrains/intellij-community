@@ -85,6 +85,9 @@ public class ServerMarkupHost(val markupModel: MarkupModelEx,
                               lifetime: Lifetime) {
   var markupIdFactory = 0
   val markupIdKey = Key<String>("com.jetbrains.reactiveidea.markupId")
+  volatile var disposed = false;
+
+
   init {
     val highlighters = markupModel.getAllHighlighters()
     reactiveModel.transaction { m ->
@@ -93,16 +96,15 @@ public class ServerMarkupHost(val markupModel: MarkupModelEx,
 
     val markupListenerDisposable = { }
     lifetime += {
+      disposed = true
       Disposer.dispose(markupListenerDisposable)
     }
 
     val markupBuffer = HashMap<String, Model>()
 
     markupModel.addMarkupModelListener(markupListenerDisposable, object : MarkupModelListenerEx {
-
-
       override fun flush() {
-        if (!markupBuffer.isEmpty()) {
+        if (!markupBuffer.isEmpty() && !disposed) {
           reactiveModel.transaction { m ->
             var result = m;
             for ((k, v) in markupBuffer)  {

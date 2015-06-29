@@ -112,9 +112,9 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
         if (openState == "open" && (state["childs"] as MapModel).isEmpty()) {
           updateChilds(descriptor, path, index)
         } else if (openState == "closed") {
-          val value = descriptor.getValue()
-          if (value is PsiDirectory) {
-              openDirs.remove(ptrManager.createSmartPsiElementPointer(value))
+          val descrValue = descriptor.getValue()
+          if (descrValue is PsiDirectory) {
+              openDirs.remove(ptrManager.createSmartPsiElementPointer(descrValue))
             }
         }
       }

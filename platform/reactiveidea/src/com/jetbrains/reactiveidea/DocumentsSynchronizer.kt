@@ -37,13 +37,15 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.Path
+import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
 
 public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
-  var bJavaHost: EditorHost? = null
+  //  var bJavaHost: EditorHost? = null
+  var tabHost: TabViewHost? = null
   var viewHost: ProjectViewHost? = null
   val startupManager = StartupManager.getInstance(project)
 
@@ -55,7 +57,9 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
 
   private fun guessDataContext(contextHint: MapModel): DataContext? {
     //todo: look at the hint!
-    val editor = bJavaHost!!.editor
+    val editorContext = contextHint.get("editor") as ListModel
+    val editorIdx = (editorContext.get(3) as PrimitiveModel<*>).value
+    val editor = tabHost!!.getEditor(Integer.valueOf(editorIdx as String)).editor
     val component = editor.getContentComponent()
     return DataManager.getInstance().getDataContext(component)
   }
@@ -63,8 +67,6 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   override fun initComponent() {
 
     UIUtil.invokeLaterIfNeeded {
-      val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled2/src/B.java")
-
       val serverModel = serverModel(lifetime.lifetime, 12346)
       serverModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel ->
         val actionName = (args["name"] as PrimitiveModel<String>).value
@@ -85,16 +87,24 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
         viewHost = ProjectViewHost(project, projectView, lifetime.lifetime, serverModel, Path("project-view"), treeStructure, viewPane)
       })
 
+      tabHost = TabViewHost(lifetime.lifetime, serverModel, Path("tab-view"))
+
+
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-              val editor = (FileEditorManager.getInstance(project).getAllEditors(file).first() as TextEditor).getEditor()
-              if (file.equals(bJava)) {
-                bJavaHost = EditorHost(lifetime.lifetime, serverModel, Path("editor"), editor, true)
+              val editors = FileEditorManager.getInstance(project).getAllEditors(file)
+                  .filter { it is TextEditor }
+                  .map { (it as TextEditor).getEditor() }
+
+              if (!editors.isEmpty()) {
+                val editor = editors.first()
+                tabHost!!.addEditor(editor, file)
               }
             }
 
             override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+              tabHost!!.removeEditor(file)
             }
 
             override fun selectionChanged(event: FileEditorManagerEvent) {

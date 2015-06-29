@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
+import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -35,7 +36,8 @@ import com.jetbrains.reactivemodel.signals.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 
-public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val editor: Editor, val providesMarkup: Boolean) {
+public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, name: String,
+                        val path: Path, val editor: Editor, val providesMarkup: Boolean) {
   companion object {
     val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
     val tags = "@@@--^tags"
@@ -45,9 +47,15 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
 
   val caretGuard = Guard()
 
-  val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
+  val documentHost : DocumentHost;
 
   init {
+    lifetime += {
+      reactiveModel.transaction {
+        m -> (path).putIn(m, AbsentModel())
+      }
+    }
+    documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
     editor.putUserData(editorHostKey, this)
     reactiveModel.transaction { m -> (path / tags).putIn(m, ListModel(arrayListOf(PrimitiveModel("editor")))) }
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
@@ -83,6 +91,10 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
     }
 
     sendSelectionAndCaret()
+
+    reactiveModel.transaction { m ->
+      (path / "name").putIn(m, PrimitiveModel(name))
+    }
 
     val caretListener = object : CaretAdapter() {
       override fun caretPositionChanged(e: CaretEvent) {
