@@ -10,6 +10,7 @@
   <target name="init">
     <mkdir dir="${out.dir}"/>
     <mkdir dir="${tmp.dir}"/>
+    <ant dir="build" antfile="download_kotlin.xml"/>
   </target>
 
   <macrodef name="call_gant">

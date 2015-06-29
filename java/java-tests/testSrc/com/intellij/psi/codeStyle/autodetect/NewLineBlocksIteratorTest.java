@@ -16,7 +16,10 @@
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.formatting.Block;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Iterator;
 
 public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest {
 
@@ -45,6 +48,14 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
     };
 
     checkNewLineBlocksStartOffsets(newLineBlocksStartOffsets);
+  }
+  
+  public void testBigFileWithOnlyErrorElements_DoNotProduceSOE() {
+    configureByFile(getFileName() + ".java");
+    Iterator<Block> iterator = createNewLineBlocksIterator();
+    while (iterator.hasNext()) {
+      iterator.next();
+    }
   }
 
 }

@@ -2,6 +2,7 @@
 ### Building and Running from the IDE
 To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate. To build and run the code:
 * Run **getPlugins.sh** / **getPlugins.bat** from the project root directory to check out additional modules.
+* Install the **Kotlin plugin** from the plugin manager (version 0.12.613). Parts of IntelliJ IDEA are written in Kotlin, and you need the plugin to compile the code.
 * Make sure you have the **Groovy** plugin enabled. Parts of IntelliJ IDEA are written in Groovy, and you will get compilation errors if you don't have the plugin enabled.
 * Make sure you have the **UI Designer** plugin enabled. Most of IntelliJ IDEA's UI is built using the **UI Designer**, and the version you build will not run correctly if you don't have the plugin enabled.
 * Open the project.

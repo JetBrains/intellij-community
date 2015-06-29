@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ public class PopFrameAction extends DebuggerAction {
         return;
       }
 
+      debugProcess.getSession().setSteppingThrough(stackFrame.getStackFrameProxy().threadProxy());
       if (!DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
         List<PsiStatement> statements = getFinallyStatements(debuggerContext.getSourcePosition());
         if (!statements.isEmpty()) {

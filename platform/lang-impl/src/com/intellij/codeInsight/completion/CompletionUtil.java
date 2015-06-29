@@ -108,24 +108,6 @@ public class CompletionUtil {
     return mainData != null ? mainData : ourGenericCompletionData;
   }
 
-  /** @see CompletionDataEP */
-  @Deprecated
-  public static void registerCompletionData(FileType fileType, NotNullLazyValue<CompletionData> completionData) {
-    ourCustomCompletionDatas.put(fileType, completionData);
-  }
-
-  /** @see CompletionDataEP */
-  @Deprecated
-  public static void registerCompletionData(FileType fileType, final CompletionData completionData) {
-    registerCompletionData(fileType, new NotNullLazyValue<CompletionData>() {
-      @Override
-      @NotNull
-      protected CompletionData compute() {
-        return completionData;
-      }
-    });
-  }
-
   @Nullable
   public static CompletionData getCompletionDataByFileType(FileType fileType) {
     for(CompletionDataEP ep: Extensions.getExtensions(CompletionDataEP.EP_NAME)) {
@@ -254,6 +236,11 @@ public class CompletionUtil {
     return element == null ? psi : element;
   }
 
+  /**
+   * Filters _names for strings that match given matcher and sorts them. 
+   * "Start matching" items go first, then others. 
+   * Within both groups names are sorted lexicographically in a case-insensitive way.
+   */
   public static LinkedHashSet<String> sortMatching(final PrefixMatcher matcher, Collection<String> _names) {
     ProgressManager.checkCanceled();
     if (matcher.getPrefix().isEmpty()) {

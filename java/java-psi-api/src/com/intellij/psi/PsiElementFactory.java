@@ -368,17 +368,25 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @NotNull PsiImportStatement createImportStatementOnDemand(@NotNull @NonNls String packageName) throws IncorrectOperationException;
 
   /**
+   * @see #createVariableDeclarationStatement(String, PsiType, PsiExpression, PsiElement) 
+   */
+  @NotNull PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name, @NotNull PsiType type, @Nullable PsiExpression initializer)
+    throws IncorrectOperationException;
+
+  /**
    * Creates a local variable declaration statement with the specified name, type and initializer,
    * optionally without reformatting the declaration.
    *
    * @param name        the name of the variable to create.
    * @param type        the type of the variable to create.
    * @param initializer the initializer for the variable.
+   * @param context     the context for dummy holder
    * @return the variable instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid identifier or
    *                                     <code>type</code> is not a valid type.
    */
-  @NotNull PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name, @NotNull PsiType type, @Nullable PsiExpression initializer)
+  @NotNull PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name, @NotNull PsiType type,
+                                                                      @Nullable PsiExpression initializer, @Nullable PsiElement context)
     throws IncorrectOperationException;
 
   /**

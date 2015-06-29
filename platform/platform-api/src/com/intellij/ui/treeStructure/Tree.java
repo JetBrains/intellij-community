@@ -658,7 +658,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     public void holdSelection() {
       myHeldSelection = getSelectionPaths();
-      clearSelection();
     }
 
     public void unholdSelection() {

@@ -592,6 +592,10 @@ public def layoutCommunityPlugins(String home) {
         }
       }
     }
+
+    pluginDir("Kotlin") {
+      fileset(dir: "${home}/build/kotlinc/plugin/Kotlin")
+    }
   }
 }
 
@@ -692,6 +696,7 @@ def reorder(String home, String targetDirectory) {
     arg(value: "${home}/lib")
     classpath {
       projectBuilder.moduleRuntimeClasspath(findModule("util"), false).each {
+        println(it)
         pathelement(location: it)
       }
     }

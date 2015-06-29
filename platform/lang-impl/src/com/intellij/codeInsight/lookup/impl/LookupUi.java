@@ -139,6 +139,8 @@ class LookupUi {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (myLookup.isLookupDisposed()) return;
+        
         myHintAlarm.cancelAllRequests();
 
         final LookupElement item = myLookup.getCurrentItem();

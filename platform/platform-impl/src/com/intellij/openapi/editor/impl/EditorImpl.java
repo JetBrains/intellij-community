@@ -885,8 +885,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean firstCharTyped = true;
-
   private void initComponent() {
     myPanel.setLayout(new BorderLayout());
 

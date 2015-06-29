@@ -31,12 +31,12 @@ import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 public class ErrorDiffTool implements FrameDiffTool {
@@ -69,8 +69,7 @@ public class ErrorDiffTool implements FrameDiffTool {
       myContext = context;
       myRequest = request;
 
-      myPanel = new JPanel(new BorderLayout());
-      myPanel.add(createComponent(request), BorderLayout.CENTER);
+      myPanel = JBUI.Panels.simplePanel(createComponent(request));
     }
 
     @NotNull

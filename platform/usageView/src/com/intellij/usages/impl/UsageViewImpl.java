@@ -1108,7 +1108,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     // call update last, to let children a chance to update their cache first
     if (node instanceof Node && node != getModelRoot() && isVisible == UsageViewTreeCellRenderer.RowLocation.INSIDE_VISIBLE_RECT) {
-      ((Node)node).update(this);
+      try {
+        ((Node)node).update(this);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
     }
   }
 

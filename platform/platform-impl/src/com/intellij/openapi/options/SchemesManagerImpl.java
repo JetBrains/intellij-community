@@ -722,23 +722,23 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
   }
 
   @Override
-  public void setSchemes(@NotNull final List<T> schemes, @Nullable Condition<T> removeCondition) {
+  public void setSchemes(@NotNull final List<T> newSchemes, @Nullable Condition<T> removeCondition) {
     if (removeCondition == null) {
       mySchemes.clear();
     }
     else {
-      for (int i = schemes.size() - 1; i >= 0; i--) {
-        T scheme = schemes.get(i);
+      for (int i = mySchemes.size() - 1; i >= 0; i--) {
+        T scheme = mySchemes.get(i);
         if (removeCondition.value(scheme)) {
           mySchemes.remove(i);
         }
       }
     }
 
-    retainExternalInfo(schemes);
+    retainExternalInfo(newSchemes);
 
-    mySchemes.ensureCapacity(schemes.size());
-    for (T scheme : schemes) {
+    mySchemes.ensureCapacity(newSchemes.size());
+    for (T scheme : newSchemes) {
       mySchemes.add(scheme);
       schemeAdded(scheme);
     }
@@ -755,6 +755,10 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
   }
 
   private void retainExternalInfo(@NotNull final List<T> schemes) {
+    if (schemeToInfo.isEmpty()) {
+      return;
+    }
+
     schemeToInfo.retainEntries(new TObjectObjectProcedure<ExternalizableScheme, ExternalInfo>() {
       @Override
       public boolean execute(ExternalizableScheme scheme, ExternalInfo info) {
@@ -852,7 +856,7 @@ public final class SchemesManagerImpl<T extends Scheme, E extends Externalizable
   @Override
   public void setCurrentSchemeName(@Nullable String schemeName) {
     myCurrentSchemeName = schemeName;
-    myCurrentScheme = schemeName == null ? null : findSchemeByName(schemeName);
+    myCurrentScheme = null;
   }
 
   @Override
