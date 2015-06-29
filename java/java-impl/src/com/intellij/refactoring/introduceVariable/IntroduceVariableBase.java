@@ -872,7 +872,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           }
 
           PsiDeclarationStatement declaration = JavaPsiFacade.getInstance(project).getElementFactory()
-            .createVariableDeclarationStatement(settings.getEnteredName(), selectedType.getType(), initializer);
+            .createVariableDeclarationStatement(settings.getEnteredName(), selectedType.getType(), initializer, container);
           if (!isInsideLoop) {
             declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
@@ -978,7 +978,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (initializer instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)initializer;
       final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
-        .createVariableDeclarationStatement("x", expectedType, initializer).getDeclaredElements()[0])
+        .createVariableDeclarationStatement("x", expectedType, initializer, initializer).getDeclaredElements()[0])
         .getInitializer();
       if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
           PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
