@@ -1685,7 +1685,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void contextAction() {
-      if (getSuspendManager().isFrozen(myThread)) {
+      // handle unfreeze through the regular context resume
+      if (false && getSuspendManager().isFrozen(myThread)) {
         getSuspendManager().unfreezeThread(myThread);
         return;
       }
@@ -1714,6 +1715,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       SuspendManager suspendManager = getSuspendManager();
       if (!suspendManager.isFrozen(myThread)) {
         suspendManager.freezeThread(myThread);
+        SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_EVENT_THREAD, 0);
+        suspendContext.setThread(myThread.getThreadReference());
+        mySuspendManager.notifyPaused(suspendContext);
       }
     }
   }

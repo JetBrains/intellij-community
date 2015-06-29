@@ -293,8 +293,8 @@
     </group>
 
     <group id="Debugger.ThreadsPanelPopup">
-      <!--<reference ref="Debugger.ResumeThread"/>-->
-      <!--<reference ref="Debugger.FreezeThread"/>-->
+      <reference ref="Debugger.ResumeThread"/>
+      <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.InterruptThread"/>
       <!--<reference ref="Debugger.ShowFrame"/>-->
       <reference ref="Debugger.PopFrame"/>
