@@ -15,7 +15,48 @@
  */
 package com.intellij.openapi.options
 
-val LOG=Logger.getInstance(javaClass<SchemesManagerFactoryImpl>())
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
+import com.intellij.openapi.components.impl.stores.DirectoryStorageData
+import com.intellij.openapi.components.impl.stores.StorageUtil
+import com.intellij.openapi.components.impl.stores.StreamProvider
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.AbstractExtensionPointBean
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.WriteExternalException
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.tracker.VirtualFileTracker
+import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
+import com.intellij.util.ThrowableConvertor
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.URLUtil
+import com.intellij.util.text.UniqueNameGenerator
+import gnu.trove.THashMap
+import gnu.trove.THashSet
+import gnu.trove.TObjectObjectProcedure
+import gnu.trove.TObjectProcedure
+import org.jdom.Document
+import org.jdom.Element
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.util.ArrayList
+import java.util.Collections
+import java.util.LinkedHashMap
+
+val LOG = Logger.getInstance(javaClass<SchemesManagerFactoryImpl>())
 
 public class SchemesManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
                                                                       private val processor: SchemeProcessor<E>,
