@@ -43,12 +43,13 @@ import java.io.File
 import java.io.InputStream
 import java.util.LinkedHashSet
 import java.util.concurrent.Future
+import kotlin.properties.Delegates
 
 val PLUGIN_NAME: String = "Settings Repository"
 
 val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
 
-val icsManager by lazy(LazyThreadSafetyMode.NONE) {
+val icsManager by Delegates.lazy {
   ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())
 }
 

@@ -23,6 +23,7 @@ import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.File
 import java.io.IOException
+import kotlin.properties.Delegates
 
 class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<CredentialsStore>, dir: File = File(getPluginSystemDir(), "repository")) : BaseRepositoryManager(dir) {
   val repository: Repository
@@ -38,7 +39,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   // we must recreate repository if dir changed because repository stores old state and cannot be reinitialized (so, old instance cannot be reused and we must instantiate new one)
   var _repository: Repository? = null
 
-  val credentialsProvider: CredentialsProvider by lazy {
+  val credentialsProvider: CredentialsProvider by Delegates.lazy {
     JGitCredentialsProvider(credentialsStore, repository)
   }
 
