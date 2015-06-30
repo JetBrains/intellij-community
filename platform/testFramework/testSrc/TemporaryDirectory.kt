@@ -15,25 +15,25 @@
  */
 package org.jetbrains.testFramework
 
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.SmartList
 import org.junit.rules.ExternalResource
-import javax.swing.SwingUtilities
+import java.io.File
 
-public fun invokeAndWaitIfNeed(runnable: () -> Unit) {
-  if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
-}
-
-public class FixtureRule() : ExternalResource() {
-  val projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture()
-
-  override fun before() {
-    UsefulTestCase.replaceIdeEventQueueSafely()
-
-    invokeAndWaitIfNeed { projectFixture.setUp() }
-  }
+public class TemporaryDirectory : ExternalResource() {
+  private val files = SmartList<File>()
 
   override fun after() {
-    invokeAndWaitIfNeed { projectFixture.tearDown() }
+    for (file in files) {
+      FileUtil.delete(file)
+    }
+    files.clear()
+  }
+
+  public fun newDirectory(): File {
+    val file = FileUtilRt.generateRandomTemporaryPath()
+    files.add(file)
+    return file;
   }
 }

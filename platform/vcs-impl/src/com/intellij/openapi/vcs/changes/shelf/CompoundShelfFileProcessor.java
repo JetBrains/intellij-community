@@ -37,14 +37,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class CompoundShelfFileProcessor {
+  private static final Logger LOG = Logger.getInstance(CompoundShelfFileProcessor.class);
+
   public static final String SHELF_DIR_NAME = "shelf";
 
-  private final String mySubdirName;
   private final StreamProvider myServerStreamProvider;
   private final String FILE_SPEC;
   private final String myShelfPath;
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.CompoundShelfFileProcessor");
 
   public CompoundShelfFileProcessor() {
     this(PathManager.getConfigPath());
@@ -58,8 +57,7 @@ public class CompoundShelfFileProcessor {
   public CompoundShelfFileProcessor(@Nullable StreamProvider serverStreamProvider, String shelfPath) {
     myServerStreamProvider = serverStreamProvider;
     myShelfPath = shelfPath;
-    mySubdirName = new File(myShelfPath).getName();
-    FILE_SPEC = StoragePathMacros.ROOT_CONFIG +  "/" + mySubdirName + "/";
+    FILE_SPEC = StoragePathMacros.ROOT_CONFIG +  "/" + new File(myShelfPath).getName() + "/";
   }
 
   /*
