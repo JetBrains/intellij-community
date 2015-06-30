@@ -131,8 +131,6 @@ class QuickListPanel {
     for (String id : item.getActionIds()) {
       includeActionId(id);
     }
-
-    myDisplayName.requestFocus();
   }
 
   private void excludeSelectionAction() {

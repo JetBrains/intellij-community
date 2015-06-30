@@ -1,0 +1,38 @@
+<project name="Download Kotlin" default="extract">
+  <property name="kotlin.version" value="0.12.613"/>
+  <property name="kotlin.build.type.id" value="Kotlin_M12_Idea142branch150version"/>
+  <property name="kotlin.build.selector" value=".lastSuccessful"/>
+
+  <target name="check_present">
+    <pathconvert property="kotlin.path" setonempty="false" pathsep=" ">
+      <path>
+        <fileset dir="${basedir}" includes="kotlin-plugin-${kotlin.version}*.zip"/>
+      </path>
+    </pathconvert>
+  </target>
+
+  <target name="download" depends="check_present" unless="kotlin.path">
+    <delete dir="${basedir}" includes="kotlin-plugin*.zip"/>
+    <loadresource property="kotlin.build.number">
+      <url url="https://teamcity.jetbrains.com/guestAuth/app/rest/buildTypes/id:${kotlin.build.type.id}/builds/status:SUCCESS,count:1/number"/>
+    </loadresource>
+    <echo message="Downloading Kotlin build ${kotlin.build.number}"/>
+    <property name="kotlin.path" value="${basedir}/kotlin-plugin-${kotlin.build.number}.zip"/>
+    <get src="https://teamcity.jetbrains.com/guestAuth/repository/download/${kotlin.build.type.id}/${kotlin.build.number}/kotlin-plugin-${kotlin.build.number}.zip"
+         dest="${kotlin.path}"/>
+  </target>
+
+  <target name="extract" depends="download">
+    <unzip src="${kotlin.path}" dest="${basedir}/kotlinc/plugin"/>
+
+    <unzip src="${kotlin.path}" dest="${basedir}">
+      <patternset includes="Kotlin/kotlinc/**"/>
+      <globmapper from="Kotlin/*" to="*"/>
+    </unzip>
+
+    <unzip src="${kotlin.path}" dest="${basedir}/kotlinc/jps">
+      <patternset includes="Kotlin/lib/jps/**"/>
+      <globmapper from="Kotlin/lib/jps/*" to="*"/>
+    </unzip>
+  </target>
+</project>

@@ -22,7 +22,6 @@ import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.ListModelEditor;
@@ -50,7 +49,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     @Override
     public QuickList clone(@NotNull QuickList item, boolean forInPlaceEditing) {
-      return new QuickList(item.getName(), item.getDescription(), item.getActionIds(), false);
+      return new QuickList(item.getName(), item.getDescription(), item.getActionIds());
     }
 
     @Override
@@ -130,26 +129,14 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
   @Override
   public boolean isModified(@NotNull List<QuickList> settings) {
     itemPanel.apply();
-    return editor.isModified(settings);
+    return editor.isModified();
   }
 
   @Override
   public void apply(@NotNull List<QuickList> settings) throws ConfigurationException {
     itemPanel.apply();
 
-    List<QuickList> items = editor.getModel().getItems();
-    for (int i = items.size() - 1; i >= 0; i--) {
-      QuickList item = items.get(i);
-      if (item.getName().isEmpty()) {
-        if (itemEditor.isEmpty(item)) {
-          ListUtil.removeIndices(editor.getList(), new int[]{i});
-        }
-        else {
-          throw new ConfigurationException("Quick list should have non empty name");
-        }
-      }
-    }
-
+    editor.ensureNonEmptyNames("Quick list should have non empty name");
     editor.processModifiedItems(new PairProcessor<QuickList, QuickList>() {
       @Override
       public boolean process(QuickList newItem, QuickList oldItem) {

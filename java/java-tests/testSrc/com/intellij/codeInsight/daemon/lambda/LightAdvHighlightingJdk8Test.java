@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,44 +16,43 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting";
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new JavacQuirksInspection(),
-    };
-  }
-
-  public void testUnderscore() throws Exception {
-    doTest();
-  }
-
-  public void testFinalVariableMightNotHaveBeenInitializedInsideLambda() throws Exception {
-    doTest();
-  }
-
-  public void testStrictfpInsideInterface() throws Exception {
-    doTest();
-  }
-
-  private void doTest() {
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTools(new JavacQuirksInspection());
+    setLanguageLevel(LanguageLevel.JDK_1_8);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk18();
   }
+
+  private void doTest() {
+    doTest(true, false, false);
+  }
+
+  private void doTest(boolean warnings, boolean weakWarnings, boolean infos, InspectionProfileEntry... inspections) {
+    enableInspectionTools(inspections);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, weakWarnings, infos);
+  }
+
+  public void testUnderscore() { doTest(); }
+  public void testFinalVariableMightNotHaveBeenInitializedInsideLambda() { doTest(); }
+  public void testStrictfpInsideInterface() { doTest(); }
+  public void testMethodReferences() { doTest(false, true, false); }
+  public void testUsedMethodsByMethodReferences() { doTest(true, true, false, new UnusedDeclarationInspection()); }
+  public void testLambdaExpressions() { doTest(false, true, false); }
 }

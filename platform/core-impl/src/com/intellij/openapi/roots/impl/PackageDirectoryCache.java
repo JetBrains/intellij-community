@@ -88,6 +88,11 @@ public class PackageDirectoryCache {
     return info;
   }
 
+  public Set<String> getSubpackageNames(@NotNull final String packageName) {
+    final PackageInfo info = getPackageInfo(packageName);
+    return info == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
+  }
+
   private class PackageInfo {
     final String myQname;
     final List<VirtualFile> myPackageDirectories;
@@ -95,7 +100,7 @@ public class PackageDirectoryCache {
       @NotNull
       @Override
       protected MultiMap<String, VirtualFile> compute() {
-        MultiMap<String, VirtualFile> result = MultiMap.createSmart();
+        MultiMap<String, VirtualFile> result = MultiMap.createLinked();
         for (VirtualFile directory : myPackageDirectories) {
           for (VirtualFile child : directory.getChildren()) {
             String childName = child.getName();

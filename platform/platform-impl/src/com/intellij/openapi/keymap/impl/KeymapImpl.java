@@ -135,16 +135,21 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   @NotNull
   public KeymapImpl copy() {
     KeymapImpl newKeymap = new KeymapImpl();
-    newKeymap.myParent = myParent;
-    newKeymap.myName = myName;
-    newKeymap.myCanModify = canModify();
+    return copyTo(newKeymap);
+  }
 
-    newKeymap.cleanShortcutsCache();
+  @NotNull
+  public KeymapImpl copyTo(@NotNull KeymapImpl otherKeymap) {
+    otherKeymap.myParent = myParent;
+    otherKeymap.myName = myName;
+    otherKeymap.myCanModify = canModify();
+
+    otherKeymap.cleanShortcutsCache();
 
     for (Map.Entry<String, LinkedHashSet<Shortcut>> entry : myActionId2ListOfShortcuts.entrySet()) {
-      newKeymap.myActionId2ListOfShortcuts.put(entry.getKey(), new LinkedHashSet<Shortcut>(entry.getValue()));
+      otherKeymap.myActionId2ListOfShortcuts.put(entry.getKey(), new LinkedHashSet<Shortcut>(entry.getValue()));
     }
-    return newKeymap;
+    return otherKeymap;
   }
 
   public boolean equals(Object object) {
@@ -511,6 +516,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return getKeymapManager().getActionBinding(actionId);
   }
 
+  @NotNull
   @Override
   public Shortcut[] getShortcuts(String actionId) {
     LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
@@ -761,7 +767,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    * @return string representation of passed keystroke.
    */
   public static String getKeyShortcutString(KeyStroke keyStroke) {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     int modifiers = keyStroke.getModifiers();
     if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
       buf.append(SHIFT);
@@ -794,7 +800,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    *         be used only for serializing of the <code>MouseShortcut</code>
    */
   private static String getMouseShortcutString(MouseShortcut shortcut) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     // modifiers
 
@@ -874,7 +880,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
 
   @Override
-  public HashMap<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
+  public Map<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
     HashMap<String, ArrayList<KeyboardShortcut>> result = new HashMap<String, ArrayList<KeyboardShortcut>>();
 
     String[] actionIds = getActionIds(keyboardShortcut.getFirstKeyStroke());
@@ -944,7 +950,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
   @Override
   public String[] getAbbreviations() {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override

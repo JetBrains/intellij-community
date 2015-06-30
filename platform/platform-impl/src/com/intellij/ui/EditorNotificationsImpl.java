@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -132,9 +131,12 @@ public class EditorNotificationsImpl extends EditorNotifications {
       public void computeInReadAction(@NotNull final ProgressIndicator indicator) {
         if (isOutdated()) return;
 
+        final List<Provider> providers = DumbService.getInstance(myProject).
+          filterByDumbAwareness(EXTENSION_POINT_NAME.getExtensions(myProject));
+
         final List<Runnable> updates = ContainerUtil.newArrayList();
         for (final FileEditor editor : editors) {
-          for (final Provider<?> provider : Extensions.getExtensions(EXTENSION_POINT_NAME, myProject)) {
+          for (final Provider<?> provider : providers) {
             final JComponent component = provider.createNotificationPanel(file, editor);
             updates.add(new Runnable() {
               @Override

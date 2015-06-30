@@ -25,24 +25,23 @@ import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.security.SecureRandom;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
-  private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
+  private final StubBuilder myBuilder = new JavaLightStubBuilder();
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    doTest("@interface A { int i() default 42; }\n class C { void m(int p) throws E { } }", null);  // warm up
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testEmpty() {
     doTest("/**/",
+
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n");
   }
@@ -497,7 +496,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
     PsiJavaFile file = (PsiJavaFile)createLightFile("SOE_test.java", sb.toString());
     long t = System.currentTimeMillis();
-    StubElement tree = NEW_BUILDER.buildStubTree(file);
+    StubElement tree = myBuilder.buildStubTree(file);
     t = System.currentTimeMillis() - t;
     assertEquals("PsiJavaFileStub []\n" +
                  "  IMPORT_LIST:PsiImportListStub\n" +
@@ -517,27 +516,23 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     String text = FileUtil.loadFile(new File(path));
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
     String message = "Source file size: " + text.length();
-    PlatformTestUtil.startPerformanceTest(message, 2000, () -> NEW_BUILDER.buildStubTree(file)).cpuBound().assertTiming();
+    PlatformTestUtil.startPerformanceTest(message, 2000, () -> myBuilder.buildStubTree(file)).cpuBound().assertTiming();
   }
 
-  private static void doTest(String source, @Nullable String expected) {
+  private void doTest(String source, String expected) {
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
     FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);
     assertFalse(fileNode.isParsed());
 
-    StubElement lightTree = NEW_BUILDER.buildStubTree(file);
+    StubElement lightTree = myBuilder.buildStubTree(file);
     assertFalse(fileNode.isParsed());
 
     file.getNode().getChildren(null); // force switch to AST
-    StubElement astBasedTree = NEW_BUILDER.buildStubTree(file);
+    StubElement astBasedTree = myBuilder.buildStubTree(file);
     assertTrue(fileNode.isParsed());
 
-    String lightStr = DebugUtil.stubTreeToString(lightTree);
-    String lightStr2 = DebugUtil.stubTreeToString(astBasedTree);
-    if (expected != null) {
-      assertEquals("light tree differs", expected, lightStr);
-      assertEquals("AST-based tree differs", expected, lightStr2);
-    }
+    assertEquals("light tree differs", expected, DebugUtil.stubTreeToString(lightTree));
+    assertEquals("AST-based tree differs", expected, DebugUtil.stubTreeToString(astBasedTree));
   }
 }

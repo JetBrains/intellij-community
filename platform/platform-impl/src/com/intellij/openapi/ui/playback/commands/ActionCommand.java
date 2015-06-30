@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TimedOutCallback;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
@@ -57,7 +57,7 @@ public class ActionCommand extends TypeCommand {
           final KeyboardShortcut ks = (KeyboardShortcut)each;
           final KeyStroke first = ks.getFirstKeyStroke();
           final KeyStroke second = ks.getSecondKeyStroke();
-          if (first != null && second == null) {
+          if (second == null) {
             stroke = KeyStroke.getKeyStroke(first.getKeyCode(), first.getModifiers(), false);
             break;
           }
@@ -135,7 +135,7 @@ public class ActionCommand extends TypeCommand {
     for (Shortcut each : shortcuts) {
       if (each instanceof KeyboardShortcut) {
         keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
-        if (keyStroke != null) break;
+        break;
       }
     }
 

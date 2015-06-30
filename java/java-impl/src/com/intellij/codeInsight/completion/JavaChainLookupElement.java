@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
@@ -26,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
@@ -126,14 +123,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
     final char atTail = document.getCharsSequence().charAt(context.getTailOffset() - 1);
     if (atTail != ';') {
-      LOG.error(LogMessageEx.createEvent("Unexpected character",
-                                         "atTail=" + atTail + "\n" +
-                                         "offset=" + context.getTailOffset() + "\n" +
-                                         "item=" + this + "\n" +
-                                         "item.class=" + this.getClass() + "\n" +
-                                         DebugUtil.currentStackTrace(),
-                                         AttachmentFactory.createAttachment(context.getDocument())));
-
+      return;
     }
     document.replaceString(context.getTailOffset() - 1, context.getTailOffset(), ".");
 

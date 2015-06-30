@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +51,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   protected synchronized Collection<Language> getFilterItems() {
     final Collection<Language> result = super.getFilterItems();
     if (result == null) {
-      return result;
+      return null;
     }
     final Collection<Language> items = new HashSet<Language>(result);
     items.add(Language.ANY);
@@ -129,10 +131,10 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
     separators.add(".");
     for(ChooseByNameContributor c: contributors) {
       if (c instanceof GotoClassContributor) {
-        separators.add(((GotoClassContributor)c).getQualifiedNameSeparator());
+        ContainerUtil.addIfNotNull(separators, ((GotoClassContributor)c).getQualifiedNameSeparator());
       }
     }
-    return separators.toArray(new String[separators.size()]);
+    return ArrayUtil.toStringArray(separators);
   }
 
   @Override

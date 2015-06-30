@@ -890,6 +890,24 @@ public class CommonCodeStyleSettings {
 
   public int FORCE_REARRANGE_MODE = REARRANGE_ACCORDIND_TO_DIALOG;
 
+  public enum WrapOnTyping {
+    UNDEFINED (-1),
+    NO_WRAP (0),
+    WRAP (1);
+
+    public int intValue;
+
+    WrapOnTyping(int i) {
+      this.intValue = i;
+    }
+  }
+
+  /**
+   * Defines if wrapping should occur when typing reaches right margin. <b>Do not refer to this field directly, use
+   * <code>CodeStyleSettings.isWrapOnTyping(Language)</code> method instead</b>.
+   * @see CodeStyleSettings#isWrapOnTyping(Language)
+   */
+  public int WRAP_ON_TYPING = WrapOnTyping.UNDEFINED.intValue;
 
   //-------------------------Indent options-------------------------------------------------
   public static class IndentOptions implements JDOMExternalizable, Cloneable {

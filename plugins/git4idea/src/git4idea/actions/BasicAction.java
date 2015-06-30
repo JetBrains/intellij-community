@@ -18,7 +18,6 @@ package git4idea.actions;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -28,10 +27,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
@@ -76,7 +75,8 @@ public abstract class BasicAction extends DumbAwareAction {
     if (!background) {
       GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
         public void run(@NotNull ProgressIndicator indicator) {
-          VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
+          VfsUtil.markDirtyAndRefresh(false, true, false, affectedFiles);
+          VcsFileUtil.markFilesDirty(project, Arrays.asList(affectedFiles));
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             public void run() {
               GitUIUtil.showOperationErrors(project, exceptions, actionName);
@@ -101,34 +101,6 @@ public abstract class BasicAction extends DumbAwareAction {
                                      GitVcs mksVcs,
                                      @NotNull List<VcsException> exceptions,
                                      @NotNull VirtualFile[] affectedFiles);
-
-  /**
-   * Perform the action over set of files in background
-   *
-   * @param project       the context project
-   * @param exceptions    the list of exceptions to be collected.
-   * @param affectedFiles the files to be affected by the operation
-   * @param action        the action to be run in background
-   * @return true value
-   */
-  protected boolean toBackground(final Project project,
-                                 GitVcs vcs,
-                                 final VirtualFile[] affectedFiles,
-                                 final List<VcsException> exceptions,
-                                 final Consumer<ProgressIndicator> action) {
-    GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        action.consume(indicator);
-        VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          public void run() {
-            GitUIUtil.showOperationErrors(project, exceptions, getActionName());
-          }
-        });
-      }
-    });
-    return true;
-  }
 
   /**
    * given a list of action-target files, returns ALL the files that should be

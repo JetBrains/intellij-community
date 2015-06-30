@@ -55,7 +55,7 @@ public class XmlEditorTest extends LightCodeInsightTestCase {
                           "</svg>");
 
     CodeStyleSettings clone = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().clone();
-    clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+    clone.setWrapOnTyping(null, true);
     try {
       CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(clone);
       EditorTestUtil.performTypingAction(getEditor(), 'x');
@@ -77,7 +77,7 @@ public class XmlEditorTest extends LightCodeInsightTestCase {
                           "<!-- Some very long and informative xml comment to trigger hard wrapping indeed. Too short? Dave, let me ask you something. Are hard wraps working? What do we live for? What ice-cream do you like? Who am I?????????????????????????????????????????????????????????????????????????????????????????????????<caret>-->");
 
     CodeStyleSettings clone = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().clone();
-    clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+    clone.setWrapOnTyping(null, true);
     try {
       CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(clone);
       EditorTestUtil.performTypingAction(getEditor(), '?');

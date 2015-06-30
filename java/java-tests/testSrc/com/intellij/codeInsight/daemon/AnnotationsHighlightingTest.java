@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
  */
 public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
 
   public void testWrongPlace() { doTest(false); }
   public void testNotValueNameOmitted() { doTest(false); }
@@ -39,10 +38,10 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInapplicable() { doTest(false); }
   public void testDuplicateAttribute() { doTest(false); }
   public void testDuplicateTarget() { doTest(false); }
-  public void testPingPongAnnotationTypesDependencies() { doTest(false);}
-  public void testClashMethods() { doTest(false);}
-  public void testDupMethods() { doTest(false);}
-  public void testPrivateInaccessibleConstant() { doTest(false);}
+  public void testPingPongAnnotationTypesDependencies() { doTest(false); }
+  public void testClashMethods() { doTest(false); }
+  public void testDupMethods() { doTest(false); }
+  public void testPrivateInaccessibleConstant() { doTest(false); }
 
   public void testInvalidPackageAnnotationTarget() { doTest(BASE_PATH + "/" + getTestName(true) + "/package-info.java", false, false); }
   public void testPackageAnnotationNotInPackageInfo() { doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false); }

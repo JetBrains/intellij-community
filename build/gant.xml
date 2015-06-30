@@ -24,7 +24,7 @@
     <fileset dir="${project.home}/build/kotlinc/lib" erroronmissingdir="false">
       <include name="kotlin-runtime.jar"/>
     </fileset>
-    <fileset dir="${project.home}/build/kotlinc/plugin" erroronmissingdir="false">
+    <fileset dir="${project.home}/build/kotlinc/plugin/Kotlin/lib" erroronmissingdir="false">
       <include name="kotlin-plugin.jar"/>
     </fileset>
     <fileset dir="${idea.lib}">

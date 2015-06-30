@@ -905,7 +905,7 @@ class AppTest {
       assert messages
       def error = messages.find { it.message.contains('InvalidType') }
       assert error?.virtualFile
-      assert groovyFile.classes[0] == GroovyCompilerLoader.findClassByStub(project, error.virtualFile)
+      assert groovyFile.classes[0] == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
     }
 
     public void "test config script"() {

@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -59,8 +60,26 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   @Override
+  protected void addOption(@NotNull String fieldName,
+                           @NotNull String title,
+                           @Nullable String groupName,
+                           int minValue,
+                           int maxValue,
+                           int defaultValue,
+                           String defaultValueText) {
+    super.addOption(fieldName, title, groupName, minValue, maxValue, defaultValue, defaultValueText);
+    if (groupName != null) {
+      myGroupToFields.putValue(groupName, fieldName);
+    }
+  }
+
+  @Override
   protected void initTables() {
     addOption("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), null, 0, 999, -1, ApplicationBundle.message("settings.code.style.default.general"));
+    addOption("WRAP_ON_TYPING", ApplicationBundle.message("wrapping.wrap.on.typing"), null,
+              CommonCodeStyleSettings.WrapOnTyping.UNDEFINED.intValue,
+              CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,
+              CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue);
     
     addOption("KEEP_LINE_BREAKS", ApplicationBundle.message("wrapping.keep.line.breaks"), WRAPPING_KEEP);
     addOption("KEEP_FIRST_COLUMN_COMMENT", ApplicationBundle.message("wrapping.keep.comment.at.first.column"), WRAPPING_KEEP);

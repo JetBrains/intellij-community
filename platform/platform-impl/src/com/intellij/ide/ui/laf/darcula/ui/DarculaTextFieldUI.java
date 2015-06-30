@@ -26,82 +26,26 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTextFieldUI extends BasicTextFieldUI {
-  private static final Icon SEARCH_ICON = IconLoader.findIcon("/com/intellij/ide/ui/laf/darcula/icons/search.png", DarculaTextFieldUI.class, true);
-  private static final Icon SEARCH_WITH_HISTORY_ICON = IconLoader.findIcon("/com/intellij/ide/ui/laf/darcula/icons/searchWithHistory.png", DarculaTextFieldUI.class, true);
-  private static final Icon CLEAR_ICON = IconLoader.findIcon("/com/intellij/ide/ui/laf/darcula/icons/clear.png", DarculaTextFieldUI.class, true);
+public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
-  private enum SearchAction {POPUP, CLEAR}
-
-  protected final JTextField myTextField;
-  protected JLabel myClearIcon;
-  protected JLabel myRecentIcon;
 
   public DarculaTextFieldUI(JTextField textField) {
-    myTextField = textField;
+    super(textField);
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(final JComponent c) {
-    final DarculaTextFieldUI ui = new DarculaTextFieldUI((JTextField)c);
-    c.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        c.repaint();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        c.repaint();
-      }
-    });
-    c.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        if (ui.getComponent() != null && isSearchField(c)) {
-          if (ui.getActionUnder(e) != null) {
-            c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-          } else {
-            c.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-          }
-        }
-      }
-    });
-    c.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (isSearchField(c)) {
-          final SearchAction action = ui.getActionUnder(e);
-          if (action != null) {
-            switch (action) {
-              case POPUP:
-                ui.showSearchPopup();
-                break;
-              case CLEAR:
-                Object listener = c.getClientProperty("JTextField.Search.CancelAction");
-                if (listener instanceof ActionListener) {
-                  ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
-                }
-                ((JTextField)c).setText("");
-                break;
-            }
-            e.consume();
-          }
-        }
-      }
-    });
-    return ui;
+    return new DarculaTextFieldUI((JTextField)c);
   }
 
-  protected void showSearchPopup() {
+  public void showSearchPopup() {
     final Object value = myTextField.getClientProperty("JTextField.Search.FindPopup");
     final JTextComponent editor = getComponent();
     if (editor != null && value instanceof JPopupMenu) {
@@ -115,7 +59,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     return (component != null) && !StringUtil.isEmpty(component.getText());
   }
 
-  private SearchAction getActionUnder(MouseEvent e) {
+  public SearchAction getActionUnder(MouseEvent e) {
     int off = JBUI.scale(8);
     Point point = new Point(e.getX() - off, e.getY() - off);
     return point.distance(getSearchIconCoord()) <= off
@@ -218,13 +162,5 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   protected void paintSafely(Graphics g) {
     paintBackground(g);
     super.paintSafely(g);
-  }
-
-  public static boolean isSearchField(Component c) {
-    return c instanceof JTextField && "search".equals(((JTextField)c).getClientProperty("JTextField.variant"));
-  }
-
-  public static boolean isSearchFieldWithHistoryPopup(Component c) {
-    return isSearchField(c) && ((JTextField)c).getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu;
   }
 }

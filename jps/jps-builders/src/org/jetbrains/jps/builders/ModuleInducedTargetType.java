@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.jps.builders;
 
-package com.intellij.util.io.fs;
-
-@Deprecated
-public class FileSystem {
-  public static IFileSystem FILE_SYSTEM = new IoFileSystem();
-
-  private FileSystem() {
-  }
+/**
+ * Marker interface for {@link org.jetbrains.jps.builders.BuildTargetType}'s implementations. It instructs the external build process
+ * to skip building for targets of this type if all modules were compiled during previous build session and no source files were changed
+ * after that.
+ * @author nik
+ */
+public interface ModuleInducedTargetType {
 }

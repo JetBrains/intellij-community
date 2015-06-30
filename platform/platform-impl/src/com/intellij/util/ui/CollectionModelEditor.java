@@ -18,9 +18,12 @@ package com.intellij.util.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OrderedSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -28,7 +31,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
   protected static final Logger LOG = Logger.getInstance(CollectionModelEditor.class);
 
   protected final E itemEditor;
-  protected final ModelHelper<T> helper = new ModelHelper<T>();
+  protected final ModelHelper helper = new ModelHelper();
 
   protected CollectionModelEditor(@NotNull E itemEditor) {
     this.itemEditor = itemEditor;
@@ -45,10 +48,18 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
   }
 
   @NotNull
+  /**
+   * Mutable internal list of items (must not be exposed to client)
+   */
   protected abstract List<T> getItems();
 
-  public final boolean isModified(@NotNull List<T> oldItems) {
+  public void reset(@NotNull List<T> originalItems) {
+    helper.reset(originalItems);
+  }
+
+  public final boolean isModified() {
     List<T> items = getItems();
+    OrderedSet<T> oldItems = helper.originalItems;
     if (items.size() != oldItems.size()) {
       return true;
     }
@@ -72,29 +83,57 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     });
   }
 
-  public static class ModelHelper<T> {
-    private final THashMap<T, T> modifiedToOriginal = new THashMap<T, T>();
+  @NotNull
+  public final T getMutable(@NotNull T item) {
+    return helper.getMutable(item, -1);
+  }
 
-    public void clear() {
+  protected boolean isEditable(@NotNull T item) {
+    return true;
+  }
+
+  protected class ModelHelper {
+    final OrderedSet<T> originalItems = new OrderedSet<T>(ContainerUtil.<T>identityStrategy());
+
+    private final THashMap<T, T> modifiedToOriginal = new THashMap<T, T>(ContainerUtil.<T>identityStrategy());
+    private final THashMap<T, T> originalToModified = new THashMap<T, T>(ContainerUtil.<T>identityStrategy());
+
+    public void reset(@Nullable List<T> newOriginalItems) {
+      if (newOriginalItems != null) {
+        originalItems.clear();
+        originalItems.addAll(newOriginalItems);
+      }
       modifiedToOriginal.clear();
+      originalToModified.clear();
     }
 
     public void remove(@NotNull T item) {
-      modifiedToOriginal.remove(item);
+      T original = modifiedToOriginal.remove(item);
+      if (original != null) {
+        originalToModified.remove(original);
+      }
     }
 
     public boolean isMutable(@NotNull T item) {
-      return modifiedToOriginal.containsKey(item);
+      return modifiedToOriginal.containsKey(item) || !originalItems.contains(item);
     }
 
     @NotNull
-    public T getMutable(@NotNull T item, @NotNull CollectionItemEditor<T> itemEditor) {
-      if (isMutable(item)) {
+    public T getMutable(@NotNull T item, int index) {
+      if (isMutable(item) || !isEditable(item)) {
         return item;
       }
       else {
-        T mutable = itemEditor.clone(item, true);
-        modifiedToOriginal.put(mutable, item);
+        T mutable = originalToModified.get(item);
+        if (mutable == null) {
+          mutable = itemEditor.clone(item, false);
+          modifiedToOriginal.put(mutable, item);
+          originalToModified.put(item, mutable);
+
+          List<T> items = getItems();
+          // silently replace item
+          items.set(index == -1 ? ContainerUtil.indexOfIdentity(items, item) : index, mutable);
+        }
         return mutable;
       }
     }

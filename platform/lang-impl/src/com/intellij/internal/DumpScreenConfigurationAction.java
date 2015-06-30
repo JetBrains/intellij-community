@@ -22,7 +22,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -73,7 +72,7 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
   private static void append(StringBuilder sb, String name, Rectangle bounds) {
     sb.append(name);
     sb.append(": x=").append(bounds.x);
-    sb.append(", y=").append(bounds.x);
+    sb.append(", y=").append(bounds.y);
     sb.append(", width=").append(bounds.width);
     sb.append(", height=").append(bounds.height);
     sb.append("\n");
@@ -213,7 +212,6 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
       }
       g = g.create();
       if (g instanceof Graphics2D) {
-        Graphics2D g2d = (Graphics2D)g;
         UISettings.setupAntialiasing(g);
       }
       for (int i = 0; i < myScreenList.size(); i++) {

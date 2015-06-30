@@ -312,7 +312,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         typeRegistry = TargetTypeRegistry.getInstance();
       }
       final BuildTargetType<?> targetType = typeRegistry.getTargetType(typeId);
-      if (targetType != null && !(targetType instanceof ModuleBasedBuildTargetType)) {
+      if (targetType != null && !(targetType instanceof ModuleInducedTargetType)) {
         return false;
       }
     }
