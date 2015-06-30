@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -1617,9 +1618,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private class RefreshFileHistoryAction extends AnAction implements DumbAware {
+  private class RefreshFileHistoryAction extends RefreshAction implements DumbAware {
     public RefreshFileHistoryAction() {
       super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"), AllIcons.Actions.Refresh);
+      registerShortcutOn(FileHistoryPanelImpl.this);
     }
 
     public void actionPerformed(AnActionEvent e) {
