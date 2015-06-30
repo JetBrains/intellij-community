@@ -58,7 +58,6 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.GeneralPath;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -600,25 +599,7 @@ public class UIUtil {
   }
 
   public static void drawWave(Graphics2D g, Rectangle rectangle) {
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    Stroke oldStroke = g.getStroke();
-    try {
-      float thickness = 0.7f;
-      g.setStroke(new BasicStroke(thickness));
-      double height = 1;
-      double cycle = 4*height;
-      final double wavedAt = rectangle.y + rectangle.height - thickness - height;
-      GeneralPath wavePath = new GeneralPath();
-      wavePath.moveTo(rectangle.x, wavedAt - Math.cos(rectangle.x * 2 * Math.PI / cycle)*height);
-      for (int x = rectangle.x + 1; x < rectangle.x + rectangle.width; x++) {
-        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle)*height);
-      }
-      g.draw(wavePath);
-    }
-    finally {
-      config.restore();
-      g.setStroke(oldStroke);
-    }
+    WavePainter.forColor(g.getColor()).paint(g, (int) rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
   @NotNull
