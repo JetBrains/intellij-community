@@ -44,19 +44,21 @@ public class SwapSelectionBoundariesAction extends EditorAction {
     public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
       assert caret != null;
       
-      if (!(editor instanceof EditorEx)) {
-        return;
-      }
       if (!caret.hasSelection()) {
         return;
       }
-      
-      EditorEx editorEx = (EditorEx)editor;
       final int start = caret.getSelectionStart();
       final int end = caret.getSelectionEnd();
       boolean moveToEnd = caret.getOffset() == start;
-      editorEx.setStickySelection(false);
-      editorEx.setStickySelection(true);
+      
+      if (editor instanceof EditorEx) {
+        EditorEx editorEx = (EditorEx)editor;
+        if (editorEx.isStickySelection()) {
+          editorEx.setStickySelection(false);
+          editorEx.setStickySelection(true);
+        }
+      }
+      
       if (moveToEnd) {
         caret.moveToOffset(end);
       }
