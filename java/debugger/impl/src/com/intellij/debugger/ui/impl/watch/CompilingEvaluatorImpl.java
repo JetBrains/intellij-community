@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,7 @@ import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -91,8 +90,12 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     final List<File> classpath = new ArrayList<File>();
     if (module != null) {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().addAllFiles(classpath);
-      rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().addAllFiles(platformClasspath);
+      for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+        classpath.add(new File(s));
+      }
+      for (String s : rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
+        platformClasspath.add(new File(s));
+      }
     }
 
     final JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
