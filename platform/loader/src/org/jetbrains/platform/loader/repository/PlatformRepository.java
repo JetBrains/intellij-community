@@ -32,4 +32,7 @@ public interface PlatformRepository {
 
   @NotNull
   List<String> getModuleRootPaths(@NotNull RuntimeModuleId id);
+
+  @NotNull
+  List<String> getModuleClasspath(@NotNull RuntimeModuleId id);
 }

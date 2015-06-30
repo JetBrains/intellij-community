@@ -28,9 +28,7 @@ import javax.xml.stream.XMLInputFactory;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -108,5 +106,25 @@ public abstract class PlatformRepositoryBase implements PlatformRepository {
       paths.add(file.getAbsolutePath());
     }
     return paths;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getModuleClasspath(@NotNull RuntimeModuleId id) {
+    List<String> classpath = new ArrayList<String>();
+    collectDependencies(id, new LinkedHashSet<RuntimeModuleId>(), classpath);
+    return classpath;
+  }
+
+  private void collectDependencies(@NotNull RuntimeModuleId id, @NotNull Set<RuntimeModuleId> dependencies, @NotNull List<String> classpath) {
+    if (dependencies.add(id)) {
+      RuntimeModuleDescriptor module = getRequiredModule(id);
+      for (File file : module.getModuleRoots()) {
+        classpath.add(file.getAbsolutePath());
+      }
+      for (RuntimeModuleId dep : module.getDependencies()) {
+        collectDependencies(dep, dependencies, classpath);
+      }
+    }
   }
 }
