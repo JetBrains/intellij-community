@@ -77,6 +77,7 @@ public class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
+    final List newArgs = new ArrayList();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {
@@ -96,18 +97,20 @@ public class RemoteTestNGStarter {
           return;
         }
         if (line.equals("end")) break;
-        resultArgs.add(line);
+        newArgs.add(line);
       }
     }
     finally {
       reader.close();
     }
 
+    resultArgs.addAll(newArgs);
+    
     if (SM_RUNNER) {
       if (commandFileName != null) {
         if (workingDirs != null && new File(workingDirs).length() > 0) {
           System.exit(new TestNGForkedStarter()
-                        .startForkedVM(workingDirs, args, param, System.out, System.err, "none", commandFileName, Collections.emptyList()));
+                        .startForkedVM(workingDirs, args, param, System.out, System.err, "none", commandFileName, newArgs));
           return;
         }
       }

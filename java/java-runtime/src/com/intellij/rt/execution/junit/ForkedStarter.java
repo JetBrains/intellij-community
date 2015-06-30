@@ -181,6 +181,7 @@ public abstract class ForkedStarter {
         final String packageName = perDirReader.readLine();
         String workingDir;
         while ((workingDir = perDirReader.readLine()) != null) {
+          final String moduleName = perDirReader.readLine();
           final String classpath = perDirReader.readLine();
           try {
 
@@ -199,7 +200,7 @@ public abstract class ForkedStarter {
             final int childResult;
             final File dir = new File(workingDir);
             if (forkMode.equals("none")) {
-              final List childArgs = createChildArgsForClasses(newArgs, packageName, workingDir, classNames, rootDescriptor);
+              final List childArgs = createChildArgsForClasses(newArgs, moduleName, packageName, workingDir, classNames, rootDescriptor);
               childResult = runChild(wrapOutputStream((OutputStream)out),
                                      wrapOutputStream((OutputStream)err),
                                      parameters, childArgs, dir, classpath, dynamicClasspath);
@@ -232,6 +233,7 @@ public abstract class ForkedStarter {
   }
 
   protected abstract List createChildArgsForClasses(List newArgs,
+                                                    String moduleName, 
                                                     String packageName,
                                                     String workingDir,
                                                     List classNames,

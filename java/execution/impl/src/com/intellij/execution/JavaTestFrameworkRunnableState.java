@@ -375,8 +375,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       try {
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
-          final String moduleDir = PathMacroUtil.getModuleDir(module.getModuleFilePath());
-          wWriter.println(moduleDir);
+          wWriter.println(PathMacroUtil.getModuleDir(module.getModuleFilePath()));
+          wWriter.println(module.getName());
 
           if (classpath == null) {
             final JavaParameters parameters = new JavaParameters();

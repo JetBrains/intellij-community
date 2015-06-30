@@ -98,7 +98,12 @@ public class JUnitForkedStarter extends ForkedStarter {
     return newArgs;
   }
   
-  protected List createChildArgsForClasses(List newArgs, String packageName, String workingDir, List classNames, Object rootDescriptor)
+  protected List createChildArgsForClasses(List newArgs,
+                                           String moduleName,
+                                           String packageName,
+                                           String workingDir,
+                                           List classNames,
+                                           Object rootDescriptor)
     throws IOException {
     File tempFile = File.createTempFile("idea_junit", ".tmp");
     tempFile.deleteOnExit();

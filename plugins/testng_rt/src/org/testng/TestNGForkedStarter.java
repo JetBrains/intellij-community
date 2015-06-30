@@ -35,14 +35,24 @@ public class TestNGForkedStarter extends ForkedStarter {
   }
 
   @Override
-  protected List createChildArgsForClasses(List newArgs, String packageName, String workingDir, List classNames, Object rootDescriptor)
-    throws IOException {
+  protected List createChildArgsForClasses(List newArgs,
+                                           String moduleName,
+                                           String packageName,
+                                           String workingDir,
+                                           List classNames,
+                                           Object rootDescriptor) throws IOException {
     final LinkedHashMap<String, Map<String, List<String>>> classes = new LinkedHashMap<String, Map<String, List<String>>>();
     for (Object className : classNames) {
       classes.put((String)className, null);
     }
+    
+    String rootPath = null;
+    if (!newArgs.isEmpty()) {
+      rootPath = new File((String)newArgs.get(0)).getParent();
+    }
+    
     final File file =
-      TestNGXmlSuiteHelper.writeSuite(classes, new LinkedHashMap<String, String>(), "testName", null,
+      TestNGXmlSuiteHelper.writeSuite(classes, new LinkedHashMap<String, String>(), moduleName, rootPath,
                                       TestNGXmlSuiteHelper.Logger.DEAF);
     file.deleteOnExit();
     
@@ -50,8 +60,7 @@ public class TestNGForkedStarter extends ForkedStarter {
   }
 
   @Override
-  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
-    throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err) throws Exception {
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(null);
     CommandLineArgs cla = new CommandLineArgs();
     RemoteArgs ra = new RemoteArgs();
@@ -86,8 +95,7 @@ public class TestNGForkedStarter extends ForkedStarter {
   }
 
   @Override
-  protected Object createRootDescription(String[] args, List newArgs, String configName, Object out, Object err)
-    throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+  protected Object createRootDescription(String[] args, List newArgs, String configName, Object out, Object err) throws Exception {
     return new Object();
   }
 
