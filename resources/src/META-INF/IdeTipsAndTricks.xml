@@ -160,5 +160,16 @@
     <tipAndTrick file="QuickDocInSuggestionList.html"/>
     <tipAndTrick file="QuickDocOnMouseMove.html"/>
     <tipAndTrick file="TerminalOpen.html"/>
+    <tipAndTrick file="PrintKeywords.html"/>
+    <tipAndTrick file="ClosingTags.html"/>
+    <tipAndTrick file="ConstructorDocs.html"/>
+    <tipAndTrick file="DiffChevron.html"/>
+    <tipAndTrick file="LensMode.html"/>
+    <tipAndTrick file="Multiselection1.html"/>
+    <tipAndTrick file="Multiselection2.html"/>
+    <tipAndTrick file="MultiselectionWords.html"/>
+    <tipAndTrick file="QuickDocOnMouseMove.html"/>
+    <tipAndTrick file="ScratchesView.html"/>
+    <tipAndTrick file="RichTextCopy.html"/>
   </extensions>
 </idea-plugin>
