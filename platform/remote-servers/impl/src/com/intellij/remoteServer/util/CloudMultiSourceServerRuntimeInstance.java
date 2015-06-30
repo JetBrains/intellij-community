@@ -19,6 +19,7 @@ import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.util.List;
@@ -42,16 +43,14 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
                                                ServerTaskExecutor tasksExecutor,
                                                List<File> libraries,
                                                List<Class<?>> commonJarClasses,
-                                               String specificsModuleName,
-                                               String specificJarPath,
+                                               RuntimeModuleId specificsModuleId,
                                                Class<A> agentInterface,
                                                String agentClassName) throws Exception {
     super(configuration,
           tasksExecutor,
           libraries,
           commonJarClasses,
-          specificsModuleName,
-          specificJarPath,
+          specificsModuleId,
           agentInterface,
           agentClassName);
 

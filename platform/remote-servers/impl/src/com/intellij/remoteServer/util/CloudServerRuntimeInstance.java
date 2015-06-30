@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.util.Collections;
@@ -52,8 +53,7 @@ public abstract class CloudServerRuntimeInstance
                                     ServerTaskExecutor tasksExecutor,
                                     List<File> libraries,
                                     List<Class<?>> commonJarClasses,
-                                    String specificsModuleName,
-                                    String specificJarPath,
+                                    RuntimeModuleId specificsModuleId,
                                     Class<A> agentInterface,
                                     String agentClassName) throws Exception {
     myConfiguration = configuration;
@@ -63,8 +63,7 @@ public abstract class CloudServerRuntimeInstance
     myAgent = agentManager.createAgent(agentManager.createReflectiveThreadProxyFactory(getClass().getClassLoader()),
                                        libraries,
                                        commonJarClasses,
-                                       specificsModuleName,
-                                       specificJarPath,
+                                       specificsModuleId,
                                        agentInterface,
                                        agentClassName,
                                        getClass());

@@ -1,11 +1,12 @@
 package com.intellij.remoteServer.agent.impl;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.remoteServer.agent.RemoteAgent;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.RemoteAgentProxyFactory;
 import com.intellij.util.Base64;
 import com.intellij.util.PathUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,8 +23,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
   public <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
                                                List<File> instanceLibraries,
                                                List<Class<?>> commonJarClasses,
-                                               String specificsRuntimeModuleName,
-                                               String specificsBuildJarPath,
+                                               RuntimeModuleId specificsRuntimeModuleId,
                                                Class<T> agentInterface,
                                                String agentClassName,
                                                Class<?> pluginClass) throws Exception {
@@ -41,17 +41,8 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
       libraries.add(new File(PathUtil.getJarPathForClass(clazz)));
     }
 
-    File plugin = new File(PathUtil.getJarPathForClass(pluginClass));
-    String allPluginsDir = plugin.getParent();
-    if (plugin.isDirectory()) {
-      // runtime behavior
-      File specificsModule = new File(allPluginsDir, specificsRuntimeModuleName);
-      libraries.add(specificsModule);
-    }
-    else {
-      // build behavior
-      File specificsDir = new File(allPluginsDir, FileUtil.toSystemDependentName(specificsBuildJarPath));
-      libraries.add(specificsDir);
+    for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(specificsRuntimeModuleId)) {
+      libraries.add(new File(path));
     }
 
     return agentProxyFactory.createProxy(libraries, agentInterface, agentClassName);

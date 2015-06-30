@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.agent;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.util.List;
@@ -17,8 +18,7 @@ public abstract class RemoteAgentManager {
   public abstract <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
                                                         List<File> instanceLibraries,
                                                         List<Class<?>> commonJarClasses,
-                                                        String specificsRuntimeModuleName,
-                                                        String specificsBuildJarPath,
+                                                        RuntimeModuleId specificsRuntimeModuleId,
                                                         Class<T> agentInterface,
                                                         String agentClassName,
                                                         Class<?> pluginClass) throws Exception;
