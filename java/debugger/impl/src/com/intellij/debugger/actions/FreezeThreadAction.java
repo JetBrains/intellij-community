@@ -64,7 +64,7 @@ public class FreezeThreadAction extends DebuggerAction {
       visible = true;
       for (DebuggerTreeNodeImpl aSelectedNode : selectedNode) {
         NodeDescriptorImpl threadDescriptor = aSelectedNode.getDescriptor();
-        if (!(threadDescriptor instanceof ThreadDescriptorImpl) || ((ThreadDescriptorImpl)threadDescriptor).isFrozen()) {
+        if (!(threadDescriptor instanceof ThreadDescriptorImpl) || ((ThreadDescriptorImpl)threadDescriptor).isSuspended()) {
           visible = false;
           break;
         }
