@@ -211,7 +211,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
   return null
 }
 
-public fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
+public fun Repository.processChildren(path: String, filter: Condition<String>? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
   val lastCommitId = resolve(Constants.HEAD) ?: return
   val reader = newObjectReader()
   try {
@@ -229,7 +229,7 @@ public fun Repository.processChildren(path: String, filter: ((name: String) -> B
       val fileMode = treeWalk.getFileMode(0)
       if (fileMode == FileMode.REGULAR_FILE || fileMode == FileMode.SYMLINK || fileMode == FileMode.EXECUTABLE_FILE) {
         val fileName = treeWalk.getNameString()
-        if (filter != null && !filter(fileName)) {
+        if (filter != null && !filter.value(fileName)) {
           continue
         }
 

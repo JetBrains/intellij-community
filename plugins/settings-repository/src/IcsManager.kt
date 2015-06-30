@@ -410,15 +410,16 @@ public class IcsManager : ApplicationLoadListener {
     autoSyncFuture = future
   }
 
-  open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
+  open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider() {
     override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
 
-    override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream) -> Boolean) {
+    override fun processChildren(path: String, roamingType: RoamingType, filter: Condition<String>, processor: StreamProvider.ChildrenProcessor) {
       val fullPath = buildPath(path, roamingType, null)
-      repositoryManager.processChildren(fullPath, filter, processor)
+      val adaptedProcessor: (String, InputStream) -> Boolean = { name, input -> processor.process(name, input) }
+      repositoryManager.processChildren(fullPath, filter, adaptedProcessor)
 
       for (repository in readOnlySourcesManager.repositories) {
-        repository.processChildren(fullPath, filter, processor)
+        repository.processChildren(fullPath, filter, adaptedProcessor)
       }
     }
 

@@ -27,11 +27,11 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
     return listOf(*files)
   }
 
-  override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
+  override fun processChildren(path: String, filter: Condition<String>, processor: (name: String, inputStream: InputStream) -> Boolean) {
     var files: Array<out File>? = null
     synchronized (lock) {
       files = File(dir, path).listFiles(object: FilenameFilter {
-        override fun accept(dir: File, name: String) = filter(name)
+        override fun accept(dir: File, name: String) = filter.value(name)
       })
     }
 

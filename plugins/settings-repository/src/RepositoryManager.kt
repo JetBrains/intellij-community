@@ -34,7 +34,7 @@ public interface RepositoryManager {
 
   public fun listSubFileNames(path: String): Collection<String>
 
-  public fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean)
+  public fun processChildren(path: String, filter: Condition<String>, processor: (name: String, inputStream: InputStream) -> Boolean)
 
   /**
    * Not all implementations support progress indicator (will not be updated on progress)
