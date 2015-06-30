@@ -109,8 +109,8 @@ public class RemoteTestNGStarter {
     if (SM_RUNNER) {
       if (commandFileName != null) {
         if (workingDirs != null && new File(workingDirs).length() > 0) {
-          System.exit(new TestNGForkedStarter()
-                        .startForkedVM(workingDirs, args, param, System.out, System.err, "none", commandFileName, newArgs));
+          System.exit(new TestNGForkedSplitter(workingDirs, System.out, System.err, newArgs)
+                        .startSplitting(args, param, commandFileName));
           return;
         }
       }

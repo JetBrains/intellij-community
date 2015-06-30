@@ -224,7 +224,10 @@ public class JUnitStarter {
           final List newArgs = new ArrayList();
           newArgs.add(String.valueOf(isJUnit4));
           newArgs.addAll(listeners);
-          return new JUnitForkedStarter().startForkedVM(ourWorkingDirs, args, name, out, err, ourForkMode, ourCommandFileName, newArgs);
+          PrintStream printOutputStream = SM_RUNNER ? ((PrintStream)out) : ((SegmentedOutputStream)out).getPrintStream();
+          PrintStream printErrStream = SM_RUNNER ? ((PrintStream)err) : ((SegmentedOutputStream)err).getPrintStream();
+          return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, printOutputStream, printErrStream, newArgs)
+            .startSplitting(args, name, ourCommandFileName);
         }
       }
       testRunner.setStreams(out, err, 0);

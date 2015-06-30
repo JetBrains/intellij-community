@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.*;
+import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
@@ -402,7 +403,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
     parameters.getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {
-      parameters.getProgramParametersList().add(ForkedDebuggerStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
+      parameters.getProgramParametersList().add(ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
     }
   }
 }

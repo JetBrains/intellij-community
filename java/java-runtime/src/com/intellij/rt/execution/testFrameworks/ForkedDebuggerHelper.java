@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.rt.execution.junit;
+package com.intellij.rt.execution.testFrameworks;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ForkedDebuggerStarter {
+public class ForkedDebuggerHelper {
   public static final String DEBUG_SOCKET = "-debugSocket";
   private int myDebugPort = -1;
   private Socket myDebugSocket;

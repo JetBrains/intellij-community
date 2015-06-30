@@ -16,47 +16,15 @@
 package org.testng;
 
 import com.beust.jcommander.JCommander;
-import com.intellij.rt.execution.junit.ForkedStarter;
+import com.intellij.rt.execution.testFrameworks.ChildVMStarter;
 import org.testng.remote.RemoteArgs;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
 
-public class TestNGForkedStarter extends ForkedStarter {
+public class TestNGForkedStarter extends ChildVMStarter {
   public static void main(String[] args) throws Exception {
     new TestNGForkedStarter().startVM(args);
-  }
-
-  @Override
-  protected String getStarterName() {
-    return TestNGForkedStarter.class.getName();
-  }
-
-  @Override
-  protected List createChildArgsForClasses(List newArgs,
-                                           String moduleName,
-                                           String packageName,
-                                           String workingDir,
-                                           List classNames,
-                                           Object rootDescriptor) throws IOException {
-    final LinkedHashMap<String, Map<String, List<String>>> classes = new LinkedHashMap<String, Map<String, List<String>>>();
-    for (Object className : classNames) {
-      classes.put((String)className, null);
-    }
-    
-    String rootPath = null;
-    if (!newArgs.isEmpty()) {
-      rootPath = new File((String)newArgs.get(0)).getParent();
-    }
-    
-    final File file =
-      TestNGXmlSuiteHelper.writeSuite(classes, new LinkedHashMap<String, String>(), moduleName, rootPath,
-                                      TestNGXmlSuiteHelper.Logger.DEAF);
-    file.deleteOnExit();
-    
-    return Collections.singletonList(file.getAbsolutePath());
   }
 
   @Override
@@ -71,32 +39,4 @@ public class TestNGForkedStarter extends ForkedStarter {
     testNG.run();
     System.exit(0);
   }
-
-  //--------------------- fork under class level -------------------------------------
-
-  @Override
-  protected List getChildren(Object child) {
-    return Collections.emptyList();
-  }
-
-  @Override
-  protected List createChildArgs(List args, Object child) {
-    return Collections.emptyList();
-  }
-
-  @Override
-  protected Object findByClassName(String className, Object rootDescription) {
-    return rootDescription;
-  }
-
-  @Override
-  protected String getTestClassName(Object child) {
-    return null;
-  }
-
-  @Override
-  protected Object createRootDescription(String[] args, List newArgs, String configName, Object out, Object err) throws Exception {
-    return new Object();
-  }
-
 }

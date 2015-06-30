@@ -40,7 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.execution.junit.ForkedDebuggerStarter;
+import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.theoryinpractice.testng.model.*;
@@ -311,7 +311,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
     parameters.getProgramParametersList().add("@@@" + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {
-      parameters.getProgramParametersList().add(ForkedDebuggerStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
+      parameters.getProgramParametersList().add(ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
     }
   }
 }
