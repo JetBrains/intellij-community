@@ -25,6 +25,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   protected synchronized Collection<Language> getFilterItems() {
     final Collection<Language> result = super.getFilterItems();
     if (result == null) {
-      return result;
+      return null;
     }
     final Collection<Language> items = new HashSet<Language>(result);
     items.add(Language.ANY);
@@ -133,7 +134,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
         ContainerUtil.addIfNotNull(separators, ((GotoClassContributor)c).getQualifiedNameSeparator());
       }
     }
-    return separators.toArray(new String[separators.size()]);
+    return ArrayUtil.toStringArray(separators);
   }
 
   @Override
