@@ -248,16 +248,10 @@ public class SchemesManagerImpl<T : Scheme, E : ExternalizableScheme>(private va
   override fun loadSchemes(): Collection<E> {
     val result = LinkedHashMap<String, E>()
     if (provider != null && provider.isEnabled()) {
-      provider.processChildren(fileSpec, roamingType, object : Condition<String> {
-        override fun value(name: String): Boolean {
-          return canRead(name)
-        }
-      }, object : StreamProvider.ChildrenProcessor() {
-        override fun process(name: String, input: InputStream): Boolean {
-          loadScheme(name, input, result)
-          return true
-        }
-      })
+      provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input ->
+        loadScheme(name, input, result)
+        true
+      }
     }
     else {
       val dir = getDirectory()

@@ -13,77 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.components.impl.stores
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.Condition
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.Collections;
+import java.io.IOException
+import java.io.InputStream
+import java.util.Collections
 
-public abstract class StreamProvider {
-  public static final StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
-
-  public boolean isEnabled() {
-    return true;
-  }
+public interface StreamProvider {
+  public open fun isEnabled(): Boolean = true
 
   /**
    * fileSpec Only main fileSpec, not version
    */
-  public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    return true;
-  }
+  public open fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = true
 
   /**
    * @param fileSpec
-   * @param content bytes of content, size of array is not actual size of data, you must use {@code size}
+   * *
+   * @param content bytes of content, size of array is not actual size of data, you must use `size`
+   * *
    * @param size actual size of data
    */
-  public abstract void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType) throws IOException;
+  public fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType)
 
-  @Nullable
-  public abstract InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException;
+  public fun loadContent(fileSpec: String, roamingType: RoamingType): InputStream?
 
-  @NotNull
-  public Collection<String> listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    return Collections.emptyList();
-  }
+  public open fun listSubFiles(fileSpec: String, roamingType: RoamingType): Collection<String> = emptyList()
 
   /**
    * You must close passed input stream.
    */
-  public void processChildren(@NotNull String path, @NotNull RoamingType roamingType, @NotNull Condition<String> filter, @NotNull ChildrenProcessor processor) {
-    for (String name : listSubFiles(path, roamingType)) {
-      if (!filter.value(name)) {
-        continue;
+  public open fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream) -> Boolean) {
+    for (name in listSubFiles(path, roamingType)) {
+      if (!filter(name)) {
+        continue
       }
 
-      InputStream input;
+      val input: InputStream?
       try {
-        input = loadContent(path + '/' + name, roamingType);
+        input = loadContent("$path/$name", roamingType)
       }
-      catch (IOException e) {
-        StorageUtil.LOG.error(e);
-        continue;
+      catch (e: IOException) {
+        StorageUtil.LOG.error(e)
+        continue
       }
 
-      if (input != null && !processor.process(name, input)) {
-        break;
+
+      if (input != null && !processor(name, input)) {
+        break
       }
     }
-  }
-
-  public abstract static class ChildrenProcessor {
-    public abstract boolean process(@NotNull String name, @NotNull InputStream input);
   }
 
   /**
    * Delete file or directory
    */
-  public abstract void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType);
+  public fun delete(fileSpec: String, roamingType: RoamingType)
 }
