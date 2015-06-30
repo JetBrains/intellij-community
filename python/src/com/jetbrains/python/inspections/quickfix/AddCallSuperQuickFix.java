@@ -20,13 +20,10 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NonNls;
@@ -34,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * For:
@@ -98,44 +93,22 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     if (problemFunction.getAnnotation() != null) {
       newFunction.append(problemFunction.getAnnotation().getText());
     }
-    newFunction.append(":");
-    final PsiComment comment = getCommentAfterParametersList(problemFunction);
-    if (comment != null) {
-      // two whitespaces are required by PEP 8
-      newFunction.append("  ").append(comment.getText());
-    }
-    newFunction.append("\n\t");
+    newFunction.append(": pass");
 
     StringUtil.join(couple.getSecond(), ", ", superCall);
     superCall.append(")");
 
-    final PyStatementList statementList = problemFunction.getStatementList();
-    final PyExpression docstring = problemFunction.getDocStringExpression();
-    if (docstring != null) {
-      newFunction.append(docstring.getText()).append("\n\t");
-    }
-    newFunction.append(superCall).append("\n\t");
-    boolean first = true;
-    for (PsiElement child = statementList.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PyStatement) {
-        if (first && docstring != null || child instanceof PyPassStatement) {
-          first = false;
-          continue;
-        }
-      }
-      if (child instanceof PyStatement || child instanceof PsiComment) {
-        newFunction.append(child.getText()).append("\n\t");
-      }
-    }
-
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    problemFunction.replace(generator.createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class, newFunction.toString()));
-  }
-
-  @Nullable
-  private static PsiComment getCommentAfterParametersList(@NotNull PyFunction function) {
-    final PsiElement colon = PyUtil.getFirstChildOfType(function, PyTokenTypes.COLON);
-    return colon == null ? null : as(PyPsiUtils.getNextNonWhitespaceSibling(colon), PsiComment.class);
+    final LanguageLevel languageLevel = LanguageLevel.forElement(problemFunction);
+    final PyStatement callSuperStatement = generator.createFromText(languageLevel, PyStatement.class, superCall.toString());
+    final PyParameterList newParameterList = generator.createFromText(languageLevel,
+                                                                      PyParameterList.class,
+                                                                      newFunction.toString(),
+                                                                      new int[]{0, 3});
+    problemFunction.getParameterList().replace(newParameterList);
+    final PyStatementList statementList = problemFunction.getStatementList();
+    PyUtil.addElementToStatementList(callSuperStatement, statementList, true);
+    PyPsiUtils.removeRedundantPass(statementList);
   }
 
   @NotNull
