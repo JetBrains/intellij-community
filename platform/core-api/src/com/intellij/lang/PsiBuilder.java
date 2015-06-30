@@ -244,6 +244,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the built tree.
    */
+  @NotNull
   ASTNode getTreeBuilt();
 
   /**
@@ -253,6 +254,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the light tree built.
    */
+  @NotNull
   FlyweightCapableTreeStructure<LighterASTNode> getLightTree();
 
   /**

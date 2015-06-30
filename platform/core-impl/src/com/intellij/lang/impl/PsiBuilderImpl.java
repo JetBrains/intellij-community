@@ -568,6 +568,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myTokenStart + myBuilder.myOffset;
     }
 
+    @NotNull
     public CharSequence getText() {
       if (myTokenType instanceof TokenWrapper) {
         return ((TokenWrapper)myTokenType).getValue();
@@ -1084,6 +1085,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @Override
+  @NotNull
   public ASTNode getTreeBuilt() {
     try {
       return buildTree();
@@ -1100,6 +1102,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
+  @NotNull
   private ASTNode buildTree() {
     final StartMarker rootMarker = prepareLightTree();
     final boolean isTooDeep = myFile != null && BlockSupport.isTooDeep(myFile.getOriginalFile());
@@ -1121,12 +1124,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @Override
+  @NotNull
   public FlyweightCapableTreeStructure<LighterASTNode> getLightTree() {
     final StartMarker rootMarker = prepareLightTree();
     return new MyTreeStructure(rootMarker, myParentLightTree);
   }
 
-  private ASTNode createRootAST(final StartMarker rootMarker) {
+  @NotNull
+  private ASTNode createRootAST(@NotNull StartMarker rootMarker) {
     final IElementType type = rootMarker.getTokenType();
     @SuppressWarnings("NullableProblems")
     final ASTNode rootNode = type instanceof ILazyParseableElementType ?
@@ -1410,7 +1415,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return startMarker.myDoneMarker.myLexemeIndex;
   }
 
-  private static CompositeElement createComposite(final StartMarker marker) {
+  @NotNull
+  private static CompositeElement createComposite(@NotNull StartMarker marker) {
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
       String message = marker.myDoneMarker instanceof DoneWithErrorMarker ? ((DoneWithErrorMarker)marker.myDoneMarker).myMessage : null;
@@ -1720,6 +1726,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public CharSequence toString(@NotNull LighterASTNode node) {
       return myRoot.myBuilder.myText.subSequence(node.getStartOffset(), node.getEndOffset());
     }
+
   }
 
   private static class ASTConverter implements Convertor<Node, ASTNode> {
