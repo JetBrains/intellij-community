@@ -2597,7 +2597,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
       if (project.isDisposed()) {
-        return null;
+        return tasks;
       }
       for (final VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
