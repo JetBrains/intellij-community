@@ -46,8 +46,6 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
   @Nullable
   public abstract T findSchemeByName(@NotNull String schemeName);
 
-  public abstract void save();
-
   public abstract void setCurrentSchemeName(@Nullable String schemeName);
 
   @Nullable
