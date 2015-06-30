@@ -58,6 +58,9 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
 
   public abstract File getRootDirectory();
 
+  /**
+   * Must be called before {@link #loadSchemes}
+   */
   public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
   }
 
