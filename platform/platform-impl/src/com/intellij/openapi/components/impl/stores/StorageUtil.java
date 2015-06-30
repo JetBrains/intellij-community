@@ -284,7 +284,7 @@ public class StorageUtil {
    * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
    */
   @NotNull
-  public static Pair<byte[], String> loadFile(@Nullable VirtualFile file) throws IOException {
+  public static Pair<byte[], String> loadFile(@Nullable final VirtualFile file) throws IOException {
     if (file == null || !file.exists()) {
       return NON_EXISTENT_FILE_DATA;
     }

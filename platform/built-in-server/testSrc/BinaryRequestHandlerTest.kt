@@ -17,7 +17,6 @@ import org.jetbrains.io.ChannelExceptionHandler
 import org.jetbrains.io.Decoder
 import org.jetbrains.io.MessageDecoder
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.testFramework.FixtureRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain

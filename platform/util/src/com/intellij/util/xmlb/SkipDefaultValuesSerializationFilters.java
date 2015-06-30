@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Please use {@link SkipDefaultsSerializationFilter} if state class doesn't implement "equals" ({@see http://kotlinlang.org/docs/reference/data-classes.html})
+ * Please use {@link SkipDefaultsSerializationFilter},
  */
 public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
   private final Map<Class<?>, Object> myDefaultBeans = new THashMap<Class<?>, Object>();

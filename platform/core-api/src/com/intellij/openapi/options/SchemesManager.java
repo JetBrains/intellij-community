@@ -46,6 +46,8 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
   @Nullable
   public abstract T findSchemeByName(@NotNull String schemeName);
 
+  public abstract void save();
+
   public abstract void setCurrentSchemeName(@Nullable String schemeName);
 
   @Nullable
@@ -58,9 +60,6 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
 
   public abstract File getRootDirectory();
 
-  /**
-   * Must be called before {@link #loadSchemes}
-   */
   public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
   }
 

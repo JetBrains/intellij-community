@@ -98,7 +98,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   @Override
   public void initComponent() {
     for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
-      for (String path : provider.getBundledListsRelativePaths()) {
+      for (final String path : provider.getBundledListsRelativePaths()) {
         mySchemesManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
           @Override
           public QuickList convert(Element element) throws Throwable {

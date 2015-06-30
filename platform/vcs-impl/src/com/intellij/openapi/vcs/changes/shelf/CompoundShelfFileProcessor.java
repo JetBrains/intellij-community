@@ -37,13 +37,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class CompoundShelfFileProcessor {
-  private static final Logger LOG = Logger.getInstance(CompoundShelfFileProcessor.class);
-
   public static final String SHELF_DIR_NAME = "shelf";
 
+  private final String mySubdirName;
   private final StreamProvider myServerStreamProvider;
   private final String FILE_SPEC;
   private final String myShelfPath;
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.CompoundShelfFileProcessor");
 
   public CompoundShelfFileProcessor() {
     this(PathManager.getConfigPath());
@@ -57,7 +58,8 @@ public class CompoundShelfFileProcessor {
   public CompoundShelfFileProcessor(@Nullable StreamProvider serverStreamProvider, String shelfPath) {
     myServerStreamProvider = serverStreamProvider;
     myShelfPath = shelfPath;
-    FILE_SPEC = StoragePathMacros.ROOT_CONFIG +  "/" + new File(myShelfPath).getName() + "/";
+    mySubdirName = new File(myShelfPath).getName();
+    FILE_SPEC = StoragePathMacros.ROOT_CONFIG +  "/" + mySubdirName + "/";
   }
 
   /*
@@ -161,7 +163,7 @@ public class CompoundShelfFileProcessor {
     }
   }
 
-  private static void copyFileContentToProviders(String newFilePath, StreamProvider serverStreamProvider, File file) throws IOException {
+  private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file) throws IOException {
     if (serverStreamProvider.isEnabled() && serverStreamProvider.isApplicable(newFilePath, RoamingType.PER_USER)) {
       byte[] content = FileUtil.loadFileBytes(file);
       serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER);
