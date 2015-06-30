@@ -105,12 +105,17 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   private RangeHighlighter addSegmentHighlighter(@NotNull Editor editor, int startOffset, int endOffset, TextAttributes attributes, @HideFlags int flags) {
-    RangeHighlighter highlighter = editor.getMarkupModel()
+    RangeHighlighter highlighter = getMarkupModel(editor)
       .addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, attributes, HighlighterTargetArea.EXACT_RANGE);
     HighlightInfo info = new HighlightInfo(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, true);
     map.put(highlighter, info);
     return highlighter;
+  }
+
+  @NotNull
+  protected MarkupModel getMarkupModel(@NotNull Editor editor) {
+    return editor.getMarkupModel();
   }
 
   @Override
@@ -119,7 +124,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (map == null) return false;
     HighlightInfo info = map.get(highlighter);
     if (info == null) return false;
-    MarkupModel markupModel = info.editor.getMarkupModel();
+    MarkupModel markupModel = getMarkupModel(info.editor);
     if (((MarkupModelEx)markupModel).containsHighlighter(highlighter)) {
       highlighter.dispose();
     }
