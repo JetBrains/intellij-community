@@ -235,6 +235,14 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     return side.select(getContents());
   }
 
+  @Nullable
+  public ThreeSide getEditorSide(@Nullable Editor editor) {
+    if (getEditor(ThreeSide.BASE) == editor) return ThreeSide.BASE;
+    if (getEditor(ThreeSide.RIGHT) == editor) return ThreeSide.RIGHT;
+    if (getEditor(ThreeSide.LEFT) == editor) return ThreeSide.LEFT;
+    return null;
+  }
+
   //
   // Abstract
   //
@@ -270,10 +278,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
     protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
-      ThreeSide side = null;
-      if (editor == getEditor(ThreeSide.LEFT)) side = ThreeSide.LEFT;
-      if (editor == getEditor(ThreeSide.RIGHT)) side = ThreeSide.RIGHT;
-      if (editor == getEditor(ThreeSide.BASE)) side = ThreeSide.BASE;
+      ThreeSide side = getEditorSide(editor);
       if (side == null) return null;
 
       int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));

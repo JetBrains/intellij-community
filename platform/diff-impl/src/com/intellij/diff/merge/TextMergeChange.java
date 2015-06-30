@@ -310,7 +310,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
             myViewer.replaceChange(TextMergeChange.this, side);
           }
         });
-        markResolved();
       }
     });
   }
@@ -327,12 +326,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
             myViewer.appendChange(TextMergeChange.this, side);
           }
         });
-        if (isConflict()) {
-          markResolved(side);
-        }
-        else {
-          markResolved();
-        }
       }
     });
   }
