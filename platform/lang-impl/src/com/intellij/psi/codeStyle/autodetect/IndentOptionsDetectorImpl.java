@@ -54,11 +54,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   public IndentOptions getIndentOptions() {
     IndentOptions indentOptions = (IndentOptions)CodeStyleSettingsManager.getSettings(myProject).getIndentOptions(myFile.getFileType()).clone();
 
-    long start = System.currentTimeMillis();
     List<LineIndentInfo> linesInfo = calcLineIndentInfo();
-    long end = System.currentTimeMillis();
-    LOG.info("Formatter-based: " + myUseFormatterBasedLineIndentBuilder + ". Line info building time: " + (end - start));
-
     if (linesInfo != null) {
       IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
       adjustIndentOptions(indentOptions, stats);
