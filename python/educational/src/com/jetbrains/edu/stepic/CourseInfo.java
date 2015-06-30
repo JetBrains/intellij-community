@@ -76,4 +76,20 @@ public class CourseInfo {
       return name;
     }
   }
+
+  public void setName(String name) {
+    myName = name;
+  }
+
+  public void setInstructors(List<Instructor> instructors) {
+    myInstructors = instructors;
+  }
+
+  public void setDescription(String description) {
+    myDescription = description;
+  }
+
+  public void setType(String type) {
+    myType = type;
+  }
 }

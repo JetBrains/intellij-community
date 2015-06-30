@@ -35,6 +35,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StudyProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyProjectGenerator.class.getName());
@@ -43,6 +45,7 @@ public class StudyProjectGenerator {
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
+  private static final Pattern CACHE_PATTERN = Pattern.compile("name=(.*) description=(.*) (instructor=(.*))+");
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
@@ -195,27 +198,27 @@ public class StudyProjectGenerator {
   }
 
   /**
-   * Writes courses to cash file {@link StudyProjectGenerator#CACHE_NAME}
+   * Writes courses to cache file {@link StudyProjectGenerator#CACHE_NAME}
    */
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public void flushCache() {
-    File cashFile = new File(myCoursesDir, CACHE_NAME);
+    File cacheFile = new File(myCoursesDir, CACHE_NAME);
     PrintWriter writer = null;
     try {
-      if (!cashFile.exists()) {
-        final boolean created = cashFile.createNewFile();
+      if (!cacheFile.exists()) {
+        final boolean created = cacheFile.createNewFile();
         if (!created) {
           LOG.error("Cannot flush courses cache. Can't create " + CACHE_NAME + " file");
           return;
         }
       }
-      writer = new PrintWriter(cashFile);
+      writer = new PrintWriter(cacheFile);
       for (CourseInfo courseInfo : myCourses) {
         final List<CourseInfo.Instructor> instructors = courseInfo.getInstructors();
-        StringBuilder builder = new StringBuilder("name=").append(courseInfo.getName()).append("description=").append(
-          courseInfo.getDescription());
+        StringBuilder builder = new StringBuilder("name=").append(courseInfo.getName()).append(" ").
+          append("description=").append(courseInfo.getDescription()).append(" ");
         for (CourseInfo.Instructor instructor : instructors) {
-          builder.append("instructor=").append(instructor.getName());
+          builder.append("instructor=").append(instructor.getName()).append(" ");
         }
         writer.println(builder.toString());
       }
@@ -232,13 +235,17 @@ public class StudyProjectGenerator {
   }
 
   public List<CourseInfo> getCourses(boolean force) {
+    if (myCoursesDir.exists()) {
+      File cacheFile = new File(myCoursesDir, CACHE_NAME);
+      if (cacheFile.exists()) {
+        myCourses = getCoursesFromCache(cacheFile);
+      }
+    }
     if (force || myCourses.isEmpty()) {
       myCourses = EduStepicConnector.getCourses();
-      return myCourses;
+      flushCache();
     }
-    else {
-      return myCourses;
-    }
+    return myCourses;
   }
 
   public void addSettingsStateListener(@NotNull SettingsListener listener) {
@@ -253,5 +260,48 @@ public class StudyProjectGenerator {
     for (SettingsListener listener : myListeners) {
       listener.stateChanged(result);
     }
+  }
+
+  private static List<CourseInfo> getCoursesFromCache(@NotNull final File cacheFile) {
+    List<CourseInfo> courses = new ArrayList<CourseInfo>();
+    try {
+      final FileInputStream inputStream = new FileInputStream(cacheFile);
+      try {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        try {
+          String line;
+          while ((line = reader.readLine()) != null) {
+            Matcher matcher = CACHE_PATTERN.matcher(line);
+            if (matcher.matches()) {
+              String courseName = matcher.group(1);
+              final CourseInfo courseInfo = new CourseInfo();
+              courseInfo.setName(courseName);
+
+              courseInfo.setDescription(matcher.group(2));
+              courses.add(courseInfo);
+
+              final int groupCount = matcher.groupCount();
+              final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
+              for (int i = 4; i <= groupCount; i++) {
+                instructors.add(new CourseInfo.Instructor(matcher.group(i)));
+              }
+              courseInfo.setInstructors(instructors);
+            }
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+        finally {
+          StudyUtils.closeSilently(reader);
+        }
+      } finally {
+        StudyUtils.closeSilently(inputStream);
+      }
+    }
+    catch (FileNotFoundException e) {
+      LOG.error(e.getMessage());
+    }
+    return courses;
   }
 }
