@@ -136,6 +136,7 @@ public class VersionCompareTest extends TestCase {
               "3.4.135.21", "4.0 Beta 139.3", "4.0 Beta 139.58", "4.0.12",
               "4.1 141.4 EAP", "4.1 141.39 EAP", "4.5 141.82"
     );
+    ascending("4.1", "142.175 v4.5", "142.175 v4.5.1");
   }
 
   public void testRubyPlugin() {
