@@ -286,13 +286,13 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
         if (param.isSelf()) {
           selfParam = param;
         }
-        else if (param.getText().equals("*")) {
+        else if (param instanceof PySingleStarParameter) {
           singleStarParam = param;
         }
-        else if (param.getText().startsWith("**")) {
+        else if (param.getAsNamed() != null && param.getAsNamed().isKeywordContainer()) {
           keywordContainer = param;
         }
-        else if (param.getText().startsWith("*")) {
+        else if (param.getAsNamed() != null && param.getAsNamed().isPositionalContainer()) {
           positionalContainer = param;
         }
         else if (param.getAsNamed() == null || !param.getAsNamed().isKeywordOnly()) {
