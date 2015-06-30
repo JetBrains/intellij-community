@@ -28,8 +28,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -39,6 +37,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.PathsList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.net.NetUtils;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -47,8 +46,10 @@ import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
 import org.intellij.lang.xpath.xslt.run.XsltRunnerExtension;
 import org.intellij.plugins.xsltDebugger.ui.OutputTabComponent;
 import org.intellij.plugins.xsltDebugger.ui.StructureTabComponent;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.PlatformRepository;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,12 +67,6 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   public static final Key<XsltChecker.LanguageLevel> VERSION = Key.create("VERSION");
   private static final Key<Integer> PORT = Key.create("PORT");
   private static final Key<Manifest> MANIFEST = Key.create("MANIFEST");
-
-  @NonNls
-  private static final String SAXON_6_JAR = "saxon.jar";
-
-  @NonNls
-  private static final String SAXON_9_JAR = "saxon9he.jar";
 
   protected boolean supports(XsltRunConfiguration config, boolean debugger) {
     return (debugger || XsltDebuggerRunner.ACTIVE.get() == Boolean.TRUE) &&
@@ -141,58 +136,30 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       pluginPath = new File(System.getProperty("xslt-debugger.plugin.path"));
     }
 
-    File rtClasspath = new File(pluginPath, "lib" + c + "xslt-debugger-engine.jar");
-    if (rtClasspath.exists()) {
-      parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
-
-      final File rmiStubs = new File(pluginPath, "lib" + c + "rmi-stubs.jar");
-      assert rmiStubs.exists() : rmiStubs.getAbsolutePath();
-      parameters.getClassPath().addTail(rmiStubs.getAbsolutePath());
-
-      final File engineImpl = new File(pluginPath, "lib" + c + "rt" + c + "xslt-debugger-engine-impl.jar");
-      assert engineImpl.exists() : engineImpl.getAbsolutePath();
-      parameters.getClassPath().addTail(engineImpl.getAbsolutePath());
-    } else {
-      if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
-        if (ApplicationManagerEx.getApplicationEx().isInternal() && new File(pluginPath, "org").exists()) {
-          rtClasspath = pluginPath;
-          final File engineImplInternal = new File(pluginPath, ".." + c + "xslt-debugger-engine-impl");
-          assert engineImplInternal.exists() : engineImplInternal.getAbsolutePath();
-          parameters.getClassPath().addTail(engineImplInternal.getAbsolutePath());
-        } else {
-          throw new CantRunException("Runtime classes not found");
-        }
-      }
-
-      parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
-
-      final File rmiStubs = new File(rtClasspath, "rmi-stubs.jar");
-      assert rmiStubs.exists() : rmiStubs.getAbsolutePath();
-      parameters.getClassPath().addTail(rmiStubs.getAbsolutePath());
-    }
-
-    File trove4j = new File(PathManager.getLibPath() + c + "trove4j.jar");
-    if (!trove4j.exists()) {
-      trove4j = new File(PathManager.getHomePath() + c + "community" + c + "lib" + c + "trove4j.jar");
-      assert trove4j.exists() : trove4j.getAbsolutePath();
-    }
-    parameters.getClassPath().addTail(trove4j.getAbsolutePath());
+    PlatformRepository repository = PlatformLoader.getInstance().getRepository();
+    PathsList classPath = parameters.getClassPath();
+    classPath.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("xslt-debugger-engine-impl")));
+    classPath.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("xslt-debugger-engine")));
+    classPath.addAll(repository.getModuleRootPaths(RuntimeModuleId.moduleLibrary("xslt-debugger-engine", "RMI Stubs")));
+    classPath.addAll(repository.getModuleRootPaths(RuntimeModuleId.projectLibrary("Trove4j")));
 
     final String type = parameters.getVMParametersList().getPropertyValue("xslt.transformer.type");
+    RuntimeModuleId saxonId = RuntimeModuleId.moduleLibrary("xslt-debugger-engine-impl", "Saxon-6.5.5");
+    RuntimeModuleId saxon9Id = RuntimeModuleId.moduleLibrary("xslt-debugger-engine-impl", "Saxon-9HE");
     if ("saxon".equalsIgnoreCase(type)) {
-      addSaxon(parameters, pluginPath, SAXON_6_JAR);
+      classPath.addAll(repository.getModuleRootPaths(saxonId));
     } else if ("saxon9".equalsIgnoreCase(type)) {
-      addSaxon(parameters, pluginPath, SAXON_9_JAR);
+      classPath.addAll(repository.getModuleRootPaths(saxon9Id));
     } else if ("xalan".equalsIgnoreCase(type)) {
       final Boolean xalanPresent = isValidXalanPresent(parameters);
       if (xalanPresent == null) {
-        addXalan(parameters, pluginPath);
+        classPath.addAll(repository.getModuleRootPaths(RuntimeModuleId.moduleLibrary("xslt-debugger-engine-impl", "Xalan-2.7.1")));
       } else if (!xalanPresent) {
         throw new CantRunException("Unsupported Xalan version is present in classpath.");
       }
     } else if (type != null) {
       throw new CantRunException("Unsupported Transformer type '" + type + "'");
-    } else if (parameters.getClassPath().getPathsString().toLowerCase().contains("xalan")) {
+    } else if (classPath.getPathsString().toLowerCase().contains("xalan")) {
       if (isValidXalanPresent(parameters) == Boolean.TRUE) {
         parameters.getVMParametersList().defineProperty("xslt.transformer.type", "xalan");
       }
@@ -212,10 +179,10 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       // add saxon for backward-compatibility
       if (level == XsltChecker.LanguageLevel.V2) {
         parameters.getVMParametersList().defineProperty("xslt.transformer.type", "saxon9");
-        addSaxon(parameters, pluginPath, SAXON_9_JAR);
+        classPath.addAll(repository.getModuleRootPaths(saxon9Id));
       } else {
         parameters.getVMParametersList().defineProperty("xslt.transformer.type", "saxon");
-        addSaxon(parameters, pluginPath, SAXON_6_JAR);
+        classPath.addAll(repository.getModuleRootPaths(saxonId));
       }
     }
 
@@ -267,30 +234,5 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     }
 
     return null;
-  }
-
-  private static void addXalan(SimpleJavaParameters parameters, File pluginPath) {
-    final File xalan = findTransformerJar(pluginPath, "xalan.jar");
-    parameters.getClassPath().addTail(xalan.getAbsolutePath());
-    parameters.getClassPath().addTail(new File(xalan.getParentFile(), "serializer.jar").getAbsolutePath());
-  }
-
-  private static void addSaxon(SimpleJavaParameters parameters, File pluginPath, final String saxonJar) {
-    final File saxon = findTransformerJar(pluginPath, saxonJar);
-    parameters.getClassPath().addTail(saxon.getAbsolutePath());
-  }
-
-  private static File findTransformerJar(File pluginPath, String jarFile) {
-    final char c = File.separatorChar;
-    File transformerFile = new File(pluginPath, "lib" + c + "rt" + c + jarFile);
-    if (!transformerFile.exists()) {
-      if (!(transformerFile = new File(pluginPath, "lib" + c + jarFile)).exists()) {
-        if (!(transformerFile = new File(new File(pluginPath, ".." + c + "xslt-debugger-engine-impl"), jarFile)).exists()) {
-          transformerFile = new File(pluginPath, jarFile);
-          assert transformerFile.exists() : transformerFile.getAbsolutePath();
-        }
-      }
-    }
-    return transformerFile;
   }
 }

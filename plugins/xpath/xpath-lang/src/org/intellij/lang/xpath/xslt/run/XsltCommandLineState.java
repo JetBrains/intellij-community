@@ -25,14 +25,9 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -48,6 +43,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import javax.swing.*;
 import java.io.File;
@@ -138,38 +135,7 @@ public class XsltCommandLineState extends CommandLineState {
       }
       vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
-      final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-      assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/xslt-rt";
-
-      final File pluginPath;
-      if (pluginId != null) {
-        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
-        assert descriptor != null;
-        pluginPath = descriptor.getPath();
-      }
-      else {
-        // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-rt
-        pluginPath = new File(System.getProperty("xslt.plugin.path"));
-      }
-
-      LOG.debug("Plugin Path = " + pluginPath.getAbsolutePath());
-
-      final char c = File.separatorChar;
-      File rtClasspath = new File(pluginPath, "lib" + c + "rt" + c + "xslt-rt.jar");
-      //        File rtClasspath = new File("C:/Demetra/plugins/xpath/lib/rt/xslt-rt.jar");
-      if (!rtClasspath.exists()) {
-        LOG.warn("Plugin's Runtime classes not found in " + rtClasspath.getAbsolutePath());
-        if (!(rtClasspath = new File(pluginPath, "classes")).exists()) {
-          if (ApplicationManagerEx.getApplicationEx().isInternal() && new File(pluginPath, "org").exists()) {
-            rtClasspath = pluginPath;
-          }
-          else {
-            throw new CantRunException("Runtime classes not found");
-          }
-        }
-        parameters.getVMParametersList().prepend("-ea");
-      }
-      parameters.getClassPath().addTail(rtClasspath.getAbsolutePath());
+      parameters.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleClasspath(RuntimeModuleId.module("xslt-rt")));
 
       parameters.setMainClass("org.intellij.plugins.xslt.run.rt.XSLTRunner");
 
