@@ -208,14 +208,20 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
 
     // Required keyword-only parameters
+    boolean hasKeywordOnlyParams = false;
     for (PyParameter param : origInfo.getRequiredKeywordOnlyParameters()) {
       newFunctionParams.add(param.getText());
+      hasKeywordOnlyParams = true;
     }
     for (PyParameter param : superInfo.getRequiredKeywordOnlyParameters()) {
       if (!origInfo.getAllParameterNames().contains(param.getName())) {
         newFunctionParams.add(param.getText());
+        hasKeywordOnlyParams = true;
       }
       superCallArgs.add(param.getName() + "=" + param.getName());
+    }
+    if (starredParam instanceof PySingleStarParameter && !hasKeywordOnlyParams) {
+      newFunctionParams.remove(newFunctionParams.size() - 1);
     }
 
     // Optional keyword-only parameters
