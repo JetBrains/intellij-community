@@ -22,7 +22,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import gnu.trove.THashMap;
@@ -44,6 +43,8 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.*;
 import java.util.*;
@@ -91,7 +92,9 @@ public class FormsInstrumenter extends FormsBuilder {
 
       final List<File> classpath = new ArrayList<File>();
       classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
-      classpath.add(getResourcePath(GridConstraints.class)); // forms_rt.jar
+      for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("forms_rt"))) {
+        classpath.add(new File(path));
+      }
       final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
       classpath.addAll(chunkSourcePath.keySet()); // sourcepath for loading forms resources
 
