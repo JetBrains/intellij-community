@@ -26,7 +26,6 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -34,9 +33,7 @@ import java.awt.event.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTextFieldUI extends BasicTextFieldUI {
-  private enum SearchAction {POPUP, CLEAR}
-
+public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
   protected final JTextField myTextField;
 
   public DarculaTextFieldUI(JTextField textField) {
@@ -46,6 +43,16 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(final JComponent c) {
     final DarculaTextFieldUI ui = new DarculaTextFieldUI((JTextField)c);
+    installListeners(c, ui);
+    return ui;
+  }
+
+  @Override
+  public JTextComponent getEditor() {
+    return getComponent();
+  }
+
+  public static void installListeners(final JComponent c, final TextFieldWithPopupHandlerUI ui) {
     c.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -60,7 +67,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     c.addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseMoved(MouseEvent e) {
-        if (ui.getComponent() != null && isSearchField(c)) {
+        if (ui.getEditor() != null && isSearchField(c)) {
           if (ui.getActionUnder(e) != null) {
             c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           } else {
@@ -92,10 +99,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
         }
       }
     });
-    return ui;
+
   }
 
-  protected void showSearchPopup() {
+  public void showSearchPopup() {
     final Object value = myTextField.getClientProperty("JTextField.Search.FindPopup");
     final JTextComponent editor = getComponent();
     if (editor != null && value instanceof JPopupMenu) {
@@ -109,7 +116,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     return (component != null) && !StringUtil.isEmpty(component.getText());
   }
 
-  private SearchAction getActionUnder(MouseEvent e) {
+  public SearchAction getActionUnder(MouseEvent e) {
     int off = JBUI.scale(8);
     Point point = new Point(e.getX() - off, e.getY() - off);
     return point.distance(getSearchIconCoord()) <= off
