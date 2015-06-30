@@ -161,7 +161,7 @@ public class CompoundShelfFileProcessor {
     }
   }
 
-  private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file) throws IOException {
+  private static void copyFileContentToProviders(String newFilePath, StreamProvider serverStreamProvider, File file) throws IOException {
     if (serverStreamProvider.isEnabled() && serverStreamProvider.isApplicable(newFilePath, RoamingType.PER_USER)) {
       byte[] content = FileUtil.loadFileBytes(file);
       serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER);

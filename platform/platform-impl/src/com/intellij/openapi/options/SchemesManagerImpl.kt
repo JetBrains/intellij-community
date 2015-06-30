@@ -50,7 +50,6 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.InputStream
-import java.lang
 import java.util.ArrayList
 import java.util.Collections
 
@@ -251,12 +250,10 @@ public class SchemesManagerImpl<T : Scheme, E : ExternalizableScheme>(private va
   override fun loadSchemes(): Collection<E> {
     val newSchemesOffset = schemes.size()
     if (provider != null && provider.isEnabled()) {
-      provider.processChildren(fileSpec, roamingType, Condition { canRead(it) }, object: StreamProvider.ChildrenProcessor() {
-        override fun process(name: String, input: InputStream): Boolean {
-          loadScheme(name, input, true)
-          return true
-        }
-      })
+      provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input ->
+        loadScheme(name, input, true)
+        true
+      }
     }
     else {
       val dir = getDirectory()
