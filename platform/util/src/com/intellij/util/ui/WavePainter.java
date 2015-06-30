@@ -23,12 +23,11 @@ import java.util.Map;
 
 /**
  * Draws a 'wavy' line of 1-pixel amplitude. Instances are cached for performance reasons.
- * <p>
+ * <p/>
  * This class is not thread-safe, it's supposed to be used in EDT only.
  */
 public class WavePainter {
   private static final float STROKE_WIDTH = 0.7f;
-  private static final float THICKNESS = 0.7f;
 
   private static final Map<Color, WavePainter> myPainters = new HashMap<Color, WavePainter>();
   private static final int PATTERN_WIDTH = 4000;
@@ -42,10 +41,9 @@ public class WavePainter {
       GraphicsUtil.setupAAPainting(g);
       g.setStroke(new BasicStroke(STROKE_WIDTH));
       g.setColor(color);
-      g.setStroke(new BasicStroke(THICKNESS));
       double height = 1;
       double cycle = 4 * height;
-      final double wavedAt = 3 - THICKNESS - height;
+      final double wavedAt = 3 - STROKE_WIDTH - height;
       GeneralPath wavePath = new GeneralPath();
       wavePath.moveTo(0, wavedAt - Math.cos(0 * 2 * Math.PI / cycle) * height);
       for (int x = 0; x < PATTERN_WIDTH; x++) {
@@ -65,8 +63,8 @@ public class WavePainter {
     Composite oldComposite = g.getComposite();
     g.setComposite(AlphaComposite.SrcOver);
     Shape clip = g.getClip();
-    g.setClip(xStart, y-3, xEnd-xStart, 3);
-    UIUtil.drawImage(g, myImage, xStart, y-3, null);
+    g.setClip(xStart, y - 3, xEnd - xStart, 3);
+    UIUtil.drawImage(g, myImage, xStart, y - 3, null);
     g.setComposite(oldComposite);
     g.setClip(clip);
   }
