@@ -17,7 +17,6 @@ package org.testng;
 
 import com.beust.jcommander.JCommander;
 import com.intellij.rt.execution.junit.ForkedStarter;
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import org.testng.remote.RemoteArgs;
 
 import java.io.File;
@@ -27,22 +26,12 @@ import java.util.*;
 
 public class TestNGForkedStarter extends ForkedStarter {
   public static void main(String[] args) throws Exception {
-    System.out.println("started");
     new TestNGForkedStarter().startVM(args);
   }
 
   @Override
   protected String getStarterName() {
     return TestNGForkedStarter.class.getName();
-  }
-
-  int startForkedVMs(String workingDirsPath,
-                     String[] args,
-                     String configName,
-                     Object out,
-                     Object err,
-                     String commandLinePath) throws Exception {
-    return startForkedVM(workingDirsPath, args, configName, out, err, "none", commandLinePath, Collections.emptyList());
   }
 
   @Override
@@ -57,14 +46,11 @@ public class TestNGForkedStarter extends ForkedStarter {
                                       TestNGXmlSuiteHelper.Logger.DEAF);
     file.deleteOnExit();
     
-    final List childArgs = new ArrayList();
-    childArgs.add(file.getAbsolutePath());
-    
-    return childArgs;
+    return Collections.singletonList(file.getAbsolutePath());
   }
 
   @Override
-  protected void startVM(String[] args, PrintStream out, PrintStream err)
+  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(null);
     CommandLineArgs cla = new CommandLineArgs();

@@ -21,7 +21,6 @@
 package org.testng;
 
 import com.beust.jcommander.JCommander;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 
@@ -29,10 +28,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 public class RemoteTestNGStarter {
   public static boolean SM_RUNNER = System.getProperty("idea.testng.sm_runner") != null;
@@ -110,7 +106,8 @@ public class RemoteTestNGStarter {
     if (SM_RUNNER) {
       if (commandFileName != null) {
         if (workingDirs != null && new File(workingDirs).length() > 0) {
-          System.exit(new TestNGForkedStarter().startForkedVMs(workingDirs, args, param, System.out, System.err, commandFileName));
+          System.exit(new TestNGForkedStarter()
+                        .startForkedVM(workingDirs, args, param, System.out, System.err, "none", commandFileName, Collections.emptyList()));
           return;
         }
       }

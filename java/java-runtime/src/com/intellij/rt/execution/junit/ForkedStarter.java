@@ -42,7 +42,7 @@ public abstract class ForkedStarter {
       final PrintStream err = new PrintStream(new ForkedVMWrapper(stream, true));
       System.setOut(out);
       System.setErr(err);
-      startVM(args, out, err);
+      configureFrameworkAndRun(args, out, err);
     }
     finally {
       System.setOut(oldOut);
@@ -141,18 +141,13 @@ public abstract class ForkedStarter {
     return result;
   }
 
-  protected abstract void startVM(String[] args, PrintStream out, PrintStream err) throws InstantiationException, 
-                                                                                          IllegalAccessException, 
-                                                                                          ClassNotFoundException;
-
-  protected int startForkedVM(String workingDirsPath,
-                              String[] args,
-                              String configName,
-                              Object out,
-                              Object err,
-                              String forkMode,
-                              String commandLinePath, List newArgs)
-    throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, InterruptedException {
+  public int startForkedVM(String workingDirsPath,
+                           String[] args,
+                           String configName,
+                           Object out,
+                           Object err,
+                           String forkMode,
+                           String commandLinePath, List newArgs) throws Exception {
     args = myForkedDebuggerStarter.excludeDebugPortFromArgs(args);
 
     final List parameters = new ArrayList();
@@ -242,8 +237,7 @@ public abstract class ForkedStarter {
                                                     List classNames,
                                                     Object rootDescriptor) throws IOException;
 
-  protected abstract Object createRootDescription(String[] args, List newArgs, String configName, Object out, Object err)
-    throws InstantiationException, IllegalAccessException, ClassNotFoundException;
+  protected abstract Object createRootDescription(String[] args, List newArgs, String configName, Object out, Object err) throws Exception;
 
   protected void sendTree(Object rootDescription) {}
   protected void sendTime(long time) {}
@@ -261,4 +255,6 @@ public abstract class ForkedStarter {
   }
 
   protected abstract String getStarterName();
+
+  protected abstract void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err) throws Exception;
 }

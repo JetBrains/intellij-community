@@ -29,10 +29,7 @@ import java.util.List;
 public class JUnitForkedStarter extends ForkedStarter {
 
   private IdeaTestRunner myTestRunner;
-
-  JUnitForkedStarter() {
-  }
-
+  
   public static void main(String[] args) throws Exception {
     new JUnitForkedStarter().startVM(args);
   }
@@ -41,7 +38,7 @@ public class JUnitForkedStarter extends ForkedStarter {
     return JUnitForkedStarter.class.getName();
   }
 
-  protected void startVM(String[] args, PrintStream out, PrintStream err)
+  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
     final int lastIdx = Integer.parseInt(args[1]);
     final String[] childTestDescription = {args[2]};
@@ -54,21 +51,6 @@ public class JUnitForkedStarter extends ForkedStarter {
     //noinspection IOResourceOpenedButNotSafelyClosed
     testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
     System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, 1, false));
-  }
-
-  int startForkedVMs(String workingDirsPath,
-                     String[] args,
-                     boolean isJUnit4,
-                     List listeners,
-                     String configName,
-                     Object out,
-                     Object err,
-                     String forkMode,
-                     String commandLinePath) throws Exception {
-    List newArgs = new ArrayList();
-    newArgs.add(String.valueOf(isJUnit4));
-    newArgs.addAll(listeners);
-    return startForkedVM(workingDirsPath, args, configName, out, err, forkMode, commandLinePath, newArgs);
   }
 
   protected Object createRootDescription(String[] args, List newArgs, String configName, Object out, Object err)
