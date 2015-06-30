@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -74,7 +75,8 @@ public abstract class BasicAction extends DumbAwareAction {
     if (!background) {
       GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
         public void run(@NotNull ProgressIndicator indicator) {
-          VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
+          VfsUtil.markDirtyAndRefresh(false, true, false, affectedFiles);
+          VcsFileUtil.markFilesDirty(project, Arrays.asList(affectedFiles));
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             public void run() {
               GitUIUtil.showOperationErrors(project, exceptions, actionName);

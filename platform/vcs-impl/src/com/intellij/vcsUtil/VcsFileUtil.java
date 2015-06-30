@@ -233,19 +233,9 @@ public class VcsFileUtil {
     return rc;
   }
 
-  /**
-   * Refresh files
-   *
-   * @param project       a project
-   * @param affectedFiles affected files and directories
-   */
-  public static void refreshFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> affectedFiles) {
+  public static void markFilesDirty(@NotNull Project project, @NotNull Collection<VirtualFile> affectedFiles) {
     final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile file : affectedFiles) {
-      if (!file.isValid()) {
-        continue;
-      }
-      file.refresh(false, true);
       if (file.isDirectory()) {
         dirty.dirDirtyRecursively(file);
       }
@@ -255,13 +245,7 @@ public class VcsFileUtil {
     }
   }
 
-  /**
-   * Mark files dirty
-   *
-   * @param project       a project
-   * @param affectedFiles affected files and directories
-   */
-  public static void markFilesDirty(Project project, List<FilePath> affectedFiles) {
+  public static void markFilesDirty(@NotNull Project project, @NotNull List<FilePath> affectedFiles) {
     final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
     for (FilePath file : affectedFiles) {
       if (file.isDirectory()) {
