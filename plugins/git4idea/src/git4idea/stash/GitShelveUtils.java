@@ -15,6 +15,10 @@
  */
 package git4idea.stash;
 
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.project.Project;
@@ -25,10 +29,14 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +68,7 @@ public class GitShelveUtils {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
-
+    final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
     context.next(new TaskDescriptor("Refreshing files before unshelve", Where.POOLED) {
         @Override
         public void run(ContinuationContext context) {
@@ -76,11 +84,36 @@ public class GitShelveUtils {
         public void run(ContinuationContext context) {
           LOG.info("Unshelving in UI thread. shelvedChangeList: " + shelvedChangeList);
           // we pass null as target change list for Patch Applier to do NOTHING with change lists
-          shelveManager.scheduleUnshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(project),
+          shelveManager.scheduleUnshelveChangeList(shelvedChangeList, changes,
                                                    shelvedChangeList.getBinaryFiles(), null, false, context, true,
                                                    true, leftConflictTitle, rightConflictTitle);
         }
+    }, new TaskDescriptor("", Where.AWT) {
+      @Override
+      public void run(ContinuationContext context) {
+        markUnshelvedFilesNonUndoable(project, changes);
+      }
+    });
+  }
+
+  @CalledInAwt
+  private static void markUnshelvedFilesNonUndoable(@NotNull final Project project,
+                                                    @NotNull List<ShelvedChange> changes) {
+    final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
+    if (undoManager != null && !changes.isEmpty()) {
+      ContainerUtil.process(changes, new Processor<ShelvedChange>() {
+        @Override
+        public boolean process(ShelvedChange change) {
+          final VirtualFile vfUnderProject = VfsUtil.findFileByIoFile(new File(project.getBasePath(), change.getAfterPath()), false);
+          if (vfUnderProject != null) {
+            final DocumentReference documentReference = DocumentReferenceManager.getInstance().create(vfUnderProject);
+            undoManager.nonundoableActionPerformed(documentReference, false);
+            undoManager.invalidateActionsFor(documentReference);
+          }
+          return true;
+        }
       });
+    }
   }
 
   public static void refreshFilesBeforeUnshelve(final Project project, ShelvedChangeList shelvedChangeList, String projectPath) {
