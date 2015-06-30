@@ -57,11 +57,11 @@ public class IdeBackgroundUtil {
   }
 
   public static void initEditorPainters(@NotNull PaintersHelper painters) {
-    painters.addPainter(PaintersHelper.newWallpaperPainter("idea.wallpaper.editor"), null);
+    PaintersHelper.initWallpaperPainter("idea.wallpaper.editor", painters);
   }
 
   public static void initFramePainters(@NotNull PaintersHelper painters) {
-    painters.addPainter(PaintersHelper.newWallpaperPainter("idea.wallpaper.ide"), null);
+    PaintersHelper.initWallpaperPainter("idea.wallpaper.ide", painters);
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     String path = UIUtil.isUnderDarcula()? appInfo.getEditorBackgroundImageUrl() : null;
