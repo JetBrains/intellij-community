@@ -29,7 +29,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class ImportTestsGroup extends ActionGroup {
+public class 
+  ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
     super("Import Test Results", "Import Test Results", AllIcons.Vcs.History);
