@@ -15,18 +15,85 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import javax.swing.*;
 import javax.swing.plaf.basic.BasicTextFieldUI;
-import javax.swing.text.JTextComponent;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI {
+  protected final JTextField myTextField;
 
-  public abstract SearchAction getActionUnder(MouseEvent e);
+  public TextFieldWithPopupHandlerUI(JTextField textField) {
+    myTextField = textField;
+    installListeners();
+  }
 
-  public abstract void showSearchPopup();
+  protected abstract SearchAction getActionUnder(MouseEvent e);
 
-  public abstract JTextComponent getEditor();
+  protected abstract void showSearchPopup();
+
+  protected void installListeners() {
+    final TextFieldWithPopupHandlerUI ui = this;
+    myTextField.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myTextField.repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        myTextField.repaint();
+      }
+    });
+    myTextField.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        if (ui.getComponent() != null && isSearchField(myTextField)) {
+          if (ui.getActionUnder(e) != null) {
+            myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          } else {
+            myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+          }
+        }
+      }
+    });
+    myTextField.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (isSearchField(myTextField)) {
+          final SearchAction action = ui.getActionUnder(e);
+          if (action != null) {
+            switch (action) {
+              case POPUP:
+                ui.showSearchPopup();
+                break;
+              case CLEAR:
+                Object listener = myTextField.getClientProperty("JTextField.Search.CancelAction");
+                if (listener instanceof ActionListener) {
+                  ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
+                }
+                myTextField.setText("");
+                break;
+            }
+            e.consume();
+          }
+        }
+      }
+    });
+  }
+
+  public static boolean isSearchField(Component c) {
+    return c instanceof JTextField && "search".equals(((JTextField)c).getClientProperty("JTextField.variant"));
+  }
+
+  public static boolean isSearchFieldWithHistoryPopup(Component c) {
+    return isSearchField(c) && ((JTextField)c).getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu;
+  }
+
+  public enum SearchAction {
+    POPUP, CLEAR
+  }
 }

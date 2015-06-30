@@ -28,78 +28,21 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
-  protected final JTextField myTextField;
+
 
   public DarculaTextFieldUI(JTextField textField) {
-    myTextField = textField;
+    super(textField);
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(final JComponent c) {
-    final DarculaTextFieldUI ui = new DarculaTextFieldUI((JTextField)c);
-    installListeners(c, ui);
-    return ui;
-  }
-
-  @Override
-  public JTextComponent getEditor() {
-    return getComponent();
-  }
-
-  public static void installListeners(final JComponent c, final TextFieldWithPopupHandlerUI ui) {
-    c.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        c.repaint();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        c.repaint();
-      }
-    });
-    c.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        if (ui.getEditor() != null && isSearchField(c)) {
-          if (ui.getActionUnder(e) != null) {
-            c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-          } else {
-            c.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-          }
-        }
-      }
-    });
-    c.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (isSearchField(c)) {
-          final SearchAction action = ui.getActionUnder(e);
-          if (action != null) {
-            switch (action) {
-              case POPUP:
-                ui.showSearchPopup();
-                break;
-              case CLEAR:
-                Object listener = c.getClientProperty("JTextField.Search.CancelAction");
-                if (listener instanceof ActionListener) {
-                  ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
-                }
-                ((JTextField)c).setText("");
-                break;
-            }
-            e.consume();
-          }
-        }
-      }
-    });
-
+    return new DarculaTextFieldUI((JTextField)c);
   }
 
   public void showSearchPopup() {
