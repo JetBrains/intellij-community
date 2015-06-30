@@ -309,9 +309,19 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
-    parameters.getProgramParametersList().add("@@@" + tempFile.getAbsolutePath());
+    final ParametersList parametersList = parameters.getProgramParametersList();
+    final List<String> params = parametersList.getParameters();
+    int paramIdx = params.size() - 1;
+    for (int i = 0; i < params.size(); i++) {
+      String param = params.get(i);
+      if ("-temp".equals(param)) {
+        paramIdx = i;
+        break;
+      }
+    }
+    parametersList.addAt(paramIdx, "@@@" + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {
-      parameters.getProgramParametersList().add(ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
+      parametersList.addAt(paramIdx, ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
     }
   }
 }

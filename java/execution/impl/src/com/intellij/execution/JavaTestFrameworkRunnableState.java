@@ -242,6 +242,37 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     if (jdk == null) {
       throw new ExecutionException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
     }
+
+    try {
+      final File tempFile = FileUtil.createTempFile("command.line", "", true);
+      final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
+      try {
+        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
+          String classpath = PathUtil.getJarPathForClass(CommandLineWrapper.class);
+          final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
+          if (!classpath.equals(utilRtPath)) {
+            classpath += File.pathSeparator + utilRtPath;
+          }
+          writer.println(classpath);
+        }
+        else {
+          writer.println("");
+        }
+  
+        writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
+        for (String vmParameter : javaParameters.getVMParametersList().getList()) {
+          writer.println(vmParameter);
+        }
+      }
+      finally {
+        writer.close();
+      }
+
+      passForkMode(getForkMode(), tempFile, javaParameters);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   protected abstract void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException;
@@ -325,36 +356,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp");
       myWorkingDirsFile.deleteOnExit();
       javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
-
-
-      final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
-      try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
-          String classpath = PathUtil.getJarPathForClass(CommandLineWrapper.class);
-          final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
-          if (!classpath.equals(utilRtPath)) {
-            classpath += File.pathSeparator + utilRtPath;
-          }
-          writer.println(classpath);
-        }
-        else {
-          writer.println("");
-        }
-
-        final Sdk jdk = javaParameters.getJdk();
-        if (jdk != null) {
-          writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
-          for (String vmParameter : javaParameters.getVMParametersList().getList()) {
-            writer.println(vmParameter);
-          }
-        }
-      }
-      finally {
-        writer.close();
-      }
-
-      passForkMode(getForkMode(), tempFile, javaParameters);
       
       myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp");
       myTempFile.deleteOnExit();
