@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.*
@@ -50,11 +49,10 @@ import gnu.trove.TObjectProcedure
 import org.jdom.Document
 import org.jdom.Element
 import java.io.File
-import java.io.IOException
 import java.io.InputStream
+import java.lang
 import java.util.ArrayList
 import java.util.Collections
-import java.util.LinkedHashMap
 
 val LOG = Logger.getInstance(javaClass<SchemesManagerFactoryImpl>())
 
@@ -253,10 +251,12 @@ public class SchemesManagerImpl<T : Scheme, E : ExternalizableScheme>(private va
   override fun loadSchemes(): Collection<E> {
     val newSchemesOffset = schemes.size()
     if (provider != null && provider.isEnabled()) {
-      provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input ->
-        loadScheme(name, input, true)
-        true
-      }
+      provider.processChildren(fileSpec, roamingType, Condition { canRead(it) }, object: StreamProvider.ChildrenProcessor() {
+        override fun process(name: String, input: InputStream): Boolean {
+          loadScheme(name, input, true)
+          return true
+        }
+      })
     }
     else {
       val dir = getDirectory()
