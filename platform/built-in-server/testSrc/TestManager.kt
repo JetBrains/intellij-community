@@ -1,11 +1,13 @@
 package org.jetbrains.ide
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
+import org.jetbrains.testFramework.invokeAndWaitIfNeed
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File
@@ -63,10 +65,10 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
     }
 
     invokeAndWaitIfNeed {
-      val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath)
+      val normalizedFilePath = FileUtilRt.toSystemIndependentName(filePath!!)
       if (annotation!!.relativeToProject) {
         val root = projectFixture.getProject().getBaseDir()
-        runWriteAction {
+        writeAction {
           fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
         }
       }
@@ -75,7 +77,7 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
           ModuleRootModificationUtil.updateModel(projectFixture.getModule()) { model ->
             val contentEntry = model.getContentEntries()[0]
             val contentRoot = contentEntry.getFile()!!
-            runWriteAction {
+            writeAction {
               contentRoot.findChild(EXCLUDED_DIR_NAME)?.delete(this@TestManager)
               fileToDelete = contentRoot.createChildDirectory(this@TestManager, EXCLUDED_DIR_NAME)
               fileToDelete!!.createChildData(this@TestManager, normalizedFilePath)
@@ -87,7 +89,7 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
         }
         else {
           val root = ModuleRootManager.getInstance(projectFixture.getModule()).getSourceRoots()[0]
-          runWriteAction {
+          writeAction {
             fileToDelete = root.findOrCreateChildData(this@TestManager, normalizedFilePath)
           }
         }
@@ -101,11 +103,11 @@ class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
     }
 
     if (fileToDelete != null) {
-      invokeAndWaitIfNeed { runWriteAction { fileToDelete?.delete(this@TestManager) } }
+      invokeAndWaitIfNeed { writeAction { fileToDelete?.delete(this@TestManager) } }
       fileToDelete = null
     }
 
-    if (ioFileToDelete != null && !FileUtilRt.delete(ioFileToDelete)) {
+    if (ioFileToDelete != null && !FileUtilRt.delete(ioFileToDelete!!)) {
       ioFileToDelete!!.deleteOnExit()
     }
 

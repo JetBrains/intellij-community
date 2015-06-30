@@ -1,19 +1,19 @@
 package org.jetbrains.ide
 
+import com.google.gson.stream.JsonWriter
+import com.intellij.openapi.vfs.CharsetToolkit
 import io.netty.handler.codec.http.HttpResponseStatus
+import org.hamcrest.CoreMatchers.equalTo
+import org.jetbrains.ide.TestManager.TestDescriptor
+import org.jetbrains.testFramework.FixtureRule
+import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-
-import org.hamcrest.CoreMatchers.equalTo
-import org.jetbrains.ide.TestManager.TestDescriptor
-import org.junit.Assert.assertThat
-import java.net.URL
-import java.net.HttpURLConnection
-import com.google.gson.stream.JsonWriter
-import java.io.OutputStreamWriter
-import com.intellij.openapi.vfs.CharsetToolkit
 import java.io.BufferedOutputStream
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
 
 public class RestApiTest {
   private val fixtureManager = FixtureRule()
