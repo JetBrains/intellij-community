@@ -1,7 +1,10 @@
 package com.jetbrains.reactivemodel
 
-import com.jetbrains.reactivemodel.models.*
-import com.jetbrains.reactivemodel.signals.*
+import com.jetbrains.reactivemodel.models.ListModel
+import com.jetbrains.reactivemodel.models.MapDiff
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 import java.util.ArrayDeque
@@ -15,12 +18,19 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   private val transactionGuard = Guard()
   private val actionToHandler: MutableMap<String, (MapModel) -> Unit> = HashMap()
 
-  private inner class ModelSignal(val path: Path, override val lifetime: Lifetime) : Signal<Model?> {
+  companion object {
+    private var cur : ReactiveModel? = null
+    public fun current() : ReactiveModel? {
+      return cur;
+    }
+  }
+
+  private inner class ModelSignal(val path: Path, override val lifetime: Lifetime) : com.jetbrains.reactivemodel.Signal<Model?> {
     override val value: Model?
       get() = path.getIn(root)
   }
 
-  public fun subscribe(lt: Lifetime = lifetime, path: Path): Signal<Model?> {
+  public fun subscribe(lt: Lifetime = lifetime, path: Path): com.jetbrains.reactivemodel.Signal<Model?> {
     val signal = ModelSignal(path, lt)
     subscriptions[path] = signal
     lifetime += {
@@ -58,10 +68,10 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   }
 
   private fun fireUpdates(oldModel: MapModel, newModel: MapModel, diff: MapDiff) {
-    updates {
+    com.jetbrains.reactivemodel.updates {
       for ((path, signal) in subscriptions) {
         if (path.getIn(diff) != null) {
-          ReactGraph.scheduleUpdate(Change(signal, path.getIn(oldModel), path.getIn(newModel)))
+          com.jetbrains.reactivemodel.ReactGraph.scheduleUpdate(com.jetbrains.reactivemodel.Change(signal, path.getIn(oldModel), path.getIn(newModel)))
         }
       }
     }
@@ -74,6 +84,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
 
   fun dispatch(model: Model) {
     model as MapModel
+    cur = this
     val actionName = (model["action"] as PrimitiveModel<String>).value
     val handler = actionToHandler[actionName]
     if (handler != null) {
@@ -85,7 +96,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   }
 }
 
-fun main(args: Array<String>) {
+fun test() {
   val mirror = ReactiveModel(Lifetime.Eternal, {
     println(it)
   })
@@ -111,22 +122,22 @@ fun main(args: Array<String>) {
   val cSignal = model.subscribe(Lifetime.Eternal, Path("b", "c"))
 
   val mirrorBC = mirror.subscribe(Lifetime.Eternal, Path("b", "c"))
-  reaction(false, "mirror/b/c", mirrorBC) {
+  com.jetbrains.reactivemodel.reaction(false, "mirror/b/c", mirrorBC) {
     println("mirror/b/c $it")
   }
 
 
-  val cStr = reaction(true, "b/c -> string", cSignal) {
+  val cStr = com.jetbrains.reactivemodel.reaction(true, "b/c -> string", cSignal) {
     if (it == null) null
     else (it as PrimitiveModel<String>).value
   }
 
-  reaction(false, "println", cStr) {
+  com.jetbrains.reactivemodel.reaction(false, "println", cStr) {
     println("b/c $it")
   }
 
   val lookupSignal = mirror.subscribe(Lifetime.Eternal, Path("b", "lookup"))
-  reaction(false, "println lookup", lookupSignal) {
+  com.jetbrains.reactivemodel.reaction(false, "println lookup", lookupSignal) {
     println(it)
   }
 

@@ -45,12 +45,12 @@ import java.util.Arrays;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup {
 
-  private MyList myList;
+  protected MyList myList;
 
   private MyMouseMotionListener myMouseMotionListener;
   private MyMouseListener myMouseListener;
 
-  private ListPopupModel myListModel;
+  protected ListPopupModel myListModel;
 
   private int myIndexForShowingChild = -1;
   private int myMaxRowCount = 20;
@@ -227,7 +227,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myMouseListener = new MyMouseListener();
 
     myListModel = new ListPopupModel(this, getSpeedSearch(), getListStep());
-    myList = new MyList();
+    myList = createList();
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
@@ -271,6 +271,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     return myList;
+  }
+
+  @NotNull
+  protected MyList createList() {
+    return new MyList(myListModel);
   }
 
   private boolean isMultiSelectionEnabled() {
@@ -475,14 +480,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   protected boolean handleFinalChoices(MouseEvent e, Object selectedValue, ListPopupStep<Object> listStep) {
-    return selectedValue == null || !listStep.hasSubstep(selectedValue) || !listStep.isSelectable(selectedValue) || !isOnNextStepButton(e);
-  }
-
-  private boolean isOnNextStepButton(MouseEvent e) {
-    final int index = myList.getSelectedIndex();
-    final Rectangle bounds = myList.getCellBounds(index, index);
-    final Point point = e.getPoint();
-    return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
+    return selectedValue == null || !listStep.hasSubstep(selectedValue) || !listStep.isSelectable(selectedValue) || !myList.isOnNextStepButton(e);
   }
 
   @Override
@@ -498,9 +496,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JBListWithHintProvider implements DataProvider {
-    public MyList() {
-      super(myListModel);
+  public static class MyList extends JBListWithHintProvider implements DataProvider {
+    public MyList(ListPopupModel listModel) {
+      super(listModel);
     }
 
     @Override
@@ -519,6 +517,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       super.processKeyEvent(e);
     }
 
+    private boolean isOnNextStepButton(MouseEvent e) {
+      final int index = getSelectedIndex();
+      final Rectangle bounds = getCellBounds(index, index);
+      final Point point = e.getPoint();
+      return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
+    }
+
     @Override
     protected void processMouseEvent(MouseEvent e) {
       if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnNextStepButton(e)) {
@@ -530,10 +535,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     @Override
     public Object getData(String dataId) {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
-        return myList.getSelectedValue();
+        return getSelectedValue();
       }
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
-         return myList.getSelectedValues();
+         return getSelectedValues();
       }
       return null;
     }

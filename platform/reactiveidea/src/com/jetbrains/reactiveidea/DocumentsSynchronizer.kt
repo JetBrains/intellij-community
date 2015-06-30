@@ -16,15 +16,13 @@
 package com.jetbrains.reactiveidea
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
+import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane
-import com.intellij.ide.projectView.impl.ProjectViewImpl
-import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -33,13 +31,18 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.reactivemodel.Model
 import com.jetbrains.reactivemodel.Path
+import com.jetbrains.reactivemodel.ReactiveModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.Signal
+import com.jetbrains.reactivemodel.VariableSignal
+import com.jetbrains.reactivemodel.reaction
+import com.jetbrains.reactivemodel.varSignal
 import com.jetbrains.reactivemodel.util.Lifetime
 
 public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
@@ -55,9 +58,9 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   private val messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect()
 
 
-  private fun guessDataContext(contextHint: MapModel): DataContext? {
+  private fun guessDataContext(contextHint: MapModel): DataContext {
     //todo: look at the hint!
-    val editorContext = contextHint.get("editor") as ListModel
+    val editorContext = contextHint.get("editor") as ListModel? ?: return DataContext.EMPTY_CONTEXT;
     val editorIdx = (editorContext.get(3) as PrimitiveModel<*>).value
     val editor = tabHost!!.getEditor(Integer.valueOf(editorIdx as String)).editor
     val component = editor.getContentComponent()

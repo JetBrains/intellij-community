@@ -30,8 +30,8 @@ import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.MapDiff
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.signals.Signal
-import com.jetbrains.reactivemodel.signals.reaction
+import com.jetbrains.reactivemodel.Signal
+import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Lifetime
 import java.awt.Color
 import java.util.HashMap
@@ -40,12 +40,12 @@ public class ClientMarkupHost(val markupModel: MarkupModelEx,
                               reactiveModel: ReactiveModel,
                               path: Path,
                               lifetime: Lifetime,
-                              documentUpdated: Signal<Any>) {
+                              documentUpdated: com.jetbrains.reactivemodel.Signal<Any>) {
   val markupIndex: MutableMap<String, RangeHighlighter> = HashMap()
   init {
     val markupSignal = reactiveModel.subscribe(lifetime, path)
     var oldMarkup: MapModel = MapModel()
-    val updateEditorMarkup = reaction(true, "update editor markup from the model", documentUpdated, markupSignal) { _, markup ->
+    val updateEditorMarkup = com.jetbrains.reactivemodel.reaction(true, "update editor markup from the model", documentUpdated, markupSignal) { _, markup ->
       if (markup != null) {
         val diff = oldMarkup.diff(markup) as MapDiff?
         if (diff != null) {

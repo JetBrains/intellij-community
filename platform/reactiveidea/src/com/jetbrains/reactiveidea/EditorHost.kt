@@ -32,7 +32,7 @@ import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
-import com.jetbrains.reactivemodel.signals.reaction
+import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 
@@ -62,7 +62,7 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")
 
 
-    val selectionReaction = reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated) { selection, caret, _ ->
+    val selectionReaction = com.jetbrains.reactivemodel.reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated) { selection, caret, _ ->
 
       selection as MapModel?
       caret as MapModel?

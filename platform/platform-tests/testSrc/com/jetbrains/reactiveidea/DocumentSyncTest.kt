@@ -41,7 +41,7 @@ import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
-import com.jetbrains.reactivemodel.signals.reaction
+import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 import kotlin.test.assertEquals
@@ -89,7 +89,7 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
 
     val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
     var clientModelChanged = false
-    reaction(false, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("a"))) { a ->
+    com.jetbrains.reactivemodel.reaction(false, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("a"))) { a ->
       clientModelChanged = true
     }
 
@@ -124,7 +124,7 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
 
 
     var clientModelChanged = false
-    reaction(true, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("document") / "events")) { a ->
+    com.jetbrains.reactivemodel.reaction(true, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("document") / "events")) { a ->
       clientModelChanged = true
     }
 

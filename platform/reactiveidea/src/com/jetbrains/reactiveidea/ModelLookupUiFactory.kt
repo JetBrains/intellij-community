@@ -31,7 +31,7 @@ public class ModelLookupUiFactory : LookupUiFactory() {
 
   override fun createLookupUi(lookup: LookupImpl, advertiser: Advertiser, list: JBList, project: Project): LookupUi {
     val editorHost = EditorHost.getHost(lookup.getEditor())
-    return LookupHost(editorHost!!.reactiveModel, editorHost.path / "lookup", lookup)
+    return LookupHost(editorHost!!.reactiveModel, editorHost.path, lookup)
   }
 
 }

@@ -2,8 +2,9 @@ package com.jetbrains.reactivemodel
 
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapDiff
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.models.assocModelWithPath
-import java.util.*
+import java.util.ArrayList
 
 public object Last
 
@@ -57,3 +58,5 @@ fun Path.getIn(mapDiff: MapDiff): Diff<Model>? =
       if (mapDiff is MapDiff ) mapDiff.diff [component]
       else null
     }
+
+fun Path.toList() : ListModel = ListModel(components.map { PrimitiveModel(it) })

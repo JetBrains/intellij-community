@@ -1,11 +1,12 @@
 
-package com.jetbrains.reactivemodel.signals
+package com.jetbrains.reactivemodel
 
 import com.intellij.util.containers.MultiMap
+import com.jetbrains.reactivemodel.log
+import com.jetbrains.reactivemodel.log.catch
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.LifetimeDefinition
-import com.jetbrains.reactivemodel.log
 import java.util.*
 
 public trait Signal<out T> {
@@ -100,7 +101,7 @@ object ReactGraph {
     }
 
     private fun processChanges(changes: ArrayList<Change<Any?>>) {
-        val changed = HashSet(changes.filter {it.newValue != it.oldValue}.map {it.s})
+        val changed = HashSet(changes.filter { it.newValue != it.oldValue }.map { it.s })
         updatesGuard.lock {
             scheduleOrder.forEach { signal ->
                 if (changed.contains(signal)) {
@@ -150,7 +151,7 @@ fun <T1, T2, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T
 
 fun <T1, T2, T3, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T1>, s2: Signal<T2>, s3: Signal<T3>, handler: (T1, T2, T3) -> T) : VariableSignal<T> {
     return ReactGraph.register(VariableSignal<T>(
-            Lifetime.create(s1.lifetime, s2.lifetime, s3.lifetime),
+        Lifetime.create(s1.lifetime, s2.lifetime, s3.lifetime),
             name,
             if (immediate) handler(s1.value, s2.value, s3.value) else null as T),
             arrayListOf(s1, s2, s3),

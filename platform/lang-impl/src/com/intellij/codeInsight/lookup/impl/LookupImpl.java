@@ -608,7 +608,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       hide();
       return false;
     }
-    myUi.updateLocation();
+    if (myUi != null) {
+      myUi.updateLocation();
+    }
     checkValid();
     return true;
   }

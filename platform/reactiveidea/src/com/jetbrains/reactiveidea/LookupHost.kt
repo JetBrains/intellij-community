@@ -22,20 +22,18 @@ import com.intellij.codeInsight.lookup.impl.LookupUi
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
-import com.jetbrains.reactivemodel.Model
-import com.jetbrains.reactivemodel.Path
-import com.jetbrains.reactivemodel.ReactiveModel
+import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.putIn
 import com.jetbrains.reactivemodel.util.Lifetime
 
-public class LookupHost(val reactiveModel: ReactiveModel, val path: Path, val lookup : LookupImpl) : LookupUi {
+public class LookupHost(val reactiveModel: ReactiveModel, val editorPath: Path, val lookup : LookupImpl) : LookupUi {
   val tags = "@@@--^tags"
   val metadata: MutableMap<Path, LookupElement> = hashMapOf()
   val life = Lifetime.create(reactiveModel.lifetime)
+  val path = Path("lookup")
 
   init {
     life.lifetime += {
@@ -47,7 +45,7 @@ public class LookupHost(val reactiveModel: ReactiveModel, val path: Path, val lo
     reactiveModel.registerHandler(life.lifetime, "insert-item") { args ->
 
       val item_path = args["item-path"] as ListModel
-      val path = item_path.list.fold(Path()) { p, m -> p / (m as PrimitiveModel<*>).value }
+      val path = path(item_path)
       val lookupElement = metadata[path]
       if (lookupElement != null) {
         val editor = lookup.getEditor()
@@ -60,6 +58,8 @@ public class LookupHost(val reactiveModel: ReactiveModel, val path: Path, val lo
       }
     }
   }
+
+  private fun path(item_path: ListModel) = item_path.list.fold(Path()) { p, m -> p / (m as PrimitiveModel<*>).value }
 
   override fun setCalculating(calculating: Boolean) {
 
@@ -83,6 +83,7 @@ public class LookupHost(val reactiveModel: ReactiveModel, val path: Path, val lo
     reactiveModel.transaction { m ->
       path.putIn(m, MapModel(hashMapOf(
           tags to ListModel(arrayListOf(PrimitiveModel("lookup"))),
+          "editor" to editorPath.toList(),
           "items" to MapModel(marshalItems(path))
       )))
     }

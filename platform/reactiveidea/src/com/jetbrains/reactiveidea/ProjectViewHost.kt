@@ -28,7 +28,7 @@ import com.jetbrains.reactivemodel.ReactiveModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
-import com.jetbrains.reactivemodel.signals.reaction
+import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Lifetime
 import java.util.HashMap
 
@@ -105,7 +105,7 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
     map.put("childs", MapModel())
     val stateSignal = reactiveModel.subscribe(lifetime, path / descriptor.toString())
 
-    reaction(true, "update state of project tree node", stateSignal) { state ->
+    com.jetbrains.reactivemodel.reaction(true, "update state of project tree node", stateSignal) { state ->
       if (state != null) {
         state as MapModel
         val openState = (state["state"] as PrimitiveModel<*>).value
@@ -114,8 +114,8 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
         } else if (openState == "closed") {
           val descrValue = descriptor.getValue()
           if (descrValue is PsiDirectory) {
-              openDirs.remove(ptrManager.createSmartPsiElementPointer(descrValue))
-            }
+            openDirs.remove(ptrManager.createSmartPsiElementPointer(descrValue))
+          }
         }
       }
     }
