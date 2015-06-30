@@ -149,7 +149,7 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
     return "Mock Package Facade Generator"
   }
 
-  class object {
+  companion object {
     private val PACKAGE_CACHE_STORAGE_PROVIDER = object : StorageProvider<AbstractStateStorage<String, String>>() {
       override fun createStorage(targetDataDir: File): AbstractStateStorage<String, String> {
         val storageFile = File(targetDataDir, "mockPackageFacade/packages")
