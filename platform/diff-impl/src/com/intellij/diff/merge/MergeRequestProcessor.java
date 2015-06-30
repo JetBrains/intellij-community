@@ -161,7 +161,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     myToolbarPanel.setContent(toolbar.getComponent());
     for (AnAction action : group.getChildren(null)) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
+      DiffUtil.registerAction(action, myMainPanel);
     }
   }
 

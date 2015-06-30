@@ -445,13 +445,13 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbarPanel.setContent(toolbar.getComponent());
     for (AnAction action : group.getChildren(null)) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
+      DiffUtil.registerAction(action, myMainPanel);
     }
   }
 
   protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
     ShowActionGroupPopupAction action = new ShowActionGroupPopupAction();
-    action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
+    DiffUtil.registerAction(action, myMainPanel);
 
     myPopupActionGroup = collectPopupActions(viewerActions);
   }

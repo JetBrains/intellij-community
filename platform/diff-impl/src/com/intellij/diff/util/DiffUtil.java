@@ -248,6 +248,10 @@ public class DiffUtil {
   // UI
   //
 
+  public static void registerAction(@NotNull AnAction action, @NotNull JComponent component) {
+    action.registerCustomShortcutSet(action.getShortcutSet(), component);
+  }
+
   @NotNull
   public static JPanel createMessagePanel(@NotNull String message) {
     Pair<JPanel, JLabel> pair = createMessagePanel();
