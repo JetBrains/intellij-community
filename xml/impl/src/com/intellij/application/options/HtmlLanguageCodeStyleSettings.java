@@ -22,8 +22,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
  * @author Rustam Vishnyakov
  */
@@ -44,6 +42,7 @@ public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProv
                                 @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN");
+      consumer.showStandardOptions("WRAP_ON_TYPING");
     }
   }
 
