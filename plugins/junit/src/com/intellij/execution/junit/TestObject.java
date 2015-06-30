@@ -402,7 +402,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
     parameters.getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {
-      parameters.getProgramParametersList().add(ForkedStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
+      parameters.getProgramParametersList().add(ForkedDebuggerStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
     }
   }
 }
