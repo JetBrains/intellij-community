@@ -284,7 +284,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
         Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
         assert versionSide != null;
 
-        boolean isAppendable = getStartLine(mySide) != getEndLine(mySide);
+        boolean isAppendable = getStartLine(mySide) != getEndLine(mySide) &&
+                               (getStartLine(ThreeSide.BASE) != getEndLine(ThreeSide.BASE) || isConflict());
 
         if (myShiftPressed) {
           return createRevertRenderer();
