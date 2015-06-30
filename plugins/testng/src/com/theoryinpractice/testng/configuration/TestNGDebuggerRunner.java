@@ -13,30 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.junit;
+package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.JavaTestFrameworkDebuggerRunner;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.JavaTestFrameworkDebuggerRunner;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author egor
- */
-public class JUnitDebuggerRunner extends JavaTestFrameworkDebuggerRunner {
+
+public class TestNGDebuggerRunner extends JavaTestFrameworkDebuggerRunner {
   @Override
   protected boolean validForProfile(@NotNull RunProfile profile) {
-    return profile instanceof JUnitConfiguration;
+    return profile instanceof TestNGConfiguration;
   }
 
   @NotNull
   @Override
   protected String getThreadName() {
-    return "junit";
+    return "testng";
   }
 
   @NotNull
   @Override
   public String getRunnerId() {
-    return "JUnitDebug";
+    return "TestNGDebug";
   }
 }
