@@ -17,6 +17,8 @@
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -64,6 +66,8 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   private final MessageBus myBus;
 
+  private boolean mySortedState;
+
   public static BookmarkManager getInstance(Project project) {
     return project.getComponent(BookmarkManager.class);
   }
@@ -107,6 +111,21 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
       }
     });
+    mySortedState  = UISettings.getInstance().SORT_BOOKMARKS;
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
+          mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
+          EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged();
+            }
+          });
+        }
+      }
+    }, project);
   }
 
   public void editDescription(@NotNull Bookmark bookmark) {
@@ -184,7 +203,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.isValid()) answer.add(bookmark);
     }
-    Collections.sort(answer);
+    if (UISettings.getInstance().SORT_BOOKMARKS) {
+      Collections.sort(answer);
+    }
     return answer;
   }
 
@@ -318,6 +339,50 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
       element.addContent(bookmarkElement);
     }
+  }
+
+  /**
+   * Try to move bookmark one position up in the list
+   *
+   * @return bookmark list after moving
+   */
+  @NotNull
+  public List<Bookmark> moveBookmarkUp(@NotNull Bookmark bookmark) {
+    final int index = myBookmarks.indexOf(bookmark);
+    if (index > 0) {
+      Collections.swap(myBookmarks, index, index - 1);
+      EventQueue.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index - 1));
+        }
+      });
+    }
+    return myBookmarks;
+  }
+
+
+  /**
+   * Try to move bookmark one position down in the list
+   *
+   * @return bookmark list after moving
+   */
+  @NotNull
+  public List<Bookmark> moveBookmarkDown(@NotNull Bookmark bookmark) {
+    final int index = myBookmarks.indexOf(bookmark);
+    if (index < myBookmarks.size() - 1) {
+      Collections.swap(myBookmarks, index, index + 1);
+      EventQueue.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index + 1));
+        }
+      });
+    }
+
+    return myBookmarks;
   }
 
   @Nullable
