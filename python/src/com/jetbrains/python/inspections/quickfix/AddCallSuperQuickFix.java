@@ -116,12 +116,16 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
     newFunction.append(superCall).append("\n\t");
     boolean first = true;
-    for (PyStatement statement : statementList.getStatements()) {
-      if (first && docstring != null || statement instanceof PyPassStatement) {
-        first = false;
-        continue;
+    for (PsiElement child = statementList.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PyStatement) {
+        if (first && docstring != null || child instanceof PyPassStatement) {
+          first = false;
+          continue;
+        }
       }
-      newFunction.append(statement.getText()).append("\n\t");
+      if (child instanceof PyStatement || child instanceof PsiComment) {
+        newFunction.append(child.getText()).append("\n\t");
+      }
     }
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
