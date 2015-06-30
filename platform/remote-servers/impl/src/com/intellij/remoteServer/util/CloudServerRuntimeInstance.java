@@ -65,8 +65,8 @@ public abstract class CloudServerRuntimeInstance
                                        commonJarClasses,
                                        specificsModuleId,
                                        agentInterface,
-                                       agentClassName,
-                                       getClass());
+                                       agentClassName
+    );
 
     myAgentTaskExecutor = new AgentTaskExecutor();
   }

@@ -25,13 +25,12 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
                                                List<Class<?>> commonJarClasses,
                                                RuntimeModuleId specificsRuntimeModuleId,
                                                Class<T> agentInterface,
-                                               String agentClassName,
-                                               Class<?> pluginClass) throws Exception {
+                                               String agentClassName) throws Exception {
 
     List<Class<?>> allCommonJarClasses = new ArrayList<Class<?>>();
     allCommonJarClasses.addAll(commonJarClasses);
-    allCommonJarClasses.add(RemoteAgent.class);
-    allCommonJarClasses.add(Base64.class);
+    allCommonJarClasses.add(RemoteAgent.class);//remote-servers-agent-rt
+    allCommonJarClasses.add(Base64.class);//util-rt
     allCommonJarClasses.add(agentInterface);
 
     List<File> libraries = new ArrayList<File>();

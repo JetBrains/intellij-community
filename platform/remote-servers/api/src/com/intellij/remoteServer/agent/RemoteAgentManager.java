@@ -20,8 +20,7 @@ public abstract class RemoteAgentManager {
                                                         List<Class<?>> commonJarClasses,
                                                         RuntimeModuleId specificsRuntimeModuleId,
                                                         Class<T> agentInterface,
-                                                        String agentClassName,
-                                                        Class<?> pluginClass) throws Exception;
+                                                        String agentClassName) throws Exception;
 
   public abstract RemoteAgentProxyFactory createReflectiveThreadProxyFactory(ClassLoader callerClassLoader);
 }
