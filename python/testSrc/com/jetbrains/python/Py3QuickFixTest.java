@@ -115,6 +115,27 @@ public class Py3QuickFixTest extends PyTestCase {
     doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
   }
 
+  // PY-15867
+  public void testAddCallSuperNoRequiredKeywordOnlyParamAfterSingleStarInSuperInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+  }
+
+    // PY-15867
+  public void testAddCallSuperRequiredKeywordOnlyParamAfterSingleStarInSuperInitIsMerged() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+  }
+
+
   // PY-8991
   public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
     runWithLanguageLevel(LanguageLevel.PYTHON32, new Runnable() {
