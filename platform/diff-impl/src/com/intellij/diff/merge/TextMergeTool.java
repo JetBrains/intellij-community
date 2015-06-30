@@ -209,6 +209,12 @@ public class TextMergeTool implements MergeTool {
         super(context, request);
 
         myModifierProvider = new ModifierProvider();
+
+        DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
+        DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT, true), myPanel);
+        DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
+        DiffUtil.registerAction(new AppendSelectedChangesAction(Side.RIGHT, true), myPanel);
+        DiffUtil.registerAction(new RevertSelectedChangesAction(true), myPanel);
       }
 
       @Override
@@ -243,11 +249,11 @@ public class TextMergeTool implements MergeTool {
       protected List<AnAction> createEditorPopupActions() {
         List<AnAction> group = new ArrayList<AnAction>();
 
-        group.add(new ApplySelectedChangesAction(Side.LEFT));
-        group.add(new AppendSelectedChangesAction(Side.LEFT));
-        group.add(new ApplySelectedChangesAction(Side.RIGHT));
-        group.add(new AppendSelectedChangesAction(Side.RIGHT));
-        group.add(new RevertSelectedChangesAction());
+        group.add(new ApplySelectedChangesAction(Side.LEFT, false));
+        group.add(new AppendSelectedChangesAction(Side.LEFT, false));
+        group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
+        group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
+        group.add(new RevertSelectedChangesAction(false));
         group.add(Separator.getInstance());
 
         group.addAll(super.createEditorPopupActions());
@@ -687,8 +693,20 @@ public class TextMergeTool implements MergeTool {
       //
 
       private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
+        private final boolean myShortcut;
+
+        public ApplySelectedChangesActionBase(boolean shortcut) {
+          myShortcut = shortcut;
+        }
+
         @Override
         public void update(@NotNull AnActionEvent e) {
+          if (myShortcut) {
+            // consume shortcut even if there are nothing to do - avoid calling some other action
+            e.getPresentation().setEnabledAndVisible(true);
+            return;
+          }
+
           Presentation presentation = e.getPresentation();
           Editor editor = e.getData(CommonDataKeys.EDITOR);
 
@@ -709,11 +727,12 @@ public class TextMergeTool implements MergeTool {
 
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
-          Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+          Editor editor = e.getData(CommonDataKeys.EDITOR);
           final ThreeSide side = getEditorSide(editor);
-          assert side != null;
+          if (editor == null || side == null) return;
 
           final List<TextMergeChange> selectedChanges = getSelectedChanges(side);
+          if (selectedChanges.isEmpty()) return;
 
           DocumentEx document = getEditor(ThreeSide.BASE).getDocument();
           String title = e.getPresentation().getText() + " in merge";
@@ -783,7 +802,8 @@ public class TextMergeTool implements MergeTool {
       }
 
       private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
-        public RevertSelectedChangesAction() {
+        public RevertSelectedChangesAction(boolean shortcut) {
+          super(shortcut);
           EmptyAction.setupAction(this, "Diff.IgnoreChange", null);
         }
 
@@ -808,7 +828,8 @@ public class TextMergeTool implements MergeTool {
       private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
         @NotNull private final Side mySide;
 
-        public ApplySelectedChangesAction(@NotNull Side side) {
+        public ApplySelectedChangesAction(@NotNull Side side, boolean shortcut) {
+          super(shortcut);
           mySide = side;
           EmptyAction.setupAction(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"), null);
         }
@@ -835,7 +856,8 @@ public class TextMergeTool implements MergeTool {
       private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
         @NotNull private final Side mySide;
 
-        public AppendSelectedChangesAction(@NotNull Side side) {
+        public AppendSelectedChangesAction(@NotNull Side side, boolean shortcut) {
+          super(shortcut);
           mySide = side;
           EmptyAction.setupAction(this, mySide.select("Diff.AppendLeftSide", "Diff.AppendRightSide"), null);
         }
