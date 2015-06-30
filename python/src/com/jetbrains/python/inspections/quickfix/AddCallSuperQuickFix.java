@@ -66,7 +66,8 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, true);
     if (superInit == null) return;
 
-    final ParametersInfo origInfo = new ParametersInfo(problemFunction.getParameterList());
+    final PyParameterList origParams = problemFunction.getParameterList();
+    final ParametersInfo origInfo = new ParametersInfo(origParams);
     final ParametersInfo superInfo = new ParametersInfo(superInit.getParameterList());
     final boolean addSelfToCall;
 
@@ -98,21 +99,13 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     superCall.append(")");
 
     final PyStatementList statementList = problemFunction.getStatementList();
-    PyExpression docstring = null;
-    final PyStatement[] statements = statementList.getStatements();
-    if (statements.length != 0 && statements[0] instanceof PyExpressionStatement) {
-      final PyExpressionStatement st = (PyExpressionStatement)statements[0];
-      if (st.getExpression() instanceof PyStringLiteralExpression) {
-        docstring = st.getExpression();
-      }
-    }
-
+    final PyExpression docstring = problemFunction.getDocStringExpression();
     if (docstring != null) {
       newFunction.append(docstring.getText()).append("\n\t");
     }
     newFunction.append(superCall).append("\n\t");
     boolean first = true;
-    for (PyStatement statement : statements) {
+    for (PyStatement statement : statementList.getStatements()) {
       if (first && docstring != null || statement instanceof PyPassStatement) {
         first = false;
         continue;
