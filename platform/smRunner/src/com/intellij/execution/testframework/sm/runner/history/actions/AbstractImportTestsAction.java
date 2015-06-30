@@ -77,7 +77,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   }
 
   public static File getTestHistoryRoot(Project project) {
-    return new File(TEST_HISTORY_PATH, FileUtil.sanitizeFileName(project.getName()));
+    return new File(TEST_HISTORY_PATH, project.getLocationHash());
   }
 
   @Override
