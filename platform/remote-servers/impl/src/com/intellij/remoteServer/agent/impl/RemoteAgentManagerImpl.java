@@ -3,8 +3,6 @@ package com.intellij.remoteServer.agent.impl;
 import com.intellij.remoteServer.agent.RemoteAgent;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.RemoteAgentProxyFactory;
-import com.intellij.util.Base64;
-import com.intellij.util.PathUtil;
 import org.jetbrains.platform.loader.PlatformLoader;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
@@ -22,25 +20,13 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
   @Override
   public <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
                                                List<File> instanceLibraries,
-                                               List<Class<?>> commonJarClasses,
                                                RuntimeModuleId specificsRuntimeModuleId,
                                                Class<T> agentInterface,
                                                String agentClassName) throws Exception {
 
-    List<Class<?>> allCommonJarClasses = new ArrayList<Class<?>>();
-    allCommonJarClasses.addAll(commonJarClasses);
-    allCommonJarClasses.add(RemoteAgent.class);//remote-servers-agent-rt
-    allCommonJarClasses.add(Base64.class);//util-rt
-    allCommonJarClasses.add(agentInterface);
-
     List<File> libraries = new ArrayList<File>();
     libraries.addAll(instanceLibraries);
-
-    for (Class<?> clazz : allCommonJarClasses) {
-      libraries.add(new File(PathUtil.getJarPathForClass(clazz)));
-    }
-
-    for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(specificsRuntimeModuleId)) {
+    for (String path : PlatformLoader.getInstance().getRepository().getModuleClasspath(specificsRuntimeModuleId)) {
       libraries.add(new File(path));
     }
 

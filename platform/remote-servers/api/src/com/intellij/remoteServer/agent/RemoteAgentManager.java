@@ -17,7 +17,6 @@ public abstract class RemoteAgentManager {
 
   public abstract <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
                                                         List<File> instanceLibraries,
-                                                        List<Class<?>> commonJarClasses,
                                                         RuntimeModuleId specificsRuntimeModuleId,
                                                         Class<T> agentInterface,
                                                         String agentClassName) throws Exception;

@@ -42,14 +42,12 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
                                                SC configuration,
                                                ServerTaskExecutor tasksExecutor,
                                                List<File> libraries,
-                                               List<Class<?>> commonJarClasses,
                                                RuntimeModuleId specificsModuleId,
                                                Class<A> agentInterface,
                                                String agentClassName) throws Exception {
     super(configuration,
           tasksExecutor,
           libraries,
-          commonJarClasses,
           specificsModuleId,
           agentInterface,
           agentClassName);

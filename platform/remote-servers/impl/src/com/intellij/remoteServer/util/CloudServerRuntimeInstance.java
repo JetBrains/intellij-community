@@ -52,7 +52,6 @@ public abstract class CloudServerRuntimeInstance
   public CloudServerRuntimeInstance(SC configuration,
                                     ServerTaskExecutor tasksExecutor,
                                     List<File> libraries,
-                                    List<Class<?>> commonJarClasses,
                                     RuntimeModuleId specificsModuleId,
                                     Class<A> agentInterface,
                                     String agentClassName) throws Exception {
@@ -62,7 +61,6 @@ public abstract class CloudServerRuntimeInstance
     RemoteAgentManager agentManager = RemoteAgentManager.getInstance();
     myAgent = agentManager.createAgent(agentManager.createReflectiveThreadProxyFactory(getClass().getClassLoader()),
                                        libraries,
-                                       commonJarClasses,
                                        specificsModuleId,
                                        agentInterface,
                                        agentClassName
