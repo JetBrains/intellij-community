@@ -31,7 +31,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.config.ToggleBooleanProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,9 +115,9 @@ public class ImportedTestConsoleProperties extends SMTRunnerConsoleProperties im
   }
 
   @Override
-  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) {
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) {
     if (myProperties != null) {
-      myProperties.appendAdditionalActions(actionGroup, parent);
+      myProperties.appendAdditionalActions(actionGroup, parent, this);
     }
   }
 }

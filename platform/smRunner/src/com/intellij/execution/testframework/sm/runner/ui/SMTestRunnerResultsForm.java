@@ -777,12 +777,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private static class MySaveHistoryTask extends Task.Backgroundable {
 
+    private final TestConsoleProperties myConsoleProperties;
     private SMTestProxy.SMRootTestProxy myRoot;
     private RunConfiguration myConfiguration;
     private String myOutput;
 
     public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
       super(consoleProperties.getProject(), "Save Test Results", true);
+      myConsoleProperties = consoleProperties;
       myRoot = root;
       myConfiguration = configuration;
     }
@@ -800,7 +802,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         final SMTestProxy.SMRootTestProxy root = myRoot;
         final RunConfiguration configuration = myConfiguration;
         if (root != null && configuration != null) {
-          TestResultsXmlFormatter.execute(root, configuration, handler);
+          TestResultsXmlFormatter.execute(root, configuration, myConsoleProperties, handler);
         }
         myOutput = w.toString();
       }

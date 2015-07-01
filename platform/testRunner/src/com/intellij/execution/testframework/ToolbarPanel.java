@@ -23,7 +23,6 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.ShowStatisticsAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
@@ -155,7 +154,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.addSeparator();
     secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                                  null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
-    properties.appendAdditionalActions(secondaryGroup, parent);
+    properties.appendAdditionalActions(secondaryGroup, parent, properties);
     actionGroup.add(secondaryGroup);
 
     add(ActionManager.getInstance().
