@@ -64,8 +64,8 @@ public class DocStringUtil {
   @Nullable
   public static PyStringLiteralExpression findDocStringExpression(@Nullable PyElement parent) {
     if (parent != null) {
-      PsiElement seeker = PyPsiUtils.getFirstNonCommentAfter(parent.getFirstChild());
-      if (seeker instanceof PyExpressionStatement) seeker = PyPsiUtils.getFirstNonCommentAfter(seeker.getFirstChild());
+      PsiElement seeker = PyPsiUtils.getNextNonCommentSibling(parent.getFirstChild(), false);
+      if (seeker instanceof PyExpressionStatement) seeker = PyPsiUtils.getNextNonCommentSibling(seeker.getFirstChild(), false);
       if (seeker instanceof PyStringLiteralExpression) return (PyStringLiteralExpression)seeker;
     }
     return null;

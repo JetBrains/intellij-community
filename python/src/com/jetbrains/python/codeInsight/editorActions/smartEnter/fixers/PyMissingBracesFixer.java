@@ -38,7 +38,7 @@ public class PyMissingBracesFixer extends PyFixer<PyElement> {
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyElement psiElement)
     throws IncorrectOperationException {
     if (psiElement instanceof PySetLiteralExpression || psiElement instanceof PyDictLiteralExpression) {
-      final PsiElement lastChild = PyPsiUtils.getFirstNonCommentBefore(psiElement.getLastChild());
+      final PsiElement lastChild = PyPsiUtils.getPrevNonCommentSibling(psiElement.getLastChild(), false);
       if (lastChild != null && !"}".equals(lastChild.getText())) {
         editor.getDocument().insertString(lastChild.getTextRange().getEndOffset(), "}");
       }
@@ -46,7 +46,7 @@ public class PyMissingBracesFixer extends PyFixer<PyElement> {
     else if (psiElement instanceof PyListLiteralExpression ||
              psiElement instanceof PySliceExpression ||
              psiElement instanceof PySubscriptionExpression) {
-      final PsiElement lastChild = PyPsiUtils.getFirstNonCommentBefore(psiElement.getLastChild());
+      final PsiElement lastChild = PyPsiUtils.getPrevNonCommentSibling(psiElement.getLastChild(), false);
       if (lastChild != null && !"]".equals(lastChild.getText())) {
         editor.getDocument().insertString(lastChild.getTextRange().getEndOffset(), "]");
       }

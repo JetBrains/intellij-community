@@ -48,7 +48,7 @@ public class PyConditionalStatementPartFixer extends PyFixer<PyConditionalStatem
     final PsiElement colon = PyPsiUtils.getFirstChildOfType(statementPart, PyTokenTypes.COLON);
     if (colon == null) {
       if (condition != null) {
-        final PsiElement firstNonComment = PyPsiUtils.getFirstNonCommentAfter(condition.getNextSibling());
+        final PsiElement firstNonComment = PyPsiUtils.getNextNonCommentSibling(condition.getNextSibling(), false);
         if (firstNonComment != null && !":".equals(firstNonComment.getNode().getText())) {
           document.insertString(firstNonComment.getTextRange().getEndOffset(), ":");
         }

@@ -55,11 +55,11 @@ public class PySplitIfIntention extends BaseIntentionAction {
     final IElementType elementType = elementAtOffset.getNode().getElementType();
     if (elementType == PyTokenTypes.COLON) {
       elementAtOffset = elementAtOffset.getPrevSibling();
-      elementAtOffset = PyPsiUtils.getFirstNonCommentBefore(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getPrevNonCommentSibling(elementAtOffset, false);
     }
     else if (elementType == PyTokenTypes.IF_KEYWORD) {
       elementAtOffset = elementAtOffset.getNextSibling();
-      elementAtOffset = PyPsiUtils.getFirstNonCommentAfter(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getNextNonCommentSibling(elementAtOffset, false);
     }
 
     PsiElement element = PsiTreeUtil.getParentOfType(elementAtOffset, PyBinaryExpression.class, false);
@@ -88,11 +88,11 @@ public class PySplitIfIntention extends BaseIntentionAction {
     final IElementType elementType = elementAtOffset.getNode().getElementType();
     if (elementType == PyTokenTypes.COLON) {
       elementAtOffset = elementAtOffset.getPrevSibling();
-      elementAtOffset = PyPsiUtils.getFirstNonCommentBefore(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getPrevNonCommentSibling(elementAtOffset, false);
     }
     else if (elementType == PyTokenTypes.IF_KEYWORD) {
       elementAtOffset = elementAtOffset.getNextSibling();
-      elementAtOffset = PyPsiUtils.getFirstNonCommentAfter(elementAtOffset);
+      elementAtOffset = PyPsiUtils.getNextNonCommentSibling(elementAtOffset, false);
     }
 
     PyBinaryExpression element = PsiTreeUtil.getParentOfType(elementAtOffset, PyBinaryExpression.class, false);

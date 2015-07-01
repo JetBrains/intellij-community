@@ -83,15 +83,15 @@ public class PyPsiUtils {
   }
 
   /**
-   * Find first sibling that is neither comment, nor whitespace before given element or this element itself.
+   * Find first sibling that is neither comment, nor whitespace before given element.
+   * @param strict prohibit returning element itself
    */
   @Nullable
-  public static PsiElement getFirstNonCommentBefore(@Nullable PsiElement start) {
-    PsiElement seeker = start;
-    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
-      seeker = seeker.getPrevSibling();
+  public static PsiElement getPrevNonCommentSibling(@Nullable PsiElement start, boolean strict) {
+    if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
+      return start;
     }
-    return seeker;
+    return PsiTreeUtil.skipSiblingsBackward(start, PsiWhiteSpace.class, PsiComment.class);
   }
 
   /**
@@ -120,13 +120,15 @@ public class PyPsiUtils {
   }
 
   /**
-   * Find first sibling that is neither comment, nor whitespace after given element or this element itself.
+   * Find first sibling that is neither comment, nor whitespace after given element.
+   * @param strict prohibit returning element itself
    */
   @Nullable
-  public static PsiElement getFirstNonCommentAfter(@Nullable PsiElement start) {
-    PsiElement seeker = start;
-    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) seeker = seeker.getNextSibling();
-    return seeker;
+  public static PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
+    if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
+      return start;
+    }
+    return PsiTreeUtil.skipSiblingsForward(start, PsiWhiteSpace.class, PsiComment.class);
   }
 
   /**

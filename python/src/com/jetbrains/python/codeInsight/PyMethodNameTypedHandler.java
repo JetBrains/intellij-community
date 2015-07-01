@@ -56,7 +56,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
 
       final ASTNode token_node = token.getNode();
       if (token_node != null && token_node.getElementType() == PyTokenTypes.IDENTIFIER) {
-        PsiElement maybe_def = PyPsiUtils.getFirstNonCommentBefore(token.getPrevSibling());
+        PsiElement maybe_def = PyPsiUtils.getPrevNonCommentSibling(token.getPrevSibling(), false);
         if (maybe_def != null) {
           ASTNode def_node = maybe_def.getNode();
           if (def_node != null && def_node.getElementType() == PyTokenTypes.DEF_KEYWORD) {
