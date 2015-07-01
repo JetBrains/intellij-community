@@ -50,7 +50,7 @@ public class FormatPostfixTemplate extends StringBasedPostfixTemplate {
   }
 
   @Override
-  protected boolean shouldRemoveParent() {
-    return false;
+  protected PsiElement getElementToRemove(PsiElement expr) {
+    return expr;
   }
 }
