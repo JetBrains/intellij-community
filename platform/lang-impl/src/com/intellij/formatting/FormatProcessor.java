@@ -531,14 +531,12 @@ public class FormatProcessor {
     AbstractBlockWrapper block = myCurrentBlock;
     AlignmentImpl alignment = myCurrentBlock.getAlignment();
 
-    while (alignment == null
-           && block != null
-           && block.getStartOffset() == myCurrentBlock.getStartOffset())
-    {
+    while (alignment == null) {
       block = block.getParent();
-      if (block != null) {
-        alignment = block.getAlignment();
+      if (block == null || block.getStartOffset() != myCurrentBlock.getStartOffset()) {
+        return false;
       }
+      alignment = block.getAlignment();
     }
 
     return myAlignmentsInsideRangesToModify.contains(alignment);
