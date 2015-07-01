@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -163,34 +162,24 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(3));
       }
 
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(final DirtBuilder dirt) {
-          for (FilePathUnderVcs root : filesConverted) {
-            dirt.addDirtyFile(root);
+      final Ref<Boolean> hasSomethingDirty = Ref.create(true);
+      boolean done = myLife.doIfAlive(new Runnable() {
+        public void run() {
+          for (final FilePathUnderVcs root : filesConverted) {
+            myDirtBuilder.addDirtyFile(root);
           }
-          for (FilePathUnderVcs root : dirsConverted) {
-            dirt.addDirtyDirRecursively(root);
+          for (final FilePathUnderVcs root : dirsConverted) {
+            myDirtBuilder.addDirtyDirRecursively(root);
           }
+          hasSomethingDirty.set(!myDirtBuilder.isEmpty());
         }
       });
-    } catch (ProcessCanceledException ignore) {
-    }
-  }
 
-  private void takeDirt(final Consumer<DirtBuilder> filler) {
-    final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        filler.consume(myDirtBuilder);
-        wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
+      if (done && hasSomethingDirty.get()) {
+        myChangeListManager.scheduleUpdate();
       }
-    };
-    boolean done = myLife.doIfAlive(runnable);
-
-    if (done && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
-      myChangeListManager.scheduleUpdate();
+    }
+    catch (ProcessCanceledException ignore) {
     }
   }
 
