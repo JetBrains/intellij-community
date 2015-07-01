@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,9 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   private static boolean checkByTypes(IElementType parentType, IElementType nodeType) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(parentType)) {
+      return true;
+    }
+    if (nodeType == JavaElementType.RECEIVER_PARAMETER) {
       return true;
     }
     if (nodeType == JavaElementType.PARAMETER && parentType != JavaElementType.PARAMETER_LIST) {
