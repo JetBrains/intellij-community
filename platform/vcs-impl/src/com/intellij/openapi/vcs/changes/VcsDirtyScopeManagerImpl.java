@@ -51,16 +51,17 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private final DirtBuilder myDirtBuilder;
   private final VcsGuess myGuess;
-  private final SynchronizedLife myLife;
 
   private final MyProgressHolder myProgressHolder;
+
+  private boolean myDisposed;
+  private final Object LOCK = new Object();
 
   public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
 
-    myLife = new SynchronizedLife();
     myGuess = new VcsGuess(myProject);
     myDirtBuilder = new DirtBuilder(myGuess);
 
@@ -71,7 +72,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @Override
   public void projectOpened() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myLife.born();
       final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
       if (vcss.length > 0) {
         markEverythingDirty();
@@ -81,7 +81,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
         @Override
         public void run() {
-          myLife.born();
           ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
             @Override
             public void run() {
@@ -100,15 +99,13 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       LOG.debug("everything dirty: " + ReflectionUtil.findCallerClass(2));
     }
 
-    boolean done = myLife.doIfAlive(new Runnable() {
-      public void run() {
+    synchronized (LOCK) {
+      if (!myDisposed) {
         myDirtBuilder.everythingDirty();
       }
-    });
-
-    if (done) {
-      myChangeListManager.scheduleUpdate();
     }
+
+    myChangeListManager.scheduleUpdate();
   }
 
   @Override
@@ -125,12 +122,10 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public void initComponent() {}
 
   public void disposeComponent() {
-    myLife.kill(new Runnable() {
-      @Override
-      public void run() {
-        myDirtBuilder.reset();
-      }
-    });
+    synchronized (LOCK) {
+      myDisposed = true;
+      myDirtBuilder.reset();
+    }
   }
 
   @NotNull
@@ -156,20 +151,19 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(3));
       }
 
-      final Ref<Boolean> hasSomethingDirty = Ref.create(true);
-      boolean done = myLife.doIfAlive(new Runnable() {
-        public void run() {
-          for (final FilePathUnderVcs root : filesConverted) {
-            myDirtBuilder.addDirtyFile(root);
-          }
-          for (final FilePathUnderVcs root : dirsConverted) {
-            myDirtBuilder.addDirtyDirRecursively(root);
-          }
-          hasSomethingDirty.set(!myDirtBuilder.isEmpty());
+      boolean hasSomethingDirty;
+      synchronized (LOCK) {
+        if (myDisposed) return;
+        for (final FilePathUnderVcs root : filesConverted) {
+          myDirtBuilder.addDirtyFile(root);
         }
-      });
+        for (final FilePathUnderVcs root : dirsConverted) {
+          myDirtBuilder.addDirtyDirRecursively(root);
+        }
+        hasSomethingDirty = !myDirtBuilder.isEmpty();
+      }
 
-      if (done && hasSomethingDirty.get()) {
+      if (hasSomethingDirty) {
         myChangeListManager.scheduleUpdate();
       }
     }
@@ -263,35 +257,28 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @Override
   @Nullable
   public VcsInvalidated retrieveScopes() {
-    boolean done = myLife.doIfAlive(new Runnable() {
-      public void run() {
-        myProgressHolder.takeNext(new DirtBuilder(myDirtBuilder));
-        myDirtBuilder.reset();
-      }
-    });
-
-    if (done) {
-      final VcsInvalidated invalidated = myProgressHolder.calculateInvalidated();
-
-      myLife.doIfAlive(new Runnable() {
-        @Override
-        public void run() {
-          myProgressHolder.takeInvalidated(invalidated);
-        }
-      });
-      return invalidated;
+    synchronized (LOCK) {
+      if (myDisposed) return null;
+      myProgressHolder.takeNext(new DirtBuilder(myDirtBuilder));
+      myDirtBuilder.reset();
     }
-    return null;
+
+    VcsInvalidated invalidated = myProgressHolder.calculateInvalidated();
+    synchronized (LOCK) {
+      if (!myDisposed) {
+        myProgressHolder.takeInvalidated(invalidated);
+      }
+    }
+    return invalidated;
   }
 
   @Override
   public void changesProcessed() {
-    myLife.doIfAlive(new Runnable() {
-      @Override
-      public void run() {
+    synchronized (LOCK) {
+      if (!myDisposed) {
         myProgressHolder.processed();
       }
-    });
+    }
   }
 
   @NotNull
@@ -301,13 +288,13 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     final Ref<MyProgressHolder> inProgressHolderRef = new Ref<MyProgressHolder>();
     final Ref<MyProgressHolder> currentHolderRef = new Ref<MyProgressHolder>();
 
-    myLife.doIfAlive(new Runnable() {
-      @Override
-      public void run() {
+    synchronized (LOCK) {
+      if (!myDisposed) {
         inProgressHolderRef.set(myProgressHolder.copy());
         currentHolderRef.set(new MyProgressHolder(new DirtBuilder(myDirtBuilder), null));
       }
-    });
+    }
+
     final VcsInvalidated inProgressInvalidated = inProgressHolderRef.get() == null ? null : inProgressHolderRef.get().calculateInvalidated();
     final VcsInvalidated currentInvalidated = currentHolderRef.get() == null ? null : currentHolderRef.get().calculateInvalidated();
     for (FilePath fp : files) {
@@ -317,34 +304,5 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
     return result;
-  }
-
-  private static class SynchronizedLife {
-    private boolean myAlive;
-    private final Object myLock = new Object();
-
-    public void born() {
-      synchronized (myLock) {
-        myAlive = true;
-      }
-    }
-
-    public void kill(Runnable runnable) {
-      synchronized (myLock) {
-        myAlive = false;
-        runnable.run();
-      }
-    }
-
-    // allow work under inner lock: inner class, not wide scope
-    public boolean doIfAlive(final Runnable runnable) {
-      synchronized (myLock) {
-        if (myAlive) {
-          runnable.run();
-          return true;
-        }
-        return false;
-      }
-    }
   }
 }
