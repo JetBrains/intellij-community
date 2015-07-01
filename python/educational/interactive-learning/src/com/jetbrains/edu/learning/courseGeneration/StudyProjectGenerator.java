@@ -1,7 +1,7 @@
 package com.jetbrains.edu.learning.courseGeneration;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
+import com.google.gson.stream.JsonReader;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +31,7 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.stepic.CourseInfo;
 import com.jetbrains.edu.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -45,7 +47,11 @@ public class StudyProjectGenerator {
   private static final String CACHE_NAME = "courseNames.txt";
   private List<CourseInfo> myCourses = new ArrayList<CourseInfo>();
   private CourseInfo mySelectedCourseInfo;
-  private static final Pattern CACHE_PATTERN = Pattern.compile("name=(.*) description=(.*) (instructor=(.*))+");
+  private static final Pattern CACHE_PATTERN = Pattern.compile("name=(.*) description=(.*) folder=(.*) (instructor=(.*))+");
+  private static final String COURSE_META_FILE = "course.json";
+  private static final String COURSE_NAME_ATTRIBUTE = "name";
+  private static final String COURSE_DESCRIPTION = "description";
+  public static final String AUTHOR_ATTRIBUTE = "authors";
 
   public void setCourses(List<CourseInfo> courses) {
     myCourses = courses;
@@ -56,10 +62,9 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    final Course course = EduStepicConnector.getCourse(mySelectedCourseInfo);
+    final Course course = getCourse();
     if (course == null) return;
     StudyTaskManager.getInstance(project).setCourse(course);
-    flushCourse(course);
     ApplicationManager.getApplication().invokeLater(
       new Runnable() {
         @Override
@@ -79,6 +84,34 @@ public class StudyProjectGenerator {
           });
         }
       });
+  }
+
+  private Course getCourse() {
+    Reader reader = null;
+    try {
+      final File courseFile = new File(new File(myCoursesDir, mySelectedCourseInfo.getName()), COURSE_META_FILE);
+      if (courseFile.exists()) {
+        reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
+        Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+        final Course course = gson.fromJson(reader, Course.class);
+        course.initCourse(false);
+        return course;
+      }
+    }
+    catch (FileNotFoundException e) {
+      LOG.error(e);
+    }
+    catch (UnsupportedEncodingException e) {
+      LOG.error(e);
+    }
+    finally {
+      StudyUtils.closeSilently(reader);
+    }
+    final Course course = EduStepicConnector.getCourse(mySelectedCourseInfo);
+    if (course != null) {
+      flushCourse(course);
+    }
+    return course;
   }
 
   public static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
@@ -215,8 +248,8 @@ public class StudyProjectGenerator {
       writer = new PrintWriter(cacheFile);
       for (CourseInfo courseInfo : myCourses) {
         final List<CourseInfo.Instructor> instructors = courseInfo.getInstructors();
-        StringBuilder builder = new StringBuilder("name=").append(courseInfo.getName()).append(" ").
-          append("description=").append(courseInfo.getDescription()).append(" ");
+        StringBuilder builder = new StringBuilder("name=").append(courseInfo.getName()).append(" ").append("description=").
+          append(courseInfo.getDescription()).append(" ").append("folder=").append(courseInfo.getName()).append(" ");
         for (CourseInfo.Instructor instructor : instructors) {
           builder.append("instructor=").append(instructor.getName()).append(" ");
         }
@@ -282,7 +315,7 @@ public class StudyProjectGenerator {
 
               final int groupCount = matcher.groupCount();
               final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
-              for (int i = 4; i <= groupCount; i++) {
+              for (int i = 5; i <= groupCount; i++) {
                 instructors.add(new CourseInfo.Instructor(matcher.group(i)));
               }
               courseInfo.setInstructors(instructors);
@@ -303,5 +336,97 @@ public class StudyProjectGenerator {
       LOG.error(e.getMessage());
     }
     return courses;
+  }
+  /**
+   * Adds course from zip archive to courses
+   *
+   * @return added course name or null if course is invalid
+   */
+  @Nullable
+  public CourseInfo addLocalCourse(String zipFilePath) {
+    File file = new File(zipFilePath);
+    try {
+      String fileName = file.getName();
+      String unzippedName = fileName.substring(0, fileName.indexOf("."));
+      File courseDir = new File(myCoursesDir, unzippedName);
+      ZipUtil.unzip(null, courseDir, file, null, null, true);
+      CourseInfo courseName = addCourse(myCourses, courseDir);
+      flushCache();
+      return courseName;
+    }
+    catch (IOException e) {
+      LOG.error("Failed to unzip course archive");
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  /**
+   * Adds course to courses specified in params
+   *
+   *
+   * @param courses
+   * @param courseDir must be directory containing course file
+   * @return added course name or null if course is invalid
+   */
+  @Nullable
+  private static CourseInfo addCourse(List<CourseInfo> courses, File courseDir) {
+    if (courseDir.isDirectory()) {
+      File[] courseFiles = courseDir.listFiles(new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String name) {
+          return name.equals(COURSE_META_FILE);
+        }
+      });
+      if (courseFiles.length != 1) {
+        LOG.info("User tried to add course with more than one or without course files");
+        return null;
+      }
+      File courseFile = courseFiles[0];
+      CourseInfo courseInfo = getCourseInfo(courseFile);
+      if (courseInfo != null) {
+        courses.add(courseInfo);
+      }
+      return courseInfo;
+    }
+    return null;
+  }
+  /**
+   * Parses course json meta file and finds course name
+   *
+   * @return information about course or null if course file is invalid
+   */
+  @Nullable
+  private static CourseInfo getCourseInfo(File courseFile) {
+    CourseInfo courseInfo = null;
+    BufferedReader reader = null;
+    try {
+      if (courseFile.getName().equals(COURSE_META_FILE)) {
+        reader = new BufferedReader(new InputStreamReader(new FileInputStream(courseFile), "UTF-8"));
+        JsonReader r = new JsonReader(reader);
+        JsonParser parser = new JsonParser();
+        JsonElement el = parser.parse(r);
+        String courseName = el.getAsJsonObject().get(COURSE_NAME_ATTRIBUTE).getAsString();
+        String courseDescription = el.getAsJsonObject().get(COURSE_DESCRIPTION).getAsString();
+        JsonArray courseAuthors = el.getAsJsonObject().get(AUTHOR_ATTRIBUTE).getAsJsonArray();
+        courseInfo = new CourseInfo();
+        courseInfo.setName(courseName);
+        courseInfo.setDescription(courseDescription);
+        courseInfo.setName(courseFile.getParent());
+        final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
+        for (JsonElement author : courseAuthors) {
+          final String authorAsString = author.getAsString();
+          instructors.add(new CourseInfo.Instructor(authorAsString));
+        }
+        courseInfo.setInstructors(instructors);
+      }
+    }
+    catch (Exception e) {
+      //error will be shown in UI
+    }
+    finally {
+      StudyUtils.closeSilently(reader);
+    }
+    return courseInfo;
   }
 }
