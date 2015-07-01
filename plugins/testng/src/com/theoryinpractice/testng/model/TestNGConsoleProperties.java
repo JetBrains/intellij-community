@@ -55,7 +55,7 @@ public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<Test
   }
 
   @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) {
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) {
     super.appendAdditionalActions(actionGroup, parent);
     actionGroup.add(createIncludeNonStartedInRerun());
     actionGroup.add(Separator.getInstance());

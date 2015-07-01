@@ -58,8 +58,8 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
   }
 
   @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                         JComponent parent) {
+  public void appendAdditionalActions(DefaultActionGroup actionGroup,
+                                      JComponent parent) {
     super.appendAdditionalActions(actionGroup, parent);
     actionGroup.add(createIncludeNonStartedInRerun());
   }
