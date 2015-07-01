@@ -106,7 +106,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         final boolean insideBalloon = isInsideBalloon(me);
 
         if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
-          if (!insideBalloon && !hasModalDialog(me)) {
+          if (!insideBalloon && !hasModalDialog(me) && !isWithinChildWindow(me)) {
             hide();
           }
           return;
@@ -158,6 +158,21 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       }
     }
   };
+
+  private boolean isWithinChildWindow(MouseEvent event) {
+    Component owner = UIUtil.getWindow(myContent);
+    if (owner != null) {
+      Component child = UIUtil.getWindow(event.getComponent());
+      if (child != owner) {
+        for (; child != null; child = child.getParent()) {
+          if (child == owner) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
 
   private static boolean hasModalDialog(MouseEvent e) {
     final Component c = e.getComponent();

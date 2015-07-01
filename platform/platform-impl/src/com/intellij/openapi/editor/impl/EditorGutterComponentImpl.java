@@ -45,7 +45,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -1379,31 +1379,32 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     GutterIconRenderer renderer = getGutterRenderer(e);
+    final Project project = myEditor.getProject();
+    if (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(renderer)) {
+      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available during indexing");
+      return;
+    }
+    
     AnAction clickAction = null;
     if (renderer != null && e.getButton() < 4) {
       clickAction = (InputEvent.BUTTON2_MASK & e.getModifiers()) > 0
                     ? renderer.getMiddleButtonClickAction()
                     : renderer.getClickAction();
     }
-    try {
-      if (clickAction != null) {
-        clickAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION", clickAction.getTemplatePresentation(),
-                                                      ActionManager.getInstance(),
-                                                      e.getModifiers()));
-        e.consume();
-        repaint();
-      }
-      else {
-        ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
-        if (lineRenderer != null) {
-          lineRenderer.doAction(myEditor, e);
-        } else {
-          fireEventToTextAnnotationListeners(e);
-        }
-      }
+    if (clickAction != null) {
+      clickAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION", clickAction.getTemplatePresentation(),
+                                                    ActionManager.getInstance(),
+                                                    e.getModifiers()));
+      e.consume();
+      repaint();
     }
-    catch (IndexNotReadyException e1) {
-      DumbService.getInstance(myEditor.getProject()).showDumbModeNotification("Navigation is not available during indexing");
+    else {
+      ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
+      if (lineRenderer != null) {
+        lineRenderer.doAction(myEditor, e);
+      } else {
+        fireEventToTextAnnotationListeners(e);
+      }
     }
   }
 

@@ -492,4 +492,8 @@ public class SheetController {
   public String getResult() {
     return myResult;
   }
+
+  public void dispose() {
+    mySheetPanel.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+  }
 }

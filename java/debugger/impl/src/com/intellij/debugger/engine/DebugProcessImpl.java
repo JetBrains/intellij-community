@@ -1694,6 +1694,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
       for (SuspendContextImpl suspendContext : suspendingContexts) {
         if (suspendContext.getThread() == myThread) {
+          getSession().getXDebugSession().sessionResumed();
           getManagerThread().invoke(createResumeCommand(suspendContext));
         }
         else {

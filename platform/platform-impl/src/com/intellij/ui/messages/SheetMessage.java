@@ -228,6 +228,7 @@ public class SheetMessage {
           if (restoreFullScreenButton) {
             FullScreenUtilities.setWindowCanFullScreen(myParent, true);
           }
+          myController.dispose();
           myWindow.dispose();
         }
       }
