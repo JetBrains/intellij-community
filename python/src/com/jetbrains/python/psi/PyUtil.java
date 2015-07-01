@@ -51,7 +51,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
@@ -98,44 +97,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 public class PyUtil {
 
   private PyUtil() {
-  }
-
-  public static ASTNode getNextNonWhitespace(ASTNode after) {
-    ASTNode node = after;
-    do {
-      node = node.getTreeNext();
-    }
-    while (isWhitespace(node));
-    return node;
-  }
-
-  public static ASTNode getPreviousNonWhitespace(ASTNode after) {
-    ASTNode node = after;
-    do {
-      node = node.getTreePrev();
-    }
-    while (isWhitespace(node));
-    return node;
-  }
-
-  private static boolean isWhitespace(ASTNode node) {
-    return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
-  }
-
-  @Nullable
-  public static PsiElement getFirstNonCommentAfter(PsiElement start) {
-    PsiElement seeker = start;
-    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) seeker = seeker.getNextSibling();
-    return seeker;
-  }
-
-  @Nullable
-  public static PsiElement getFirstNonCommentBefore(PsiElement start) {
-    PsiElement seeker = start;
-    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
-      seeker = seeker.getPrevSibling();
-    }
-    return seeker;
   }
 
   @NotNull
@@ -915,38 +876,6 @@ public class PyUtil {
 
     private KnownDecoratorProviderHolder() {
     }
-  }
-
-  /**
-   * Returns child element in the psi tree
-   *
-   * @param filter  Types of expected child
-   * @param number  number
-   * @param element tree parent node
-   * @return PsiElement - child psiElement
-   */
-  @Nullable
-  public static PsiElement getChildByFilter(@NotNull final PsiElement element, final @NotNull TokenSet filter, final int number) {
-    final ASTNode node = element.getNode();
-    if (node != null) {
-      final ASTNode[] children = node.getChildren(filter);
-      return (0 <= number && number < children.length) ? children[number].getPsi() : null;
-    }
-    return null;
-  }
-
-  /**
-   * Returns first child psi element with specified element type or {@code null} if no such element exists.
-   * Semantically it's the same as {@code getChildByFilter(element, TokenSet.create(type), 0)}.
-   *
-   * @param element tree parent node
-   * @param type    element type expected
-   * @return child element described
-   */
-  @Nullable
-  public static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
-    final ASTNode child = element.getNode().findChildByType(type);
-    return child != null ? child.getPsi() : null;
   }
 
   /**

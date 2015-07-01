@@ -31,6 +31,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 
 /**
  * Adds appropriate first parameter to a freshly-typed method declaration.
@@ -55,7 +56,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
 
       final ASTNode token_node = token.getNode();
       if (token_node != null && token_node.getElementType() == PyTokenTypes.IDENTIFIER) {
-        PsiElement maybe_def = PyUtil.getFirstNonCommentBefore(token.getPrevSibling());
+        PsiElement maybe_def = PyPsiUtils.getFirstNonCommentBefore(token.getPrevSibling());
         if (maybe_def != null) {
           ASTNode def_node = maybe_def.getNode();
           if (def_node != null && def_node.getElementType() == PyTokenTypes.DEF_KEYWORD) {
