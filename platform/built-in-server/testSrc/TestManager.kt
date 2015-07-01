@@ -1,5 +1,6 @@
 package org.jetbrains.ide
 
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -7,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import org.jetbrains.testFramework.invokeAndWaitIfNeed
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.File

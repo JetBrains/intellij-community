@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application
 
+import javax.swing.SwingUtilities
+
 public inline fun writeAction(runnable: () -> Unit) {
   val token = WriteAction.start()
   try {
@@ -22,5 +24,15 @@ public inline fun writeAction(runnable: () -> Unit) {
   }
   finally {
     token.finish()
+  }
+}
+
+public fun invokeAndWaitIfNeed(runnable: () -> Unit) {
+  val app = ApplicationManager.getApplication()
+  if (app == null) {
+    if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
+  }
+  else {
+    if (app.isDispatchThread()) runnable() else app.invokeAndWait(runnable, ModalityState.any())
   }
 }

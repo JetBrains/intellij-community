@@ -43,7 +43,7 @@ public interface StreamProvider {
   /**
    * You must close passed input stream.
    */
-  public open fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream) -> Boolean) {
+  public open fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
     for (name in listSubFiles(path, roamingType)) {
       if (!filter(name)) {
         continue
@@ -59,7 +59,7 @@ public interface StreamProvider {
       }
 
 
-      if (input != null && !processor(name, input)) {
+      if (input != null && !processor(name, input, false)) {
         break
       }
     }

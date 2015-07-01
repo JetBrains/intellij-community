@@ -61,7 +61,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
                                                                       private val provider: StreamProvider?,
                                                                       private val ioDirectory: File) : SchemesManager<T, E>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
-  private val bundledExternalizableSchemes = THashMap<String, E>()
+  private val readOnlyExternalizableSchemes = THashMap<String, E>()
 
   private var currentScheme: T? = null
   private var currentSchemeName: String? = null
@@ -215,7 +215,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         @suppress("UNCHECKED_CAST")
         val oldInfo = schemeToInfo.put(scheme as E, info)
         LOG.assertTrue(oldInfo == null)
-        val oldScheme = bundledExternalizableSchemes.put(scheme.getName(), scheme)
+        val oldScheme = readOnlyExternalizableSchemes.put(scheme.getName(), scheme)
         if (oldScheme != null) {
           LOG.warn("Duplicated scheme ${scheme.getName()} - old: $oldScheme, new $scheme")
         }
@@ -250,8 +250,11 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   override fun loadSchemes(): Collection<E> {
     val newSchemesOffset = schemes.size()
     if (provider != null && provider.isEnabled()) {
-      provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input ->
-        loadScheme(name, input, true)
+      provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
+        val scheme = loadScheme(name, input, true)
+        if (readOnly && scheme != null) {
+          readOnlyExternalizableSchemes.put(scheme.name, scheme)
+        }
         true
       }
     }
@@ -304,7 +307,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private fun isOverwriteOnLoad(existingScheme: E): Boolean {
-    if (bundledExternalizableSchemes.get(existingScheme.getName()) === existingScheme) {
+    if (readOnlyExternalizableSchemes.get(existingScheme.getName()) === existingScheme) {
       // so, bundled scheme is shadowed
       return true
     }
@@ -488,7 +491,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     // save only if scheme differs from bundled
-    val bundledScheme = bundledExternalizableSchemes.get(scheme.getName())
+    val bundledScheme = readOnlyExternalizableSchemes.get(scheme.getName())
     if (bundledScheme != null && schemeToInfo.get(bundledScheme)!!.hash == newHash) {
       externalInfo?.scheduleDelete()
       return
@@ -651,7 +654,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     schemeToInfo.retainEntries(object : TObjectObjectProcedure<E, ExternalInfo> {
       override fun execute(scheme: E, info: ExternalInfo): Boolean {
-        if (bundledExternalizableSchemes.get(scheme.getName()) == scheme) {
+        if (readOnlyExternalizableSchemes.get(scheme.getName()) == scheme) {
           return true
         }
 
@@ -731,9 +734,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     schemeToInfo.clear()
   }
 
-  override fun getAllSchemes(): List<T> {
-    return Collections.unmodifiableList(schemes)
-  }
+  override fun getAllSchemes() = Collections.unmodifiableList(schemes)
 
   override fun findSchemeByName(schemeName: String): T? {
     for (scheme in schemes) {
@@ -789,7 +790,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     return names
   }
 
-  override fun isMetadataEditable(scheme: E) = !bundledExternalizableSchemes.containsKey(scheme.name)
+  override fun isMetadataEditable(scheme: E) = !readOnlyExternalizableSchemes.containsKey(scheme.name)
 
   private class ExternalInfo(var fileNameWithoutExtension: String, var fileExtension: String?) {
     // we keep it to detect rename
