@@ -203,6 +203,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
 
+      fileset(dir: "$home/build/kotlinc/lib") {
+        include(name: "kotlin-runtime.jar")
+        include(name: "kotlin-reflect.jar")
+      }
+
       dir("src") {
         fileset(dir: "$home/lib/src") {
           include(name: "trove4j_src.jar")
