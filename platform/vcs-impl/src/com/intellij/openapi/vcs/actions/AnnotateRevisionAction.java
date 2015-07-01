@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -34,6 +35,11 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     if (getRevisions() == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
