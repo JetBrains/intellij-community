@@ -127,10 +127,18 @@ public abstract class Filter<T extends AbstractTestProxy> {
     }
   });
 
-  public static final Filter SUCCESSFUL_CONFIGS = new Filter() {
+  public static final Filter HIDE_SUCCESSFUL_CONFIGS = new Filter() {
     @Override
     public boolean shouldAccept(AbstractTestProxy test) {
-      return !test.isConfig() || !test.isPassed();
+      final List<? extends AbstractTestProxy> children = test.getChildren();
+      if (!children.isEmpty()) {
+        for (AbstractTestProxy proxy : children) {
+          if (!proxy.isConfig() || !proxy.isPassed()) return true;
+        }
+        return false;
+      }
+
+      return !(test.isConfig() && test.isPassed());
     }
   };
 
