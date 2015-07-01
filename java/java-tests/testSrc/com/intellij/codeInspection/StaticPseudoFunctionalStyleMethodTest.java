@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 
 import java.io.File;
@@ -91,6 +92,22 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
     doTest();
   }
 
+  public void testDiamondResolve() {
+    doTest();
+  }
+
+  public void _testTransformLambda() {
+    doTest();
+  }
+
+  public void _testTransformMethodCalling() {
+    doTest();
+  }
+
+  public void testTransformMethodRef() {
+    doTest();
+  }
+
   public void _testReplaceWithMethodReference() {
     doTest();
   }
@@ -109,7 +126,7 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
         }
       }
     }
-    assertTrue(isQuickFixFound);
+    assertTrue("Quick fix isn't found", isQuickFixFound);
     myFixture.checkResultByFile(getTestName(true) + "/test_after.java");
   }
 }
