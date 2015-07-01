@@ -655,7 +655,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @NotNull
   private AnAction showSettings() {
     final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
-    String description = configurableUsageTarget == null ? "Show find usages settings dialog" : "Show settings for "+configurableUsageTarget.getLongDescriptiveName();
+    String description = null;
+    try {
+      description = configurableUsageTarget == null ? null : "Show settings for "+configurableUsageTarget.getLongDescriptiveName();
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+    if (description == null) {
+      description = "Show find usages settings dialog";
+    }
     return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
       {
         KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
