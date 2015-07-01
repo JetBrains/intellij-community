@@ -36,6 +36,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,11 +152,11 @@ public class AddMethodsDialog extends DialogWrapper {
         final DefaultComboBoxModel comboBoxModel = (DefaultComboBoxModel)myMethodNameCombo.getModel();
         comboBoxModel.removeAllElements();
         if (aClass == null) {
-          myMethodNameCombo.setEnabled(false);
+          enable(false);
         }
         else {
           final List<PseudoLambdaReplaceTemplate> possibleTemplates = PseudoLambdaReplaceTemplate.getAllTemplates();
-          final MultiMap<String, PsiMethod> nameToMethod = new MultiMap<String, PsiMethod>();
+          final LinkedMultiMap<String, PsiMethod> nameToMethod = new LinkedMultiMap<String, PsiMethod>();
           for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), new Condition<PsiMethod>() {
             @Override
             public boolean value(PsiMethod method) {
@@ -181,13 +182,25 @@ public class AddMethodsDialog extends DialogWrapper {
           for (Map.Entry<String, Collection<PsiMethod>> entry : nameToMethod.entrySet()) {
             comboBoxModel.addElement(entry.getValue());
           }
-          myMethodNameCombo.setEnabled(true);
+          final boolean isSuitableMethodsFound = comboBoxModel.getSize() != 0;
+          enable(isSuitableMethodsFound);
         }
       }
     });
 
-    myExamplePanel.setEnabled(false);
+    setOKActionEnabled(false);
     init();
+  }
+
+  private void enable(boolean isEnabled) {
+    myMethodNameCombo.setEnabled(isEnabled);
+    myTemplatesCombo.setEnabled(isEnabled);
+    setOKActionEnabled(isEnabled);
+    myExamplePanel.setEnabled(isEnabled);
+    if (!isEnabled) {
+      myBeforeActionPanel.reset("", StdFileTypes.JAVA);
+      myAfterActionPanel.reset("", StdFileTypes.JAVA);
+    }
   }
 
   private void showTemplateExample(final PseudoLambdaReplaceTemplate template, final PsiMethod method) {
