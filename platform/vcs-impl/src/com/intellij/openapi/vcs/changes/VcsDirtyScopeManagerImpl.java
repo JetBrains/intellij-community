@@ -438,23 +438,18 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   private static class SynchronizedLife {
-    private LifeStages myStage;
-    private final Object myLock;
-
-    private SynchronizedLife() {
-      myStage = LifeStages.NOT_BORN;
-      myLock = new Object();
-    }
+    private boolean myAlive;
+    private final Object myLock = new Object();
 
     public void born() {
       synchronized (myLock) {
-        myStage = LifeStages.ALIVE;
+        myAlive = true;
       }
     }
 
     public void kill(Runnable runnable) {
       synchronized (myLock) {
-        myStage = LifeStages.DEAD;
+        myAlive = false;
         runnable.run();
       }
     }
@@ -462,18 +457,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     // allow work under inner lock: inner class, not wide scope
     public boolean doIfAlive(final Runnable runnable) {
       synchronized (myLock) {
-        if (LifeStages.ALIVE.equals(myStage)) {
+        if (myAlive) {
           runnable.run();
           return true;
         }
         return false;
       }
-    }
-
-    private static enum LifeStages {
-      NOT_BORN,
-      ALIVE,
-      DEAD
     }
   }
 }
