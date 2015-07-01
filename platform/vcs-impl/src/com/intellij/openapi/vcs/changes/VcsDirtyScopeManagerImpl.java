@@ -113,7 +113,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @Override
   public void projectClosed() {
-    killSelf();
   }
 
   @Override
@@ -125,18 +124,13 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @Override
   public void initComponent() {}
 
-  private void killSelf() {
+  public void disposeComponent() {
     myLife.kill(new Runnable() {
       @Override
       public void run() {
         myDirtBuilder.reset();
       }
     });
-  }
-
-  @Override
-  public void disposeComponent() {
-    killSelf();
   }
 
   @NotNull
