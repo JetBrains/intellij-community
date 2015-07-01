@@ -56,6 +56,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,6 +94,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final Wrapper myContentPanel;
   @NotNull private final Wrapper myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
   @NotNull private final Wrapper myToolbarStatusPanel;
+  @NotNull private final MyProgressBar myProgressBar;
 
   @NotNull private DiffRequest myActiveRequest;
 
@@ -119,19 +121,17 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     // UI
 
-    myPanel = new JPanel(new BorderLayout());
     myMainPanel = new MyPanel();
     myContentPanel = new Wrapper();
     myToolbarPanel = new Wrapper();
     myToolbarPanel.setFocusable(true);
     myToolbarStatusPanel = new Wrapper();
+    myProgressBar = new MyProgressBar();
 
-    myPanel.add(myMainPanel, BorderLayout.CENTER);
+    myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
-    JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(myToolbarPanel, BorderLayout.CENTER);
-    topPanel.add(myToolbarStatusPanel, BorderLayout.EAST);
-
+    JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel).addToRight(statusPanel);
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -894,6 +894,26 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
+  private static class MyProgressBar extends JBProgressBar {
+    private int myProgressCount = 0;
+
+    public MyProgressBar() {
+      setIndeterminate(true);
+      setVisible(false);
+    }
+
+    public void startProgress() {
+      myProgressCount++;
+      setVisible(true);
+    }
+
+    public void stopProgress() {
+      myProgressCount--;
+      LOG.assertTrue(myProgressCount >= 0);
+      if (myProgressCount == 0) setVisible(false);
+    }
+  }
+
   private class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     @Override
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
@@ -918,6 +938,16 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Override
     public void reloadDiffRequest() {
       reloadRequest();
+    }
+
+    @Override
+    public void showProgressBar(boolean enabled) {
+      if (enabled) {
+        myProgressBar.startProgress();
+      }
+      else {
+        myProgressBar.stopProgress();
+      }
     }
 
     @Nullable

@@ -31,4 +31,9 @@ public abstract class DiffContextEx extends DiffContext {
    * this can be used, if some change in request or settings was made, and we need to reload DiffRequest to apply them.
    */
   public abstract void reloadDiffRequest();
+
+  /*
+   * Show indeterminate progress near status panel.
+   */
+  public abstract void showProgressBar(boolean enabled);
 }

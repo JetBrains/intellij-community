@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,8 +23,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -161,5 +164,47 @@ public class BackgroundTaskUtil {
     indicator.cancel();
 
     return resultRef.get();
+  }
+
+  @CalledInAwt
+  @NotNull
+  public static ProgressIndicator executeOnPooledThread(@NotNull final Consumer<ProgressIndicator> task, @NotNull Disposable parent) {
+    final ModalityState modalityState = ModalityState.current();
+    final ProgressIndicator indicator = new EmptyProgressIndicator() {
+      @NotNull
+      @Override
+      public ModalityState getModalityState() {
+        return modalityState;
+      }
+    };
+    indicator.start();
+
+    final Disposable disposable = new Disposable() {
+      @Override
+      public void dispose() {
+        if (indicator.isRunning()) indicator.cancel();
+      }
+    };
+    Disposer.register(parent, disposable);
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              task.consume(indicator);
+            }
+            finally {
+              indicator.stop();
+              Disposer.dispose(disposable);
+            }
+          }
+        }, indicator);
+      }
+    });
+
+    return indicator;
   }
 }

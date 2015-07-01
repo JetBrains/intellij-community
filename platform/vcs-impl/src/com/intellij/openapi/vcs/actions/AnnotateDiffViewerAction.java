@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.DiffExtension;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.contents.DiffContent;
@@ -28,19 +29,16 @@ import com.intellij.diff.tools.util.base.DiffViewerBase;
 import com.intellij.diff.tools.util.base.DiffViewerListener;
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
+import com.intellij.diff.util.BackgroundTaskUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -48,7 +46,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
@@ -59,6 +60,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
@@ -145,41 +147,41 @@ public class AnnotateDiffViewerAction extends DumbAwareAction {
     final FileAnnotationLoader loader = createAnnotationsLoader(project, viewer.getRequest(), side);
     assert loader != null;
 
+    final DiffContextEx diffContext = ObjectUtils.tryCast(viewer.getContext(), DiffContextEx.class);
+
     markRunningProgress(viewer, side, true);
+    if (diffContext != null) diffContext.showProgressBar(true);
 
-    // TODO: show progress in diff viewer
-    // TODO: we can abort loading on DiffViewer.dispose(). But vcs can't stop gracefully anyway.
-    Task.Backgroundable task = new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true,
-                                                       BackgroundFromStartOption.getInstance()) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        loader.run();
-      }
-
+    BackgroundTaskUtil.executeOnPooledThread(new Consumer<ProgressIndicator>() {
       @Override
-      public void onCancel() {
-        onSuccess();
-      }
-
-      @Override
-      public void onSuccess() {
-        markRunningProgress(viewer, side, false);
-
-        if (loader.getException() != null) {
-          AbstractVcsHelper.getInstance(myProject).showError(loader.getException(), VcsBundle.message("operation.name.annotate"));
+      public void consume(ProgressIndicator indicator) {
+        try {
+          loader.run();
         }
-        if (loader.getResult() == null) return;
-        if (viewer.isDisposed()) return;
+        finally {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (diffContext != null) diffContext.showProgressBar(false);
+              markRunningProgress(viewer, side, false);
 
-        annotator.showAnnotation(viewer, side, loader.getResult());
+              if (loader.getException() != null) {
+                AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(viewer.getProject());
+                vcsHelper.showError(loader.getException(), VcsBundle.message("operation.name.annotate"));
+              }
+              if (loader.getResult() == null) return;
+              if (viewer.isDisposed()) return;
 
-        if (loader.shouldCache()) {
-          putDataToCache(viewer, side, loader.getResult());
+              annotator.showAnnotation(viewer, side, loader.getResult());
+
+              if (loader.shouldCache()) {
+                putDataToCache(viewer, side, loader.getResult());
+              }
+            }
+          }, indicator.getModalityState());
         }
       }
-    };
-    ProgressIndicator indicator = new BackgroundableProcessIndicator(task);
-    ProgressManagerImpl progressManager = (ProgressManagerImpl)ProgressManager.getInstance();
-    progressManager.runProcessWithProgressAsynchronously(task, indicator, null, ModalityState.current());
+    }, viewer);
   }
 
   @Nullable
