@@ -101,6 +101,7 @@ public class PsiBuilderAdapter implements PsiBuilder {
     return myDelegate.getCurrentOffset();
   }
 
+  @NotNull
   @Override
   public Marker mark() {
     return myDelegate.mark();

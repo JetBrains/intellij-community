@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
@@ -28,10 +29,10 @@ import java.awt.event.MouseEvent;
  * @author Dmitry Avdeev
  */
 public class NavigateAction<T extends PsiElement> extends AnAction {
-  private LineMarkerInfo<T> myInfo;
+  private final LineMarkerInfo<T> myInfo;
 
-  public NavigateAction(String text,
-                        LineMarkerInfo<T> info,
+  public NavigateAction(@NotNull String text,
+                        @NotNull LineMarkerInfo<T> info,
                         @Nullable String originalActionId) {
     super(text);
     myInfo = info;
@@ -41,7 +42,7 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
     }
   }
 
-  public NavigateAction(LineMarkerInfo<T> info) {
+  public NavigateAction(@NotNull LineMarkerInfo<T> info) {
     myInfo = info;
   }
 
@@ -56,7 +57,8 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
     }
   }
 
-  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(LineMarkerInfo<T> info, String text, @Nullable String originalActionId) {
+  @NotNull
+  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull String text, @Nullable String originalActionId) {
     NavigateAction<T> action = new NavigateAction<T>(text, info, originalActionId);
     info.setNavigateAction(action);
     return info;
