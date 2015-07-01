@@ -31,6 +31,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -140,33 +141,24 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     killSelf();
   }
 
-  private void convertPaths(@Nullable final Collection<FilePath> from, final Collection<FilePathUnderVcs> to) {
-    if (from != null) {
-      for (final FilePath fp : from) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final AbstractVcs vcs = myGuess.getVcsForDirty(fp);
-            if (vcs != null) {
-              to.add(new FilePathUnderVcs(fp, vcs));
-            }
-          }
-        });
+  @NotNull
+  private Collection<FilePathUnderVcs> convertPaths(@Nullable final Collection<FilePath> from) {
+    if (from == null) return Collections.emptyList();
+    return ContainerUtil.mapNotNull(from, new Function<FilePath, FilePathUnderVcs>() {
+      @Override
+      public FilePathUnderVcs fun(FilePath path) {
+        AbstractVcs vcs = myGuess.getVcsForDirty(path);
+        return vcs == null ? null : new FilePathUnderVcs(path, vcs);
       }
-    }
+    });
   }
 
   @Override
   public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     try {
-      final ArrayList<FilePathUnderVcs> filesConverted = filesDirty == null ? null : new ArrayList<FilePathUnderVcs>(filesDirty.size());
-      final ArrayList<FilePathUnderVcs> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<FilePathUnderVcs>(dirsRecursivelyDirty.size());
-
-      convertPaths(filesDirty, filesConverted);
-      convertPaths(dirsRecursivelyDirty, dirsConverted);
-      final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty()
-                                || dirsConverted != null && ! dirsConverted.isEmpty();
-      if (! haveStuff) return;
+      final Collection<FilePathUnderVcs> filesConverted = convertPaths(filesDirty);
+      final Collection<FilePathUnderVcs> dirsConverted = convertPaths(dirsRecursivelyDirty);
+      if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(2));
@@ -175,15 +167,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       takeDirt(new Consumer<DirtBuilder>() {
         @Override
         public void consume(final DirtBuilder dirt) {
-          if (filesConverted != null) {
-            for (FilePathUnderVcs root : filesConverted) {
-              dirt.addDirtyFile(root);
-            }
+          for (FilePathUnderVcs root : filesConverted) {
+            dirt.addDirtyFile(root);
           }
-          if (dirsConverted != null) {
-            for (FilePathUnderVcs root : dirsConverted) {
-              dirt.addDirtyDirRecursively(root);
-            }
+          for (FilePathUnderVcs root : dirsConverted) {
+            dirt.addDirtyDirRecursively(root);
           }
         }
       });
