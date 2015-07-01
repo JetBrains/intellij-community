@@ -16,8 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -55,16 +53,6 @@ public class DirtBuilder implements DirtBuilderReader {
 
   public void everythingDirty() {
     myEverythingDirty = true;
-  }
-
-  public void addDirtyFile(final VcsRoot root) {
-    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
-    myFiles.add(new FilePathUnderVcs(VcsUtil.getFilePath(root.getPath()), root.getVcs()));
-  }
-
-  public void addDirtyDirRecursively(final VcsRoot root) {
-    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
-    myDirs.add(new FilePathUnderVcs(VcsUtil.getFilePath(root.getPath()), root.getVcs()));
   }
 
   public void addDirtyFile(final FilePathUnderVcs root) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -55,7 +56,7 @@ public class Scopes {
           final AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
           final VirtualFile file = lfs.findFileByPath(mapping.getDirectory());
           if (file != null) {
-            builder.addDirtyDirRecursively(new VcsRoot(vcs, file));
+            builder.addDirtyDirRecursively(new FilePathUnderVcs(VcsUtil.getFilePath(file), vcs));
           }
         }
       }

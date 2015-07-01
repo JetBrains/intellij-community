@@ -26,16 +26,19 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author max
@@ -204,73 +207,24 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  private void convert(@Nullable final Collection<VirtualFile> from, final Collection<VcsRoot> to) {
-    if (from != null) {
-      for (final VirtualFile vf : from) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final AbstractVcs vcs = myGuess.getVcsForDirty(vf);
-            if (vcs != null) {
-              to.add(new VcsRoot(vcs, vf));
-            }
-          }
-        });
-      }
-    }
+  public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
+    filePathsDirty(toFilePaths(filesDirty), toFilePaths(dirsRecursivelyDirty));
   }
 
-  @Override
-  public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
-    try {
-      final ArrayList<VcsRoot> filesConverted = filesDirty == null ? null : new ArrayList<VcsRoot>(filesDirty.size());
-      final ArrayList<VcsRoot> dirsConverted = dirsRecursivelyDirty == null ? null : new ArrayList<VcsRoot>(dirsRecursivelyDirty.size());
-
-      convert(filesDirty, filesConverted);
-      convert(dirsRecursivelyDirty, dirsConverted);
-      final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty() || dirsConverted != null && ! dirsConverted.isEmpty();
-      if (! haveStuff) return;
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("files dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(2));
+  @NotNull
+  private static Collection<FilePath> toFilePaths(@Nullable Collection<VirtualFile> files) {
+    if (files == null) return Collections.emptyList();
+    return ContainerUtil.map(files, new Function<VirtualFile, FilePath>() {
+      @Override
+      public FilePath fun(VirtualFile virtualFile) {
+        return VcsUtil.getFilePath(virtualFile);
       }
-
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(final DirtBuilder dirt) {
-          if (filesConverted != null) {
-            for (VcsRoot root : filesConverted) {
-              dirt.addDirtyFile(root);
-            }
-          }
-          if (dirsConverted != null) {
-            for (VcsRoot root : dirsConverted) {
-              dirt.addDirtyDirRecursively(root);
-            }
-          }
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    });
   }
 
   @Override
   public void fileDirty(@NotNull final VirtualFile file) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(file);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("file dirty: " + file + "; " + ReflectionUtil.findCallerClass(2));
-      }
-      final VcsRoot root = new VcsRoot(vcs, file);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyFile(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    fileDirty(VcsUtil.getFilePath(file));
   }
 
   @Override
@@ -299,21 +253,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @Override
   public void dirDirtyRecursively(final VirtualFile dir) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(dir);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("dir dirty recursively: " + dir + "; " + ReflectionUtil.findCallerClass(2));
-      }
-      final VcsRoot root = new VcsRoot(vcs, dir);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyDirRecursively(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    dirDirtyRecursively(VcsUtil.getFilePath(dir));
   }
 
   @Override

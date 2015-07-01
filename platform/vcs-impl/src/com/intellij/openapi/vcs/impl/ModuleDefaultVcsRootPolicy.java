@@ -150,7 +150,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
           for(VirtualFile file: files) {
             final AbstractVcs vcs = vcsGuess.getVcsForDirty(file);
             if (vcs != null) {
-              builder.addDirtyDirRecursively(new VcsRoot(vcs, file));
+              builder.addDirtyDirRecursively(new FilePathUnderVcs(VcsUtil.getFilePath(file), vcs));
             }
           }
         }
@@ -161,7 +161,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         if (haveDefaultMapping && (myBaseDir != null)) {
           final AbstractVcs vcs = vcsGuess.getVcsForDirty(myBaseDir);
           if (vcs != null) {
-            builder.addDirtyFile(new VcsRoot(vcs, myBaseDir));
+            builder.addDirtyFile(new FilePathUnderVcs(VcsUtil.getFilePath(myBaseDir), vcs));
           }
         }
       }
