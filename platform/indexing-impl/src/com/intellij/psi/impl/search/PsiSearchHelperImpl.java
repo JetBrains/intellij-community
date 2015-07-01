@@ -312,7 +312,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         // we failed to run read action in job launcher thread
         // run read action in our thread instead to wait for a write action to complete and resume parallel processing
-        ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
+        DumbService.getInstance(myManager.getProject()).runReadActionInSmartMode(EmptyRunnable.getInstance());
         files = failedList;
       }
       return completed;
@@ -347,7 +347,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       ApplicationUtil.tryRunReadAction(new Computable<Void>() {
         @Override
         public Void compute() {
-          if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
+          final Project project = myManager.getProject();
+          if (project.isDisposed()) throw new ProcessCanceledException();
+          if (DumbService.isDumb(project)) throw new ApplicationUtil.CannotRunReadActionException();
+          
           List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
           Set<PsiFile> processed = new THashSet<PsiFile>(psiRoots.size() * 2, (float)0.5);
           for (final PsiFile psiRoot : psiRoots) {
