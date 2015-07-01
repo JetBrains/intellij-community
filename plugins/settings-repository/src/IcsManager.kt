@@ -412,13 +412,15 @@ public class IcsManager : ApplicationLoadListener {
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
     override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
 
-    override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream) -> Boolean) {
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = buildPath(path, roamingType, null)
-      repositoryManager.processChildren(fullPath, filter, processor)
 
+      // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
-        repository.processChildren(fullPath, filter, processor)
+        repository.processChildren(fullPath, filter, { name, input -> processor(name, input, true) })
       }
+
+      repositoryManager.processChildren(fullPath, filter, { name, input -> processor(name, input, false) })
     }
 
     override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {

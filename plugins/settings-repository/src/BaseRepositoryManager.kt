@@ -1,6 +1,7 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer

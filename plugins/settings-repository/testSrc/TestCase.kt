@@ -19,10 +19,12 @@ import org.hamcrest.CoreMatchers
 import org.hamcrest.Matchers
 import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.edit
+import org.jetbrains.settingsRepository.git
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.icsManager
+import org.jetbrains.testFramework.TemporaryDirectory
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -56,6 +58,12 @@ fun addAndCommit(path: String): FileInfo {
   return FileInfo(path, data)
 }
 
+fun Repository.add(data: ByteArray, path: String): Repository {
+  FileUtil.writeToFile(File(getWorkTree(), path), data)
+  edit(AddFile(path))
+  return this
+}
+
 fun delete(data: ByteArray, directory: Boolean) {
   val addedFile = "\$APP_CONFIG$/remote.xml"
   save(addedFile, data)
@@ -73,6 +81,9 @@ fun delete(data: ByteArray, directory: Boolean) {
 
 abstract class TestCase {
   var fixture: IdeaProjectTestFixture? = null
+
+  val tempDirManager = TemporaryDirectory()
+  public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
 
   val testHelper = RespositoryHelper()
 
@@ -160,4 +171,6 @@ abstract class TestCase {
     }
     return repository
   }
+
+  fun createRepository() = git.createRepository(tempDirManager.newDirectory())
 }

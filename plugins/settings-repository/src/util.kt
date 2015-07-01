@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import java.io.File
 import java.nio.ByteBuffer
-import javax.swing.SwingUtilities
 
 public fun String?.nullize(): String? = StringUtil.nullize(this)
 
@@ -49,8 +48,4 @@ fun getPluginSystemDir(): File {
   else {
     return File(FileUtil.expandUserHome(customPath))
   }
-}
-
-fun invokeAndWaitIfNeed(runnable: ()->Unit) {
-  if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
 }

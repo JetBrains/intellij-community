@@ -16,14 +16,12 @@ import java.io.File
 
 class BareGitTest : TestCase() {
   public Test fun `remote doesn't have commits`() {
-    val remoteRepository = getRemoteRepository()
-    val dir = FileUtil.generateRandomTemporaryPath()
-    val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), dir)
+    val repository = cloneBare(createRepository().getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
     assertThat(repository.read("\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml"), nullValue())
   }
 
   public Test fun bare() {
-    val remoteRepository = getRemoteRepository()
+    val remoteRepository = createRepository()
     val workTree: File = remoteRepository.getWorkTree()
     val filePath = "\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml"
     val file = File(testDataPath, "remote.xml")
@@ -31,13 +29,12 @@ class BareGitTest : TestCase() {
     remoteRepository.edit(AddFile(filePath))
     remoteRepository.commit("")
 
-    val dir = FileUtil.generateRandomTemporaryPath()
-    val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), dir)
+    val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
     assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!), equalTo(FileUtil.loadFile(file)))
   }
 
   public Test fun processChildren() {
-    val remoteRepository = getRemoteRepository()
+    val remoteRepository = createRepository()
 
     val workTree: File = remoteRepository.getWorkTree()
     val filePath = "\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml"
@@ -46,8 +43,7 @@ class BareGitTest : TestCase() {
     remoteRepository.edit(AddFile(filePath))
     remoteRepository.commit("")
 
-    val dir = FileUtil.generateRandomTemporaryPath()
-    val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), dir)
+    val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
 
     val data = THashMap<String, String>()
     repository.processChildren("\$ROOT_CONFIG$/keymaps") {name, input ->
