@@ -180,6 +180,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       boolean set = myPsiFile.compareAndSet(null, psiFile);
       if (!set) {
         if (psiFile instanceof PsiFileImpl) {
+          if (myPsiFile.get() == psiFile) {
+            LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
+          }
           ((PsiFileImpl)psiFile).markInvalidated();
         }
         psiFile = myPsiFile.get();
