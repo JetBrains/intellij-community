@@ -16,8 +16,8 @@
 package com.intellij.util.diff;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,6 +34,10 @@ public class DiffTree<OT, NT> {
   private final ShallowNodeComparator<OT, NT> myComparator;
   private final List<Ref<OT[]>> myOldChildrenLists = new ArrayList<Ref<OT[]>>();
   private final List<Ref<NT[]>> myNewChildrenLists = new ArrayList<Ref<NT[]>>();
+  private final CharSequence myOldText;
+  private final CharSequence myNewText;
+  private final int myOldTreeStart;
+  private final int myNewTreeStart;
 
   private DiffTree(@NotNull FlyweightCapableTreeStructure<OT> oldTree,
                    @NotNull FlyweightCapableTreeStructure<NT> newTree,
@@ -41,6 +45,10 @@ public class DiffTree<OT, NT> {
     myOldTree = oldTree;
     myNewTree = newTree;
     myComparator = comparator;
+    myOldText = oldTree.toString(oldTree.getRoot());
+    myOldTreeStart = oldTree.getStartOffset(oldTree.getRoot());
+    myNewText = newTree.toString(newTree.getRoot());
+    myNewTreeStart = newTree.getStartOffset(newTree.getRoot());
   }
 
   public static <OT, NT> void diff(@NotNull FlyweightCapableTreeStructure<OT> oldTree,
@@ -263,9 +271,12 @@ public class DiffTree<OT, NT> {
       CompareResult c11 = looksEqual(myComparator, oldChild, newChild);
 
       if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
-        CharSequence oldText = myOldTree.toString(oldChild);
-        CharSequence newText = myNewTree.toString(newChild);
-        c11 = StringUtil.equals(oldText, newText)
+        int oldStart = myOldTree.getStartOffset(oldChild) - myOldTreeStart;
+        int oldEnd = myOldTree.getEndOffset(oldChild) - myOldTreeStart;
+        int newStart = myNewTree.getStartOffset(newChild) - myNewTreeStart;
+        int newEnd = myNewTree.getEndOffset(newChild) - myNewTreeStart;
+        // drill down only if node texts match, but when they do, match all the way down unconditionally
+        c11 = CharArrayUtil.regionMatches(myOldText, oldStart, oldEnd, myNewText, newStart, newEnd)
               ? build(oldChild, newChild, level + 1, DiffTree.<OT, NT>emptyConsumer())
               : CompareResult.NOT_EQUAL;
       }
