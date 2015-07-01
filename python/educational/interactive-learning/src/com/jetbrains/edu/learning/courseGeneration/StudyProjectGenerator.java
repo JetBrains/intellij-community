@@ -412,7 +412,6 @@ public class StudyProjectGenerator {
         courseInfo = new CourseInfo();
         courseInfo.setName(courseName);
         courseInfo.setDescription(courseDescription);
-        courseInfo.setName(courseFile.getParent());
         final ArrayList<CourseInfo.Instructor> instructors = new ArrayList<CourseInfo.Instructor>();
         for (JsonElement author : courseAuthors) {
           final String authorAsString = author.getAsString();
