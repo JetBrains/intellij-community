@@ -19,6 +19,7 @@ package com.intellij.formatting;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -191,9 +192,8 @@ class InitialInfoBuilder {
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
 
-    boolean isInsideFormattingRanges = isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock);
     if (myCollectAlignmentsInsideFormattingRange && rootBlock.getAlignment() != null
-        && isInsideFormattingRanges && !myInsideFormatRestrictingTag)
+        && isAffectedByFormatting(rootBlock) && !myInsideFormatRestrictingTag)
     {
       myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
     }
@@ -386,9 +386,27 @@ class InitialInfoBuilder {
     }
   }
 
-  private boolean isInsideFormattingRanges(final Block block, boolean rootIsRightBlock) {
+  private boolean isAffectedByFormatting(final Block block) {
     if (myAffectedRanges == null) return true;
-    return !myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock);
+
+    List<FormatTextRanges.FormatTextRange> allRanges = myAffectedRanges.getRanges();
+    Document document = myModel.getDocument();
+    int docLength = document.getTextLength();
+    
+    for (FormatTextRanges.FormatTextRange range : allRanges) {
+      int startOffset = range.getStartOffset();
+      if (startOffset >= docLength) continue;
+      
+      int lineNumber = document.getLineNumber(startOffset);
+      int lineEndOffset = document.getLineEndOffset(lineNumber);
+
+      int blockStartOffset = block.getTextRange().getStartOffset();
+      if (blockStartOffset >= startOffset && blockStartOffset < lineEndOffset) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {
