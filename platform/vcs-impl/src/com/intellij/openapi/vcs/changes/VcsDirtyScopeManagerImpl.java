@@ -91,24 +91,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  public void suspendMe() {
-    myLife.suspendMe();
-  }
-
-  public void reanimate() {
-    final Ref<Boolean> wasNotEmptyRef = new Ref<Boolean>();
-    myLife.releaseMe(new Runnable() {
-      @Override
-      public void run() {
-        wasNotEmptyRef.set(! myDirtBuilder.isEmpty());
-      }
-    });
-    if (Boolean.TRUE.equals(wasNotEmptyRef.get())) {
-      myChangeListManager.scheduleUpdate();
-    }
-  }
-
-  @Override
   public void markEverythingDirty() {
     if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
@@ -123,7 +105,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     });
 
-    if (lifeDrop.isDone() && !lifeDrop.isSuspened()) {
+    if (lifeDrop.isDone()) {
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -218,7 +200,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     };
     final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
 
-    if (lifeDrop.isDone() && !lifeDrop.isSuspened() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
+    if (lifeDrop.isDone() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -459,26 +441,19 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   private static class LifeDrop {
     private final boolean myDone;
-    private final boolean mySuspened;
 
-    private LifeDrop(boolean done, boolean suspened) {
+    private LifeDrop(boolean done) {
       myDone = done;
-      mySuspened = suspened;
     }
 
     public boolean isDone() {
       return myDone;
-    }
-
-    public boolean isSuspened() {
-      return mySuspened;
     }
   }
 
   private static class SynchronizedLife {
     private LifeStages myStage;
     private final Object myLock;
-    private boolean mySuspended;
 
     private SynchronizedLife() {
       myStage = LifeStages.NOT_BORN;
@@ -498,31 +473,14 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
 
-    public void suspendMe() {
-      synchronized (myLock) {
-        if (LifeStages.ALIVE.equals(myStage)) {
-          mySuspended = true;
-        }
-      }
-    }
-
-    public void releaseMe(final Runnable runnable) {
-      synchronized (myLock) {
-        if (LifeStages.ALIVE.equals(myStage)) {
-          mySuspended = false;
-          runnable.run();
-        }
-      }
-    }
-
     // allow work under inner lock: inner class, not wide scope
     public LifeDrop doIfAlive(final Runnable runnable) {
       synchronized (myLock) {
         if (LifeStages.ALIVE.equals(myStage)) {
           runnable.run();
-          return new LifeDrop(true, mySuspended);
+          return new LifeDrop(true);
         }
-        return new LifeDrop(false, mySuspended);
+        return new LifeDrop(false);
       }
     }
 
