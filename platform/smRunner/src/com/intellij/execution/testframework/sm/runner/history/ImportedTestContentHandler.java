@@ -59,6 +59,9 @@ public class ImportedTestContentHandler extends DefaultHandler {
       myErrorOutput = Comparing.equal(attributes.getValue(TestResultsXmlFormatter.ATTR_OUTPUT_TYPE), "stderr");
       currentValue.setLength(0);
     }
+    else if (TestResultsXmlFormatter.ROOT_ELEM.equals(qName)) {
+      myProcessor.onRootPresentationAdded(attributes.getValue("name"), attributes.getValue("comment"), attributes.getValue("location"));
+    }
   }
 
   @Override

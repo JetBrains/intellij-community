@@ -786,7 +786,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
   }
 
-  public static class SMRootTestProxy extends SMTestProxy {
+  public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
     private boolean myTestsReporterAttached; // false by default
 
     private String myPresentation;
@@ -805,6 +805,7 @@ public class SMTestProxy extends AbstractTestProxy {
       return myTestsReporterAttached;
     }
 
+    @Override
     public String getPresentation() {
       return myPresentation;
     }
@@ -817,12 +818,18 @@ public class SMTestProxy extends AbstractTestProxy {
       myComment = comment;
     }
 
+    @Override
     public String getComment() {
       return myComment;
     }
 
     public void setRootLocationUrl(String locationUrl) {
       myRootLocationUrl = locationUrl;
+    }
+
+    @Override
+    public String getRootLocation() {
+      return myRootLocationUrl;
     }
 
     @Nullable

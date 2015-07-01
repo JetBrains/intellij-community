@@ -23,6 +23,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.TestProxyRoot;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
@@ -63,6 +64,8 @@ public class TestResultsXmlFormatter {
   public static final String STATUS_ERROR = "error";
   public static final String STATUS_IGNORED = "ignored";
   public static final String STATUS_SKIPPED = "skipped";
+
+  public static final String ROOT_ELEM = "root";
   
   public static final Key<RunnerAndConfigurationSettingsImpl> SETTINGS = Key.create("RUN_CONFIGURATION_SETTINGS");
 
@@ -141,6 +144,24 @@ public class TestResultsXmlFormatter {
     }
 
 
+    if (myTestRoot instanceof TestProxyRoot) {
+      final String presentation = ((TestProxyRoot)myTestRoot).getPresentation();
+      if (presentation != null) {
+        final LinkedHashMap<String, String> rootAttrs = new LinkedHashMap<String, String>();
+        rootAttrs.put("name", presentation);
+        final String comment = ((TestProxyRoot)myTestRoot).getComment();
+        if (comment != null) {
+          rootAttrs.put("comment", comment);
+        }
+        final String rootLocation = ((TestProxyRoot)myTestRoot).getRootLocation();
+        if (rootLocation != null) {
+          rootAttrs.put("location", rootLocation);
+        }
+        startElement(ROOT_ELEM, rootAttrs);
+        endElement(ROOT_ELEM);
+      }
+    }
+    
     if (myTestRoot.shouldSkipRootNodeForExport()) {
       for (AbstractTestProxy node : myTestRoot.getChildren()) {
         processNode(node, f);
