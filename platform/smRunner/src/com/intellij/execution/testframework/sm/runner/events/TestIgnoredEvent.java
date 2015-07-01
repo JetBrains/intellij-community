@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.TestIgnored;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +40,11 @@ public class TestIgnoredEvent extends TreeNodeEvent {
     myStacktrace = stacktrace;
   }
 
-  @Nullable
+  @NotNull
   public String getIgnoreComment() {
+    if (StringUtil.isEmpty(myIgnoreComment)) {
+      return SMTestsRunnerBundle.message("sm.test.runner.states.test.is.ignored");
+    }
     return myIgnoreComment;
   }
 
