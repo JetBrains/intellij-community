@@ -75,8 +75,7 @@ object ReactGraph {
       }
     }
     children.keySet().forEach { dfs(it) }
-    time.sort(compareByDescending { it.first })
-    return time.map { it.second }
+    return time.sortBy(compareByDescending { it.first }).map {it.second}
   }
 
 
