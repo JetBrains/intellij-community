@@ -34,7 +34,7 @@ import java.util.List;
 public final class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance(SchemesManagerFactoryImpl.class);
 
-  private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<SchemeManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull
   @Override
@@ -44,13 +44,13 @@ public final class SchemesManagerFactoryImpl extends SchemesManagerFactory imple
     StateStorageManager storageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
     String baseDirPath = storageManager.expandMacros(fileSpec);
     StreamProvider provider = storageManager.getStreamProvider();
-    SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));
+    SchemeManagerImpl<T, E> manager = new SchemeManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));
     myRegisteredManagers.add(manager);
     return manager;
   }
 
-  public void process(@NotNull Consumer<SchemesManagerImpl> processor) {
-    for (SchemesManagerImpl manager : myRegisteredManagers) {
+  public void process(@NotNull Consumer<SchemeManagerImpl> processor) {
+    for (SchemeManagerImpl manager : myRegisteredManagers) {
       try {
         processor.consume(manager);
       }
@@ -63,7 +63,7 @@ public final class SchemesManagerFactoryImpl extends SchemesManagerFactory imple
   @Override
   public void save() {
     List<Throwable> errors = new SmartList<Throwable>();
-    for (SchemesManagerImpl registeredManager : myRegisteredManagers) {
+    for (SchemeManagerImpl registeredManager : myRegisteredManagers) {
       try {
         registeredManager.save(errors);
       }
