@@ -14,10 +14,10 @@
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="IntelliLang-java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="python-community-tests" />
     <orderEntry type="module" module-name="python-community-plugin" />
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="IntelliLang-xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="python-community-plugin-resources" scope="RUNTIME" />
   </component>
 </module>
 
