@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImportTestsFromFileAction extends AbstractImportTestsAction {
   public ImportTestsFromFileAction(SMTRunnerConsoleProperties properties) {
-    super(properties, (properties == null ? "" : "Import ") + "From File ...", "Import tests from file");
+    super(properties, (properties == null ? "" : "Import ") + "From File ...", "Import tests from file", null);
   }
 
   @Nullable

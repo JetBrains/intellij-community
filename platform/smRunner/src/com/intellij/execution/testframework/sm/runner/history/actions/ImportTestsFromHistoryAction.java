@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
+import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,19 +34,25 @@ import java.util.Date;
 public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   private String myFileName;
   
-  public ImportTestsFromHistoryAction(SMTRunnerConsoleProperties properties, String name) {
-    super(properties, getPresentableText(name), getPresentableText(name));
+  public ImportTestsFromHistoryAction(@Nullable SMTRunnerConsoleProperties properties, Project project, String name) {
+    super(properties, getPresentableText(project, name), getPresentableText(project, name), getIcon(project, name));
     myFileName = name;
   }
 
-  private static String getPresentableText(String name) {
+  private static Icon getIcon(Project project, String name) {
+    return TestHistoryConfiguration.getInstance(project).getIcon(name);
+  }
+
+  private static String getPresentableText(Project project, String name) {
     String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
     final int lastIndexOf = nameWithoutExtension.lastIndexOf(" - ");
     if (lastIndexOf > 0) {
       final String date = nameWithoutExtension.substring(lastIndexOf + 3);
       try {
         final Date creationDate = new SimpleDateFormat(SMTestRunnerResultsForm.HISTORY_DATE_FORMAT).parse(date);
-        return nameWithoutExtension.substring(0, lastIndexOf) + " (" + DateFormatUtil.formatDateTime(creationDate) + ")";
+        final String configurationName = TestHistoryConfiguration.getInstance(project).getConfigurationName(name);
+        return (configurationName != null ? configurationName : nameWithoutExtension.substring(0, lastIndexOf)) + 
+               " (" + DateFormatUtil.formatDateTime(creationDate) + ")";
       }
       catch (ParseException ignore) {}
     }

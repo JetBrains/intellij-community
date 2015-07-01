@@ -41,7 +41,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
@@ -50,21 +49,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.rt.execution.junit.IDEAJUnitListener;
-import com.intellij.rt.execution.junit.JUnitForkedStarter;
-import com.intellij.rt.execution.junit.JUnitStarter;
-import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.rt.execution.junit.*;
+import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> {
@@ -74,7 +67,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NonNls private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   private final JUnitConfiguration myConfiguration;
-  protected File myWorkingDirsFile = null;
   protected File myListenersFile;
 
   public static TestObject fromString(final String id,
@@ -133,15 +125,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return SourceScope.modulesWithDependencies(getConfiguration().getModules());
   }
 
-  private static void configureAdditionalClasspath(JavaParameters javaParameters) {
-    javaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
-  }
-
   @Override
-  protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
+  protected void configureRTClasspath(JavaParameters javaParameters) {
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
-    super.configureClasspath(javaParameters);
   }
 
   @Override
@@ -375,53 +361,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory() : "";
       JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
 
-      if (perModule != null && perModule.size() > 1) {
-        final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
-                                 ? null : javaParameters.getClassPath().getPathsString();
-
-        final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
-        try {
-          wWriter.println(packageName);
-          for (Module module : perModule.keySet()) {
-            final String moduleDir = PathMacroUtil.getModuleDir(module.getModuleFilePath());
-            wWriter.println(moduleDir);
-
-            if (classpath == null) {
-              final JavaParameters parameters = new JavaParameters();
-              configureAdditionalClasspath(parameters);
-              if (isSmRunnerUsed()) {
-                parameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
-              }
-              JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
-                                                   .getAlternativeJrePath() : null);
-              wWriter.println(parameters.getClassPath().getPathsString());
-            } else {
-              wWriter.println(classpath);
-            }
-
-            final List<String> classNames = perModule.get(module);
-            wWriter.println(classNames.size());
-            for (String className : classNames) {
-              wWriter.println(className);
-            }
-          }
-        } finally {
-          wWriter.close();
-        }
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  protected void createTempFiles(JavaParameters javaParameters) {
-    super.createTempFiles(javaParameters);
-    try {
-      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_junit", ".tmp");
-      myWorkingDirsFile.deleteOnExit();
-      javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+      writeClassesPerModule(packageName, javaParameters, perModule);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -433,10 +373,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     super.deleteTempFiles();
     if (myListenersFile != null) {
       FileUtil.delete(myListenersFile);
-    }
-    
-    if (myWorkingDirsFile != null) {
-      FileUtil.delete(myWorkingDirsFile);
     }
   }
 
@@ -464,10 +400,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getConfiguration().getPersistentData().getScope();
   }
 
-  protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
-    getJavaParameters().getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
+  protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
+    parameters.getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {
-      getJavaParameters().getProgramParametersList().add(JUnitForkedStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
+      parameters.getProgramParametersList().add(ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
     }
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
+import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
@@ -336,7 +337,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                    Disposable parentDisposable) {
     final RunProfile configuration = consoleProperties.getConfiguration();
     if (configuration instanceof RunConfiguration && !(consoleProperties instanceof ImportedTestConsoleProperties)) {
-      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, configuration);
+      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
@@ -773,10 +774,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private static class MySaveHistoryTask extends Task.Backgroundable {
 
     private SMTestProxy.SMRootTestProxy myRoot;
-    private RunProfile myConfiguration;
+    private RunConfiguration myConfiguration;
     private String myOutput;
 
-    public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunProfile configuration) {
+    public MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
       super(consoleProperties.getProject(), "Save Test Results", true);
       myRoot = root;
       myConfiguration = configuration;
@@ -793,7 +794,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         StringWriter w = new StringWriter();
         handler.setResult(new StreamResult(w));
         final SMTestProxy.SMRootTestProxy root = myRoot;
-        final RunConfiguration configuration = (RunConfiguration)myConfiguration;
+        final RunConfiguration configuration = myConfiguration;
         if (root != null && configuration != null) {
           TestResultsXmlFormatter.execute(root, configuration, handler);
         }
@@ -814,8 +815,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           AbstractImportTestsAction.adjustHistory(myProject);
           final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
                                                        new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
-          FileUtil.writeToFile(new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml"),
-                               myOutput);
+          final File file = new File(AbstractImportTestsAction.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
+          FileUtil.writeToFile(file, myOutput);
+          TestHistoryConfiguration.getInstance(myProject).registerHistoryItem(file.getName(), 
+                                                                              myConfiguration.getName(),
+                                                                              myConfiguration.getType().getId());
         }
         catch (IOException e) {
           LOG.info("Fail to write test history", e);

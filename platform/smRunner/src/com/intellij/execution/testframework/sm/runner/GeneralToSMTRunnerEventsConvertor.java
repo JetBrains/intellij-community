@@ -438,9 +438,6 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       public void run() {
         final String testName = ObjectUtils.assertNotNull(testIgnoredEvent.getName());
         String ignoreComment = testIgnoredEvent.getIgnoreComment();
-        if (StringUtil.isEmpty(ignoreComment)) {
-          ignoreComment = SMTestsRunnerBundle.message("sm.test.runner.states.test.is.ignored");
-        }
         final String stackTrace = testIgnoredEvent.getStacktrace();
         final String fullTestName = getFullTestName(testName);
         SMTestProxy testProxy = getProxyByFullTestName(fullTestName);

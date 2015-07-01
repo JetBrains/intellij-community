@@ -727,7 +727,7 @@
                      displayName="Block marker comment"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
                      groupBundle="messages.InspectionsBundle"
-                     groupName="Code style issues" enabledByDefault="false" level="WARNING"
+                     groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
                      displayName="Pseudo functional expression using static class"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"

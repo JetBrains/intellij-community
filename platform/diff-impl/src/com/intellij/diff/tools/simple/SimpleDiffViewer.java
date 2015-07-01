@@ -543,11 +543,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     protected boolean isSomeChangeSelected(@NotNull Side side) {
       if (myDiffChanges.isEmpty()) return false;
 
-      List<Caret> carets = getEditor(side).getCaretModel().getAllCarets();
+      EditorEx editor = getEditor(side);
+      List<Caret> carets = editor.getCaretModel().getAllCarets();
       if (carets.size() != 1) return true;
       Caret caret = carets.get(0);
       if (caret.hasSelection()) return true;
-      int line = caret.getLogicalPosition().line;
+      int line = editor.getDocument().getLineNumber(editor.getExpectedCaretOffset());
 
       for (SimpleDiffChange change : myDiffChanges) {
         if (change.isSelectedByLine(line, side)) return true;

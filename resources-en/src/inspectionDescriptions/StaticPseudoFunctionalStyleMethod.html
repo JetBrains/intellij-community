@@ -1,5 +1,11 @@
 <html>
 <body>
 Inspection detects usages of pseudo-functional code if Java Stream API is available.
+<br/>
+Consider cases when monad behaviour is emulated by static method call:
+<br/>
+<code>
+List&lt;String&gt; transformedIterable = Iterables.transform(someList, someTransformFunction);
+</code>
 </body>
 </html>

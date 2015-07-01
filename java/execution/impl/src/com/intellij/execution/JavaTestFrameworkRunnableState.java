@@ -61,17 +61,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
   protected File myTempFile;
+  protected File myWorkingDirsFile = null;
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
     super(environment);
@@ -157,6 +158,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   protected boolean isSmRunnerUsed() {
     return Registry.is(getFrameworkId() + "_sm");
   }
+
+  protected abstract void configureRTClasspath(JavaParameters javaParameters);
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -255,7 +258,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
         else {
           writer.println("");
         }
-
+  
         writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
         for (String vmParameter : javaParameters.getVMParametersList().getList()) {
           writer.println(vmParameter);
@@ -265,14 +268,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
         writer.close();
       }
 
-      passForkMode(forkMode, tempFile);
+      passForkMode(getForkMode(), tempFile, javaParameters);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       LOG.error(e);
     }
   }
 
-  protected abstract void passForkMode(String forkMode, File tempFile) throws ExecutionException;
+  protected abstract void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException;
 
   protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
     final T configuration = getConfiguration();
@@ -295,6 +298,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   }
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
+    configureRTClasspath(javaParameters);
     RunConfigurationModule module = getConfiguration().getConfigurationModule();
     final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
@@ -349,18 +353,65 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
+      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp");
+      myWorkingDirsFile.deleteOnExit();
+      javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+      
       myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp");
       myTempFile.deleteOnExit();
       passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
     }
-    catch (IOException e) {
+    catch (Exception e) {
       LOG.error(e);
+    }
+  }
+
+  protected void writeClassesPerModule(String packageName, JavaParameters javaParameters, Map<Module, List<String>> perModule)
+    throws FileNotFoundException, UnsupportedEncodingException, CantRunException {
+    if (perModule != null && perModule.size() > 1) {
+      final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
+                               ? null : javaParameters.getClassPath().getPathsString();
+
+      final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
+      try {
+        wWriter.println(packageName);
+        for (Module module : perModule.keySet()) {
+          wWriter.println(PathMacroUtil.getModuleDir(module.getModuleFilePath()));
+          wWriter.println(module.getName());
+
+          if (classpath == null) {
+            final JavaParameters parameters = new JavaParameters();
+            parameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
+            configureRTClasspath(parameters);
+            JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                               getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
+                                                 .getAlternativeJrePath() : null);
+            wWriter.println(parameters.getClassPath().getPathsString());
+          }
+          else {
+            wWriter.println(classpath);
+          }
+
+          final List<String> classNames = perModule.get(module);
+          wWriter.println(classNames.size());
+          for (String className : classNames) {
+            wWriter.println(className);
+          }
+        }
+      }
+      finally {
+        wWriter.close();
+      }
     }
   }
 
   protected void deleteTempFiles() {
     if (myTempFile != null) {
       FileUtil.delete(myTempFile);
+    }
+    
+    if (myWorkingDirsFile != null) {
+      FileUtil.delete(myWorkingDirsFile);
     }
   }
 

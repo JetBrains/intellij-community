@@ -67,17 +67,28 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public static final String TEST_HISTORY_SIZE = "test_history_size";
   private SMTRunnerConsoleProperties myProperties;
 
-  public AbstractImportTestsAction(@Nullable String text, @Nullable String description) {
-    super(text, description, null);
+  public AbstractImportTestsAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    super(text, description, icon);
   }
 
-  public AbstractImportTestsAction(SMTRunnerConsoleProperties properties, @Nullable String text, @Nullable String description) {
-    this(text, description);
+  public AbstractImportTestsAction(SMTRunnerConsoleProperties properties, @Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    this(text, description, icon);
     myProperties = properties;
   }
 
   public static File getTestHistoryRoot(Project project) {
-    return new File(TEST_HISTORY_PATH, FileUtil.sanitizeFileName(project.getName()));
+    return new File(TEST_HISTORY_PATH, project.getLocationHash());
+  }
+  
+  public static int getHistorySize() {
+    int historySize;
+    try {
+      historySize = Math.max(0, Integer.parseInt(PropertiesComponent.getInstance().getValue(TEST_HISTORY_SIZE, "10")));
+    }
+    catch (NumberFormatException e) {
+      historySize = 10;
+    }
+    return historySize;
   }
 
   @Override
@@ -113,13 +124,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   }
   
   public static void adjustHistory(Project project) {
-    int historySize;
-    try {
-      historySize = Math.max(0, Integer.parseInt(PropertiesComponent.getInstance().getValue(TEST_HISTORY_SIZE, "10")));
-    }
-    catch (NumberFormatException e) {
-      historySize = 5;
-    }
+    int historySize = getHistorySize();
 
     final File[] files = getTestHistoryRoot(project).listFiles();
     if (files != null && files.length >= historySize) {

@@ -275,14 +275,20 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        ((InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent()).amnesty();
+        final TreePath[] paths = myTree.getSelectionPaths();
+        if (paths != null) {
+          for (TreePath path : paths) {
+            ((InspectionTreeNode)path.getLastPathComponent()).amnesty();
+          }
+        }
         updateView(false);
       }
 
       @Override
       public void update(final AnActionEvent e) {
-        final TreePath path = myTree.getSelectionPath();
-        e.getPresentation().setEnabled(path != null && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS);
+        final TreePath[] paths = myTree.getSelectionPaths();
+        e.getPresentation().setEnabled(paths != null && paths.length > 0 && 
+                                       !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS);
       }
     };
 
@@ -293,14 +299,19 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        ((InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent()).ignoreElement();
+        final TreePath[] paths = myTree.getSelectionPaths();
+        if (paths != null) {
+          for (TreePath path : paths) {
+            ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement();
+          }
+        }
         updateView(false);
       }
 
       @Override
       public void update(final AnActionEvent e) {
-        final TreePath path = myTree.getSelectionPath();
-        e.getPresentation().setEnabled(path != null);
+        final TreePath[] path = myTree.getSelectionPaths();
+        e.getPresentation().setEnabled(path != null && path.length > 0);
       }
     };
 

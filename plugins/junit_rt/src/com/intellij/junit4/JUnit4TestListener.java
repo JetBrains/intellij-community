@@ -88,6 +88,7 @@ public class JUnit4TestListener extends RunListener {
 
   public void testStarted(Description description) throws Exception {
     final String methodName = getFullMethodName(description);
+    if (methodName == null) return;
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
     final List parents = (List)myParents.get(description);
@@ -127,9 +128,12 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testFinished(Description description) throws Exception {
-    final long duration = currentTime() - myCurrentTestStart;
-    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(getFullMethodName(description)) +
-                          (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
+    final String methodName = getFullMethodName(description);
+    if (methodName != null) {
+      final long duration = currentTime() - myCurrentTestStart;
+      myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) +
+                            (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
+    }
   }
 
   public void testFailure(Failure failure) throws Exception {

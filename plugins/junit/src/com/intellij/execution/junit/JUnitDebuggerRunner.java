@@ -15,97 +15,28 @@
  */
 package com.intellij.execution.junit;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.DefaultDebugEnvironment;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.impl.GenericDebuggerRunner;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.JavaTestFrameworkRunnableState;
-import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.JavaTestFrameworkDebuggerRunner;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.RunContentDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 
 /**
  * @author egor
  */
-public class JUnitDebuggerRunner extends GenericDebuggerRunner {
+public class JUnitDebuggerRunner extends JavaTestFrameworkDebuggerRunner {
   @Override
-  public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof JUnitConfiguration;
+  protected boolean validForProfile(@NotNull RunProfile profile) {
+    return profile instanceof JUnitConfiguration;
+  }
+
+  @NotNull
+  @Override
+  protected String getThreadName() {
+    return "junit";
   }
 
   @NotNull
   @Override
   public String getRunnerId() {
     return "JUnitDebug";
-  }
-
-  @Nullable
-  @Override
-  protected RunContentDescriptor createContentDescriptor(@NotNull final RunProfileState state, @NotNull final ExecutionEnvironment environment)
-    throws ExecutionException {
-    final RunContentDescriptor res = super.createContentDescriptor(state, environment);
-    final ServerSocket socket = ((JavaTestFrameworkRunnableState)state).getForkSocket();
-    if (socket != null) {
-      Thread thread = new Thread("junit debugger runner") {
-        @Override
-        public void run() {
-          try {
-            final Socket accept = socket.accept();
-            try {
-              DataInputStream stream = new DataInputStream(accept.getInputStream());
-              try {
-                int read = stream.readInt();
-                while (read != -1) {
-                  final DebugProcess process =
-                    DebuggerManager.getInstance(environment.getProject()).getDebugProcess(res.getProcessHandler());
-                  if (process == null) break;
-                  final RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(read), true);
-                  final DebugEnvironment env = new DefaultDebugEnvironment(environment, state, connection, true);
-                  SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      try {
-                        ((DebugProcessImpl)process).reattach(env);
-                        accept.getOutputStream().write(0);
-                      }
-                      catch (Exception e) {
-                        e.printStackTrace();
-                      }
-                    }
-                  });
-                  read = stream.readInt();
-                }
-              } finally {
-                stream.close();
-              }
-            } finally {
-              accept.close();
-            }
-          }
-          catch (EOFException ignored) {}
-          catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
-      };
-      thread.setDaemon(true);
-      thread.start();
-    }
-    return res;
   }
 }

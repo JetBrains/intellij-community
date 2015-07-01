@@ -38,10 +38,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
- * For "heavyweight" tests use AdvHighlightingTest
- */
 public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7";
 

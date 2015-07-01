@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -774,23 +774,25 @@ public class GeneratedParserUtilBase {
     MyList<Variant> unexpected = new MyList<Variant>(INITIAL_VARIANTS_SIZE / 10);
 
     final LimitedPool<Variant> VARIANTS = new LimitedPool<Variant>(VARIANTS_POOL_SIZE, new LimitedPool.ObjectFactory<Variant>() {
+      @NotNull
       @Override
       public Variant create() {
         return new Variant();
       }
 
       @Override
-      public void cleanup(final Variant o) {
+      public void cleanup(@NotNull final Variant o) {
       }
     });
     final LimitedPool<Frame> FRAMES = new LimitedPool<Frame>(FRAMES_POOL_SIZE, new LimitedPool.ObjectFactory<Frame>() {
+      @NotNull
       @Override
       public Frame create() {
         return new Frame();
       }
 
       @Override
-      public void cleanup(final Frame o) {
+      public void cleanup(@NotNull final Frame o) {
       }
     });
 

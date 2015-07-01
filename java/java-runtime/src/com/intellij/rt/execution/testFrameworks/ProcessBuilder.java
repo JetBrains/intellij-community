@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.rt.execution.junit;
+package com.intellij.rt.execution.testFrameworks;
 
 import java.io.File;
 import java.io.IOException;

@@ -29,7 +29,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class ImportTestsGroup extends ActionGroup {
+public class 
+  ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
     super("Import Test Results", "Import Test Results", AllIcons.Vcs.History);
@@ -56,7 +57,7 @@ public class ImportTestsGroup extends ActionGroup {
     });
     final AnAction[] actions = new AnAction[files.length + 2];
     for (int i = 0; i < files.length; i++) {
-      actions[i] = new ImportTestsFromHistoryAction(myProperties, files[i].getName());
+      actions[i] = new ImportTestsFromHistoryAction(myProperties, project, files[i].getName());
     }
     actions[files.length] = Separator.getInstance();
     actions[files.length + 1] = new ImportTestsFromFileAction(myProperties); 
