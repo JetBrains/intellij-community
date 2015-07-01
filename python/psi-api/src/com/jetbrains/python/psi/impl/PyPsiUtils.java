@@ -75,7 +75,7 @@ public class PyPsiUtils {
   }
 
   /**
-   * Find first non-whitespace sibling before given AST node.
+   * Finds first non-whitespace sibling before given AST node.
    */
   @Nullable
   public static ASTNode getPrevNonWhitespaceSibling(@NotNull ASTNode node) {
@@ -83,7 +83,7 @@ public class PyPsiUtils {
   }
 
   /**
-   * Find first sibling that is neither comment, nor whitespace before given element.
+   * Finds first sibling that is neither comment, nor whitespace before given element.
    * @param strict prohibit returning element itself
    */
   @Nullable
@@ -112,7 +112,7 @@ public class PyPsiUtils {
   }
 
   /**
-   * Find first non-whitespace sibling after given AST node.
+   * Finds first non-whitespace sibling after given AST node.
    */
   @Nullable
   public static ASTNode getNextNonWhitespaceSibling(@NotNull ASTNode after) {
@@ -120,7 +120,7 @@ public class PyPsiUtils {
   }
 
   /**
-   * Find first sibling that is neither comment, nor whitespace after given element.
+   * Finds first sibling that is neither comment, nor whitespace after given element.
    * @param strict prohibit returning element itself
    */
   @Nullable
@@ -129,6 +129,30 @@ public class PyPsiUtils {
       return start;
     }
     return PsiTreeUtil.skipSiblingsForward(start, PsiWhiteSpace.class, PsiComment.class);
+  }
+
+  /**
+   * Finds first token after given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   * @param ignoreComments ignore commentaries as well
+   */
+  @Nullable
+  public static PsiElement getNextSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
+    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
+      element = PsiTreeUtil.nextLeaf(element);
+    }
+    return element;
+  }
+
+  /**
+   * Finds first token before given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   * @param ignoreComments ignore commentaries as well
+   */
+  @Nullable
+  public static PsiElement getPrevSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
+    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
+      element = PsiTreeUtil.prevLeaf(element);
+    }
+    return element;
   }
 
   /**
@@ -434,22 +458,6 @@ public class PyPsiUtils {
       });
     }
     return result;
-  }
-
-  @Nullable
-  public static PsiElement getSignificantToTheRight(PsiElement element, final boolean ignoreComments) {
-    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
-      element = PsiTreeUtil.nextLeaf(element);
-    }
-    return element;
-  }
-
-  @Nullable
-  public static PsiElement getSignificantToTheLeft(PsiElement element, final boolean ignoreComments) {
-    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
-      element = PsiTreeUtil.prevLeaf(element);
-    }
-    return element;
   }
 
   public static int findArgumentIndex(PyCallExpression call, PsiElement argument) {
