@@ -193,6 +193,7 @@
     <group id="Diff.EditorPopupMenu"/>
     <group id="Diff.ViewerPopupMenu"/>
     <group id="Diff.ViewerToolbar"/>
+    <group id="Diff.EditorGutterPopupMenu"/>
 
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
@@ -365,7 +366,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" popup="true" compact="true">
+      <group id="ToolsMenu" configurable="true" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
         <separator/>
@@ -476,7 +477,7 @@
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
-    <group id="MainToolBar">
+    <group id="MainToolBar" configurable="true">
       <reference ref="OpenFile"/>
       <reference ref="SaveAll"/>
       <reference ref="Synchronize"/>
@@ -501,7 +502,7 @@
 
     <group id="NavBarVcsGroup"/>
 
-    <group id="EditorPopupMenu">
+    <group id="EditorPopupMenu" configurable="true">
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
@@ -519,12 +520,6 @@
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingAction"/>
-    </group>
-    
-    <group id="BasicEditorPopupMenu">
-      <reference ref="$Cut"/>
-      <reference ref="$Copy"/>
-      <reference ref="$Paste"/>
     </group>
 
     <group id="ConsoleEditorPopupMenu">
@@ -651,7 +646,7 @@
     <action id="Console.Open" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="Console.Execute" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="Console.Execute.Multiline" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-    <action id="Console.SplitLine" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorSplitLine"/>
+    <action id="Console.SplitLine" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="SplitLine"/>
     <group id="Console.HistoryActions">
       <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction"/>

@@ -541,7 +541,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    return EditorGutter.KEY.is(dataId) ? this : null;
+    if (EditorGutter.KEY.is(dataId)) {
+      return this;
+    }
+    else if (CommonDataKeys.EDITOR.is(dataId)) {
+      return myEditor;
+    }
+    return null;
   }
 
   private interface RangeHighlighterProcessor {

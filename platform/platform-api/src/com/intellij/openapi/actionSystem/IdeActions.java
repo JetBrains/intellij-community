@@ -169,6 +169,7 @@ public interface IdeActions {
   @NonNls String GROUP_DIFF_EDITOR_POPUP = "Diff.EditorPopupMenu";
   @NonNls String DIFF_VIEWER_POPUP = "Diff.ViewerPopupMenu";
   @NonNls String DIFF_VIEWER_TOOLBAR = "Diff.ViewerToolbar";
+  @NonNls String GROUP_DIFF_EDITOR_GUTTER_POPUP = "Diff.EditorGutterPopupMenu";
 
   @NonNls String ACTION_EXPAND_ALL = "ExpandAll";
   @NonNls String ACTION_COLLAPSE_ALL = "CollapseAll";
