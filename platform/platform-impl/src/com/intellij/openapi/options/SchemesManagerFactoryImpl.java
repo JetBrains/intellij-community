@@ -62,15 +62,12 @@ public final class SchemesManagerFactoryImpl extends SchemesManagerFactory imple
 
   @Override
   public void save() {
-    List<Throwable> errors = null;
-    for (SchemesManager registeredManager : myRegisteredManagers) {
+    List<Throwable> errors = new SmartList<Throwable>();
+    for (SchemesManagerImpl registeredManager : myRegisteredManagers) {
       try {
-        registeredManager.save();
+        registeredManager.save(errors);
       }
       catch (Throwable e) {
-        if (errors == null) {
-          errors = new SmartList<Throwable>();
-        }
         errors.add(e);
       }
     }

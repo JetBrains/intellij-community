@@ -30,7 +30,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
 
   private JBList list = new JBList(model);
 
-  public ListModelEditor(@NotNull final ListItemEditor<T> itemEditor) {
+  public ListModelEditor(@NotNull ListItemEditor<T> itemEditor) {
     super(itemEditor);
 
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -42,7 +42,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
         public void run(AnActionButton button) {
           if (!model.isEmpty()) {
             T lastItem = model.getElementAt(model.getSize() - 1);
-            if (itemEditor.isEmpty(lastItem)) {
+            if (ListModelEditor.this.itemEditor.isEmpty(lastItem)) {
               ListScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), lastItem));
               return;
             }
@@ -59,6 +59,12 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
         return areSelectedItemsRemovable(list.getSelectionModel());
       }
     });
+  }
+
+  @NotNull
+  public ListModelEditor<T> disableUpDownActions() {
+    toolbarDecorator.disableUpDownActions();
+    return this;
   }
 
   @NotNull

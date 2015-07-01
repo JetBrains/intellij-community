@@ -98,6 +98,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
+  @NotNull
   public TableModelEditor<T> preferredScrollableViewportHeightInRows(int rows) {
     table.setPreferredScrollableViewportSize(new Dimension(200, table.getRowHeight() * rows));
     return this;
@@ -151,11 +152,13 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
+  @NotNull
   public TableModelEditor<T> disableUpDownActions() {
     toolbarDecorator.disableUpDownActions();
     return this;
   }
 
+  @NotNull
   public TableModelEditor<T> enabled(boolean value) {
     table.setEnabled(value);
     return this;

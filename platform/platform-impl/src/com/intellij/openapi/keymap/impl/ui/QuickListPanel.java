@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.ui.*;
@@ -36,7 +37,7 @@ class QuickListPanel {
   private final CollectionListModel<Object> actionsModel;
   private JPanel myPanel;
   private final JBList myActionsList;
-  JTextField myDisplayName;
+  JTextField myName;
   private JTextField myDescription;
   private JPanel myListPanel;
   QuickList item;
@@ -97,10 +98,10 @@ class QuickListPanel {
       return;
     }
 
-    item.setName(myDisplayName.getText().trim());
+    item.setName(myName.getText().trim());
     item.setDescription(myDescription.getText().trim());
 
-    ListModel model = getActionsList().getModel();
+    ListModel model = myActionsList.getModel();
     int size = model.getSize();
     String[] ids;
     if (size == 0) {
@@ -124,7 +125,8 @@ class QuickListPanel {
       return;
     }
 
-    myDisplayName.setText(this.item.getName());
+    myName.setText(item.getName());
+    myName.setEnabled(QuickListsManager.getInstance().getSchemeManager().isMetadataEditable(item));
     myDescription.setText(item.getDescription());
 
     actionsModel.removeAll();
@@ -138,18 +140,6 @@ class QuickListPanel {
     for (int i = ids.length - 1; i >= 0; i--) {
       actionsModel.remove(ids[i]);
     }
-  }
-
-  public JList getActionsList() {
-    return myActionsList;
-  }
-
-  public String getDescription() {
-    return myDescription.getText();
-  }
-
-  public String getDisplayName() {
-    return myDisplayName.getText();
   }
 
   private void includeActionId(@NotNull String id) {
