@@ -34,23 +34,23 @@ import java.util.Date;
 public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   private String myFileName;
   
-  public ImportTestsFromHistoryAction(SMTRunnerConsoleProperties properties, String name) {
-    super(properties, getPresentableText(properties, name), getPresentableText(properties, name), getIcon(properties, name));
+  public ImportTestsFromHistoryAction(@Nullable SMTRunnerConsoleProperties properties, Project project, String name) {
+    super(properties, getPresentableText(project, name), getPresentableText(project, name), getIcon(project, name));
     myFileName = name;
   }
 
-  private static Icon getIcon(SMTRunnerConsoleProperties properties, String name) {
-    return TestHistoryConfiguration.getInstance(properties.getProject()).getIcon(name);
+  private static Icon getIcon(Project project, String name) {
+    return TestHistoryConfiguration.getInstance(project).getIcon(name);
   }
 
-  private static String getPresentableText(SMTRunnerConsoleProperties properties, String name) {
+  private static String getPresentableText(Project project, String name) {
     String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
     final int lastIndexOf = nameWithoutExtension.lastIndexOf(" - ");
     if (lastIndexOf > 0) {
       final String date = nameWithoutExtension.substring(lastIndexOf + 3);
       try {
         final Date creationDate = new SimpleDateFormat(SMTestRunnerResultsForm.HISTORY_DATE_FORMAT).parse(date);
-        final String configurationName = TestHistoryConfiguration.getInstance(properties.getProject()).getConfigurationName(name);
+        final String configurationName = TestHistoryConfiguration.getInstance(project).getConfigurationName(name);
         return (configurationName != null ? configurationName : nameWithoutExtension.substring(0, lastIndexOf)) + 
                " (" + DateFormatUtil.formatDateTime(creationDate) + ")";
       }
