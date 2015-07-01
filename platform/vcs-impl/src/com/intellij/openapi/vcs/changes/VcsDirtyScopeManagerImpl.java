@@ -31,7 +31,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -161,7 +160,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(2));
+        LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(3));
       }
 
       takeDirt(new Consumer<DirtBuilder>() {
@@ -217,21 +216,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @Override
   public void fileDirty(@NotNull final FilePath file) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(file);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("file dirty: " + file + "; " + ReflectionUtil.findCallerClass(1));
-      }
-      final FilePathUnderVcs root = new FilePathUnderVcs(file, vcs);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyFile(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    filePathsDirty(Collections.singleton(file), null);
   }
 
   @Override
@@ -246,21 +231,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @Override
   public void dirDirtyRecursively(final FilePath path) {
-    try {
-      final AbstractVcs vcs = myGuess.getVcsForDirty(path);
-      if (vcs == null) return;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("dir dirty recursively: " + path + "; " + ReflectionUtil.findCallerClass(2));
-      }
-      final FilePathUnderVcs root = new FilePathUnderVcs(path, vcs);
-      takeDirt(new Consumer<DirtBuilder>() {
-        @Override
-        public void consume(DirtBuilder dirtBuilder) {
-          dirtBuilder.addDirtyDirRecursively(root);
-        }
-      });
-    } catch (ProcessCanceledException ignore) {
-    }
+    filePathsDirty(null, Collections.singleton(path));
   }
 
   private class MyProgressHolder {
