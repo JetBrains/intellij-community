@@ -25,7 +25,7 @@ public class FinalUtils {
 
   public static boolean canBeFinal(@NotNull PsiVariable variable) {
     if (variable.getInitializer() != null || variable instanceof PsiParameter) {
-      // parameters hava implicit initializer
+      // parameters have an implicit initializer
       return !VariableAccessUtils.variableIsAssigned(variable);
     }
     final FinalDefiniteAssignment definiteAssignment = new FinalDefiniteAssignment(variable);
