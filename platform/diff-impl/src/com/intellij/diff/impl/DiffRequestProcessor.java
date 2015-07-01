@@ -22,10 +22,7 @@ import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.ErrorDiffRequest;
-import com.intellij.diff.requests.LoadingDiffRequest;
-import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -143,7 +140,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     if (bottomPanel != null) myMainPanel.add(bottomPanel, BorderLayout.SOUTH);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 
-    myState = new EmptyState();
+    myState = EmptyState.INSTANCE;
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
 
     myOpenInEditorAction = new OpenInEditorAction(new Runnable() {
@@ -398,6 +395,9 @@ public abstract class DiffRequestProcessor implements Disposable {
         myContentPanel.setContent(null);
 
         myActiveRequest.onAssigned(false);
+
+        myState = EmptyState.INSTANCE;
+        myActiveRequest = NoDiffRequest.INSTANCE;
       }
     });
   }
@@ -499,6 +499,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull
   protected DiffSettings getSettings() {
     return mySettings;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   //
@@ -1017,6 +1021,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private static class EmptyState implements ViewerState {
+    private static final EmptyState INSTANCE = new EmptyState();
+
     @Override
     public void init() {
     }
