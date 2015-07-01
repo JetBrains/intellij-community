@@ -319,6 +319,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     fireOnTestingFinished();
+    
+    if (testsRoot.wasTerminated() && myStatusLine.getStatusColor() == ColorProgressBar.GREEN) {
+      myStatusLine.setStatusColor(JBColor.LIGHT_GRAY);
+    }
 
     if (testsRoot.isEmptySuite() &&
         testsRoot.isTestsReporterAttached() &&
