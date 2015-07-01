@@ -457,23 +457,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     return result;
   }
 
-  private String toStringScopes(final VcsInvalidated vcsInvalidated) {
-    final StringBuilder sb = new StringBuilder();
-    sb.append("is everything dirty: ").append(vcsInvalidated.isEverythingDirty()).append(";\n");
-    for (VcsDirtyScope scope : vcsInvalidated.getScopes()) {
-      sb.append("|\nFiles: ");
-      for (FilePath path : scope.getDirtyFiles()) {
-        sb.append(path).append('\n');
-      }
-      sb.append("\nDirs: ");
-      for (FilePath filePath : scope.getRecursivelyDirtyDirectories()) {
-        sb.append(filePath).append('\n');
-      }
-    }
-    sb.append("-------------");
-    return sb.toString();
-  }
-
   private static class LifeDrop {
     private final boolean myDone;
     private final boolean mySuspened;
@@ -528,18 +511,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         if (LifeStages.ALIVE.equals(myStage)) {
           mySuspended = false;
           runnable.run();
-        }
-      }
-    }
-
-    public LifeDrop doIfAliveAndNotSuspended(final Runnable runnable) {
-      synchronized (myLock) {
-        synchronized (myLock) {
-          if (LifeStages.ALIVE.equals(myStage) && ! mySuspended) {
-            runnable.run();
-            return new LifeDrop(true, mySuspended);
-          }
-          return new LifeDrop(false, mySuspended);
         }
       }
     }
