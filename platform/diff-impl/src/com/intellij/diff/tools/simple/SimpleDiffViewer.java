@@ -138,9 +138,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new ReplaceSelectedChangesAction());
-    group.add(new AppendSelectedChangesAction());
-    group.add(new RevertSelectedChangesAction());
+    group.add(new ReplaceSelectedChangesAction(Side.LEFT));
+    group.add(new AppendSelectedChangesAction(Side.LEFT));
+    group.add(new ReplaceSelectedChangesAction(Side.RIGHT));
+    group.add(new AppendSelectedChangesAction(Side.RIGHT));
+    group.add(new RevertSelectedChangesAction(Side.LEFT));
+    group.add(new RevertSelectedChangesAction(Side.RIGHT));
     group.add(Separator.getInstance());
 
     group.addAll(super.createEditorPopupActions());
@@ -493,14 +496,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
-    private final boolean myModifyOpposite;
+    @NotNull protected final Side myModifiedSide;
 
-    public ApplySelectedChangesActionBase(@Nullable String text,
-                                          @Nullable String description,
-                                          @Nullable Icon icon,
-                                          boolean modifyOpposite) {
-      super(text, description, icon);
-      myModifyOpposite = modifyOpposite;
+    public ApplySelectedChangesActionBase(@NotNull Side modifiedSide) {
+      myModifiedSide = modifiedSide;
     }
 
     @Override
@@ -512,14 +511,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       Side side = Side.fromLeft(editor == getEditor(Side.LEFT));
-      Editor modifiedEditor = getEditor(side.other(myModifyOpposite));
+      if (!isVisible(side)) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
 
+      Editor modifiedEditor = getEditor(myModifiedSide);
       if (!DiffUtil.isEditable(modifiedEditor)) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
-      e.getPresentation().setIcon(getIcon(side));
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(isSomeChangeSelected(side));
     }
@@ -529,13 +531,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
       final Side side = Side.fromLeft(editor == getEditor(Side.LEFT));
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
+      if (selectedChanges.isEmpty()) return;
 
-      Editor modifiedEditor = getEditor(side.other(myModifyOpposite));
+      Editor modifiedEditor = getEditor(myModifiedSide);
       String title = e.getPresentation().getText() + " selected changes";
       DiffUtil.executeWriteCommand(modifiedEditor.getDocument(), e.getProject(), title, new Runnable() {
         @Override
         public void run() {
-          apply(side, selectedChanges);
+          apply(selectedChanges);
         }
       });
     }
@@ -556,66 +559,70 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return false;
     }
 
-    @NotNull
-    protected abstract Icon getIcon(@NotNull Side side);
+    protected abstract boolean isVisible(@NotNull Side side);
 
     @CalledWithWriteLock
-    protected abstract void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes);
+    protected abstract void apply(@NotNull List<SimpleDiffChange> changes);
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public ReplaceSelectedChangesAction() {
-      super("Replace", null, AllIcons.Diff.Arrow, true);
-    }
+    public ReplaceSelectedChangesAction(@NotNull Side focusedSide) {
+      super(focusedSide.other());
 
-    @NotNull
-    @Override
-    protected Icon getIcon(@NotNull Side side) {
-      return side.isLeft() ? AllIcons.Diff.ArrowRight : AllIcons.Diff.Arrow;
+      getTemplatePresentation().setText("Replace");
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow));
     }
 
     @Override
-    protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+    protected boolean isVisible(@NotNull Side side) {
+      return side == myModifiedSide.other();
+    }
+
+    @Override
+    protected void apply(@NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        replaceChange(change, side);
+        replaceChange(change, myModifiedSide.other());
       }
     }
   }
 
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public AppendSelectedChangesAction() {
-      super("Insert", null, AllIcons.Diff.ArrowLeftDown, true);
-    }
+    public AppendSelectedChangesAction(@NotNull Side focusedSide) {
+      super(focusedSide.other());
 
-    @NotNull
-    @Override
-    protected Icon getIcon(@NotNull Side side) {
-      return side.isLeft() ? AllIcons.Diff.ArrowRightDown : AllIcons.Diff.ArrowLeftDown;
+      getTemplatePresentation().setText("Insert");
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown));
     }
 
     @Override
-    protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+    protected boolean isVisible(@NotNull Side side) {
+      return side == myModifiedSide.other();
+    }
+
+    @Override
+    protected void apply(@NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        appendChange(change, side);
+        appendChange(change, myModifiedSide.other());
       }
     }
   }
 
   private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public RevertSelectedChangesAction() {
-      super("Revert", null, AllIcons.Diff.Remove, false);
-    }
-
-    @NotNull
-    @Override
-    protected Icon getIcon(@NotNull Side side) {
-      return AllIcons.Diff.Remove;
+    public RevertSelectedChangesAction(@NotNull Side focusedSide) {
+      super(focusedSide);
+      getTemplatePresentation().setText("Revert");
+      getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
     }
 
     @Override
-    protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
+    protected boolean isVisible(@NotNull Side side) {
+      return side == myModifiedSide;
+    }
+
+    @Override
+    protected void apply(@NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        replaceChange(change, side.other());
+        replaceChange(change, myModifiedSide.other());
       }
     }
   }
