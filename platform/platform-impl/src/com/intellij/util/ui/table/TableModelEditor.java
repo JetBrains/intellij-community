@@ -365,12 +365,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
     @Override
     public boolean isEnabled(AnActionEvent e) {
-      for (T item : table.getSelectedObjects()) {
-        if (itemEditor.isRemovable(item)) {
-          return true;
-        }
-      }
-      return false;
+      return areSelectedItemsRemovable(table.getSelectionModel());
     }
   }
 }

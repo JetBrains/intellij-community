@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
 
-    toolbarDecorator = ToolbarDecorator.createDecorator(list)
+    toolbarDecorator = ToolbarDecorator.createDecorator(list, model)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -51,7 +52,13 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
           model.add(item);
           ListScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), item));
         }
-      });
+      })
+    .setRemoveActionUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        return areSelectedItemsRemovable(list.getSelectionModel());
+      }
+    });
   }
 
   @NotNull
