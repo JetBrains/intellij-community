@@ -129,7 +129,7 @@ public class ModelPopupFactory : JBPopupFactory() {
 
   override fun guessBestPopupLocation(editor: Editor): RelativePoint {
     println("editor = [${editor}]")
-    throw UnsupportedOperationException()
+    return RelativePoint(Point())
   }
 
   override fun isBestPopupLocationVisible(editor: Editor): Boolean {
