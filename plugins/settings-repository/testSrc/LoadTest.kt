@@ -3,7 +3,7 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
-import com.intellij.openapi.options.SchemesManagerImpl
+import com.intellij.openapi.options.SchemeManagerImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import org.hamcrest.CoreMatchers.equalTo
@@ -29,8 +29,8 @@ class LoadTest : TestCase() {
     }
   }
 
-  private fun createSchemesManager(dirPath: String): SchemesManagerImpl<TestScheme, TestScheme> {
-    return SchemesManagerImpl<TestScheme, TestScheme>(dirPath, object : BaseSchemeProcessor<TestScheme>() {
+  private fun createSchemesManager(dirPath: String): SchemeManagerImpl<TestScheme, TestScheme> {
+    return SchemeManagerImpl<TestScheme, TestScheme>(dirPath, object : BaseSchemeProcessor<TestScheme>() {
       override fun writeScheme(scheme: TestScheme?): Parent? {
         throw UnsupportedOperationException()
       }
