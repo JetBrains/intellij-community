@@ -98,14 +98,13 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       LOG.debug("everything dirty: " + ReflectionUtil.findCallerClass(2));
     }
 
-    final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
-      @Override
+    boolean done = myLife.doIfAlive(new Runnable() {
       public void run() {
         myDirtBuilder.everythingDirty();
       }
     });
 
-    if (lifeDrop.isDone()) {
+    if (done) {
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -198,9 +197,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         wasNotEmptyRef.set(!myDirtBuilder.isEmpty());
       }
     };
-    final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
+    boolean done = myLife.doIfAlive(runnable);
 
-    if (lifeDrop.isDone() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
+    if (done && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -382,15 +381,14 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @Override
   @Nullable
   public VcsInvalidated retrieveScopes() {
-    final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
-      @Override
+    boolean done = myLife.doIfAlive(new Runnable() {
       public void run() {
         myProgressHolder.takeNext(new DirtBuilder(myDirtBuilder));
         myDirtBuilder.reset();
       }
     });
 
-    if (lifeDrop.isDone()) {
+    if (done) {
       final VcsInvalidated invalidated = myProgressHolder.calculateInvalidated();
 
       myLife.doIfAlive(new Runnable() {
@@ -439,18 +437,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     return result;
   }
 
-  private static class LifeDrop {
-    private final boolean myDone;
-
-    private LifeDrop(boolean done) {
-      myDone = done;
-    }
-
-    public boolean isDone() {
-      return myDone;
-    }
-  }
-
   private static class SynchronizedLife {
     private LifeStages myStage;
     private final Object myLock;
@@ -474,13 +460,13 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
 
     // allow work under inner lock: inner class, not wide scope
-    public LifeDrop doIfAlive(final Runnable runnable) {
+    public boolean doIfAlive(final Runnable runnable) {
       synchronized (myLock) {
         if (LifeStages.ALIVE.equals(myStage)) {
           runnable.run();
-          return new LifeDrop(true);
+          return true;
         }
-        return new LifeDrop(false);
+        return false;
       }
     }
 
