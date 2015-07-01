@@ -2,7 +2,6 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
@@ -27,11 +26,11 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
     return listOf(*files)
   }
 
-  override fun processChildren(path: String, filter: Condition<String>, processor: (name: String, inputStream: InputStream) -> Boolean) {
+  override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
     var files: Array<out File>? = null
     synchronized (lock) {
       files = File(dir, path).listFiles(object: FilenameFilter {
-        override fun accept(dir: File, name: String) = filter.value(name)
+        override fun accept(dir: File, name: String) = filter(name)
       })
     }
 

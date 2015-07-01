@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsBundle
@@ -410,16 +409,15 @@ public class IcsManager : ApplicationLoadListener {
     autoSyncFuture = future
   }
 
-  open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider() {
+  open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
     override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
 
-    override fun processChildren(path: String, roamingType: RoamingType, filter: Condition<String>, processor: StreamProvider.ChildrenProcessor) {
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream) -> Boolean) {
       val fullPath = buildPath(path, roamingType, null)
-      val adaptedProcessor: (String, InputStream) -> Boolean = { name, input -> processor.process(name, input) }
-      repositoryManager.processChildren(fullPath, filter, adaptedProcessor)
+      repositoryManager.processChildren(fullPath, filter, processor)
 
       for (repository in readOnlySourcesManager.repositories) {
-        repository.processChildren(fullPath, filter, adaptedProcessor)
+        repository.processChildren(fullPath, filter, processor)
       }
     }
 
