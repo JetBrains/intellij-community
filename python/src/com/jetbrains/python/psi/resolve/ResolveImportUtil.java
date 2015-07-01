@@ -275,14 +275,10 @@ public class ResolveImportUtil {
     if (parent instanceof PyFileImpl) {
       PsiElement possibleResult = null;
       if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
-        // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
-        // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
         possibleResult = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
       }
 
-      // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
-      // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
       final PyModuleType moduleType = new PyModuleType((PyFile)parent);
       final List<? extends RatedResolveResult> results = moduleType.resolveMember(referencedName, null, AccessDirection.READ,
                                                                                   resolveContext);
@@ -315,7 +311,6 @@ public class ResolveImportUtil {
     }
     if (dir != null) {
       final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
-      //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       if (result != null) {
         return result;
       }
