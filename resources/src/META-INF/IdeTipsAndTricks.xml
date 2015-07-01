@@ -161,7 +161,7 @@
     <tipAndTrick file="QuickDocOnMouseMove.html"/>
     <tipAndTrick file="TerminalOpen.html"/>
     <tipAndTrick file="PrintKeywords.html"/>
-    <tipAndTrick file="ClosingTags.html"/>
+    <!--<tipAndTrick file="ClosingTags.html"/>-->
     <tipAndTrick file="ConstructorDocs.html"/>
     <tipAndTrick file="DiffChevron.html"/>
     <tipAndTrick file="LensMode.html"/>
