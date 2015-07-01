@@ -63,7 +63,7 @@ public class TestNGForkTest {
                               "      <class name=\"p.T1\"/>\n" +
                               "    </classes>\n" +
                               "  </test> <!-- mod1 -->\n" +
-                              "</suite> <!-- Default Suite -->\n", generatedSuite);
+                              "</suite> <!-- Default Suite -->\n", StringUtil.convertLineSeparators(generatedSuite));
           Assert.assertFalse(myStarted);
           myStarted = true;
           return 0;
