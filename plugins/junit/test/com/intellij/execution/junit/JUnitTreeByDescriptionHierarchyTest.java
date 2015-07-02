@@ -151,6 +151,41 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[testFinished name='TestA.testName|[1|]']\n" +
            "##teamcity[testSuiteFinished name='|[1|]']\n");
   }
+  
+  @Test
+  public void testParameterizedClassWithSameParameters() throws Exception {
+    final String className = "a.TestA";
+    final Description aTestClassDescription = Description.createSuiteDescription(className);
+    final ArrayList<Description> tests = new ArrayList<Description>();
+    for (String paramName : new String[]{"[0]", "[0]"}) {
+      final Description param1 = Description.createSuiteDescription(paramName);
+      aTestClassDescription.addChild(param1);
+      final Description testDescription = Description.createTestDescription(className, "testName" + paramName);
+      tests.add(testDescription);
+      param1.addChild(testDescription);
+    }
+    doTest(aTestClassDescription, tests,
+           //tree
+           "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://a.TestA.|[0|]']\n" +
+           "##teamcity[suiteTreeNode name='TestA.testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
+           "##teamcity[suiteTreeEnded name='|[0|]']\n" +
+           "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://a.TestA.|[0|]']\n" +
+           "##teamcity[suiteTreeNode name='TestA.testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
+           "##teamcity[suiteTreeEnded name='|[0|]']\n",
+           //start
+           "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[rootName name = 'TestA' comment = 'a' location = 'java:suite://a.TestA']\n" +
+           "##teamcity[testSuiteStarted name='|[0|]']\n" +
+           "##teamcity[testStarted name='TestA.testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
+           "\n" +
+           "##teamcity[testFinished name='TestA.testName|[0|]']\n" +
+           "##teamcity[testSuiteFinished name='|[0|]']\n" +
+           "##teamcity[testSuiteStarted name='|[0|]']\n" +
+           "##teamcity[testStarted name='TestA.testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
+           "\n" +
+           "##teamcity[testFinished name='TestA.testName|[0|]']\n" +
+           "##teamcity[testSuiteFinished name='|[0|]']\n");
+  }
 
   @Test
   public void test2SuitesWithTheSameTest() throws Exception {
