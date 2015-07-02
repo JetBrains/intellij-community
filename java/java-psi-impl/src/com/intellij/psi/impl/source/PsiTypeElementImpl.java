@@ -249,40 +249,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiImplUtil.markTypeAnnotations(this);
     PsiElement result = super.replace(newElement);
     PsiImplUtil.deleteTypeAnnotations((PsiTypeElement)result);
-
-    // We want to reformat method call arguments on method return type change because there is a possible situation that they are aligned
-    // and the change breaks the alignment.
-    // Example:
-    //     Object test(1,
-    //                 2) {}
-    // Suppose we're changing return type to 'MyCustomClass'. We get the following if parameter list is not reformatted:
-    //     MyCustomClass test(1,
-    //                 2) {}
-    PsiElement parent = result.getParent();
-    if (parent instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)parent;
-      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
-    }
-
-    // We cover situation like below here:
-    //     int test(int i, int j) {}
-    //     ...
-    //     int i = test(1,
-    //                  2);
-    // I.e. the point is to avoid code like below during changing 'test()' return type from 'int' to 'long':
-    //     long i = test(1,
-    //                  2);
-    else if (parent instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)parent;
-      if (variable.hasInitializer()) {
-        PsiExpression methodCallCandidate = variable.getInitializer();
-        if (methodCallCandidate instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)methodCallCandidate;
-          CodeEditUtil.markToReformat(methodCallExpression.getArgumentList().getNode(), true);
-        }
-      }
-    }
-
     return result;
   }
 
