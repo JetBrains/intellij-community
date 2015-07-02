@@ -22,6 +22,14 @@ public class Lifetime internal (eternal : Boolean = false) {
             }
             return res
         }
+
+        public fun create(parents : List<Lifetime>) : LifetimeDefinition {
+            val res = LifetimeDefinition()
+            for (parent in parents) {
+                parent.addNested(res)
+            }
+            return res
+        }
     }
 
     public val isEternal : Boolean = eternal

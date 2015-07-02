@@ -15,6 +15,8 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.github.krukow.clj_lang.PersistentList
+import com.jetbrains.reactiveidea.ServerEditorTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
@@ -25,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -33,24 +36,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.reactivemodel.Model
-import com.jetbrains.reactivemodel.Path
-import com.jetbrains.reactivemodel.ReactiveModel
+import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.Signal
-import com.jetbrains.reactivemodel.VariableSignal
-import com.jetbrains.reactivemodel.reaction
-import com.jetbrains.reactivemodel.varSignal
+import com.jetbrains.reactivemodel.models.ListModel
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
+import java.util.*
 
-public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
+public class DocumentsSynchronizer(val project: Project, val serverEditorTracker: ServerEditorTracker) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
-  //  var bJavaHost: EditorHost? = null
   var tabHost: TabViewHost? = null
   var viewHost: ProjectViewHost? = null
   val startupManager = StartupManager.getInstance(project)
+  val reactiveModels = VariableSignal(lifetime, "reactive models", ArrayList<ReactiveModel>())
 
 
   override fun getComponentName(): String = "DocumentsSynchronizer"
@@ -58,30 +59,41 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   private val messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect()
 
 
-  private fun guessDataContext(contextHint: MapModel): DataContext {
-    //todo: look at the hint!
-    val editorContext = contextHint.get("editor") as ListModel? ?: return DataContext.EMPTY_CONTEXT;
-    val editorIdx = (editorContext.get(3) as PrimitiveModel<*>).value
-    val editor = tabHost!!.getEditor(Integer.valueOf(editorIdx as String)).editor
+  private fun guessDataContext(contextHint: MapModel, model: MapModel): DataContext {
+    if(contextHint.get("editor") == null) {
+      return DataContext.EMPTY_CONTEXT;
+    }
+    val editor = (contextHint.get("editor") as ListModel)
+        .map { (it as PrimitiveModel<*>).value }
+        .drop(1)
+        .reverse()
+        .foldRight(Path(), { part, path -> path / part })
+        .getIn(model)!!.meta.valAt("editor") as Editor
     val component = editor.getContentComponent()
     return DataManager.getInstance().getDataContext(component)
   }
 
   override fun initComponent() {
-
     UIUtil.invokeLaterIfNeeded {
+      initTracker()
+
       val serverModel = serverModel(lifetime.lifetime, 12346)
-      serverModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel ->
+      serverModel.registerHandler(lifetime.lifetime, "invoke-action") { args: MapModel, model ->
         val actionName = (args["name"] as PrimitiveModel<String>).value
         val contextHint = args["context"] as MapModel
         val anAction = ActionManager.getInstance().getAction(actionName)
         if (anAction != null) {
-          val dataContext = guessDataContext(contextHint)
+          val dataContext = guessDataContext(contextHint, model)
           anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
         } else {
           println("can't find idea action $args")
         }
+        model
       }
+
+      val models = ArrayList(reactiveModels.value);
+      models.add(serverModel)
+      reactiveModels.value = models;
 
       startupManager.runWhenProjectIsInitialized(Runnable {
         val projectView = ProjectView.getInstance(project)
@@ -115,6 +127,48 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
           })
 
     }
+  }
+
+  public fun initTracker() {
+    var activeList: VariableSignal<List<Signal<Model?>>> =
+        reaction(true, "models", reactiveModels) { list: List<ReactiveModel> ->
+          list.map {
+            it.subscribe(it.lifetime, Path("tab-view"))
+          }
+        }
+
+    var signalList: VariableSignal<Signal<List<Model?>>> = reaction(true, "editor models", activeList) { list ->
+      unlist(list)
+    }
+
+    var flattenList: VariableSignal<List<Model?>?> = flatten(signalList)
+
+    var activeEditorModls = reaction(true, "tabs", flattenList) { list: List<Model?>? ->
+      if (list != null) {
+        list.map { model -> model?.meta?.valAt("host") as? TabViewHost }
+            .filterNotNull()
+            .map { host ->
+              host.reactiveModel.subscribe(lifetime.lifetime, host.path / host.editorsPath)
+            };
+      } else {
+        emptyList()
+      }
+    }
+
+    var activeEditors: VariableSignal<List<Editor>> = reaction(true, "editors", activeEditorModls) { tabs ->
+      tabs.filter { it.value != null }
+          .flatMap { editors ->
+            val value = editors.value as MapModel
+            value.values().filter {
+              it as MapModel
+              (it[EditorHost.activePath] as PrimitiveModel<*>).value as Boolean
+            }.map {
+              it!!.meta.valAt("editor") as Editor
+            }
+          }
+    }
+
+    serverEditorTracker.setActiveEditors(activeEditors)
   }
 
   private fun isClient(): Boolean = System.getProperty("com.jetbrains.reactiveidea.client") == "true"

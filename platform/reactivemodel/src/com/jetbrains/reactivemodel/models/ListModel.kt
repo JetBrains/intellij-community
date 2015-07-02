@@ -2,9 +2,13 @@ package com.jetbrains.reactivemodel.models
 
 import com.github.krukow.clj_ds.PersistentVector
 import com.github.krukow.clj_ds.Persistents
+import com.github.krukow.clj_lang.IPersistentMap
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.util.emptyMeta
 
 public data class ListModel(val list: PersistentVector<Model> = Persistents.vector()): AssocModel<Int, ListModel>, List<Model> by list {
+    override val meta: IPersistentMap<String, *>
+        get() = emptyMeta();
     override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitListModel(this)
 
     public constructor(l: List<Model>): this(Persistents.vector(l))

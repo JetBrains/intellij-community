@@ -164,16 +164,18 @@ fun <T1, T2, T3, T4, T> reaction(immediate: Boolean = false, name: String, s1: S
       { handler(it[0] as T1, it[1] as T2, it[2] as T3, it[3] as T4) })
 }
 
-fun <T> unlist(name: String, s: List<Signal<T>>): Signal<List<T>> {
-  return ReactGraph.register(
-      s = VariableSignal<List<T>>(Lifetime.create(Lifetime.Eternal),
-          name,
-          s.map { it.value }),
-      parents = s,
-      handler = { l -> l.map { it -> it as T } })
+fun <V, T> reaction(immediate: Boolean = false, name: String, s1: List<Signal<V>> , handler: (List<V>) -> T) : VariableSignal<T> {
+    return ReactGraph.register(VariableSignal<T>(Lifetime.create(Lifetime.Eternal),
+        name,
+        if (immediate) handler(s1.map { it.value }) else null as T),
+        s1,
+        { handler(it as List<V>) })
 }
 
-fun <T> unlist(s: List<Signal<T>>): Signal<List<T>> = unlist("unlist", s)
+
+fun <T> unlist(s: List<Signal<T>>, name: String = "unlist $s"): Signal<List<T>> {
+  return reaction(true, name, s) { l: List<T> -> l }
+}
 
 fun <T> flatten(input: Signal<Signal<T>?>): VariableSignal<T?> {
   val result = varSignal(name = "flatten($input)", initial = input.value?.value)
@@ -239,6 +241,4 @@ fun main(args: Array<String>): Unit {
   reaction(false, "print", ul) { l ->
     print(l)
   }
-
-  //nothing should be printed here
 }

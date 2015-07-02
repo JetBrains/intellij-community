@@ -3,6 +3,7 @@ package com.jetbrains.reactivemodel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapDiff
 import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.assocModelWithPath
 import java.util.ArrayList
 
@@ -11,10 +12,14 @@ public object Last
 public data class Path(val components: List<Any>) {
   public constructor(vararg cs: Any) : this(listOf(*cs))
 
-  public fun div(a: Any) : Path {
+  public fun div(a: Any): Path {
     val list = ArrayList(components)
     list.add(a)
     return Path(list)
+  }
+
+  public fun dropLast(n: Int) : Path {
+    return Path(components.take(components.size() - n))
   }
 }
 

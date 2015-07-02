@@ -15,11 +15,9 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.github.krukow.clj_lang.PersistentHashMap
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.BidirectionalMap
-import com.intellij.util.containers.HashMap
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
 import com.jetbrains.reactivemodel.getIn
@@ -27,48 +25,62 @@ import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
 import com.jetbrains.reactivemodel.util.Lifetime
-import gnu.trove.THashMap
-import gnu.trove.TIntObjectHashMap
 import gnu.trove.TObjectIntHashMap
 
-class TabViewHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel,
-                  val path: Path) {
-  val hosts = TIntObjectHashMap<EditorHost>()
+class TabViewHost(val lifetime: Lifetime,
+                  public val reactiveModel: ReactiveModel,
+                  public val path: Path) {
   val editorToIdx = TObjectIntHashMap<VirtualFile>()
+  val hostMeta = PersistentHashMap.create<String, Any>("host", this)
+  val editorsPath = "editors"
   var currentIdx = 0
 
   init {
     reactiveModel.transaction { m ->
-      setActiveEditor(m, 0)
+      path.putIn(m, MapModel(metadata = hostMeta))
     }
   }
 
   fun addEditor(editor: Editor, file: VirtualFile) {
-    hosts.put(currentIdx, EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, file.getName(), path / "editors" / currentIdx.toString(), editor, true))
+    EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, file.getName(),
+        path / editorsPath / currentIdx.toString(), editor, true)
     editorToIdx.put(file, currentIdx++)
-  }
-
-  fun getEditor(value: Int): EditorHost {
-    return hosts.get(value)
   }
 
   fun removeEditor(file: VirtualFile) {
     if (editorToIdx.containsKey(file)) {
       val res = editorToIdx.remove(file)
-      val editor = hosts.remove(res)
       reactiveModel.transaction { m ->
-        if (res == getActiveEditor(m)) {
-          if (hosts.keys().isNotEmpty()) {
-            return@transaction setActiveEditor(m, hosts.keys().first())
+        val editor = getEditorHost(res, m)
+        editor.lifetime.terminate()
+        if (isActive(m, res)) {
+          val candidate = getActiveEditorCandidate(m, res)
+          if(candidate != null) {
+            return@transaction setActive(m, candidate)
           }
         }
         m
       }
-      editor.lifetime.terminate()
     }
   }
 
-  private fun setActiveEditor(m: MapModel, index: Int) = (path / "active").putIn(m, PrimitiveModel(index))
+  private fun getEditorHost(idx: Int, m: MapModel): EditorHost {
+    return (path / editorsPath / idx.toString()).getIn(m)!!.meta.valAt("host") as EditorHost
+  }
 
-  private fun getActiveEditor(m: MapModel) = ((path / "active").getIn(m) as PrimitiveModel<*>).value as Int
+  private fun isActive(m: MapModel, idx: Int): Boolean {
+    return ((path / editorsPath / idx.toString() / EditorHost.activePath).getIn(m) as PrimitiveModel<*>).value == true
+  }
+
+  private fun setActive(m: MapModel, candidate: String): MapModel {
+    return (path / editorsPath / candidate / EditorHost.activePath).putIn(m, PrimitiveModel(true))
+  }
+
+  /**
+   * Get first convinient editor for set active if current active removed
+   */
+  private fun getActiveEditorCandidate(m: MapModel, removed: Int): String? {
+    return ((path / editorsPath).getIn(m) as MapModel).keySet()
+        .firstOrNull { Integer.valueOf(it) != removed }
+  }
 }

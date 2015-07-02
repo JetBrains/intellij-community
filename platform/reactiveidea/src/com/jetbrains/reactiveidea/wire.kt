@@ -80,7 +80,9 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   server.addEventListener("action", javaClass<JsonNode>()) { client, json, ackRequest ->
     val action = toModel(JSONObject(json.toString()))
     UIUtil.invokeLaterIfNeeded {
-      reactiveModel.dispatch(action)
+      reactiveModel.transaction { m ->
+        reactiveModel.dispatch(action, m)
+      }
     }
   }
 

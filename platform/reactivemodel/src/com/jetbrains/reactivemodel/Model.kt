@@ -16,7 +16,7 @@ public trait DiffVisitor<T> {
   fun visitPrimitiveDiff(primitiveDiff: PrimitiveDiff): T
 }
 
-public trait Model {
+public trait Model : HasMeta {
   fun diff(other: Model): Diff<Model>? {
     if (other == this) {
       return null

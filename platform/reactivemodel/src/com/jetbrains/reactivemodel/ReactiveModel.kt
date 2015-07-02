@@ -16,7 +16,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
   private val transactionGuard = Guard()
-  private val actionToHandler: MutableMap<String, (MapModel) -> Unit> = HashMap()
+  private val actionToHandler: MutableMap<String, (MapModel, MapModel) -> MapModel> = HashMap()
 
   companion object {
     private var cur : ReactiveModel? = null
@@ -77,22 +77,23 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     }
   }
 
-  public fun registerHandler(l: Lifetime, action: String, handler : (MapModel) -> Unit) {
+  public fun registerHandler(l: Lifetime, action: String, handler : (MapModel, MapModel) -> MapModel) {
     actionToHandler[action] = handler
     l += {actionToHandler.remove(action)}
   }
 
-  fun dispatch(model: Model) {
-    model as MapModel
+  fun dispatch(actionModel: Model, model: MapModel): MapModel {
+    actionModel as MapModel
     cur = this
-    val actionName = (model["action"] as PrimitiveModel<String>).value
+    val actionName = (actionModel["action"] as PrimitiveModel<String>).value
     val handler = actionToHandler[actionName]
     if (handler != null) {
-      handler(model["args"] as MapModel)
+      return handler(actionModel["args"] as MapModel, model)
     } else {
-      println("unknown action $model")
+      println("unknown action $actionModel")
     }
-    println(model)
+    println(actionModel)
+    return model
   }
 }
 

@@ -58,7 +58,9 @@ public abstract class CodeInsightAction extends AnAction {
         final Runnable action = new Runnable() {
           @Override
           public void run() {
-            if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+            if (!ApplicationManager.getApplication().isUnitTestMode() &&
+                !ApplicationManager.getApplication().isServer() &&
+                !editor.getContentComponent().isShowing()) return;
             handler.invoke(project, editor, psiFile);
           }
         };

@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.jetbrains.reactivemodel.models
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.NotNull;
+import com.github.krukow.clj_lang.IPersistentMap
 
-import java.util.List;
-
-public interface EditorTracker {
-  @NotNull
-  List<Editor> getActiveEditors();
-
-  void addEditorTrackerListener(@NotNull EditorTrackerListener listener, @NotNull Disposable parentDisposable);
+public interface HasMeta {
+  val meta: IPersistentMap<String, *>
 }

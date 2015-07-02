@@ -42,7 +42,7 @@ public class LookupHost(val reactiveModel: ReactiveModel, val editorPath: Path, 
       }
       metadata.clear()
     }
-    reactiveModel.registerHandler(life.lifetime, "insert-item") { args ->
+    reactiveModel.registerHandler(life.lifetime, "insert-item") { args, model ->
 
       val item_path = args["item-path"] as ListModel
       val path = path(item_path)
@@ -56,6 +56,7 @@ public class LookupHost(val reactiveModel: ReactiveModel, val editorPath: Path, 
             UndoConfirmationPolicy.DEFAULT,
             editor.getDocument())
       }
+      model
     }
   }
 

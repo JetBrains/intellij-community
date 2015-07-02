@@ -1,11 +1,17 @@
 package com.jetbrains.reactivemodel.models
 
+import com.github.krukow.clj_lang.IPersistentMap
+import com.github.krukow.clj_lang.PersistentHashMap
 import com.jetbrains.reactivemodel.Diff
 import com.jetbrains.reactivemodel.DiffVisitor
 import com.jetbrains.reactivemodel.Model
 import com.jetbrains.reactivemodel.ModelVisitor
+import com.jetbrains.reactivemodel.util.emptyMeta
 
-public data class PrimitiveModel<T: Any>(public val value: T): Model {
+public data class PrimitiveModel<T: Any>(public val value: T, val metadata: IPersistentMap<String, *> = emptyMeta()): Model {
+    override val meta: IPersistentMap<String, *>
+        get() = metadata;
+
     override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitPrimitiveModel(this)
 
     override fun patch(diff: Diff<Model>): Model {

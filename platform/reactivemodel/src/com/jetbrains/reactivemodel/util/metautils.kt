@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.jetbrains.reactivemodel.util
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.NotNull;
+import com.github.krukow.clj_lang.IPersistentMap
+import com.github.krukow.clj_lang.PersistentHashMap
 
-import java.util.List;
 
-public interface EditorTracker {
-  @NotNull
-  List<Editor> getActiveEditors();
-
-  void addEditorTrackerListener(@NotNull EditorTrackerListener listener, @NotNull Disposable parentDisposable);
+public fun withEmptyMeta<K, V>(map : PersistentHashMap<K, V>): PersistentHashMap<K, V> {
+  return withMeta(map, emptyMeta());
 }
+
+public fun withMeta<K, V>(map : PersistentHashMap<K, V>, meta: IPersistentMap<String, *>): PersistentHashMap<K, V> {
+  return map.withMeta(meta) as PersistentHashMap<K, V>;
+}
+
+public fun emptyMeta() : IPersistentMap<String, *>  = PersistentHashMap.EMPTY as IPersistentMap<String, *>

@@ -29,6 +29,7 @@ import com.jetbrains.reactivemodel.models.MapModel;
 import com.jetbrains.reactivemodel.models.PrimitiveModel;
 import com.jetbrains.reactivemodel.util.Lifetime;
 import com.jetbrains.reactivemodel.util.LifetimeDefinition;
+import com.jetbrains.reactivemodel.util.UtilPackage;
 import kotlin.Function2;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,8 @@ public class ModelListPopup extends ListPopupImpl {
     myModel.transaction(new Function1<MapModel, MapModel>() {
       @Override
       public MapModel invoke(MapModel mapModel) {
-        return (MapModel)ReactivemodelPackage.putIn(myPath.div("selectedIndex"), mapModel, new PrimitiveModel<Integer>(index));
+        return (MapModel)ReactivemodelPackage.putIn(myPath.div("selectedIndex"), mapModel,
+                                                    new PrimitiveModel<Integer>(index, UtilPackage.emptyMeta()));
       }
     });
   }
@@ -110,7 +112,7 @@ public class ModelListPopup extends ListPopupImpl {
     assert editorHost != null;
     final Path editorPath = editorHost.getPath();
     final MapModel context =
-      new MapModel(ContainerUtil.newHashMap(new Pair<String, Model>("editor", ReactivemodelPackage.toList(editorPath))));
+      new MapModel(ContainerUtil.newHashMap(new Pair<String, Model>("editor", ReactivemodelPackage.toList(editorPath))), UtilPackage.emptyMeta());
     show(context);
   }
 
@@ -135,18 +137,18 @@ public class ModelListPopup extends ListPopupImpl {
         int i = 0;
         for (final Object value : listStep.getValues()) {
           list.put(String.valueOf(i++), new MapModel(new HashMap<String, Model>() {{
-            put("text", new PrimitiveModel<String>(listStep.getTextFor(value)));
-          }}));
+            put("text", new PrimitiveModel<String>(listStep.getTextFor(value), UtilPackage.emptyMeta()));
+          }}, UtilPackage.emptyMeta()));
         }
-        mapModel = (MapModel)ReactivemodelPackage.putIn(myPath.div("list"), mapModel, new MapModel(list));
+        mapModel = (MapModel)ReactivemodelPackage.putIn(myPath.div("list"), mapModel, new MapModel(list, UtilPackage.emptyMeta()));
         final String title = listStep.getTitle();
         if (title != null) {
-          mapModel = (MapModel)ReactivemodelPackage.putIn(myPath.div("title"), mapModel, new PrimitiveModel<String>(title));
+          mapModel = (MapModel)ReactivemodelPackage.putIn(myPath.div("title"), mapModel, new PrimitiveModel<String>(title, UtilPackage.emptyMeta()));
         }
         if (context != null) {
           mapModel = (MapModel)ReactivemodelPackage.putIn(myPath.div("context"), mapModel, context);
         }
-        mapModel = (MapModel)ReactivemodelPackage.putIn(myPath.div("selectedIndex"), mapModel, new PrimitiveModel<Integer>(mySelectedIndex));
+        mapModel = (MapModel)ReactivemodelPackage.putIn(myPath.div("selectedIndex"), mapModel, new PrimitiveModel<Integer>(mySelectedIndex, UtilPackage.emptyMeta()));
         return mapModel;
       }
     });
