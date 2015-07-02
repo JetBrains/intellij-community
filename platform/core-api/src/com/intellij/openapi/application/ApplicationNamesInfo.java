@@ -62,7 +62,8 @@ public class ApplicationNamesInfo {
     final Element names = rootElement.getChild(ELEMENT_NAMES);
     myProductName = names.getAttributeValue(ATTRIBUTE_PRODUCT);
     myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
-    myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase());
+    // RoboVM: need to change this for project directory
+    myLowercaseProductName = myProductName;
     myScriptName = names.getAttributeValue(ATTRIBUTE_SCRIPT);
   }
 
