@@ -1,8 +1,8 @@
 <component>
-  <version major="1" minor="0" eap="true"/>
+  <version major="1" minor="0" strict="1.0.0" eap="true"/>
   <company name="RoboVM AB" url="http://robovm.com"/>
-  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <install-over minbuild="0.1" maxbuild="999.9999" version="0"/>
+  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__" apiVersion="135.1286"/>
+  <install-over minbuild="0.1" maxbuild="999.999999" version="0"/>
   <logo url="/robovm_studio_logo.png" textcolor="aaaaaa" progressColor="FDA916" progressY="230" progressTailIcon="/robovm_studio_progress_tail.png"/>
   <about url="/robovm_studio_about.png" foreground="aaaaaa" copyrightForeground="aaaaaa" linkColor="ff7f00" logoX="300" logoY="265" logoW="75" logoH="30"/>
   <icon size32="/icon_rvm.png" size16="/icon_rvm_small.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_rvm_128.png" ico="idea_rvm.ico"/>
@@ -21,7 +21,7 @@
   <support url="https://www.jetbrains.com/support/idea/index.html"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
             release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
-  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/index.html"/>
+  <whatsnew url="http://robovm.com/blog"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
   <third-party url="http://www.jetbrains.org/"/>
