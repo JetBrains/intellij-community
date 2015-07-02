@@ -59,7 +59,7 @@ public abstract class GitChangesSaver {
   public abstract void refresh();
 
   /**
-   * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
+   * Returns an instance of the proper GitChangesSaver depending on the given save changes policy.
    * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
   @NotNull
@@ -69,16 +69,9 @@ public abstract class GitChangesSaver {
                                          @NotNull ProgressIndicator progressIndicator,
                                          @NotNull String stashMessage,
                                          @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
-    switch (saveMethod) {
-      case STASH: return new GitStashChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
-      case SHELVE: return new GitShelveChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
+    if (saveMethod == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
+      return new GitShelveChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
     }
-    return getDefaultSaver(project, platformFacade, git, progressIndicator, stashMessage);
-  }
-
-  // In the case of illegal value in the settings or impossibility to get the settings.
-  private static GitChangesSaver getDefaultSaver(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull Git git,
-                                                 @NotNull ProgressIndicator progressIndicator, @NotNull String stashMessage) {
     return new GitStashChangesSaver(project, platformFacade, git, progressIndicator, stashMessage);
   }
 
