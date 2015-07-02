@@ -669,15 +669,6 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void doOKAction(boolean findAll) {
-    if (myResultsPreviewTable != null &&
-        myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX &&
-        myResultsPreviewTable.getSelectedRowCount() != 0 &&
-        !myModel.isReplaceState()
-       ) {
-      navigateToSelectedUsage(myResultsPreviewTable);
-      return;
-    }
-
     FindModel validateModel = myModel.clone();
     applyTo(validateModel, findAll);
 
