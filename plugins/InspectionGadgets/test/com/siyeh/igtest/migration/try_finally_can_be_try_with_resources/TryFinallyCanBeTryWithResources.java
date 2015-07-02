@@ -49,4 +49,17 @@ class TryFinallyCanBeTryWithResources {
       in.close();
     }
   }
+
+  public void read4() throws IOException {
+    FileInputStream fileInputStream = null;
+    FileInputStream bufferedInputStream = null;
+    try {
+      fileInputStream = new FileInputStream("s");
+      bufferedInputStream = null; // don't report, one of the vars is reassigned
+      bufferedInputStream = new FileInputStream("fileInputStream");
+    } finally {
+      bufferedInputStream.close();
+      fileInputStream.close();
+    }
+  }
 }

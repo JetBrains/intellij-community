@@ -548,16 +548,13 @@ public abstract class ChooseByNameBase {
 
                 EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
                 if (queue instanceof IdeEventQueue) {
-                  if (!((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
+                  if (((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
                     Component root = SwingUtilities.getRoot(myTextField);
-                    if (root != null && root.isShowing()) {
-                      IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
-                      return;
+                    if (root == null || root.isShowing()) {
+                      hideHint();
                     }
                   }
                 }
-
-                hideHint();
               }
             }
           }, 5);

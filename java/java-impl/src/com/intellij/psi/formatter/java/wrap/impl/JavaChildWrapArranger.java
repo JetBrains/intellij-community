@@ -72,9 +72,9 @@ public class JavaChildWrapArranger {
   public Wrap arrange(ASTNode child,
                       ASTNode parent,
                       CommonCodeStyleSettings settings,
+                      JavaCodeStyleSettings javaSettings,
                       Wrap suggestedWrap,
                       AbstractJavaBlock reservedWrapsProvider) {
-    final JavaCodeStyleSettings javaSettings = settings.getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
     ASTNode directParent = child.getTreeParent();
     int role = ((CompositeElement)directParent).getChildRole(child);
 

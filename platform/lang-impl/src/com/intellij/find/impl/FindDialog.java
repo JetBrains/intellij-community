@@ -319,6 +319,67 @@ public class FindDialog extends DialogWrapper {
         }
       );
     }
+
+    if (!myModel.isReplaceState()) {
+      makeResultsPreviewActionOverride(
+        comboBox,
+        KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0),
+        "choosePrevious",
+        new Runnable() {
+          @Override
+          public void run() {
+            int row = myResultsPreviewTable.getSelectedRow();
+            if (row > 0) myResultsPreviewTable.setRowSelectionInterval(row - 1, row - 1);
+          }
+        }
+      );
+
+      makeResultsPreviewActionOverride(
+        comboBox,
+        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0),
+        "chooseNext",
+        new Runnable() {
+          @Override
+          public void run() {
+            int row = myResultsPreviewTable.getSelectedRow();
+            if (row >= 0 && row + 1 < myResultsPreviewTable.getRowCount()) {
+              myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
+            }
+          }
+        }
+      );
+
+      new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (myResultsPreviewTable != null &&
+              myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
+            navigateToSelectedUsage(myResultsPreviewTable);
+          }
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox);
+    }
+  }
+
+  private void makeResultsPreviewActionOverride(final JComboBox component, KeyStroke keyStroke, String newActionKey, final Runnable newAction) {
+    InputMap inputMap = component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    Object action = inputMap.get(keyStroke);
+    inputMap.put(keyStroke, newActionKey);
+    final Action previousAction = action != null ? component.getActionMap().get(action) : null;
+    component.getActionMap().put(newActionKey, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (previousAction != null && component.isPopupVisible()) {
+          previousAction.actionPerformed(e);
+          return;
+        }
+
+        if(myResultsPreviewTable != null &&
+          myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
+          newAction.run();
+        }
+      }
+    });
   }
 
   private void handleComboBoxValueChanged(@NotNull ComboBox comboBox) {

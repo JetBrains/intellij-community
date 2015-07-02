@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public interface I {}
+interface I {}
 class A implements I {}
 class B implements I {}
 
@@ -23,7 +23,7 @@ class U {
 
     } else {
       if (o instanceof A) {
-        B bb = (B)o;
+        B bb = <warning descr="Cast '(B)o' conflicts with surrounding 'instanceof' check">(B)o</warning>;
       } else {
       }
     }
