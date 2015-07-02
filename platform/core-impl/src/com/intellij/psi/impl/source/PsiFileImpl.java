@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected IElementType myContentElementType;
   private long myModificationStamp;
 
-  protected PsiFile myOriginalFile = null;
+  protected PsiFile myOriginalFile;
   private final FileViewProvider myViewProvider;
   private volatile Reference<StubTree> myStub;
   private boolean myInvalidated;
@@ -555,7 +555,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
   private static final Comparator<PsiFile> FILE_BY_LANGUAGE_ID = new Comparator<PsiFile>() {
     @Override
-    public int compare(PsiFile o1, PsiFile o2) {
+    public int compare(@NotNull PsiFile o1, @NotNull PsiFile o2) {
       return o1.getLanguage().getID().compareTo(o2.getLanguage().getID());
     }
   };
@@ -944,14 +944,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return this == another;
   }
 
-  private static final Key<SoftReference<StubTree>> STUB_TREE_IN_PARSED_TREE = Key.create("STUB_TREE_IN_PARSED_TREE");
+  private static final Key<Reference<StubTree>> STUB_TREE_IN_PARSED_TREE = Key.create("STUB_TREE_IN_PARSED_TREE");
   private final Object myStubFromTreeLock = new Object();
 
+  @NotNull
   public StubTree calcStubTree() {
     FileElement fileElement = calcTreeElement();
+    StubTree tree = SoftReference.dereference(fileElement.getUserData(STUB_TREE_IN_PARSED_TREE));
+    if (tree != null) {
+      return tree;
+    }
     synchronized (myStubFromTreeLock) {
-      SoftReference<StubTree> ref = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
-      StubTree tree = SoftReference.dereference(ref);
+      tree = SoftReference.dereference(fileElement.getUserData(STUB_TREE_IN_PARSED_TREE));
 
       if (tree == null) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
