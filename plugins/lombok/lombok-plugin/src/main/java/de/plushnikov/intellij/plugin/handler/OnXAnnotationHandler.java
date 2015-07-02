@@ -46,12 +46,12 @@ public class OnXAnnotationHandler {
       return false;
     }
 
-    String parameterName = nameValuePair.getFirstChild().getText();
+    String parameterName = nameValuePair.getName();
     if (!ONX_PARAMETERS.contains(parameterName)) {
       return false;
     }
     
-    PsiElement containingAnnotation = nameValuePair.getContext().getPrevSibling().getContext();
+    PsiElement containingAnnotation = nameValuePair.getContext().getContext();
     return containingAnnotation instanceof PsiAnnotation && ONXABLE_ANNOTATIONS.contains(((PsiAnnotation) containingAnnotation).getQualifiedName());
   }
   
