@@ -46,7 +46,7 @@ public class UploadApplicationAction extends AnAction {
   public void update(AnActionEvent e) {
     final Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(
-      project != null && !ProjectFacetManager.getInstance(project).getFacets(AppEngineFacet.ID).isEmpty());
+      project != null && ProjectFacetManager.getInstance(project).hasFacets(AppEngineFacet.ID));
 
     if (project != null) {
       String text;
