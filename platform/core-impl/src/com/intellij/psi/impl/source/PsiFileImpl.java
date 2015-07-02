@@ -657,7 +657,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
     StubTree stubHolder = (StubTree)tree;
-    final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(getViewProvider());
 
     synchronized (PsiLock.LOCK) {
       if (getTreeElement() != null) return null;
@@ -665,17 +664,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      final PsiFileStub[] stubRoots = stubHolder.getRoot().getStubRoots();
-      int matchingRoot = 0;
-      for (Pair<IStubFileElementType, PsiFile> root : roots) {
-        final PsiFileStub matchingStub = stubRoots[matchingRoot++];
-        //noinspection unchecked
-        ((StubBase)matchingStub).setPsi(root.second);
-        final StubTree stubTree = new StubTree(matchingStub);
-        stubTree.setDebugInfo("created in getStubTree()");
-        if (root.second == this) stubHolder = stubTree;
-        ((PsiFileImpl)root.second).myStub = new SoftReference<StubTree>(stubTree);
-      }
+      //noinspection unchecked
+      ((StubBase)stubHolder.getRoot()).setPsi(this);
+      myStub = new SoftReference<StubTree>(stubHolder);
       return stubHolder;
     }
   }
