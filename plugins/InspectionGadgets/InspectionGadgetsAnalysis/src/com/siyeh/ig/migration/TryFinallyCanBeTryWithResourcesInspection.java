@@ -310,7 +310,6 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return;
       }
       final PsiStatement[] tryBlockStatements = tryBlock.getStatements();
-      boolean found = false;
       for (PsiVariable variable : variables) {
         final boolean hasInitializer;
         final PsiExpression initializer = variable.getInitializer();
@@ -322,16 +321,9 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           hasInitializer = !PsiType.NULL.equals(type);
         }
         final int index = findInitialization(tryBlockStatements, variable, hasInitializer);
-        if (index >= 0 ^ hasInitializer) {
-          if (isVariableUsedOutsideContext(variable, tryBlock)) {
-            continue;
-          }
-          found = true;
-          break;
+        if (!(index >= 0 ^ hasInitializer) || isVariableUsedOutsideContext(variable, tryBlock)) {
+          return;
         }
-      }
-      if (!found) {
-        return;
       }
       registerStatementError(tryStatement);
     }
