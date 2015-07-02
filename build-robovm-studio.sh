@@ -10,7 +10,7 @@ cd ../..
 ant -f build-robovm.xml
 rm -rf out/robovm-studio
 mkdir -p out/robovm-studio
-version=$(<build-robovm/build.txt)
+version=$(<build-robovm/version.txt)
 cp out/artifacts/*.mac.zip out/robovm-studio/robovm-studio-$version.zip
 cd out/robovm-studio
 unzip robovm-studio-$version.zip
