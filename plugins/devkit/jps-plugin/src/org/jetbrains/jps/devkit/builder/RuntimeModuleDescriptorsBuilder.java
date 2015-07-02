@@ -61,6 +61,7 @@ public class RuntimeModuleDescriptorsBuilder extends TargetBuilder<BuildRootDesc
       Collection<String> urls = JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly().classes().getUrls();
       hash = 31 * hash + urls.hashCode();
     }
+    hash = hash * 1000 + RepositoryConstants.VERSION_NUMBER;
     if (Comparing.equal(hash, storage.getState())) {
       return;
     }
@@ -78,7 +79,7 @@ public class RuntimeModuleDescriptorsBuilder extends TargetBuilder<BuildRootDesc
       }
     };
     new RuntimeModuleDescriptorsGenerator(project, messageHandler).generateForDevelopmentMode();
-    storage.setState(hash*1000 + RepositoryConstants.VERSION_NUMBER);
+    storage.setState(hash);
   }
 
   @NotNull
