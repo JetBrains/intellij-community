@@ -21,6 +21,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 public class CutAction extends AnAction implements DumbAware {
+  public CutAction() {
+    setEnabledInModalContext(true);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     CutProvider provider = PlatformDataKeys.CUT_PROVIDER.getData(dataContext);
