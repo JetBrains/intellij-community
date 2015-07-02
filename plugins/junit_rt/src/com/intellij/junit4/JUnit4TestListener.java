@@ -274,7 +274,7 @@ public class JUnit4TestListener extends RunListener {
     try {
       final Throwable cause = assertion.getCause();
       if (isComparisonFailure(cause)) {
-        return ComparisonFailureData.create(assertion);
+        return ComparisonFailureData.create(cause);
       }
     }
     catch (Throwable ignore) {
