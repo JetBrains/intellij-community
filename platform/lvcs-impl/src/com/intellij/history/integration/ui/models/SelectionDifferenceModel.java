@@ -16,14 +16,16 @@
 
 package com.intellij.history.integration.ui.models;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.actions.DocumentFragmentContent;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.FragmentContent;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 
 public class SelectionDifferenceModel extends FileDifferenceModel {
@@ -96,10 +98,11 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
     int fromOffset = d.getLineStartOffset(myFrom);
     int toOffset = d.getLineEndOffset(myTo);
 
-    return FragmentContent.fromRangeMarker(d.createRangeMarker(fromOffset, toOffset), myProject);
+    DocumentContent documentContent = DiffContentFactory.getInstance().create(myProject, d);
+    return new DocumentFragmentContent(myProject, documentContent, new TextRange(fromOffset, toOffset));
   }
 
-  private SimpleContent getDiffContent(Revision r, RevisionProcessingProgress p) {
+  private DocumentContent getDiffContent(Revision r, RevisionProcessingProgress p) {
     return createSimpleDiffContent(getContentOf(r, p), r.findEntry());
   }
 
