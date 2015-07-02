@@ -130,10 +130,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
           mutable = itemEditor.clone(item, false);
           modifiedToOriginal.put(mutable, item);
           originalToModified.put(item, mutable);
-
-          List<T> items = getItems();
-          // silently replace item
-          items.set(index == -1 ? ContainerUtil.indexOfIdentity(items, item) : index, mutable);
+          silentlyReplaceItem(item, mutable, index);
         }
         return mutable;
       }
@@ -146,6 +143,12 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     public void process(@NotNull TObjectObjectProcedure<T, T> procedure) {
       modifiedToOriginal.forEachEntry(procedure);
     }
+  }
+
+  protected void silentlyReplaceItem(@NotNull T oldItem, @NotNull T newItem, int index) {
+    // silently replace item
+    List<T> items = getItems();
+    items.set(index == -1 ? ContainerUtil.indexOfIdentity(items, oldItem) : index, newItem);
   }
 
   protected final boolean areSelectedItemsRemovable(@NotNull ListSelectionModel selectionMode) {
