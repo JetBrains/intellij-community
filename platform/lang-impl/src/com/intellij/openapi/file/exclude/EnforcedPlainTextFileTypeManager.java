@@ -48,7 +48,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     ProjectManager.getInstance().addProjectManagerListener(this);
   }
 
-  public boolean isMarkedAsPlainText(VirtualFile file) {
+  public boolean isMarkedAsPlainText(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
     if (!mySetsInitialized) {
       synchronized (LOCK) {
@@ -77,15 +77,15 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }
 
-  public void markAsPlainText(@NotNull Project project, VirtualFile... files) {
+  public void markAsPlainText(@NotNull Project project, @NotNull VirtualFile... files) {
     setPlainTextStatus(project, true, files);
   }
 
-  public void resetOriginalFileType(@NotNull Project project, VirtualFile... files) {
+  public void resetOriginalFileType(@NotNull Project project, @NotNull VirtualFile... files) {
     setPlainTextStatus(project, false, files);
   }
 
-  private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, final VirtualFile... files) {
+  private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, @NotNull final VirtualFile... files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
