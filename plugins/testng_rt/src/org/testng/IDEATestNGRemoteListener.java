@@ -31,6 +31,14 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public synchronized void onStart(final ISuite suite) {
     myPrintStream.println("##teamcity[enteredTheMatrix]");
     if (suite != null) {
+      final List<ITestNGMethod> allMethods = suite.getAllMethods();
+      if (allMethods != null) {
+        int count = 0;
+        for (ITestNGMethod method : allMethods) {
+          if (method.isTest()) count++;
+        }
+        myPrintStream.println("##teamcity[testCount count = \'" + count + "\']");
+      }
       myPrintStream.println("##teamcity[rootName name = '" + suite.getName() + "' location = 'file://" + suite.getXmlSuite().getFileName() + "']");
     }
   }
@@ -148,9 +156,6 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount, boolean config) {
-    if (!config) {
-      myPrintStream.println("##teamcity[testCount count=\'1\']");
-    }
     myParamsMap.put(result, paramString);
     onSuiteStart(result.getTestHierarchy(), result, true);
     final String className = result.getClassName();
