@@ -244,6 +244,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       setAutoselectOnMouseMove(false).
       setMayBeParent(true).
       setDimensionServiceKey(myDimensionServiceKey).
+      setUseDimensionServiceForXYLocation(myDimensionServiceKey != null).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
       setItemChoosenCallback(itemCallback).
