@@ -27,8 +27,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.FinalUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -338,9 +338,6 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   static boolean isVariableUsedOutsideContext(PsiVariable variable, PsiElement context) {
-    if (!FinalUtils.canBeFinal(variable)) {
-      return true;
-    }
     final VariableUsedOutsideContextVisitor visitor = new VariableUsedOutsideContextVisitor(variable, context);
     final PsiElement declarationScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     if (declarationScope == null) {
@@ -465,35 +462,44 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return aClass != null && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
-  static int findInitialization(PsiElement[] elements, PsiVariable variable,
-    boolean hasInitializer) {
+  static int findInitialization(PsiElement[] elements, PsiVariable variable, boolean hasInitializer) {
     int result = -1;
     final int statementsLength = elements.length;
     for (int i = 0; i < statementsLength; i++) {
       final PsiElement element = elements[i];
-      if (!(element instanceof PsiExpressionStatement)) {
-        continue;
-      }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)element;
-      final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiAssignmentExpression)) {
-        continue;
-      }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-      final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
-        continue;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
-      final PsiElement target = referenceExpression.resolve();
-      if (variable.equals(target)) {
+      if (isNormalAssignment(element, variable)) {
         if (result >= 0 && !hasInitializer) {
           return -1;
         }
+        else if (hasInitializer) {
+          return i;
+        }
         result = i;
+      }
+      else if (VariableAccessUtils.variableIsAssigned(variable, element)) {
+        return hasInitializer ? i : -1;
       }
     }
     return result;
+  }
+
+  private static boolean isNormalAssignment(PsiElement element, PsiVariable variable) {
+    if (!(element instanceof PsiExpressionStatement)) {
+      return false;
+    }
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)element;
+    final PsiExpression expression = expressionStatement.getExpression();
+    if (!(expression instanceof PsiAssignmentExpression)) {
+      return false;
+    }
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    final PsiExpression lhs = assignmentExpression.getLExpression();
+    if (!(lhs instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+    final PsiElement target = referenceExpression.resolve();
+    return variable.equals(target);
   }
 
   static class VariableUsedOutsideContextVisitor extends JavaRecursiveElementVisitor {
