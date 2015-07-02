@@ -211,7 +211,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
-            saveTemplate(t, templateSetElement);
+            TemplateImpl def = getDefaultTemplate(t);
+            templateSetElement.addContent(serializeTemplate(t, def == null ? null : def.getTemplateContext()));
           }
         }
 
@@ -406,8 +407,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  private TemplateImpl addTemplate(String key, String string, String group, String description, String shortcut, boolean isDefault,
-                                   final String id) {
+  private static TemplateImpl createTemplate(String key, String string, String group, String description, String shortcut, String id) {
     TemplateImpl template = new TemplateImpl(key, string, group);
     template.setId(id);
     template.setDescription(description);
@@ -422,9 +422,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
     else {
       template.setShortcutChar(DEFAULT_CHAR);
-    }
-    if (isDefault) {
-      myDefaultTemplates.put(TemplateKey.keyOf(template), template);
     }
     return template;
   }
@@ -469,7 +466,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Nullable
-  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, ClassLoader classLoader) throws InvalidDataException {
+  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, @NotNull ClassLoader classLoader) throws InvalidDataException {
     if (!TEMPLATE_SET.equals(element.getName())) {
       throw new InvalidDataException();
     }
@@ -482,7 +479,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     Map<String, TemplateImpl> created = new LinkedHashMap<String,  TemplateImpl>();
 
     for (Element child : element.getChildren(TEMPLATE)) {
-      TemplateImpl template = readTemplateFromElement(isDefault, groupName, child, classLoader);
+      TemplateImpl template = readTemplateFromElement(groupName, child, classLoader);
+      if (isDefault) {
+        myDefaultTemplates.put(TemplateKey.keyOf(template), template);
+      }
       TemplateImpl existing = getTemplate(template.getKey(), template.getGroupName());
       boolean defaultTemplateModified = isDefault && (myState.deletedKeys.contains(TemplateKey.keyOf(template)) ||
                                                       myTemplatesById.containsKey(template.getId()) ||
@@ -523,10 +523,12 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return result.isEmpty() ? null : result;
   }
 
-  private TemplateImpl readTemplateFromElement(final boolean isDefault,
-                                               final String groupName,
-                                               final Element element,
-                                               ClassLoader classLoader) throws InvalidDataException {
+  public static TemplateImpl readTemplateFromElement(final String groupName,
+                                                      final Element element,
+                                                      @NotNull ClassLoader classLoader) throws InvalidDataException {
+    if (!TEMPLATE.equals(element.getName())) {
+      throw new InvalidDataException();
+    }
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -534,9 +536,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      if (classLoader == null) {
-        classLoader = getClass().getClassLoader();
-      }
       ResourceBundle bundle = AbstractBundle.getResourceBundle(resourceBundle, classLoader);
       description = bundle.getString(key);
     }
@@ -544,7 +543,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       description = element.getAttributeValue(DESCRIPTION);
     }
     String shortcut = element.getAttributeValue(SHORTCUT);
-    TemplateImpl template = addTemplate(name, value, groupName, description, shortcut, isDefault, id);
+    TemplateImpl template = createTemplate(name, value, groupName, description, shortcut, id);
 
     template.setToReformat(Boolean.parseBoolean(element.getAttributeValue(TO_REFORMAT)));
     template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
@@ -572,7 +571,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return template;
   }
 
-  private void saveTemplate(TemplateImpl template, Element templateSetElement) {
+  @NotNull
+  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateContext defaultContext) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -612,12 +612,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     try {
       Element contextElement = new Element(CONTEXT);
-      TemplateImpl def = getDefaultTemplate(template);
-      template.getTemplateContext().writeTemplateContext(contextElement, def == null ? null : def.getTemplateContext());
+      template.getTemplateContext().writeTemplateContext(contextElement, defaultContext);
       element.addContent(contextElement);
     } catch (WriteExternalException ignore) {
     }
-    templateSetElement.addContent(element);
+    return element;
   }
 
   public void setTemplates(@NotNull List<TemplateGroup> newGroups) {

@@ -479,7 +479,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           getTextRenderer().append(((TemplateGroup)value).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
-    }, myTreeRoot);
+    }, myTreeRoot, this);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
@@ -659,8 +659,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        final int selected = getSingleSelectedIndex();
-        final TemplateGroup templateGroup = getGroup(selected);
+        final TemplateGroup templateGroup = getSingleSelectedGroup();
         boolean enabled = templateGroup != null;
         e.getPresentation().setEnabled(enabled);
         e.getPresentation().setVisible(enabled);
@@ -780,9 +779,16 @@ public class TemplateListPanel extends JPanel implements Disposable {
         group.add(move);
         group.add(changeContext);
         group.add(revert);
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE));
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
     });
+  }
+
+  @Nullable 
+  TemplateGroup getSingleSelectedGroup() {
+    return getGroup(getSingleSelectedIndex());
   }
 
   private static Set<String> getAllGroups(Map<TemplateImpl, DefaultMutableTreeNode> templates) {
@@ -793,7 +799,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return oldGroups;
   }
 
-  private Map<TemplateImpl, DefaultMutableTreeNode> getSelectedTemplates() {
+  Map<TemplateImpl, DefaultMutableTreeNode> getSelectedTemplates() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) {
       return Collections.emptyMap();
@@ -811,8 +817,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void renameGroup() {
-    final int selected = getSingleSelectedIndex();
-    final TemplateGroup templateGroup = getGroup(selected);
+    final TemplateGroup templateGroup = getSingleSelectedGroup();
     if (templateGroup == null) return;
 
     final String oldName = templateGroup.getName();
@@ -821,7 +826,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     if (newName != null && !newName.equals(oldName)) {
       templateGroup.setName(newName);
-      ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(selected));
+      ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(getSingleSelectedIndex()));
     }
   }
 
