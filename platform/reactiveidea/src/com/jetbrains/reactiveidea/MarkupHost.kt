@@ -82,18 +82,16 @@ public class ClientMarkupHost(val markupModel: MarkupModelEx,
 public class ServerMarkupHost(val markupModel: MarkupModelEx,
                               reactiveModel: ReactiveModel,
                               path: Path,
-                              lifetime: Lifetime) {
+                              lifetime: Lifetime) : MetaHost(lifetime, reactiveModel, path) {
   var markupIdFactory = 0
   val markupIdKey = Key<String>("com.jetbrains.reactiveidea.markupId")
   volatile var disposed = false;
 
-
   init {
-    val highlighters = markupModel.getAllHighlighters()
-    reactiveModel.transaction { m ->
+    initModel() { m ->
+      val highlighters = markupModel.getAllHighlighters()
       path.putIn(m, MapModel(highlighters.map { highlighter -> (markupIdFactory++).toString() to marshalHighlighter(highlighter) }.toMap()))
     }
-
     val markupListenerDisposable = { }
     lifetime += {
       disposed = true

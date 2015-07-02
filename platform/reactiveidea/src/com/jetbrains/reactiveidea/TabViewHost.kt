@@ -26,24 +26,22 @@ import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
 import com.jetbrains.reactivemodel.util.Lifetime
 import gnu.trove.TObjectIntHashMap
+import java.util.*
 
-class TabViewHost(val lifetime: Lifetime,
-                  public val reactiveModel: ReactiveModel,
-                  public val path: Path) {
-  val fileToEditorIdx = TObjectIntHashMap<VirtualFile>()
-  val hostMeta = PersistentHashMap.create<String, Any>("host", this)
-  val editorsPath = "editors"
-  var currentIdx = 0
-
-  init {
-    reactiveModel.transaction { m ->
-      path.putIn(m, MapModel(metadata = hostMeta))
-    }
+class TabViewHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path) : MetaHost(lifetime, reactiveModel, path) {
+  companion object {
+    val editorsPath = "editors"
   }
 
+  init {
+    initModel()
+  }
+
+  val fileToEditorIdx = TObjectIntHashMap<VirtualFile>()
+  var currentIdx = 0
+
   fun addEditor(editor: Editor, file: VirtualFile) {
-    EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, file.getName(),
-        path / editorsPath / currentIdx.toString(), editor, true)
+    EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, path / editorsPath / currentIdx.toString(), file.getName(), editor, true)
     fileToEditorIdx.put(file, currentIdx++)
   }
 
@@ -55,7 +53,7 @@ class TabViewHost(val lifetime: Lifetime,
         editor.lifetime.terminate()
         if (isActive(m, res)) {
           val candidate = getActiveEditorCandidate(m, res)
-          if(candidate != null) {
+          if (candidate != null) {
             return@transaction setActive(m, candidate)
           }
         }

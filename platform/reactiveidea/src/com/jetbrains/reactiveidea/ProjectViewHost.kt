@@ -33,9 +33,9 @@ import com.jetbrains.reactivemodel.util.Lifetime
 import java.util.HashMap
 
 
-public class ProjectViewHost(val project: Project, val projectView: ProjectView?, val lifetime: Lifetime,
-                             val reactiveModel: ReactiveModel, val path: Path,
-                             val treeStructure: AbstractTreeStructure, val viewPane: AbstractProjectViewPSIPane) {
+public class ProjectViewHost(val project: Project, val projectView: ProjectView?, lifetime: Lifetime,
+                             reactiveModel: ReactiveModel, p: Path, val treeStructure: AbstractTreeStructure,
+                             val viewPane: AbstractProjectViewPSIPane) : MetaHost(lifetime, reactiveModel, p) {
 
   class PsiDirNode(val path: Path, val descriptor: AbstractTreeNode<*>, val index: Int)
 
@@ -44,16 +44,14 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
   val openDirs = HashMap<SmartPsiElementPointer<PsiDirectory>, PsiDirNode>()
   val ptrManager = SmartPointerManager.getInstance(project)
 
-
   init {
-    reactiveModel.transaction { m ->
+    initModel { m ->
       val root = treeStructure.getRootElement();
       val descriptor = treeStructure.createDescriptor(root, null) as AbstractTreeNode<*>
       val current = path / paneId
       val rootNode = createNode(descriptor, current, 0)
       current.putIn(m, MapModel(mapOf(root.toString() to rootNode)))
     }
-
     val psiTreeChangeListener = object : PsiTreeChangeAdapter() {
       override fun childAdded(event: PsiTreeChangeEvent) {
         handle(event)

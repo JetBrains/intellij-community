@@ -26,48 +26,50 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.jetbrains.reactivemodel.Path
-import com.jetbrains.reactivemodel.ReactiveModel
-import com.jetbrains.reactivemodel.getIn
+import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.putIn
-import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
+import java.util.*
 
-public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, name: String,
-                        val path: Path, val editor: Editor, val providesMarkup: Boolean) {
+public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path,
+                        name: String, val editor: Editor, val providesMarkup: Boolean) : MetaHost(lifetime, reactiveModel, path) {
   companion object {
     val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
     val tags = "@@@--^tags"
     val activePath = "active"
 
-    public fun getHost(editor: Editor) : EditorHost? = editor.getUserData(editorHostKey)
+    public fun getHost(editor: Editor): EditorHost? = editor.getUserData(editorHostKey)
   }
 
   val caretGuard = Guard()
 
-  val documentHost : DocumentHost;
+  init {
+    initModel { m ->
+      var editorsModel: List<Model?> = (path.dropLast(1).getIn(m) as? MapModel)
+          ?.values()
+          ?.filter { (it as MapModel).isNotEmpty() } ?: emptyList()
+      (path / activePath).putIn(m, PrimitiveModel(editorsModel.isEmpty()))
+    }
+  }
 
-  val hostMeta = PersistentHashMap.create<String, Any>("host", this, "editor", editor)
 
+  override fun buildMeta(): HashMap<String, Any> {
+    val map = super.buildMeta()
+    map["editor"] = editor
+    return map
+  }
 
   init {
-    reactiveModel.transaction { m ->
-      var editorsModel = path.dropLast(1).getIn(m) as? MapModel
-      var mapModel = path.putIn(m, MapModel(metadata = hostMeta))
-      mapModel = (path / activePath).putIn(mapModel, PrimitiveModel(editorsModel == null || editorsModel.isEmpty()))
-      mapModel
-    }
     lifetime += {
-      reactiveModel.transaction {
-        m -> (path).putIn(m, AbsentModel())
+      reactiveModel.transaction { m ->
+        (path).putIn(m, AbsentModel())
       }
     }
-    documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
+    val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
     editor.putUserData(editorHostKey, this)
     reactiveModel.transaction { m -> (path / tags).putIn(m, ListModel(arrayListOf(PrimitiveModel("editor")))) }
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")

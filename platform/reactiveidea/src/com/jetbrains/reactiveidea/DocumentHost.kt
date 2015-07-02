@@ -35,15 +35,15 @@ import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 
-public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document, project: Project?, providesMarkup: Boolean, caretGuard: Guard) {
+public class DocumentHost(lifetime: Lifetime, reactModel: ReactiveModel, path: Path, val doc: Document,
+                          project: Project?, providesMarkup: Boolean, caretGuard: Guard) : MetaHost(lifetime, reactModel, path) {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
   private val recursionGuard = Guard()
-
-  val markupHost: Any
 
   public val documentUpdated: com.jetbrains.reactivemodel.Signal<Any?>
 
   init {
+    initModel()
     val listener = object : DocumentAdapter() {
       override fun documentChanged(e: DocumentEvent) {
         if (!recursionGuard.locked) {
@@ -64,7 +64,7 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       }
     }
 
-    val textSignal = com.jetbrains.reactivemodel.reaction(true, "document text", reactiveModel.subscribe(lifetime, path / "text")) { model ->
+    val textSignal = com.jetbrains.reactivemodel.reaction(true, "document text", reactModel.subscribe(lifetime, path / "text")) { model ->
       if (model == null) null
       else (model as PrimitiveModel<String>).value
     }
@@ -83,14 +83,14 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       doc.removeDocumentListener(listener)
     }
 
-    reactiveModel.transaction { m ->
+    reactModel.transaction { m ->
       var result = (path / "text").putIn(m, PrimitiveModel(doc.getText()))
       result = (path / "events").putIn(result, ListModel())
 
       result
     }
 
-    val listenToDocumentEvents = com.jetbrains.reactivemodel.reaction(true, "listen to model events", reactiveModel.subscribe(lifetime, (path / "events"))) { model ->
+    val listenToDocumentEvents = com.jetbrains.reactivemodel.reaction(true, "listen to model events", reactModel.subscribe(lifetime, (path / "events"))) { model ->
       val evts = model as ListModel?
 
       if (evts != null) {
@@ -122,21 +122,20 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
     documentUpdated = com.jetbrains.reactivemodel.reaction(true, "document updated", listenToDocumentEvents, updateDocumentText) { _, __ -> _ to __ }
 
     val documentMarkup = DocumentMarkupModel.forDocument(doc, project, true) as MarkupModelEx
-    markupHost =
-        if (providesMarkup) {
-          ServerMarkupHost(
-              documentMarkup,
-              reactiveModel,
-              path / "markup",
-              lifetime)
-        } else {
-          ClientMarkupHost(
-              documentMarkup,
-              reactiveModel,
-              path / "markup",
-              lifetime,
-              documentUpdated)
-        }
+    if (providesMarkup) {
+      ServerMarkupHost(
+          documentMarkup,
+          reactModel,
+          path / "markup",
+          lifetime)
+    } else {
+      ClientMarkupHost(
+          documentMarkup,
+          reactModel,
+          path / "markup",
+          lifetime,
+          documentUpdated)
+    }
   }
 }
 

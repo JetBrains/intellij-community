@@ -4565,10 +4565,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       start();
     }
 
-    private void setBlinkCaret(boolean value) {
-      myIsBlinkCaret = value;
-    }
-
     @Override
     public void run() {
       if (myEditor != null) {
@@ -4592,6 +4588,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
       }
+    }
+
+    private void setBlinkCaret(boolean value) {
+      myIsBlinkCaret = value;
     }
   }
 

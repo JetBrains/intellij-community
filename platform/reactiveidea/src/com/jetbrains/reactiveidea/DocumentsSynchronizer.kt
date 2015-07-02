@@ -148,7 +148,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         list.map { model -> model?.meta?.valAt("host") as? TabViewHost }
             .filterNotNull()
             .map { host ->
-              host.reactiveModel.subscribe(lifetime.lifetime, host.path / host.editorsPath)
+              host.reactiveModel.subscribe(lifetime.lifetime, host.path / TabViewHost.editorsPath)
             };
       } else {
         emptyList()
