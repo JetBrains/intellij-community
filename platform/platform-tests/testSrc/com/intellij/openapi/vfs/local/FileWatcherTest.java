@@ -135,6 +135,19 @@ public class FileWatcherTest extends PlatformTestCase {
   }
 
 
+  public void testWatchRequestConvention() {
+    File dir = createTestDir("top");
+
+    LocalFileSystem.WatchRequest r1 = myFileSystem.addRootToWatch(dir.getPath(), true);
+    LocalFileSystem.WatchRequest r2 = myFileSystem.addRootToWatch(dir.getPath(), true);
+    assertNotNull(r1);
+    assertNotNull(r2);
+    assertFalse(r1.equals(r2));
+
+    myFileSystem.removeWatchedRoots(ContainerUtil.immutableList(r1, r2));
+    FileUtil.delete(dir);
+  }
+
   public void testFileRoot() throws Exception {
     File file = createTestFile("test.txt");
     refresh(file);
