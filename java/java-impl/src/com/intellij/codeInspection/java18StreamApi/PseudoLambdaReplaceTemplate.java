@@ -449,6 +449,12 @@ class PseudoLambdaReplaceTemplate {
       final String methodName = functionalInterfaceMethod.getName();
       return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + methodName, null);
     }
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiType expressionType = expression.getType();
+      final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(expressionType);
+      LOG.assertTrue(method != null);
+      return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + method.getName(), null);
+    }
     return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true);
   }
 
