@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,35 +156,14 @@ public class InstanceOfUtils {
           }
         }
       }
-      PsiExpression condition = ifStatement.getCondition();
-      condition = PsiUtil.deparenthesizeExpression(condition);
-      if (condition instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression binaryExpression =
-          (PsiPolyadicExpression)condition;
-        visitPolyadicExpression(binaryExpression);
-      }
-      else {
-        checkExpression(condition);
-      }
+      checkExpression(ifStatement.getCondition());
     }
 
     @Override
     public void visitConditionalExpression(PsiConditionalExpression expression) {
-      final PsiExpression elseExpression =
-        expression.getElseExpression();
-      inElse = elseExpression != null &&
-               PsiTreeUtil.isAncestor(elseExpression,
-                                      referenceExpression, true);
-      PsiExpression condition = expression.getCondition();
-      condition = PsiUtil.deparenthesizeExpression(condition);
-      if (condition instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression binaryExpression =
-          (PsiPolyadicExpression)condition;
-        visitPolyadicExpression(binaryExpression);
-      }
-      else {
-        checkExpression(condition);
-      }
+      final PsiExpression elseExpression = expression.getElseExpression();
+      inElse = elseExpression != null && PsiTreeUtil.isAncestor(elseExpression, referenceExpression, true);
+      checkExpression(expression.getCondition());
     }
 
     private void checkExpression(PsiExpression expression) {
