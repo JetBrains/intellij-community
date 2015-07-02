@@ -158,6 +158,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
     settings.setDefaultRightMargin(((Number) myRightMarginSpinner.getValue()).intValue());
+    //noinspection deprecation
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
     myIndentOptionsEditor.setEnabled(true);
     myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
@@ -223,6 +224,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       return true;
     }
 
+    //noinspection deprecation
     if (settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN ^ myCbWrapWhenTypingReachesRightMargin.isSelected()) {
       return true;
     }
@@ -279,6 +281,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
 
     myRightMarginSpinner.setValue(settings.getDefaultRightMargin());
+    //noinspection deprecation
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
     myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
     myIndentOptionsEditor.setEnabled(true);

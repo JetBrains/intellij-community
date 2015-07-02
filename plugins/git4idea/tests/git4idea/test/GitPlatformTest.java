@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package git4idea.test;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -105,7 +104,6 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       myVcs.doActivate();
 
       GitTestUtil.assumeSupportedGitVersion(myVcs);
-      initChangeListManager();
       addSilently();
       removeSilently();
     }
@@ -124,11 +122,6 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       name = name.substring(1);
     }
     return name;
-  }
-
-  private void initChangeListManager() {
-    ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
-    ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
   }
 
   @Override

@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -177,7 +178,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   }
 
   private void doAnnotate() {
-    for (ExternalAnnotator annotator : myAnnotator2DataMap.keySet()) {
+    for (ExternalAnnotator annotator : DumbService.getInstance(myProject).filterByDumbAwareness(myAnnotator2DataMap.keySet())) {
       final MyData data = myAnnotator2DataMap.get(annotator);
       if (data != null) {
         data.myAnnotationResult = annotator.doAnnotate(data.myCollectedInfo);

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -160,8 +159,9 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     }
   }
 
-  protected abstract class XmlElementStorageSaveSession extends SaveSessionBase {
+  public abstract class XmlElementStorageSaveSession extends SaveSessionBase {
     private final StorageData myOriginalStorageData;
+    @Nullable
     private StorageData myCopiedStorageData;
 
     private final Map<String, Element> myNewLiveStates = new THashMap<String, Element>();
@@ -173,7 +173,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     @Nullable
     @Override
     public final SaveSession createSaveSession() {
-      return checkIsSavingDisabled() || myCopiedStorageData == null ? null : this;
+      return checkIsSavingDisabled() || (myCopiedStorageData == null && !myOriginalStorageData.isDirty()) ? null : this;
     }
 
     @Override
@@ -186,24 +186,22 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
       }
     }
 
-    public void forceSave() throws IOException {
-      LOG.assertTrue(myCopiedStorageData == null);
-
-      if (myBlockSavingTheContent) {
-        return;
-      }
-
-      doSave(getElement(myOriginalStorageData, isCollapsePathsOnSave(), Collections.<String, Element>emptyMap()));
-    }
-
     @Override
     public final void save() throws IOException {
       if (myBlockSavingTheContent) {
         return;
       }
 
-      doSave(getElement(myCopiedStorageData, isCollapsePathsOnSave(), myNewLiveStates));
-      myStorageData = myCopiedStorageData;
+      StorageData storageData = myCopiedStorageData;
+      if (storageData == null) {
+        storageData = myOriginalStorageData;
+        if (!storageData.isDirty()) {
+          LOG.warn("Copied storage data must be not null because original storage data is not dirty");
+        }
+      }
+
+      doSave(getElement(storageData, isCollapsePathsOnSave(), myNewLiveStates));
+      myStorageData = storageData;
     }
 
     // only because default project store hack
@@ -213,7 +211,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
     protected abstract void doSave(@Nullable Element element) throws IOException;
 
-    protected void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
+    protected final void saveForProvider(@Nullable BufferExposingByteArrayOutputStream content, @Nullable Element element) throws IOException {
       if (!myStreamProvider.isApplicable(myFileSpec, myRoamingType)) {
         return;
       }
@@ -228,10 +226,10 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
 
     private void doSaveForProvider(@NotNull Element element, @NotNull RoamingType roamingType, @Nullable BufferExposingByteArrayOutputStream content) throws IOException {
       if (content == null) {
-        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType, true);
+        StorageUtil.sendContent(myStreamProvider, myFileSpec, element, roamingType);
       }
       else {
-        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType, true);
+        myStreamProvider.saveContent(myFileSpec, content.getInternalBuffer(), content.size(), myRoamingType);
       }
     }
   }

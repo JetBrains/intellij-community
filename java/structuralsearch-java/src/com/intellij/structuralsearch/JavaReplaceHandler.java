@@ -485,6 +485,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         if (offset + reference.getTextLength() < finalStartOffset) {
           return;
         }
+        if (reference.getTypeParameters().length != 0) {
+          return;
+        }
         final PsiElement target = reference.resolve();
         if (!(target instanceof PsiMember)) {
           return;

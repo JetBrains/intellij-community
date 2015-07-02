@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalDependencies">
+    <plugin id="DevKit" />
+    <plugin id="Git4Idea" />
+    <plugin id="JUnit" />
+    <plugin id="com.intellij.copyright" />
+    <plugin id="com.intellij.java-i18n" />
+    <plugin id="com.intellij.properties" />
+    <plugin id="com.intellij.uiDesigner" />
+    <plugin id="org.intellij.groovy" />
+    <plugin id="org.jetbrains.kotlin" min-version="0.12.613" max-version="0.12.614" />
+  </component>
+</project>

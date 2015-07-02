@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -46,10 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.EventObject;
 
 /**
@@ -105,12 +105,15 @@ public abstract class AbstractValueHint {
       }
     }
     else {
-      int offset = calculateOffset(editor, point);
-      if (myCurrentRange != null && myCurrentRange.getStartOffset() <= offset && offset <= myCurrentRange.getEndOffset()) {
+      if (isInsideCurrentRange(editor, point)) {
         return true;
       }
     }
     return false;
+  }
+
+  boolean isInsideCurrentRange(Editor editor, Point point) {
+    return myCurrentRange != null && myCurrentRange.contains(calculateOffset(editor, point));
   }
 
   public static int calculateOffset(@NotNull Editor editor, @NotNull Point point) {
@@ -189,15 +192,31 @@ public abstract class AbstractValueHint {
     return myType;
   }
 
+  private boolean myInsideShow = false;
+
   protected boolean showHint(final JComponent component) {
+    myInsideShow = true;
     if (myCurrentHint != null) {
       myCurrentHint.hide();
     }
-    myCurrentHint = new LightweightHint(component);
+    myCurrentHint = new LightweightHint(component) {
+      @Override
+      protected boolean canAutoHideOn(TooltipEvent event) {
+        InputEvent inputEvent = event.getInputEvent();
+        if (inputEvent instanceof MouseEvent) {
+          Component comp = inputEvent.getComponent();
+          if (comp instanceof EditorComponentImpl) {
+            EditorImpl editor = ((EditorComponentImpl)comp).getEditor();
+            return !isInsideCurrentRange(editor, ((MouseEvent)inputEvent).getPoint());
+          }
+        }
+        return true;
+      }
+    };
     myCurrentHint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(EventObject event) {
-        if (myHideRunnable != null) {
+        if (myHideRunnable != null && !myInsideShow) {
           myHideRunnable.run();
         }
         onHintHidden();
@@ -215,6 +234,7 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true));
+    myInsideShow = false;
     return true;
   }
 
@@ -280,5 +300,29 @@ public abstract class AbstractValueHint {
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
     DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, getEditor(), myPoint, getProject());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AbstractValueHint hint = (AbstractValueHint)o;
+
+    if (!myProject.equals(hint.myProject)) return false;
+    if (!myEditor.equals(hint.myEditor)) return false;
+    if (myType != hint.myType) return false;
+    if (myCurrentRange != null ? !myCurrentRange.equals(hint.myCurrentRange) : hint.myCurrentRange != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myProject.hashCode();
+    result = 31 * result + myEditor.hashCode();
+    result = 31 * result + myType.hashCode();
+    result = 31 * result + (myCurrentRange != null ? myCurrentRange.hashCode() : 0);
+    return result;
   }
 }

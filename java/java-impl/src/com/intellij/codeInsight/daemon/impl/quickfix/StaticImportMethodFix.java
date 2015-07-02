@@ -83,6 +83,7 @@ public class StaticImportMethodFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file)
+           && file instanceof PsiJavaFile
            && myMethodCall.getElement() != null
            && myMethodCall.getElement().isValid()
            && myMethodCall.getElement().getMethodExpression().getQualifierExpression() == null

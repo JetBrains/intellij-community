@@ -16,8 +16,10 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,6 +45,7 @@ public class RightMarginForm {
   private JTextField myRightMarginField;
   private JCheckBox myDefaultGeneralCheckBox;
   private JPanel myTopPanel;
+  private JCheckBox myWrapOnTypingCheckBox;
   private final Language myLanguage;
   private final int myDefaultRightMargin;
 
@@ -77,6 +80,22 @@ public class RightMarginForm {
         myRightMarginField.setEnabled(false);
       }
     }
+    if (langSettings != settings) {
+      if (CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue == langSettings.WRAP_ON_TYPING) {
+        ((ThreeStateCheckBox)myWrapOnTypingCheckBox).setState(ThreeStateCheckBox.State.SELECTED);
+      }
+      else if (CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue == langSettings.WRAP_ON_TYPING) {
+        ((ThreeStateCheckBox)myWrapOnTypingCheckBox).setState(ThreeStateCheckBox.State.NOT_SELECTED);
+      }
+      else {
+        ((ThreeStateCheckBox)myWrapOnTypingCheckBox).setState(ThreeStateCheckBox.State.DONT_CARE);
+      }
+    }
+    else {
+      ((ThreeStateCheckBox)myWrapOnTypingCheckBox)
+        .setState(settings.isWrapOnTyping(myLanguage) ? ThreeStateCheckBox.State.SELECTED : ThreeStateCheckBox.State.NOT_SELECTED);
+      myWrapOnTypingCheckBox.setEnabled(false);
+    }
   }
 
   public void apply(@NotNull CodeStyleSettings settings) {
@@ -88,17 +107,26 @@ public class RightMarginForm {
       else {
         langSettings.RIGHT_MARGIN = getFieldRightMargin(settings.getDefaultRightMargin());
       }
+      langSettings.WRAP_ON_TYPING = getWrapOnTypingIntValue();
     }
   }
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
-    if (myDefaultGeneralCheckBox.isSelected()) {
-      return langSettings.RIGHT_MARGIN >= 0;
-    }
-    else {
-      return langSettings.RIGHT_MARGIN != getFieldRightMargin(settings.getDefaultRightMargin());
-    }
+    boolean isRightMarginChanged =
+      myDefaultGeneralCheckBox.isSelected() ?
+      langSettings.RIGHT_MARGIN >= 0 :
+      langSettings.RIGHT_MARGIN != getFieldRightMargin(settings.getDefaultRightMargin());
+    return isRightMarginChanged || getWrapOnTypingIntValue() != langSettings.WRAP_ON_TYPING;
+  }
+
+  private int getWrapOnTypingIntValue() {
+    ThreeStateCheckBox.State state = ((ThreeStateCheckBox)myWrapOnTypingCheckBox).getState();
+    return
+      ThreeStateCheckBox.State.SELECTED.equals(state) ? CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue :
+      ThreeStateCheckBox.State.NOT_SELECTED.equals(state) ? CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue :
+      CommonCodeStyleSettings.WrapOnTyping.UNDEFINED.intValue;
+
   }
 
   private int getFieldRightMargin(int fallBackValue) {
@@ -116,5 +144,9 @@ public class RightMarginForm {
 
   public JPanel getTopPanel() {
     return myTopPanel;
+  }
+
+  private void createUIComponents() {
+    myWrapOnTypingCheckBox = new ThreeStateCheckBox(ApplicationBundle.message("wrapping.wrap.on.typing"));
   }
 }

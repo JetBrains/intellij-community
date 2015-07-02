@@ -117,6 +117,11 @@ public class TestProxy extends AbstractTestProxy {
     return getInfo().getName();
   }
 
+  @Override
+  public boolean isConfig() {
+    return false;
+  }
+
   public boolean isInProgress() {
     return getState().isInProgress();
   }
@@ -170,6 +175,11 @@ public class TestProxy extends AbstractTestProxy {
   @Override
   public boolean isInterrupted() {
     return getMagnitude() == PoolOfTestStates.TERMINATED_INDEX;
+  }
+
+  @Override
+  public boolean hasPassedTests() {
+    return isPassed();
   }
 
   @Override

@@ -1,6 +1,7 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.env.PyEnvTaskRunner;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestTask;
 import com.jetbrains.env.ut.PyUnitTestTask;
@@ -21,6 +22,30 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
         Assert.assertEquals(2, allTestsCount());
         Assert.assertEquals(2, passedTestsCount());
         allTestsPassed();
+      }
+    });
+  }
+
+  /**
+   * Ensures that skipped and erroneous tests do not lead to suite ignorance
+   */
+  public void testUTSkippedAndIgnored() {
+    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
+
+      @Override
+      public void runTestOn(final String sdkHome) throws Exception {
+        if (!PyEnvTaskRunner.isJython(sdkHome)) {
+          // Temporary Crunch to disable this test on Jython
+          super.runTestOn(sdkHome);
+        }
+      }
+
+      @Override
+      public void after() {
+        assertEquals(4, allTestsCount());
+        assertEquals(2, passedTestsCount());
+        assertEquals(2, failedTestsCount());
+        Assert.assertFalse("Suite is not finished", myTestProxy.isInterrupted());
       }
     });
   }
@@ -115,8 +140,8 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
         final List<String> fileNames = getHighlightedStrings().second;
         Assert.assertThat("No lines highlighted", fileNames, Matchers.not(Matchers.empty()));
         // PyTest highlights file:line_number
-        Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.anyOf(Matchers.endsWith("reference_tests.py:13"),
-                                                                                               Matchers.endsWith("reference_tests.py:7"))));
+        Assert.assertTrue("Assert fail not marked", fileNames.contains("reference_tests.py:7"));
+        Assert.assertTrue("Failed test not marked", fileNames.contains("reference_tests.py:12"));
       }
     });
   }

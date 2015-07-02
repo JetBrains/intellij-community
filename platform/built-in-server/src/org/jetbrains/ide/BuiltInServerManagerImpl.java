@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.ShutDownTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,15 +106,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
         LOG.info("built-in server started, port " + server.getPort());
 
         Disposer.register(ApplicationManager.getApplication(), server);
-        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
-          public void run() {
-            if (!Disposer.isDisposed(server)) {
-              // something went wrong
-              Disposer.dispose(server);
-            }
-          }
-        });
       }
     });
   }

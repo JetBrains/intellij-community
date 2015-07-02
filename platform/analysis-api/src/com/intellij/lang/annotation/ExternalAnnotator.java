@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * Implemented by a custom language plugin to process the files in a language by an
  * external annotation tool. The external annotator is expected to be slow and is started
  * after the regular annotator has completed its work.
+ * 
+ * During indexing only {@link com.intellij.openapi.project.DumbAware} annotators are executed.
  *
  * @author ven
  * @see com.intellij.lang.ExternalLanguageAnnotators

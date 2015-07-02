@@ -48,6 +48,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -284,8 +285,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       @Override
       public Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (resolve(index) == null) {
-          comp.setForeground(JBColor.RED);
+        try {
+          if (resolve(index) == null) {
+            comp.setForeground(JBColor.RED);
+          }
+        }
+        catch (IndexNotReadyException ignore) {
         }
         return comp;
       }

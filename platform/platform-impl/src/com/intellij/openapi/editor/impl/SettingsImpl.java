@@ -213,7 +213,7 @@ public class SettingsImpl implements EditorSettings {
   public boolean isWrapWhenTypingReachesRightMargin(Project project) {
     return myWrapWhenTypingReachesRightMargin != null ?
            myWrapWhenTypingReachesRightMargin.booleanValue() :
-           CodeStyleFacade.getInstance(project).isWrapWhenTypingReachesRightMargin();
+           CodeStyleFacade.getInstance(project).isWrapOnTyping(myLanguage);
   }
 
   @Override

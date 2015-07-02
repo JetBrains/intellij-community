@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.sun.jdi.request.EventRequest;
 
 /**
  * User: lex
@@ -69,20 +68,6 @@ public class ResumeThreadAction extends DebuggerAction{
         if (!(threadDescriptor instanceof ThreadDescriptorImpl) || !((ThreadDescriptorImpl)threadDescriptor).isSuspended()) {
           visible = false;
           break;
-        }
-      }
-      if (visible) {
-        for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
-          final ThreadDescriptorImpl threadDescriptor = (ThreadDescriptorImpl)selectedNode.getDescriptor();
-          if (threadDescriptor.getSuspendContext().getSuspendPolicy() == EventRequest.SUSPEND_ALL && !threadDescriptor.isFrozen()) {
-            enabled = false;
-            break;
-          }
-          else {
-            if (threadDescriptor.isFrozen()) {
-              text = DebuggerBundle.message("action.resume.thread.text.unfreeze");
-            }
-          }
         }
       }
     }

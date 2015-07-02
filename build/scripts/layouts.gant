@@ -18,6 +18,9 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 target('default': "Developers update") {
+  //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
+  String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
+  loadProjectFromPath(projectHome)
   def patchedDescriptorDir = patchAppDescriptor(deploy)
   layoutFull(home, deploy, patchedDescriptorDir)
   ant.delete(dir: patchedDescriptorDir)
@@ -200,6 +203,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
 
+      fileset(dir: "$home/build/kotlinc/lib") {
+        include(name: "kotlin-runtime.jar")
+        include(name: "kotlin-reflect.jar")
+      }
+
       dir("src") {
         fileset(dir: "$home/lib/src") {
           include(name: "trove4j_src.jar")
@@ -261,7 +269,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
   printUnusedModules(info.usedModules)
 
-  //reorder(targetDirectory)
+  reorder(home, targetDirectory)
   return info
 }
 
@@ -440,6 +448,7 @@ public def layoutCommunityPlugins(String home) {
 
         fileset(dir: "$home/plugins/testng/lib") {
           include(name: "testng.jar")
+          include(name: "jcommander.jar")
         }
       }
     }
@@ -588,6 +597,10 @@ public def layoutCommunityPlugins(String home) {
         }
       }
     }
+
+    pluginDir("Kotlin") {
+      fileset(dir: "${home}/build/kotlinc/plugin/Kotlin")
+    }
   }
 }
 
@@ -680,17 +693,15 @@ def moduleOptional(String name, Closure init) {
 }
 
 def reorder(String home, String targetDirectory) {
-  if (findModule("util") != null) {
-    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
-      arg(value: "$home/build/order.txt")
-      arg(value: targetDirectory)
-      arg(value: targetDirectory)
-      arg(value: "$home/lib")
-      classpath {
-        pathelement(location: projectBuilder.moduleOutput(findModule("util")))
-        pathelement(location: projectBuilder.moduleOutput(findModule("util-rt")))
-        pathelement(location: "$home/lib/jna.jar")
-        pathelement(location: "$home/lib/trove4j.jar")
+  projectBuilder.info("Reordering JARs in $targetDirectory")
+  ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: true, failonerror: true) {
+    arg(value: "${home}/build/order.txt")
+    arg(value: targetDirectory)
+    arg(value: targetDirectory)
+    arg(value: "${home}/lib")
+    classpath {
+      projectBuilder.moduleRuntimeClasspath(findModule("util"), false).each {
+        pathelement(location: it)
       }
     }
   }

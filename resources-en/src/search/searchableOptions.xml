@@ -20084,7 +20084,7 @@
     <option name="flag" hit="Undefined Flag" />
     <option name="undefined" hit="Undefined Flag" />
   </configurable>
-  <configurable id="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable" configurable_name="Python Template Languages">
+  <configurable id="com.jetbrains.python.templateLanguages.PyTemplateLanguageModulesConfigurable" configurable_name="Python Template Languages">
     <option name="" hit="" />
     <option name="languages" hit="Python Template Languages" />
     <option name="python" hit="Python Template Languages" />

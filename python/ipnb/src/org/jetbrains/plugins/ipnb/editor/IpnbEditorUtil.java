@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -50,8 +53,10 @@ public class IpnbEditorUtil {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     assert editorFactory != null;
     final String text = codeSourcePanel.getCell().getSourceAsString().trim();
+    final Module module = ProjectRootManagerEx.getInstanceEx(project).getFileIndex()
+      .getModuleForFile(codeSourcePanel.getIpnbCodePanel().getFileEditor().getVirtualFile());
     final IpnbPyFragment fragment = new IpnbPyFragment(project, text, true, codeSourcePanel);
-
+    fragment.putUserData(ModuleUtilCore.KEY_MODULE, module);
     final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
     assert document != null;
     EditorEx editor = (EditorEx)editorFactory.createEditor(document, project, fragment.getVirtualFile(), false);

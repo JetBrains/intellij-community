@@ -185,6 +185,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       public void run() {
         final String testName = testStartedEvent.getName();
         final String locationUrl = testStartedEvent.getLocationUrl();
+        final boolean isConfig = testStartedEvent.isConfig();
         final String fullName = getFullTestName(testName);
 
         if (myRunningTestsFullNameToProxy.containsKey(fullName)) {
@@ -200,6 +201,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         if (testProxy == null) {
           // creates test
           testProxy = new SMTestProxy(testName, false, locationUrl);
+          testProxy.setConfig(isConfig);
 
           if (myLocator != null) {
             testProxy.setLocator(myLocator);
@@ -436,9 +438,6 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       public void run() {
         final String testName = ObjectUtils.assertNotNull(testIgnoredEvent.getName());
         String ignoreComment = testIgnoredEvent.getIgnoreComment();
-        if (StringUtil.isEmpty(ignoreComment)) {
-          ignoreComment = SMTestsRunnerBundle.message("sm.test.runner.states.test.is.ignored");
-        }
         final String stackTrace = testIgnoredEvent.getStacktrace();
         final String fullTestName = getFullTestName(testName);
         SMTestProxy testProxy = getProxyByFullTestName(fullTestName);

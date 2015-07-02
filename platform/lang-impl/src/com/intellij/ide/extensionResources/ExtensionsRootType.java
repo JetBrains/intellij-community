@@ -288,6 +288,8 @@ public class ExtensionsRootType extends RootType {
   }
 
   private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) throws IOException {
+    if (!ApplicationManager.getApplication().isDispatchThread()) return;
+
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     if (plugin == null || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) return;
 

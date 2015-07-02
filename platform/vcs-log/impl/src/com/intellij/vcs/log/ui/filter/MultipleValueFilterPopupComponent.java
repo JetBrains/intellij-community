@@ -15,10 +15,7 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -109,7 +106,8 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     @NotNull private final Collection<String> myValues;
 
     public PredefinedValueAction(@NotNull Collection<String> values) {
-      super(displayableText(values), tooltip(values), null);
+      super(null, tooltip(values), null);
+      getTemplatePresentation().setText(displayableText(values), false);
       myValues = values;
     }
 

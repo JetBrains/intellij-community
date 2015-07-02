@@ -592,6 +592,18 @@ public class RedundantCastUtil {
           if (!isCastRedundantInRefExpression(refExpression, operand)) return;
         }
       }
+      if (parent instanceof PsiConditionalExpression) {
+        if (castTo instanceof PsiClassType && opType instanceof PsiPrimitiveType && opType != PsiType.NULL) {
+          final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
+          final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
+          final PsiExpression opposite = PsiTreeUtil.isAncestor(thenExpression, typeCast, false) ? elseExpression : thenExpression;
+          if (opposite != null &&
+              !(opposite.getType() instanceof PsiPrimitiveType) &&
+              !(PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent) instanceof PsiPrimitiveType)) {
+            return;
+          }
+        }
+      }
 
       if (arrayAccessAtTheLeftSideOfAssignment(parent)) {
         if (TypeConversionUtil.isAssignable(opType, castTo, false) && opType.getArrayDimensions() == castTo.getArrayDimensions()) {

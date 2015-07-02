@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myFilesToMove.size()];
     final PsiFile[] classes = PsiUtilCore.toPsiFileArray(myFilesToMove.keySet());
     System.arraycopy(classes, 0, elements, 0, classes.length);
@@ -117,7 +117,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   @Override
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     for (PsiFile psiFile : myFilesToMove.keySet()) {
       try {
@@ -134,10 +134,10 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   @Override
-  protected void refreshElements(PsiElement[] elements) {}
+  protected void refreshElements(@NotNull PsiElement[] elements) {}
 
   @Override
-  public void performRefactoring(UsageInfo[] usages) {
+  public void performRefactoring(@NotNull UsageInfo[] usages) {
     //try to create all directories beforehand
     try {
       //top level directories should be created even if they are empty
@@ -225,7 +225,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myTargetDirectory);
     return data;

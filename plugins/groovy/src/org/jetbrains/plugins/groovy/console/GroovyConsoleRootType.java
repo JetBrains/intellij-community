@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,8 @@ import javax.swing.*;
 
 public final class GroovyConsoleRootType extends ConsoleRootType {
 
-  public static final AnAction executeAction = new GrExecuteCommandAction();
+  public static final AnAction EXECUTE_ACTION = new GrExecuteCommandAction();
+  public static final String CONTENT_ID = "groovy_console";
 
   @NotNull
   public static GroovyConsoleRootType getInstance() {
@@ -56,10 +58,21 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
     return !GroovyConsoleStateService.getInstance(project).isProjectConsole(element);
   }
 
+  @NotNull
+  @Override
+  public String getContentPathName(@NotNull String id) {
+    assert id == CONTENT_ID;
+    return CONTENT_ID;
+  }
+
   @Nullable
   @Override
   public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
-    return GroovyConsoleStateService.getInstance(project).getSelectedModuleTitle(file);
+    final String name = file.getName();
+    final String moduleTitle = GroovyConsoleStateService.getInstance(project).getSelectedModuleTitle(file);
+    return name.startsWith(CONTENT_ID)
+           ? StringUtil.replace(name, CONTENT_ID, moduleTitle == null ? "unknown" : moduleTitle)
+           : String.format("%s-%s", moduleTitle, name);
   }
 
   @Override
@@ -71,11 +84,11 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
       if (!(fileEditor instanceof TextEditor)) continue;
       final Editor editor = ((TextEditor)fileEditor).getEditor();
       final JPanel panel = new EditorHeaderComponent();
-      final DefaultActionGroup actionGroup = new DefaultActionGroup(new GrSelectModuleAction(projectConsole, file));
+      final DefaultActionGroup actionGroup = new DefaultActionGroup(EXECUTE_ACTION, new GrSelectModuleAction(projectConsole, file));
       final ActionToolbar menu = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
       panel.add(menu.getComponent());
       editor.setHeaderComponent(panel);
-      executeAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
+      EXECUTE_ACTION.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
     }
   }
 }

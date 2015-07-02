@@ -27,7 +27,7 @@ import java.awt.geom.Point2D;
  */
 class TextFragment implements LineFragment {
   // glyph location that should definitely be outside of painted region
-  private static final Point NOWHERE = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
+  private static final Point NOWHERE = new Point(1000000000, 1000000000);
   
   @NotNull
   private final GlyphVector myGlyphVector;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.ArrayUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
-
-import java.util.Arrays;
 
 public class AddSteppingFilterAction extends DebuggerAction {
   public void actionPerformed(final AnActionEvent e) {
@@ -56,9 +55,7 @@ public class AddSteppingFilterAction extends DebuggerAction {
           public void run() {
             String filter = Messages.showInputDialog(project, "", "Add Stepping Filter", null, name, null);
             if (filter != null) {
-              ClassFilter[] filters = DebuggerSettings.getInstance().getSteppingFilters();
-              ClassFilter[] newFilters = Arrays.copyOf(filters, filters.length + 1);
-              newFilters[newFilters.length - 1] = new ClassFilter(filter);
+              ClassFilter[] newFilters = ArrayUtil.append(DebuggerSettings.getInstance().getSteppingFilters(), new ClassFilter(filter));
               DebuggerSettings.getInstance().setSteppingFilters(newFilters);
             }
           }

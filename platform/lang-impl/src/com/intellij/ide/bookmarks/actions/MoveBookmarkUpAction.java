@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,7 +40,10 @@ class MoveBookmarkUpAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(
-      BookmarksAction.notFiltered(myList) && BookmarksAction.getSelectedBookmarks(myList).size() == 1  && myList.getSelectedIndex() > 0);
+      !UISettings.getInstance().SORT_BOOKMARKS &&
+      BookmarksAction.notFiltered(myList)
+      && BookmarksAction.getSelectedBookmarks(myList).size() == 1
+      && myList.getSelectedIndex() > 0);
   }
 
   @Override

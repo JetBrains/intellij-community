@@ -89,7 +89,7 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
                                                  @NotNull final ProcessHandler processHandler) throws ExecutionException {
     final GradleConsoleProperties properties = new GradleConsoleProperties(configuration, executor);
     myExecutionConsole = (SMTRunnerConsoleView)SMTestRunnerConnectionUtil.createAndAttachConsole(
-      configuration.getSettings().getExternalSystemId().getReadableName(), processHandler, properties, env);
+      configuration.getSettings().getExternalSystemId().getReadableName(), processHandler, properties);
 
     TestTreeRenderer originalRenderer =
       ObjectUtils.tryCast(myExecutionConsole.getResultsViewer().getTreeView().getCellRenderer(), TestTreeRenderer.class);

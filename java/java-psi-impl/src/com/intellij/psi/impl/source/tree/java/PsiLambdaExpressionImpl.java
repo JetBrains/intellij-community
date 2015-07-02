@@ -110,7 +110,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     final PsiElement body = getBody();
     if (body instanceof PsiCodeBlock) {
       try {
-        ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, ourPolicy);
+        ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, ourPolicy, false, false);
         int startOffset = controlFlow.getStartOffset(body);
         int endOffset = controlFlow.getEndOffset(body);
         if (startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {

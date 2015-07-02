@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -751,15 +751,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings.setDirectoryMappings(mappingsList);
   }
 
-  public void writeDirectoryMappings(final Element element) {
+  public void writeDirectoryMappings(@NotNull Element element) {
     if (myProject.isDefault()) {
       element.setAttribute(ATTRIBUTE_DEFAULT_PROJECT, Boolean.TRUE.toString());
     }
     for (VcsDirectoryMapping mapping : getDirectoryMappings()) {
+      VcsRootSettings rootSettings = mapping.getRootSettings();
+      if (rootSettings == null && StringUtil.isEmpty(mapping.getDirectory()) && StringUtil.isEmpty(mapping.getVcs())) {
+        continue;
+      }
+
       Element child = new Element(ELEMENT_MAPPING);
       child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.getDirectory());
       child.setAttribute(ATTRIBUTE_VCS, mapping.getVcs());
-      final VcsRootSettings rootSettings = mapping.getRootSettings();
       if (rootSettings != null) {
         Element rootSettingsElement = new Element(ELEMENT_ROOT_SETTINGS);
         rootSettingsElement.setAttribute(ATTRIBUTE_CLASS, rootSettings.getClass().getName());

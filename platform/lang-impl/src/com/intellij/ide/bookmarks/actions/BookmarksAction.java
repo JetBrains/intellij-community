@@ -18,6 +18,7 @@ package com.intellij.ide.bookmarks.actions;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.ide.bookmarks.BookmarksListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -41,9 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -69,6 +68,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(editDescriptionAction);
     actions.add(new DeleteBookmarkAction(project, list));
+    actions.add(new ToggleSortBookmarksAction());
     actions.add(new MoveBookmarkUpAction(project, list));
     actions.add(new MoveBookmarkDownAction(project, list));
 
@@ -110,6 +110,36 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     list.getEmptyText().setText("No Bookmarks");
     list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    project.getMessageBus().connect(myPopup).subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
+      @Override
+      public void bookmarkAdded(@NotNull Bookmark b) {
+      }
+
+      @Override
+      public void bookmarkRemoved(@NotNull Bookmark b) {
+      }
+
+      @Override
+      public void bookmarkChanged(@NotNull Bookmark b) {
+      }
+
+      @Override
+      public void bookmarksOrderChanged() {
+        doUpdate();
+      }
+
+      private void doUpdate() {
+        TreeSet selectedValues = new TreeSet(Arrays.asList(list.getSelectedValues()));
+        DefaultListModel listModel = buildModel(project);
+        list.setModel(listModel);
+        ListSelectionModel selectionModel = list.getSelectionModel();
+        for (int i = 0; i < listModel.getSize(); i++) {
+          if (selectedValues.contains(listModel.get(i))) {
+            selectionModel.addSelectionInterval(i, i);
+          }
+        }
+      }
+    });
   }
 
   @SuppressWarnings("unchecked")

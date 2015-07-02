@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -195,7 +196,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
-    myBuilder = new UsageNodeTreeBuilder(myTargets, getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot);
+    myBuilder = new UsageNodeTreeBuilder(myTargets, getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot, myProject);
 
     final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
@@ -654,7 +655,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @NotNull
   private AnAction showSettings() {
     final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
-    String description = configurableUsageTarget == null ? "Show find usages settings dialog" : "Show settings for "+configurableUsageTarget.getLongDescriptiveName();
+    String description = null;
+    try {
+      description = configurableUsageTarget == null ? null : "Show settings for "+configurableUsageTarget.getLongDescriptiveName();
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+    if (description == null) {
+      description = "Show find usages settings dialog";
+    }
     return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
       {
         KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
@@ -1108,7 +1117,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     // call update last, to let children a chance to update their cache first
     if (node instanceof Node && node != getModelRoot() && isVisible == UsageViewTreeCellRenderer.RowLocation.INSIDE_VISIBLE_RECT) {
-      ((Node)node).update(this);
+      try {
+        ((Node)node).update(this);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
     }
   }
 
@@ -1608,7 +1621,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       final JButton button = new JButton(UIUtil.replaceMnemonicAmpersand(text));
       DialogUtil.registerMnemonic(button);
-
+      DumbService.getInstance(myProject).makeDumbAware(button, UsageViewImpl.this);
+      
       button.setFocusable(false);
       button.addActionListener(new ActionListener() {
         @Override

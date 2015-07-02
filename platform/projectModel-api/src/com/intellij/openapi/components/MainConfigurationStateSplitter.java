@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,14 @@ public abstract class MainConfigurationStateSplitter extends StateSplitterEx {
   }
 
   @NotNull
-  protected abstract String getSubStateFileName(@NotNull Element element);
+  protected String getSubStateFileName(@NotNull Element element) {
+    for (Element option : element.getChildren("option")) {
+      if (option.getAttributeValue("name").equals("myName")) {
+        return option.getAttributeValue("value");
+      }
+    }
+    throw new IllegalStateException();
+  }
 
   @NotNull
   protected abstract String getComponentStateFileName();

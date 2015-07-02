@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-import com.beust.jcommander.internal.Lists;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -246,7 +245,7 @@ public class GitBranchWorkerTest extends GitPlatformTest {
   private void test_untracked_files_overwritten_by_in_first_repo(String operation, int untrackedFiles) {
     branchWithCommit(myRepositories, "feature");
 
-    Collection<String> files = Lists.newArrayList();
+    Collection<String> files = ContainerUtil.newArrayList();
     for (int i = 0; i < untrackedFiles; i++) {
       files.add("untracked" + i + ".txt");
     }

@@ -165,6 +165,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final List<JavaValue> values = getSelectedValues(event);
     if (values.isEmpty()) {
+      event.getPresentation().setEnabledAndVisible(false);
       return;
     }
 

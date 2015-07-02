@@ -15,16 +15,14 @@
  */
 package org.jetbrains.java.generate;
 
+import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -56,14 +54,17 @@ import java.util.List;
 /**
  * The action-handler that does the code generation.
  */
-public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler implements GenerateToStringActionHandler {
+public class GenerateToStringActionHandlerImpl implements GenerateToStringActionHandler, CodeInsightActionHandler {
     private static final Logger logger = Logger.getInstance("#GenerateToStringActionHandlerImpl");
 
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        assert project != null;
+    @Override
+    public boolean startInWriteAction() {
+        return true;
+    }
 
-        PsiClass clazz = getSubjectClass(editor, dataContext);
+    @Override
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+        PsiClass clazz = getSubjectClass(editor, file);
         assert clazz != null;
 
         doExecuteAction(project, clazz, editor);
@@ -145,14 +146,8 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         return GenerationUtil.combineToClassMemberList(filteredFields, filteredMethods);
     }
 
-    @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
-        return getSubjectClass(editor, dataContext) != null;
-    }
-
     @Nullable
-    private static PsiClass getSubjectClass(Editor editor, DataContext dataContext) {
-        PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    private static PsiClass getSubjectClass(Editor editor, final PsiFile file) {
         if (file == null) return null;
 
         int offset = editor.getCaretModel().getOffset();

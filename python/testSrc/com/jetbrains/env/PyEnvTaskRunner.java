@@ -106,7 +106,7 @@ public class PyEnvTaskRunner {
   }
 
 
-  protected static boolean isJython(@NotNull String sdkHome) {
+  public static boolean isJython(@NotNull String sdkHome) {
     return sdkHome.toLowerCase().contains("jython");
   }
 }

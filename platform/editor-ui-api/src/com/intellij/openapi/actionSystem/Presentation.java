@@ -304,7 +304,7 @@ public final class Presentation implements Cloneable {
   }
 
   public void copyFrom(Presentation presentation) {
-    setText(presentation.getTextWithMnemonic());
+    setText(presentation.getTextWithMnemonic(), presentation.myDisplayedMnemonicIndex > -1);
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
     setDisabledIcon(presentation.getDisabledIcon());

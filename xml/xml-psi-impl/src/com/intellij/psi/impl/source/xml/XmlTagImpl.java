@@ -713,11 +713,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final boolean caseSensitive = isCaseSensitive();
 
     for (final XmlAttribute attribute : attributes) {
-      final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if (attrNameElement != null &&
-          (caseSensitive && Comparing.equal(attrNameElement.getChars(), qname) ||
-           !caseSensitive && Comparing.equal(attrNameElement.getChars(), qname, false))) {
-        return attribute;
+      final ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
+      if (child instanceof LeafElement) {
+        final LeafElement attrNameElement = (LeafElement)child;
+        if ((caseSensitive && Comparing.equal(attrNameElement.getChars(), qname) ||
+             !caseSensitive && Comparing.equal(attrNameElement.getChars(), qname, false))) {
+          return attribute;
+        }
       }
     }
     return null;

@@ -29,6 +29,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI;
+
+import javax.swing.*;
 
 /**
 * Created by IntelliJ IDEA.
@@ -40,7 +45,12 @@ import com.intellij.psi.PsiDocumentManager;
 public class FindAllAction extends EditorHeaderAction implements DumbAware {
   public FindAllAction(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
-    getTemplatePresentation().setIcon(AllIcons.Actions.Export);
+    Icon base = AllIcons.Actions.Find;
+    Icon text = IconUtil.textToIcon("ALL", editorSearchComponent, JBUI.scale(6F));
+    LayeredIcon icon = new LayeredIcon(2);
+    icon.setIcon(base, 0);
+    icon.setIcon(text, 1, 0, base.getIconHeight() - text.getIconHeight());
+    getTemplatePresentation().setIcon(icon);
     getTemplatePresentation().setDescription("Export matches to Find tool window");
     getTemplatePresentation().setText("Find All");
     final AnAction findUsages = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);

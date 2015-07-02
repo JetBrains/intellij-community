@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,35 +25,41 @@ import java.util.List;
  * @author traff
  */
 public class MutableCollectionComboBoxModel<T> extends AbstractCollectionComboBoxModel<T> {
-  private List<T> myItems;
-
   public MutableCollectionComboBoxModel(@NotNull List<T> items) {
     this(items, ContainerUtil.getFirstItem(items));
   }
 
-  public MutableCollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
-    super(selection);
-
-    myItems = items;
+  public MutableCollectionComboBoxModel() {
+    super(null);
   }
 
-  @NotNull
-  @Override
-  final protected List<T> getItems() {
-    return myItems;
+  public MutableCollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
+    super(selection, items);
   }
 
   public void update(@NotNull List<T> items) {
-    myItems = items;
-    super.update();
+    replaceAll(items);
   }
 
   public void addItem(T item) {
-    myItems.add(item);
+    add(item);
+  }
 
-    fireIntervalAdded(this, myItems.size() - 1, myItems.size() - 1);
-    if (myItems.size() == 1 && getSelectedItem() == null && item != null) {
-      setSelectedItem(item);
+  @Override
+  protected final void fireIntervalAdded(Object source, int index0, int index1) {
+    super.fireIntervalAdded(source, index0, index1);
+
+    if (getSize() == 1 && getSelectedItem() == null) {
+      setSelectedItem(getElementAt(0));
+    }
+  }
+
+  @Override
+  protected final void fireIntervalRemoved(Object source, int index0, int index1) {
+    super.fireIntervalRemoved(source, index0, index1);
+
+    if (getSelected() != null && !contains(getSelected())) {
+      setSelectedItem(isEmpty() ? null : getElementAt(index0 == 0 ? 0 : index0 - 1));
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
   }
 
@@ -76,7 +76,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  protected void refreshElements(final PsiElement[] elements) {
+  protected void refreshElements(@NotNull final PsiElement[] elements) {
     LOG.assertTrue(elements.length == 2 && elements[0] instanceof PsiClass && elements[1] instanceof PsiClass);
     setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
   }
@@ -96,7 +96,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
            JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible(mySuper, refElement, null);
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
       final PsiClass aSuper = mySuper;
       processTurnToSuperRefs(usages, aSuper);

@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class TestNGTreeHierarchyTest {
@@ -231,9 +232,8 @@ public class TestNGTreeHierarchyTest {
 
     Assert.assertEquals("output: " + buf, "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
-                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp']\n" +
+                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
                                           "##teamcity[testCount count='1']\n" +
@@ -241,14 +241,12 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testStarted name='ATest.test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.test1']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
-                                          "##teamcity[testStarted name='ATest.tearDown' locationHint='java:test://a.ATest.tearDown']\n" +
+                                          "##teamcity[testStarted name='ATest.tearDown' locationHint='java:test://a.ATest.tearDown' config='true']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.tearDown']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
-                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp']\n" +
+                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
                                           "##teamcity[testCount count='1']\n" +
@@ -256,9 +254,8 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testStarted name='ATest.test2' locationHint='java:test://a.ATest.test2|[0|]']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.test2']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
-                                          "##teamcity[testStarted name='ATest.tearDown' locationHint='java:test://a.ATest.tearDown']\n" +
+                                          "##teamcity[testStarted name='ATest.tearDown' locationHint='java:test://a.ATest.tearDown' config='true']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.tearDown']\n" +
                                           "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
@@ -275,9 +272,8 @@ public class TestNGTreeHierarchyTest {
 
     Assert.assertEquals("output: " + buf, "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
-                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp']\n" +
+                                          "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
                                           "##teamcity[testFailed name='ATest.setUp' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
@@ -386,6 +382,16 @@ public class TestNGTreeHierarchyTest {
     @Override
     public List<String> getTestHierarchy() {
       return Collections.singletonList(myClassName);
+    }
+
+    @Override
+    public String getFileName() {
+      return null;
+    }
+
+    @Override
+    public String getXmlTestName() {
+      return null;
     }
 
     @Override

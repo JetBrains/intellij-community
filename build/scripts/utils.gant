@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
@@ -24,6 +26,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 
 includeTool << JpsGantTool
 
@@ -134,6 +137,15 @@ binding.setVariable("guessHome", {
 binding.setVariable("loadProject", {
   defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/1.6", "JDK_16_x64"))
   defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
+  def bundledKotlinPath = "$home/build/kotlinc"
+  if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
+    bundledKotlinPath = "$home/community/build/kotlinc"
+  }
+  if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
+    projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar")
+    return
+  }
+  setPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
   projectBuilder.buildIncrementally = Boolean.parseBoolean(p("jps.build.incrementally", "false"))
   def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
   projectBuilder.dataStorageRoot = new File("$home/$dataDirName")
@@ -207,6 +219,11 @@ private void defineJdk(String jdkName, jdkHomePath) {
     }
     projectBuilder.info("JDK '$jdkName' classpath: ${jdk.getFiles(JpsOrderRootType.COMPILED)}")
   }
+}
+
+private void setPathVariable(String name, String value) {
+  def pathVars = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global)
+  pathVars.addPathVariable(name, value)
 }
 
 binding.setVariable("prepareOutputFolder", {
@@ -822,21 +839,22 @@ binding.setVariable("bundledJDKs"){
   requireProperty("jdk.bundled.linux", "false")
   requireProperty("jdk.bundled.mac", "1.8")
   requireProperty("jdk.custom.mac", "true")
-
-  if (p("jdk.bundled.win") != "false") {
-    setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
-    extractRedistJre(winJDK, "${paths.sandbox}/bundled.win.jdk")
-  }
-  if (p("jdk.bundled.linux") != "false"){
-    setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
-    extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk")
-  }
-  if (p("jdk.bundled.mac") != "false"){
-    setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
-  }
-  def customJdkDir = new File("${home}/build/jdk/custom")
-  if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())){
-    setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+  if (new File("${home}/build/jdk").exists()) {
+    if (p("jdk.bundled.win") != "false") {
+      setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
+      extractRedistJre(winJDK, "${paths.sandbox}/bundled.win.jdk/jre")
+    }
+    if (p("jdk.bundled.linux") != "false") {
+      setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
+      extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk/jre")
+    }
+    if (p("jdk.bundled.mac") != "false") {
+      setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
+    }
+    def customJdkDir = new File("${home}/build/jdk/custom")
+    if (p("jdk.custom.mac") == "true" && (customJdkDir.exists() && customJdkDir.isDirectory())) {
+      setProperty("macCustomJDK", getPathToBundledJDK(customJdkDir, "openjdk.1.8", ".tar.gz"))
+    }
   }
 }
 

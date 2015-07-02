@@ -36,7 +36,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
-import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,14 +75,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public VirtualFile findFileByIoFile(@NotNull File file) {
     String path = file.getAbsolutePath();
-    return findFileByPath(path.replace(File.separatorChar, '/'));
-  }
-
-  @Override
-  @Nullable
-  public VirtualFile findFileByIoFile(@NotNull final IFile file) {
-    String path = file.getPath();
-    if (path == null) return null;
     return findFileByPath(path.replace(File.separatorChar, '/'));
   }
 
@@ -237,14 +228,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
     String path = file.getAbsolutePath();
-    return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
-  }
-
-  @Override
-  @Nullable
-  public VirtualFile refreshAndFindFileByIoFile(@NotNull final IFile ioFile) {
-    String path = ioFile.getPath();
-    if (path == null) return null;
     return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
   }
 

@@ -39,4 +39,7 @@ public interface FlyweightCapableTreeStructure<T> {
 
   @NotNull
   CharSequence toString(@NotNull T node);
+
+  int getStartOffset(@NotNull T node);
+  int getEndOffset(@NotNull T node);
 }

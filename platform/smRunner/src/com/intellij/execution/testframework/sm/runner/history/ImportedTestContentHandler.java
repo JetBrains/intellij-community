@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -51,10 +52,20 @@ public class ImportedTestContentHandler extends DefaultHandler {
       myCurrentTest = name;
       myDuration = attributes.getValue(TestResultsXmlFormatter.ATTR_DURATION);
       myStatus = attributes.getValue(TestResultsXmlFormatter.ATTR_STATUS);
-      myProcessor.onTestStarted(new TestStartedEvent(name, attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION)));
+      final String isConfig = attributes.getValue(TestResultsXmlFormatter.ATTR_CONFIG);
+      final TestStartedEvent startedEvent = new TestStartedEvent(name, attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION));
+      if (isConfig != null && Boolean.valueOf(isConfig)) {
+        startedEvent.setConfig(true);
+      }
+      myProcessor.onTestStarted(startedEvent);
+      currentValue.setLength(0);
     }
     else if (TestResultsXmlFormatter.ELEM_OUTPUT.equals(qName)) {
       myErrorOutput = Comparing.equal(attributes.getValue(TestResultsXmlFormatter.ATTR_OUTPUT_TYPE), "stderr");
+      currentValue.setLength(0);
+    }
+    else if (TestResultsXmlFormatter.ROOT_ELEM.equals(qName)) {
+      myProcessor.onRootPresentationAdded(attributes.getValue("name"), attributes.getValue("comment"), attributes.getValue("location"));
     }
   }
 
@@ -78,8 +89,14 @@ public class ImportedTestContentHandler extends DefaultHandler {
       if (TestResultsXmlFormatter.STATUS_FAILED.equals(myStatus) || isError) {
         myProcessor.onTestFailure(new TestFailedEvent(myCurrentTest, "", currentText, isError, null, null));
       }
-      else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus)) {
-        myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText));
+      else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus) || TestResultsXmlFormatter.STATUS_SKIPPED.equals(myStatus)) {
+        myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText) {
+          @NotNull
+          @Override
+          public String getIgnoreComment() {
+            return "";
+          }
+        });
       }
       myProcessor.onTestFinished(new TestFinishedEvent(myCurrentTest, myDuration != null ? Long.parseLong(myDuration) : -1));
       if (!TestResultsXmlFormatter.STATUS_PASSED.equals(myStatus)) {

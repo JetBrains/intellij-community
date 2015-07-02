@@ -120,7 +120,17 @@ final class PaintersHelper implements Painter.Listener {
     TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
   }
 
-  public static AbstractPainter newWallpaperPainter(final String propertyName) {
+  public static void initWallpaperPainter(@NotNull String propertyName, @NotNull PaintersHelper painters) {
+    String value = System.getProperty(propertyName);
+    if (value == null && !new File(PathManager.getConfigPath(), propertyName + ".png").exists()) {
+      // property not set & there's no default
+      return;
+    }
+    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName);
+    painters.addPainter(painter, null);
+  }
+
+  private static AbstractPainter newWallpaperPainter(@NotNull final String propertyName) {
     return new ImagePainter() {
       Image image;
       float alpha;

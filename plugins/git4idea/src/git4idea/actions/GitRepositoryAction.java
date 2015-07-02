@@ -26,7 +26,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -92,7 +94,8 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
 
   protected final void runFinalTasks(Project project, GitVcs vcs, Set<VirtualFile> affectedRoots, String actionName,
                                      List<VcsException> exceptions) {
-    VcsFileUtil.refreshFiles(project, affectedRoots);
+    VfsUtil.markDirtyAndRefresh(false, true, false, ArrayUtil.toObjectArray(affectedRoots, VirtualFile.class));
+    VcsFileUtil.markFilesDirty(project, affectedRoots);
     for (TransactionRunnable task : myDelayedTasks) {
       task.run(exceptions);
     }

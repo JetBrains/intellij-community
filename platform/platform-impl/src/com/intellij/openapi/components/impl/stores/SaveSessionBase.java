@@ -19,13 +19,14 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage.ExternalizationSession {
+abstract class SaveSessionBase implements StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
   private SkipDefaultsSerializationFilter serializationFilter;
 
   @SuppressWarnings("deprecation")

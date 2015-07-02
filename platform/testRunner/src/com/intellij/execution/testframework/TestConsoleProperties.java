@@ -64,7 +64,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
   public static final BooleanProperty SHOW_INLINE_STATISTICS = new BooleanProperty("showInlineStatistics", true);
   public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
-  public static final BooleanProperty SPLIT_VERTICALLY = new BooleanProperty("splitVertically", false);
+  public static final BooleanProperty HIDE_SUCCESSFUL_CONFIG = new BooleanProperty("hideConfig", false);
 
   private final Project myProject;
   private final Executor myExecutor;
@@ -195,7 +195,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     myUsePredefinedMessageFilter = usePredefinedMessageFilter;
   }
 
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) { }
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) { }
   
   @Nullable
   protected AnAction createImportAction() {
@@ -203,9 +203,16 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   @NotNull
-  protected ToggleBooleanProperty createIncludeNonStartedInRerun() {
+  protected ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
-    return new ToggleBooleanProperty(text, null, null, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+    return new ToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+  }
+  
+  @NotNull
+  protected ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
+    String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
+    setIfUndefined(HIDE_SUCCESSFUL_CONFIG, true);
+    return new ToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
   }
 
   @JdkConstants.TreeSelectionMode

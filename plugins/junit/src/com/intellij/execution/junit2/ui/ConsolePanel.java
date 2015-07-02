@@ -25,7 +25,6 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestTreeView;
@@ -88,7 +87,7 @@ public class ConsolePanel extends TestResultsPanel {
 
   @Override
   protected TestStatusLine createStatusLine() {
-    myStatusLine = new JUnitStatusLine(myProperties);
+    myStatusLine = new JUnitStatusLine();
     return myStatusLine;
   }
 

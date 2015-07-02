@@ -540,18 +540,13 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  public static ReloadComponentStoreStatus reloadStore(@NotNull Collection<Pair<VirtualFile, StateStorage>> changedStorages, @NotNull IComponentStore.Reloadable store) {
-    MultiMap<StateStorage, VirtualFile> storageToFiles = MultiMap.createLinkedSet();
-    for (Pair<VirtualFile, StateStorage> pair : changedStorages) {
-      storageToFiles.putValue(pair.second, pair.first);
-    }
-
+  public static ReloadComponentStoreStatus reloadStore(@NotNull MultiMap<StateStorage, VirtualFile> changes, @NotNull IComponentStore.Reloadable store) {
     Collection<String> notReloadableComponents;
     boolean willBeReloaded = false;
     try {
       AccessToken token = WriteAction.start();
       try {
-        notReloadableComponents = store.reload(storageToFiles);
+        notReloadableComponents = store.reload(changes);
       }
       catch (Throwable e) {
         Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
@@ -566,12 +561,12 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
         return ReloadComponentStoreStatus.SUCCESS;
       }
 
-      willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages);
+      willBeReloaded = askToRestart(store, notReloadableComponents, changes);
       return willBeReloaded ? ReloadComponentStoreStatus.RESTART_AGREED : ReloadComponentStoreStatus.RESTART_CANCELLED;
     }
     finally {
       if (!willBeReloaded) {
-        for (StateStorage storage : storageToFiles.keySet()) {
+        for (StateStorage storage : changes.keySet()) {
           if (storage instanceof StateStorageBase) {
             ((StateStorageBase)storage).enableSaving();
           }
@@ -583,7 +578,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   // used in settings repository plugin
   public static boolean askToRestart(@NotNull Reloadable store,
                                      @NotNull Collection<String> notReloadableComponents,
-                                     @Nullable Collection<Pair<VirtualFile, StateStorage>> changedStorages) {
+                                     @Nullable MultiMap<StateStorage, VirtualFile> changedStorages) {
     StringBuilder message = new StringBuilder();
     String storeName = store instanceof IApplicationStore ? "Application" : "Project";
     message.append(storeName).append(' ');
@@ -611,8 +606,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     if (Messages.showYesNoDialog(message.toString(),
                                  storeName + " Files Changed", Messages.getQuestionIcon()) == Messages.YES) {
       if (changedStorages != null) {
-        for (Pair<VirtualFile, StateStorage> cause : changedStorages) {
-          StateStorage storage = cause.getSecond();
+        for (StateStorage storage : changedStorages.keySet()) {
           if (storage instanceof StateStorageBase) {
             ((StateStorageBase)storage).disableSaving();
           }

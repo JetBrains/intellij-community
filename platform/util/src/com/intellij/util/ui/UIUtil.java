@@ -58,7 +58,6 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.GeneralPath;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -600,25 +599,7 @@ public class UIUtil {
   }
 
   public static void drawWave(Graphics2D g, Rectangle rectangle) {
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    Stroke oldStroke = g.getStroke();
-    try {
-      float thickness = 0.7f;
-      g.setStroke(new BasicStroke(thickness));
-      double height = 1;
-      double cycle = 4*height;
-      final double wavedAt = rectangle.y + rectangle.height - thickness - height;
-      GeneralPath wavePath = new GeneralPath();
-      wavePath.moveTo(rectangle.x, wavedAt - Math.cos(rectangle.x * 2 * Math.PI / cycle)*height);
-      for (int x = rectangle.x + 1; x < rectangle.x + rectangle.width; x++) {
-        wavePath.lineTo(x, wavedAt - Math.cos(x * 2 * Math.PI / cycle)*height);
-      }
-      g.draw(wavePath);
-    }
-    finally {
-      config.restore();
-      g.setStroke(oldStroke);
-    }
+    WavePainter.forColor(g.getColor()).paint(g, (int) rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
   @NotNull
@@ -1291,7 +1272,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaBasedLookAndFeel() {
-    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
+    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -1982,9 +1963,10 @@ public class UIUtil {
 
   public static void drawStringWithHighlighting(Graphics g, String s, int x, int y, Color foreground, Color highlighting) {
     g.setColor(highlighting);
-    for (int i = x - 1; i <= x + 1; i++) {
-      for (int j = y - 1; j <= y + 1; j++) {
-        g.drawString(s, i, j);
+    boolean isRetina = isRetina();
+    for (float i = x - 1; i <= x + 1; i += isRetina ? .5 : 1) {
+      for (float j = y - 1; j <= y + 1; j += isRetina ? .5 : 1) {
+        ((Graphics2D)g).drawString(s, i, j);
       }
     }
     g.setColor(foreground);
@@ -2043,6 +2025,16 @@ public class UIUtil {
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
       eachParent = eachParent.getParent();
+    }
+    return null;
+  }
+
+  public static <T extends JComponent> T findParentByClass(@NotNull Component c, Class<T> cls) {
+    for (Component component = c; component != null; component = component.getParent()) {
+      if (cls.isAssignableFrom(component.getClass())) {
+        @SuppressWarnings({"unchecked"}) final T t = (T)component;
+        return t;
+      }
     }
     return null;
   }
@@ -3392,5 +3384,14 @@ public class UIUtil {
       }
     }
     return false;
+  }
+
+  public static void setColumns(JTextComponent textComponent, int columns) {
+    if (textComponent instanceof JTextField) {
+      ((JTextField)textComponent).setColumns(columns);
+    }
+    if (textComponent instanceof JTextArea) {
+      ((JTextArea)textComponent).setColumns(columns);
+    }
   }
 }

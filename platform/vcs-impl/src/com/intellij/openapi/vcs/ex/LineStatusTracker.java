@@ -136,6 +136,8 @@ public class LineStatusTracker {
     myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
+      if (myReleased) return;
+
       removeAnathema();
       removeHighlightersFromMarkupModel();
       try {

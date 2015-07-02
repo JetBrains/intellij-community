@@ -231,7 +231,7 @@ public class JUnit4TestRunnerUtil {
             }
 
             //filter only selected method
-            if (methodName != null && descriptionMethodName != null && !descriptionMethodName.startsWith(methodName)) {
+            if (methodName != null && descriptionMethodName != null && !descriptionMethodName.startsWith(methodName + "[")) {
               return false;
             }
             return true;

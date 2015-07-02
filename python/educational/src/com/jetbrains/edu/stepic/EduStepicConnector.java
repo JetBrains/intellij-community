@@ -36,8 +36,15 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.*;
 
 public class EduStepicConnector {
@@ -68,13 +75,28 @@ public class EduStepicConnector {
 
     HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100);
     ourCookieStore = new BasicCookieStore();
-    ourClient = builder.setDefaultCookieStore(ourCookieStore).build();
 
     try {
+      // Create a trust manager that does not validate certificate for this connection
+      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+        public X509Certificate[] getAcceptedIssuers() { return null; }
+        public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+        public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+      }};
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, trustAllCerts, new SecureRandom());
+      ourClient = builder.setDefaultCookieStore(ourCookieStore).setSslcontext(sslContext).build();
+
       ourClient.execute(request);
       saveCSRFToken();
     }
     catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    catch (NoSuchAlgorithmException e) {
+      LOG.error(e.getMessage());
+    }
+    catch (KeyManagementException e) {
       LOG.error(e.getMessage());
     }
   }

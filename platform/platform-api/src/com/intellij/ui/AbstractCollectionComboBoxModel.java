@@ -19,33 +19,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author traff
  */
-public abstract class AbstractCollectionComboBoxModel<T> extends AbstractListModel implements ComboBoxModel {
+public abstract class AbstractCollectionComboBoxModel<T> extends CollectionListModel<T> implements ComboBoxModel {
   private T mySelection;
 
   public AbstractCollectionComboBoxModel(@Nullable T selection) {
     mySelection = selection;
   }
 
-  @Override
-  public int getSize() {
-    return getItems().size();
+  public AbstractCollectionComboBoxModel(@Nullable T selection, @NotNull Collection<T> items) {
+    super(items);
+
+    mySelection = selection;
   }
 
   @Override
-  public T getElementAt(final int index) {
-    return getItems().get(index);
-  }
-
-  @Override
-  public void setSelectedItem(@Nullable Object anItem) {
-    //noinspection unchecked
-    mySelection = (T)anItem;
-    update();
+  public void setSelectedItem(@Nullable Object item) {
+    if (mySelection != item) {
+      //noinspection unchecked
+      mySelection = (T)item;
+      update();
+    }
   }
 
   @Override
@@ -64,9 +62,6 @@ public abstract class AbstractCollectionComboBoxModel<T> extends AbstractListMod
   }
 
   public boolean contains(T item) {
-    return getItems().contains(item);
+    return getElementIndex(item) != -1;
   }
-
-  @NotNull
-  abstract protected List<T> getItems();
 }

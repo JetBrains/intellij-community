@@ -1,19 +1,20 @@
 import sys
 
+
 class TeamcityServiceMessages:
     quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", ']': '|]'}
-    
+
     def __init__(self, output=sys.stdout, prepend_linebreak=False):
         self.output = output
         self.prepend_linebreak = prepend_linebreak
-    
+
     def escapeValue(self, value):
         if sys.version_info[0] <= 2 and isinstance(value, unicode):
             s = value.encode("utf-8")
         else:
             s = str(value)
         return "".join([self.quote.get(x, x) for x in s])
-    
+
     def message(self, messageName, **properties):
         s = "##teamcity[" + messageName
         for k, v in properties.items():
@@ -39,17 +40,26 @@ class TeamcityServiceMessages:
 
     def testIgnored(self, testName, message=''):
         self.message('testIgnored', name=testName, message=message)
-        
-    def testFailed(self, testName, message='', details='', expected='', actual=''):
-      if expected and actual:
-        self.message('testFailed', type='comparisonFailure', name=testName, message=message,
-                   details=details, expected=expected, actual=actual)
-      else:
-        self.message('testFailed', name=testName, message=message, details=details)
+        self.testFinished(testName)
 
-    def testError(self, testName, message='', details=''):
+
+    def testFailed(self, testName, message='', details='', expected='', actual='', duration=None):
+        """
+        Marks test as failed. *CAUTION*: This method calls ``testFinished``, so you do not need
+        to call it second time. Try to provide ``duration`` if possible.
+
+        """
+        if expected and actual:
+            self.message('testFailed', type='comparisonFailure', name=testName, message=message,
+                         details=details, expected=expected, actual=actual)
+        else:
+            self.message('testFailed', name=testName, message=message, details=details)
+        self.testFinished(testName, int(duration) if duration else None)
+
+    def testError(self, testName, message='', details='', duration=None):
         self.message('testFailed', name=testName, message=message, details=details, error="true")
-        
+        self.testFinished(testName, int(duration) if duration else None)
+
     def testStdOut(self, testName, out):
         self.message('testStdOut', name=testName, out=out)
 

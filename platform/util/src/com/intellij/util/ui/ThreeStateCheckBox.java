@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class ThreeStateCheckBox extends JCheckBox {
 
       @Override
       public boolean isSelected() {
-        return myState == State.SELECTED;
+        return myState == State.SELECTED || (UIUtil.isUnderAquaLookAndFeel() && myState == State.DONT_CARE);
       }
     });
 
@@ -101,6 +101,10 @@ public class ThreeStateCheckBox extends JCheckBox {
 
   public void setState(State state) {
     myState = state;
+
+    String value = state == State.DONT_CARE ? "indeterminate" : null;
+    putClientProperty("JButton.selectedState", value);
+
     repaint();
   }
 
@@ -112,6 +116,10 @@ public class ThreeStateCheckBox extends JCheckBox {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      return;
+    }
+
     switch (getState()) {
       case DONT_CARE:
         Icon icon = getIcon();

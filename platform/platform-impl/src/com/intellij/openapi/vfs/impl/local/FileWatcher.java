@@ -328,8 +328,8 @@ public class FileWatcher {
     }
 
     @Override
-    protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
-      return true;
+    protected boolean useNonBlockingRead() {
+      return false;
     }
   }
 

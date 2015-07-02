@@ -345,6 +345,9 @@
       <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction" />
       <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
     </group>
+    <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.NewScratchFileAction$LanguageAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ChangeFileEncodingAction"/>
+    </action>
 
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
@@ -630,6 +633,7 @@
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>
       <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" use-shortcut-of="$Delete"/>
+      <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="SafeDelete"/>
       <separator/>
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="AllIcons.Actions.Back"
               use-shortcut-of="RecentFiles"/>
@@ -879,8 +883,8 @@
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
     <group>
-      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsAction"
-              text="Import Test Results" id="ImportTests"/>
+      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup"
+              text="Import Test Results" icon="AllIcons.ToolbarDecorator.Import" id="ImportTests"/>
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="editRunConfigurations"/>
     </group>
 

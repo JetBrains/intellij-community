@@ -35,6 +35,8 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 /**
  * @author Nikolai Matveev
  */
@@ -157,7 +159,12 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     new WriteCommandAction(project, commandText) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, this);
+        try {
+          LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, this);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
       }
     }.execute();
   }

@@ -26,6 +26,8 @@ import java.util.Map;
 
 public class ParenthesesUtils {
 
+  public static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>();
+
   private ParenthesesUtils() {}
 
   public static final int PARENTHESIZED_PRECEDENCE = 0;
@@ -50,6 +52,21 @@ public class ParenthesesUtils {
 
   private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
 
+
+  static {
+    tokenMap.put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
+    tokenMap.put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
+    tokenMap.put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
+    tokenMap.put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
+    tokenMap.put(JavaTokenType.ANDEQ, JavaTokenType.AND);
+    tokenMap.put(JavaTokenType.OREQ, JavaTokenType.OR);
+    tokenMap.put(JavaTokenType.XOREQ, JavaTokenType.XOR);
+    tokenMap.put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
+    tokenMap.put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
+    tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
+    tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
+  }
+  
   static {
     s_binaryOperatorPrecedence.put(JavaTokenType.PLUS, ADDITIVE_PRECEDENCE);
     s_binaryOperatorPrecedence.put(JavaTokenType.MINUS, ADDITIVE_PRECEDENCE);
@@ -525,5 +542,19 @@ public class ParenthesesUtils {
       return PsiTreeUtil.isAncestor(condition, expression, true);
     }
     return parentPrecedence < childPrecedence;
+  }
+
+  public static boolean areParenthesesNeeded(PsiJavaToken sign, PsiExpression rhs) {
+    if (rhs instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)rhs;
+      final int precedence1 = getPrecedenceForOperator(binaryExpression.getOperationTokenType());
+      final IElementType signTokenType = sign.getTokenType();
+      final IElementType newOperatorToken = tokenMap.get(signTokenType);
+      final int precedence2 = getPrecedenceForOperator(newOperatorToken);
+      return precedence1 >= precedence2 || !isCommutativeOperator(newOperatorToken);
+    }
+    else {
+      return rhs instanceof PsiConditionalExpression;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,8 +150,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     updateIcon(action);
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
-      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);
-      setAcceleratorFromShortcuts(shortcuts);
+      setAcceleratorFromShortcuts(KeymapManager.getInstance().getActiveKeymap().getShortcuts(id));
     }
     else {
       final ShortcutSet shortcutSet = action.getShortcutSet();
@@ -161,7 +160,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     }
   }
 
-  private void setAcceleratorFromShortcuts(final Shortcut[] shortcuts) {
+  private void setAcceleratorFromShortcuts(@NotNull Shortcut[] shortcuts) {
     for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         final KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();

@@ -59,6 +59,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
@@ -160,6 +161,28 @@ public class MavenUtil {
       else {
         ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
       }
+    }
+  }
+  
+  public static void smartInvokeAndWait(final Project p, final ModalityState state, final Runnable r) {
+    if (isNoBackgroundMode() || ApplicationManager.getApplication().isDispatchThread()) {
+      r.run();
+    }
+    else {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      DumbService.getInstance(p).smartInvokeLater(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            r.run();
+          }
+          finally {
+            semaphore.up();
+          }
+        }
+      }, state);
+      semaphore.waitFor();
     }
   }
 

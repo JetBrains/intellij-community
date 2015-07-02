@@ -41,7 +41,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -56,6 +55,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
@@ -71,7 +71,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -110,13 +109,17 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
-  private final Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = new HashSet<ThreadReferenceProxyImpl>();
+  private final Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = ContainerUtil.newConcurrentSet();
   protected final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myModifiedClassesScanRequired = false;
 
   public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
     return mySteppingThroughThreads.contains(threadProxy);
+  }
+
+  public boolean setSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
+    return mySteppingThroughThreads.add(threadProxy);
   }
 
   @NotNull
@@ -322,12 +325,17 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  private void resetIgnoreStepFiltersFlag() {
+  public void resetIgnoreStepFiltersFlag() {
     myIgnoreFiltersFrameCountThreshold = 0;
   }
 
   public void setIgnoreStepFiltersFlag(int currentStackFrameCount) {
-    myIgnoreFiltersFrameCountThreshold = currentStackFrameCount;
+    if (myIgnoreFiltersFrameCountThreshold <= 0) {
+      myIgnoreFiltersFrameCountThreshold = currentStackFrameCount;
+    }
+    else {
+      myIgnoreFiltersFrameCountThreshold = Math.min(myIgnoreFiltersFrameCountThreshold, currentStackFrameCount);
+    }
   }
 
   public boolean shouldIgnoreSteppingFilters() {
@@ -563,10 +571,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
 
     private boolean shouldSetAsActiveContext(final SuspendContextImpl suspendContext) {
-      // always switch context if it is not a breakpoint stop
-      if (DebuggerUtilsEx.getEventDescriptors(suspendContext).isEmpty()) {
-        return true;
-      }
       final ThreadReferenceProxyImpl newThread = suspendContext.getThread();
       if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || isSteppingThrough(newThread)) {
         return true;
@@ -585,7 +589,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
     @Override
     public void resumed(final SuspendContextImpl suspendContext) {
-      final SuspendContextImpl currentContext = getProcess().getSuspendManager().getPausedContext();
+      final SuspendContextImpl currentContext = suspendContext != null && isSteppingThrough(suspendContext.getThread())
+                                                ? null
+                                                : getProcess().getSuspendManager().getPausedContext();
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         @Override
         public void run() {

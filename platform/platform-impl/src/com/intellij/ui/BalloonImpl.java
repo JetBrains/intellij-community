@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -105,7 +106,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         final boolean insideBalloon = isInsideBalloon(me);
 
         if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
-          if (!insideBalloon && !hasModalDialog(me)) {
+          if (!insideBalloon && !hasModalDialog(me) && !isWithinChildWindow(me)) {
             hide();
           }
           return;
@@ -157,6 +158,21 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       }
     }
   };
+
+  private boolean isWithinChildWindow(MouseEvent event) {
+    Component owner = UIUtil.getWindow(myContent);
+    if (owner != null) {
+      Component child = UIUtil.getWindow(event.getComponent());
+      if (child != owner) {
+        for (; child != null; child = child.getParent()) {
+          if (child == owner) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
 
   private static boolean hasModalDialog(MouseEvent e) {
     final Component c = e.getComponent();
@@ -286,6 +302,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myTitle = title;
     myLayer = layer != null ? layer : Layer.normal;
     myBlockClicks = blockClicks;
+    MnemonicHelper.init(content);
 
     if (!myDialogMode) {
       new AwtVisitor(content) {

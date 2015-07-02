@@ -323,6 +323,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
     @NonNls private static final String ATTR_KEY_DIAGNOSTIC = "diagnosticInfo";
+    @NonNls private static final String ATTR_KEY_CONFIG = "config";
 
     @NonNls private static final String MESSAGE = "message";
     @NonNls private static final String TEST_REPORTER_ATTACHED = "enteredTheMatrix";
@@ -378,8 +379,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       // TODO
       // final String locationUrl = testStarted.getLocationHint();
 
-      final String locationUrl = testStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
+      final Map<String, String> attributes = testStarted.getAttributes();
+      final String locationUrl = attributes.get(ATTR_KEY_LOCATION_URL);
       TestStartedEvent testStartedEvent = new TestStartedEvent(testStarted, locationUrl);
+      testStartedEvent.setConfig(attributes.get(ATTR_KEY_CONFIG) != null);
       fireOnTestStarted(testStartedEvent);
     }
 

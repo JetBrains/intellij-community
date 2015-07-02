@@ -31,7 +31,7 @@ public class GroovyClsCustomNavigationPolicy extends ClsCustomNavigationPolicyEx
   @Override
   @Nullable
   public PsiElement getNavigationElement(@NotNull ClsMethodImpl clsMethod) {
-    if (isGroovyLanguage(clsMethod)) return null;
+    if (!isGroovyLanguage(clsMethod)) return null;
 
     PsiMethod source = clsMethod.getSourceMirrorMethod();
     if (source instanceof LightElement) {

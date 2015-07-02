@@ -318,6 +318,7 @@ def create_fork(original_name):
         child_process = getattr(os, original_name)() # fork
         if not child_process:
             import pydevd
+            pydevd.threadingCurrentThread().__pydevd_main_thread = True
 
             pydevd.settrace_forked()
         return child_process

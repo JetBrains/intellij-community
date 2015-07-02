@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -27,5 +28,5 @@ public interface KeymapListener {
 
   void quickListRenamed(QuickList oldQuickList, QuickList newQuickList);
 
-  void processCurrentKeymapChanged(QuickList[] ids);
+  void processCurrentKeymapChanged(@NotNull QuickList[] ids);
 }

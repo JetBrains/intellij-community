@@ -815,7 +815,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void reinitDocumentIndentOptions() {
     if (myProject != null && !myProject.isDisposed()) {
-      CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
+      PsiDocumentManager.getInstance(myProject).performForCommittedDocument(myDocument, new Runnable() {
+        @Override
+        public void run() {
+          CodeStyleSettingsManager.updateDocumentIndentOptions(myProject, myDocument);
+        }
+      });
     }
   }
 
@@ -879,8 +884,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
   }
-
-  private static boolean firstCharTyped = true;
 
   private void initComponent() {
     myPanel.setLayout(new BorderLayout());

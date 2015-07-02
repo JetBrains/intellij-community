@@ -31,15 +31,12 @@ public class QuickList extends ExternalizableSchemeAdapter {
   public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
   private static final String ID_TAG = "id";
-  private static final String READONLY_TAG = "readonly";
   private static final String ACTION_TAG = "action";
   private static final String DISPLAY_NAME_TAG = "display";
   private static final String DESCRIPTION_TAG = "description";
 
-  private String myName;
   private String myDescription;
   private String[] myActionIds = ArrayUtil.EMPTY_STRING_ARRAY;
-  private boolean myReadonly;
 
   /**
    * With read external to be called immediately after in mind
@@ -48,21 +45,10 @@ public class QuickList extends ExternalizableSchemeAdapter {
     myName = "";
   }
 
-  public QuickList(@NotNull String name, @Nullable String description, String[] actionIds, boolean isReadonly) {
+  public QuickList(@NotNull String name, @Nullable String description, String[] actionIds) {
     myName = name;
     myDescription = StringUtil.nullize(description);
     myActionIds = actionIds;
-    myReadonly = isReadonly;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return myName;
-  }
-
-  public boolean isReadonly() {
-    return myReadonly;
   }
 
   @Nullable
@@ -113,9 +99,6 @@ public class QuickList extends ExternalizableSchemeAdapter {
     if (myDescription != null) {
       groupElement.setAttribute(DESCRIPTION_TAG, myDescription);
     }
-    if (myReadonly) {
-      groupElement.setAttribute(READONLY_TAG, "true");
-    }
 
     for (String actionId : getActionIds()) {
       groupElement.addContent(new Element(ACTION_TAG).setAttribute(ID_TAG, actionId));
@@ -125,17 +108,11 @@ public class QuickList extends ExternalizableSchemeAdapter {
   public void readExternal(@NotNull Element element) {
     myName = element.getAttributeValue(DISPLAY_NAME_TAG);
     myDescription = StringUtil.nullize(element.getAttributeValue(DESCRIPTION_TAG));
-    myReadonly = Boolean.valueOf(element.getAttributeValue(READONLY_TAG, "false")).booleanValue();
 
     List<Element> actionElements = element.getChildren(ACTION_TAG);
     myActionIds = new String[actionElements.size()];
     for (int i = 0, n = actionElements.size(); i < n; i++) {
       myActionIds[i] = actionElements.get(i).getAttributeValue(ID_TAG);
     }
-  }
-
-  @Override
-  public void setName(@NotNull String newName) {
-    myName = newName;
   }
 }

@@ -73,6 +73,7 @@
       <localInspection groupPath="Java" language="JAVA" shortName="TestNGDataProvider"
                        implementationClass="com.theoryinpractice.testng.inspection.TestNGDataProviderInspection" displayName="Data provider problems"
                        groupName="TestNG" enabledByDefault="true" level="WARNING"/>
+      <programRunner implementation="com.theoryinpractice.testng.configuration.TestNGDebuggerRunner"/>
     </extensions>
     <extensionPoints >
       <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>

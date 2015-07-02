@@ -33,10 +33,10 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
-import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -67,6 +67,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TLongArrayList;
+import gnu.trove.TLongProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +128,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean myLoaded;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private Boolean myActive;
+  private volatile boolean myActive;
+  public volatile boolean myCancelDeactivation;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
@@ -167,7 +170,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void bootstrapPicoContainer(@NotNull String name) {
     super.bootstrapPicoContainer(name);
-    getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
+    getPicoContainer().registerComponentImplementation(IComponentStore.class, ApplicationStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }
 
@@ -531,6 +534,24 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ourThreadExecutorsService.shutdownNow();
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
+
+    if (LOG.isDebugEnabled()) {
+      final long[] sum = {0};
+      writePauses.forEach(new TLongProcedure() {
+        @Override
+        public boolean execute(long value) {
+          sum[0] += value;
+          return true;
+        }
+      });
+      LOG.debug("write action Statistics:\n" +
+                "\nTotal write actions: " + writePauses.size() +
+                "\nTotal write pauses : " + sum[0] + "ms"+
+                "\nAverage write pause: " + sum[0] / writePauses.size() + "ms" +
+                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms" +
+                ""
+      );
+    }
   }
 
   @NotNull
@@ -1150,6 +1171,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
+  public boolean isDeactivationCanceled() {
+    return myCancelDeactivation;
+  }
+
   public boolean tryToApplyActivationState(boolean active, Window window) {
     final Component frame = UIUtil.findUltimateParent(window);
 
@@ -1157,7 +1182,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       final IdeFrame ideFrame = (IdeFrame)frame;
       if (isActive() != active) {
         myActive = active;
-        System.setProperty("idea.active", myActive.toString());
+        System.setProperty("idea.active", String.valueOf(myActive));
         ApplicationActivationListener publisher = getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC);
         if (active) {
           publisher.applicationActivated(ideFrame);
@@ -1174,14 +1199,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isUnitTestMode()) return true;
+   if (isUnitTestMode()) return true;
 
-    if (myActive == null) {
-      Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      return active != null;
-    }
-
-    return myActive;
+   return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null || myActive;
   }
 
   @NotNull
@@ -1201,11 +1221,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private void startWrite(Class clazz) {
+  private final TLongArrayList writePauses = new TLongArrayList();
+  private void startWrite(@Nullable Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
-
+    long start = System.currentTimeMillis();
     try {
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
@@ -1242,10 +1263,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     myWriteActionsStack.push(clazz);
+    if (LOG.isDebugEnabled()) {
+      long end = System.currentTimeMillis();
+      writePauses.add(end - start);
+    }
     fireWriteActionStarted(clazz);
   }
 
-  private void endWrite(Class clazz) {
+  private void endWrite(@Nullable Class clazz) {
     try {
       myWriteActionsStack.pop();
       fireWriteActionFinished(clazz);
@@ -1257,14 +1282,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  public AccessToken acquireWriteActionLock(Class clazz) {
+  public AccessToken acquireWriteActionLock(@Nullable Class clazz) {
     return new WriteAccessToken(clazz);
   }
 
   private class WriteAccessToken extends AccessToken {
+    @Nullable
     private final Class clazz;
 
-    public WriteAccessToken(Class clazz) {
+    public WriteAccessToken(@Nullable Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
@@ -1392,15 +1418,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getMulticaster().applicationExiting();
   }
 
-  private void fireBeforeWriteActionStart(Class action) {
+  private void fireBeforeWriteActionStart(@Nullable Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
-  private void fireWriteActionStarted(Class action) {
+  private void fireWriteActionStarted(@Nullable Class action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
-  private void fireWriteActionFinished(Class action) {
+  private void fireWriteActionFinished(@Nullable Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
   }
 

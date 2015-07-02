@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,36 +93,22 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     if (problemFunction.getAnnotation() != null) {
       newFunction.append(problemFunction.getAnnotation().getText());
     }
-    newFunction.append(":\n\t");
+    newFunction.append(": pass");
 
     StringUtil.join(couple.getSecond(), ", ", superCall);
     superCall.append(")");
 
-    final PyStatementList statementList = problemFunction.getStatementList();
-    PyExpression docstring = null;
-    final PyStatement[] statements = statementList.getStatements();
-    if (statements.length != 0 && statements[0] instanceof PyExpressionStatement) {
-      final PyExpressionStatement st = (PyExpressionStatement)statements[0];
-      if (st.getExpression() instanceof PyStringLiteralExpression) {
-        docstring = st.getExpression();
-      }
-    }
-
-    if (docstring != null) {
-      newFunction.append(docstring.getText()).append("\n\t");
-    }
-    newFunction.append(superCall).append("\n\t");
-    boolean first = true;
-    for (PyStatement statement : statements) {
-      if (first && docstring != null || statement instanceof PyPassStatement) {
-        first = false;
-        continue;
-      }
-      newFunction.append(statement.getText()).append("\n\t");
-    }
-
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    problemFunction.replace(generator.createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class, newFunction.toString()));
+    final LanguageLevel languageLevel = LanguageLevel.forElement(problemFunction);
+    final PyStatement callSuperStatement = generator.createFromText(languageLevel, PyStatement.class, superCall.toString());
+    final PyParameterList newParameterList = generator.createFromText(languageLevel,
+                                                                      PyParameterList.class,
+                                                                      newFunction.toString(),
+                                                                      new int[]{0, 3});
+    problemFunction.getParameterList().replace(newParameterList);
+    final PyStatementList statementList = problemFunction.getStatementList();
+    PyUtil.addElementToStatementList(callSuperStatement, statementList, true);
+    PyPsiUtils.removeRedundantPass(statementList);
   }
 
   @NotNull
@@ -208,14 +195,20 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
 
     // Required keyword-only parameters
+    boolean hasKeywordOnlyParams = false;
     for (PyParameter param : origInfo.getRequiredKeywordOnlyParameters()) {
       newFunctionParams.add(param.getText());
+      hasKeywordOnlyParams = true;
     }
     for (PyParameter param : superInfo.getRequiredKeywordOnlyParameters()) {
       if (!origInfo.getAllParameterNames().contains(param.getName())) {
         newFunctionParams.add(param.getText());
+        hasKeywordOnlyParams = true;
       }
       superCallArgs.add(param.getName() + "=" + param.getName());
+    }
+    if (starredParam instanceof PySingleStarParameter && !hasKeywordOnlyParams) {
+      newFunctionParams.remove(newFunctionParams.size() - 1);
     }
 
     // Optional keyword-only parameters
@@ -286,13 +279,13 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
         if (param.isSelf()) {
           selfParam = param;
         }
-        else if (param.getText().equals("*")) {
+        else if (param instanceof PySingleStarParameter) {
           singleStarParam = param;
         }
-        else if (param.getText().startsWith("**")) {
+        else if (param.getAsNamed() != null && param.getAsNamed().isKeywordContainer()) {
           keywordContainer = param;
         }
-        else if (param.getText().startsWith("*")) {
+        else if (param.getAsNamed() != null && param.getAsNamed().isPositionalContainer()) {
           positionalContainer = param;
         }
         else if (param.getAsNamed() == null || !param.getAsNamed().isKeywordOnly()) {

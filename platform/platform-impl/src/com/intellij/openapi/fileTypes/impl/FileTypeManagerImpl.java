@@ -79,7 +79,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  private static final int VERSION = 14;
+  private static final int VERSION = 15;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
@@ -88,7 +88,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @NonNls
   private static final String DEFAULT_IGNORED =
-    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;.tox;_svn;rcs;vssver.scc;vssver2.scc;";
+    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;.tox;_svn;rcs;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
@@ -897,35 +897,39 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       addIgnore("__pycache__");
     }
 
-    if (savedVersion < 10) {
-      addIgnore(".bundle");
-    }
-
     if (savedVersion < 11) {
       addIgnore("*.rbc");
     }
 
     if (savedVersion < 13) {
       // we want *.lib back since it's an important user artifact for CLion, also for IDEA project itself, since we have some libs.  
-      Set<String> masks = new LinkedHashSet<String>(myIgnoredPatterns.getIgnoreMasks());
-      masks.remove("*.lib");
-      
-      myIgnoredPatterns.clearPatterns();
-      for (String each : masks) {
-        myIgnoredPatterns.addIgnoreMask(each);
-      }
+      unignoreMask("*.lib");
     }
 
     if (savedVersion < 14) {
       addIgnore(".tox");
     }
 
+    if (savedVersion < 15) {
+      // we want .bundle back, bundler keeps useful data there
+      unignoreMask(".bundle");
+    }
     myIgnoredFileCache.clearCache();
 
     String counter = JDOMExternalizer.readString(state, "fileTypeChangedCounter");
     if (counter != null) {
       fileTypeChangedCount.set(StringUtilRt.parseInt(counter, 0));
       autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
+    }
+  }
+
+  private void unignoreMask(@NotNull final String maskToRemove) {
+    final Set<String> masks = new LinkedHashSet<String>(myIgnoredPatterns.getIgnoreMasks());
+    masks.remove(maskToRemove);
+
+    myIgnoredPatterns.clearPatterns();
+    for (final String each : masks) {
+      myIgnoredPatterns.addIgnoreMask(each);
     }
   }
 

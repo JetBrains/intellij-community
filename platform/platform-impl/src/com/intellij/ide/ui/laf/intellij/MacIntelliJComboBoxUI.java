@@ -16,12 +16,10 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
@@ -36,9 +34,15 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
-  private static final Icon COMBOBOX = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxMac.png");
-  private static final Icon COMBOBOX_LEFT = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxLeft.png");
-  private static final Icon COMBOBOX_TOP_BOTTOM = DarculaLaf.loadIcon("/com/intellij/ide/ui/laf/icons/comboboxTopBottom.png");
+  private static final Icon COMBOBOX = DarculaLaf.loadIcon("comboboxMac.png");
+  private static final Icon COMBOBOX_LEFT = DarculaLaf.loadIcon("comboboxLeft.png");
+  private static final Icon COMBOBOX_TOP_BOTTOM = DarculaLaf.loadIcon("comboboxTopBottom.png");
+  private static final Icon COMBOBOX_FOCUSED = DarculaLaf.loadIcon("comboboxMacFocused.png");
+  private static final Icon COMBOBOX_LEFT_FOCUSED = DarculaLaf.loadIcon("comboboxLeftFocused.png");
+  private static final Icon COMBOBOX_TOP_BOTTOM_FOCUSED = DarculaLaf.loadIcon("comboboxTopBottomFocused.png");
+  private static final Icon COMBOBOX_TOP_BOTTOM_DISABLED = DarculaLaf.loadIcon("comboboxTopBottomDisabled.png");
+  private static final Icon COMBOBOX_LEFT_DISABLED = DarculaLaf.loadIcon("comboboxLeftDisabled.png");
+  private static final Icon COMBOBOX_DISABLED = DarculaLaf.loadIcon("comboboxMacDisabledRight.png");
   private final JComboBox myComboBox;
 
   public MacIntelliJComboBoxUI(JComboBox comboBox) {
@@ -46,7 +50,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     currentValuePane = new CellRendererPane() {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
-        c.setBackground(Color.WHITE);
+        c.setBackground(myComboBox.isEnabled() ? Gray.xFF : Gray.xF6);
         super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
       }
     };
@@ -62,16 +66,15 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     final Color bg = myComboBox.getBackground();
     final Color fg = myComboBox.getForeground();
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
-
       @Override
       public void paint(Graphics g2) {
-        Icon icon = myComboBox.isEnabled() ? COMBOBOX : IconLoader.getDisabledIcon(COMBOBOX);
+        Icon icon = myComboBox.isEnabled() ? myComboBox.hasFocus() ? COMBOBOX_FOCUSED : COMBOBOX : COMBOBOX_DISABLED;
         icon.paintIcon(this, g2, 0, 0);
       }
 
       @Override
       public Dimension getPreferredSize() {
-        return JBUI.size(COMBOBOX.getIconWidth(), COMBOBOX.getIconWidth());
+        return JBUI.size(COMBOBOX.getIconWidth(), COMBOBOX.getIconHeight());
       }
     };
     button.setBorder(BorderFactory.createEmptyBorder());
@@ -84,8 +87,8 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     return getSizeWithIcon(super.getMinimumSize(c));
   }
 
-  private Dimension getSizeWithIcon(Dimension d) {
-    return new Dimension(Math.max(d.width + 6, COMBOBOX.getIconWidth()), Math.max(d.height, COMBOBOX.getIconHeight()));
+  private static Dimension getSizeWithIcon(Dimension d) {
+    return new Dimension(Math.max(d.width + 7, COMBOBOX.getIconWidth()), Math.max(d.height, COMBOBOX.getIconHeight()));
   }
 
   @Override
@@ -102,21 +105,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
           return new JTextField() {
             {
               setOpaque(false);
-              setBorder(new Border() {
-                @Override
-                public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-                }
-
-                @Override
-                public Insets getBorderInsets(Component c) {
-                  return JBUI.insets(2, 6, 2, 6);
-                }
-
-                @Override
-                public boolean isBorderOpaque() {
-                  return false;
-                }
-              });
+              setBorder(JBUI.Borders.empty(1, 0));
             }
 
             public void setText(String s) {
@@ -126,14 +115,10 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
               super.setText(s);
             }
 
-            public void setBorder(Border b) {
-                super.setBorder(b);
-            }
-
             @Override
             public Dimension getPreferredSize() {
               Dimension size = super.getPreferredSize();
-              return new Dimension(size.width, COMBOBOX.getIconHeight() - 2);
+              return new Dimension(size.width, COMBOBOX.getIconHeight() - 6);
             }
           };
         }
@@ -182,13 +167,17 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
-    rect.height=Math.min(rect.height, COMBOBOX.getIconHeight());
-    rect.y+=2;
-    rect.x+=5;
-    rect.height-=4;
+    rect.height=Math.min(rect.height, COMBOBOX.getIconHeight()-8);
+    rect.y+=4;
+    rect.x+=8;
+    rect.width-=8;
     return rect;
   }
 
+  @Override
+  protected Dimension getDefaultSize() {
+    return super.getDefaultSize();
+  }
 
   @Override
   protected LayoutManager createLayoutManager() {
@@ -205,12 +194,12 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
       @Override
       public Dimension preferredLayoutSize(Container parent) {
-        return null;
+        return parent.getPreferredSize();
       }
 
       @Override
       public Dimension minimumLayoutSize(Container parent) {
-        return null;
+        return parent.getMinimumSize();
       }
 
       @Override
@@ -221,7 +210,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
         Insets insets = getInsets();
         int buttonHeight = height - (insets.top + insets.bottom);
-        int buttonWidth = buttonHeight;
+        int buttonWidth = COMBOBOX.getIconWidth();
         if (arrowButton != null) {
           Insets arrowInsets = arrowButton.getInsets();
           buttonWidth = arrowButton.getPreferredSize().width + arrowInsets.left + arrowInsets.right;
@@ -243,7 +232,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
   @Override
   public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
-    g.setColor(Color.WHITE);
+    g.setColor(myComboBox.isEnabled() ? Gray.xFF : Gray.xF6);
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
@@ -253,23 +242,26 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    super.paint(g, c);
-
     Rectangle r = arrowButton.getBounds();
     int stop = r.x;
-    g.setClip(0,0, stop, COMBOBOX.getIconHeight());
-    COMBOBOX_LEFT.paintIcon(c,g,0,r.y);
-    int x = COMBOBOX_LEFT.getIconWidth();
+    Insets clip = getInsets();
+    Graphics gg = g.create(clip.left, r.y, stop - clip.left, COMBOBOX.getIconHeight());
+    boolean enabled = c.isEnabled();
+    boolean hasFocus = c.hasFocus();
+    Icon icon = enabled ? hasFocus ? COMBOBOX_LEFT_FOCUSED : COMBOBOX_LEFT : COMBOBOX_LEFT_DISABLED;
+    icon.paintIcon(c,gg,0,0);
+    int x = icon.getIconWidth();
+    icon = enabled ? hasFocus ? COMBOBOX_TOP_BOTTOM_FOCUSED : COMBOBOX_TOP_BOTTOM : COMBOBOX_TOP_BOTTOM_DISABLED;
     while (x < stop) {
-      COMBOBOX_TOP_BOTTOM.paintIcon(c, g, x, r.y);
-      x+=COMBOBOX_TOP_BOTTOM.getIconWidth();
+      icon.paintIcon(c, gg, x, 0);
+      x+=icon.getIconWidth();
     }
-    if (UIUtil.isRetina()) {
-      ((Graphics2D)g).scale(0.5d, 0.5d);
-      g.setColor(Color.WHITE);
-      g.drawLine(COMBOBOX_LEFT.getIconWidth() * 2, 3, stop * 2, 3);
-      g.drawLine(COMBOBOX_LEFT.getIconWidth() * 2, 40, stop * 2, 40);
-      ((Graphics2D)g).scale(2d, 2d);
+    gg.dispose();
+    icon = enabled ? hasFocus ? COMBOBOX_FOCUSED : COMBOBOX : COMBOBOX_DISABLED;
+    icon.paintIcon(c, g, r.x, r.y);
+
+    if ( !comboBox.isEditable() ) {
+      paintCurrentValue(g, rectangleForCurrentValue(), false);
     }
   }
 }

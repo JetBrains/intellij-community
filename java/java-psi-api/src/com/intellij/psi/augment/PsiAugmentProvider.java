@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
@@ -29,7 +30,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
+/**
+ * An extension that enables one to add children to some PSI elements, e.g. methods to Java classes. The class code remains the same, but its
+ * method accessors also include the results returned from {@link PsiAugmentProvider}s.
+ * 
+ * During indexing, only {@link com.intellij.openapi.project.DumbAware} augment providers are run.
+ */
 public abstract class PsiAugmentProvider {
   private static final Logger LOG = Logger.getInstance("#" + PsiAugmentProvider.class.getName());
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
@@ -40,7 +46,7 @@ public abstract class PsiAugmentProvider {
   @NotNull
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
     List<Psi> result = Collections.emptyList();
-    for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (PsiAugmentProvider provider : DumbService.getInstance(element.getProject()).filterByDumbAwareness(Extensions.getExtensions(EP_NAME))) {
       List<Psi> augments = provider.getAugments(element, type);
       if (!augments.isEmpty()) {
         if (result.isEmpty()) result = new ArrayList<Psi>(augments.size());

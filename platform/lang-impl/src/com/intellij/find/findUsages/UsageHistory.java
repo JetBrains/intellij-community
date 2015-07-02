@@ -15,44 +15,52 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class UsageHistory {
   // the last element is the most recent
-  private final List<ConfigurableUsageTarget> myHistory = ContainerUtil.createLockFreeCopyOnWriteList();
+  @SuppressWarnings("unchecked")
+  private final Map<ConfigurableUsageTarget, String> myHistory = new LinkedHashMap<ConfigurableUsageTarget, String>((EqualityPolicy<ConfigurableUsageTarget>)EqualityPolicy.IDENTITY) {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<ConfigurableUsageTarget, String> eldest) {
+      // todo configure history depth limit
+      return size() > 15;
+    }
+  };
 
   public void add(@NotNull ConfigurableUsageTarget usageTarget) {
     final String descriptiveName = usageTarget.getLongDescriptiveName();
-    ContainerUtil.retainAll(myHistory, new Condition<ConfigurableUsageTarget>() {
-      @Override
-      public boolean value(ConfigurableUsageTarget existing) {
-        return !existing.getLongDescriptiveName().equals(descriptiveName);
+    synchronized (myHistory) {
+      final Set<Map.Entry<ConfigurableUsageTarget, String>> entries = myHistory.entrySet();
+      for (Iterator<Map.Entry<ConfigurableUsageTarget, String>> iterator = entries.iterator(); iterator.hasNext(); ) {
+        if (iterator.next().getValue().equals(descriptiveName)) {
+          iterator.remove();
+        }
       }
-    });
-    myHistory.add(usageTarget);
-
-    // todo configure history depth limit
-    if (myHistory.size() > 15) {
-      myHistory.remove(0);
+      myHistory.put(usageTarget, descriptiveName);
     }
   }
 
   @NotNull
   public List<ConfigurableUsageTarget> getAll() {
-    removeInvalidElementsFromHistory();
-    return Collections.unmodifiableList(myHistory);
-  }
-
-  private void removeInvalidElementsFromHistory() {
-    for (ConfigurableUsageTarget target : myHistory) {
-      if (!target.isValid()) myHistory.remove(target);
+    synchronized (myHistory) {
+      List<ConfigurableUsageTarget> result = ContainerUtil.newArrayList();
+      final Set<ConfigurableUsageTarget> entries = myHistory.keySet();
+      for (Iterator<ConfigurableUsageTarget> iterator = entries.iterator(); iterator.hasNext(); ) {
+        final ConfigurableUsageTarget target = iterator.next();
+        if (!target.isValid()) {
+          iterator.remove();
+        } else {
+          result.add(target);
+        }
+      }
+      return result;
     }
   }
-
 }

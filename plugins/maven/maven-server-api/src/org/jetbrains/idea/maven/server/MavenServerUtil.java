@@ -19,9 +19,10 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
 
 public class MavenServerUtil {
   private static final Properties mySystemPropertiesCache;
@@ -61,12 +62,7 @@ public class MavenServerUtil {
     File baseDir = workingDir;
     File dir = workingDir;
     while ((dir = dir.getParentFile()) != null) {
-      if (dir.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return ".mvn".equals(name);
-        }
-      }).length > 0) {
+      if (new File(dir, ".mvn").exists()) {
         baseDir = dir;
         break;
       }

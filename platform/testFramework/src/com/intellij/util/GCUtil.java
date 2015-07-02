@@ -15,14 +15,13 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 
+import java.beans.Introspector;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 public class GCUtil {
@@ -43,28 +42,35 @@ public class GCUtil {
   /**
    * Try to force VM to collect soft references if possible.
    * Method doesn't guarantee to succeed, and should not be used in the production code.
-   * Commits / hours optimized method code: 4 / 2
+   * Commits / hours optimized method code: 5 / 3
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
-    tryClearBeanInfoCache();
-
+    //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<Object>();
     SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
-    ArrayList<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
+    ArrayList<SoftReference<?>> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
+
+    System.gc();
+    final long freeMemory = Runtime.getRuntime().freeMemory();
+
     for (int i = 0; i < 100; i++) {
-      System.gc();
       if (q.poll() != null) {
         break;
       }
-      TimeoutUtil.sleep(10);
-      long bytes = Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE / 2);
-      list.add(new SoftReference<byte[]>(new byte[(int)bytes]));
+
+      // full gc is caused by allocation of large enough array below, SoftReference will be cleared after two full gc
+      int bytes = Math.min((int)(freeMemory * 0.45), Integer.MAX_VALUE / 2);
+      list.add(new SoftReference<byte[]>(new byte[bytes]));
     }
 
     // use ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
     // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
     list.ensureCapacity(list.size() + useReference(ref));
+
+    // do not leave a chance for our created SoftReference's content to lie around until next full GC's
+    for(SoftReference createdReference:list) createdReference.clear();
+    //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }
 
   private static int useReference(SoftReference<Object> ref) {
@@ -72,20 +78,12 @@ public class GCUtil {
     return o == null ? 0 : Math.abs(o.hashCode()) % 10;
   }
 
-  private static final boolean ourHasBeanInfoCache = SystemInfo.isJavaVersionAtLeast("1.7");
-
-  private static void tryClearBeanInfoCache() {
-    if (ourHasBeanInfoCache) {
-      try {
-        Class<?> aClass = Class.forName("java.beans.ThreadGroupContext");
-        Method getContextMethod = aClass.getDeclaredMethod("getContext");
-        getContextMethod.setAccessible(true);
-        Object contextForThreadGroup = getContextMethod.invoke(null);
-        Method clearBeanInfoCacheMethod = contextForThreadGroup.getClass().getDeclaredMethod("clearBeanInfoCache");
-        clearBeanInfoCacheMethod.setAccessible(true);
-        clearBeanInfoCacheMethod.invoke(contextForThreadGroup);
-      }
-      catch (Throwable ignore) {}
-    }
+  /**
+   * Using java beans (e.g. Groovy does it) results in all referenced class infos being cached in ThreadGroupContext. A valid fix
+   * would be to hold BeanInfo objects on soft references, but that should be done in JDK. So let's clear this cache manually for now, 
+   * in clients that are known to create bean infos. 
+   */
+  public static void clearBeanInfoCache() {
+    Introspector.flushCaches();
   }
 }

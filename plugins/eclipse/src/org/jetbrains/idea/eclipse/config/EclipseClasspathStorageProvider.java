@@ -16,9 +16,8 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
@@ -146,7 +145,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       VirtualFile root = LocalFileSystem.getInstance().findFileByPath(ClasspathStorage.getModuleDir(module));
       VirtualFile source = root == null ? null : root.findChild(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
       if (source != null && source.isValid()) {
-        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+        AccessToken token = WriteAction.start();
         try {
           source.rename(this, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
         }

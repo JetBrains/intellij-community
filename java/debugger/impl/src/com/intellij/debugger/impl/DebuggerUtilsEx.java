@@ -22,9 +22,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -237,12 +235,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
-  public static boolean isFiltered(String qName, ClassFilter[] classFilters) {
+  public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
     return isFiltered(qName, Arrays.asList(classFilters));
   }
   
-  public static boolean isFiltered(String qName, List<ClassFilter> classFilters) {
-    if(qName.indexOf('[') != -1) {
+  public static boolean isFiltered(@NotNull String qName, List<ClassFilter> classFilters) {
+    if (qName.indexOf('[') != -1) {
       return false; //is array
     }
 
@@ -751,10 +749,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      if (mySourcePosition instanceof ExecutionPointHighlighter.HighlighterProvider) {
-        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).getHighlightRange();
-      }
-      return null;
+      return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
   }
 
@@ -819,7 +814,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     };
     element.accept(lambdaCollector);
     // add initial lambda if we're inside already
-    NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+    PsiElement method = getContainingMethod(element);
     if (method instanceof PsiLambdaExpression) {
       lambdas.add((PsiLambdaExpression)method);
     }
@@ -858,8 +853,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static boolean inTheMethod(@NotNull SourcePosition pos, @NotNull PsiElement method) {
     PsiElement elem = pos.getElementAt();
     if (elem == null) return false;
-    NavigatablePsiElement elemMethod = PsiTreeUtil.getParentOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
-    return Comparing.equal(elemMethod, method);
+    return Comparing.equal(getContainingMethod(elem), method);
   }
 
   public static boolean inTheSameMethod(@NotNull SourcePosition pos1, @NotNull SourcePosition pos2) {
@@ -868,10 +862,28 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     PsiElement elem2 = pos2.getElementAt();
     if (elem1 == null) return elem2 == null;
     if (elem2 != null) {
-      NavigatablePsiElement expectedMethod = PsiTreeUtil.getParentOfType(elem1, PsiMethod.class, PsiLambdaExpression.class);
-      NavigatablePsiElement currentMethod = PsiTreeUtil.getParentOfType(elem2, PsiMethod.class, PsiLambdaExpression.class);
+      PsiElement expectedMethod = getContainingMethod(elem1);
+      PsiElement currentMethod = getContainingMethod(elem2);
       return Comparing.equal(expectedMethod, currentMethod);
     }
     return false;
   }
+
+  @Nullable
+  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
+    return PsiTreeUtil.getParentOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
+  }
+
+  @Nullable
+  public static PsiElement getContainingMethod(@NotNull SourcePosition position) {
+    return getContainingMethod(position.getElementAt());
+  }
+
+  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = new Comparator<Method>() {
+    @Override
+    public int compare(Method m1, Method m2) {
+      return LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
+    }
+  };
+
 }

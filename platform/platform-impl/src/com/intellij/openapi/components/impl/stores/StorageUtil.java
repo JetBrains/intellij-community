@@ -29,7 +29,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -66,7 +65,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class StorageUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
+  static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
@@ -143,7 +142,7 @@ public class StorageUtil {
       LOG.warn("Content equals, but it must be handled not on this level: " + result.getName());
     }
     else {
-      if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
+      if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
         DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
       }
       doWrite(requestor, result, content, lineSeparatorIfPrependXmlProlog);
@@ -158,7 +157,9 @@ public class StorageUtil {
                               @NotNull final VirtualFile file,
                               @NotNull final BufferExposingByteArrayOutputStream content,
                               @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
-    LOG.debug("Save " + file.getPresentableUrl());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Save " + file.getPresentableUrl());
+    }
     AccessToken token = WriteAction.start();
     try {
       OutputStream out = file.getOutputStream(requestor);
@@ -236,7 +237,7 @@ public class StorageUtil {
   }
 
   public static void deleteFile(@NotNull Object requestor, @NotNull VirtualFile virtualFile) throws IOException {
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+    AccessToken token = WriteAction.start();
     try {
       virtualFile.delete(requestor);
     }
@@ -320,10 +321,10 @@ public class StorageUtil {
   /**
    * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
    */
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type, boolean async) throws IOException {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Element element, @NotNull RoamingType type) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
     BufferExposingByteArrayOutputStream content = writeToBytes(element, "\n");
-    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
+    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type);
   }
 
   public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {

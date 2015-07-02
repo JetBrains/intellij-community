@@ -211,4 +211,8 @@ public class TextAttributes implements Cloneable {
     return "[" + getForegroundColor() + "," + getBackgroundColor() + "," + getFontType() + "," + getEffectType() + "," +
            getEffectColor() + "," + getErrorStripeColor() + "]";
   }
+
+  public void setEnforcedDefaults(boolean enforcedDefaults) {
+    myEnforcedDefaults = enforcedDefaults;
+  }
 }

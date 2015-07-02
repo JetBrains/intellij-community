@@ -130,6 +130,11 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       updateForFile(b.getFile());
     }
 
+    @Override
+    public void bookmarksOrderChanged() {
+      //do nothing
+    }
+
     private void updateForFile(@NotNull VirtualFile file) {
       PsiElement element = findPsi(file);
       if (element != null) {

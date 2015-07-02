@@ -19,10 +19,12 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
@@ -54,9 +56,11 @@ public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<Test
   }
 
   @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent) {
-    super.appendAdditionalActions(actionGroup, parent);
-    actionGroup.add(createIncludeNonStartedInRerun());
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) {
+    super.appendAdditionalActions(actionGroup, parent, target);
+    actionGroup.add(createIncludeNonStartedInRerun(target));
+    actionGroup.add(Separator.getInstance());
+    actionGroup.add(createHideSuccessfulConfig(target));
   }
 
   @Nullable

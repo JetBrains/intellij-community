@@ -18,17 +18,18 @@ package com.intellij.execution.testframework.export;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
@@ -56,25 +57,35 @@ public class TestResultsXmlFormatter {
   public static final String ATTR_STATUS = "status";
   public static final String TOTAL_STATUS = "total";
   private static final String ATTR_FOORTER_TEXT = "footerText";
+  public static final String ATTR_CONFIG = "isConfig";
   public static final String STATUS_PASSED = "passed";
   public static final String STATUS_FAILED = "failed";
   public static final String STATUS_ERROR = "error";
   public static final String STATUS_IGNORED = "ignored";
   public static final String STATUS_SKIPPED = "skipped";
 
+  public static final String ROOT_ELEM = "root";
+  
+  public static final Key<RunnerAndConfigurationSettingsImpl> SETTINGS = Key.create("RUN_CONFIGURATION_SETTINGS");
+
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
+  private final boolean myHidePassedConfig;
 
-  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler)
+  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, TestConsoleProperties properties, ContentHandler resultHandler)
     throws SAXException {
-    new TestResultsXmlFormatter(root, runtimeConfiguration, resultHandler).execute();
+    new TestResultsXmlFormatter(root, runtimeConfiguration, properties, resultHandler).execute();
   }
 
-  private TestResultsXmlFormatter(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler) {
+  private TestResultsXmlFormatter(AbstractTestProxy root,
+                                  RunConfiguration runtimeConfiguration,
+                                  TestConsoleProperties properties,
+                                  ContentHandler resultHandler) {
     myRuntimeConfiguration = runtimeConfiguration;
     myTestRoot = root;
     myResultHandler = resultHandler;
+    myHidePassedConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
   }
 
   private void execute() throws SAXException {
@@ -114,8 +125,11 @@ public class TestResultsXmlFormatter {
       endElement(ELEM_COUNT);
     }
 
-    final RunnerAndConfigurationSettingsImpl settings =
+    RunnerAndConfigurationSettingsImpl settings =
       (RunnerAndConfigurationSettingsImpl)RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).getSettings(myRuntimeConfiguration);
+    if (settings == null && myRuntimeConfiguration instanceof UserDataHolder) {
+      settings = ((UserDataHolder)myRuntimeConfiguration).getUserData(SETTINGS);
+    }
     if (settings != null) {
       final Element config = new Element("config");
       try {
@@ -134,6 +148,24 @@ public class TestResultsXmlFormatter {
     }
 
 
+    if (myTestRoot instanceof TestProxyRoot) {
+      final String presentation = ((TestProxyRoot)myTestRoot).getPresentation();
+      if (presentation != null) {
+        final LinkedHashMap<String, String> rootAttrs = new LinkedHashMap<String, String>();
+        rootAttrs.put("name", presentation);
+        final String comment = ((TestProxyRoot)myTestRoot).getComment();
+        if (comment != null) {
+          rootAttrs.put("comment", comment);
+        }
+        final String rootLocation = ((TestProxyRoot)myTestRoot).getRootLocation();
+        if (rootLocation != null) {
+          rootAttrs.put("location", rootLocation);
+        }
+        startElement(ROOT_ELEM, rootAttrs);
+        endElement(ROOT_ELEM);
+      }
+    }
+    
     if (myTestRoot.shouldSkipRootNodeForExport()) {
       for (AbstractTestProxy node : myTestRoot.getChildren()) {
         processNode(node, f);
@@ -176,6 +208,9 @@ public class TestResultsXmlFormatter {
     String locationUrl = node.getLocationUrl();
     if (locationUrl != null) {
       attrs.put(ATTR_LOCATION, locationUrl);
+    }
+    if (node.isConfig()) {
+      attrs.put(ATTR_CONFIG, "true");
     }
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
     startElement(elemName, attrs);
@@ -222,6 +257,10 @@ public class TestResultsXmlFormatter {
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
+        if (myHidePassedConfig && child.isConfig() && child.isPassed()) {
+          //ignore configurations during export
+          continue;
+        }
         processNode(child, filter);
       }
     }
@@ -268,6 +307,9 @@ public class TestResultsXmlFormatter {
     // TODO enumeration!
     switch (magnitude) {
       case 0:
+        return STATUS_SKIPPED;
+      case 2:
+      case 4:
         return STATUS_SKIPPED;
       case 5:
         return STATUS_IGNORED;

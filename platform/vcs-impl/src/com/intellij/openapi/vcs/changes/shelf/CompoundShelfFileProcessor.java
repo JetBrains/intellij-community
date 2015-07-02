@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public class CompoundShelfFileProcessor {
         copyFileContentToProviders(newFilePath, serverStreamProvider, file);
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.info(e);
     }
   }
@@ -166,7 +166,7 @@ public class CompoundShelfFileProcessor {
   private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file) throws IOException {
     if (serverStreamProvider.isEnabled() && serverStreamProvider.isApplicable(newFilePath, RoamingType.PER_USER)) {
       byte[] content = FileUtil.loadFileBytes(file);
-      serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER, true);
+      serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER);
     }
   }
 

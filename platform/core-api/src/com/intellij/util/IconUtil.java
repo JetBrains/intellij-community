@@ -29,11 +29,10 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.IconDeferrer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -461,6 +460,33 @@ public class IconUtil {
       @Override
       public int getIconHeight() {
         return getImage() instanceof JBHiDPIScaledImage ? super.getIconHeight() / 2: super.getIconHeight();
+      }
+    };
+  }
+
+  @NotNull
+  public static Icon textToIcon(final String text, final Component component, final float fontSize) {
+    final Font font = JBFont.create(JBUI.Fonts.label().deriveFont(fontSize));
+    FontMetrics metrics = component.getFontMetrics(font);
+    final int width = metrics.stringWidth(text) + JBUI.scale(4);
+    final int height = metrics.getHeight();
+
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        GraphicsUtil.setupAntialiasing(g);
+        g.setFont(font);
+        UIUtil.drawStringWithHighlighting(g, text, x + JBUI.scale(2), y + height - JBUI.scale(1), JBColor.foreground(), JBColor.background());
+      }
+
+      @Override
+      public int getIconWidth() {
+        return width;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return height;
       }
     };
   }

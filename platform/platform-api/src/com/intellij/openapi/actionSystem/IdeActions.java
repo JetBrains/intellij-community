@@ -33,6 +33,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_SPLIT = "EditorSplitLine";
   @NonNls String ACTION_EDITOR_TEXT_START = "EditorTextStart";
   @NonNls String ACTION_EDITOR_TEXT_END = "EditorTextEnd";
+  @NonNls String ACTION_EDITOR_FORWARD_PARAGRAPH = "EditorForwardParagraph";
+  @NonNls String ACTION_EDITOR_BACKWARD_PARAGRAPH = "EditorBackwardParagraph";
   @NonNls String ACTION_EDITOR_TEXT_START_WITH_SELECTION = "EditorTextStartWithSelection";
   @NonNls String ACTION_EDITOR_TEXT_END_WITH_SELECTION = "EditorTextEndWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_LINE_START = "EditorLineStart";
@@ -46,6 +48,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION = "EditorRightWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION = "EditorUpWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION = "EditorDownWithSelection";
+  @NonNls String ACTION_EDITOR_SWAP_SELECTION_BOUNDARIES = "EditorSwapSelectionBoundaries";
   @NonNls String ACTION_EDITOR_MOVE_CARET_UP = "EditorUp";
   @NonNls String ACTION_EDITOR_MOVE_CARET_LEFT = "EditorLeft";
   @NonNls String ACTION_EDITOR_MOVE_CARET_DOWN = "EditorDown";
@@ -267,6 +270,7 @@ public interface IdeActions {
   @NonNls String ACTION_GOTO_DECLARATION = "GotoDeclaration";
   @NonNls String ACTION_GOTO_TYPE_DECLARATION = "GotoTypeDeclaration";
   @NonNls String ACTION_GOTO_IMPLEMENTATION = "GotoImplementation";
+  @NonNls String ACTION_GOTO_SUPER = "GotoSuperMethod";
 
   @NonNls String MODULE_SETTINGS = "ModuleSettings";
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -42,8 +43,9 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     myItems = ContainerUtilRt.newArrayList(items);
   }
 
-  public CollectionListModel() {
-    myItems = new ArrayList<T>();
+  @NotNull
+  protected final List<T> getInternalList() {
+    return myItems;
   }
 
   @Override
@@ -74,20 +76,24 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     fireIntervalAdded(this, i, i + elements.size() - 1);
   }
 
-  public void remove(@NotNull final T element) {
-    int i = myItems.indexOf(element);
-    if (myItems.remove(element)) {
-      fireIntervalRemoved(this, i, i);
+  public void remove(@NotNull T element) {
+    int index = getElementIndex(element);
+    if (index != -1) {
+      remove(index);
     }
   }
 
-  public void setElementAt(@NotNull final T element, final int index) {
-    myItems.set(index, element);
+  public void setElementAt(@NotNull final T item, final int index) {
+    itemReplaced(myItems.set(index, item), item);
     fireContentsChanged(this, index, index);
   }
 
+  @SuppressWarnings("UnusedParameters")
+  protected void itemReplaced(@NotNull T existingItem, @Nullable T newItem) {
+  }
+
   public void remove(final int index) {
-    myItems.remove(index);
+    itemReplaced(myItems.remove(index), null);
     fireIntervalRemoved(this, index, index);
   }
 

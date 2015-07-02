@@ -18,6 +18,7 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
@@ -46,7 +47,6 @@ import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurati
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -158,12 +158,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   @NotNull
   private static File[] listXmlFiles(final File dir) {
-    File[] files = dir.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        return isXmlFile(file);
-      }
-    });
+    File[] files = dir.listFiles(FileFilters.filesWithExtension("xml"));
     return files != null ? files : ArrayUtil.EMPTY_FILE_ARRAY;
   }
 

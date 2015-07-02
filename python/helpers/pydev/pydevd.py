@@ -423,8 +423,9 @@ class PyDB:
                 pydev_log.error_once(
                     'Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
-            if isThreadAlive(t) and not t.isDaemon():
-                return True
+            if isThreadAlive(t):
+                if not t.isDaemon() or hasattr(t, "__pydevd_main_thread"):
+                    return True
 
         return False
 
@@ -2034,7 +2035,7 @@ def _locked_settrace(
 
         PyDBCommandThread(debugger).start()
         CheckOutputThread(debugger).start()
-        
+
         #Suspend as the last thing after all tracing is in place.
         if suspend:
             debugger.setSuspend(t, CMD_THREAD_SUSPEND)

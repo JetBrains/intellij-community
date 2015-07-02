@@ -189,6 +189,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control X",                "GotoFile", "SaveAll", "NextTab", "PreviousTab", "CloseContent", "CloseAllEditors", "NextSplitter",
                                   "GotoNextError", "NextProjectWindow", "EditorSwapSelectionBoundaries", "SplitVertically",
                                   "SplitHorizontally", "UnsplitAll", "Switcher", "$SelectAll"},
+    { "control UP",               "EditorBackwardParagraph", "EditorLookupUp"},
+    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown"},
     { "control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "MethodDown", "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
@@ -198,6 +200,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift alt G",              "GotoChangedFile", "GotoClass", "hg4idea.QGotoFromPatches"},
     { "shift alt P",              "ParameterInfo", "hg4idea.QPushAction"},
     { "shift control X",          "GotoPreviousError", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+    { "shift control alt F",      "EditorCodeBlockEndWithSelection", "Console.TableResult.EditFilterCriteria"},
     });
     put("Visual Studio", new String[][] {
     { "F5",                       "Resume", "UML.ApplyCurrentLayout"},

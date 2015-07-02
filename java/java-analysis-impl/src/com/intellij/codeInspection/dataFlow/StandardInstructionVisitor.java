@@ -57,15 +57,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return callExpression != null ? DfaPsiUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
     }
   };
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<MethodCallInstruction, Boolean> myOptionOfNullable = new FactoryMap<MethodCallInstruction, Boolean>() {
-    @Nullable
-    @Override
-    protected Boolean create(MethodCallInstruction key) {
-      PsiCallExpression expression = key.getCallExpression();
-      return expression instanceof PsiMethodCallExpression && DfaOptionalSupport.resolveOfNullable(expression) != null;
-    }
-  };
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -240,11 +231,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           forceNotNull(runner, memState, arg);
         }
       }
-      else if (myOptionOfNullable.get(instruction)) {
-        checkNotNullable(memState, arg, NullabilityProblem.passingNotNullToOptional, expr);
-        checkNotNullable(memState, arg, NullabilityProblem.passingNullToOptional, expr);
-      }
-      else if (requiredNullability == Nullness.UNKNOWN) {
+      else if (!instruction.updateOfNullable(memState, arg) && requiredNullability == Nullness.UNKNOWN) {
         checkNotNullable(memState, arg, NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter, expr);
       }
     }
@@ -384,14 +371,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   protected boolean checkNotNullable(DfaMemoryState state,
                                      DfaValue value, NullabilityProblem problem,
                                      PsiElement anchor) {
-    if (problem == NullabilityProblem.passingNotNullToOptional) {
-      return !state.isNotNull(value);
-    }
-
     boolean notNullable = state.checkNotNullable(value);
     if (notNullable &&
-        problem != NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter &&
-        problem != NullabilityProblem.passingNullToOptional) {
+        problem != NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter) {
       DfaValueFactory factory = ((DfaMemoryStateImpl)state).getFactory();
       state.applyCondition(factory.getRelationFactory().createRelation(value, factory.getConstFactory().getNull(), NE, false));
     }

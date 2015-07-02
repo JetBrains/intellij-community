@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     myResizable = b;
   }
 
+  protected boolean canAutoHideOn(TooltipEvent event) {
+    return true;
+  }
+
   /**
    * Shows the hint in the layered pane. Coordinates <code>x</code> and <code>y</code>
    * are in <code>parentComponent</code> coordinate system. Note that the component
@@ -144,7 +148,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           new IdeTooltip(hintHint.getOriginalComponent(), hintHint.getOriginalPoint(), myComponent, hintHint, myComponent) {
             @Override
             protected boolean canAutohideOn(TooltipEvent event) {
-              if (event.getInputEvent() instanceof MouseEvent) {
+              if (!LightweightHint.this.canAutoHideOn(event)) {
+                return false;
+              }
+              else if (event.getInputEvent() instanceof MouseEvent) {
                 return !(hintHint.isContentActive() && event.isIsEventInsideBalloon());
               }
               else if (event.getAction() != null) {

@@ -27,12 +27,12 @@ import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,20 +66,18 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JComponent rootPanel = new JPanel(new BorderLayout(0, JBUI.scale(2)));
-    rootPanel.add(myListPanel, BorderLayout.CENTER);
     JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
     optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(optionsPanel);
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(optionsPanel);
     if (!myController.isForcePushEnabled()) {
-      panel.add(createForcePushInfoLabel(), BorderLayout.NORTH);
+      panel.addToTop(createForcePushInfoLabel());
     }
-    rootPanel.add(panel, BorderLayout.SOUTH);
-    return rootPanel;
+    return JBUI.Panels.simplePanel(0, 2)
+      .addToCenter(myListPanel)
+      .addToBottom(panel);
   }
 
   @NotNull
@@ -100,10 +98,7 @@ public class VcsPushDialog extends DialogWrapper {
     });
     here.setFont(JBUI.Fonts.smallFont());
     text.add(here);
-    JPanel wrap = new JPanel(new BorderLayout());
-    wrap.add(text, BorderLayout.EAST);
-    wrap.setBorder(JBUI.Borders.emptyBottom(4));
-    return wrap;
+    return JBUI.Panels.simplePanel().addToRight(text).withBorder(JBUI.Borders.emptyBottom(4));
   }
 
   @Override

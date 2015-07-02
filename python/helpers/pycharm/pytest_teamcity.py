@@ -80,7 +80,6 @@ if PYVERSION > [1, 4, 0]:
       messages.testIgnored(name)
     elif report.failed:
       messages.testFailed(name, details=report.longrepr)
-      messages.testFinished(name)  # We need to mark it finished even if it failed to display it at parent node
     elif report.when == "call":
       messages.testFinished(name)
 

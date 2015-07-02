@@ -233,8 +233,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     UIUtil.setEnabled(myCommonJavaParameters.getProgramParametersComponent(), false, true);
 
     setAnchor(mySearchForTestsLabel);
-    myModule.setAnchor(myAlternativeJREPanel.getCbEnabled());
-    myCommonJavaParameters.setAnchor(myAlternativeJREPanel.getCbEnabled());
+    myAlternativeJREPanel.setAnchor(myModule.getLabel());
+    myCommonJavaParameters.setAnchor(myModule.getLabel());
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {

@@ -55,6 +55,7 @@ public class RequestHint {
   private boolean myTargetMethodMatched = false;
 
   private boolean myIgnoreFilters = false;
+  private boolean myResetIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
@@ -109,6 +110,14 @@ public class RequestHint {
 
   public void setIgnoreFilters(boolean ignoreFilters) {
     myIgnoreFilters = ignoreFilters;
+  }
+
+  public void setResetIgnoreFilters(boolean resetIgnoreFilters) {
+    myResetIgnoreFilters = resetIgnoreFilters;
+  }
+
+  public boolean isResetIgnoreFilters() {
+    return myResetIgnoreFilters;
   }
 
   public void setRestoreBreakpoints(boolean restoreBreakpoints) {

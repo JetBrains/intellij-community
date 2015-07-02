@@ -80,7 +80,7 @@ public class VariantsCompletionAction extends AnAction {
           super.paintComponent(g);
         }
       };
-      list.setBackground(new JBColor(EditorSearchComponent.COMPLETION_BACKGROUND_COLOR, new Color(0x4C4F51)));
+      list.setBackground(new JBColor(new Color(235, 244, 254), new Color(0x4C4F51)));
       list.setFont(editor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
       Utils.showCompletionPopup(

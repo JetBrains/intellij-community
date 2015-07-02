@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
     return new UsageViewDescriptorAdapter() {
       @NotNull
       @Override
@@ -100,7 +100,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(final UsageInfo[] usages) {
+  protected void performRefactoring(@NotNull final UsageInfo[] usages) {
     final MultiMap<PsiElement, UsageInfo> usagesByElement = MultiMap.create();
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);

@@ -38,8 +38,8 @@ class JUnitStatusLine extends TestStatusLine {
   private final StateInfo myStateInfo = new StateInfo();
   private boolean myTestsBuilt = false;
 
-  JUnitStatusLine(TestConsoleProperties properties) {
-    super(properties);
+  JUnitStatusLine() {
+    super();
   }
 
   public void setModel(final JUnitRunningModel model) {
@@ -94,6 +94,7 @@ class JUnitStatusLine extends TestStatusLine {
     }
 
     public void updateLabel(final SimpleColoredComponent label) {
+      label.clear();
       final StringBuilder buffer = new StringBuilder();
       if (myDoneEvent != null && myTerminated) {
         String termMessage = generateTermMessage(getTestCount(0));

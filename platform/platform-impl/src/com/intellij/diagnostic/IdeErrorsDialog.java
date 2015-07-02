@@ -32,6 +32,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -497,7 +498,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     PluginId pluginId = findPluginId(message.getThrowable());
-    return pluginId != null;
+    return pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString());
   }
 
   private void updateCountLabel() {

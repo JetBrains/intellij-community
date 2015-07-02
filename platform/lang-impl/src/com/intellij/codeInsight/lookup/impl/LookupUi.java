@@ -125,7 +125,7 @@ class LookupUi {
     mySortingLabel.setOpaque(true);
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
-    myModalityState = ModalityState.stateForComponent(myLookup.getComponent());
+    myModalityState = ModalityState.stateForComponent(lookup.getEditor().getComponent());
 
     addListeners();
 
@@ -139,6 +139,8 @@ class LookupUi {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (myLookup.isLookupDisposed()) return;
+        
         myHintAlarm.cancelAllRequests();
 
         final LookupElement item = myLookup.getCurrentItem();
