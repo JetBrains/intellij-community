@@ -50,6 +50,10 @@ public final class RuntimeModuleId {
     return new RuntimeModuleId(LIB_NAME_PREFIX + moduleName + "." + libraryName);
   }
 
+  public static RuntimeModuleId moduleResource(@NotNull String moduleName, @NotNull String resourceName) {
+    return new RuntimeModuleId(moduleName + "." + resourceName);
+  }
+
   @Override
   public String toString() {
     return "RuntimeModuleId[" + myStringId + "]";

@@ -124,7 +124,7 @@ public class ModuleDescriptorsGenerationRunner {
   private void runGenerator() {
     try {
       String[] modules = {
-        "jps-model-api", "jps-model-serialization", "platform-loader", "jps-model-impl",
+        "jps-model-api", "jps-model-serialization", "platform-loader", "jps-model-impl", "devkit-jps-model",
         "platform-module-descriptors-generator", "jps-plugin-system"
       };
       List<URL> classpath = new ArrayList<URL>();

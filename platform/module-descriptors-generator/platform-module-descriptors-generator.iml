@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jps-model-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="devkit-jps-model" />
   </component>
 </module>

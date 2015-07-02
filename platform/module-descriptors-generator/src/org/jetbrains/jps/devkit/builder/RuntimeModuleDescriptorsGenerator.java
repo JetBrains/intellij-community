@@ -22,6 +22,9 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourceRoot;
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourceRootsCollection;
+import org.jetbrains.jps.devkit.model.JpsRuntimeResourcesService;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.ex.JpsElementBase;
@@ -217,18 +220,19 @@ public class RuntimeModuleDescriptorsGenerator {
       myMessageHandler.reportError("Failed to create output directory " + outputDir);
       return;
     }
+
+    generateDescriptorsForModules();
+    generateDescriptorsZip(outputDir, collectUsedLibrariesAndRuntimeResources());
+
     try {
       FileUtil.writeToFile(new File(outputDir, RepositoryConstants.VERSION_FILE_NAME), String.valueOf(RepositoryConstants.VERSION_NUMBER));
       FileUtil.writeToFile(new File(outputDir, RepositoryConstants.PROJECT_CONFIGURATION_HASH_FILE_NAME), RepositoryConstants.GENERATED_BY_COMPILER_HASH_MARK);
     }
     catch (IOException e) {
       myMessageHandler.reportError("Failed to write version file: " + e.getMessage());
-      return;
     }
-
-    generateDescriptorsForModules();
-    generateDescriptorsZip(outputDir, collectUsedLibraries());
   }
+
 
   private void generateDescriptorsForModules() {
     myMessageHandler.showProgressMessage("Generating runtime dependencies information...");
@@ -295,10 +299,20 @@ public class RuntimeModuleDescriptorsGenerator {
     return JpsJavaExtensionService.dependencies(module).withoutSdk().withoutModuleSourceEntries().runtimeOnly();
   }
 
-  private List<RuntimeModuleDescriptor> collectUsedLibraries() {
+  private List<RuntimeModuleDescriptor> collectUsedLibrariesAndRuntimeResources() {
+    List<RuntimeModuleDescriptor> descriptors = new ArrayList<RuntimeModuleDescriptor>();
     Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
     for (JpsModule module : myProject.getModules()) {
       libraries.addAll(enumerateRuntimeDependencies(module).getLibraries());
+
+      JpsRuntimeResourceRootsCollection rootsCollection = JpsRuntimeResourcesService.getInstance().getRoots(module);
+      if (rootsCollection != null) {
+        for (JpsRuntimeResourceRoot root : rootsCollection.getRoots()) {
+          RuntimeModuleId id = RuntimeModuleId.moduleResource(module.getName(), root.getName());
+          descriptors.add(new LibraryDescriptor(id, Collections.singletonList(JpsPathUtil.urlToFile(root.getUrl()))));
+        }
+      }
+
     }
     Set<RuntimeModuleId> names = new HashSet<RuntimeModuleId>();
     for (JpsLibrary library : libraries) {
@@ -307,7 +321,6 @@ public class RuntimeModuleDescriptorsGenerator {
       }
     }
 
-    List<RuntimeModuleDescriptor> descriptors = new ArrayList<RuntimeModuleDescriptor>();
     for (JpsLibrary library : libraries) {
       descriptors.add(new LibraryDescriptor(getLibraryId(library), library.getFiles(JpsOrderRootType.COMPILED)));
     }

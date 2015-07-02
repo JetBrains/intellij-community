@@ -21,7 +21,7 @@ import org.jetbrains.platform.loader.repository.RuntimeModuleId;
  * @author nik
  */
 public class RepositoryConstants {
-  public static final int VERSION_NUMBER = 3;
+  public static final int VERSION_NUMBER = 4;
   public static final String CHECK_DEVELOPMENT_REPOSITORY_UP_TO_DATE_PROPERTY = "idea.loader.check.dev.repository";
   public static final String VERSION_FILE_NAME = "version.txt";
   public static final String MODULE_DESCRIPTORS_DIR_NAME = "module-descriptors";
