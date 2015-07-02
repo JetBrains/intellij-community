@@ -461,6 +461,28 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(text+"\n", getEditor().getDocument().getText());
   }
 
+  public void testReplaceWithRegExp() {
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("(?<!^) ");
+    findModel.setStringToReplace("  ");
+    findModel.setWholeWordsOnly(false);
+    findModel.setRegularExpressions(true);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(false);
+    findModel.setPromptOnReplace(false);
+
+    myFindManager.setFindNextModel(null);
+    myFindManager.getFindInFileModel().copyFrom(findModel);
+
+    String text = "#  Base";
+    configureByText(PlainTextFileType.INSTANCE, text);
+    assertTrue(FindUtil.replace(getProject(), getEditor(), 0, findModel));
+
+    assertEquals("#    Base", getEditor().getDocument().getText());
+  }
+
   private  void initProject(String folderName, final String... sourceDirs) {
     final String testDir = JavaTestUtil.getJavaTestDataPath() + "/find/" + folderName;
     ApplicationManager.getApplication().runWriteAction(() -> {
