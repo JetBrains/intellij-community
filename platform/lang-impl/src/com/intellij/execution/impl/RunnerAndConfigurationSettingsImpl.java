@@ -487,6 +487,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     setSingleton(template.isSingleton());
     setEditBeforeRun(template.isEditBeforeRun());
+    setActivateToolWindowBeforeRun(template.isActivateToolWindowBeforeRun());
   }
 
   @SuppressWarnings("deprecation")
