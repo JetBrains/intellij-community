@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEdi
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildConfEditor;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,10 @@ public class PluginModuleEditorsProvider implements ModuleConfigurationEditorPro
 
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
     final Module module = state.getRootModel().getModule();
+    if (PsiUtil.isIdeaProject(module.getProject())) {
+      return new ModuleConfigurationEditor[]{new RuntimeResourceRootsEditor(state)};
+    }
+
     if (ModuleType.get(module) != PluginModuleType.getInstance()) return ModuleConfigurationEditor.EMPTY;
 
     final DefaultModuleConfigurationEditorFactory editorFactory = DefaultModuleConfigurationEditorFactory.getInstance();

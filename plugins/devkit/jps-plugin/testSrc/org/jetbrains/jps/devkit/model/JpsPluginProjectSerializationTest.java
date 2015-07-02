@@ -45,5 +45,11 @@ public class JpsPluginProjectSerializationTest extends JpsSerializationTestCase 
       .addSdk("IDEA plugin SDK", null, null, JpsIdeaSdkType.INSTANCE, properties);
     assertSame(pluginSdk.getProperties(), module.getSdk(JpsIdeaSdkType.INSTANCE));
     assertSame(javaSdk.getProperties(), module.getSdk(JpsJavaSdkType.INSTANCE));
+
+    JpsRuntimeResourceRootsCollection roots = JpsRuntimeResourcesService.getInstance().getRoots(module);
+    assertNotNull(roots);
+    JpsRuntimeResourceRoot root = assertOneElement(roots.getRoots());
+    assertEquals("data", root.getName());
+    assertEquals(getUrl("data"), root.getUrl());
   }
 }

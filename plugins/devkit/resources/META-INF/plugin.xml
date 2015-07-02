@@ -28,6 +28,7 @@
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
+    <moduleExtension implementation="org.jetbrains.idea.devkit.module.RuntimeResourcesConfigurationImpl"/>
 
     <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginXmlDomFileDescription"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"

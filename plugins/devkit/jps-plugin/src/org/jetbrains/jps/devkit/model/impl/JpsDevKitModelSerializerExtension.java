@@ -16,19 +16,21 @@
 package org.jetbrains.jps.devkit.model.impl;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.devkit.model.JpsIdeaSdkProperties;
-import org.jetbrains.jps.devkit.model.JpsIdeaSdkType;
-import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
-import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
+import org.jetbrains.jps.devkit.model.*;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +38,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtension {
+  public static final String RUNTIME_RESOURCES_COMPONENT_NAME = "RuntimeResources";
+
   @NotNull
   @Override
   public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
@@ -46,6 +50,18 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
   @Override
   public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Collections.singletonList(new JpsIdeaSdkPropertiesSerializer());
+  }
+
+  @Override
+  public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
+    RuntimeResourceListState state = new RuntimeResourceListState();
+    XmlSerializer.deserializeInto(state, rootModel);
+    if (!state.myRoots.isEmpty()) {
+      JpsRuntimeResourceRootsCollection roots = JpsRuntimeResourcesService.getInstance().getOrCreateRoots(module);
+      for (RuntimeResourceRootState root : state.myRoots) {
+        roots.addRoot(root.myName, root.myUrl);
+      }
+    }
   }
 
   private static class JpsIdeaSdkPropertiesSerializer extends JpsSdkPropertiesSerializer<JpsSimpleElement<JpsIdeaSdkProperties>> {
@@ -101,6 +117,12 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
         componentElement.setAttribute(MANIFEST_ATTRIBUTE, manifestFileUrl);
       }
     }
+  }
+
+  public static class RuntimeResourceListState {
+    @Property(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false)
+    public List<RuntimeResourceRootState> myRoots = new ArrayList<RuntimeResourceRootState>();
   }
 }
 
