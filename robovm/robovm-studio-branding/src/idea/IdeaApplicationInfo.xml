@@ -1,7 +1,7 @@
 <component>
   <version major="1" minor="0" strict="1.0.0" eap="true"/>
   <company name="RoboVM AB" url="http://robovm.com"/>
-  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__" apiVersion="135.1286"/>
+  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__" apiVersion="142.0"/>
   <install-over minbuild="0.1" maxbuild="999.999999" version="0"/>
   <logo url="/robovm_studio_logo.png" textcolor="aaaaaa" progressColor="FDA916" progressY="230" progressTailIcon="/robovm_studio_progress_tail.png"/>
   <about url="/robovm_studio_about.png" foreground="aaaaaa" copyrightForeground="aaaaaa" linkColor="ff7f00" logoX="300" logoY="265" logoW="75" logoH="30"/>
