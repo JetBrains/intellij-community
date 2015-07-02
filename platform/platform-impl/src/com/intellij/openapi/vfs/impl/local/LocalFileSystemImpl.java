@@ -34,6 +34,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private static final String FS_ROOT = "/";
 
   private final Object myLock = new Object();
-  private final List<WatchRequestImpl> myRootsToWatch = new ArrayList<WatchRequestImpl>();
+  private final Set<WatchRequestImpl> myRootsToWatch = new THashSet<WatchRequestImpl>();
   private TreeNode myNormalizedTree = null;
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
