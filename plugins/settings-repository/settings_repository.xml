@@ -7,7 +7,6 @@
           <element id="archive" name="settings-repository.jar">
             <element id="module-output" name="settings-repository" />
           </element>
-          <element id="file-copy" path="$PROJECT_DIR$/community/build/kotlinc/lib/kotlin-runtime.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/org.eclipse.jgit-4.0.2-SNAPSHOT.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/jackson-annotations-2.5.1.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/settings-repository/lib/jackson-core-2.5.1.jar" />
