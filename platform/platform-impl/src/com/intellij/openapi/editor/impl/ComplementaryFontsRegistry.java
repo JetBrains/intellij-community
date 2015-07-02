@@ -43,7 +43,13 @@ public class ComplementaryFontsRegistry {
   private static FontInfo ourSharedDefaultFont;
   private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
   private static boolean ourOldUseAntialiasing;
-  
+
+  // This matches style detection in JDK (class sun.font.Font2D)
+  private static final String[] BOLD_NAMES = {"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi" };
+  private static final String[] ITALIC_NAMES = {"italic", "cursiva", "oblique", "inclined"};
+  private static final String[] BOLD_ITALIC_NAMES = {"bolditalic", "bold-italic", "bold italic", "boldoblique", "bold-oblique", 
+    "bold oblique", "demibold italic", "negreta cursiva","demi oblique"};
+
   static {
     final UISettings settings = UISettings.getInstance();
     ourOldUseAntialiasing = settings.ANTIALIASING_IN_EDITOR;
@@ -121,33 +127,36 @@ public class ComplementaryFontsRegistry {
     Font[] allFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
     for (Font font : allFonts) {
       String name = font.getName();
-      int style;
-      if (name.endsWith("-Italic")) {
-        style = Font.ITALIC;
-      }
-      else if (name.endsWith("-Bold")) {
-        style = Font.BOLD;
-      }
-      else if (name.endsWith("-BoldItalic")) {
-        style = Font.BOLD | Font.ITALIC;
-      }
-      else {
-        style = Font.PLAIN;
-      }
+      int style = getFontStyle(name);
       if (style != Font.PLAIN) {
-        String baseName = name.substring(0, name.lastIndexOf('-'));
-        Pair<String, Integer>[] entry = ourStyledFontMap.get(baseName);
+        String familyName = font.getFamily();
+        Pair<String, Integer>[] entry = ourStyledFontMap.get(familyName);
         if (entry == null) {
           //noinspection unchecked
           entry = new Pair[4];
           for (int i = 1; i < 4; i++) {
-            entry[i] = Pair.create(baseName, i);
+            entry[i] = Pair.create(familyName, i);
           }
-          ourStyledFontMap.put(baseName, entry);
+          ourStyledFontMap.put(familyName, entry);
         }
         entry[style] = Pair.create(name, Font.PLAIN);
       }
     }
+  }
+
+  @JdkConstants.FontStyle
+  private static int getFontStyle(String fontName) {
+    fontName = fontName.toLowerCase(Locale.getDefault());
+    for (String name : BOLD_ITALIC_NAMES) {
+      if (fontName.contains(name)) return Font.BOLD | Font.ITALIC;
+    }
+    for (String name : ITALIC_NAMES) {
+      if (fontName.contains(name)) return Font.ITALIC;
+    }
+    for (String name : BOLD_NAMES) {
+      if (fontName.contains(name)) return Font.BOLD;
+    }
+    return Font.PLAIN;
   }
 
   private static Pair<String, Integer> fontFamily(String familyName, int style) {
