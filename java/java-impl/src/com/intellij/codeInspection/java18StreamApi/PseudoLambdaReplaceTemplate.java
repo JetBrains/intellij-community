@@ -497,7 +497,11 @@ class PseudoLambdaReplaceTemplate {
     if (type instanceof PsiClassType) {
       final PsiClass resolved = ((PsiClassType)type).resolve();
       LOG.assertTrue(resolved != null && resolved.getQualifiedName() != null, type);
-      return collectionExpression.getText() + ".stream()";
+      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        return collectionExpression.getText() + ".stream()";
+      } else {
+        return "java.util.stream.StreamSupport.stream(" + collectionExpression.getText() + ".spliterator(), false)";
+      }
     }
     else if (type instanceof PsiArrayType) {
       return CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + collectionExpression.getText() + ")";
