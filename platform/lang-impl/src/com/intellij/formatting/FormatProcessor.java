@@ -477,6 +477,7 @@ public class FormatProcessor {
     if (isReformatSelectedRangesContext()) {
       if (isCurrentBlockAlignmentUsedInRangesToModify() && whiteSpace.isReadOnly()) {
         whiteSpace.setReadOnly(false);
+        whiteSpace.setLineFeedsAreReadOnly(true);
       }
     }
 
