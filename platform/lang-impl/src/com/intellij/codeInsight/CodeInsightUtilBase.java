@@ -56,7 +56,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
       @Override
       public void run() {
         final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-        if (editor != null && editor.getComponent().isDisplayable()) {
+        if (editor != null && (editor.getComponent().isDisplayable() || ApplicationManager.getApplication().isServer())) {
           HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
         }
       }
