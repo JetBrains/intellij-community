@@ -886,6 +886,18 @@ class T58 {
     x = 3;
   }
 }
+class T59 {
+  private int i = 0;
+  {
+    assert true : i++;
+  }
+}
+class T60 {
+  private int i = 1;
+  {
+    if (false) i = 2;
+  }
+}
 class Foo {
 
   public interface Accessor<T> {

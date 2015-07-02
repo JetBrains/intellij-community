@@ -15,10 +15,7 @@ class TypeMap {
   private val typesToGenerate = ArrayList<StandaloneTypeBinding>()
 
   fun resolve(domainName: String, typeName: String, direction: TypeData.Direction): BoxableType? {
-    val domainGenerator = domainGeneratorMap!!.get(domainName)
-    if (domainGenerator == null) {
-      throw RuntimeException("Failed to find domain generator: " + domainName)
-    }
+    val domainGenerator = domainGeneratorMap!!.get(domainName) ?: throw RuntimeException("Failed to find domain generator: " + domainName)
     return direction.get(getTypeData(domainName, typeName)).resolve(this, domainGenerator)
   }
 
@@ -28,7 +25,7 @@ class TypeMap {
 
   fun generateRequestedTypes() {
     // size may grow during iteration
-    var list = typesToGenerate.copyToArray()
+    var list = typesToGenerate.toTypedArray()
     typesToGenerate.clear()
     while (true) {
       for (binding in list) {
@@ -39,7 +36,7 @@ class TypeMap {
         break
       }
       else {
-        list = typesToGenerate.copyToArray()
+        list = typesToGenerate.toTypedArray()
         typesToGenerate.clear()
       }
     }
@@ -52,6 +49,6 @@ class TypeMap {
       result = TypeData(typeName)
       map.put(key, result)
     }
-    return result!!
+    return result
   }
 }

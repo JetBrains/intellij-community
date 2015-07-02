@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,11 +48,11 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement comparisonToken = descriptor.getPsiElement();
-    final PsiBinaryExpression expression = (PsiBinaryExpression)
-      comparisonToken.getParent();
-    if (expression == null) {
+    final PsiElement parent = comparisonToken.getParent();
+    if (!(parent instanceof PsiBinaryExpression)) {
       return;
     }
+    final PsiBinaryExpression expression = (PsiBinaryExpression)parent;
     boolean negated = false;
     final IElementType tokenType = expression.getOperationTokenType();
     if (JavaTokenType.NE.equals(tokenType)) {

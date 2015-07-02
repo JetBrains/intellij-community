@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner.history.actions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -26,6 +27,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
@@ -115,7 +117,14 @@ public abstract class AbstractImportTestsAction extends AnAction {
         }
         final Executor executor = properties != null ? properties.getExecutor() 
                                                      : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-        ExecutionEnvironmentBuilder.create(project, executor, profile).buildAndExecute();
+        ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
+        final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
+        final ProgramRunner runner =
+          initialConfiguration != null ? RunnerRegistry.getInstance().getRunner(executor.getId(), initialConfiguration) : null;
+        if (runner != null) {
+          builder = builder.runner(runner);
+        }
+        builder.buildAndExecute();
       }
       catch (ExecutionException e1) {
         Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
@@ -212,6 +221,10 @@ public abstract class AbstractImportTestsAction extends AnAction {
 
     public SMTRunnerConsoleProperties getProperties() {
       return myProperties;
+    }
+
+    public RunConfiguration getInitialConfiguration() {
+      return mySettings != null ? mySettings.getConfiguration() : null;
     }
 
     public Project getProject() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,11 @@ import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowSiblingsAction extends ShowImplementationsAction {
-  public ShowSiblingsAction() {
-    super();
-  }
-
   @Override
-  public void performForContext(DataContext dataContext, final boolean invokedByShortcut) {
+  public void performForContext(@NotNull DataContext dataContext, final boolean invokedByShortcut) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
@@ -61,7 +57,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     }
 
     final NavigatablePsiElement[] superElements = (NavigatablePsiElement[])findSuperElements(element);
-    if (superElements == null || superElements.length == 0) return;
+    if (superElements.length == 0) return;
 
     final boolean isMethod = superElements[0] instanceof PsiMethod;
     final JBPopup popup = PsiElementListNavigator.navigateOrCreatePopup(superElements, "Choose super " + (isMethod ? "method" : "class or interface"), "Super " + (isMethod ? "methods" : "classes/interfaces"),
@@ -81,11 +77,11 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
   }
 
   private void showSiblings(boolean invokedByShortcut,
-                            Project project,
+                            @NotNull Project project,
                             Editor editor,
                             PsiFile file,
                             boolean invokedFromEditor,
-                            PsiElement element) {
+                            @NotNull PsiElement element) {
     final PsiElement[] impls = getSelfAndImplementations(editor, element, createImplementationsSearcher(), false);
     final String text = SymbolPresentationUtil.getSymbolPresentableText(element);
     showImplementations(impls, project, text, editor, file, element, invokedFromEditor, invokedByShortcut);
@@ -96,11 +92,11 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     return false;
   }
 
-  @Nullable
+  @NotNull
   private static PsiElement[] findSuperElements(final PsiElement element) {
     PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     if (parent == null) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
 
     return FindSuperElementsHelper.findSuperElements(parent);

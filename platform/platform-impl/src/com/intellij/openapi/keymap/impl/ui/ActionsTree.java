@@ -86,7 +86,6 @@ public class ActionsTree {
 
           if (rowBounds.intersects(clip)) {
             Object node = getPathForRow(row).getLastPathComponent();
-
             if (node instanceof DefaultMutableTreeNode) {
               Object data = ((DefaultMutableTreeNode)node).getUserObject();
               Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
@@ -106,30 +105,20 @@ public class ActionsTree {
       @Override
       public void mouseMoved(MouseEvent e) {
         String description = getDescription(e);
-        if (description != null) {
-          ActionMenu.showDescriptionInStatusBar(true, myTree, description);
-        }
-        else {
-          ActionMenu.showDescriptionInStatusBar(false, myTree, null);
-        }
+        ActionMenu.showDescriptionInStatusBar(description != null, myTree, description);
       }
 
       @Nullable
       private String getDescription(@NotNull MouseEvent e) {
         TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-        if (path == null) return null;
+        DefaultMutableTreeNode node = path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
+        Object userObject = node == null ? null : node.getUserObject();
+        if (!(userObject instanceof String)) {
+          return null;
+        }
 
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-        if (node == null) return null;
-
-        Object userObject = node.getUserObject();
-        if (!(userObject instanceof String)) return null;
-
-        String actionId = (String)userObject;
-        AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
-        if (action == null) return null;
-
-        return action.getTemplatePresentation().getDescription();
+        AnAction action = ActionManager.getInstance().getActionOrStub((String)userObject);
+        return action == null ? null : action.getTemplatePresentation().getDescription();
       }
     });
 
@@ -138,6 +127,11 @@ public class ActionsTree {
     myComponent = ScrollPaneFactory.createScrollPane(myTree,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+  }
+
+  // silently replace current map
+  void setKeymap(@NotNull Keymap keymap) {
+    myKeymap = keymap;
   }
 
   public JComponent getComponent() {
@@ -171,7 +165,7 @@ public class ActionsTree {
     return (QuickList)userObject;
   }
 
-  public void reset(Keymap keymap, final QuickList[] allQuickLists) {
+  public void reset(@NotNull Keymap keymap, @NotNull QuickList[] allQuickLists) {
     reset(keymap, allQuickLists, myFilter, null);
   }
 
@@ -188,7 +182,7 @@ public class ActionsTree {
     reset(myKeymap, currentQuickListIds, filter, null);
   }
 
-  private void reset(final Keymap keymap, final QuickList[] allQuickLists, String filter, @Nullable KeyboardShortcut shortcut) {
+  private void reset(@NotNull Keymap keymap, @NotNull QuickList[] allQuickLists, String filter, @Nullable KeyboardShortcut shortcut) {
     myKeymap = keymap;
 
     final PathsKeeper pathsKeeper = new PathsKeeper();
@@ -198,11 +192,11 @@ public class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true,
-                                                      ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, filter, true));
+    Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true,
+                                                      ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
     if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()){
-      mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, false,
-                                                  ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut, filter, false));
+      mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, false,
+                                                  ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, false));
     }
     myRoot = ActionsTreeUtil.createNode(mainGroup);
     myMainGroup = mainGroup;
@@ -251,14 +245,7 @@ public class ActionsTree {
         if (userObject instanceof QuickList) {
           userObject = ((QuickList)userObject).getActionId();
         }
-
-        if (userObject instanceof String) {
-          Shortcut[] shortcuts = myKeymap.getShortcuts((String)userObject);
-          return KeymapUtil.getShortcutsText(shortcuts);
-        }
-        else {
-          return "";
-        }
+        return userObject instanceof String ? KeymapUtil.getShortcutsText(myKeymap.getShortcuts((String)userObject)) : "";
       }
       else {
         return "???";
