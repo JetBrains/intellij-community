@@ -352,20 +352,21 @@ public class GradleExecutionHelper {
     if (settings != null) {
       File serviceDirectory = settings.getServiceDirectory() == null ? null : new File(settings.getServiceDirectory());
       File gradleHome = settings.getGradleHome() == null ? null : new File(settings.getGradleHome());
-      //noinspection EnumSwitchStatementWhichMissesCases
-      switch (settings.getDistributionType()) {
-        case LOCAL:
-          if (gradleHome != null) {
-            connector.useInstallation(gradleHome);
-          }
-          break;
-        case WRAPPED:
-          if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
-          }
-          break;
+      if (gradleHome != null) {
+        try {
+          // There were problems with symbolic links processing at the gradle side.
+          connector.useInstallation(gradleHome.getCanonicalFile());
+        }
+        catch (IOException e) {
+          connector.useInstallation(gradleHome);
+        }
       }
-
+      else if (settings.getWrapperPropertyFile() != null) {
+        File propertiesFile = new File(settings.getWrapperPropertyFile());
+        if (propertiesFile.exists()) {
+          DistributionFactoryExt.setWrappedDistribution(connector, propertiesFile.getAbsolutePath(), serviceDirectory);
+        }
+      }
       // Setup service directory if necessary.
       if (serviceDirectory != null) {
         connector.useGradleUserHomeDir(serviceDirectory);
