@@ -30,7 +30,7 @@ import gnu.trove.TObjectIntHashMap
 class TabViewHost(val lifetime: Lifetime,
                   public val reactiveModel: ReactiveModel,
                   public val path: Path) {
-  val editorToIdx = TObjectIntHashMap<VirtualFile>()
+  val fileToEditorIdx = TObjectIntHashMap<VirtualFile>()
   val hostMeta = PersistentHashMap.create<String, Any>("host", this)
   val editorsPath = "editors"
   var currentIdx = 0
@@ -44,12 +44,12 @@ class TabViewHost(val lifetime: Lifetime,
   fun addEditor(editor: Editor, file: VirtualFile) {
     EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, file.getName(),
         path / editorsPath / currentIdx.toString(), editor, true)
-    editorToIdx.put(file, currentIdx++)
+    fileToEditorIdx.put(file, currentIdx++)
   }
 
   fun removeEditor(file: VirtualFile) {
-    if (editorToIdx.containsKey(file)) {
-      val res = editorToIdx.remove(file)
+    if (fileToEditorIdx.containsKey(file)) {
+      val res = fileToEditorIdx.remove(file)
       reactiveModel.transaction { m ->
         val editor = getEditorHost(res, m)
         editor.lifetime.terminate()
