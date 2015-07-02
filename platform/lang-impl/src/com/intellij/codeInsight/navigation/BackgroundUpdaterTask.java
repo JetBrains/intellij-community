@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.AbstractPopup;
@@ -69,7 +67,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     super(project, title, canBeCancelled, backgroundOption);
   }
 
-  public void init(@NotNull AbstractPopup popup, T component, Ref<UsageView> usageView) {
+  public void init(@NotNull AbstractPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
     myComponent = component;
     myUsageView = usageView;

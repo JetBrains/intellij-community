@@ -63,7 +63,7 @@ public class ThreeStateCheckBox extends JCheckBox {
 
       @Override
       public boolean isSelected() {
-        return myState == State.SELECTED;
+        return myState == State.SELECTED || (UIUtil.isUnderAquaLookAndFeel() && myState == State.DONT_CARE);
       }
     });
 
@@ -101,6 +101,10 @@ public class ThreeStateCheckBox extends JCheckBox {
 
   public void setState(State state) {
     myState = state;
+
+    String value = state == State.DONT_CARE ? "indeterminate" : null;
+    putClientProperty("JButton.selectedState", value);
+
     repaint();
   }
 
@@ -111,12 +115,11 @@ public class ThreeStateCheckBox extends JCheckBox {
 
   @Override
   protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
     if (UIUtil.isUnderAquaLookAndFeel()) {
-      paintIndeterminateIcon(g);
       return;
     }
 
-    super.paintComponent(g);
     switch (getState()) {
       case DONT_CARE:
         Icon icon = getIcon();
@@ -153,21 +156,6 @@ public class ThreeStateCheckBox extends JCheckBox {
         break;
       default:
         break;
-    }
-  }
-
-  protected void paintIndeterminateIcon(Graphics g) {
-    State initial = getState();
-    try {
-      if (getState() == State.DONT_CARE) {
-        setSelected(true);
-        putClientProperty("JButton.selectedState", "indeterminate");
-      } else {
-        putClientProperty("JButton.selectedState", null);
-      }
-      super.paintComponent(g);
-    } finally {
-      setState(initial);
     }
   }
 }

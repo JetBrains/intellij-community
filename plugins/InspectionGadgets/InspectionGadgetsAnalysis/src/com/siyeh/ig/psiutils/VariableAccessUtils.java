@@ -16,7 +16,10 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +80,30 @@ public class VariableAccessUtils {
       new VariableUsedInArrayInitializerVisitor(variable);
     context.accept(visitor);
     return visitor.isPassed();
+  }
+
+  public static boolean variableIsAssigned(@NotNull PsiVariable variable) {
+    if (variable instanceof PsiField) {
+      if (variable.hasModifierProperty(PsiModifier.PRIVATE)) {
+        final PsiClass aClass = PsiUtil.getTopLevelClass(variable);
+        return variableIsAssigned(variable, aClass);
+      }
+      return !ReferencesSearch.search(variable, variable.getUseScope()).forEach(new Processor<PsiReference>() {
+        @Override
+        public boolean process(PsiReference reference) {
+          final PsiElement element = reference.getElement();
+          if (!(element instanceof PsiExpression)) {
+            return true;
+          }
+          final PsiExpression expression = (PsiExpression)element;
+          return !PsiUtil.isAccessedForWriting(expression);
+        }
+      });
+    }
+    final PsiElement context =
+      PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiMethod.class, PsiLambdaExpression.class,
+                                  PsiCatchSection.class, PsiForStatement.class, PsiForeachStatement.class);
+    return variableIsAssigned(variable, context);
   }
 
   public static boolean variableIsAssigned(

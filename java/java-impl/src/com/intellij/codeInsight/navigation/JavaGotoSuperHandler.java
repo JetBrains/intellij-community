@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class JavaGotoSuperHandler implements CodeInsightActionHandler {
   @Override
@@ -41,7 +40,7 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement[] superElements = findSuperElements(file, offset);
-    if (superElements == null || superElements.length == 0) return;
+    if (superElements.length == 0) return;
     if (superElements.length == 1) {
       PsiElement superElement = superElements[0].getNavigationElement();
       final PsiFile containingFile = superElement.getContainingFile();
@@ -50,24 +49,25 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
       if (virtualFile == null) return;
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, superElement.getTextOffset());
       FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    } else {
-      if (superElements[0] instanceof PsiMethod) {
-        boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature((PsiMethod[])superElements);
-        PsiElementListNavigator.openTargets(editor, (PsiMethod[])superElements,
-                                            CodeInsightBundle.message("goto.super.method.chooser.title"),
-                                            CodeInsightBundle.message("goto.super.method.findUsages.title", ((PsiMethod)superElements[0]).getName()),
-                                            new MethodCellRenderer(showMethodNames));
-      }
-      else {
-        NavigationUtil.getPsiElementPopup(superElements, CodeInsightBundle.message("goto.super.class.chooser.title")).showInBestPositionFor(editor);
-      }
+    }
+    else if (superElements[0] instanceof PsiMethod) {
+      boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature((PsiMethod[])superElements);
+      PsiElementListNavigator.openTargets(editor, (PsiMethod[])superElements,
+                                          CodeInsightBundle.message("goto.super.method.chooser.title"),
+                                          CodeInsightBundle
+                                            .message("goto.super.method.findUsages.title", ((PsiMethod)superElements[0]).getName()),
+                                          new MethodCellRenderer(showMethodNames));
+    }
+    else {
+      NavigationUtil.getPsiElementPopup(superElements, CodeInsightBundle.message("goto.super.class.chooser.title"))
+        .showInBestPositionFor(editor);
     }
   }
 
-  @Nullable
-  private PsiElement[] findSuperElements(PsiFile file, int offset) {
+  @NotNull
+  private PsiElement[] findSuperElements(@NotNull PsiFile file, int offset) {
     PsiElement element = getElement(file, offset);
-    if (element == null) return null;
+    if (element == null) return PsiElement.EMPTY_ARRAY;
 
     final PsiElement psiElement = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, PsiMember.class);
     if (psiElement instanceof PsiFunctionalExpression) {
@@ -79,13 +79,13 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
 
     final PsiNameIdentifierOwner parent = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class, PsiClass.class);
     if (parent == null) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
 
     return FindSuperElementsHelper.findSuperElements(parent);
   }
 
-  protected PsiElement getElement(PsiFile file, int offset) {
+  protected PsiElement getElement(@NotNull PsiFile file, int offset) {
     return file.findElementAt(offset);
   }
 

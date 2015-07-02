@@ -96,11 +96,11 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
     doTest();
   }
 
-  public void _testTransformLambda() {
+  public void testTransformLambda() {
     doTest();
   }
 
-  public void _testTransformMethodCalling() {
+  public void testTransformMethodCalling() {
     doTest();
   }
 

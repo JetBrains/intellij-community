@@ -19,7 +19,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.MutableCollectionComboBoxModel;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,11 +84,7 @@ public abstract class ListModelEditorBase<T> extends CollectionModelEditor<T, Li
       @Override
       public boolean execute(T newItem, T oldItem) {
         itemEditor.applyModifiedProperties(newItem, oldItem);
-        int index = ContainerUtil.indexOfIdentity(items, newItem);
-        if (index == -1) {
-          LOG.error("Inconsistent model", newItem.toString());
-        }
-        model.setElementAt(oldItem, index);
+        silentlyReplaceItem(newItem, oldItem, -1);
         return true;
       }
     });
@@ -98,10 +93,22 @@ public abstract class ListModelEditorBase<T> extends CollectionModelEditor<T, Li
     return items;
   }
 
+  @Override
+  protected void silentlyReplaceItem(@NotNull T oldItem, @NotNull T newItem, int index) {
+    super.silentlyReplaceItem(oldItem, newItem, index);
+    model.checkSelectionOnSilentReplace(oldItem, newItem);
+  }
+
   protected final class MyModel extends MutableCollectionComboBoxModel<T> {
     @NotNull
     final List<T> items() {
       return super.getInternalList();
+    }
+
+    void checkSelectionOnSilentReplace(@NotNull T oldItem, @NotNull T newItem) {
+      if (mySelection == oldItem) {
+        mySelection = newItem;
+      }
     }
 
     @Override

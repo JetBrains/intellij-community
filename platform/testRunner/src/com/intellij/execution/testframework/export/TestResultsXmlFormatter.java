@@ -18,12 +18,10 @@ package com.intellij.execution.testframework.export;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.TestProxyRoot;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
@@ -59,6 +57,7 @@ public class TestResultsXmlFormatter {
   public static final String ATTR_STATUS = "status";
   public static final String TOTAL_STATUS = "total";
   private static final String ATTR_FOORTER_TEXT = "footerText";
+  public static final String ATTR_CONFIG = "isConfig";
   public static final String STATUS_PASSED = "passed";
   public static final String STATUS_FAILED = "failed";
   public static final String STATUS_ERROR = "error";
@@ -72,16 +71,21 @@ public class TestResultsXmlFormatter {
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
+  private final boolean myHidePassedConfig;
 
-  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler)
+  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, TestConsoleProperties properties, ContentHandler resultHandler)
     throws SAXException {
-    new TestResultsXmlFormatter(root, runtimeConfiguration, resultHandler).execute();
+    new TestResultsXmlFormatter(root, runtimeConfiguration, properties, resultHandler).execute();
   }
 
-  private TestResultsXmlFormatter(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler) {
+  private TestResultsXmlFormatter(AbstractTestProxy root,
+                                  RunConfiguration runtimeConfiguration,
+                                  TestConsoleProperties properties,
+                                  ContentHandler resultHandler) {
     myRuntimeConfiguration = runtimeConfiguration;
     myTestRoot = root;
     myResultHandler = resultHandler;
+    myHidePassedConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
   }
 
   private void execute() throws SAXException {
@@ -205,6 +209,9 @@ public class TestResultsXmlFormatter {
     if (locationUrl != null) {
       attrs.put(ATTR_LOCATION, locationUrl);
     }
+    if (node.isConfig()) {
+      attrs.put(ATTR_CONFIG, "true");
+    }
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
     startElement(elemName, attrs);
     if (node.isLeaf()) {
@@ -250,7 +257,7 @@ public class TestResultsXmlFormatter {
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
-        if (child.isConfig() && child.isPassed()) {
+        if (myHidePassedConfig && child.isConfig() && child.isPassed()) {
           //ignore configurations during export
           continue;
         }

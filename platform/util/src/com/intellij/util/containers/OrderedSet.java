@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,13 @@ public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess 
     this(ContainerUtil.<T>canonicalStrategy());
   }
 
+  public OrderedSet(@NotNull Collection<T> set) {
+    super(set.size());
+
+    myHashSet = new OpenTHashSet<T>(set.size());
+    addAll(set);
+  }
+
   public OrderedSet(@NotNull TObjectHashingStrategy<T> hashingStrategy) {
     this(hashingStrategy, 4);
   }
@@ -36,6 +43,12 @@ public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess 
   public OrderedSet(@NotNull TObjectHashingStrategy<T> hashingStrategy, int capacity) {
     super(capacity);
     myHashSet = new OpenTHashSet<T>(capacity, hashingStrategy);
+  }
+
+  public OrderedSet(int capacity) {
+    super(capacity);
+
+    myHashSet = new OpenTHashSet<T>(capacity);
   }
 
   @Override

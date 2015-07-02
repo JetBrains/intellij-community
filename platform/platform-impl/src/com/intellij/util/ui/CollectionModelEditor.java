@@ -25,6 +25,7 @@ import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>> implements ElementProducer<T> {
@@ -129,10 +130,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
           mutable = itemEditor.clone(item, false);
           modifiedToOriginal.put(mutable, item);
           originalToModified.put(item, mutable);
-
-          List<T> items = getItems();
-          // silently replace item
-          items.set(index == -1 ? ContainerUtil.indexOfIdentity(items, item) : index, mutable);
+          silentlyReplaceItem(item, mutable, index);
         }
         return mutable;
       }
@@ -145,5 +143,27 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     public void process(@NotNull TObjectObjectProcedure<T, T> procedure) {
       modifiedToOriginal.forEachEntry(procedure);
     }
+  }
+
+  protected void silentlyReplaceItem(@NotNull T oldItem, @NotNull T newItem, int index) {
+    // silently replace item
+    List<T> items = getItems();
+    items.set(index == -1 ? ContainerUtil.indexOfIdentity(items, oldItem) : index, newItem);
+  }
+
+  protected final boolean areSelectedItemsRemovable(@NotNull ListSelectionModel selectionMode) {
+    int minSelectionIndex = selectionMode.getMinSelectionIndex();
+    int maxSelectionIndex = selectionMode.getMaxSelectionIndex();
+    if (minSelectionIndex < 0 || maxSelectionIndex < 0) {
+      return false;
+    }
+
+    List<T> items = getItems();
+    for (int i = minSelectionIndex; i <= maxSelectionIndex; i++) {
+      if (itemEditor.isRemovable(items.get(i))) {
+        return true;
+      }
+    }
+    return false;
   }
 }

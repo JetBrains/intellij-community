@@ -204,7 +204,7 @@ public layoutEducational(String classesPath, Set usedJars) {
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
   if (p("jdk.bundled.linux") != "false") {
-    buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/bin/*"])
+    buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/jre/bin/*"])
   }
 
 

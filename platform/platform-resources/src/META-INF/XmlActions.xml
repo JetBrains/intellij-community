@@ -105,12 +105,14 @@
         <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward"
                 text="Next Emmet Edit Point" description="Go to next Emmet edit point">
           <keyboard-shortcut first-keystroke="alt shift CLOSE_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X" replace-all="true"/>
           <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X 10.5+" replace-all="true"/>
         </action>
 
         <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward"
                 text="Previous Emmet Edit Point" description="Go to previous Emmet edit point">
           <keyboard-shortcut first-keystroke="alt shift OPEN_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X" replace-all="true"/>
           <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X 10.5+" replace-all="true"/>
         </action>
       </group>
