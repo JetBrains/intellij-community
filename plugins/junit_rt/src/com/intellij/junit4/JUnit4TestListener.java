@@ -43,6 +43,7 @@ public class JUnit4TestListener extends RunListener {
 
   private List myStartedSuites = new ArrayList();
   private Map   myParents = new HashMap();
+  private Map   myMethodNames = new HashMap();
   private final PrintStream myPrintStream;
   private String myRootName;
   private long myCurrentTestStart;
@@ -87,12 +88,14 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testStarted(Description description) throws Exception {
-    final String methodName = getFullMethodName(description);
-    if (methodName == null) return;
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
     final List parents = (List)myParents.get(description);
     List parentsHierarchy = parents != null && !parents.isEmpty() ? (List)parents.remove(0) : Collections.singletonList(description);
+    
+    final String methodName = getFullMethodName(description, parentsHierarchy.isEmpty() ? null 
+                                                                                        : (Description)parentsHierarchy.get(parentsHierarchy.size() - 1));
+    if (methodName == null) return;
 
     int idx = 0;
     Description currentClass;
@@ -197,10 +200,18 @@ public class JUnit4TestListener extends RunListener {
     catch (Exception ignore) {}
   }
 
-  private static String getFullMethodName(Description description) {
-    final String methodName = JUnit4ReflectionUtil.getMethodName(description);
-    if (methodName != null) {
-      return getShortName(JUnit4ReflectionUtil.getClassName(description)) + "." + methodName;
+  private String getFullMethodName(Description description) {
+    return getFullMethodName(description, null);
+  }
+
+  private String getFullMethodName(Description description, Description parent) {
+    String methodName = (String)myMethodNames.get(description);
+    if (methodName == null) {
+      methodName = JUnit4ReflectionUtil.getMethodName(description);
+      if (methodName != null && (parent == null || !isParameter(parent))) {
+        methodName = getShortName(JUnit4ReflectionUtil.getClassName(description)) + "." + methodName;
+      }
+      myMethodNames.put(description, methodName);
     }
     return methodName;
   }
@@ -305,7 +316,7 @@ public class JUnit4TestListener extends RunListener {
 
     String className = JUnit4ReflectionUtil.getClassName(description);
     if (description.getChildren().isEmpty()) {
-      final String methodName = getFullMethodName((Description)description);
+      final String methodName = getFullMethodName((Description)description, parent);
       if (methodName != null) {
         if (parent != null) {
           List parents = (List)myParents.get(description);
