@@ -644,7 +644,7 @@ public class FileUtil extends FileUtilRt {
    * Please note that this method is symlink-unfriendly (i.e. result of "/path/to/link/../next" most probably will differ from
    * what {@link java.io.File#getCanonicalPath()} will return) - so use with care.<br>
    * <br>
-   * If the path may contain synlinks, use use {@link FileUtil#toCanonicalPath(String, boolean)}
+   * If the path may contain symlinks, use {@link FileUtil#toCanonicalPath(String, boolean)} instead.
    */
   @Contract("null -> null")
   public static String toCanonicalPath(@Nullable String path) {
