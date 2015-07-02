@@ -25,11 +25,11 @@ import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.serialization.*;
-import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,13 +39,13 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
   @NotNull
   @Override
   public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
-    return Arrays.asList(new JpsPluginModulePropertiesSerializer());
+    return Collections.singletonList(new JpsPluginModulePropertiesSerializer());
   }
 
   @NotNull
   @Override
   public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
-    return Arrays.asList(new JpsIdeaSdkPropertiesSerializer());
+    return Collections.singletonList(new JpsIdeaSdkPropertiesSerializer());
   }
 
   private static class JpsIdeaSdkPropertiesSerializer extends JpsSdkPropertiesSerializer<JpsSimpleElement<JpsIdeaSdkProperties>> {
