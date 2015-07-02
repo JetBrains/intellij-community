@@ -608,6 +608,22 @@ public class DeclarationParser {
       }
     }
 
+    if (typed) {
+      IElementType tokenType = builder.getTokenType();
+      if (tokenType == JavaTokenType.THIS_KEYWORD || tokenType == JavaTokenType.IDENTIFIER && builder.lookAhead(1) == JavaTokenType.DOT) {
+        PsiBuilder.Marker mark = builder.mark();
+
+        PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+        if (expr != null && exprType(expr) == JavaElementType.THIS_EXPRESSION) {
+          mark.drop();
+          done(param, JavaElementType.RECEIVER_PARAMETER);
+          return param;
+        }
+
+        mark.rollbackTo();
+      }
+    }
+
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (!resource) {
         eatBrackets(builder, typeInfo != null && typeInfo.isVarArg ? "expected.rparen" : null);

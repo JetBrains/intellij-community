@@ -72,6 +72,15 @@ public class DeclarationParserTest extends JavaParsingTestCase {
       "  }\n} }");
   }
 
+  public void testReceiver() {
+    doParserTest(
+      "{ void m1(C this);" +
+      "  void m2(T T.this);" +
+      "  void m3(X Y.Z);" +
+      "  T f1 = (T this) -> { };" +
+      "  T f2 = (T T.this) -> { }; }");
+  }
+
   public void testFieldSimple() { doParserTest("{ int field = 0; }"); }
   public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }"); }
   public void testUnclosedBracket() { doParserTest("{ int field[ }"); }
