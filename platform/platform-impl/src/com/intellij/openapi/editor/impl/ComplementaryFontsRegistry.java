@@ -159,17 +159,6 @@ public class ComplementaryFontsRegistry {
     return Font.PLAIN;
   }
 
-  private static Pair<String, Integer> fontFamily(String familyName, int style) {
-    if (SystemInfo.isMac && style > 0 && style < 4) {
-      Pair<String, Integer>[] replacement = ourStyledFontMap.get(familyName);
-      if (replacement != null) {
-        familyName = replacement[style].first;
-        style = replacement[style].second;
-      }
-    }
-    return Pair.create(familyName, style);
-  }
-
   @NotNull
   public static FontInfo getFontAbleToDisplay(char c, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
     boolean tryDefaultFont = true;
@@ -209,11 +198,17 @@ public class ComplementaryFontsRegistry {
   @Nullable
   private static FontInfo doGetFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
-      Pair<String, Integer> p = fontFamily(defaultFontFamily, style);
+      if (SystemInfo.isMac && style > 0 && style < 4) {
+        Pair<String, Integer>[] replacement = ourStyledFontMap.get(defaultFontFamily);
+        if (replacement != null) {
+          defaultFontFamily = replacement[style].first;
+          style = replacement[style].second;
+        }
+      }
       if (ourSharedKeyInstance.mySize == size &&
-          ourSharedKeyInstance.myStyle == p.getSecond() &&
+          ourSharedKeyInstance.myStyle == style &&
           ourSharedKeyInstance.myFamilyName != null &&
-          ourSharedKeyInstance.myFamilyName.equals(p.getFirst()) &&
+          ourSharedKeyInstance.myFamilyName.equals(defaultFontFamily) &&
           ourSharedDefaultFont != null &&
           ( c < 128 ||
             ourSharedDefaultFont.canDisplay(c)
@@ -222,13 +217,13 @@ public class ComplementaryFontsRegistry {
         return ourSharedDefaultFont;
       }
 
-      ourSharedKeyInstance.myFamilyName = p.getFirst();
+      ourSharedKeyInstance.myFamilyName = defaultFontFamily;
       ourSharedKeyInstance.mySize = size;
-      ourSharedKeyInstance.myStyle = p.getSecond();
+      ourSharedKeyInstance.myStyle = style;
 
       FontInfo defaultFont = ourUsedFonts.get(ourSharedKeyInstance);
       if (defaultFont == null) {
-        defaultFont = new FontInfo(p.getFirst(), size, p.getSecond());
+        defaultFont = new FontInfo(defaultFontFamily, size, style);
         ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
         ourSharedKeyInstance = new FontKey("", 0, 0);
       }
