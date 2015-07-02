@@ -52,6 +52,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     myFile = null;
   }
 
+  @Override
   @Nullable
   public String getInvalidationReason() {
     return myInvalidationReason;
