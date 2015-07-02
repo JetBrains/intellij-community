@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -71,7 +72,9 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
       @Override
       public FileType getFileType() {
         FileType type = super.getFileType();
-        return type.isBinary() ? currentFileType : type;
+        if (!type.isBinary()) return type;
+        if (!currentFileType.isBinary()) return currentFileType;
+        return PlainTextFileType.INSTANCE;
       }
     };
   }
