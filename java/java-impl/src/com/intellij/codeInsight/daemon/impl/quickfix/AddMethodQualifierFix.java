@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,6 +113,9 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) {
+      return;
+    }
     if (myCandidates.size() == 1 || UNIT_TEST_MODE) {
       qualify(myCandidates.get(0), editor);
     }
