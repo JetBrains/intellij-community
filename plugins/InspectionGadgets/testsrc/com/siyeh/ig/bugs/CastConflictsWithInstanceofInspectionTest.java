@@ -49,6 +49,18 @@ public class CastConflictsWithInstanceofInspectionTest extends LightInspectionTe
     doTest();
   }
 
+  public void testIfCheckBefore() {
+    doTest();
+  }
+
+  public void testIfElseCheckBefore() {
+    doTest();
+  }
+
+  public void testAssertCheckBefore() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -35,6 +35,41 @@ public class InstanceOfUtils {
     }
     final PsiClassType rawType = classType.rawType();
     final InstanceofChecker checker = new InstanceofChecker(operand, rawType, false);
+    PsiStatement sibling = PsiTreeUtil.getParentOfType(context, PsiStatement.class);
+    sibling = PsiTreeUtil.getPrevSiblingOfType(sibling, PsiStatement.class);
+    while (sibling != null) {
+      if (sibling instanceof PsiIfStatement) {
+        final PsiIfStatement ifStatement = (PsiIfStatement)sibling;
+        final PsiExpression condition = ifStatement.getCondition();
+        if (condition != null) {
+          if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getThenBranch())) {
+            checker.negate = true;
+            checker.checkExpression(condition);
+            if (checker.hasAgreeingInstanceof()) {
+              return null;
+            }
+          }
+          else if (!ControlFlowUtils.statementMayCompleteNormally(ifStatement.getElseBranch())) {
+            checker.negate = false;
+            checker.checkExpression(condition);
+            if (checker.hasAgreeingInstanceof()) {
+              return null;
+            }
+          }
+        }
+      }
+      else if (sibling instanceof PsiAssertStatement) {
+        final PsiAssertStatement assertStatement = (PsiAssertStatement)sibling;
+        final PsiExpression condition = assertStatement.getAssertCondition();
+        checker.negate = false;
+        checker.checkExpression(condition);
+        if (checker.hasAgreeingInstanceof()) {
+          return null;
+        }
+      }
+      sibling = PsiTreeUtil.getPrevSiblingOfType(sibling, PsiStatement.class);
+    }
+    checker.negate = false;
     PsiElement parent = PsiTreeUtil.getParentOfType(context, PsiIfStatement.class, PsiConditionalExpression.class,
                                                      PsiPolyadicExpression.class);
     while (parent != null) {
@@ -82,7 +117,7 @@ public class InstanceOfUtils {
     private final PsiReferenceExpression referenceExpression;
     private final PsiType castType;
     private final boolean strict;
-    private boolean inElse = false;
+    private boolean negate = false;
     private PsiInstanceOfExpression conflictingInstanceof = null;
     private boolean agreeingInstanceof = false;
 
@@ -110,21 +145,21 @@ public class InstanceOfUtils {
             return;
           }
         }
-        if (!inElse && conflictingInstanceof != null) {
+        if (!negate && conflictingInstanceof != null) {
           agreeingInstanceof = false;
         }
       }
       else if (tokenType == JavaTokenType.OROR) {
         for (PsiExpression operand : expression.getOperands()) {
           if (operand instanceof PsiPrefixExpression && ((PsiPrefixExpression)operand).getOperationTokenType() == JavaTokenType.EXCL) {
-            inElse = true;
+            negate = true;
           }
           checkExpression(operand);
           if (agreeingInstanceof) {
             return;
           }
         }
-        if (inElse && conflictingInstanceof != null) {
+        if (negate && conflictingInstanceof != null) {
           agreeingInstanceof = false;
         }
       }
@@ -133,9 +168,9 @@ public class InstanceOfUtils {
     @Override
     public void visitIfStatement(PsiIfStatement ifStatement) {
       final PsiStatement branch = ifStatement.getElseBranch();
-      inElse = branch != null &&
+      negate = branch != null &&
                PsiTreeUtil.isAncestor(branch, referenceExpression, true);
-      if (inElse) {
+      if (negate) {
         if (branch instanceof PsiBlockStatement) {
           final PsiBlockStatement blockStatement =
             (PsiBlockStatement)branch;
@@ -162,13 +197,13 @@ public class InstanceOfUtils {
     @Override
     public void visitConditionalExpression(PsiConditionalExpression expression) {
       final PsiExpression elseExpression = expression.getElseExpression();
-      inElse = elseExpression != null && PsiTreeUtil.isAncestor(elseExpression, referenceExpression, true);
+      negate = elseExpression != null && PsiTreeUtil.isAncestor(elseExpression, referenceExpression, true);
       checkExpression(expression.getCondition());
     }
 
     private void checkExpression(PsiExpression expression) {
       expression = PsiUtil.deparenthesizeExpression(expression);
-      if (inElse) {
+      if (negate) {
         if (expression instanceof PsiPrefixExpression) {
           final PsiPrefixExpression prefixExpression =
             (PsiPrefixExpression)expression;
@@ -202,7 +237,7 @@ public class InstanceOfUtils {
         agreeingInstanceof = true;
         conflictingInstanceof = null;
       }
-      else if (isConflicting(instanceOfExpression)) {
+      else if (isConflicting(instanceOfExpression) && conflictingInstanceof == null) {
         conflictingInstanceof = instanceOfExpression;
       }
     }
