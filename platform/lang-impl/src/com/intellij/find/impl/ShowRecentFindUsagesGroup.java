@@ -19,6 +19,7 @@ package com.intellij.find.impl;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.impl.UsageViewImpl;
@@ -45,7 +46,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) return EMPTY_ARRAY;
+    if (project == null || DumbService.isDumb(project)) return EMPTY_ARRAY;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     List<ConfigurableUsageTarget> history = new ArrayList<ConfigurableUsageTarget>(findUsagesManager.getHistory().getAll());
     Collections.reverse(history);

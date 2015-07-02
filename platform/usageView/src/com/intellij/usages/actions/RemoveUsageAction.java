@@ -18,14 +18,40 @@ package com.intellij.usages.actions;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 
+import java.util.List;
+
 /**
  * @author Manuel Stadelmann
  */
 public class RemoveUsageAction extends IncludeExcludeActionBase {
+
   @Override
   protected void process(Usage[] usages, UsageView usageView) {
+
+    Usage nextToSelect = null;
+
     for (Usage usage : usages) {
+      Usage toSelect = getNextToSelect(usageView, usage);
       usageView.removeUsage(usage);
+      nextToSelect = toSelect;
     }
+
+    if (nextToSelect != null) {
+      usageView.selectUsages(new Usage[]{nextToSelect});
+    }
+  }
+
+  private Usage getNextToSelect(UsageView usageView, Usage toDelete) {
+    List<Usage> sortedUsages = usageView.getSortedUsages();
+    int curIndex = sortedUsages.indexOf(toDelete);
+
+    int selectIndex = 0;
+    if (curIndex < sortedUsages.size() - 1) {
+      selectIndex = curIndex + 1;
+    }
+    else if (curIndex > 0) {
+      selectIndex = curIndex - 1;
+    }
+    return sortedUsages.get(selectIndex);
   }
 }

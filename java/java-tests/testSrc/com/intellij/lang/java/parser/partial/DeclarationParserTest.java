@@ -34,19 +34,12 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testPines() { doParserTest("{ class A<T extends List<String>> extends List<List<Integer>> { } }"); }
   public void testIncompleteAnnotation() { doParserTest("{ public class Foo { public void testSomething(); @Null } }"); }
   public void testClassInit() { doParserTest("{ { /*comment*/ } }"); }
-  public void testAnnoDeclaration() { doParserTest("{ public @interface Annotation {} }"); }
-  public void testEnumSmartTypeCompletion() { doParserTest("{ @Preliminary(A.B\n#) public class TimeTravel {}\n" +
-                                                           "  @Preliminary(a=A.B\n#) public class TimeTravel {}\n" +
-                                                           "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }"); }
-  public void testTypeAnno() {
-    doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
-                 "  @F int @F[] method() throws @F Exception {\n" +
-                 "    a = this instanceof @F C;\n" +
-                 "    C<@F @G C> c = new @Q C<@F C>();\n" +
-                 "    c = (@F Object)c;\n" +
-                 "    Class c = @TA String.class;\n" +
-                 "    @F C.field++;\n" +
-                 "  }\n} }");
+
+  public void testEnumSmartTypeCompletion() {
+    doParserTest(
+      "{ @Preliminary(A.B\n#) public class TimeTravel {}\n" +
+      "  @Preliminary(a=A.B\n#) public class TimeTravel {}\n" +
+      "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }");
   }
 
   public void testEnumBody0() { doParserTest("{ ; }", false, true); }
@@ -59,12 +52,25 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumWithInitializedConstants() { doParserTest("{ A(10) { },\n B { void method() {} } }", false, true); }
   public void testEnumWithoutConstants() { doParserTest("{ private A }", false, true); }
 
+  public void testAnnoDeclaration() { doParserTest("{ public @interface Annotation {} }"); }
   public void testAnnoSimple() { doParserTest("{ int foo (); }", true, false); }
   public void testAnnoDefault() { doParserTest("{ Class foo() default String.class; }", true, false); }
   public void testAnnoNested() { doParserTest("{ @interface Inner { String bar () default \"<unspecified>\"; } }", true, false); }
   public void testAnnoInner() { doParserTest("{ @interface Inner { double bar () default 0.0; } }"); }
   public void testAnnoOtherMembers() { doParserTest("{ int field;\n void m() {}\n class C {}\n interface I {} }", true, false); }
   public void testAnnoLoop() { doParserTest("{ @@@ int i; }"); }
+
+  public void testTypeAnno() {
+    doParserTest(
+      "{ class C<@D T extends @F Object> extends @F Object {\n" +
+      "  @F int @F[] method() throws @F Exception {\n" +
+      "    a = this instanceof @F C;\n" +
+      "    C<@F @G C> c = new @Q C<@F C>();\n" +
+      "    c = (@F Object)c;\n" +
+      "    Class c = @TA String.class;\n" +
+      "    @F C.field++;\n" +
+      "  }\n} }");
+  }
 
   public void testFieldSimple() { doParserTest("{ int field = 0; }"); }
   public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }"); }
@@ -94,9 +100,13 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testConstructorBrackets() { doParserTest("{ A() [] { } }"); }
   public void testVarArgBrackets() { doParserTest("{ void foo(int... x[]); }"); }
 
-  public void testGenericMethod() { doParserTest("{ public static <E> test();\n" +
-                                                 " <E> void test1();\n" +
-                                                 " <E1 extends Integer, E2 extends Runnable> String test2(); }"); }
+  public void testGenericMethod() {
+    doParserTest(
+      "{ public static <E> test();\n" +
+      " <E> void test1();\n" +
+      " <E1 extends Integer, E2 extends Runnable> String test2(); }");
+  }
+
   public void testGenericMethodErrors() { doParserTest("{ <Error sss /> test <error>(); }"); }
   public void testErrors() { doParserTest("{ public static <error descr=\"2\">protected int f1 = 0; }"); }
   public void testCompletionHack0() { doParserTest("{ <X IntelliJIdeaRulezz>\n String s = \"\"; }"); }

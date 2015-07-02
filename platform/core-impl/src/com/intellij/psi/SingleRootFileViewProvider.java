@@ -178,11 +178,15 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         psiFile = PsiUtilCore.NULL_PSI_FILE;
       }
       boolean set = myPsiFile.compareAndSet(null, psiFile);
-      if (!set) {
+      if (!set && psiFile != PsiUtilCore.NULL_PSI_FILE) {
+        PsiFile alreadyCreated = myPsiFile.get();
+        if (alreadyCreated == psiFile) {
+          LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
+        }
         if (psiFile instanceof PsiFileImpl) {
           ((PsiFileImpl)psiFile).markInvalidated();
         }
-        psiFile = myPsiFile.get();
+        psiFile = alreadyCreated;
       }
     }
     return psiFile == PsiUtilCore.NULL_PSI_FILE ? null : psiFile;

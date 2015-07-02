@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.FinalUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -352,6 +353,9 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   static boolean isVariableUsedOutsideContext(PsiVariable variable, PsiElement context) {
+    if (!FinalUtils.canBeFinal(variable)) {
+      return true;
+    }
     final VariableUsedOutsideContextVisitor visitor = new VariableUsedOutsideContextVisitor(variable, context);
     final PsiElement declarationScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     if (declarationScope == null) {

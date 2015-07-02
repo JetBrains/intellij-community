@@ -28,16 +28,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
@@ -285,13 +283,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     if (document == null || lineNumber >= document.getLineCount()) {
       return EmptyIterable.getInstance();
     }
-    final int startOffset = document.getLineStartOffset(lineNumber);
-    final int endOffset = document.getLineEndOffset(lineNumber);
+    final TextRange lineRange = DocumentUtil.getLineTextRange(document, lineNumber);
     return new Iterable<PsiElement>() {
       @Override
       public Iterator<PsiElement> iterator() {
         return new Iterator<PsiElement>() {
-          PsiElement myElement = file.findElementAt(startOffset);
+          PsiElement myElement = DebuggerUtilsEx.findElementAt(file, lineRange.getStartOffset());
 
           @Override
           public boolean hasNext() {
@@ -303,7 +300,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             PsiElement res = myElement;
             do {
               myElement = PsiTreeUtil.nextLeaf(myElement);
-              if (myElement == null || myElement.getTextOffset() > endOffset) {
+              if (myElement == null || myElement.getTextOffset() > lineRange.getEndOffset()) {
                 myElement = null;
                 break;
               }

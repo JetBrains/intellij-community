@@ -31,6 +31,8 @@ public class SettingsProviderComponent {
   }
 
   public List<OutPair> getOutPairs(Project project, String filePath) {
+    if (filePath == null) return Collections.emptyList();
+
     final List<OutPair> outPairs;
     try {
       final Set<String> rootDirs = getRootDirs(project);

@@ -242,6 +242,22 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
+  public void startNonCancelableSection() {
+    if (isCancelable()) {
+      enableCancel(false);
+    }
+    super.startNonCancelableSection();
+  }
+
+  @Override
+  public void finishNonCancelableSection() {
+    super.finishNonCancelableSection();
+    if (isCancelable()) {
+      enableCancel(true);
+    }
+  }
+
+  @Override
   public void setIndeterminate(boolean indeterminate) {
     super.setIndeterminate(indeterminate);
     update();
@@ -383,5 +399,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public boolean isPopupWasShown() {
     return myDialog != null && myDialog.myPopup != null && myDialog.myPopup.isShowing();
+  }
+
+  protected void enableCancel(boolean enable) {
+    myDialog.enableCancelButtonIfNeeded(enable);
   }
 }
