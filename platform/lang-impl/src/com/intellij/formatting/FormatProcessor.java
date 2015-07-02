@@ -475,7 +475,7 @@ public class FormatProcessor {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
     if (isReformatSelectedRangesContext()) {
-      if (isCurrentBlockAlignmentUsedInRangesToModify() && whiteSpace.isReadOnly()) {
+      if (isCurrentBlockAlignmentUsedInRangesToModify() && whiteSpace.isReadOnly() && !spaceProperty.isReadOnly()) {
         whiteSpace.setReadOnly(false);
         whiteSpace.setLineFeedsAreReadOnly(true);
       }
