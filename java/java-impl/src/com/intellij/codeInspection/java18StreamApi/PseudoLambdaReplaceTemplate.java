@@ -290,54 +290,39 @@ class PseudoLambdaReplaceTemplate {
                                            final @Nullable PsiSubstitutor methodSubstitutor,
                                            final PsiElement context) {
     if (type instanceof PsiClassType) {
-      PsiClass targetClass = ((PsiClassType)type).resolve();
-      if (targetClass != null) {
-        //TODO fuu
-        if (targetClass instanceof PsiAnonymousClass) {
-          targetClass = ((PsiAnonymousClass)targetClass).getBaseClassType().resolve();
-          if (targetClass == null) {
+      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+      if (resolvedClass != null) {
+        if (resolvedClass instanceof PsiAnonymousClass) {
+          final PsiClass baseClass = ((PsiAnonymousClass)resolvedClass).getBaseClassType().resolve();
+          if (baseClass == null) {
             return false;
           }
+          if (!LambdaUtil.isFunctionalClass(baseClass)) {
+            return false;
+          }
+          PsiMethod superMethod = LambdaUtil.getFunctionalInterfaceMethod(baseClass);
+          if (superMethod == null) {
+            return false;
+          }
+          final PsiMethod[] methods = resolvedClass.findMethodsByName(superMethod.getName(), false);
+          PsiMethod method = null;
+          for (PsiMethod m : methods) {
+            if (PsiSuperMethodUtil.isSuperMethod(m, superMethod)) {
+              method = m;
+            }
+          }
+          if (method == null) {
+            return false;
+          }
+          final PsiType psiType = methodSubstitutor == null ? method.getReturnType() : methodSubstitutor.substitute(method.getReturnType());
+          return isSuitableLambdaRole(psiType, baseMethodReturnType, methodSubstitutor, context);
         } else {
-          if (!LambdaUtil.isFunctionalClass(targetClass)) {
+          if (!LambdaUtil.isFunctionalClass(resolvedClass)) {
             return false;
           }
           return isSuitableLambdaRole(LambdaUtil.getFunctionalInterfaceReturnType(type), baseMethodReturnType, methodSubstitutor, context);
         }
-        if (!LambdaUtil.isFunctionalClass(targetClass)) {
-          return false;
         }
-        //TODO fuu
-        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(targetClass);
-        final PsiMethod[] methods = ((PsiClassType)type).resolve().findMethodsByName(method.getName(), false);
-        if (methods.length != 1) {
-          return false;
-        }
-        method = methods[0];
-        if (method == null) {
-          return false;
-        }
-        final PsiType psiType;
-        if (type instanceof PsiClassReferenceType) {
-          final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-          final PsiClass resolvedClass = ((PsiClassReferenceType)type).resolve();
-          final PsiTypeParameter[] typeParameters = resolvedClass.getTypeParameters();
-          final PsiType[] substitutedTypeParameters = reference.getTypeParameters();
-
-          LOG.assertTrue(typeParameters.length == substitutedTypeParameters.length);
-          final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
-          for (int i = 0; i < typeParameters.length; i++) {
-            PsiTypeParameter parameter = typeParameters[i];
-            PsiType t = substitutedTypeParameters[i];
-            substitutionMap.put(parameter, t);
-          }
-          PsiSubstitutor substitutor = PsiSubstitutorImpl.createSubstitutor(substitutionMap);
-          psiType = substitutor.substitute(method.getReturnType());
-        } else {
-          psiType = method.getReturnType();
-        }
-        return isSuitableLambdaRole(psiType, baseMethodReturnType, methodSubstitutor, context);
-      }
       return false;
     } else {
       return false;
