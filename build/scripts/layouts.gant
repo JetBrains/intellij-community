@@ -593,6 +593,9 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
       jar("devkit-jps-plugin.jar") {
         module("devkit-jps-plugin")
       }
+      jar("devkit-jps-model.jar") {
+        module("devkit-jps-model")
+      }
       dir("jps") {
         jar("platform-module-descriptors-generator.jar") {
           module("platform-module-descriptors-generator")

@@ -10,6 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="module" module-name="devkit-jps-model" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
