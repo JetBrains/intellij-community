@@ -19,19 +19,12 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -399,38 +392,6 @@ class PseudoLambdaReplaceTemplate {
     return JavaPsiFacade.getElementFactory(project).createExpressionFromText(sb.toString(), null);
   }
 
-  private static void convertNewExpression(PsiMethod containingMethod, PsiNewExpression newExpression, PsiClass expectedReturnClass) {
-    final String expectedReturnQName = expectedReturnClass.getQualifiedName();
-    LOG.assertTrue(expectedReturnQName != null);
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(newExpression.getProject());
-    PsiAnonymousClass anonymousClass = PsiTreeUtil.findChildOfType(newExpression, PsiAnonymousClass.class);
-    LOG.assertTrue(anonymousClass != null);
-    PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.findChildOfType(anonymousClass, PsiJavaCodeReferenceElement.class);
-    LOG.assertTrue(referenceElement != null);
-    final PsiReferenceParameterList parameterList = PsiTreeUtil.findChildOfType(referenceElement, PsiReferenceParameterList.class);
-    final PsiJavaCodeReferenceElement newCodeReferenceElement = factory.createReferenceFromText(expectedReturnClass.getQualifiedName()
-                                                                                                +
-                                                                                                (parameterList == null
-                                                                                                 ? ""
-                                                                                                 : parameterList.getText()), null);
-    referenceElement.replace(newCodeReferenceElement);
-    final List<PsiMethod> methods = ContainerUtil.filter(anonymousClass.getMethods(), new Condition<PsiMethod>() {
-      @Override
-      public boolean value(PsiMethod method) {
-        return !"equals".equals(method.getName());
-      }
-    });
-    LOG.assertTrue(methods.size() == 1, methods);
-    final PsiMethod method = methods.get(0);
-    method.setName(expectedReturnClass.getMethods()[0].getName());
-    final PsiTypeElement element = containingMethod.getReturnTypeElement();
-    if (element != null) {
-      final PsiReferenceParameterList genericParameter = PsiTreeUtil.findChildOfType(element, PsiReferenceParameterList.class);
-      element.replace(
-        factory.createTypeElementFromText(expectedReturnQName + (genericParameter == null ? "" : genericParameter.getText()), null));
-    }
-  }
-
   @Nullable
   private static String findSuitableTailMethodForCollection(PsiMethod lambdaHandler) {
     final PsiType type = lambdaHandler.getReturnType();
@@ -504,8 +465,7 @@ class PseudoLambdaReplaceTemplate {
     return expression;
   }
 
-  private static String createPipelineHeadText(@NotNull PsiExpression collectionExpression,
-                                               boolean force) {
+  private static String createPipelineHeadText(PsiExpression collectionExpression, boolean force) {
     if (collectionExpression instanceof PsiNewExpression) {
       final PsiDiamondType.DiamondInferenceResult diamondResolveResult =
         PsiDiamondTypeImpl.resolveInferredTypesNoCheck((PsiNewExpression)collectionExpression, collectionExpression);
@@ -522,6 +482,9 @@ class PseudoLambdaReplaceTemplate {
       final PsiType newType = copiedExpression.getType();
       if (!currentType.equals(newType)) {
         collectionExpression = AddTypeArgumentsFix.addTypeArguments(copiedExpression, currentType);
+        if (collectionExpression == null) {
+          return null;
+        }
       }
     }
     final PsiType type = collectionExpression.getType();
