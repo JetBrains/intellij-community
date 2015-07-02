@@ -181,14 +181,10 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       PsiClass aClass = method.getContainingClass();
       if (aClass == null || aClass.hasModifierProperty(PsiModifier.FINAL) || aClass.isInterface()) continue;
 
-      System.err.println("collectSiblingInheritedMethods for "+method+" in "+aClass.getQualifiedName());
-
       boolean canHaveSiblingSuper = !method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC) && method.hasModifierProperty(PsiModifier.PUBLIC)&& !method.hasModifierProperty(PsiModifier.FINAL)&& !method.hasModifierProperty(PsiModifier.NATIVE);
-      System.err.println("canHaveSiblingSuper = " + canHaveSiblingSuper);
       if (!canHaveSiblingSuper) continue;
 
       PsiMethod siblingInheritedViaSubClass = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method, subClassCache);
-      System.err.println("siblingInheritedViaSubClass = " + siblingInheritedViaSubClass);
       if (siblingInheritedViaSubClass == null) {
         continue;
       }
@@ -197,7 +193,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       result.add(info);
       PsiClass sClass = siblingInheritedViaSubClass.getContainingClass();
       String sName = sClass == null ? null : sClass.getQualifiedName();
-      System.err.println("Added sibling "+siblingInheritedViaSubClass+" in "+sName+" to results: "+result);
     }
   }
 
