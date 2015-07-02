@@ -51,6 +51,14 @@ Installation
   
 Restart IDE.
 
+IntelliJ and Eclipse compiler
+-----------------------------
+If you're using Eclipse compiler with lombok, try this setup:
+- install plugin
+- <kbd>...</kbd> > <kbd>Compiler</kbd> > <kbd>Java Compiler</kbd> > <kbd>Use Compiler: Eclipse</kbd>
+- <kbd>...</kbd> > <kbd>Compiler</kbd> > <kbd>Annotation Processors</kbd> > <kbd>Enable annotation processing: checked (default configuration)</kbd>
+- <kbd>...</kbd> > <kbd>Compiler</kbd> > <kbd>Additional build process VM options: -javaagent:lombok.jar</kbd>
+
 Developed By
 ------------
 [**@mplushnikov** Michail Plushnikov] (https://github.com/mplushnikov)
