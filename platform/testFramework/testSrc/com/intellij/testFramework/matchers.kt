@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.testFramework
+package com.intellij.testFramework
 
 import org.hamcrest.Description
 import org.hamcrest.Factory
