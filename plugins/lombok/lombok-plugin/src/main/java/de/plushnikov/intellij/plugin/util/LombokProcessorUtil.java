@@ -1,6 +1,8 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
@@ -10,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +31,21 @@ public class LombokProcessorUtil {
   @Nullable
   public static String getAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
     return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "access"));
+  }
+  
+  @NotNull
+  public static Collection<String> getOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
+    PsiAnnotationMemberValue onXValue = psiAnnotation.findAttributeValue(parameterName);
+    if (!(onXValue instanceof PsiAnnotation)) {
+      return Collections.emptyList();
+    }
+    Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation) onXValue, "value", PsiAnnotation.class);
+    Collection<String> annotationStrings = new ArrayList<String>();
+    for (PsiAnnotation annotation : annotations) {
+      PsiAnnotationParameterList params = annotation.getParameterList();
+      annotationStrings.add(PsiAnnotationUtil.getSimpleNameOf(annotation) + params.getText());
+    }
+    return annotationStrings;
   }
 
   @Nullable

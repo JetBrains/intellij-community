@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -135,8 +136,10 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
 
     method.withBody(PsiMethodUtil.createCodeBlockFromText(String.format("return %s.%s;", isStatic ? psiClass.getName() : "this", psiField.getName()), psiClass));
 
-    copyAnnotations(psiField, method.getModifierList(),
+    PsiModifierList modifierList = method.getModifierList();
+    copyAnnotations(psiField, modifierList,
         LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
+    addOnXAnnotations(PsiAnnotationUtil.findAnnotation(psiField, Getter.class), modifierList, "onMethod");
     return method;
   }
 }
