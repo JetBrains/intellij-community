@@ -32,13 +32,11 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
@@ -88,6 +86,7 @@ public class PyBlock implements ASTBlock {
   private final Wrap myWrap;
   private final PyBlockContext myContext;
   private List<PyBlock> mySubBlocks = null;
+  private Map<ASTNode, PyBlock> mySubBlockByNode = null;
   private Alignment myChildAlignment;
   private final Alignment myDictAlignment;
   private final Wrap myDictWrapping;
@@ -137,16 +136,28 @@ public class PyBlock implements ASTBlock {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = buildSubBlocks();
+      mySubBlockByNode = buildSubBlocks();
+      mySubBlocks = new ArrayList<PyBlock>(mySubBlockByNode.values());
       if (DUMP_FORMATTING_BLOCKS) {
         dumpSubBlocks();
       }
     }
-    return new ArrayList<Block>(mySubBlocks);
+    return Collections.<Block>unmodifiableList(mySubBlocks);
   }
 
-  private List<PyBlock> buildSubBlocks() {
-    final List<PyBlock> blocks = new ArrayList<PyBlock>();
+  @Nullable
+  private PyBlock getSubBlockByNode(@NotNull ASTNode node) {
+    return mySubBlockByNode.get(node);
+  }
+
+  @Nullable
+  private PyBlock getSubBlockByIndex(int index) {
+    return mySubBlocks.get(index);
+  }
+
+  @NotNull
+  private Map<ASTNode, PyBlock> buildSubBlocks() {
+    final Map<ASTNode, PyBlock> blocks = new LinkedHashMap<ASTNode, PyBlock>();
     for (ASTNode child = myNode.getFirstChildNode(); child != null; child = child.getTreeNext()) {
 
       final IElementType childType = child.getElementType();
@@ -157,9 +168,9 @@ public class PyBlock implements ASTBlock {
         continue;
       }
 
-      blocks.add(buildSubBlock(child));
+      blocks.put(child, buildSubBlock(child));
     }
-    return Collections.unmodifiableList(blocks);
+    return Collections.unmodifiableMap(blocks);
   }
 
   private PyBlock buildSubBlock(ASTNode child) {
@@ -685,9 +696,22 @@ public class PyBlock implements ASTBlock {
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
-      final PsiElement psi1 = node1.getPsi();
-      final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
+      ASTNode node2 = ((ASTBlock)child2).getNode();
       final IElementType childType1 = node1.getElementType();
+      final PsiElement psi1 = node1.getPsi();
+
+      PsiElement psi2 = node2.getPsi();
+      // skip not inline comments to handles blank lines between various declarations
+      if (psi2 instanceof PsiComment && hasLineBreaksBefore(node2, 1)) {
+        final PsiElement nonCommentAfter = PyPsiUtils.getNextNonCommentSibling(psi2, true);
+        if (nonCommentAfter != null) {
+          psi2 = nonCommentAfter;
+        }
+      }
+      node2 = psi2.getNode();
+      final IElementType childType2 = psi2.getNode().getElementType();
+      //noinspection ConstantConditions
+      child2 = getSubBlockByNode(node2);
 
       final CommonCodeStyleSettings settings = myContext.getSettings();
       if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
@@ -696,8 +720,8 @@ public class PyBlock implements ASTBlock {
         }
       }
 
-      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && hasTypeIgnoringPrecedingComments(psi2, STATEMENT_OR_DECLARATION)) ||
-          STATEMENT_OR_DECLARATION.contains(childType1) && hasTypeIgnoringPrecedingComments(psi2, PyElementTypes.CLASS_OR_FUNCTION)) {
+      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
+          STATEMENT_OR_DECLARATION.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
         if (PyUtil.isTopLevel(psi1)) {
           return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
         }
@@ -723,17 +747,6 @@ public class PyBlock implements ASTBlock {
       }
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
-  }
-
-  private static boolean hasTypeIgnoringPrecedingComments(@NotNull PsiElement element, @NotNull TokenSet types) {
-    if (element instanceof PsiComment) {
-      final PsiElement psi3 = PsiTreeUtil.getNextSiblingOfType(element, PyElement.class);
-      if (psi3 != null) {
-        final IElementType type3 = psi3.getNode().getElementType();
-        return types.contains(type3);
-      }
-    }
-    return types.contains(element.getNode().getElementType());
   }
 
   private Spacing getBlankLinesForOption(final int option) {
@@ -762,7 +775,7 @@ public class PyBlock implements ASTBlock {
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
 
-      final PyBlock insertAfterBlock = mySubBlocks.get(newChildIndex - 1);
+      final PyBlock insertAfterBlock = getSubBlockByIndex(newChildIndex - 1);
 
       final ASTNode prevNode = insertAfterBlock.getNode();
       final PsiElement prevElt = prevNode.getPsi();
@@ -950,11 +963,10 @@ public class PyBlock implements ASTBlock {
       return null;
     }
     int prevIndex = newChildIndex - 1;
-    while (prevIndex > 0 && mySubBlocks.get(prevIndex).getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+    while (prevIndex > 0 && getSubBlockByIndex(prevIndex).getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
       prevIndex--;
     }
-    final PyBlock insertAfterBlock = mySubBlocks.get(prevIndex);
-    return insertAfterBlock.getNode();
+    return getSubBlockByIndex(prevIndex).getNode();
   }
 
   private static ASTNode getLastNonSpaceChild(ASTNode node, boolean acceptError) {
