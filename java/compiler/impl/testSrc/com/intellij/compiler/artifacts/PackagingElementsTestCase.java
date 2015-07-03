@@ -17,7 +17,6 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
@@ -34,9 +33,8 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
-
-import java.io.File;
 
 /**
  * @author nik
@@ -101,9 +99,9 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   private static VirtualFile getJarFromLibDirectory(final RuntimeModuleId id) {
-    final File file = PathManagerEx.getClassesRoot(id);
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    assertNotNull(file.getAbsolutePath() + " not found", virtualFile);
+    final String path = PlatformLoader.getInstance().getRepository().getModuleRootPath(id);
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+    assertNotNull(path + " not found", virtualFile);
     final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
     assertNotNull(jarRoot);
     return jarRoot;

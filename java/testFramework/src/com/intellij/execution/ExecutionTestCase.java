@@ -40,6 +40,7 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.platform.loader.PlatformLoader;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
@@ -227,5 +228,4 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     }
     Thread.interrupted();
   }
-
 }

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
@@ -32,6 +31,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
@@ -115,9 +115,9 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected static String getJUnitJarPath() {
-    final File file = PathManagerEx.getClassesRoot(RuntimeModuleId.projectLibrary("JUnit3"));
-    assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
-    return FileUtil.toSystemIndependentName(file.getAbsolutePath());
+    final String path = PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.projectLibrary("JUnit3"));
+    assertTrue("File " + path + " doesn't exist", new File(path).exists());
+    return FileUtil.toSystemIndependentName(path);
   }
 
   protected static void assertEmptyOutput(JpsArtifact a) {

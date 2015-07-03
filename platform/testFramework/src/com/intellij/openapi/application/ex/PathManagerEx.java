@@ -40,11 +40,8 @@ import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
-import org.jetbrains.platform.loader.PlatformLoader;
-import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -454,13 +451,5 @@ public class PathManagerEx {
       }
     }
     return TestDataLookupStrategy.ULTIMATE;
-  }
-
-  @NotNull
-  public static File getClassesRoot(RuntimeModuleId id) {
-    List<String> roots = PlatformLoader.getInstance().getRepository().getModuleRootPaths(id);
-    String first = ContainerUtil.getFirstItem(roots);
-    LOG.assertTrue(first != null, "Cannot find classes root for " + id.getStringId());
-    return new File(first);
   }
 }
