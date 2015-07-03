@@ -56,7 +56,7 @@ public class ThreeStateCheckBox extends JCheckBox {
     setModel(new ToggleButtonModel() {
       @Override
       public void setSelected(boolean selected) {
-        myState = nextState();
+        setState(nextState());
         fireStateChanged();
         fireItemStateChanged(new ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, this, ItemEvent.SELECTED));
       }
