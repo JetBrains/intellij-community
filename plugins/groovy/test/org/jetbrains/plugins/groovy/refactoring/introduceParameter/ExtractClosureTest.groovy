@@ -322,7 +322,7 @@ def foo = {String s ->
 
 foo('a')
 ''', '''
-def foo = {String s, Closure closure ->
+def foo = { String s, Closure closure ->
     s+=2
     <selection>closure(s)</selection>
 }
@@ -342,7 +342,7 @@ class X {
 new X().foo('a')
 ''', '''
 class X {
-    def foo = {Closure closure ->
+    def foo = { Closure closure ->
         <selection>closure()</selection>
     }
 }
@@ -362,7 +362,7 @@ def foo = {String s ->
 
 foo('a')
 ''', '''
-def foo = {Closure closure ->
+def foo = { Closure closure ->
     closure()
 }
 
@@ -386,7 +386,7 @@ class X {
 new X().foo('a')
 ''', '''
 class X {
-    def foo = {Closure closure ->
+    def foo = { Closure closure ->
         <selection>closure()</selection>
     }
     def bar(){}
@@ -407,7 +407,7 @@ def foo = {int x, int y ->
 
 foo(2, 3)
 ''', '''
-def foo = {Closure closure ->
+def foo = { Closure closure ->
     int a = 5
     <selection>closure(a)</selection>
 }
@@ -430,7 +430,7 @@ def adventure = {
 
 adventure()
 ''', '''
-def adventure = {Closure closure ->
+def adventure = { Closure closure ->
 
     try {
         <caret>closure()
@@ -463,7 +463,7 @@ def killMonsters(){2}
 def collectLoot(){3}
 def becomeTownGuard(){}
 ''', '''
-def adventure = {Closure<Integer> closure ->
+def adventure = { Closure<Integer> closure ->
     try {
         def skill = <selection>closure()</selection>
     } catch (ArrowToKneeException e) {
@@ -499,7 +499,7 @@ class Some {
      private static int smth = 1
      private static void doSmth() {}
 
-     void m1 = {<caret>Closure closure ->
+     void m1 = {<caret> Closure closure ->
 
          closure()
      }
@@ -520,7 +520,7 @@ void foo = {
 }
 foo()
 ''', '''
-void foo = {Closure<Character> closure ->
+void foo = { Closure<Character> closure ->
     def s = <selection><caret>closure()</selection>
 }
 foo { return "zxcvbn".substring(2).charAt(1) }
