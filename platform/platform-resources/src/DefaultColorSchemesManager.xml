@@ -1190,6 +1190,14 @@
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
+      <option name="BLINKING_HIGHLIGHTS_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR" value="808080"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
       <option name="BAD_CHARACTER">
         <value>
           <option name="EFFECT_COLOR" value="ff0000" />
