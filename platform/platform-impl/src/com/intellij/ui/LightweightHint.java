@@ -388,12 +388,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     setSize(myComponent.getPreferredSize());
   }
 
-  @Override
-  public void updateBounds(int x, int y) {
-    setSize(myComponent.getPreferredSize());
-    updateLocation(x, y);
-  }
-
   public void updateLocation(int x, int y) {
     Point point = new Point(x, y);
     fixActualPoint(point);

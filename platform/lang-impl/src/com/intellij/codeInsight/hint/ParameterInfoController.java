@@ -234,7 +234,8 @@ public class ParameterInfoController implements Disposable {
     //JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
     //p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
     //p.x = Math.max(p.x, 0);
-    myHint.updateBounds(p.x, p.y);
+    myHint.pack();
+    myHint.updateLocation(p.x, p.y);
   }
 
   private void addAlarmRequest(){
