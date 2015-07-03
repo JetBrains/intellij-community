@@ -303,7 +303,7 @@ private layoutFull(Map args, String target, Set usedJars) {
         fileset(file: it)
       }
 
-      fileset(dir: "$home/community/build/kotlinc/lib") {
+      fileset(dir: "$ch/build/kotlinc/lib") {
         include(name: "kotlin-runtime.jar")
         include(name: "kotlin-reflect.jar")
       }
