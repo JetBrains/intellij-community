@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -26,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 
 /**
  * @author Max Medvedev
@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
 public class AutoExternalizeContributor extends AstTransformContributor {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition clazz, @NotNull Consumer<PsiMethod> collector) {
+  public void collectMethods(@NotNull GrTypeDefinition clazz, @NotNull Collection<PsiMethod> collector) {
     if (!hasGeneratedImplementations(clazz)) return;
 
     final LightMethodBuilder write = new LightMethodBuilder(clazz.getManager(), "writeExternal");
@@ -41,13 +41,13 @@ public class AutoExternalizeContributor extends AstTransformContributor {
     write.addParameter("out", ObjectOutput.class.getName());
     write.addException(IOException.class.getName());
     write.setOriginInfo("created by @AutoExternalize");
-    collector.consume(write);
+    collector.add(write);
 
     final LightMethodBuilder read = new LightMethodBuilder(clazz.getManager(), "readExternal");
     read.setContainingClass(clazz);
     read.addParameter("oin", ObjectInput.class.getName());
     read.setOriginInfo("created by @AutoExternalize");
-    collector.consume(read);
+    collector.add(read);
   }
 
   private static boolean hasGeneratedImplementations(GrTypeDefinition clazz) {

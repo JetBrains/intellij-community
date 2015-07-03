@@ -26,7 +26,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashMap;
@@ -51,7 +50,7 @@ import java.util.*;
  */
 public class DelegatedMethodsContributor extends AstTransformContributor {
   @Override
-  public void collectMethods(@NotNull final GrTypeDefinition clazz, @NotNull Consumer<PsiMethod> collector) {
+  public void collectMethods(@NotNull final GrTypeDefinition clazz, @NotNull Collection<PsiMethod> collector) {
     Set<PsiClass> processed = new HashSet<PsiClass>();
 
     if (!checkForDelegate(clazz)) return;
@@ -67,9 +66,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       addMethodChecked(signatures, method, PsiSubstitutor.EMPTY, result);
     }
 
-    for (PsiMethod method : result) {
-      collector.consume(method);
-    }
+    collector.addAll(result);
   }
 
   private static boolean checkForDelegate(GrTypeDefinition clazz) {

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -25,6 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.Collection;
 
 /**
  * @author peter
@@ -38,7 +39,7 @@ public class LoggingContributor extends AstTransformContributor {
     build();
 
   @Override
-  public void collectFields(@NotNull GrTypeDefinition psiClass, @NotNull Consumer<GrField> collector) {
+  public void collectFields(@NotNull GrTypeDefinition psiClass, @NotNull Collection<GrField> collector) {
     GrModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return;
 
@@ -51,7 +52,7 @@ public class LoggingContributor extends AstTransformContributor {
         field.setNavigationElement(annotation);
         field.getModifierList().setModifiers(PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC);
         field.setOriginInfo("created by @" + annotation.getShortName());
-        collector.consume(field);
+        collector.add(field);
       }
     }
   }
