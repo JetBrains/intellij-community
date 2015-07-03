@@ -1,6 +1,7 @@
 package org.jetbrains.settingsRepository
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
@@ -75,6 +76,7 @@ class IcsSettings {
 }
 
 JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
+JsonIgnoreProperties(ignoreUnknown = true)
 class ReadonlySource(var url: String? = null, var active: Boolean = true) {
   JsonIgnore
   val path: String?
