@@ -2,10 +2,10 @@ package org.jetbrains.ide
 
 import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.testFramework.FixtureRule
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.hamcrest.CoreMatchers.equalTo
 import org.jetbrains.ide.TestManager.TestDescriptor
-import org.jetbrains.testFramework.FixtureRule
 import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test

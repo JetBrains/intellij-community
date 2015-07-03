@@ -72,7 +72,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
-                                   "WRAP_ON_TYPING",
                                    "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",
                                    "LINE_COMMENT_AT_FIRST_COLUMN",
                                    "BLOCK_COMMENT_AT_FIRST_COLUMN",

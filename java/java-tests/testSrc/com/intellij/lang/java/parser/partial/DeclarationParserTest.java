@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java.parser.partial;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
@@ -131,21 +130,6 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   }
 
   private void doParserTest(String text, boolean isAnnotation, boolean isEnum) {
-    doParserTest(text, new MyTestParser(isAnnotation, isEnum));
-  }
-
-  private static class MyTestParser implements TestParser {
-    private final boolean myAnnotation;
-    private final boolean myAnEnum;
-
-    public MyTestParser(boolean annotation, boolean anEnum) {
-      myAnnotation = annotation;
-      myAnEnum = anEnum;
-    }
-
-    @Override
-    public void parse(PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseClassBodyWithBraces(builder, myAnnotation, myAnEnum);
-    }
+    doParserTest(text, builder -> JavaParser.INSTANCE.getDeclarationParser().parseClassBodyWithBraces(builder, isAnnotation, isEnum));
   }
 }

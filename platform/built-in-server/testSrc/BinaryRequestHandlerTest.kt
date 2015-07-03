@@ -1,5 +1,6 @@
 package org.jetbrains.ide
 
+import com.intellij.testFramework.FixtureRule
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.net.NetUtils
@@ -17,7 +18,6 @@ import org.jetbrains.io.ChannelExceptionHandler
 import org.jetbrains.io.Decoder
 import org.jetbrains.io.MessageDecoder
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.testFramework.FixtureRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain

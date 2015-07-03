@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.options
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
@@ -9,7 +24,10 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.exists
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
@@ -25,9 +43,6 @@ import org.hamcrest.CoreMatchers.sameInstance
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.collection.IsMapContaining.hasKey
 import org.jdom.Element
-import org.jetbrains.testFramework.FixtureRule
-import org.jetbrains.testFramework.TemporaryDirectory
-import org.jetbrains.testFramework.exists
 import org.junit.Rule
 import org.junit.Test
 import java.io.File

@@ -346,8 +346,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     EditorHighlighter highlighter2 = DiffUtil.initEditorHighlighter(project, content2, text2);
 
     if (highlighter1 == null && highlighter2 == null) return null;
-    if (highlighter1 == null) highlighter1 = DiffUtil.initEmptyEditorHighlighter(project, text1);
-    if (highlighter2 == null) highlighter2 = DiffUtil.initEmptyEditorHighlighter(project, text2);
+    if (highlighter1 == null) highlighter1 = DiffUtil.initEmptyEditorHighlighter(text1);
+    if (highlighter2 == null) highlighter2 = DiffUtil.initEmptyEditorHighlighter(text2);
 
     return new UnifiedEditorHighlighter(myDocument, highlighter1, highlighter2, ranges, textLength);
   }

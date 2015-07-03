@@ -461,6 +461,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(text+"\n", getEditor().getDocument().getText());
   }
 
+  public void testReplaceWithRegExp() {
+    doTestRegexpReplace("#  Base", "(?<!^) ", "  ", "#    Base");
+  }
+
   private  void initProject(String folderName, final String... sourceDirs) {
     final String testDir = JavaTestUtil.getJavaTestDataPath() + "/find/" + folderName;
     ApplicationManager.getApplication().runWriteAction(() -> {

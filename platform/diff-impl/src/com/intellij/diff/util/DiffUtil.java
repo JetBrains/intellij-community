@@ -107,7 +107,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static EditorHighlighter initEmptyEditorHighlighter(@Nullable Project project, @NotNull CharSequence text) {
+  public static EditorHighlighter initEmptyEditorHighlighter(@NotNull CharSequence text) {
     EditorHighlighter highlighter = createEmptyEditorHighlighter();
     highlighter.setText(text);
     return highlighter;
@@ -214,10 +214,6 @@ public class DiffUtil {
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
     scrollToCaret(editor, animated);
-  }
-
-  public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
-    scrollToPoint(editor, point, false);
   }
 
   public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point, boolean animated) {
@@ -876,14 +872,6 @@ public class DiffUtil {
     return holder;
   }
 
-  public static <T> UserDataHolderBase createUserDataHolder(@NotNull Key<T> key1, @Nullable T value1,
-                                                            @NotNull Key<T> key2, @Nullable T value2) {
-    UserDataHolderBase holder = new UserDataHolderBase();
-    holder.putUserData(key1, value1);
-    holder.putUserData(key2, value2);
-    return holder;
-  }
-
   public static boolean isUserDataFlagSet(@NotNull Key<Boolean> key, UserDataHolder... holders) {
     for (UserDataHolder holder : holders) {
       if (holder == null) continue;
@@ -1038,10 +1026,6 @@ public class DiffUtil {
     public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
       this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
            ignorePolicy.isShouldTrimChunks());
-    }
-
-    public DiffConfig() {
-      this(IgnorePolicy.DEFAULT, HighlightPolicy.BY_LINE);
     }
   }
 }

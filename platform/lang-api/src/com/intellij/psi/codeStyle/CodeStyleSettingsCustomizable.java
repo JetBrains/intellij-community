@@ -113,7 +113,6 @@ public interface CodeStyleSettingsCustomizable {
 
   enum WrappingOrBraceOption {
     RIGHT_MARGIN,
-    WRAP_ON_TYPING,
     KEEP_CONTROL_STATEMENT_IN_ONE_LINE,
     LINE_COMMENT_AT_FIRST_COLUMN,
     BLOCK_COMMENT_AT_FIRST_COLUMN,

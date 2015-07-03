@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import javax.swing.*;
  * @author Rustam Vishnyakov
  */
 public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
-
   public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon(2);
   public static final String ENFORCED_PLAIN_TEXT = "Enforced Plain Text";
 
@@ -40,15 +39,10 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
     ENFORCED_PLAIN_TEXT_ICON.setIcon(PlatformIcons.EXCLUDED_FROM_COMPILE_ICON, 1);
   }
 
-  
   private final FileTypeIdentifiableByVirtualFile myFileType;
-  
-  
-  public EnforcedPlainTextFileTypeFactory() {
-    
-    
-    myFileType = new FileTypeIdentifiableByVirtualFile() {
 
+  public EnforcedPlainTextFileTypeFactory() {
+    myFileType = new FileTypeIdentifiableByVirtualFile() {
       @Override
       public boolean isMyFileType(@NotNull VirtualFile file) {
         return isMarkedAsPlainText(file);
@@ -95,14 +89,12 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
   }
 
   @Override
-  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
+  public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(myFileType, "");
   }
   
-  private static boolean isMarkedAsPlainText(VirtualFile file) {
+  private static boolean isMarkedAsPlainText(@NotNull VirtualFile file) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    if (typeManager == null) return false;
-    return typeManager.isMarkedAsPlainText(file);
+    return typeManager != null && typeManager.isMarkedAsPlainText(file);
   }
-
 }

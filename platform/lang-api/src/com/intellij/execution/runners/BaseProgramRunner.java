@@ -16,10 +16,7 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.options.SettingsEditor;
@@ -72,6 +69,10 @@ abstract class BaseProgramRunner<Settings extends RunnerSettings> implements Pro
   static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
     if (descriptor != null) {
       descriptor.setExecutionId(environment.getExecutionId());
+      RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+      if (settings != null) {
+        descriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
+      }
     }
     if (callback != null) {
       callback.processStarted(descriptor);

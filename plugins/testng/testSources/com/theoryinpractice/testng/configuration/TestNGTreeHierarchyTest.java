@@ -46,8 +46,7 @@ public class TestNGTreeHierarchyTest {
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
     
-    doTest(suite, "##teamcity[testCount count='1']\n" +
-                  "\n" +
+    doTest(suite, "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
                   "##teamcity[testStarted name='ATest.test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
@@ -65,7 +64,6 @@ public class TestNGTreeHierarchyTest {
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
@@ -90,19 +88,16 @@ public class TestNGTreeHierarchyTest {
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testName' locationHint='java:test://ATest.testName|[0|]']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.testName']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testName1' locationHint='java:test://ATest.testName1|[0|]']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.testName1']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testName (1)' locationHint='java:test://ATest.testName|[1|]']\n" +
                                           "\n" +
@@ -125,12 +120,10 @@ public class TestNGTreeHierarchyTest {
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testName' locationHint='java:test://ATest.testName|[0|]']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "##teamcity[testSuiteFinished name='ATest']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='BTest' locationHint = 'java:suite://BTest']\n" +
@@ -153,7 +146,6 @@ public class TestNGTreeHierarchyTest {
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
@@ -175,7 +167,6 @@ public class TestNGTreeHierarchyTest {
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
@@ -196,19 +187,16 @@ public class TestNGTreeHierarchyTest {
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
 
-    doTest(suite, "##teamcity[testCount count='1']\n" +
-                  "\n" +
+    doTest(suite, "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
                   "##teamcity[testStarted name='ATest.test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                   "\n" +
                   "##teamcity[testFinished name='ATest.test1|[0|]']\n" +
-                  "##teamcity[testCount count='1']\n" +
                   "\n" +
                   "##teamcity[testStarted name='ATest.test1|[1|] (1)' locationHint='java:test://a.ATest.test1|[1|]']\n" +
                   "\n" +
                   "##teamcity[testFinished name='ATest.test1|[1|] (1)']\n" +
-                  "##teamcity[testCount count='1']\n" +
                   "\n" +
                   "##teamcity[testStarted name='ATest.test1|[2|] (2)' locationHint='java:test://a.ATest.test1|[2|]']\n" +
                   "\n" +
@@ -236,7 +224,6 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                                           "\n" +
@@ -249,7 +236,6 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.setUp']\n" +
-                                          "##teamcity[testCount count='1']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.test2' locationHint='java:test://a.ATest.test2|[0|]']\n" +
                                           "\n" +
@@ -287,8 +273,7 @@ public class TestNGTreeHierarchyTest {
     final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null});
     listener.onTestStart(result);
     listener.onTestFinished(result);
-    Assert.assertEquals("output: " + buf, "##teamcity[testCount count='1']\n" +
-                                          "\n" +
+    Assert.assertEquals("output: " + buf, "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testMe|[null, null|]' locationHint='java:test://ATest.testMe|[0|]']\n" +

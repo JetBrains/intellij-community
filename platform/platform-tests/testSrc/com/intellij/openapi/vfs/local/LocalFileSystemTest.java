@@ -184,10 +184,10 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
   public void testUnicodeNames() throws Exception {
     final File dirFile = createTempDirectory();
-    final String name = "te\u00dft123123123.txt";
+    final String name = "a-\u00df-123123123.txt";
     final File childFile = new File(dirFile, name);
     boolean created = childFile.createNewFile();
-    assert created || childFile.exists() : childFile;
+    assertTrue(created || childFile.exists());
 
     final VirtualFile dir = myFS.refreshAndFindFileByIoFile(dirFile);
     assertNotNull(dir);
@@ -233,7 +233,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     else if (SystemInfo.isUnix) {
       root = myFS.findFileByPath("/");
       assertNotNull(root);
-      assertEquals(root.getPath(), "/");
+      assertEquals("/", root.getPath());
     }
 
     root = myFS.findFileByPath("");
@@ -335,7 +335,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     FileUtil.writeToFile(new File(testDir, "Foo.java"), content);
 
     VirtualFile virtualDir = myFS.findFileByIoFile(testDir);
-    assert virtualDir != null : testDir;
+    assertNotNull(virtualDir);
     virtualDir.getChildren();
     virtualDir.refresh(false, true);
     checkChildCount(virtualDir, 1);

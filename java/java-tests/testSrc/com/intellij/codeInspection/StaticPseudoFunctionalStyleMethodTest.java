@@ -108,6 +108,10 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
     doTest();
   }
 
+  public void testLambdaIsVariable() {
+    doTest();
+  }
+
   public void _testReplaceWithMethodReference() {
     doTest();
   }
