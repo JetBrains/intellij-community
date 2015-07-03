@@ -93,6 +93,14 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jna-3.2.7.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/native-platform-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-amd64-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-i386-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.10.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -20,7 +20,6 @@ import com.google.gson.GsonBuilder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.externalSystem.JavaProjectData;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -30,9 +29,6 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.KeyValue;
@@ -41,7 +37,6 @@ import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -50,7 +45,6 @@ import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TObjectHashingStrategy;
 import groovy.lang.GroovyObject;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
-import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
@@ -61,6 +55,8 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.*;
@@ -68,11 +64,9 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
-import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
-import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -608,38 +602,27 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     // Gradle i18n bundle.
     ExternalSystemApiUtil.addBundle(classPath, GradleBundle.PATH_TO_BUNDLE, GradleBundle.class);
 
-    // Gradle tool jars.
-    String toolingApiPath = PathManager.getJarPathForClass(ProjectConnection.class);
-    if (toolingApiPath == null) {
-      LOG.warn(GradleBundle.message("gradle.generic.text.error.jar.not.found"));
-      throw new ExecutionException("Can't find gradle libraries");
-    }
-    File gradleJarsDir = new File(toolingApiPath).getParentFile();
-    File[] gradleJars = gradleJarsDir.listFiles(FileFilters.filesWithExtension("jar"));
-    if (gradleJars == null) {
-      LOG.warn(GradleBundle.message("gradle.generic.text.error.jar.not.found"));
-      throw new ExecutionException("Can't find gradle libraries at " + gradleJarsDir.getAbsolutePath());
-    }
-    for (File jar : gradleJars) {
-      classPath.add(jar.getAbsolutePath());
-    }
-
-    List<String> additionalEntries = ContainerUtilRt.newArrayList();
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(GroovyObject.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(GsonBuilder.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ExternalProject.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(JavaProjectData.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(LanguageLevel.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(StdModuleTypes.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(JavaModuleType.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ModuleType.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(EmptyModuleType.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ProjectImportAction.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(Init.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(org.slf4j.Logger.class));
-    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
-    for (String entry : additionalEntries) {
-      classPath.add(entry);
+    //todo[nik,runtime-modules] replace with getClasspath for 'gradle-tooling-extension-impl' module?
+    RuntimeModuleId[] modules = {
+      RuntimeModuleId.moduleLibrary("gradle", "Gradle"),
+      RuntimeModuleId.moduleLibrary("gradle", "commons-io"),
+      RuntimeModuleId.moduleLibrary("gradle", "GradleGuava"),
+      RuntimeModuleId.moduleLibrary("gradle", "GradleJnaPosix"),
+      RuntimeModuleId.moduleLibrary("gradle", "Jsr305"),
+      RuntimeModuleId.projectLibrary("Slf4j"),
+      RuntimeModuleId.projectLibrary("Groovy"),
+      RuntimeModuleId.projectLibrary("gson"),
+      RuntimeModuleId.module("external-system-api"),
+      RuntimeModuleId.module("java-impl"),
+      RuntimeModuleId.module("java-psi-api"),
+      RuntimeModuleId.module("openapi"),
+      RuntimeModuleId.module("lang-api"),
+      RuntimeModuleId.module("lang-impl"),
+      RuntimeModuleId.module("gradle-tooling-extension-api"),
+      RuntimeModuleId.module("gradle-tooling-extension-impl"),
+    };
+    for (RuntimeModuleId module : modules) {
+      classPath.addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(module));
     }
   }
 
