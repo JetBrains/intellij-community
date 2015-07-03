@@ -985,7 +985,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         @Override
         public void run() {
           if (ApplicationManager.getApplication().isActive()) {
-            window.toFront();
+            if (window instanceof JFrame && ((JFrame)window).getState() == Frame.ICONIFIED) {
+              ((JFrame)window).setState(Frame.NORMAL);
+            } else {
+              window.toFront();
+            }
           }
         }
       });
