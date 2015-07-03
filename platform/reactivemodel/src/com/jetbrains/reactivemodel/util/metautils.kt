@@ -23,8 +23,15 @@ public fun withEmptyMeta<K, V>(map : PersistentHashMap<K, V>): PersistentHashMap
   return withMeta(map, emptyMeta());
 }
 
+@suppress("UNCHECKED_CAST")
 public fun withMeta<K, V>(map : PersistentHashMap<K, V>, meta: IPersistentMap<String, *>): PersistentHashMap<K, V> {
   return map.withMeta(meta) as PersistentHashMap<K, V>;
 }
 
+@suppress("UNCHECKED_CAST")
 public fun emptyMeta() : IPersistentMap<String, *>  = PersistentHashMap.EMPTY as IPersistentMap<String, *>
+
+public fun createMeta(vararg objects: Any) : IPersistentMap<String, *> = PersistentHashMap.create<String, Any>(*objects)
+
+fun IPersistentMap<String, *>.lifetime(): Lifetime = this.valAt("lifetime") as Lifetime
+fun IPersistentMap<String, *>.get(key: String): Any? = this.valAt(key)

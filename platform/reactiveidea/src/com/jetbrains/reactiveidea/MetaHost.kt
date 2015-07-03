@@ -33,7 +33,7 @@ public open class MetaHost(val lifetime: Lifetime,
   protected fun initModel(initFunc: ((MapModel) -> MapModel) = { m -> m }) {
     val hostMeta = PersistentHashMap.create(buildMeta())
     reactiveModel.transaction { m ->
-      initFunc(path.putIn(m, MapModel(metadata = hostMeta)))
+      initFunc(path.putIn(m, MapModel(meta = hostMeta)))
     }
   }
 

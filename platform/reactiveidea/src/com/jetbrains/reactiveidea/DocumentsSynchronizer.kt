@@ -15,8 +15,6 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.github.krukow.clj_lang.PersistentList
-import com.jetbrains.reactiveidea.ServerEditorTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
@@ -35,16 +33,15 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.models.ListModel
-import com.jetbrains.reactivemodel.models.MapModel
-import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
-import java.util.*
+import com.jetbrains.reactivemodel.util.get
+import java.util.ArrayList
 
 public class DocumentsSynchronizer(val project: Project, val serverEditorTracker: ServerEditorTracker) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
@@ -87,6 +84,15 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
         } else {
           println("can't find idea action $args")
+        }
+        model
+      }
+
+      serverModel.registerHandler(lifetime.lifetime, "open-file") {args: MapModel, model ->
+        val path = (args["path"] as ListModel).map { (it as PrimitiveModel<*>).value }.drop(1).fold(Path(), { path, part -> path / part })
+        val psiPtr  = path.getIn(model)!!.meta["psi"]
+        if(psiPtr is SmartPsiElementPointer<*>) {
+          FileEditorManager.getInstance(project).openFile(psiPtr.getVirtualFile(), false)
         }
         model
       }

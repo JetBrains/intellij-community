@@ -11,7 +11,7 @@ import com.jetbrains.reactivemodel.util.withMeta
 import java.util.HashMap
 
 public data class MapModel(val hmap: PersistentHashMap<String, Model> = PersistentHashMap.emptyMap(),
-                           val metadata: IPersistentMap<String, *> = emptyMeta())
+                           override val meta: IPersistentMap<String, *> = emptyMeta())
 : AssocModel<String, MapModel>, Map<String, Model?> by hmap {
 
   override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitMapModel(this)
@@ -21,10 +21,10 @@ public data class MapModel(val hmap: PersistentHashMap<String, Model> = Persiste
 
   public override fun assoc(key: String, value: Model?): MapModel =
       if (value is AbsentModel) remove(key)
-      else MapModel(hmap.plus(key, value), metadata)
+      else MapModel(hmap.plus(key, value), meta)
 
   public override fun find(key: String): Model? = hmap.get(key)
-  public fun remove(k: String): MapModel = MapModel(hmap.minus(k))
+  public fun remove(k: String): MapModel = MapModel(hmap.minus(k), meta)
 
   override fun diffImpl(other: Model): Diff<Model>? {
     if (other !is MapModel) {
@@ -79,9 +79,6 @@ public data class MapModel(val hmap: PersistentHashMap<String, Model> = Persiste
     }
     return self
   }
-
-  override val meta: IPersistentMap<String, *>
-    get() = metadata
 }
 
 public data class MapDiff(val diff: Map<String, Diff<Model>>) : Diff<MapModel> {

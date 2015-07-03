@@ -1,10 +1,8 @@
 package com.jetbrains.reactivemodel
 
-import com.jetbrains.reactivemodel.models.ListModel
-import com.jetbrains.reactivemodel.models.MapDiff
-import com.jetbrains.reactivemodel.models.MapModel
-import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 import java.util.ArrayDeque
@@ -64,7 +62,48 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     }
     root = newModel
     fireUpdates(oldModel, newModel, diff)
+    terminateLifetimes(oldModel, diff)
     return diff
+  }
+
+  class TerminateLifetimeVisitor(val oldModel: MapModel, val path: Path = Path()) : DiffVisitor<Unit> {
+    override fun visitMapDiff(mapDiff: MapDiff) {
+      mapDiff.diff.forEach { e ->
+        e.value.acceptVisitor(TerminateLifetimeVisitor(oldModel, path / e.key))
+      }
+    }
+
+    override fun visitValueDiff(valueDiff: ValueDiff<*>) {
+      if(valueDiff.newValue is AbsentModel) {
+        val oldModel = path.getIn(oldModel)
+        if (oldModel is MapModel) {
+          terminateLifetimesRec(oldModel)
+        }
+      }
+    }
+
+    override fun visitListDiff(listDiff: ListDiff) {}
+
+    override fun visitPrimitiveDiff(primitiveDiff: PrimitiveDiff) {}
+
+    private fun terminateLifetimesRec(oldModel: MapModel) {
+      val lifetime = oldModel.meta.valAt("lifetime") as Lifetime?
+      if(lifetime != null) {
+        lifetime.terminate()
+      } else {
+        val map : Map<String, Model?> = oldModel.hmap // explicit type inference
+        map.forEach { e ->
+          val value = e.getValue()
+          if(value is MapModel) {
+            terminateLifetimesRec(value)
+          }
+        }
+      }
+    }
+  }
+
+  private fun terminateLifetimes(oldModel: MapModel, diff: MapDiff) {
+    diff.acceptVisitor(TerminateLifetimeVisitor(oldModel))
   }
 
   private fun fireUpdates(oldModel: MapModel, newModel: MapModel, diff: MapDiff) {

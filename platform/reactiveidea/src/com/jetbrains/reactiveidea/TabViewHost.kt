@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
 import com.jetbrains.reactivemodel.getIn
+import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
@@ -41,7 +42,7 @@ class TabViewHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path) 
   var currentIdx = 0
 
   fun addEditor(editor: Editor, file: VirtualFile) {
-    EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, path / editorsPath / currentIdx.toString(), file.getName(), editor, true)
+    EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, path / editorsPath / currentIdx.toString(), file, editor, true)
     fileToEditorIdx.put(file, currentIdx++)
   }
 
@@ -49,21 +50,21 @@ class TabViewHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path) 
     if (fileToEditorIdx.containsKey(file)) {
       val res = fileToEditorIdx.remove(file)
       reactiveModel.transaction { m ->
-        val editor = getEditorHost(res, m)
-        editor.lifetime.terminate()
+        val editor = getEditorHost(res, m) ?: return@transaction m
+        val model = (editor.path).putIn(m, AbsentModel())
         if (isActive(m, res)) {
           val candidate = getActiveEditorCandidate(m, res)
           if (candidate != null) {
-            return@transaction setActive(m, candidate)
+            return@transaction setActive(model, candidate)
           }
         }
-        m
+        model
       }
     }
   }
 
-  private fun getEditorHost(idx: Int, m: MapModel): EditorHost {
-    return (path / editorsPath / idx.toString()).getIn(m)!!.meta.valAt("host") as EditorHost
+  private fun getEditorHost(idx: Int, m: MapModel): EditorHost? {
+    return (path / editorsPath / idx.toString()).getIn(m)?.meta?.valAt("host") as? EditorHost
   }
 
   private fun isActive(m: MapModel, idx: Int): Boolean {

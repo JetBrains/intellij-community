@@ -15,7 +15,6 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.github.krukow.clj_lang.PersistentHashMap
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
@@ -24,19 +23,20 @@ import com.intellij.openapi.editor.event.CaretAdapter
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.reactivemodel.*
-import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
-import java.util.*
+import java.util.HashMap
 
 public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path,
-                        name: String, val editor: Editor, val providesMarkup: Boolean) : MetaHost(lifetime, reactiveModel, path) {
+                        val file: VirtualFile, val editor: Editor, val providesMarkup: Boolean) : MetaHost(lifetime, reactiveModel, path) {
   companion object {
     val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
     val tags = "@@@--^tags"
@@ -46,16 +46,7 @@ public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: 
   }
 
   val caretGuard = Guard()
-
-  init {
-    initModel { m ->
-      var editorsModel: List<Model?> = (path.dropLast(1).getIn(m) as? MapModel)
-          ?.values()
-          ?.filter { (it as MapModel).isNotEmpty() } ?: emptyList()
-      (path / activePath).putIn(m, PrimitiveModel(editorsModel.isEmpty()))
-    }
-  }
-
+  val name = file.getName()
 
   override fun buildMeta(): HashMap<String, Any> {
     val map = super.buildMeta()
@@ -64,9 +55,17 @@ public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: 
   }
 
   init {
+    initModel { m ->
+      var editorsModel: List<Model?> = (path.dropLast(1).getIn(m) as? MapModel)
+          ?.values()
+          ?.filter { (it as MapModel).isNotEmpty() } ?: emptyList()
+      (path / activePath).putIn(m, PrimitiveModel(editorsModel.isEmpty()))
+    }
     lifetime += {
-      reactiveModel.transaction { m ->
-        (path).putIn(m, AbsentModel())
+      val project = editor.getProject()
+      if(project != null) {
+        val manager = FileEditorManager.getInstance(project);
+        manager.closeFile(file)
       }
     }
     val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
