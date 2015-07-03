@@ -71,7 +71,7 @@ Developed By
 - [**@mlueders** Mike Lueders](https://github.com/mlueders)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
 - [**@siosio** siosio](https://github.com/siosio)
-- [**@Siriah** Siriah](https://github.com/Siriah)
+- [**@Siriah** Iris Hupkens](https://github.com/Siriah)
 
 
 License
