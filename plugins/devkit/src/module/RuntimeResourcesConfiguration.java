@@ -16,8 +16,8 @@
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.ModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ import java.util.List;
  */
 public abstract class RuntimeResourcesConfiguration extends ModuleExtension<RuntimeResourcesConfiguration> {
   public static RuntimeResourcesConfiguration getInstance(@NotNull Module module) {
-    return ModuleServiceManager.getService(module, RuntimeResourcesConfiguration.class);
+    return ModuleRootManager.getInstance(module).getModuleExtension(RuntimeResourcesConfiguration.class);
   }
 
   @NotNull

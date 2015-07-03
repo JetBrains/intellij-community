@@ -30,7 +30,7 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 public class RuntimeModuleReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    PsiMethodPattern moduleMethod = psiMethod().withName("module", "moduleLibrary", "moduleTests").definedInClass(RuntimeModuleId.class.getName());
+    PsiMethodPattern moduleMethod = psiMethod().withName("module", "moduleLibrary", "moduleTests", "moduleResource").definedInClass(RuntimeModuleId.class.getName());
     registrar.registerReferenceProvider(literalExpression().methodCallParameter(0, moduleMethod), new PsiReferenceProvider() {
       @NotNull
       @Override
@@ -48,7 +48,7 @@ public class RuntimeModuleReferenceContributor extends PsiReferenceContributor {
       }
     });
 
-    PsiMethodPattern moduleLibraryMethod = psiMethod().withName("moduleLibrary").definedInClass(RuntimeModuleId.class.getName());
+    PsiMethodPattern moduleLibraryMethod = psiMethod().withName("moduleLibrary", "moduleResource").definedInClass(RuntimeModuleId.class.getName());
     registrar.registerReferenceProvider(literalExpression().methodCallParameter(1, moduleLibraryMethod), new PsiReferenceProvider() {
       @NotNull
       @Override
@@ -57,7 +57,15 @@ public class RuntimeModuleReferenceContributor extends PsiReferenceContributor {
         if (parent != null) {
           PsiExpression[] expressions = parent.getArgumentList().getExpressions();
           if (expressions.length > 0 && expressions[0] instanceof PsiLiteralExpression) {
-            return new PsiReference[]{new ModuleLibraryReference(element, (PsiLiteralExpression)expressions[0])};
+            PsiLiteralExpression moduleNameElement = (PsiLiteralExpression)expressions[0];
+            PsiReference reference;
+            if ("moduleLibrary".equals(parent.getMethodExpression().getReferenceName())) {
+              reference = new ModuleLibraryReference(element, moduleNameElement);
+            }
+            else {
+              reference = new IdeaRuntimeResourceReference(element, moduleNameElement);
+            }
+            return new PsiReference[]{reference};
           }
         }
         return PsiReference.EMPTY_ARRAY;

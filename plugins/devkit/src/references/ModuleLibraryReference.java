@@ -23,12 +23,9 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomTarget;
-import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +36,9 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class ModuleLibraryReference extends RuntimeModuleReferenceBase {
-  @NotNull private final PsiLiteralExpression myModuleNameElement;
-
+public class ModuleLibraryReference extends ModuleResourceReferenceBase {
   public ModuleLibraryReference(@NotNull PsiElement libraryNameElement, @NotNull PsiLiteralExpression moduleNameElement) {
-    super(libraryNameElement);
-    myModuleNameElement = moduleNameElement;
+    super(libraryNameElement, moduleNameElement);
   }
 
   @Nullable
@@ -60,16 +54,9 @@ public class ModuleLibraryReference extends RuntimeModuleReferenceBase {
 
   @Nullable
   private Map<String, Library> getLibrariesMap() {
-    IdeaModuleReference moduleNameReference = findModuleReference();
-    if (moduleNameReference == null) return null;
-    PsiElement resolved = moduleNameReference.resolve();
-    if (!(resolved instanceof PomTargetPsiElement)) return null;
-
-    PomTarget pomTarget = ((PomTargetPsiElement)resolved).getTarget();
-    if (!(pomTarget instanceof IdeaModulePomTarget)) return null;
-
+    Module module = resolveModule();
+    if (module == null) return null;
     Map<String, Library> libraries = new HashMap<String, Library>();
-    Module module = ((IdeaModulePomTarget)pomTarget).getModule();
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
         Library library = ((LibraryOrderEntry)entry).getLibrary();
@@ -85,15 +72,6 @@ public class ModuleLibraryReference extends RuntimeModuleReferenceBase {
       }
     }
     return libraries;
-  }
-
-  private IdeaModuleReference findModuleReference() {
-    for (PsiReference reference : myModuleNameElement.getReferences()) {
-      if (reference instanceof IdeaModuleReference) {
-        return (IdeaModuleReference)reference;
-      }
-    }
-    return null;
   }
 
   @NotNull
