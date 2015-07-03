@@ -45,6 +45,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   private volatile boolean myIndeterminate;
   private volatile Object myMacActivity;
+  private volatile boolean myShouldStartActivity = true;
 
   private Stack<String> myTextStack;
   private DoubleArrayList myFractionStack;
@@ -70,7 +71,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myText = "";
     myFraction = 0;
     myText2 = "";
-    myMacActivity = MacUtil.wakeUpNeo(toString());
+    startSystemActivity();
     myRunning = true;
   }
 
@@ -85,6 +86,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
     myFinished = true;
+    stopSystemActivity();
+  }
+
+  protected void startSystemActivity() {
+    myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(toString()) : null;
+  }
+
+  protected void stopSystemActivity() {
     MacUtil.matrixHasYou(myMacActivity);
     myMacActivity = null;
   }
@@ -97,6 +106,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void cancel() {
     myCanceled = true;
+    stopSystemActivity();
     ProgressManager.canceled(this);
   }
 
@@ -246,6 +256,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
       myFractionStack = new DoubleArrayList(stacked.getFractionStack());
     }
+    myShouldStartActivity = false;
   }
 
   @Override
