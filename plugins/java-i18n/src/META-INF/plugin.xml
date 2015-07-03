@@ -63,7 +63,7 @@
 
     <intentionAction>
       <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
-      <category>I18N</category>
+      <category>Java/I18N</category>
     </intentionAction>
 
   </extensions>

@@ -130,8 +130,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+      runManagerSettings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
     } else {
       settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+      settings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
     }
   }
 

@@ -62,7 +62,13 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     public String getName(@NotNull QuickList item) {
       return item.getName();
     }
+
+    @Override
+    public boolean isRemovable(@NotNull QuickList item) {
+      return QuickListsManager.getInstance().getSchemeManager().isMetadataEditable(item);
+    }
   };
+
   private final ListModelEditor<QuickList> editor = new ListModelEditor<QuickList>(itemEditor);
 
   private JComponent component;
@@ -74,6 +80,8 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     final CardLayout cardLayout = new CardLayout();
 
+    // doesn't make any sense (and in any case scheme manager cannot preserve order)
+    editor.disableUpDownActions();
     editor.getList().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -90,12 +98,12 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     });
 
     itemPanel = new QuickListPanel(editor.getModel());
-    itemPanel.myDisplayName.getDocument().addDocumentListener(new DocumentAdapter() {
+    itemPanel.myName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         QuickList item = itemPanel.item;
         if (item != null) {
-          String name = itemPanel.myDisplayName.getText();
+          String name = itemPanel.myName.getText();
           boolean changed = !item.getName().equals(name);
           item.setName(name);
           if (changed) {

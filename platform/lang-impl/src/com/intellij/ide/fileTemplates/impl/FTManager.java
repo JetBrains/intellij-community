@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,12 +361,9 @@ class FTManager {
   }
 
   public File getConfigRoot(boolean create) {
-    final File templatesPath = myTemplatesDir.isEmpty() ? new File(myScheme.getTemplatesDir()) : new File(myScheme.getTemplatesDir(), myTemplatesDir);
-    if (create) {
-      final boolean created = templatesPath.mkdirs();
-      if (!created && !templatesPath.exists()) {
-        LOG.info("Cannot create directory: " + templatesPath.getAbsolutePath());
-      }
+    File templatesPath = myTemplatesDir.isEmpty() ? new File(myScheme.getTemplatesDir()) : new File(myScheme.getTemplatesDir(), myTemplatesDir);
+    if (create && !templatesPath.mkdirs() && !templatesPath.exists()) {
+      LOG.info("Cannot create directory: " + templatesPath.getAbsolutePath());
     }
     return templatesPath;
   }

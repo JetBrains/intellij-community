@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -30,23 +30,23 @@ import java.util.*;
 /**
  * @author Rustam Vishnyakov
  */
-public class PersistentFileSetManager implements PersistentStateComponent<Element> {
+class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
   private static final String PATH_ATTR = "url";
 
-  private final Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
+  private final Set<VirtualFile> myFiles = new THashSet<VirtualFile>();
   
-  protected boolean addFile(VirtualFile file) {
+  protected boolean addFile(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
     myFiles.add(file);
     return true;
   }
   
-  protected boolean containsFile(VirtualFile file) {
+  protected boolean containsFile(@NotNull VirtualFile file) {
     return myFiles.contains(file);
   }
   
-  protected boolean removeFile(VirtualFile file) {
+  protected boolean removeFile(@NotNull VirtualFile file) {
     if (!myFiles.contains(file)) return false;
     myFiles.remove(file);
     return true;
@@ -56,8 +56,9 @@ public class PersistentFileSetManager implements PersistentStateComponent<Elemen
   public Collection<VirtualFile> getFiles() {
     return myFiles;
   }
-  
-  public Collection<VirtualFile> getSortedFiles() {
+
+  @NotNull
+  private Collection<VirtualFile> getSortedFiles() {
     List<VirtualFile> sortedFiles = new ArrayList<VirtualFile>();
     sortedFiles.addAll(myFiles);
     Collections.sort(sortedFiles, new Comparator<VirtualFile>() {

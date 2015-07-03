@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -65,6 +66,10 @@ public class NoopMethodInAbstractClassInspection extends BaseInspection {
         return;
       }
       if (!MethodUtils.isEmpty(method)) {
+        return;
+      }
+      if (FindSuperElementsHelper.getSiblingInheritedViaSubClass(method) != null) {
+        // it may be an explicit intention to have non-abstract method here in order to sibling-inherit the method in subclass
         return;
       }
       registerMethodError(method);

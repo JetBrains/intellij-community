@@ -645,11 +645,33 @@ public class FileUtil extends FileUtilRt {
   /**
    * Converts given path to canonical representation by eliminating '.'s, traversing '..'s, and omitting duplicate separators.
    * Please note that this method is symlink-unfriendly (i.e. result of "/path/to/link/../next" most probably will differ from
-   * what {@link java.io.File#getCanonicalPath()} will return) - so use with care.
+   * what {@link java.io.File#getCanonicalPath()} will return) - so use with care.<br>
+   * <br>
+   * If the path may contain symlinks, use {@link FileUtil#toCanonicalPath(String, boolean)} instead.
    */
   @Contract("null -> null")
   public static String toCanonicalPath(@Nullable String path) {
     return toCanonicalPath(path, File.separatorChar, true);
+  }
+
+  /**
+   * When relative ../ parts do not escape outside of symlinks, the links are not expanded.<br>
+   * That is, in the best-case scenario the original non-expanded path is preserved.<br>
+   * <br>
+   * Otherwise, returns a fully resolved path using {@link java.io.File#getCanonicalPath()}.<br>
+   * <br>
+   * Consider the following case:
+   * <pre>
+   * root/
+   *   dir1/
+   *     link_to_dir1
+   *   dir2/
+   * </pre>
+   * 'root/dir1/link_to_dir1/../dir2' should be resolved to 'root/dir2'
+   */
+  @Contract("null, _ -> null")
+  public static String toCanonicalPath(@Nullable String path, boolean resolveSymlinksIfNecessary) {
+    return toCanonicalPath(path, File.separatorChar, true, resolveSymlinksIfNecessary);
   }
 
   @Contract("null, _ -> null")
@@ -664,6 +686,14 @@ public class FileUtil extends FileUtilRt {
 
   @Contract("null, _, _ -> null")
   private static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
+    return toCanonicalPath(path, separatorChar, removeLastSlash, false);
+  }
+
+  @Contract("null, _, _, _ -> null")
+  private static String toCanonicalPath(@Nullable String path,
+                                        final char separatorChar,
+                                        final boolean removeLastSlash,
+                                        final boolean resolveSymlinksIfNecessary) {
     if (path == null || path.isEmpty()) {
       return path;
     }
@@ -676,6 +706,21 @@ public class FileUtil extends FileUtilRt {
       return path;
     }
 
+    final String finalPath = path;
+    NotNullProducer<String> realCanonicalPath = !resolveSymlinksIfNecessary ? null : new NotNullProducer<String>() {
+      @NotNull
+      @Override
+      public String produce() {
+        try {
+          return new File(finalPath).getCanonicalPath().replace(separatorChar, '/');
+        }
+        catch (IOException ignore) {
+          // fall back to the default behavior
+          return toCanonicalPath(finalPath, separatorChar, removeLastSlash, false);
+        }
+      }
+    };
+
     StringBuilder result = new StringBuilder(path.length());
     int start = processRoot(path, result);
     int dots = 0;
@@ -685,7 +730,9 @@ public class FileUtil extends FileUtilRt {
       char c = path.charAt(i);
       if (c == '/') {
         if (!separator) {
-          processDots(result, dots, start);
+          if (!processDots(result, dots, start, resolveSymlinksIfNecessary)) {
+            return realCanonicalPath.produce();
+          }
           dots = 0;
         }
         separator = true;
@@ -710,7 +757,9 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (dots > 0) {
-      processDots(result, dots, start);
+      if (!processDots(result, dots, start, resolveSymlinksIfNecessary)) {
+        return realCanonicalPath.produce();
+      }
     }
 
     int lastChar = result.length() - 1;
@@ -754,7 +803,8 @@ public class FileUtil extends FileUtilRt {
     return 0;
   }
 
-  private static void processDots(@NotNull StringBuilder result, int dots, int start) {
+  @Contract("_, _, _, false -> true")
+  private static boolean processDots(@NotNull StringBuilder result, int dots, int start, boolean resolveSymlinksIfNecessary) {
     if (dots == 2) {
       int pos = -1;
       if (!StringUtil.endsWith(result, "/../") && !StringUtil.equals(result, "../")) {
@@ -770,6 +820,9 @@ public class FileUtil extends FileUtilRt {
         }
       }
       if (pos >= 0) {
+        if (resolveSymlinksIfNecessary && FileSystemUtil.isSymLink(new File(result.toString()))) {
+          return false;
+        }
         result.delete(pos, result.length());
       }
       else {
@@ -780,6 +833,7 @@ public class FileUtil extends FileUtilRt {
       StringUtil.repeatSymbol(result, '.', dots);
       result.append('/');
     }
+    return true;
   }
 
   /**

@@ -15,14 +15,13 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 
+import java.beans.Introspector;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 public class GCUtil {
@@ -79,25 +78,12 @@ public class GCUtil {
     return o == null ? 0 : Math.abs(o.hashCode()) % 10;
   }
 
-  private static final boolean ourHasBeanInfoCache = SystemInfo.isJavaVersionAtLeast("1.7");
-
   /**
    * Using java beans (e.g. Groovy does it) results in all referenced class infos being cached in ThreadGroupContext. A valid fix
    * would be to hold BeanInfo objects on soft references, but that should be done in JDK. So let's clear this cache manually for now, 
    * in clients that are known to create bean infos. 
    */
-  public static void tryClearBeanInfoCache() {
-    if (ourHasBeanInfoCache) {
-      try {
-        Class<?> aClass = Class.forName("java.beans.ThreadGroupContext");
-        Method getContextMethod = aClass.getDeclaredMethod("getContext");
-        getContextMethod.setAccessible(true);
-        Object contextForThreadGroup = getContextMethod.invoke(null);
-        Method clearBeanInfoCacheMethod = contextForThreadGroup.getClass().getDeclaredMethod("clearBeanInfoCache");
-        clearBeanInfoCacheMethod.setAccessible(true);
-        clearBeanInfoCacheMethod.invoke(contextForThreadGroup);
-      }
-      catch (Throwable ignore) {}
-    }
+  public static void clearBeanInfoCache() {
+    Introspector.flushCaches();
   }
 }

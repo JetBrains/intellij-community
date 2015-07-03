@@ -203,13 +203,15 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         final int idx = myList.locationToIndex(e.getPoint());
         if (idx >= 0) {
-          final Rectangle baseRect = myList.getCellBounds(idx, idx);
-          baseRect.setSize(checkboxWidth, baseRect.height);
-          if (baseRect.contains(e.getPoint())) {
-            toggleSelection();
-            return true;
+          if (myShowCheckboxes) {
+            final Rectangle baseRect = myList.getCellBounds(idx, idx);
+            baseRect.setSize(checkboxWidth, baseRect.height);
+            if (baseRect.contains(e.getPoint())) {
+              toggleSelection();
+              return true;
+            }
           }
-          else if (clickCount == 2) {
+          if (clickCount == 2) {
             myDoubleClickHandler.run();
             return true;
           }
@@ -228,9 +230,11 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
         final int row = myTree.getRowForLocation(e.getPoint().x, e.getPoint().y);
         if (row >= 0) {
-          final Rectangle baseRect = myTree.getRowBounds(row);
-          baseRect.setSize(checkboxWidth, baseRect.height);
-          if (baseRect.contains(e.getPoint())) return false;
+          if (myShowCheckboxes) {
+            final Rectangle baseRect = myTree.getRowBounds(row);
+            baseRect.setSize(checkboxWidth, baseRect.height);
+            if (baseRect.contains(e.getPoint())) return false;
+          }
         }
 
         myDoubleClickHandler.run();

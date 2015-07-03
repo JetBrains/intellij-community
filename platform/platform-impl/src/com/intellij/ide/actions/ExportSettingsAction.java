@@ -40,7 +40,9 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
@@ -51,12 +53,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
-import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ExportSettingsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExportSettingsAction.class);
@@ -85,34 +85,32 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
     final File saveFile = dialog.getExportFile();
     try {
-      if (saveFile.exists()) {
-        final int ret = Messages.showOkCancelDialog(
-          IdeBundle.message("prompt.overwrite.settings.file", FileUtil.toSystemDependentName(saveFile.getPath())),
-          IdeBundle.message("title.file.already.exists"), Messages.getWarningIcon());
-        if (ret != Messages.OK) return;
+      if (saveFile.exists() && Messages.showOkCancelDialog(
+        IdeBundle.message("prompt.overwrite.settings.file", FileUtil.toSystemDependentName(saveFile.getPath())),
+        IdeBundle.message("title.file.already.exists"), Messages.getWarningIcon()) != Messages.OK) {
+        return;
       }
-      final JarOutputStream output = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(saveFile)));
+
+      MyZipOutputStream zipOut = new MyZipOutputStream(new BufferedOutputStream(new FileOutputStream(saveFile)));
       try {
-        final File configPath = new File(PathManager.getConfigPath());
-        final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
+        Set<String> writtenItemRelativePaths = new THashSet<String>();
+        String configRoot = PathManager.getConfigPath();
         for (File file : exportFiles) {
-          final String rPath = FileUtil.getRelativePath(configPath, file);
-          assert rPath != null;
-          final String relativePath = FileUtil.toSystemIndependentName(rPath);
           if (file.exists()) {
-            ZipUtil.addFileOrDirRecursively(output, saveFile, file, relativePath, null, writtenItemRelativePaths);
+            String rPath = FileUtilRt.getRelativePath(configRoot, file.getAbsolutePath(), File.separatorChar);
+            assert rPath != null;
+            ZipUtil.addFileOrDirRecursively(zipOut, null, file, FileUtilRt.toSystemIndependentName(rPath), null, writtenItemRelativePaths);
           }
         }
 
-        exportInstalledPlugins(saveFile, output, writtenItemRelativePaths);
+        exportInstalledPlugins(zipOut);
 
-        final File magicFile = new File(FileUtil.getTempDirectory(), ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
-        FileUtil.createIfDoesntExist(magicFile);
-        magicFile.deleteOnExit();
-        ZipUtil.addFileToZip(output, magicFile, ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER, writtenItemRelativePaths, null);
+        ZipEntry zipEntry = new ZipEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
+        zipOut.putNextEntry(zipEntry);
+        zipOut.closeEntry();
       }
       finally {
-        output.close();
+        zipOut.close();
       }
       ShowFilePathAction.showDialog(getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
                                     IdeBundle.message("title.export.successful"), saveFile, null);
@@ -122,18 +120,41 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
   }
 
-  private static void exportInstalledPlugins(File saveFile, JarOutputStream output, HashSet<String> writtenItemRelativePaths) throws IOException {
-    final List<String> oldPlugins = new ArrayList<String>();
+  private static void exportInstalledPlugins(@NotNull MyZipOutputStream zipOut) throws IOException {
+    List<String> plugins = new ArrayList<String>();
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       if (!descriptor.isBundled() && descriptor.isEnabled()) {
-        oldPlugins.add(descriptor.getPluginId().getIdString());
+        plugins.add(descriptor.getPluginId().getIdString());
       }
     }
-    if (!oldPlugins.isEmpty()) {
-      File tempFile = FileUtil.createTempFile("installed", "plugins");
-      tempFile.deleteOnExit();
-      PluginManagerCore.savePluginsList(oldPlugins, false, tempFile);
-      ZipUtil.addDirToZipRecursively(output, saveFile, tempFile, "/" + PluginManager.INSTALLED_TXT, null, writtenItemRelativePaths);
+    if (plugins.isEmpty()) {
+      return;
+    }
+
+    ZipEntry e = new ZipEntry(PluginManager.INSTALLED_TXT);
+    zipOut.putNextEntry(e);
+    zipOut.ignoreClose = true;
+    try {
+      PluginManagerCore.writePluginsList(plugins, new OutputStreamWriter(zipOut, CharsetToolkit.UTF8_CHARSET));
+    }
+    finally {
+      zipOut.ignoreClose = false;
+      zipOut.closeEntry();
+    }
+  }
+
+  private static class MyZipOutputStream extends ZipOutputStream {
+    private boolean ignoreClose = true;
+
+    public MyZipOutputStream(@NotNull OutputStream out) {
+      super(out);
+    }
+
+    @Override
+    public void close() throws IOException {
+      if (!ignoreClose) {
+        super.close();
+      }
     }
   }
 

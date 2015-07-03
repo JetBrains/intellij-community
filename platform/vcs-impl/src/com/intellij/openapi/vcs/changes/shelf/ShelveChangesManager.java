@@ -34,6 +34,7 @@ import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.progress.AsynchronousExecution;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -146,6 +147,10 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final boolean rollback)
     throws IOException, VcsException {
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (progressIndicator != null) {
+      progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
+    }
     final List<Change> textChanges = new ArrayList<Change>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<ShelvedBinaryFile>();
     for (Change change : changes) {
@@ -180,12 +185,15 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         patchPath, commitContext);
 
       changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
-      myShelvedChangeLists.add(changeList);
       ProgressManager.checkCanceled();
+      myShelvedChangeLists.add(changeList);
 
       if (rollback) {
         final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
         boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
+        if (progressIndicator != null) {
+          progressIndicator.startNonCancelableSection();
+        }
         new RollbackWorker(myProject, operationName, modalContext).
           doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
       }

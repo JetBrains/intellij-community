@@ -1460,12 +1460,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitThisExpression(PsiThisExpression expr) {
-    myHolder.add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier(), myLanguageLevel));
-    if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, myFile));
-    }
-    if (!myHolder.hasErrorResults()) {
-      visitExpression(expr);
+    if (!(expr.getParent() instanceof PsiReceiverParameter)) {
+      myHolder.add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier(), myLanguageLevel));
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, myFile));
+      if (!myHolder.hasErrorResults()) visitExpression(expr);
     }
   }
 
@@ -1578,6 +1576,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+  }
+
+  @Override
+  public void visitReceiverParameter(PsiReceiverParameter parameter) {
+    super.visitReceiverParameter(parameter);
+    if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(parameter, Feature.RECEIVERS));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkReceiverPlacement(parameter));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkReceiverType(parameter));
   }
 
   @Nullable

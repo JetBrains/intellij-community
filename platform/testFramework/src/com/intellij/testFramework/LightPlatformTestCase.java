@@ -594,7 +594,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (ourTestCount++ % 100 == 0) {
       // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
       // so let's clear the cache every now and then to ensure it doesn't grow too large
-      GCUtil.tryClearBeanInfoCache();
+      GCUtil.clearBeanInfoCache();
     }
   }
   

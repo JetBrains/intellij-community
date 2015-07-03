@@ -227,6 +227,73 @@ public class FileUtilHeavyTest {
     FileUtil.delete(linkDir);
     assertEquals(1, targetDir.list().length);
   }
+  
+  
+  @Test
+  public void testToCanonicalPathSymLinksAware() throws Exception {
+    assumeTrue(SystemInfo.areSymLinksSupported);
+    
+    File rootDir = IoTestUtil.createTestDir(myTempDirectory, "root");
+    assertTrue(new File(rootDir, "dir1/dir2/dir3/dir4").mkdirs());
+    
+    String root = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(rootDir.getPath()));
+
+    // non-recursive link
+    IoTestUtil.createSymLink(new File(rootDir, "dir1/dir2").getPath(), new File(rootDir, "dir1/dir2_link").getPath());
+    // recursive links to a parent dir
+    IoTestUtil.createSymLink(new File(rootDir, "dir1").getPath(), new File(rootDir, "dir1/dir1_link").getPath());
+
+    // I) links should NOT be resolved when ../ stays inside the linked path
+    // I.I) non-recursive links 
+    assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/./", true));
+    assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/../", true));
+    assertEquals(root + "/dir1/dir2_link/dir3", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/dir4/../", true));
+    assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/dir4/../../", true));
+    assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir2_link/dir3/../", true));
+
+    // I.II) recursive links 
+    assertEquals(root + "/dir1/dir1_link", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/./", true));
+    assertEquals(root + "/dir1/dir1_link", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../", true));
+    assertEquals(root + "/dir1/dir1_link/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/dir3/../", true));
+    assertEquals(root + "/dir1/dir1_link", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/dir3/../../", true));
+    assertEquals(root + "/dir1/dir1_link", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir1_link/dir2/../", true));
+
+    // II) links should be resolved is ../ escapes outside
+    
+    // II.I) non-recursive links 
+    assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/../", true));
+    assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/../dir2", true));
+    assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/../../dir1/dir2", true));
+    assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/../../dir2", true));
+    assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/../../../dir1/dir2", true));
+    assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir2_link/../dir2", true));
+
+    // II.I) recursive links
+    // the rules seems to be different when ../ goes over recursive link: 
+    // * on Windows ../ goes to link's parent
+    // * on Unix ../ goes to target's parent
+    if (SystemInfo.isWindows) {
+      assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../", true));
+      assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../dir2", true));
+      assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../../dir1/dir2", true));
+      assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../../dir2", true));
+      assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../../../dir1/dir2", true));
+      assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir1_link/../dir2", true));
+    } else {
+      assertEquals(root, FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../", true));
+      assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../dir1", true));
+      assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../../root/dir1", true));
+      assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../../dir1", true));
+      assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../../../root/dir1", true));
+      assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir1_link/../dir1", true));
+    }
+    
+    // some corner cases, behavior should be the same as the default FileUtil.toCanonicalPath 
+    assertEquals(FileUtil.toCanonicalPath("..", false), FileUtil.toCanonicalPath("..", true));
+    assertEquals(FileUtil.toCanonicalPath("../", false),  FileUtil.toCanonicalPath("../", true));
+    assertEquals(FileUtil.toCanonicalPath("/..", false),  FileUtil.toCanonicalPath("/..", true));
+    assertEquals(FileUtil.toCanonicalPath("/../", false),  FileUtil.toCanonicalPath("/../", true));
+  }
 
   @Test
   public void testCaseSensitivityDetection() throws IOException {

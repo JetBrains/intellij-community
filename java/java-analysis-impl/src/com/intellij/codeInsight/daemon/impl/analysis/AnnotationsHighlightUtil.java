@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -663,8 +664,7 @@ public class AnnotationsHighlightUtil {
     if (methods.length == 1) {
       PsiType expected = new PsiImmediateClassType((PsiClass)target, PsiSubstitutor.EMPTY).createArrayType();
       if (!expected.equals(methods[0].getReturnType())) {
-        return JavaErrorMessages.message("annotation.container.bad.type", container.getQualifiedName(), JavaHighlightUtil
-          .formatType(expected));
+        return JavaErrorMessages.message("annotation.container.bad.type", container.getQualifiedName(), JavaHighlightUtil.formatType(expected));
       }
     }
 
@@ -696,6 +696,64 @@ public class AnnotationsHighlightUtil {
     PsiClass container = ((PsiClassType)containerType).resolve();
     if (container == null || !container.isAnnotationType()) return null;
     return container;
+  }
+
+  @Nullable
+  static HighlightInfo checkReceiverPlacement(PsiReceiverParameter parameter) {
+    PsiElement owner = parameter.getParent().getParent();
+    if (owner == null) return null;
+
+    if (!(owner instanceof PsiMethod)) {
+      String text = JavaErrorMessages.message("receiver.wrong.context");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+    }
+
+    PsiMethod method = (PsiMethod)owner;
+    if (isStatic(method) || (method).isConstructor() && isStatic(method.getContainingClass())) {
+      String text = JavaErrorMessages.message("receiver.static.context");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+    }
+
+    PsiElement leftNeighbour = PsiTreeUtil.skipSiblingsBackward(parameter, PsiWhiteSpace.class);
+    if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
+      String text = JavaErrorMessages.message("receiver.wrong.position");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkReceiverType(PsiReceiverParameter parameter) {
+    PsiElement owner = parameter.getParent().getParent();
+    if (!(owner instanceof PsiMethod)) return null;
+
+    PsiMethod method = (PsiMethod)owner;
+    PsiClass enclosingClass = method.getContainingClass();
+    if (method.isConstructor() && enclosingClass != null) {
+      enclosingClass = enclosingClass.getContainingClass();
+    }
+
+    if (enclosingClass != null && !enclosingClass.equals(PsiUtil.resolveClassInType(parameter.getType()))) {
+      PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
+      String text = JavaErrorMessages.message("receiver.type.mismatch");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text).create();
+    }
+
+    PsiThisExpression identifier = parameter.getIdentifier();
+    if (enclosingClass != null && !enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
+      String text = JavaErrorMessages.message("receiver.name.mismatch");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+    }
+
+    return null;
+  }
+
+  private static boolean isStatic(PsiModifierListOwner owner) {
+    if (owner == null) return false;
+    if (owner instanceof PsiClass && ((PsiClass)owner).getContainingClass() == null) return true;
+    PsiModifierList modifierList = owner.getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC);
   }
 
   @Nullable

@@ -19,11 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.PyUtil;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -55,6 +54,6 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
 
   @Nullable
   public PsiElement getOperation() {
-    return PyUtil.getChildByFilter(this, PyTokenTypes.AUG_ASSIGN_OPERATIONS, 0);
+    return PyPsiUtils.getChildByFilter(this, PyTokenTypes.AUG_ASSIGN_OPERATIONS, 0);
   }
 }

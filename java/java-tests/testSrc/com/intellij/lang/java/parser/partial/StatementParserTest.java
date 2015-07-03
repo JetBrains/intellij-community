@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java.parser.partial;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
@@ -148,23 +147,11 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testWhileIncomplete4() { doParserTest("while(cond)"); }
   public void testWhileIncomplete5() { doParserTest("while() foo();"); }
 
-  private void doBlockParserTest(final String text) {
-    doParserTest(text, new MyBlockTestParser());
-  }
-  private static class MyBlockTestParser implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
-    }
+  private void doBlockParserTest(String text) {
+    doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true));
   }
 
-  private void doParserTest(final String text) {
-    doParserTest(text, new MyStatementsTestParser());
-  }
-  private static class MyStatementsTestParser implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getStatementParser().parseStatements(builder);
-    }
+  private void doParserTest(String text) {
+    doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseStatements(builder));
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.ui.ConsoleView;
@@ -58,10 +59,10 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
   }
 
   @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                         JComponent parent) {
-    super.appendAdditionalActions(actionGroup, parent);
-    actionGroup.add(createIncludeNonStartedInRerun());
+  public void appendAdditionalActions(DefaultActionGroup actionGroup,
+                                      JComponent parent, TestConsoleProperties target) {
+    super.appendAdditionalActions(actionGroup, parent, target);
+    actionGroup.add(createIncludeNonStartedInRerun(target));
   }
 
   @Override

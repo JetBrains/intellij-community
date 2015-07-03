@@ -32,10 +32,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -301,7 +298,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
         }.execute();
       }
 
-      virtualFile.refresh(true, true);
+      VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile);
     }
   }
 }

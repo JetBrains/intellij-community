@@ -22,10 +22,14 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * User: anna
  */
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
+  private String myText;
+
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);
   }
@@ -53,5 +57,11 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
 
   public String getText() {
     return getChildComponent().getText();
+  }
+
+  public void setText(String text) {
+    final ComboBoxModel model = getChildComponent().getModel();
+    model.setSelectedItem(text);
+    myText = text;
   }
 }

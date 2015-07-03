@@ -727,7 +727,7 @@
                      displayName="Block marker comment"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
                      groupBundle="messages.InspectionsBundle"
-                     groupName="Code style issues" enabledByDefault="false" level="WARNING"
+                     groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
                      displayName="Pseudo functional expression using static class"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
@@ -743,205 +743,205 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InvertIfConditionAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
-      <category>Annotations</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationIntention</className>
-      <category>Annotations</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationIntention</className>
-      <category>Annotations</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.dataFlow.EditContractIntention</className>
-      <category>Annotations</category>
+      <category>Java/Annotations</category>
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>
-      <category>Annotations</category>
+      <category>Java/Annotations</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateSwitchIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
-      <category>Control Flow</category>
+      <category>Java/Control Flow</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BindFieldsFromParametersAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateCastExpressionFromInstanceofAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.GenerateMissedTestsAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateSubclassAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ImplementAbstractMethodAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CopyAbstractMethodImplementationAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitDeclarationAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.JoinDeclarationAndAssignmentAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.PushConditionInCallAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.intention.MoveInitializerToSetUpMethodAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveFieldAssignmentToInitializerAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MakeTypeGenericAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOverrideAnnotationAction</className>
-      <category>Annotations</category>
+      <category>Java/Annotations</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.IntroduceVariableIntentionAction</className>
-      <category>Refactorings</category>
+      <category>Java/Refactorings</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.EncapsulateFieldAction</className>
-      <category>Refactorings</category>
+      <category>Java/Refactorings</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SimplifyBooleanExpressionAction</className>
-      <category>Boolean</category>
+      <category>Java/Boolean</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
-      <category>I18N</category>
+      <category>Java/I18N</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
-      <category>I18N</category>
+      <category>Java/I18N</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction</className>
-      <category>Imports</category>
+      <category>Java/Imports</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction</className>
-      <category>Imports</category>
+      <category>Java/Imports</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExpandStaticImportAction</className>
-      <category>Imports</category>
+      <category>Java/Imports</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInspection.actions.UnimplementInterfaceAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInspection.actions.ReplaceImplementsWithStaticImportAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertColorRepresentationIntentionAction</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddJavadocIntention</className>
-      <category>Declaration</category>
+      <category>Java/Declaration</category>
     </intentionAction>
 
     <intentionAction>
@@ -956,12 +956,12 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
-      <category>Other</category>
+      <category>Java/Imports</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
-      <category>Strings</category>
+      <category>Java/Strings</category>
     </intentionAction>
 
 
@@ -971,21 +971,21 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.RemoveLiteralUnderscoresAction</className>
-      <category>Numbers</category>
+      <category>Java/Numbers</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InsertLiteralUnderscoresAction</className>
-      <category>Numbers</category>
+      <category>Java/Numbers</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
-      <category>Strings</category>
+      <category>Java/Strings</category>
     </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction</className>
-      <category>Try Statements</category>
+      <category>Java/Try Statements</category>
     </intentionAction>
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>

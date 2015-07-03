@@ -17,7 +17,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.formatting.FormatConstants;
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
@@ -48,7 +47,7 @@ public class AutoHardWrapHandler {
   /**
    * This key is used as a flag that indicates if <code>'auto wrap line on typing'</code> activity is performed now.
    *
-   * @see CodeStyleSettings#isWrapOnTyping(Language)
+   * @see CodeStyleSettings#WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
    */
   public static final Key<Boolean> AUTO_WRAP_LINE_IN_PROGRESS_KEY = new Key<Boolean>("AUTO_WRAP_LINE_IN_PROGRESS");
 

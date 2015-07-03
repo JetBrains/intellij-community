@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,27 +288,36 @@ public class CharArrayUtil {
     return offset;
   }
 
-  public static boolean regionMatches(@NotNull char[] buffer, int offset, int bufferEnd, @NotNull CharSequence s) {
+  public static boolean regionMatches(@NotNull char[] buffer, int start, int end, @NotNull CharSequence s) {
     final int len = s.length();
-    if (offset + len > bufferEnd) return false;
-    if (offset < 0) return false;
+    if (start + len > end) return false;
+    if (start < 0) return false;
     for (int i = 0; i < len; i++) {
-      if (buffer[offset + i] != s.charAt(i)) return false;
+      if (buffer[start + i] != s.charAt(i)) return false;
     }
     return true;
   }
 
-  public static boolean regionMatches(@NotNull CharSequence buffer, int offset, int bufferEnd, @NotNull CharSequence s) {
+  public static boolean regionMatches(@NotNull CharSequence buffer, int start, int end, @NotNull CharSequence s) {
     final int len = s.length();
-    if (offset + len > bufferEnd) return false;
-    if (offset < 0) return false;
+    if (start + len > end) return false;
+    if (start < 0) return false;
     
     //if (buffer instanceof String && s instanceof String) {
     //  return ((String)buffer).regionMatches(offset, (String)s, 0, len);
     //}
     
     for (int i = 0; i < len; i++) {
-      if (buffer.charAt(offset + i) != s.charAt(i)) return false;
+      if (buffer.charAt(start + i) != s.charAt(i)) return false;
+    }
+    return true;
+  }
+
+  public static boolean regionMatches(@NotNull CharSequence s1, int start1, int end1, @NotNull CharSequence s2, int start2, int end2) {
+    if (end1-start1 != end2-start2) return false;
+
+    for (int i = start1,j=start2; i < end1; i++,j++) {
+      if (s1.charAt(i) != s2.charAt(j)) return false;
     }
     return true;
   }

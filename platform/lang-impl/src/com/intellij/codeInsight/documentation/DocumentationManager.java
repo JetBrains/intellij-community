@@ -33,7 +33,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -96,7 +95,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private Component myPreviouslyFocused;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
 
-  private final ActionManagerEx myActionManagerEx;
+  private final ActionManager myActionManager;
 
   private final TargetElementUtil myTargetElementUtil;
 
@@ -161,9 +160,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
-  public DocumentationManager(final Project project, ActionManagerEx managerEx, TargetElementUtil targetElementUtil) {
+  public DocumentationManager(final Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
     super(project);
-    myActionManagerEx = managerEx;
+    myActionManager = manager;
     final AnActionListener actionListener = new AnActionListener() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
@@ -174,11 +173,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             return;
           }
           if (action instanceof ListScrollingUtil.ListScrollAction) return;
-          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
-          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
-          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
-          if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
-          if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
+          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
+          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
+          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
+          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
+          if (action == ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
           if (ActionPlaces.JAVADOC_INPLACE_SETTINGS.equals(event.getPlace())) return;
           if (action instanceof BaseNavigateToSourceAction) return;
           closeDocHint();
@@ -198,7 +197,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     };
-    myActionManagerEx.addAnActionListener(actionListener, project);
+    myActionManager.addAnActionListener(actionListener, project);
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myProject);
     myTargetElementUtil = targetElementUtil;
   }
@@ -463,7 +462,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     };
     List<Pair<ActionListener, KeyStroke>> actions = ContainerUtil.newSmartList();
-    AnAction quickDocAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_QUICK_JAVADOC);
+    AnAction quickDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
     for (Shortcut shortcut : quickDocAction.getShortcutSet().getShortcuts()) {
       if (!(shortcut instanceof KeyboardShortcut)) continue;
       actions.add(Pair.create(actionListener, ((KeyboardShortcut)shortcut).getFirstKeyStroke()));

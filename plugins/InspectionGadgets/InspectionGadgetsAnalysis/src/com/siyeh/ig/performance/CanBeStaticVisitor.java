@@ -34,16 +34,9 @@ class CanBeStaticVisitor extends JavaRecursiveElementVisitor {
       return;
     }
     super.visitReferenceExpression(ref);
-    final PsiElement element = ref.resolve();
-    if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        canBeStatic = false;
-      }
-    }
-    else if (element instanceof PsiVariable) {
-      //can happen with initializers of inner classes referencing
-      //local variables or parameters from outer class
+    PsiElement element = ref.resolve();
+
+    if (element instanceof PsiModifierListOwner && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
       canBeStatic = false;
     }
   }

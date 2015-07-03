@@ -589,7 +589,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
     @Override
     public void resumed(final SuspendContextImpl suspendContext) {
-      final SuspendContextImpl currentContext = isSteppingThrough(suspendContext.getThread()) ? null : getProcess().getSuspendManager().getPausedContext();
+      final SuspendContextImpl currentContext = suspendContext != null && isSteppingThrough(suspendContext.getThread())
+                                                ? null
+                                                : getProcess().getSuspendManager().getPausedContext();
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         @Override
         public void run() {

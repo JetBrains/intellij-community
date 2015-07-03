@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
 
-  protected Editor getEditor(DataContext dataContext) {
+  protected static Editor getEditor(@NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     if (editor == null) {
@@ -123,7 +123,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     return editor;
   }
 
-  public void performForContext(DataContext dataContext, boolean invokedByShortcut) {
+  public void performForContext(@NotNull DataContext dataContext, boolean invokedByShortcut) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -185,7 +185,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     showImplementations(impls, project, text, editor, file, element, isInvokedFromEditor, invokedByShortcut);
   }
 
-  protected static PsiElement getElement(Project project, PsiFile file, Editor editor, PsiElement element) {
+  protected static PsiElement getElement(@NotNull Project project, PsiFile file, Editor editor, PsiElement element) {
     if (element == null && editor != null) {
       element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getAllAccepted());
       final PsiElement adjustedElement =
@@ -200,6 +200,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     return element;
   }
 
+  @NotNull
   protected static ImplementationSearcher createImplementationsSearcher() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
@@ -209,18 +210,16 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         }
       };
     }
-    else {
-      return new ImplementationSearcher.FirstImplementationsSearcher() {
-        @Override
-        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
-          return ShowImplementationsAction.filterElements(targetElements);
-        }
-      };
-    }
+    return new ImplementationSearcher.FirstImplementationsSearcher() {
+      @Override
+      protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+        return ShowImplementationsAction.filterElements(targetElements);
+      }
+    };
   }
 
-  protected void updateElementImplementations(final PsiElement element, final Editor editor, final Project project, final PsiFile file) {
-    PsiElement[] impls = null;
+  private void updateElementImplementations(final PsiElement element, final Editor editor, @NotNull Project project, final PsiFile file) {
+    PsiElement[] impls = {};
     String text = "";
     if (element != null) {
      // if (element instanceof PsiPackage) return;
@@ -234,10 +233,15 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     showImplementations(impls, project, text, editor, file, element, false, false);
   }
 
-  protected void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor, final PsiFile file,
+  protected void showImplementations(@NotNull PsiElement[] impls,
+                                     @NotNull final Project project,
+                                     final String text,
+                                     final Editor editor,
+                                     final PsiFile file,
                                      final PsiElement element,
-                                     boolean invokedFromEditor, boolean invokedByShortcut) {
-    if (impls == null || impls.length == 0) return;
+                                     boolean invokedFromEditor,
+                                     boolean invokedByShortcut) {
+    if (impls.length == 0) return;
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_FEATURE);
     if (LookupManager.getInstance(project).getActiveLookup() != null) {
@@ -317,7 +321,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
-  private static boolean cancelTask(ImplementationsUpdaterTask task) {
+  private static boolean cancelTask(@Nullable ImplementationsUpdaterTask task) {
     if (task != null) {
       ProgressIndicator indicator = task.myIndicator;
       if (indicator != null) {
@@ -330,9 +334,10 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   private void updateInBackground(Editor editor,
                                   @Nullable PsiElement element,
-                                  ImplementationViewComponent component,
+                                  @NotNull ImplementationViewComponent component,
                                   String title,
-                                  AbstractPopup popup, Ref<UsageView> usageView) {
+                                  @NotNull AbstractPopup popup,
+                                  @NotNull Ref<UsageView> usageView) {
     final ImplementationsUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
     cancelTask(updaterTask);
 
@@ -348,15 +353,17 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     return true;
   }
 
+  @NotNull
   private static PsiElement[] getSelfAndImplementations(Editor editor,
-                                                        PsiElement element,
-                                                        final ImplementationSearcher handler) {
+                                                        @NotNull PsiElement element,
+                                                        @NotNull ImplementationSearcher handler) {
     return getSelfAndImplementations(editor, element, handler, !(element instanceof PomTargetPsiElement));
   }
 
+  @NotNull
   protected static PsiElement[] getSelfAndImplementations(Editor editor,
-                                                          PsiElement element,
-                                                          final ImplementationSearcher handler,
+                                                          @NotNull PsiElement element,
+                                                          @NotNull ImplementationSearcher handler,
                                                           final boolean includeSelfAlways) {
     int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
     final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, offset, includeSelfAlways, true);
@@ -367,17 +374,18 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       // Magically, it's null for ant property declarations.
       element = element.getNavigationElement();
       psiFile = element.getContainingFile();
-      if (psiFile == null) return PsiElement.EMPTY_ARRAY;
+      if (psiFile == null) {
+        return PsiElement.EMPTY_ARRAY;
+      }
     }
     if (psiFile.getVirtualFile() != null && (element.getTextRange() != null || element instanceof PsiFile)) {
       return new PsiElement[]{element};
     }
-    else {
-      return PsiElement.EMPTY_ARRAY;
-    }
+    return PsiElement.EMPTY_ARRAY;
   }
 
-  private static PsiElement[] filterElements(final PsiElement[] targetElements) {
+  @NotNull
+  private static PsiElement[] filterElements(@NotNull final PsiElement[] targetElements) {
     final Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
     for (final PsiElement elt : targetElements) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -410,12 +418,13 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
     private final String myCaption;
     private final Editor myEditor;
+    @NotNull
     private final PsiElement myElement;
     private final boolean myIncludeSelf;
     private PsiElement[] myElements;
     private volatile ProgressIndicator myIndicator;
 
-    public ImplementationsUpdaterTask(final PsiElement element, final Editor editor, final String caption, boolean includeSelf) {
+    private ImplementationsUpdaterTask(@NotNull PsiElement element, final Editor editor, final String caption, boolean includeSelf) {
       super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
       myCaption = caption;
       myEditor = editor;

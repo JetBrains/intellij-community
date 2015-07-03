@@ -401,17 +401,21 @@ public class ExpressionParser {
           expr.done(dotTokenType == JavaTokenType.THIS_KEYWORD ? JavaElementType.THIS_EXPRESSION : JavaElementType.SUPER_EXPRESSION);
         }
         else {
-          dotPos.drop();
           PsiBuilder.Marker refExpr = expr.precede();
 
           myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
 
-          if (!expectOrError(builder, ID_OR_SUPER, "expected.identifier")) {
+          if (!expect(builder, ID_OR_SUPER)) {
+            dotPos.rollbackTo();
+            builder.advanceLexer();
+            myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
+            error(builder, JavaErrorMessages.message("expected.identifier"));
             refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
             startMarker.drop();
             return refExpr;
           }
 
+          dotPos.drop();
           refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
           expr = refExpr;
         }

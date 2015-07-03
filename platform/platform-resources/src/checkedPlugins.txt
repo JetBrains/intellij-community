@@ -20,3 +20,4 @@ com.jetbrains.plugins.meteor
 AWSCloudFormation
 Dart
 IdeaVIM
+IDETalk

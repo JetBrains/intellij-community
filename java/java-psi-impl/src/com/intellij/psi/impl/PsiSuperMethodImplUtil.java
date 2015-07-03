@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -294,41 +294,39 @@ public class PsiSuperMethodImplUtil {
   }
 
   private static boolean isSuperMethod(@NotNull PsiClass aClass,
-                                       @NotNull HierarchicalMethodSignature hierarchicalMethodSignature,
-                                       @NotNull HierarchicalMethodSignature superSignatureHierarchical) {
+                                       @NotNull MethodSignatureBackedByPsiMethod hierarchicalMethodSignature,
+                                       @NotNull MethodSignatureBackedByPsiMethod superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiClass superClass = superMethod.getContainingClass();
-    PsiClass containingClass = hierarchicalMethodSignature.getMethod().getContainingClass();
-    if (!superMethod.isConstructor()) {
-      if (!aClass.equals(superClass)) {
-        if (PsiUtil.isAccessible(aClass.getProject(), superMethod, aClass, aClass)) {
-          if (MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature)) {
-            if (superClass != null) {
-              if (superClass.isInterface() ||
-                  CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-                if (superMethod.hasModifierProperty(PsiModifier.STATIC) ||
-                    superMethod.hasModifierProperty(PsiModifier.DEFAULT) && hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.STATIC) && !InheritanceUtil.isInheritorOrSelf(containingClass, superClass, true)) {
-                  return false;
-                }
+    PsiMethod method = hierarchicalMethodSignature.getMethod();
+    PsiClass containingClass = method.getContainingClass();
+    if (!superMethod.isConstructor() &&
+        !aClass.equals(superClass) &&
+        PsiUtil.isAccessible(aClass.getProject(), superMethod, aClass, aClass) &&
+        MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature) && superClass != null) {
+      if (superClass.isInterface() ||
+          CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+        if (superMethod.hasModifierProperty(PsiModifier.STATIC) ||
+            superMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+            method.hasModifierProperty(PsiModifier.STATIC) &&
+            !InheritanceUtil.isInheritorOrSelf(containingClass, superClass, true)) {
+          return false;
+        }
 
-                if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) ||
-                    hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.DEFAULT)) {
-                  return !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true);
-                }
-                return true;
-              }
+        if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) ||
+            method.hasModifierProperty(PsiModifier.DEFAULT)) {
+          return !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true);
+        }
+        return true;
+      }
 
-              if (containingClass != null) {
-                if (containingClass.isInterface()) {
-                  return false;
-                }
+      if (containingClass != null) {
+        if (containingClass.isInterface()) {
+          return false;
+        }
 
-                if (!aClass.isInterface() && !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
-                  return true;
-                }
-              }
-            }
-          }
+        if (!aClass.isInterface() && !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
+          return true;
         }
       }
     }

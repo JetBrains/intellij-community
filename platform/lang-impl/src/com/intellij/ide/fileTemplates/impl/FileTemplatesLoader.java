@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.*;
 public class FileTemplatesLoader {
   private static final Logger LOG = Logger.getInstance("#" + FileTemplatesLoader.class.getName());
 
-  private static final String TEMPLATES_DIR = "fileTemplates";
+  static final String TEMPLATES_DIR = "fileTemplates";
   private static final String DEFAULT_TEMPLATES_ROOT = TEMPLATES_DIR;
   public static final String DESCRIPTION_FILE_EXTENSION = "html";
   private static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;

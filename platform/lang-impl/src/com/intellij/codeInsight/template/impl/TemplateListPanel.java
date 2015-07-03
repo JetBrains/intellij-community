@@ -39,7 +39,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -454,15 +453,15 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private JPanel createTable() {
     myTreeRoot = new CheckedTreeNode(null);
 
-    myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(){
+    myTree = new LiveTemplateTree(new CheckboxTree.CheckboxTreeCellRenderer() {
       @Override
       public void customizeRenderer(final JTree tree,
-                                        Object value,
-                                        final boolean selected,
-                                        final boolean expanded,
-                                        final boolean leaf,
-                                        final int row,
-                                        final boolean hasFocus) {
+                                    Object value,
+                                    final boolean selected,
+                                    final boolean expanded,
+                                    final boolean leaf,
+                                    final int row,
+                                    final boolean hasFocus) {
         if (!(value instanceof DefaultMutableTreeNode)) return;
         value = ((DefaultMutableTreeNode)value).getUserObject();
 
@@ -473,42 +472,14 @@ public class TemplateListPanel extends JPanel implements Disposable {
           getTextRenderer().append(template.getKey(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fgColor));
           String description = template.getDescription();
           if (StringUtil.isNotEmpty(description)) {
-            getTextRenderer().append (" (" + description + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+            getTextRenderer().append(" (" + description + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
         }
         else if (value instanceof TemplateGroup) {
-          getTextRenderer().append (((TemplateGroup)value).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
-
-      }
-    }, myTreeRoot) {
-      @Override
-      protected void onNodeStateChanged(final CheckedTreeNode node) {
-        Object obj = node.getUserObject();
-        if (obj instanceof TemplateImpl) {
-          ((TemplateImpl)obj).setDeactivated(!node.isChecked());
+          getTextRenderer().append(((TemplateGroup)value).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
-
-      @Override
-      protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-          @Override
-          public String convert(TreePath o) {
-            Object object = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
-            if (object instanceof TemplateGroup) {
-              return ((TemplateGroup)object).getName();
-            }
-            if (object instanceof TemplateImpl) {
-              TemplateImpl template = (TemplateImpl)object;
-              return StringUtil.notNullize(template.getKey()) + " " + StringUtil.notNullize(template.getDescription()) + " " + template.getTemplateText();
-            }
-            return "";
-          }
-        }, true);
-
-      }
-    };
+    }, myTreeRoot, this);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
@@ -688,8 +659,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        final int selected = getSingleSelectedIndex();
-        final TemplateGroup templateGroup = getGroup(selected);
+        final TemplateGroup templateGroup = getSingleSelectedGroup();
         boolean enabled = templateGroup != null;
         e.getPresentation().setEnabled(enabled);
         e.getPresentation().setVisible(enabled);
@@ -809,9 +779,16 @@ public class TemplateListPanel extends JPanel implements Disposable {
         group.add(move);
         group.add(changeContext);
         group.add(revert);
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE));
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
     });
+  }
+
+  @Nullable 
+  TemplateGroup getSingleSelectedGroup() {
+    return getGroup(getSingleSelectedIndex());
   }
 
   private static Set<String> getAllGroups(Map<TemplateImpl, DefaultMutableTreeNode> templates) {
@@ -822,7 +799,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return oldGroups;
   }
 
-  private Map<TemplateImpl, DefaultMutableTreeNode> getSelectedTemplates() {
+  Map<TemplateImpl, DefaultMutableTreeNode> getSelectedTemplates() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) {
       return Collections.emptyMap();
@@ -840,8 +817,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void renameGroup() {
-    final int selected = getSingleSelectedIndex();
-    final TemplateGroup templateGroup = getGroup(selected);
+    final TemplateGroup templateGroup = getSingleSelectedGroup();
     if (templateGroup == null) return;
 
     final String oldName = templateGroup.getName();
@@ -850,7 +826,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     if (newName != null && !newName.equals(oldName)) {
       templateGroup.setName(newName);
-      ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(selected));
+      ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(getSingleSelectedIndex()));
     }
   }
 

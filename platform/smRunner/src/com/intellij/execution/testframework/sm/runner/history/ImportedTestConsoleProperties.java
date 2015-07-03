@@ -28,11 +28,13 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.TestProxyFilterProvider;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 
 public class ImportedTestConsoleProperties extends SMTRunnerConsoleProperties implements SMCustomMessagesParsing {
@@ -110,5 +112,12 @@ public class ImportedTestConsoleProperties extends SMTRunnerConsoleProperties im
   @Nullable
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return myProperties == null ? null : myProperties.createRerunFailedTestsAction(consoleView);
+  }
+
+  @Override
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) {
+    if (myProperties != null) {
+      myProperties.appendAdditionalActions(actionGroup, parent, this);
+    }
   }
 }

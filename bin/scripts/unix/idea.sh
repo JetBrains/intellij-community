@@ -61,7 +61,7 @@ IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
-elif [ -x "$IDE_HOME/jre/bin/java" ] && "$IDE_HOME/jre/bin/java" -version > /dev/null 2>&1 ; then
+elif [ -x "$IDE_HOME/jre/jre/bin/java" ] && "$IDE_HOME/jre/jre/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre"
 elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
@@ -173,7 +173,7 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/bin/java" \
+LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/jre/bin/java" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \

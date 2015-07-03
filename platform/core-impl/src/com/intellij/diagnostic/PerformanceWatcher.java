@@ -56,8 +56,8 @@ public class PerformanceWatcher implements ApplicationComponent {
   /**
    * If the product is unresponsive for UNRESPONSIVE_THRESHOLD seconds, dump threads every UNRESPONSIVE_INTERVAL seconds
    */
-  private int UNRESPONSIVE_THRESHOLD = 5;
-  private int UNRESPONSIVE_INTERVAL = 5;
+  private int UNRESPONSIVE_THRESHOLD_SECONDS = 5;
+  private int UNRESPONSIVE_INTERVAL_SECONDS = 5;
 
   public static PerformanceWatcher getInstance() {
     return ServiceManager.getService(PerformanceWatcher.class);
@@ -78,7 +78,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     final String threshold = System.getProperty("performance.watcher.threshold");
     if (threshold != null) {
       try {
-        UNRESPONSIVE_THRESHOLD = Integer.parseInt(threshold);
+        UNRESPONSIVE_THRESHOLD_SECONDS = Integer.parseInt(threshold);
       }
       catch (NumberFormatException e) {
         // ignore
@@ -87,13 +87,13 @@ public class PerformanceWatcher implements ApplicationComponent {
     final String interval = System.getProperty("performance.watcher.interval");
     if (interval != null) {
       try {
-        UNRESPONSIVE_INTERVAL = Integer.parseInt(interval);
+        UNRESPONSIVE_INTERVAL_SECONDS = Integer.parseInt(interval);
       }
       catch (NumberFormatException e) {
         // ignore
       }
     }
-    if (UNRESPONSIVE_THRESHOLD == 0 || UNRESPONSIVE_INTERVAL == 0) {
+    if (UNRESPONSIVE_THRESHOLD_SECONDS == 0 || UNRESPONSIVE_INTERVAL_SECONDS == 0) {
       return;
     }
 
@@ -157,14 +157,14 @@ public class PerformanceWatcher implements ApplicationComponent {
   private boolean shouldWatch() {
     return !ApplicationManager.getApplication().isUnitTestMode() &&
            !ApplicationManager.getApplication().isHeadlessEnvironment() &&
-           UNRESPONSIVE_INTERVAL != 0 &&
-           UNRESPONSIVE_THRESHOLD != 0;
+           UNRESPONSIVE_INTERVAL_SECONDS != 0 &&
+           UNRESPONSIVE_THRESHOLD_SECONDS != 0;
   }
 
   private void checkEDTResponsiveness() {
     while(true) {
       try {
-        if (myShutdownSemaphore.tryAcquire(UNRESPONSIVE_INTERVAL, TimeUnit.SECONDS)) {
+        if (myShutdownSemaphore.tryAcquire(UNRESPONSIVE_INTERVAL_SECONDS, TimeUnit.SECONDS)) {
           break;
         }
       }
@@ -172,8 +172,8 @@ public class PerformanceWatcher implements ApplicationComponent {
         break;
       }
       if (mySwingThreadCounter != myLoopCounter) {
-        myUnresponsiveDuration += UNRESPONSIVE_INTERVAL;
-        if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
+        myUnresponsiveDuration += UNRESPONSIVE_INTERVAL_SECONDS;
+        if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD_SECONDS) {
           if (myCurHangLogDir == mySessionLogDir) {
             //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
             myCurHangLogDir = new File(mySessionLogDir, myDateFormat.format(new Date()));
@@ -182,7 +182,7 @@ public class PerformanceWatcher implements ApplicationComponent {
         }
       }
       else {
-        if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD) {
+        if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD_SECONDS) {
           //System.out.println("EDT was unresponsive for " + myUnresponsiveDuration + " seconds");
           if (myCurHangLogDir != mySessionLogDir && myCurHangLogDir.exists()) {
             myCurHangLogDir.renameTo(new File(mySessionLogDir, getLogDirForHang()));

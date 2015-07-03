@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class Factory  {
   private Factory() {}
 
+  @NotNull
   public static LeafElement createSingleLeafElement(@NotNull IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, PsiFile originalFile) {
     DummyHolder dummyHolder = DummyHolderFactory.createHolder(manager, table, type.getLanguage());
     dummyHolder.setOriginalFile(originalFile);
@@ -43,6 +44,7 @@ public class Factory  {
     return newElement;
   }
 
+  @NotNull
   public static LeafElement createSingleLeafElement(@NotNull IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
     final FileElement holderElement = DummyHolderFactory.createHolder(manager, table, type.getLanguage()).getTreeElement();
     final LeafElement newElement = ASTFactory.leaf(type, holderElement.getCharTable().intern(
@@ -52,14 +54,17 @@ public class Factory  {
     return newElement;
   }
 
+  @NotNull
   public static LeafElement createSingleLeafElement(@NotNull IElementType type, CharSequence buffer, CharTable table, PsiManager manager) {
     return createSingleLeafElement(type, buffer, 0, buffer.length(), table, manager);
   }
 
+  @NotNull
   public static LeafElement createSingleLeafElement(@NotNull IElementType type, CharSequence buffer, int startOffset, int endOffset, @Nullable CharTable table, PsiManager manager) {
     return createSingleLeafElement(type, buffer, startOffset, endOffset, table, manager, true);
   }
 
+  @NotNull
   public static CompositeElement createErrorElement(String description) {
     return new PsiErrorElementImpl(description);
   }
