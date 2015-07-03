@@ -100,6 +100,8 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
   @NonNls String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
 
+  @NonNls String JAVA_UTIL_STREAM_BASE_STREAM = "java.util.stream.BaseStream";
+
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 
   @NonNls String CLASS_FILE_EXTENSION = ".class";

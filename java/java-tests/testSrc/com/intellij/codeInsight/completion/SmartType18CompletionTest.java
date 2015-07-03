@@ -132,6 +132,20 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     assertEmpty(myItems);
   }
 
+public void testConvertToObjectStream() {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 2);
+  myFixture.type('\n');
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
+  public void testConvertToDoubleStream() {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 2);
+    myFixture.type('\n');
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
   private void doTest() {
     doTest(true);
   }
