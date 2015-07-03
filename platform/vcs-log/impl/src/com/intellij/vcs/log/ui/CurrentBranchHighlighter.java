@@ -59,7 +59,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogFilterUi filterUi) {
       return new CurrentBranchHighlighter(logDataHolder, uiProperties);
     }
 

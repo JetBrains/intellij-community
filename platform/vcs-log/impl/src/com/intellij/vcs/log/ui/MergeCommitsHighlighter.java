@@ -18,12 +18,12 @@ package com.intellij.vcs.log.ui;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
@@ -53,7 +53,9 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
+                                               @NotNull VcsLogUiProperties uiProperties,
+                                               @NotNull VcsLogFilterUi filterUi) {
       return new MergeCommitsHighlighter(logDataHolder, uiProperties);
     }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui;
 
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
@@ -22,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogHighlighterFactory {
   @NotNull
-  VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties);
+  VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
+                                      @NotNull VcsLogUiProperties uiProperties,
+                                      @NotNull VcsLogFilterUi filterUi);
 
   @NotNull
   String getId();
