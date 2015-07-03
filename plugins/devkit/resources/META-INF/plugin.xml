@@ -128,6 +128,9 @@
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection" />
+    <localInspection language="JAVA" shortName="ReadWriteAccess"
+                     key="inspections.read.write.access" groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.readWriteLock.ReadWriteAccessInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
