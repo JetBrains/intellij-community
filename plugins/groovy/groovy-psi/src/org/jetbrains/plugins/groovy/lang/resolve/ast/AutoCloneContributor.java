@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-
-import java.util.Collection;
 
 /**
  * @author Max Medvedev
@@ -31,7 +30,7 @@ import java.util.Collection;
 public class AutoCloneContributor extends AstTransformContributor {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition clazz, @NotNull Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull GrTypeDefinition clazz, @NotNull Consumer<PsiMethod> collector) {
     if (PsiImplUtil.getAnnotation(clazz, GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_CLONE) == null) return;
 
     final LightMethodBuilder clone = new LightMethodBuilder(clazz.getManager(), "clone");
@@ -39,6 +38,6 @@ public class AutoCloneContributor extends AstTransformContributor {
     clone.setContainingClass(clazz);
     clone.addException(CloneNotSupportedException.class.getName());
     clone.setOriginInfo("created by @AutoClone");
-    collector.add(clone);
+    collector.consume(clone);
   }
 }

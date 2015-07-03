@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiModifier;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -24,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import java.util.Collection;
 
 /**
  * @author peter
@@ -39,7 +38,7 @@ public class LoggingContributor extends AstTransformContributor {
     build();
 
   @Override
-  public void collectFields(@NotNull GrTypeDefinition psiClass, @NotNull Collection<GrField> collector) {
+  public void collectFields(@NotNull GrTypeDefinition psiClass, @NotNull Consumer<GrField> collector) {
     GrModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return;
 
@@ -52,7 +51,7 @@ public class LoggingContributor extends AstTransformContributor {
         field.setNavigationElement(annotation);
         field.getModifierList().setModifiers(PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC);
         field.setOriginInfo("created by @" + annotation.getShortName());
-        collector.add(field);
+        collector.consume(field);
       }
     }
   }

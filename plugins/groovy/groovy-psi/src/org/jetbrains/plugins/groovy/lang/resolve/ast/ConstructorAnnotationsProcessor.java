@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +41,7 @@ import java.util.Set;
 public class ConstructorAnnotationsProcessor extends AstTransformContributor {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition typeDefinition, @NotNull Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull GrTypeDefinition typeDefinition, @NotNull Consumer<PsiMethod> collector) {
     if (typeDefinition.getName() == null) return;
 
     PsiModifierList modifierList = typeDefinition.getModifierList();
@@ -63,8 +63,8 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(typeDefinition, tupleConstructor, immutable, canonical);
     final GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
 
-    collector.add(fieldsConstructor);
-    collector.add(mapConstructor);
+    collector.consume(fieldsConstructor);
+    collector.consume(mapConstructor);
   }
 
   @NotNull
@@ -154,7 +154,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
       }
     }
 
-    final Map<String,PsiMethod> properties = PropertyUtil.getAllProperties(true, false, methods);
+    final Map<String, PsiMethod> properties = PropertyUtil.getAllProperties(true, false, methods);
     for (PsiField field : CollectClassMembersUtil.getFields(psiClass, false)) {
       final String name = field.getName();
       if (includeFields ||

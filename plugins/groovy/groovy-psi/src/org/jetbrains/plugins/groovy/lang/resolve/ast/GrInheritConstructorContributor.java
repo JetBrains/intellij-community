@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-
-import java.util.Collection;
 
 /**
  * @author Maxim.Medvedev
@@ -32,7 +31,7 @@ import java.util.Collection;
 public class GrInheritConstructorContributor extends AstTransformContributor {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition psiClass, @NotNull Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull GrTypeDefinition psiClass, @NotNull Consumer<PsiMethod> collector) {
     if (psiClass.isAnonymous() || psiClass.isInterface() || psiClass.isEnum()) {
       return;
     }
@@ -59,7 +58,7 @@ public class GrInheritConstructorContributor extends AstTransformContributor {
         inheritedConstructor.addParameter(name, type, false);
       }
       if (psiClass.findCodeMethodsBySignature(inheritedConstructor, false).length == 0) {
-        collector.add(inheritedConstructor);
+        collector.consume(inheritedConstructor);
       }
     }
   }

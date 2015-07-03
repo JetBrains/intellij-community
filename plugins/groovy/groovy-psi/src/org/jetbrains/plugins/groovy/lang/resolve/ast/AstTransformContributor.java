@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -32,13 +33,14 @@ import java.util.List;
  * @author Max Medvedev
  */
 public abstract class AstTransformContributor {
-  public static final ExtensionPointName<AstTransformContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
+  public static final ExtensionPointName<AstTransformContributor> EP_NAME =
+    ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
 
-  public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull final GrTypeDefinition clazz, Consumer<PsiMethod> collector) {
 
   }
 
-  public void collectFields(@NotNull final GrTypeDefinition clazz, Collection<GrField> collector) {
+  public void collectFields(@NotNull final GrTypeDefinition clazz, Consumer<GrField> collector) {
 
   }
 
@@ -47,9 +49,14 @@ public abstract class AstTransformContributor {
     Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
       @Override
       public Collection<PsiMethod> compute() {
-        Collection<PsiMethod> collector = new ArrayList<PsiMethod>();
+        final Collection<PsiMethod> collector = new ArrayList<PsiMethod>();
         for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-          contributor.collectMethods(clazz, collector);
+          contributor.collectMethods(clazz, new Consumer<PsiMethod>() {
+            @Override
+            public void consume(PsiMethod method) {
+              collector.add(method);
+            }
+          });
         }
         return collector;
       }
@@ -62,9 +69,14 @@ public abstract class AstTransformContributor {
     List<GrField> fields = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
       @Override
       public List<GrField> compute() {
-        List<GrField> collector = new ArrayList<GrField>();
+        final List<GrField> collector = new ArrayList<GrField>();
         for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-          contributor.collectFields(clazz, collector);
+          contributor.collectFields(clazz, new Consumer<GrField>() {
+            @Override
+            public void consume(GrField field) {
+              collector.add(field);
+            }
+          });
         }
         return collector;
       }
