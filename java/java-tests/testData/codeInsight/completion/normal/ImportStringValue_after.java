@@ -1,4 +1,4 @@
-import foo.*;
+import foo.StringValue;
 
 public class Bar {
     {
