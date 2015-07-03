@@ -140,6 +140,11 @@ public abstract class GitTextHandler extends GitHandler {
     public Charset getCharset() {
       return myCharset;
     }
+
+    @Override
+    protected boolean useNonBlockingRead() {
+      return false;
+    }
   }
 
 }
