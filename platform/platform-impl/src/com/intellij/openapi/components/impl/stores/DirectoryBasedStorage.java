@@ -26,9 +26,9 @@ import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SmartHashSet;
@@ -258,15 +258,8 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
               storeElement.setAttribute(StorageData.NAME, componentName);
               storeElement.addContent(element);
 
-              BufferExposingByteArrayOutputStream byteOut;
               VirtualFile file = getFile(fileName, dir, MySaveSession.this);
-              if (file.exists()) {
-                byteOut = StorageUtil.writeToBytes(storeElement, StorageUtil.loadFile(file).second);
-              }
-              else {
-                byteOut = StorageUtil.writeToBytes(storeElement, SystemProperties.getLineSeparator());
-              }
-              StorageUtil.writeFile(null, MySaveSession.this, file, byteOut, null);
+              StorageUtil.writeFile(null, MySaveSession.this, file, storeElement, LineSeparator.fromString(file.exists() ? StorageUtil.loadFile(file).second : SystemProperties.getLineSeparator()));
             }
             catch (IOException e) {
               LOG.error(e);

@@ -68,7 +68,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     StorageData result = createStorageData();
     Element element;
     // we don't use local data if has stream provider
-    if (myStreamProvider != null && myStreamProvider.isEnabled()) {
+    if (myStreamProvider != null && myStreamProvider.getEnabled()) {
       try {
         element = loadDataFromStreamProvider();
         if (element != null) {
