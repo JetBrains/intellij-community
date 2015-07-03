@@ -114,18 +114,22 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-              val editors = FileEditorManager.getInstance(project).getAllEditors(file)
-                  .filter { it is TextEditor }
-                  .map { (it as TextEditor).getEditor() }
+              if(!lifetime.lifetime.isTerminated) {
+                val editors = FileEditorManager.getInstance(project).getAllEditors(file)
+                    .filter { it is TextEditor }
+                    .map { (it as TextEditor).getEditor() }
 
-              if (!editors.isEmpty()) {
-                val editor = editors.first()
-                tabHost!!.addEditor(editor, file)
+                if (!editors.isEmpty()) {
+                  val editor = editors.first()
+                  tabHost!!.addEditor(editor, file)
+                }
               }
             }
 
             override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-              tabHost!!.removeEditor(file)
+              if(!lifetime.lifetime.isTerminated) {
+                tabHost!!.removeEditor(file)
+              }
             }
 
             override fun selectionChanged(event: FileEditorManagerEvent) {
