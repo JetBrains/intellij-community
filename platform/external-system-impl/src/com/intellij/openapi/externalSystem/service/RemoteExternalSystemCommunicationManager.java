@@ -16,7 +16,6 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -33,28 +32,20 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiBundle;
@@ -62,10 +53,11 @@ import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -134,24 +126,25 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         // IDE jars.
         classPath.addAll(PathManager.getUtilClassPath());
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ProjectBundle.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PlaceHolder.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(DebuggerView.class), classPath);
+        RuntimeModuleId[] modules = {
+          RuntimeModuleId.module("projectModel-api"),
+          RuntimeModuleId.module("editor-ui-api"),
+          RuntimeModuleId.module("debugger-impl"),
+          RuntimeModuleId.module("core-api"),
+          RuntimeModuleId.module("platform-api"),
+          RuntimeModuleId.module("platform-impl"),
+          RuntimeModuleId.module("extensions"),
+          RuntimeModuleId.module("external-system-api"),
+          RuntimeModuleId.module("external-system-impl"),
+          RuntimeModuleId.module("openapi"),
+          RuntimeModuleId.module("java-impl"),
+          RuntimeModuleId.module("lang-api"),
+          RuntimeModuleId.module("lang-impl")
+        };
+        for (RuntimeModuleId module : modules) {
+          params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(module));
+        }
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.ProjectBundle", ProjectBundle.class);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PsiBundle.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Alarm.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(DependencyScope.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExtensionPointName.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(StorageUtil.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(StdModuleTypes.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(JavaModuleType.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ModuleType.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(EmptyModuleType.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
-
-        // External system module jars
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
         params.getClassPath().addAll(classPath);
 

@@ -516,17 +516,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
-  public Set<Class> getToolingExtensionsClasses() {
-    return ContainerUtil.<Class>set(
-      // externalSystem api jar
-      ExternalSystemSourceType.class,
-      // gradle-tooling-extension-api jar
-      ProjectImportAction.class,
-      // gradle-tooling-extension-impl jar
-      ModelBuildScriptClasspathBuilderImpl.class,
-      Multimap.class,
-      GsonBuilder.class,
-      ShortTypeHandling.class
+  public Set<RuntimeModuleId> getToolingExtensionsModules() {
+    return ContainerUtil.set(
+      RuntimeModuleId.module("external-system-api"),
+      RuntimeModuleId.module("gradle-tooling-extension-api"),
+      RuntimeModuleId.module("gradle-tooling-extension-impl"),
+      RuntimeModuleId.projectLibrary("Groovy"),
+      RuntimeModuleId.projectLibrary("gson")
     );
   }
 

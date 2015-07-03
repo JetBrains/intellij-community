@@ -41,6 +41,8 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
@@ -57,6 +59,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -411,15 +414,15 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class> toolingExtensionClasses) {
+  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<RuntimeModuleId> toolingExtensionModules) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
     try {
       if (stream == null) {
         LOG.warn("Can't get init script template");
         return null;
       }
-      final String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
-      String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
+      final String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionModules);
+      String s = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
@@ -515,16 +518,7 @@ public class GradleExecutionHelper {
       }
     }
     if (!testIncludePatterns.isEmpty()) {
-      StringBuilder buf = new StringBuilder();
-      buf.append('[');
-      for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
-        String pattern = iterator.next();
-        buf.append('\"').append(pattern).append('\"');
-        if (iterator.hasNext()) {
-          buf.append(',');
-        }
-      }
-      buf.append(']');
+      String patternsString = quoteAndJoin(testIncludePatterns);
 
       InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
       try {
@@ -532,7 +526,7 @@ public class GradleExecutionHelper {
           LOG.warn("Can't get test filter init script template");
           return;
         }
-        String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), buf.toString());
+        String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), patternsString);
         final File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
         ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
       }
@@ -546,20 +540,22 @@ public class GradleExecutionHelper {
   }
 
   @NotNull
-  private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
-    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, new Function<Class, String>() {
-      @Override
-      public String fun(Class aClass) {
-        String path = PathManager.getJarPathForClass(aClass);
-        return path == null ? null : PathUtil.getCanonicalPath(path);
-      }
-    });
+  private static String getToolingExtensionsJarPaths(@NotNull Set<RuntimeModuleId> toolingModules) {
+    List<String> paths = new ArrayList<String>();
+    for (RuntimeModuleId module : toolingModules) {
+      paths.addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(module));
+    }
+    return quoteAndJoin(paths);
+  }
+
+  @NotNull
+  private static String quoteAndJoin(Collection<String> paths) {
     StringBuilder buf = new StringBuilder();
     buf.append('[');
-    for (Iterator<String> it = jarPaths.iterator(); it.hasNext(); ) {
-      String jarPath = it.next();
+    for (Iterator<String> iterator = paths.iterator(); iterator.hasNext(); ) {
+      String jarPath = iterator.next();
       buf.append('\"').append(jarPath).append('\"');
-      if (it.hasNext()) {
+      if (iterator.hasNext()) {
         buf.append(',');
       }
     }

@@ -23,7 +23,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -32,6 +31,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.gradle.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
@@ -136,7 +136,7 @@ public abstract class AbstractModelBuilderTest {
       final ProjectImportAction projectImportAction = new ProjectImportAction(false);
       projectImportAction.addExtraProjectModelClasses(getModels());
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
-      File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
+      File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionModules());
       assertNotNull(initScript);
       String jdkHome = IdeaTestUtil.requireRealJdkHome();
       buildActionExecutor.setJavaHome(new File(jdkHome));
@@ -150,23 +150,20 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @NotNull
-  private Set<Class> getToolingExtensionClasses() {
-    final Set<Class> classes = ContainerUtil.<Class>set(
-      ExternalProject.class,
-      // gradle-tooling-extension-api jar
-      ProjectImportAction.class,
-      // gradle-tooling-extension-impl jar
-      ModelBuildScriptClasspathBuilderImpl.class,
-      Multimap.class,
-      ShortTypeHandling.class
+  private Set<RuntimeModuleId> getToolingExtensionModules() {
+    final Set<RuntimeModuleId> classes = ContainerUtil.set(
+      RuntimeModuleId.module("external-system-api"),
+      RuntimeModuleId.module("gradle-tooling-extension-api"),
+      RuntimeModuleId.module("gradle-tooling-extension-impl"),
+      RuntimeModuleId.projectLibrary("Groovy")
     );
 
-    ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());
+    ContainerUtil.addAllNotNull(classes, doGetToolingExtensionModules());
     return classes;
   }
 
   @NotNull
-  protected Set<Class> doGetToolingExtensionClasses() {
+  protected Set<RuntimeModuleId> doGetToolingExtensionModules() {
     return Collections.emptySet();
   }
 

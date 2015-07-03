@@ -49,6 +49,8 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
+import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
@@ -140,7 +142,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final List<KeyValue<String, String>> extraJvmArgs = new ArrayList<KeyValue<String, String>>();
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
-    final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
+    final Set<RuntimeModuleId> toolingExtensionModules = ContainerUtil.newHashSet();
 
     if(resolverCtx.isPreviewMode()){
       commandLineArgs.add("-Didea.isPreviewMode=true");
@@ -168,8 +170,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
       // collect extra command-line arguments
       commandLineArgs.addAll(resolverExtension.getExtraCommandLineArgs());
-      // collect tooling extensions classes
-      toolingExtensionClasses.addAll(resolverExtension.getToolingExtensionsClasses());
+      toolingExtensionModules.addAll(resolverExtension.getToolingExtensionsModules());
     }
 
     final ParametersList parametersList = new ParametersList();
@@ -185,7 +186,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);
 
-    File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
+    File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionModules);
     if (initScript != null) {
       ContainerUtil.addAll(commandLineArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     }

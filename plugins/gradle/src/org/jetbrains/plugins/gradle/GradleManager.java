@@ -45,8 +45,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
@@ -67,7 +65,10 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -189,22 +190,11 @@ public class GradleManager
 
   @Override
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
-    final Set<String> additionalEntries = ContainerUtilRt.newHashSet();
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-      ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(extension.getClass()));
-      for (Class aClass : extension.getExtraProjectModelClasses()) {
-        ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(aClass));
-      }
       extension.enhanceRemoteProcessing(parameters);
     }
 
-    final PathsList classPath = parameters.getClassPath();
-    for (String entry : additionalEntries) {
-      classPath.add(entry);
-    }
-
-    parameters.getVMParametersList().addProperty(
-      ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
+    parameters.getVMParametersList().addProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
   }
 
   @Override

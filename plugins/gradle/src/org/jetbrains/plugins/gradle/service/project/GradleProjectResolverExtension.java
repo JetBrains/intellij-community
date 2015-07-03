@@ -30,6 +30,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.gradle.GradleManager;
 
 import java.util.Collection;
@@ -100,12 +101,12 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   Set<Class> getExtraProjectModelClasses();
 
   /**
-   * add paths containing these classes to classpath of gradle tooling extension
+   * add modules containing these classes to classpath of gradle tooling extension
    *
-   * @return classes to be available for gradle
+   * @return modules to be available for gradle
    */
   @NotNull
-  Set<Class> getToolingExtensionsClasses();
+  Set<RuntimeModuleId> getToolingExtensionsModules();
 
   @NotNull
   List<KeyValue<String, String>> getExtraJvmArgs();

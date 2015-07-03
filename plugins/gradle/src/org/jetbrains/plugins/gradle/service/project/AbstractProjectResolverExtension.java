@@ -31,6 +31,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.net.URL;
 import java.util.Collection;
@@ -134,7 +135,7 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @NotNull
   @Override
-  public Set<Class> getToolingExtensionsClasses() {
+  public Set<RuntimeModuleId> getToolingExtensionsModules() {
     return Collections.emptySet();
   }
 
