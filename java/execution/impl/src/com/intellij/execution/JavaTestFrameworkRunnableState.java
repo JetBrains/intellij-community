@@ -58,14 +58,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.PlatformRepository;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
