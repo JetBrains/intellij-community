@@ -24,15 +24,20 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Collections;
 
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogFilterUi myFilterUi;
 
-  public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
+  public CurrentBranchHighlighter(@NotNull VcsLogDataHolder logDataHolder,
+                                  @NotNull VcsLogUiProperties uiProperties,
+                                  @NotNull VcsLogFilterUi filterUi) {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
+    myFilterUi = filterUi;
   }
 
   @NotNull
@@ -43,7 +48,9 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     if (details != null && !(details instanceof LoadingDetails)) {
       VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
       String currentBranch = provider.getCurrentBranch(details.getRoot());
-      if (currentBranch != null) {
+      VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
+      if (currentBranch != null &&
+          (branchFilter == null || !Collections.singleton(currentBranch).containsAll(branchFilter.getBranchNames()))) {
         Condition<Hash> condition = myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
         if (condition.value(details.getId())) {
           return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
@@ -60,7 +67,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogFilterUi filterUi) {
-      return new CurrentBranchHighlighter(logDataHolder, uiProperties);
+      return new CurrentBranchHighlighter(logDataHolder, uiProperties, filterUi);
     }
 
     @NotNull
