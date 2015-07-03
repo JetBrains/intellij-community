@@ -22,11 +22,16 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.GenericDomValue;
@@ -35,8 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -57,31 +60,39 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     }
   }
 
+  private List<Module> getAcceptableModules(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<List<Module>>() {
+      @Nullable
+      @Override
+      public Result<List<Module>> compute() {
+        List<Module> result = ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), new Condition<Module>() {
+          @Override
+          public boolean value(Module module) {
+            return acceptModule(module);
+          }
+        });
+        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+  }
+
   @Override
   @NotNull
   public String[] getNames(final Project project, boolean includeNonProjectItems) {
-    Set<String> result = new HashSet<String>();
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      if (acceptModule(module)) {
-        addNames(module, result);
-      }
+    Set<String> result = ContainerUtil.newHashSet();
+    for (Module module : getAcceptableModules(project)) {
+      addNames(module, result);
     }
-
     return ArrayUtil.toStringArray(result);
   }
 
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, boolean includeNonProjectItems) {
-    List<NavigationItem> result = new ArrayList<NavigationItem>();
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      if (acceptModule(module)) {
-        addItems(module, name, result);
-      }
+    List<NavigationItem> result = ContainerUtil.newArrayList();
+    for (Module module : getAcceptableModules(project)) {
+      addItems(module, name, result);
     }
-
     return result.toArray(new NavigationItem[result.size()]);
   }
 
