@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -128,7 +129,8 @@ public class JavaFilePasteProvider implements PasteProvider {
   private static PsiJavaFile createJavaFileFromClipboardContent(final Project project) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     if (text == null) return null;
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE, text);
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("A.java", JavaLanguage.INSTANCE, 
+                                                                             StringUtil.convertLineSeparators(text));
     return psiFile instanceof PsiJavaFile ? (PsiJavaFile)psiFile : null;
   }
 }
