@@ -130,19 +130,4 @@ class Outer {
       IntFunction<Super> f = Outer.<error descr="Annotations are not allowed here">@TA</error> This.super::getField;
     }
   }
-
-  //todo[r.sh]
-  /*public String toString(@TA C this) { return ""; }
-
-  public boolean equals(@TA C this, @TA C other) { return false; }
-
-  C(@TA C this, boolean b) { }
-
-  class Outer {
-    class Middle {
-      class Inner {
-        void innerMethod(@TA Outer.@TA Middle.@TA Inner this) { }
-      }
-    }
-  }*/
 }

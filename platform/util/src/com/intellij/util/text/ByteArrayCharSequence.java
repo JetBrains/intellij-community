@@ -15,13 +15,34 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteArrayCharSequence implements CharSequence {
+  private int hash;
   private final byte[] myChars;
 
-  public ByteArrayCharSequence(@NotNull byte... chars) {
+  private ByteArrayCharSequence(@NotNull byte[] chars) {
     myChars = chars;
+  }
+
+  @Override
+  public int hashCode() {
+    int h = hash;
+    if (h == 0) {
+      byte[] chars = myChars;
+
+      for (byte aChar : chars) {
+        h = 31 * h + aChar;
+      }
+      hash = h;
+    }
+    return h;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof CharSequence && StringUtil.equals(this, (CharSequence)obj);
   }
 
   @Override
@@ -63,6 +84,7 @@ public class ByteArrayCharSequence implements CharSequence {
         //noinspection RedundantStringConstructorCall
         return new String(name.toString()); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
       }
+
       bytes[i] = (byte)c;
     }
     return new ByteArrayCharSequence(bytes);

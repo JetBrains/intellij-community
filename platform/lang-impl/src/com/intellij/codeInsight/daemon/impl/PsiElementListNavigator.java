@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -88,12 +89,12 @@ public class PsiElementListNavigator {
   }
 
   @Nullable
-  public static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
+  public static JBPopup navigateOrCreatePopup(@NotNull final NavigatablePsiElement[] targets,
                                               final String title,
                                               final String findUsagesTitle,
                                               final ListCellRenderer listRenderer,
                                               @Nullable final ListBackgroundUpdaterTask listUpdaterTask,
-                                              final Consumer<Object[]> consumer) {
+                                              @NotNull final Consumer<Object[]> consumer) {
     if (targets.length == 0) return null;
     if (targets.length == 1) {
       consumer.consume(targets);

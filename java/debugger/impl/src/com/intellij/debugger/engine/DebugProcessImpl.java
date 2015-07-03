@@ -456,6 +456,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         catch (IllegalThreadStateException e) {
           LOG.info(e); // undocumented by JDI: may be thrown when querying thread status
         }
+        catch (ObjectCollectedException ignored) {
+        }
       }
       requestManager.deleteEventRequests(toDelete);
     }
@@ -1694,6 +1696,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
       for (SuspendContextImpl suspendContext : suspendingContexts) {
         if (suspendContext.getThread() == myThread) {
+          getSession().getXDebugSession().sessionResumed();
           getManagerThread().invoke(createResumeCommand(suspendContext));
         }
         else {

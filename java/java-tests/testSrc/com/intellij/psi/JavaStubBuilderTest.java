@@ -371,7 +371,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "\n" +
            "class C<@A T extends @A C> implements @A I<@A T> {\n" +
            "  @TA T<@A T1, @A ? extends @A T2> f;\n" +
-           "  @TA T m(/*@A C this,*/ @TA int p) throws @A E {\n" +
+           "  @TA T m(@A C this, @TA int p) throws @A E {\n" +
            "    o.<@A1 C>m();\n" +
            "    new <T> @A2 C();\n" +
            "    C.@A3 B v = (@A4 C)v.new @A5 C();\n" +

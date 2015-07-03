@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java.parser.partial;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
@@ -150,13 +149,6 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
 
   private void doParserTest(String text) {
-    doParserTest(text, new MyTestParser());
-  }
-
-  private static class MyTestParser implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getExpressionParser().parse(builder);
-    }
+    doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
   }
 }

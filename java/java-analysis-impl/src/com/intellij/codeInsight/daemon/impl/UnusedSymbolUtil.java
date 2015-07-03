@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -135,14 +136,15 @@ public class UnusedSymbolUtil {
     }
     else {
       //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
-      if (containingClass != null && method.isConstructor()
+      boolean isConstructor = method.isConstructor();
+      if (containingClass != null && isConstructor
           && containingClass.getConstructors().length == 1
           && isClassUsed(project, containingFile, containingClass, progress, helper)) {
         return true;
       }
       if (isImplicitUsage(project, method, progress)) return true;
 
-      if (method.findSuperMethods().length != 0) {
+      if (!isConstructor && FindSuperElementsHelper.findSuperElements(method).length != 0) {
         return true;
       }
       if (!weAreSureThereAreNoUsages(project, containingFile, method, progress, helper)) {
@@ -193,7 +195,7 @@ public class UnusedSymbolUtil {
                                       @NotNull PsiFile containingFile,
                                       @NotNull PsiMember member,
                                       @NotNull ProgressIndicator progress,
-                                      final PsiFile ignoreFile,
+                                      @Nullable PsiFile ignoreFile,
                                       @NotNull Processor<UsageInfo> usageInfoProcessor) {
     String name = member.getName();
     if (name == null) {
@@ -247,10 +249,8 @@ public class UnusedSymbolUtil {
     }
     else if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
-      JavaMethodFindUsagesOptions o = new JavaMethodFindUsagesOptions(project);
-      //o.isIncludeOverloadUsages = true;
-      options = o;
-      options.isSearchForTextOccurrences = method.isConstructor();;
+      options = new JavaMethodFindUsagesOptions(project);
+      options.isSearchForTextOccurrences = method.isConstructor();
     }
     else if (member instanceof PsiVariable) {
       options = new JavaVariableFindUsagesOptions(project);
@@ -271,7 +271,7 @@ public class UnusedSymbolUtil {
                                                 @NotNull ProgressIndicator progress,
                                                 @NotNull GlobalUsageHelper helper) {
     final PsiClass containingClass = member.getContainingClass();
-    if (containingClass == null || !(containingClass instanceof PsiClassImpl)) return true;
+    if (!(containingClass instanceof PsiClassImpl)) return true;
     final PsiMethod valuesMethod = ((PsiClassImpl)containingClass).getValuesMethod();
     return valuesMethod == null || isMethodReferenced(project, containingFile, valuesMethod, progress, helper);
   }

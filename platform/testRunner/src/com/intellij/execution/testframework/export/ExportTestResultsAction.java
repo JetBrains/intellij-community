@@ -307,7 +307,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
     StringWriter w = new StringWriter();
     handler.setResult(new StreamResult(w));
     try {
-      TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, handler);
+      TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, myModel.getProperties(), handler);
     }
     catch (ProcessCanceledException e) {
       return null;

@@ -52,7 +52,12 @@ public class ImportedTestContentHandler extends DefaultHandler {
       myCurrentTest = name;
       myDuration = attributes.getValue(TestResultsXmlFormatter.ATTR_DURATION);
       myStatus = attributes.getValue(TestResultsXmlFormatter.ATTR_STATUS);
-      myProcessor.onTestStarted(new TestStartedEvent(name, attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION)));
+      final String isConfig = attributes.getValue(TestResultsXmlFormatter.ATTR_CONFIG);
+      final TestStartedEvent startedEvent = new TestStartedEvent(name, attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION));
+      if (isConfig != null && Boolean.valueOf(isConfig)) {
+        startedEvent.setConfig(true);
+      }
+      myProcessor.onTestStarted(startedEvent);
       currentValue.setLength(0);
     }
     else if (TestResultsXmlFormatter.ELEM_OUTPUT.equals(qName)) {

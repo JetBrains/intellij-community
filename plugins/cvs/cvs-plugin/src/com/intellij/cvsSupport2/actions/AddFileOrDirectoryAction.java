@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui.AbstractAddOptionsDialog
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -100,14 +103,26 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
       LOG.error(filesToAdd);
     }
 
-    if (showDialog) {
-      final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
-      if (!dialog.showAndGet()) {
-        return CvsHandler.NULL;
+    if (!showDialog) {
+      return CommandCvsHandler.createAddFilesHandler(project, roots);
+    }
+    final CvsHandler[] handler = new CvsHandler[1];
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
+        handler[0] = !dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots);
       }
+    };
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      application.invokeAndWait(runnable, ModalityState.any());
     }
 
-    return CommandCvsHandler.createAddFilesHandler(project, roots);
+    return handler[0];
   }
 
   @Override

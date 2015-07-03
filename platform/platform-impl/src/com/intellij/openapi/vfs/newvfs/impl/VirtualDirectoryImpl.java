@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.UriUtil;
@@ -547,6 +549,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+    checkLeaks(newMap);
     return myData.changeUserMap(oldMap, UserDataInterner.internUserData(newMap));
+  }
+
+  static void checkLeaks(KeyFMap newMap) {
+    for (Key key : newMap.getKeys()) {
+      if (key != null && newMap.get(key) instanceof PsiCachedValue) {
+        throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
+      }
+    }
   }
 }

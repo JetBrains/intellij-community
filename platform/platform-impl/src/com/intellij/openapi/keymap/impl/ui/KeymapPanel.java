@@ -119,8 +119,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   });
 
-  private Keymap mySelectedKeymap;
-
   private JButton myCopyButton;
   private JButton myDeleteButton;
   private JButton myResetToDefault;
@@ -146,7 +144,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void propertyChange(@NotNull final PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null && myQuickListsModified) {
-          processCurrentKeymapChanged(myQuickLists);
+          currentKeymapChanged();
           myQuickListsModified = false;
         }
       }
@@ -185,9 +183,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myEditor.getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        if (myEditor.getModel().getSelectedItem() != mySelectedKeymap) {
-          processCurrentKeymapChanged(myQuickLists);
-        }
+        currentKeymapChanged();
       }
     });
     panel.add(createKeymapNamePanel(), new GridBagConstraints(3, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
@@ -207,10 +203,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   @Override
   public void processCurrentKeymapChanged(@NotNull QuickList[] ids) {
     myQuickLists = ids;
+    currentKeymapChanged();
+  }
+
+  private void currentKeymapChanged() {
     myResetToDefault.setEnabled(false);
 
     Keymap selectedKeymap = myEditor.getModel().getSelected();
-    mySelectedKeymap = selectedKeymap;
 
     boolean editable = selectedKeymap != null && selectedKeymap.canModify();
     myDeleteButton.setEnabled(editable);
@@ -228,16 +227,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
     else {
       myBaseKeymapLabel.setText(KeyMapBundle.message("based.on.keymap.label", parent.getPresentableName()));
-      if (selectedKeymap.canModify() && ((KeymapImpl)mySelectedKeymap).getOwnActionIds().length > 0) {
+      if (selectedKeymap.canModify() && ((KeymapImpl)selectedKeymap).getOwnActionIds().length > 0) {
         myResetToDefault.setEnabled(true);
       }
     }
 
-    resetActionsTree(selectedKeymap);
-  }
-
-  private void resetActionsTree(@NotNull Keymap keymap) {
-    myActionsTree.reset(myEditor.getMutable(keymap), myQuickLists);
+    myActionsTree.reset(selectedKeymap, myQuickLists);
   }
 
   private JPanel createKeymapButtonsPanel() {
@@ -450,7 +445,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private JPanel createFilteringPanel() {
     //noinspection ConstantConditions
-    resetActionsTree(myEditor.getModel().getSelected());
+    myActionsTree.reset(myEditor.getModel().getSelected(), myQuickLists);
 
     final JLabel firstLabel = new JLabel(KeyMapBundle.message("filter.first.stroke.input"));
     final JCheckBox enable2Shortcut = new JCheckBox(KeyMapBundle.message("filter.second.stroke.input"));
@@ -482,12 +477,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     });
 
     IJSwingUtilities.adjustComponentsOnMac(firstLabel, firstShortcut);
-    //noinspection deprecation
     JPanel filterComponent = FormBuilder.createFormBuilder()
       .addLabeledComponent(firstLabel, firstShortcut, true)
       .addComponent(enable2Shortcut)
       .setVerticalGap(0)
-      .setIndent(5)
+      .setHorizontalGap(5)
       .addComponent(secondShortcut)
       .getPanel();
 
@@ -525,31 +519,21 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myActionsTree.filter(option, myQuickLists);
   }
 
-  private void addKeyboardShortcut(Shortcut shortcut) {
-    String actionId = myActionsTree.getSelectedActionId();
-    if (actionId == null) {
-      return;
-    }
-
-    if (!createKeymapCopyIfNeeded()) return;
+  private void addKeyboardShortcut(@NotNull String actionId, @Nullable Shortcut shortcut) {
+    Keymap keymap = createKeymapCopyIfNeeded();
 
     KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(this, actionId, myQuickLists);
-
-
-    KeyboardShortcut selectedKeyboardShortcut = shortcut instanceof KeyboardShortcut ? (KeyboardShortcut)shortcut : null;
-
-    dialog.setData(mySelectedKeymap, selectedKeyboardShortcut);
+    dialog.setData(keymap, shortcut instanceof KeyboardShortcut ? (KeyboardShortcut)shortcut : null);
     if (!dialog.showAndGet()) {
       return;
     }
 
     KeyboardShortcut keyboardShortcut = dialog.getKeyboardShortcut();
-
     if (keyboardShortcut == null) {
       return;
     }
 
-    Map<String, ArrayList<KeyboardShortcut>> conflicts = mySelectedKeymap.getConflicts(actionId, keyboardShortcut);
+    Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
     if (!conflicts.isEmpty()) {
       int result = Messages.showYesNoCancelDialog(
         this,
@@ -563,7 +547,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       if (result == Messages.YES) {
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
-            mySelectedKeymap.removeShortcut(id, s);
+            keymap.removeShortcut(id, s);
           }
         }
       }
@@ -573,20 +557,20 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     // if shortcut is already registered to this action, just select it in the list
-    Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
+    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     for (Shortcut s : shortcuts) {
       if (s.equals(keyboardShortcut)) {
         return;
       }
     }
 
-    mySelectedKeymap.addShortcut(actionId, keyboardShortcut);
+    keymap.addShortcut(actionId, keyboardShortcut);
     if (StringUtil.startsWithChar(actionId, '$')) {
-      mySelectedKeymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), keyboardShortcut);
+      keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), keyboardShortcut);
     }
 
     repaintLists();
-    processCurrentKeymapChanged(myQuickLists);
+    currentKeymapChanged();
   }
 
   private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions) {
@@ -595,14 +579,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
 
-    if (!createKeymapCopyIfNeeded()) return;
+    Keymap keymap = createKeymapCopyIfNeeded();
 
     MouseShortcut mouseShortcut = shortcut instanceof MouseShortcut ? (MouseShortcut)shortcut : null;
 
     MouseShortcutDialog dialog = new MouseShortcutDialog(
       this,
       mouseShortcut,
-      mySelectedKeymap,
+      keymap,
       actionId,
       myActionsTree.getMainGroup(),
       restrictions
@@ -617,7 +601,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
 
-    String[] actionIds = mySelectedKeymap.getActionIds(mouseShortcut);
+    String[] actionIds = keymap.getActionIds(mouseShortcut);
     if (actionIds.length > 1 || (actionIds.length == 1 && !actionId.equals(actionIds[0]))) {
       int result = Messages.showYesNoCancelDialog(
         this,
@@ -630,7 +614,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
       if (result == Messages.YES) {
         for (String id : actionIds) {
-          mySelectedKeymap.removeShortcut(id, mouseShortcut);
+          keymap.removeShortcut(id, mouseShortcut);
         }
       }
       else if (result != Messages.NO) {
@@ -640,50 +624,51 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     // if shortcut is already registered to this action, just select it in the list
 
-    Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
+    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     for (Shortcut shortcut1 : shortcuts) {
       if (shortcut1.equals(mouseShortcut)) {
         return;
       }
     }
 
-    mySelectedKeymap.addShortcut(actionId, mouseShortcut);
+    keymap.addShortcut(actionId, mouseShortcut);
     if (StringUtil.startsWithChar(actionId, '$')) {
-      mySelectedKeymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), mouseShortcut);
+      keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), mouseShortcut);
     }
 
     repaintLists();
-    processCurrentKeymapChanged(myQuickLists);
+    currentKeymapChanged();
   }
 
   private void repaintLists() {
     myActionsTree.getComponent().repaint();
   }
 
-  private boolean createKeymapCopyIfNeeded() {
-    if (mySelectedKeymap.canModify()) return true;
-
-    final Keymap selectedKeymap = myEditor.getModel().getSelected();
-    if (selectedKeymap == null) {
-      return false;
+  @NotNull
+  private Keymap createKeymapCopyIfNeeded() {
+    Keymap keymap = myEditor.getModel().getSelected();
+    assert keymap != null;
+    if (keymap.canModify()) {
+      Keymap mutable = myEditor.getMutable(keymap);
+      myActionsTree.setKeymap(mutable);
+      return mutable;
     }
 
-    KeymapImpl newKeymap = ((KeymapImpl)selectedKeymap).deriveKeymap();
-
-    String newKeymapName = KeyMapBundle.message("new.keymap.name", selectedKeymap.getPresentableName());
+    String newKeymapName = KeyMapBundle.message("new.keymap.name", keymap.getPresentableName());
     if (!tryNewKeymapName(newKeymapName)) {
       for (int i = 0; ; i++) {
-        newKeymapName = KeyMapBundle.message("new.indexed.keymap.name", selectedKeymap.getPresentableName(), i);
+        newKeymapName = KeyMapBundle.message("new.indexed.keymap.name", keymap.getPresentableName(), i);
         if (tryNewKeymapName(newKeymapName)) {
           break;
         }
       }
     }
 
+    KeymapImpl newKeymap = ((KeymapImpl)keymap).deriveKeymap();
     newKeymap.setName(newKeymapName);
     newKeymap.setCanModify(true);
 
-    final int indexOf = myEditor.getModel().getElementIndex(selectedKeymap);
+    int indexOf = myEditor.getModel().getElementIndex(keymap);
     if (indexOf >= 0) {
       myEditor.getModel().add(indexOf + 1, newKeymap);
     }
@@ -692,28 +677,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     myEditor.getModel().setSelectedItem(newKeymap);
-    processCurrentKeymapChanged(myQuickLists);
-
-    return true;
-  }
-
-  private void removeShortcut(Shortcut shortcut) {
-    String actionId = myActionsTree.getSelectedActionId();
-    if (actionId == null) {
-      return;
-    }
-
-    if (!createKeymapCopyIfNeeded()) return;
-
-    if (shortcut == null) return;
-
-    mySelectedKeymap.removeShortcut(actionId, shortcut);
-    if (StringUtil.startsWithChar(actionId, '$')) {
-      mySelectedKeymap.removeShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), shortcut);
-    }
-
-    repaintLists();
-    processCurrentKeymapChanged(myQuickLists);
+    currentKeymapChanged();
+    return newKeymap;
   }
 
   private void copyKeymap() {
@@ -738,7 +703,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myEditor.getModel().add(newKeymap);
     myEditor.getModel().setSelectedItem(newKeymap);
     myEditor.getComboBox().getEditor().selectAll();
-    processCurrentKeymapChanged(myQuickLists);
+    currentKeymapChanged();
   }
 
   private boolean tryNewKeymapName(String name) {
@@ -759,7 +724,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     myEditor.getModel().remove(keymap);
-    processCurrentKeymapChanged(myQuickLists);
+    currentKeymapChanged();
   }
 
   private void resetKeymap() {
@@ -768,7 +733,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
     ((KeymapImpl)keymap).clearOwnActionsIds();
-    processCurrentKeymapChanged(myQuickLists);
+    currentKeymapChanged();
   }
 
   @Override
@@ -784,11 +749,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
     }
 
-    mySelectedKeymap = null;
+    Keymap selectedKeymap = null;
     List<Keymap> list = getManagerKeymaps();
     for (Keymap keymap : list) {
-      if (mySelectedKeymap == null && keymap == KeymapManagerEx.getInstanceEx().getActiveKeymap()) {
-        mySelectedKeymap = keymap;
+      if (selectedKeymap == null && keymap == KeymapManagerEx.getInstanceEx().getActiveKeymap()) {
+        selectedKeymap = keymap;
       }
     }
     myEditor.reset(list);
@@ -797,23 +762,23 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       KeymapImpl keymap = new KeymapImpl();
       keymap.setName(KeyMapBundle.message("keymap.no.name"));
       myEditor.getModel().add(keymap);
-      mySelectedKeymap = keymap;
+      selectedKeymap = keymap;
     }
 
-    myEditor.getModel().setSelectedItem(mySelectedKeymap);
+    myEditor.getModel().setSelectedItem(selectedKeymap);
 
-    processCurrentKeymapChanged(myQuickLists);
+    currentKeymapChanged();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myEditor.ensureNonEmptyNames("Quick list should have non empty name");
+    myEditor.ensureNonEmptyNames(KeyMapBundle.message("configuration.all.keymaps.should.have.non.empty.names.error.message"));
 
     ensureUniqueKeymapNames();
     KeymapManagerImpl keymapManager = (KeymapManagerImpl)KeymapManager.getInstance();
     // we must specify the same filter, which was used to get original items
     keymapManager.setKeymaps(myEditor.apply(), KEYMAP_FILTER);
-    keymapManager.setActiveKeymap(mySelectedKeymap);
+    keymapManager.setActiveKeymap(myEditor.getModel().getSelected());
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
@@ -828,7 +793,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(mySelectedKeymap, KeymapManager.getInstance().getActiveKeymap()) || myEditor.isModified();
+    return !Comparing.equal(myEditor.getModel().getSelected(), KeymapManager.getInstance().getActiveKeymap()) || myEditor.isModified();
   }
 
   @NotNull
@@ -873,34 +838,59 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Nullable
   public Shortcut[] getCurrentShortcuts(@NotNull String actionId) {
-    return mySelectedKeymap == null ? null : mySelectedKeymap.getShortcuts(actionId);
+    Keymap keymap = myEditor.getModel().getSelected();
+    return keymap == null ? null : keymap.getShortcuts(actionId);
   }
 
   private void editSelection(InputEvent e) {
-    final String actionId = myActionsTree.getSelectedActionId();
-    if (actionId == null) return;
+    String actionId = myActionsTree.getSelectedActionId();
+    if (actionId == null) {
+      return;
+    }
 
+    DefaultActionGroup group = createEditActionGroup(actionId);
+    if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
+      ActionManager.getInstance()
+        .createActionPopupMenu(ActionPlaces.UNKNOWN, group)
+        .getComponent()
+        .show(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
+    }
+    else {
+      DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Edit Shortcuts",
+                                                                            group,
+                                                                            dataContext,
+                                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                                            true);
+
+      if (e instanceof MouseEvent) {
+        popup.show(new RelativePoint((MouseEvent)e));
+      }
+      else {
+        popup.showInBestPositionFor(dataContext);
+      }
+    }
+  }
+
+  @NotNull
+  private DefaultActionGroup createEditActionGroup(@NotNull final String actionId) {
     DefaultActionGroup group = new DefaultActionGroup();
-
-    final Shortcut[] shortcuts = getCurrentShortcuts(actionId);
-    final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
-
     final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getInstance().getForActionId(actionId);
-
     if (restrictions.allowKeyboardShortcut) {
       group.add(new DumbAwareAction("Add Keyboard Shortcut") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Shortcut firstKeyboard = null;
-          assert shortcuts != null;
-          for (Shortcut shortcut : shortcuts) {
+          Shortcut firstShortcut = null;
+          Keymap keymap = myEditor.getModel().getSelected();
+          assert keymap != null;
+          for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
             if (shortcut instanceof KeyboardShortcut) {
-              firstKeyboard = shortcut;
+              firstShortcut = shortcut;
               break;
             }
           }
 
-          addKeyboardShortcut(firstKeyboard);
+          addKeyboardShortcut(actionId, firstShortcut);
         }
       });
     }
@@ -910,8 +900,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Shortcut firstMouse = null;
-          assert shortcuts != null;
-          for (Shortcut shortcut : shortcuts) {
+          Keymap keymap = myEditor.getModel().getSelected();
+          assert keymap != null;
+          for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
             if (shortcut instanceof MouseShortcut) {
               firstMouse = shortcut;
               break;
@@ -926,10 +917,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new DumbAwareAction("Add Abbreviation") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final String abbr = Messages.showInputDialog("Enter new abbreviation:", "Abbreviation", null);
+          String abbr = Messages.showInputDialog("Enter new abbreviation:", "Abbreviation", null);
           if (abbr != null) {
-            String actionId = myActionsTree.getSelectedActionId();
-            AbbreviationManager.getInstance().register(abbr, actionId);
+            AbbreviationManager.getInstance().register(abbr, myActionsTree.getSelectedActionId());
             repaintLists();
           }
         }
@@ -943,28 +933,31 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.addSeparator();
 
-    assert shortcuts != null;
-    for (final Shortcut shortcut : shortcuts) {
+    Keymap keymap = myEditor.getModel().getSelected();
+    assert keymap != null;
+    for (final Shortcut shortcut : keymap.getShortcuts(actionId)) {
       group.add(new DumbAwareAction("Remove " + KeymapUtil.getShortcutText(shortcut)) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          removeShortcut(shortcut);
+          Keymap keymap = createKeymapCopyIfNeeded();
+          keymap.removeShortcut(actionId, shortcut);
+          if (StringUtil.startsWithChar(actionId, '$')) {
+            keymap.removeShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), shortcut);
+          }
+
+          repaintLists();
+          currentKeymapChanged();
         }
       });
     }
 
     if (Registry.is("actionSystem.enableAbbreviations")) {
-      for (final String abbreviation : abbreviations) {
+      for (final String abbreviation : AbbreviationManager.getInstance().getAbbreviations(actionId)) {
         group.addAction(new DumbAwareAction("Remove Abbreviation '" + abbreviation + "'") {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             AbbreviationManager.getInstance().remove(abbreviation, actionId);
             repaintLists();
-          }
-
-          @Override
-          public void update(@NotNull AnActionEvent e) {
-            super.update(e);
           }
         });
       }
@@ -973,37 +966,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new DumbAwareAction("Reset Shortcuts") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        ((KeymapImpl)mySelectedKeymap).clearOwnActionsId(actionId);
-        processCurrentKeymapChanged(myQuickLists);
+        ((KeymapImpl)createKeymapCopyIfNeeded()).clearOwnActionsId(actionId);
+        currentKeymapChanged();
         repaintLists();
       }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setVisible(mySelectedKeymap.canModify() && ((KeymapImpl)mySelectedKeymap).hasOwnActionId(actionId));
-        super.update(e);
+        e.getPresentation().setVisible(((KeymapImpl)myEditor.getModel().getSelected()).hasOwnActionId(actionId));
       }
     });
 
-    if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
-      final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-      popupMenu.getComponent().show(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
-    }
-    else {
-      final DataContext dataContext = DataManager.getInstance().getDataContext(this);
-      final ListPopup popup = JBPopupFactory.getInstance()
-        .createActionGroupPopup("Edit Shortcuts",
-                                group,
-                                dataContext,
-                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                true);
-
-      if (e instanceof MouseEvent) {
-        popup.show(new RelativePoint((MouseEvent)e));
-      }
-      else {
-        popup.showInBestPositionFor(dataContext);
-      }
-    }
+    return group;
   }
 }

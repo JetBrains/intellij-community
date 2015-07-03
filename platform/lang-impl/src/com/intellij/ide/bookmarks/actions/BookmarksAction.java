@@ -27,9 +27,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -37,17 +39,22 @@ import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author max
  */
 public class BookmarksAction extends AnAction implements DumbAware, MasterDetailPopupBuilder.Delegate {
+  @NonNls private static final String DIMENSION_SERVICE_KEY = "bookmarks";
+
   private JBPopup myPopup;
 
   @Override
@@ -76,7 +83,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       setList(list).
       setDelegate(this).
       setDetailView(new DetailViewImpl(project)).
-      setDimensionServiceKey("bookmarks").
+      setDimensionServiceKey(DIMENSION_SERVICE_KEY).
       setAddDetailViewToEast(true).
       setActionsGroup(actions).
       setPopupTuner(new Consumer<PopupChooserBuilder>() {
@@ -106,7 +113,13 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), list);
 
     editDescriptionAction.setPopup(myPopup);
-    myPopup.showCenteredInCurrentWindow(project);
+    final Point location = DimensionService.getInstance().getLocation(DIMENSION_SERVICE_KEY, project);
+    if (location != null) {
+      myPopup.showInScreenCoordinates(WindowManager.getInstance().getFrame(project), location);
+    }
+    else {
+      myPopup.showCenteredInCurrentWindow(project);
+    }
 
     list.getEmptyText().setText("No Bookmarks");
     list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

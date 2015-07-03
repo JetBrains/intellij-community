@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
@@ -34,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,20 +43,24 @@ public class SuperMethodWarningUtil {
   private SuperMethodWarningUtil() {}
 
   @NotNull
-  public static PsiMethod[] checkSuperMethods(final PsiMethod method, String actionString) {
-    return checkSuperMethods(method, actionString, null);
+  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
+    return checkSuperMethods(method, actionString, Collections.<PsiElement>emptyList());
   }
 
   @NotNull
-  public static PsiMethod[] checkSuperMethods(final PsiMethod method, String actionString, Collection<PsiElement> ignore) {
+  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<PsiElement> ignore) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
-    if (ignore != null) {
-      superMethods.removeAll(ignore);
-    }
+    superMethods.removeAll(ignore);
 
+    if (superMethods.isEmpty()) {
+      PsiMethod siblingSuperMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+      if (siblingSuperMethod != null) {
+        superMethods.add(siblingSuperMethod);
+      }
+    }
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
 
 
@@ -85,7 +91,7 @@ public class SuperMethodWarningUtil {
   }
 
 
-  public static PsiMethod checkSuperMethod(final PsiMethod method, String actionString) {
+  public static PsiMethod checkSuperMethod(@NotNull PsiMethod method, @NotNull String actionString) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
 
@@ -110,10 +116,10 @@ public class SuperMethodWarningUtil {
     return null;
   }
 
-  public static void checkSuperMethod(final PsiMethod method,
-                                      final String actionString,
-                                      final PsiElementProcessor<PsiMethod> processor,
-                                      final Editor editor) {
+  public static void checkSuperMethod(@NotNull PsiMethod method,
+                                      @NotNull String actionString,
+                                      @NotNull final PsiElementProcessor<PsiMethod> processor,
+                                      @NotNull Editor editor) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) {
       processor.execute(method);
@@ -137,7 +143,7 @@ public class SuperMethodWarningUtil {
       return;
     }
 
-    final PsiMethod[] methods = new PsiMethod[]{superMethod, method};
+    final PsiMethod[] methods = {superMethod, method};
     final String renameBase = actionString + " base method";
     final String renameCurrent = actionString + " only current method";
     final JBList list = new JBList(renameBase, renameCurrent);
@@ -148,6 +154,7 @@ public class SuperMethodWarningUtil {
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           final Object value = list.getSelectedValue();
           if (value instanceof String) {

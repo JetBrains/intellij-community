@@ -176,6 +176,9 @@ public layoutCommunity(String classesPath, Set usedJars) {
 
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix])
+  if (p("jdk.bundled.linux") != "false") {
+    buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildName}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${home}/out/pycharm/bundled.linux.jdk"], ["jre/jre/bin/*"])
+  }
 
   String macAppRoot = isEap() ? "PyCharm CE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm CE.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharmPC-${buildNumber}.sit", [paths.distAll], paths.distMac)

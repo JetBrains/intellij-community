@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>ElseElse.java</file>
-    <line>26</line>
-    <description>Cast &lt;code&gt;(B)o&lt;/code&gt; conflicts with surrounding 'instanceof' check #loc</description>
-  </problem>
-</problems>

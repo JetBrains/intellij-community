@@ -56,7 +56,7 @@ public class TestFrameworkActions {
     }
 
     final boolean hideSuccessfulConfigs = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
-    final Filter hideConfigsFilter = hideSuccessfulConfigs ? Filter.SUCCESSFUL_CONFIGS : Filter.NO_FILTER;
+    final Filter hideConfigsFilter = hideSuccessfulConfigs ? Filter.HIDE_SUCCESSFUL_CONFIGS : Filter.NO_FILTER;
 
     return hidePassedFilter.and(hideIgnoredFilter).and(hideConfigsFilter);
   }

@@ -965,6 +965,9 @@ public class HighlightUtil extends HighlightUtilBase {
     else if (modifierOwner instanceof PsiLocalVariable || modifierOwner instanceof PsiParameter) {
       isAllowed = PsiModifier.FINAL.equals(modifier);
     }
+    else if (modifierOwner instanceof PsiReceiverParameter) {
+      isAllowed = false;
+    }
 
     isAllowed &= incompatibles != null;
     if (!isAllowed) {
@@ -2899,7 +2902,8 @@ public class HighlightUtil extends HighlightUtilBase {
     EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods"),
     METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references"),
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
-    TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations");
+    TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
+    RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers");
 
     private final LanguageLevel level;
     private final String key;

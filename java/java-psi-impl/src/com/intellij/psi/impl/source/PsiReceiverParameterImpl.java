@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -28,6 +27,11 @@ import org.jetbrains.annotations.Nullable;
 public class PsiReceiverParameterImpl extends CompositePsiElement implements PsiReceiverParameter {
   public PsiReceiverParameterImpl() {
     super(JavaElementType.RECEIVER_PARAMETER);
+  }
+
+  @NotNull
+  public PsiThisExpression getIdentifier() {
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiThisExpression.class);
   }
 
   @Nullable
@@ -98,13 +102,6 @@ public class PsiReceiverParameterImpl extends CompositePsiElement implements Psi
   @Override
   public int getTextOffset() {
     return getIdentifier().getTextOffset();
-  }
-
-  @NotNull
-  private PsiElement getIdentifier() {
-    ASTNode node = findChildByType(JavaTokenType.THIS_KEYWORD);
-    assert node != null : getChildren();
-    return node.getPsi();
   }
 
   @Override

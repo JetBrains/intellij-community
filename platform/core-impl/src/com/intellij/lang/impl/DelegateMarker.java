@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
     return myDelegate;
   }
 
+  @NotNull
   @Override
   public PsiBuilder.Marker precede() {
     return myDelegate.precede();
@@ -51,22 +52,22 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
   }
 
   @Override
-  public void done(IElementType type) {
+  public void done(@NotNull IElementType type) {
     myDelegate.done(type);
   }
 
   @Override
-  public void collapse(IElementType type) {
+  public void collapse(@NotNull IElementType type) {
     myDelegate.collapse(type);
   }
 
   @Override
-  public void doneBefore(IElementType type, PsiBuilder.Marker before) {
+  public void doneBefore(@NotNull IElementType type, @NotNull PsiBuilder.Marker before) {
     myDelegate.doneBefore(type, before);
   }
 
   @Override
-  public void doneBefore(IElementType type, PsiBuilder.Marker before, String errorMessage) {
+  public void doneBefore(@NotNull IElementType type, @NotNull PsiBuilder.Marker before, String errorMessage) {
     myDelegate.doneBefore(type, before, errorMessage);
   }
 
@@ -76,7 +77,7 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
   }
 
   @Override
-  public void errorBefore(String message, PsiBuilder.Marker before) {
+  public void errorBefore(String message, @NotNull PsiBuilder.Marker before) {
     myDelegate.errorBefore(message, before);
   }
 

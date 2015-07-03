@@ -15,20 +15,16 @@
  */
 package org.jetbrains.java.generate;
 
-import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 
 /**
- * The IDEA action for this plugin.
- * <p/>
  * This action handles the generation of a <code>toString()</code> method that dumps the fields
  * of the class.
  */
-public class GenerateToStringAction extends EditorAction {
+public class GenerateToStringAction extends BaseGenerateAction {
 
-    /**
-     * Constructor.
-     */
     public GenerateToStringAction() {
-        super(new GenerateToStringActionHandlerImpl()); // register our action handler
+        super(new GenerateToStringActionHandlerImpl());
     }
+
 }

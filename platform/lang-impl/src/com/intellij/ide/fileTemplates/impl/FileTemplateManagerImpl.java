@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,16 +47,9 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/**
- * @author MYakovlev
- *         Date: Jul 24
- * @author 2002
- */
 @State(
   name = "FileTemplateManagerImpl",
-  storages = {
-    @Storage(file = StoragePathMacros.WORKSPACE_FILE)
-  }
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class FileTemplateManagerImpl extends FileTemplateManager implements PersistentStateComponent<FileTemplateManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");

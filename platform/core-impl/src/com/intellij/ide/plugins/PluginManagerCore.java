@@ -196,15 +196,18 @@ public class PluginManagerCore {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }
-    PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(plugins, append)));
+    writePluginsList(ids, new BufferedWriter(new FileWriter(plugins, append)));
+  }
+
+  public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
     try {
       for (String id : ids) {
-        printWriter.println(id);
+        writer.write(id);
+        writer.write(LineSeparator.getSystemLineSeparator().getSeparatorString());
       }
-      printWriter.flush();
     }
     finally {
-      printWriter.close();
+      writer.close();
     }
   }
 
