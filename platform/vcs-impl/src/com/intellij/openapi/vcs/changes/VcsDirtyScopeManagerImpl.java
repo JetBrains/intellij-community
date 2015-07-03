@@ -129,22 +129,23 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @NotNull
-  private Collection<FilePathUnderVcs> convertPaths(@Nullable final Collection<FilePath> from) {
-    if (from == null) return Collections.emptyList();
-    return ContainerUtil.mapNotNull(from, new Function<FilePath, FilePathUnderVcs>() {
-      @Override
-      public FilePathUnderVcs fun(FilePath path) {
-        AbstractVcs vcs = myGuess.getVcsForDirty(path);
-        return vcs == null ? null : new FilePathUnderVcs(path, vcs);
+  private MultiMap<AbstractVcs, FilePath> convertPaths(@Nullable final Collection<FilePath> from) {
+    if (from == null) return MultiMap.empty();
+    MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
+    for (FilePath path : from) {
+      AbstractVcs vcs = myGuess.getVcsForDirty(path);
+      if (vcs != null) {
+        map.putValue(vcs, path);
       }
-    });
+    }
+    return map;
   }
 
   @Override
   public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     try {
-      final Collection<FilePathUnderVcs> filesConverted = convertPaths(filesDirty);
-      final Collection<FilePathUnderVcs> dirsConverted = convertPaths(dirsRecursivelyDirty);
+      final MultiMap<AbstractVcs, FilePath> filesConverted = convertPaths(filesDirty);
+      final MultiMap<AbstractVcs, FilePath> dirsConverted = convertPaths(dirsRecursivelyDirty);
       if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
       if (LOG.isDebugEnabled()) {
@@ -154,11 +155,15 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       boolean hasSomethingDirty;
       synchronized (LOCK) {
         if (myDisposed) return;
-        for (final FilePathUnderVcs root : filesConverted) {
-          myDirtBuilder.addDirtyFile(root);
+        for (AbstractVcs vcs : filesConverted.keySet()) {
+          for (FilePath path : filesConverted.get(vcs)) {
+            myDirtBuilder.addDirtyFile(vcs, path);
+          }
         }
-        for (final FilePathUnderVcs root : dirsConverted) {
-          myDirtBuilder.addDirtyDirRecursively(root);
+        for (AbstractVcs vcs : dirsConverted.keySet()) {
+          for (FilePath path : dirsConverted.get(vcs)) {
+            myDirtBuilder.addDirtyDirRecursively(vcs, path);
+          }
         }
         hasSomethingDirty = !myDirtBuilder.isEmpty();
       }

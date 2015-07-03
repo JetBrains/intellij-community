@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
-import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
 import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -68,7 +67,7 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     FilePath fp = VcsUtil.getFilePath(ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir));
     final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
     if (vcs != null) {
-      builder.addDirtyDirRecursively(new FilePathUnderVcs(fp, vcs));
+      builder.addDirtyDirRecursively(vcs, fp);
     }
   }
 

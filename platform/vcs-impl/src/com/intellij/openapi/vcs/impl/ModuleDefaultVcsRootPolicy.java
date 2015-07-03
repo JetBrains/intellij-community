@@ -28,9 +28,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
-import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
 import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
@@ -141,7 +143,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
           FilePath fp = VcsUtil.getFilePath(myBaseDir, Project.DIRECTORY_STORE_FOLDER, true);
           final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
           if (vcs != null) {
-            builder.addDirtyDirRecursively(new FilePathUnderVcs(fp, vcs));
+            builder.addDirtyDirRecursively(vcs, fp);
           }
         }
 
@@ -150,7 +152,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
           for(VirtualFile file: files) {
             final AbstractVcs vcs = vcsGuess.getVcsForDirty(file);
             if (vcs != null) {
-              builder.addDirtyDirRecursively(new FilePathUnderVcs(VcsUtil.getFilePath(file), vcs));
+              builder.addDirtyDirRecursively(vcs, VcsUtil.getFilePath(file));
             }
           }
         }
@@ -161,7 +163,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         if (haveDefaultMapping && (myBaseDir != null)) {
           final AbstractVcs vcs = vcsGuess.getVcsForDirty(myBaseDir);
           if (vcs != null) {
-            builder.addDirtyFile(new FilePathUnderVcs(VcsUtil.getFilePath(myBaseDir), vcs));
+            builder.addDirtyFile(vcs, VcsUtil.getFilePath(myBaseDir));
           }
         }
       }

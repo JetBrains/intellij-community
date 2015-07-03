@@ -16,10 +16,14 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +59,8 @@ public class Scopes {
           final String vcsName = mapping.getVcs();
           final AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
           final VirtualFile file = lfs.findFileByPath(mapping.getDirectory());
-          if (file != null) {
-            builder.addDirtyDirRecursively(new FilePathUnderVcs(VcsUtil.getFilePath(file), vcs));
+          if (vcs != null && file != null) {
+            builder.addDirtyDirRecursively(vcs, VcsUtil.getFilePath(file));
           }
         }
       }
@@ -71,27 +75,14 @@ public class Scopes {
       markEverythingDirty();
       return;
     }
-    final Collection<FilePathUnderVcs> dirs = dirt.getDirsForVcs();
-    final Collection<FilePathUnderVcs> files = dirt.getFilesForVcs();
 
-    final MultiMap<AbstractVcs, FilePath> filesMap = new MultiMap<AbstractVcs, FilePath>();
-    final MultiMap<AbstractVcs, FilePath> dirsMap = new MultiMap<AbstractVcs, FilePath>();
+    MultiMap<AbstractVcs, FilePath> files = dirt.getFilesForVcs();
+    MultiMap<AbstractVcs, FilePath> dirs = dirt.getDirsForVcs();
 
-    for (FilePathUnderVcs dir : dirs) {
-      dirsMap.putValue(dir.getVcs(), dir.getPath());
-    }
-    for (FilePathUnderVcs file : files) {
-      filesMap.putValue(file.getVcs(), file.getPath());
-    }
-    final Set<AbstractVcs> keys = new HashSet<AbstractVcs>(filesMap.keySet());
-    keys.addAll(dirsMap.keySet());
+    Set<AbstractVcs> keys = ContainerUtil.newHashSet(files.keySet());
+    keys.addAll(dirs.keySet());
     for (AbstractVcs key : keys) {
-      Collection<FilePath> dirPaths = dirsMap.get(key);
-      dirPaths = dirPaths == null ? Collections.<FilePath>emptyList() : dirPaths;
-      Collection<FilePath> filePaths = filesMap.get(key);
-      filePaths = filePaths == null ? Collections.<FilePath>emptyList() : filePaths;
-
-      getScope(key).addDirtyData(dirPaths, filePaths);
+      getScope(key).addDirtyData(dirs.get(key), files.get(key));
     }
   }
 
