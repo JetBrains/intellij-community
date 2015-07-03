@@ -57,8 +57,8 @@ public class DelegatingFormattingModel implements FormattingModelEx {
   }
 
   @Override
-  public TextRange shiftIndentInsideRange(TextRange range, int indent) {
-    return myBaseModel.shiftIndentInsideRange(range, indent);
+  public TextRange shiftIndentInsideRange(ASTNode node, TextRange range, int indent) {
+    return myBaseModel.shiftIndentInsideRange(node, range, indent);
   }
 
   @Override

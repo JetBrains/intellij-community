@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import net.sf.cglib.core.*;
@@ -32,6 +33,13 @@ public class InstanceofCheckerGenerator {
   private static final InstanceofCheckerGenerator ourInstance;
 
   static {
+    try {
+      ClassGenerator.class.getDeclaredMethod("generateClass", ClassVisitor.class);
+    }
+    catch (NoSuchMethodException e) {
+      throw new IllegalStateException("Incorrect cglib version in the classpath, source=" + PathManager.getJarPathForClass(ClassGenerator.class));
+    }
+
     try {
       ourInstance = new InstanceofCheckerGenerator();
     }

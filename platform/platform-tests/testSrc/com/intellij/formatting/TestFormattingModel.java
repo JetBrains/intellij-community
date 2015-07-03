@@ -111,7 +111,7 @@ public class TestFormattingModel implements FormattingModel, FormattingDocumentM
   }
 
   @Override
-  public TextRange shiftIndentInsideRange(TextRange range, int indent) {
+  public TextRange shiftIndentInsideRange(ASTNode node, TextRange range, int indent) {
     return range;
   }
 

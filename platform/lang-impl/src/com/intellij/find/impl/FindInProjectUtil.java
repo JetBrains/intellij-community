@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,14 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
@@ -65,7 +65,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
@@ -445,6 +448,24 @@ public class FindInProjectUtil {
     }
   }
 
+  private static void addSourceDirectoriesFromLibraries(@NotNull Project project,
+                                                        @NotNull VirtualFile file,
+                                                        @NotNull Collection<VirtualFile> outSourceRoots) {
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    VirtualFile classRoot = index.getClassRootForFile(file);
+    if (classRoot == null) return;
+    String relativePath = VfsUtil.getRelativePath(file, classRoot);
+    if (relativePath == null) return;
+    for (OrderEntry orderEntry : index.getOrderEntriesForFile(file)) {
+      for (VirtualFile sourceRoot : orderEntry.getFiles(OrderRootType.SOURCES)) {
+        VirtualFile sourceFile = sourceRoot.findFileByRelativePath(relativePath);
+        if (sourceFile != null) {
+          outSourceRoots.add(sourceFile);
+        }
+      }
+    }
+  }
+
   @NotNull
   static SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {
     SearchScope customScope = findModel.getCustomScope();
@@ -454,9 +475,20 @@ public class FindInProjectUtil {
     return findModel.isCustomScope() && customScope != null ? customScope :
            // we don't have to check for myProjectFileIndex.isExcluded(file) here like FindInProjectTask.collectFilesInScope() does
            // because all found usages are guaranteed to be not in excluded dir
-           directory != null ? GlobalSearchScopesCore.directoryScope(project, directory, findModel.isWithSubdirectories()) :
+           directory != null ? forDirectory(project, findModel.isWithSubdirectories(), directory) :
            module != null ? module.getModuleContentScope() :
            findModel.isProjectScope() ? ProjectScope.getContentScope(project) :
            GlobalSearchScope.allScope(project);
+  }
+
+  @NotNull
+  private static GlobalSearchScope forDirectory(@NotNull Project project,
+                                                boolean withSubdirectories,
+                                                @NotNull VirtualFile directory) {
+    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    result.add(directory);
+    addSourceDirectoriesFromLibraries(project, directory, result);
+    VirtualFile[] array = result.toArray(new VirtualFile[result.size()]);
+    return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
   }
 }

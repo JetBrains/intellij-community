@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,4 +36,10 @@ public interface FlyweightCapableTreeStructure<T> {
   int getChildren(@NotNull T parent, @NotNull Ref<T[]> into);
 
   void disposeChildren(T[] nodes, int count);
+
+  @NotNull
+  CharSequence toString(@NotNull T node);
+
+  int getStartOffset(@NotNull T node);
+  int getEndOffset(@NotNull T node);
 }

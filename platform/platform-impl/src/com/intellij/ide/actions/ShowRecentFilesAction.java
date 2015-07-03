@@ -32,7 +32,7 @@ public class ShowRecentFilesAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
-    Switcher.createAndShowSwitcher(e, IdeBundle.message("title.popup.recent.files"), true);
+    Switcher.createAndShowSwitcher(e, IdeBundle.message("title.popup.recent.files"), true, null);
   }
 
   @Override

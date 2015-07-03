@@ -16,6 +16,9 @@
 package com.intellij.util.diff;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ThreeState;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +33,13 @@ import java.util.List;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class DiffTreeTest extends TestCase {
   private static class Node {
+    private final int myStartOffset;
     @NotNull
     private final Node[] myChildren;
     private final int myId;
 
-    public Node(final int id, @NotNull Node... children) {
+    public Node(final int id, int startOffset, @NotNull Node... children) {
+      myStartOffset = startOffset;
       myChildren = children;
       myId = id;
     }
@@ -55,7 +60,17 @@ public class DiffTreeTest extends TestCase {
 
     @Override
     public String toString() {
-      return String.valueOf(myId);
+      return getChildren().length == 0 ? String.valueOf(myId) : StringUtil.join(myChildren, new Function<Node, String>() {
+        @Override
+        public String fun(Node node) {
+          return node.toString();
+        }
+      }, "");
+    }
+
+    public TextRange getTextRange() {
+      int endOffset = myChildren.length == 0 ? myStartOffset + toString().length() : myChildren[myChildren.length-1].getTextRange().getEndOffset();
+      return new TextRange(myStartOffset, endOffset);
     }
   }
 
@@ -92,6 +107,22 @@ public class DiffTreeTest extends TestCase {
     @Override
     public void disposeChildren(final Node[] nodes, final int count) {
     }
+
+    @NotNull
+    @Override
+    public CharSequence toString(@NotNull Node node) {
+      return node.toString();
+    }
+
+    @Override
+    public int getStartOffset(@NotNull Node node) {
+      return node.getTextRange().getStartOffset();
+    }
+
+    @Override
+    public int getEndOffset(@NotNull Node node) {
+      return node.getTextRange().getEndOffset();
+    }
   }
 
   private static class NodeComparator implements ShallowNodeComparator<Node, Node> {
@@ -117,17 +148,17 @@ public class DiffTreeTest extends TestCase {
 
     @Override
     public void nodeReplaced(@NotNull final Node oldNode, @NotNull final Node newNode) {
-      myResults.add("REPLACED: " + oldNode + " to " + newNode);
+      myResults.add("REPLACED: " + oldNode.getId() + " to " + newNode.getId());
     }
 
     @Override
     public void nodeDeleted(@NotNull final Node parent, @NotNull final Node child) {
-      myResults.add("DELETED from " + parent + ": " + child);
+      myResults.add("DELETED from " + parent.getId() + ": " + child.getId());
     }
 
     @Override
     public void nodeInserted(@NotNull final Node oldParent, @NotNull final Node node, final int pos) {
-      myResults.add("INSERTED to " + oldParent + ": " + node + " at " + pos);
+      myResults.add("INSERTED to " + oldParent.getId() + ": " + node.getId() + " at " + pos);
     }
 
     public List<String> getEvents() {
@@ -136,32 +167,32 @@ public class DiffTreeTest extends TestCase {
   }
 
   public void testEmptyEqualRoots() throws Exception {
-    Node r1 = new Node(0);
-    Node r2 = new Node(0);
+    Node r1 = new Node(0,0);
+    Node r2 = new Node(0,0);
     final String expected = "";
 
     performTest(r1, r2, expected);
   }
 
   public void testSingleChildEqualRoots() throws Exception {
-    Node r1 = new Node(0, new Node(1));
-    Node r2 = new Node(0, new Node(1));
+    Node r1 = new Node(0,0, new Node(1,0));
+    Node r2 = new Node(0,0, new Node(1,0));
     final String expected = "";
 
     performTest(r1, r2, expected);
   }
 
   public void testTheOnlyChildRemoved() throws Exception {
-    Node r1 = new Node(0, new Node(1));
-    Node r2 = new Node(0);
+    Node r1 = new Node(0,0, new Node(1,0));
+    Node r2 = new Node(0,0);
     String expected = "DELETED from 0: 1";
 
     performTest(r1, r2, expected);
   }
 
   public void testTheOnlyChildAdded() throws Exception {
-    Node r1 = new Node(0);
-    Node r2 = new Node(0, new Node(1));
+    Node r1 = new Node(0,0);
+    Node r2 = new Node(0,0, new Node(1,0));
     String expected = "INSERTED to 0: 1 at 0";
 
     performTest(r1, r2, expected);
@@ -169,56 +200,56 @@ public class DiffTreeTest extends TestCase {
   }
 
   public void testTheOnlyChildReplaced() throws Exception {
-    Node r1 = new Node(0, new Node(1));
-    Node r2 = new Node(0, new Node(2));
+    Node r1 = new Node(0,0, new Node(1,0));
+    Node r2 = new Node(0,0, new Node(2,0));
     String expected = "REPLACED: 1 to 2";
 
     performTest(r1, r2, expected);
   }
 
   public void testInsertedIntoTheMiddle() throws Exception {
-    Node r1 = new Node(0, new Node(1, new Node(21), new Node(23)));
-    Node r2 = new Node(0, new Node(1, new Node(21), new Node(22), new Node(23)));
-    String expected = "INSERTED to 1: 22 at 1";
+    Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1)));
+    Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(4,1), new Node(3,2)));
+    String expected = "INSERTED to 1: 4 at 1";
 
     performTest(r1, r2, expected);
   }
 
   public void testInsertedFirst() throws Exception {
-    Node r1 = new Node(0, new Node(1, new Node(22), new Node(23)));
-    Node r2 = new Node(0, new Node(1, new Node(21), new Node(22), new Node(23)));
-    String expected = "INSERTED to 1: 21 at 0";
+    Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(4,1)));
+    Node r2 = new Node(0,0, new Node(1,0, new Node(3,0), new Node(2,1), new Node(4,2)));
+    String expected = "INSERTED to 1: 3 at 0";
 
     performTest(r1, r2, expected);
   }
 
   public void testInsertedLast() throws Exception {
-    Node r1 = new Node(0, new Node(1, new Node(21), new Node(22)));
-    Node r2 = new Node(0, new Node(1, new Node(21), new Node(22), new Node(23)));
-    String expected = "INSERTED to 1: 23 at 2";
+    Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1)));
+    Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1), new Node(4,2)));
+    String expected = "INSERTED to 1: 4 at 2";
 
     performTest(r1, r2, expected);
   }
 
   public void testInsertedTwoLast() throws Exception {
-    Node r1 = new Node(0, new Node(1, new Node(21), new Node(22)));
-    Node r2 = new Node(0, new Node(1, new Node(21), new Node(22), new Node(23), new Node(24)));
+    Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1)));
+    Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1), new Node(4,2), new Node(5,3)));
 
-    performTest(r1, r2, "INSERTED to 1: 24 at 2", "INSERTED to 1: 23 at 2");
+    performTest(r1, r2, "INSERTED to 1: 5 at 2", "INSERTED to 1: 4 at 2");
   }
 
   public void testSubtreeAppears() throws Exception {
-    Node r1 = new Node(0, new Node(1, new Node(21), new Node(22), new Node(23)));
-    Node r2 = new Node(0, new Node(1, new Node(21), new Node(22, new Node(221)), new Node(23)));
+    Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1), new Node(4,2)));
+    Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1, new Node(6,1)), new Node(4,2)));
 
-    performTest(r1, r2, "INSERTED to 22: 221 at 0");
+    performTest(r1, r2, "INSERTED to 3: 6 at 0");
   }
 
   public void testSubtreeChanges() throws Exception {
-    Node r1 = new Node(0, new Node(1, new Node(21), new Node(22, new Node(221)), new Node(23)));
-    Node r2 = new Node(0, new Node(1, new Node(21), new Node(250, new Node(222)), new Node(23)));
+    Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1, new Node(6,1)), new Node(4,2)));
+    Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(5,1, new Node(6,1)), new Node(4,2)));
 
-    performTest(r1, r2, "REPLACED: 22 to 250");
+    performTest(r1, r2, "REPLACED: 3 to 5");
   }
 
   private static void performTest(final Node r1, final Node r2, final String... expected) {

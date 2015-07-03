@@ -73,7 +73,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   }
 
   @Override
-  public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
+  public TextRange shiftIndentInsideRange(ASTNode node, TextRange textRange, int shift) {
     return textRange; // TODO: Remove this method from here...
   }
 

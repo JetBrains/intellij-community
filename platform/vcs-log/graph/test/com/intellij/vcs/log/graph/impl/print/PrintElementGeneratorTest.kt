@@ -79,25 +79,21 @@ public class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGen
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun oneNode() {
     doTest("oneNode")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun longEdges() {
     doTest("longEdges")
   }
 
   Test
-  throws(javaClass<IOException>())
   public fun specialElements() {
     doTest("specialElements")
   }

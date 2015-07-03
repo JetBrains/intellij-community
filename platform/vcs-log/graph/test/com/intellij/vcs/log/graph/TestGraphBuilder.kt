@@ -93,7 +93,7 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 
     val SimpleEdge.toIndex: Int?  get() = toNode?.let { nodeIdToIndex[it] }
 
-    ;{
+    init {
       val idsMap = HashMap<Int, Int>()
       nodes = buildNodes.map2 {(index, it) ->
         idsMap[index] = it.nodeId
