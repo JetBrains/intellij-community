@@ -31,6 +31,9 @@ public interface PlatformRepository {
   RuntimeModuleDescriptor getRequiredModule(@NotNull RuntimeModuleId moduleName);
 
   @NotNull
+  String getModuleRootPath(@NotNull RuntimeModuleId id);
+
+  @NotNull
   List<String> getModuleRootPaths(@NotNull RuntimeModuleId id);
 
   @NotNull

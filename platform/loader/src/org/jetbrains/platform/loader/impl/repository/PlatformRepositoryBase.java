@@ -100,6 +100,16 @@ public abstract class PlatformRepositoryBase implements PlatformRepository {
 
   @NotNull
   @Override
+  public String getModuleRootPath(@NotNull RuntimeModuleId id) {
+    List<File> roots = getRequiredModule(id).getModuleRoots();
+    if (roots.size() != 1) {
+      throw new IllegalArgumentException("Module with single root expected but '" + id.getStringId() + "' has " + roots.size() + " roots");
+    }
+    return roots.get(0).getAbsolutePath();
+  }
+
+  @NotNull
+  @Override
   public List<String> getModuleRootPaths(@NotNull RuntimeModuleId id) {
     List<String> paths = new ArrayList<String>();
     for (File file : getRequiredModule(id).getModuleRoots()) {

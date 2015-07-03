@@ -24,7 +24,6 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -40,8 +39,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
@@ -167,14 +167,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     if (userDefined != null && new File(userDefined).exists()) {
       return userDefined;
     }
-
-    final File ourJar = new File(PathUtil.getJarPathForClass(GroovyHotSwapper.class));
-    if (ourJar.isDirectory()) { //development mode
-      return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
-    }
-
-    final File pluginDir = ourJar.getParentFile();
-    return pluginDir.getPath() + File.separator + "agent" + File.separator + "gragent.jar";
+    return PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.moduleResource("jetgroovy", "gragent.jar"));
   }
 
 }
