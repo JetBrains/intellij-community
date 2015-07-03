@@ -462,9 +462,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public void doneBefore(@NotNull final IElementType type, @NotNull final Marker before, final String errorMessage) {
-      final StartMarker marker = (StartMarker)before;
-      myBuilder.myProduction.add(myBuilder.myProduction.lastIndexOf(marker),
-                                 new ErrorItem(myBuilder, errorMessage, marker.myLexemeIndex));
+      StartMarker marker = (StartMarker)before;
+      myBuilder.myProduction.add(myBuilder.myProduction.lastIndexOf(marker), new ErrorItem(myBuilder, errorMessage, marker.myLexemeIndex));
       doneBefore(type, before);
     }
 
@@ -503,18 +502,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
-    public CharSequence getText() {
+    @Override
+    public String toString() {
+      if (myBuilder == null) return "<dropped>";
       boolean isDone = myDoneMarker != null;
       CharSequence originalText = myBuilder.getOriginalText();
       int startOffset = getStartOffset();
       int endOffset = isDone ? getEndOffset() : myBuilder.getCurrentOffset();
       CharSequence text = originalText.subSequence(startOffset, endOffset);
-      return isDone ? text : text + "...";
-    }
-
-    @Override
-    public String toString() {
-      return getText().toString();
+      return isDone ? text.toString() : text + "...";
     }
   }
 
