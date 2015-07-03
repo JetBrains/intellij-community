@@ -61,7 +61,7 @@ public class EditSourceUtil {
   }
 
   private static PsiElement getNavigatableOriginalElement(PsiElement element) {
-    final List<? extends PsiElement> originalElements = GeneratedSourcesFilter.getAllOriginalElements(element);
+    final List<? extends PsiElement> originalElements = GeneratedSourcesFilter.collectAllOriginalElements(element);
     for (PsiElement original: originalElements) {
       if (canNavigate(original)) {
         return original;
