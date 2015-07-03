@@ -1135,6 +1135,17 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     return null;
   }
 
+  @Nullable
+  public RunnerAndConfigurationSettings findConfigurationByTypeAndName(@NotNull String typeId, @NotNull String name) {
+    for (RunnerAndConfigurationSettings settings : getSortedConfigurations()) {
+      ConfigurationType t = settings.getType();
+      if (t != null && typeId.equals(t.getId()) && name.equals(settings.getName())) {
+        return settings;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   @Override
   public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {

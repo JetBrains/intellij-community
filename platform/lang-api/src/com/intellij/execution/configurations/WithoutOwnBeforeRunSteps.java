@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 package com.intellij.execution.configurations;
 
 /**
- * Allow to get before/after steps from wrapped configuration: e.g. to rerun tests with initial tests before options
+ * Marker interface to NOT show "Before launch" section in Run/Debug Configuration editor
  */
-public interface WrappingRunConfiguration<T extends RunConfiguration> extends WithoutOwnBeforeRunSteps {
-  T getPeer();
+public interface WithoutOwnBeforeRunSteps {
 }
