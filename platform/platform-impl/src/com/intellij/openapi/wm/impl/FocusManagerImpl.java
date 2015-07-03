@@ -1098,7 +1098,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (mgr.getFocusOwner() == null) {
         Component c = getComponent(myLastFocusedAtDeactivation, ideFrame);
         if (c == null || !c.isShowing()) {
-          c = getComponent(myLastFocused, ideFrame);
+          c = getComponent(myLastFocusedAtDeactivation, ideFrame);
         }
 
         final boolean mouseEventAhead = IdeEventQueue.isMouseEventAhead(null);
