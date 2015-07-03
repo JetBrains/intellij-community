@@ -434,10 +434,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     if (hint.isVisible()) {
       if (updateSize) {
-        hint.updateBounds(p.x, p.y);
-      } else {
-        hint.updateLocation(p.x, p.y);
+        hint.pack();
       }
+      hint.updatePosition(hintInfo.getPreferredPosition());
+      hint.updateLocation(p.x, p.y);
     }
     else {
       hint.show(externalComponent, p.x, p.y, editor.getContentComponent(), hintInfo);
