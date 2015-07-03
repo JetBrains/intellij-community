@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
@@ -233,6 +235,13 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
     }
 
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
+      CollectConversion.addCollectConversion((PsiReferenceExpression)parent, expected, 
+                                             JavaSmartCompletionContributor.decorateWithoutTypeCheck(result, expected));
+    }
+
     if (IMPORT_REFERENCE.accepts(position)) {
       result.addElement(LookupElementBuilder.create("*"));
     }
@@ -254,7 +263,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     addAllClasses(parameters, result, inheritors);
 
-    final PsiElement parent = position.getParent();
     if (parent instanceof PsiReferenceExpression &&
         !((PsiReferenceExpression)parent).isQualified() &&
         parameters.isExtendedCompletion() &&

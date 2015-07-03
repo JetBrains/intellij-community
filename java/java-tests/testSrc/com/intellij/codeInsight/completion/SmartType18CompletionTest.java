@@ -146,6 +146,10 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  public void testCollectorsToList() {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }
