@@ -501,20 +501,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         if (myErrorStripeRenderer != null) {
-          if (isMirrored() && g instanceof Graphics2D) {
-            Graphics2D g2d = (Graphics2D)g;
-            AffineTransform old = g2d.getTransform();
-            AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
-            tx.translate(-getErrorIconWidth(), 0);
-            g2d.transform(tx);
-            myErrorStripeRenderer.paint(this, g2d, new Rectangle(0, 0, getErrorIconWidth(), getErrorIconHeight()));
-            g2d.setTransform(old);
-          }
-          else {
-            int x = getThinGap() + myMinMarkHeight;
-            final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
-            myErrorStripeRenderer.paint(this, g, b);
-          }
+          int x = isMirrored() ? 0 : (getThinGap() + myMinMarkHeight);
+          final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
+          myErrorStripeRenderer.paint(this, g, b);
         }
       }
       finally {
