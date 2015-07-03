@@ -303,6 +303,11 @@ private layoutFull(Map args, String target, Set usedJars) {
         fileset(file: it)
       }
 
+      fileset(dir: "$home/community/build/kotlinc/lib") {
+        include(name: "kotlin-runtime.jar")
+        include(name: "kotlin-reflect.jar")
+      }
+
       dir("libpty") {
         fileset(dir: "$ch/lib/libpty") {
           exclude(name: "*.txt")
