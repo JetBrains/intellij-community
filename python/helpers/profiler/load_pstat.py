@@ -4,7 +4,7 @@ import pstats
 from prof_util import statsToResponse
 
 from _prof_imports import TSerialization
-from _prof_imports import TJSONProtocol
+from _prof_imports import TBinaryProtocol
 from _prof_imports import ProfilerResponse
 from _prof_imports import IS_PY3K
 
@@ -19,13 +19,20 @@ if __name__ == '__main__':
 
     statsToResponse(stats.stats, m)
 
-    data = TSerialization.serialize(m, TJSONProtocol.TJSONProtocolFactory())
+    data = TSerialization.serialize(m, TBinaryProtocol.TBinaryProtocolFactory())
 
+    # setup stdout to write binary data to it
     if IS_PY3K:
-        data = data.decode("utf-8")
+        out = sys.stdout.buffer
+    elif sys.platform == 'win32':
+        import os, msvcrt
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+        out = sys.stdout
+    else:
+        out = sys.stdout
 
-    sys.stdout.write(data)
-    sys.stdout.flush()
+    out.write(data)
+    out.flush()
 
 
 

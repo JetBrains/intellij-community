@@ -388,6 +388,7 @@ class RunConfigurable extends BaseConfigurable {
 
     JComponent configurableComponent = configurable.createComponent();
     final JBScrollPane scrollPane = new JBScrollPane(configurableComponent);
+    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
     scrollPane.setBorder(null);
     myRightPanel.add(scrollPane, BorderLayout.CENTER);
     if (configurable instanceof SingleConfigurationConfigurable) {

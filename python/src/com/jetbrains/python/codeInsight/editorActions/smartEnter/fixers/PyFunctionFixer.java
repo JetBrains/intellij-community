@@ -22,7 +22,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +39,7 @@ public class PyFunctionFixer extends PyFixer<PyFunction> {
   @Override
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyFunction function)
     throws IncorrectOperationException {
-    final PsiElement colon = PyUtil.getFirstChildOfType(function, PyTokenTypes.COLON);
+    final PsiElement colon = PyPsiUtils.getFirstChildOfType(function, PyTokenTypes.COLON);
     if (!isFakeFunction(function) && colon == null) {
       final PyParameterList parameterList = function.getParameterList();
       if (function.getNameNode() == null) {

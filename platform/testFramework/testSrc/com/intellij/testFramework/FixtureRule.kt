@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.testFramework
+package com.intellij.testFramework
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.junit.rules.ExternalResource
 

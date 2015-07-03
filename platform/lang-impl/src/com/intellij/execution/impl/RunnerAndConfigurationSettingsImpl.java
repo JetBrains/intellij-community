@@ -72,6 +72,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   @NonNls
   private static final String EDIT_BEFORE_RUN = "editBeforeRun";
   @NonNls
+  private static final String ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun";
+  @NonNls
   public static final String SINGLETON = "singleton";
 
   /** for compatibility */
@@ -98,6 +100,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   private boolean myTemporary;
   private boolean myEditBeforeRun;
+  private boolean myActivateToolWindowBeforeRun = true;
   private boolean mySingleton;
   private boolean myWasSingletonSpecifiedExplicitly;
   private String myFolderName;
@@ -306,6 +309,16 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   @Override
+  public void setActivateToolWindowBeforeRun(boolean activate) {
+    myActivateToolWindowBeforeRun = activate;
+  }
+
+  @Override
+  public boolean isActivateToolWindowBeforeRun() {
+    return myActivateToolWindowBeforeRun;
+  }
+
+  @Override
   public void setSingleton(boolean singleton) {
     mySingleton = singleton;
   }
@@ -338,6 +351,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
     myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
     myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
+    String value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN);
+    myActivateToolWindowBeforeRun = value == null || Boolean.valueOf(value).booleanValue();
     myFolderName = element.getAttributeValue(FOLDER_NAME);
     //assert myID == null: "myId must be null at readExternal() stage";
     //myID = element.getAttributeValue(UNIQUE_ID, UUID.randomUUID().toString());
@@ -390,6 +405,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
       if (isEditBeforeRun()) {
         element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
+      }
+      if (!isActivateToolWindowBeforeRun()) {
+        element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, String.valueOf(false));
       }
       if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault()) {
         element.setAttribute(SINGLETON, String.valueOf(mySingleton));
@@ -469,6 +487,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     setSingleton(template.isSingleton());
     setEditBeforeRun(template.isEditBeforeRun());
+    setActivateToolWindowBeforeRun(template.isActivateToolWindowBeforeRun());
   }
 
   @SuppressWarnings("deprecation")

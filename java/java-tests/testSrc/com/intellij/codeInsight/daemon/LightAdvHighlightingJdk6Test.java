@@ -63,4 +63,8 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testAgentPremain() {
     doTest(false, false); 
   }
+
+  public void testInitializedBeforeUsed() throws Exception {
+    doTest(false, false);
+  }
 }

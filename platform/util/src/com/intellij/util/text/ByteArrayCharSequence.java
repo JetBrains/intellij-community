@@ -15,7 +15,6 @@
  */
 package com.intellij.util.text;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteArrayCharSequence implements CharSequence {
@@ -38,11 +37,6 @@ public class ByteArrayCharSequence implements CharSequence {
       hash = h;
     }
     return h;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof CharSequence && StringUtil.equals(this, (CharSequence)obj);
   }
 
   @Override

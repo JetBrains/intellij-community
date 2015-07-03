@@ -24,7 +24,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -45,18 +45,18 @@ public class PyConditionalStatementPartFixer extends PyFixer<PyConditionalStatem
     throws IncorrectOperationException {
     final PyExpression condition = statementPart.getCondition();
     final Document document = editor.getDocument();
-    final PsiElement colon = PyUtil.getFirstChildOfType(statementPart, PyTokenTypes.COLON);
+    final PsiElement colon = PyPsiUtils.getFirstChildOfType(statementPart, PyTokenTypes.COLON);
     if (colon == null) {
       if (condition != null) {
-        final PsiElement firstNonComment = PyUtil.getFirstNonCommentAfter(condition.getNextSibling());
+        final PsiElement firstNonComment = PyPsiUtils.getNextNonCommentSibling(condition.getNextSibling(), false);
         if (firstNonComment != null && !":".equals(firstNonComment.getNode().getText())) {
           document.insertString(firstNonComment.getTextRange().getEndOffset(), ":");
         }
       }
       else {
         final TokenSet keywords = TokenSet.create(PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD, PyTokenTypes.WHILE_KEYWORD);
-        final PsiElement keywordToken = PyUtil.getChildByFilter(statementPart,
-                                                                keywords, 0);
+        final PsiElement keywordToken = PyPsiUtils.getChildByFilter(statementPart,
+                                                                    keywords, 0);
         final int offset = sure(keywordToken).getTextRange().getEndOffset();
         document.insertString(offset, " :");
         processor.registerUnresolvedError(offset + 1);
