@@ -120,7 +120,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
 
       try {
-        if (myStreamProvider != null && myStreamProvider.isEnabled()) {
+        if (myStreamProvider != null && myStreamProvider.getEnabled()) {
           // stream provider always use LF separator
           saveForProvider(myLineSeparator == LineSeparator.LF ? content : null, element);
         }

@@ -86,8 +86,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       updateExtension = false
     }
 
-    val application = ApplicationManager.getApplication()
-    val virtualFileTracker = ServiceManager.getService(javaClass<VirtualFileTracker>())
+    val virtualFileTracker = if (provider != null && provider.enabled) null else ServiceManager.getService(javaClass<VirtualFileTracker>())
     if (virtualFileTracker != null) {
       val baseDirPath = ioDirectory.getAbsolutePath().replace(File.separatorChar, '/')
       virtualFileTracker.addTracker(LocalFileSystem.PROTOCOL_PREFIX + baseDirPath, object : VirtualFileAdapter() {
@@ -189,7 +188,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
             processor.onCurrentSchemeChanged(oldCurrentScheme)
           }
         }
-      }, false, application)
+      }, false, ApplicationManager.getApplication())
     }
   }
 
@@ -249,7 +248,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
   override fun loadSchemes(): Collection<E> {
     val newSchemesOffset = schemes.size()
-    if (provider != null && provider.isEnabled()) {
+    if (provider != null && provider.enabled) {
       provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         val scheme = loadScheme(name, input, true)
         if (readOnly && scheme != null) {
@@ -505,7 +504,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     val byteOut = StorageUtil.writeToBytes(element, "\n")
 
     var providerPath: String?
-    if (provider != null && provider.isEnabled()) {
+    if (provider != null && provider.enabled) {
       providerPath = fileSpec + '/' + fileName
       if (!provider.isApplicable(providerPath, roamingType)) {
         providerPath = null
@@ -577,7 +576,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       return
     }
 
-    if (provider != null && provider.isEnabled()) {
+    if (provider != null && provider.enabled) {
       for (name in filesToDelete) {
         errors.catch {
           StorageUtil.delete(provider, fileSpec + '/' + name, roamingType)
