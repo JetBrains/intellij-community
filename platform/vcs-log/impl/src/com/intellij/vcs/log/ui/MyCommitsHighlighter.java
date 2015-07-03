@@ -27,6 +27,7 @@ import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Set;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogUiProperties myUiProperties;
@@ -48,12 +49,15 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
     if (!myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    Map<VirtualFile, VcsUser> users = myDataHolder.getCurrentUser();
-    VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
-    if (details != null && !(details instanceof LoadingDetails)) {
-      VcsUser currentUser = users.get(details.getRoot());
-      if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
-        return VcsCommitStyleFactory.bold();
+    Map<VirtualFile, VcsUser> currentUsers = myDataHolder.getCurrentUser();
+    Set<VcsUser> allUsers = myDataHolder.getUserRegistry().getUsers();
+    if (allUsers.size() != currentUsers.values().size() || !currentUsers.values().containsAll(allUsers)) {
+      VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
+      if (details != null && !(details instanceof LoadingDetails)) {
+        VcsUser currentUser = currentUsers.get(details.getRoot());
+        if (currentUser != null && VcsUserImpl.isSamePerson(currentUser, details.getAuthor())) {
+          return VcsCommitStyleFactory.bold();
+        }
       }
     }
     return VcsCommitStyle.DEFAULT;
