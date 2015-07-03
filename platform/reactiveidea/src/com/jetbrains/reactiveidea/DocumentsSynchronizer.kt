@@ -105,10 +105,10 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         val projectView = ProjectView.getInstance(project)
         val viewPane = projectView.getProjectViewPaneById(ProjectViewPane.ID) as AbstractProjectViewPSIPane
         val treeStructure = viewPane.createStructure()
-        viewHost = ProjectViewHost(project, projectView, lifetime.lifetime, serverModel, Path("project-view"), treeStructure, viewPane)
+        viewHost = ProjectViewHost(project, projectView, serverModel, Path("project-view"), treeStructure, viewPane)
       })
 
-      tabHost = TabViewHost(lifetime.lifetime, serverModel, Path("tab-view"))
+      tabHost = TabViewHost(serverModel, Path("tab-view"))
 
 
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
@@ -180,9 +180,6 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
 
     serverEditorTracker.setActiveEditors(activeEditors)
   }
-
-  private fun isClient(): Boolean = System.getProperty("com.jetbrains.reactiveidea.client") == "true"
-
 
   override fun disposeComponent() {
     lifetime.terminate()

@@ -35,8 +35,8 @@ import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 
-public class DocumentHost(lifetime: Lifetime, reactModel: ReactiveModel, path: Path, val doc: Document,
-                          project: Project?, providesMarkup: Boolean, caretGuard: Guard) : MetaHost(lifetime, reactModel, path) {
+public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Document, project: Project?,
+                          providesMarkup: Boolean, caretGuard: Guard) : MetaHost(reactModel, path) {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
   private val recursionGuard = Guard()
 
@@ -123,11 +123,7 @@ public class DocumentHost(lifetime: Lifetime, reactModel: ReactiveModel, path: P
 
     val documentMarkup = DocumentMarkupModel.forDocument(doc, project, true) as MarkupModelEx
     if (providesMarkup) {
-      ServerMarkupHost(
-          documentMarkup,
-          reactModel,
-          path / "markup",
-          lifetime)
+      ServerMarkupHost(documentMarkup, reactModel, path / "markup")
     } else {
       ClientMarkupHost(
           documentMarkup,

@@ -35,8 +35,8 @@ import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 import java.util.HashMap
 
-public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path,
-                        val file: VirtualFile, val editor: Editor, val providesMarkup: Boolean) : MetaHost(lifetime, reactiveModel, path) {
+public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: VirtualFile,
+                        val editor: Editor, val providesMarkup: Boolean) : MetaHost(reactiveModel, path) {
   companion object {
     val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
     val tags = "@@@--^tags"
@@ -68,7 +68,7 @@ public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: 
         manager.closeFile(file)
       }
     }
-    val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
+    val documentHost = DocumentHost(reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
     editor.putUserData(editorHostKey, this)
     reactiveModel.transaction { m -> (path / tags).putIn(m, ListModel(arrayListOf(PrimitiveModel("editor")))) }
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")

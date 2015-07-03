@@ -5,12 +5,13 @@ import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
+import com.jetbrains.reactivemodel.util.createMeta
 import java.util.ArrayDeque
 import java.util.HashMap
 import java.util.Queue
 
 public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
-  public var root: MapModel = MapModel()
+  public var root: MapModel = MapModel(meta = createMeta("lifetime", lifetime))
   private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
   private val transactionGuard = Guard()
