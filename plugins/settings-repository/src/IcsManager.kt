@@ -410,6 +410,9 @@ public class IcsManager : ApplicationLoadListener {
   }
 
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
+    override val enabled: Boolean
+      get() = repositoryActive
+
     override fun listSubFiles(fileSpec: String, roamingType: RoamingType): MutableCollection<String> = repositoryManager.listSubFileNames(buildPath(fileSpec, roamingType, null)) as MutableCollection<String>
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
@@ -447,8 +450,6 @@ public class IcsManager : ApplicationLoadListener {
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
     }
-
-    override fun isEnabled() = repositoryActive
   }
 }
 
