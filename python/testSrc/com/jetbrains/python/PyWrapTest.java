@@ -32,9 +32,9 @@ public class PyWrapTest extends PyTestCase {
     super.setUp();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    myOldWrap = settings.isWrapOnTyping(PythonLanguage.getInstance());
+    myOldWrap = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
     myOldMargin = pythonSettings.RIGHT_MARGIN;
-    settings.setWrapOnTyping(PythonLanguage.getInstance(), true);
+    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
     pythonSettings.RIGHT_MARGIN = 80;
   }
 
@@ -42,7 +42,7 @@ public class PyWrapTest extends PyTestCase {
   protected void tearDown() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    settings.setWrapOnTyping(PythonLanguage.getInstance(), myOldWrap);
+    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
     pythonSettings.RIGHT_MARGIN = myOldMargin;
     super.tearDown();
   }
@@ -76,9 +76,9 @@ public class PyWrapTest extends PyTestCase {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     int oldValue = pythonSettings.RIGHT_MARGIN;
-    boolean oldMarginValue = settings.isWrapOnTyping(PythonLanguage.getInstance());
+    boolean oldMarginValue = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
     pythonSettings.RIGHT_MARGIN = 100;
-    settings.setWrapOnTyping(PythonLanguage.getInstance(), true);
+    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
     try {
       final String testName = "wrap/" + getTestName(true);
       myFixture.configureByFile(testName + ".py");
@@ -89,7 +89,7 @@ public class PyWrapTest extends PyTestCase {
     }
     finally {
       pythonSettings.RIGHT_MARGIN = oldValue;
-      settings.setWrapOnTyping(PythonLanguage.getInstance(), oldMarginValue);
+      settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = oldMarginValue;
     }
   }
 

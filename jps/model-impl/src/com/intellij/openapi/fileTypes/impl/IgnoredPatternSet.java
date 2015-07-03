@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class IgnoredPatternSet {
   private final Set<String> myMasks = new LinkedHashSet<String>();
   private final FileTypeAssocTable<Boolean> myIgnorePatterns = new FileTypeAssocTable<Boolean>().copy();
 
+  @NotNull
   Set<String> getIgnoreMasks() {
     return Collections.unmodifiableSet(myMasks);
   }
@@ -41,9 +42,7 @@ public class IgnoredPatternSet {
     StringTokenizer tokenizer = new StringTokenizer(list, ";");
     while (tokenizer.hasMoreTokens()) {
       String ignoredFile = tokenizer.nextToken();
-      if (ignoredFile != null) {
-        addIgnoreMask(ignoredFile);
-      }
+      addIgnoreMask(ignoredFile);
     }
   }
 
@@ -64,7 +63,7 @@ public class IgnoredPatternSet {
     return fileName.endsWith(FileUtil.ASYNC_DELETE_EXTENSION);
   }
 
-  public void clearPatterns() {
+  void clearPatterns() {
     myMasks.clear();
     myIgnorePatterns.removeAllAssociations(Boolean.TRUE);
   }

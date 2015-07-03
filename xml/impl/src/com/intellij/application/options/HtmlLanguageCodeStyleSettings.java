@@ -42,7 +42,6 @@ public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProv
                                 @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN");
-      consumer.showStandardOptions("WRAP_ON_TYPING");
     }
   }
 

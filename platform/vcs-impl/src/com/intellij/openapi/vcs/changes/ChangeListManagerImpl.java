@@ -279,9 +279,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             vcsManager.addVcsListener(myVcsListener);
           }
         });
-    }
 
-    myConflictTracker.startTracking();
+      myConflictTracker.startTracking();
+    }
   }
 
   private void broadcastStateAfterLoad() {

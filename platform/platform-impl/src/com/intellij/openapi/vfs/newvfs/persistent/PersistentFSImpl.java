@@ -61,7 +61,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private final ReadWriteLock myRootsLock = new ReentrantReadWriteLock();
   private final Map<String, VirtualFileSystemEntry> myRoots = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
-  private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myRootsById = ContainerUtil.createConcurrentIntObjectMap();
 
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectMap();
   private final Object myInputLock = new Object();
@@ -199,7 +199,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return nameIds.toArray(new FSRecords.NameId[nameIds.size()]);
   }
 
-  public static void setChildrenCached(int id) {
+  private static void setChildrenCached(int id) {
     int flags = FSRecords.getFlags(id);
     FSRecords.setFlags(id, flags | CHILDREN_CACHED_FLAG, true);
   }
@@ -309,11 +309,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     return isDirectory(getFileAttributes(getFileId(file)));
-  }
-
-  private static int getParent(final int id) {
-    assert id > 0;
-    return FSRecords.getParent(id);
   }
 
   private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull CharSequence n1, CharSequence n2) {
@@ -912,9 +907,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       return null;
     }
 
-    boolean mark = false;
-
     myRootsLock.writeLock().lock();
+    boolean mark = false;
     try {
       VirtualFileSystemEntry root = myRoots.get(rootUrl);
       if (root != null) return root;
@@ -962,59 +956,31 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     myIdToDirCache.clear();
   }
 
-  private static final int DEPTH_LIMIT = 75;
-
   @Override
   @Nullable
   public NewVirtualFile findFileById(final int id) {
-    return findFileById(id, false, null, 0);
+    return findFileById(id, false);
   }
 
   @Override
   public NewVirtualFile findFileByIdIfCached(final int id) {
-    return findFileById(id, true, null, 0);
+    return findFileById(id, true);
   }
 
   @Nullable
-  private VirtualFileSystemEntry findFileById(int id, boolean cachedOnly, TIntArrayList visited, int mask) {
+  private VirtualFileSystemEntry findFileById(int id, boolean cachedOnly) {
     VirtualFileSystemEntry cached = myIdToDirCache.get(id);
     if (cached != null) return cached;
 
-    if (visited != null && (visited.size() >= DEPTH_LIMIT || (mask & id) == id && visited.contains(id))) {
-      @NonNls String sb = "Dead loop detected in persistent FS (id=" + id + " cached-only=" + cachedOnly + "):";
-      for (int i = 0; i < visited.size(); i++) {
-        int _id = visited.get(i);
-        sb += "\n  " + _id + " '" + getName(_id) + "' " +
-          String.format("%02x", getFileAttributes(_id)) + ' ' + myIdToDirCache.containsKey(_id);
+    TIntArrayList parents = FSRecords.getParents(id);
+    int rootId = parents.get(parents.size() - 1);
+    VirtualFileSystemEntry result = myRootsById.get(rootId);
+    for (int i=parents.size() - 2; i>=0; i--) {
+      if (result == null) {
+        break;
       }
-      LOG.error(sb);
-      return null;
-    }
-
-    int parentId = getParent(id);
-    if (parentId >= id) {
-      if (visited == null) visited = new TIntArrayList(DEPTH_LIMIT);
-    }
-    if (visited != null)  visited.add(id);
-
-    VirtualFileSystemEntry result;
-    if (parentId == 0) {
-      myRootsLock.readLock().lock();
-      try {
-        result = myRootsById.get(id);
-      }
-      finally {
-        myRootsLock.readLock().unlock();
-      }
-    }
-    else {
-      VirtualFileSystemEntry parentFile = findFileById(parentId, cachedOnly, visited, mask | id);
-      if (parentFile instanceof VirtualDirectoryImpl) {
-        result = ((VirtualDirectoryImpl)parentFile).findChildById(id, cachedOnly);
-      }
-      else {
-        result = null;
-      }
+      int parentId = parents.get(i);
+      result = ((VirtualDirectoryImpl)result).findChildById(parentId, cachedOnly);
     }
 
     if (result != null && result.isDirectory()) {
