@@ -23,9 +23,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -47,6 +49,8 @@ import java.util.Set;
  * Base class for "Go To Symbol" contributors.
  */
 public abstract class GoToSymbolProvider implements ChooseByNameContributor {
+  // non-static to store modules accepted by different providers separately
+  private final Key<CachedValue<List<Module>>> ACCEPTABLE_MODULES = Key.create("ACCEPTABLE_MODULES_" + toString());
 
   protected abstract void addNames(@NotNull Module module, Set<String> result);
 
@@ -61,7 +65,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   }
 
   private List<Module> getAcceptableModules(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<List<Module>>() {
+    return CachedValuesManager.getManager(project).getCachedValue(project, ACCEPTABLE_MODULES, new CachedValueProvider<List<Module>>() {
       @Nullable
       @Override
       public Result<List<Module>> compute() {
@@ -73,7 +77,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
         });
         return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
       }
-    });
+    }, false);
   }
 
   @Override
