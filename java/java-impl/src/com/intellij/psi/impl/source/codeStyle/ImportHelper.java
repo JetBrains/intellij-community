@@ -412,7 +412,7 @@ public class ImportHelper{
         useOnDemand = false;
       }
       // name of class we try to import is the same as of the class defined in this file
-      if (curRefClass != null) {
+      if (containsInCurrentFile(file, curRefClass)) {
         useOnDemand = true;
       }
       // check conflicts
@@ -428,10 +428,9 @@ public class ImportHelper{
     }
 
     if (useOnDemand &&
-        curRefClass != null &&
         refClass.getContainingClass() != null &&
         mySettings.INSERT_INNER_CLASS_IMPORTS &&
-        "java.lang".equals(StringUtil.getPackageName(curRefClass.getQualifiedName()))) {
+        containsInCurrentFile(file, curRefClass)) {
       return false;
     }
 
@@ -463,6 +462,17 @@ public class ImportHelper{
       LOG.error(e);
     }
     return true;
+  }
+
+  private static boolean containsInCurrentFile(@NotNull PsiJavaFile file, PsiClass curRefClass) {
+    if (curRefClass != null) {
+      final String curRefClassQualifiedName = curRefClass.getQualifiedName();
+      if (curRefClassQualifiedName != null && 
+          ArrayUtil.find(file.getImplicitlyImportedPackages(), StringUtil.getPackageName(curRefClassQualifiedName)) < 0) {
+         return true;
+      }
+    }
+    return false;
   }
 
   private static void calcClassesToReimport(PsiJavaFile file, JavaPsiFacade facade, PsiResolveHelper helper, String packageName, List<PsiClass> classesToReimport,
