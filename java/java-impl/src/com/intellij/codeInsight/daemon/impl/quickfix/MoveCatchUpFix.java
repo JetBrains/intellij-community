@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCatchSection;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiTryStatement;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +55,7 @@ public class MoveCatchUpFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCatchSection.isValid()
-           && myCatchSection.getManager().isInProject(myCatchSection)
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(myCatchSection)
            && myMoveBeforeSection.isValid()
            && myCatchSection.getCatchType() != null
            && PsiUtil.resolveClassInType(myCatchSection.getCatchType()) != null

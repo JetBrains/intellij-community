@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -76,6 +77,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     String message = null;
     if (!method.getManager().isInProject(method)) {
       message = "Move method is not supported for non-project methods";
+    } else if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(method)) {
+      message = "Move method is not supported for generated methods";
     } else if (method.isConstructor()) {
       message = RefactoringBundle.message("move.method.is.not.supported.for.constructors");
     } else if (method.getLanguage()!= JavaLanguage.INSTANCE) {
@@ -132,7 +135,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   private static void showErrorHint(Project project, DataContext dataContext, String message) {
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
-    CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
+    CommonRefactoringUtil
+      .showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
   }
 
   @Nullable
@@ -143,6 +147,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     boolean classesInProjectFound = false;
+    boolean nonGeneratedClassedFound = false;
     for (PsiVariable variable : allVariables) {
       final PsiType type = variable.getType();
       if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters()) {
@@ -153,7 +158,10 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
           final boolean inProject = method.getManager().isInProject(psiClass);
           if (inProject) {
             classesInProjectFound = true;
-            suitableVariables.add(variable);
+            if (GeneratedSourcesFilter.isInProjectAndNotGenerated(method)) {
+              nonGeneratedClassedFound = true;
+              suitableVariables.add(variable);
+            }
           }
         }
       }
@@ -168,6 +176,9 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       }
       else if (!classesInProjectFound) {
         return RefactoringBundle.message("all.candidate.variables.have.types.not.in.project");
+      }
+      else if (!nonGeneratedClassedFound) {
+        return RefactoringBundle.message("all.candidate.variables.have.types.from.generated.sources");
       }
     }
     return null;
@@ -197,7 +208,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     public static boolean hasTypeParameters(PsiElement element) {
       final TypeParametersSearcher searcher = new TypeParametersSearcher();
       final boolean[] hasParameters = new boolean[]{false};
-      element.accept(new JavaRecursiveElementWalkingVisitor(){
+      element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitTypeElement(PsiTypeElement type) {
           super.visitTypeElement(type);

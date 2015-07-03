@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -389,7 +390,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private static boolean isLibraryInterfaceMethod(final PsiMethod method) {
-    return method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.getManager().isInProject(method);
+    return method.hasModifierProperty(PsiModifier.ABSTRACT) && !GeneratedSourcesFilter.isInProjectAndNotGenerated(method);
   }
 
   private class Introducer {

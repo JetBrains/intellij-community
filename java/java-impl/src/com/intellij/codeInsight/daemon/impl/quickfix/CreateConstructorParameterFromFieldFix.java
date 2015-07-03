@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -86,8 +87,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
   private static boolean isAvailable(PsiField field) {
     PsiClass containingClass = field == null ? null : field.getContainingClass();
-    return field != null
-           && field.getManager().isInProject(field)
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(field)
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
            && !(containingClass instanceof PsiSyntheticClass)

@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -689,7 +690,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final PsiType type = TypeConversionUtil.erasure(((PsiParameter)element).getType());
         final PsiClass aClass = PsiUtil.resolveClassInType(type);
         if (aClass != null) {
-          if (!myManager.isInProject(element) || !myManager.areElementsEquivalent(aClass, myClass)) {
+          if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(element) || !myManager.areElementsEquivalent(aClass, myClass)) {
             if (!isSuperInheritor(aClass)) {
               markNode(element);
             }

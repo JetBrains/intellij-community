@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,10 @@ public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsi
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement instanceof PsiVariable && startElement.isValid() && ((PsiVariable)startElement).getTypeElement() != null;
+    return super.isAvailable(project, file, startElement, endElement)
+           && startElement instanceof PsiVariable
+           && startElement.isValid()
+           && ((PsiVariable)startElement).getTypeElement() != null;
   }
 
   @Override

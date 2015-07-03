@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
@@ -220,6 +221,9 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     }
     if (!psiClass.getManager().isInProject(psiClass)) {
       return "Library classes cannot be inlined";
+    }
+    if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(psiClass)) {
+      return "Generated source code cannot be inlined";
     }
 
     PsiClassType[] classTypes = psiClass.getExtendsListTypes();

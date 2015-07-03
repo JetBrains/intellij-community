@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -99,7 +100,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
                                         @NotNull PsiElement context) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
-    if (method != null && context.getManager().isInProject(method)) {
+    if (GeneratedSourcesFilter.isInProjectAndNotGenerated(method)) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == expressions.length) {
         for (int i = 0, length = parameters.length; i < length; i++) {

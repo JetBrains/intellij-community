@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, LowPri
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file.getManager().isInProject(file)
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(file)
            && file instanceof PsiJavaFile
            && !CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY
       ;

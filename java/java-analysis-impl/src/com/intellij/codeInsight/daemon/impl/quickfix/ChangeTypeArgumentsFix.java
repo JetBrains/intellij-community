@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -157,7 +158,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
                                         @NotNull PsiElement context) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
-    if (method != null && context.getManager().isInProject(method)) {
+    if (GeneratedSourcesFilter.isInProjectAndNotGenerated(method)) {
       final ChangeTypeArgumentsFix fix = new ChangeTypeArgumentsFix(method, psiClass, expressions, context);
       QuickFixAction.registerQuickFixAction(highlightInfo, null, fix);
     }

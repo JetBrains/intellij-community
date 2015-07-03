@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -120,14 +121,16 @@ public class VariableTypeFromCallFix implements IntentionAction {
                                                                                    expressions, PsiSubstitutor.EMPTY, resolved,
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
             final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
-            if (!varType.equals(appropriateVarType)) {
+            if (!varType.equals(appropriateVarType) && GeneratedSourcesFilter.isInProjectAndNotGenerated(resolved)) {
               actions.add(new VariableTypeFromCallFix(appropriateVarType, (PsiVariable)resolved));
             }
             break;
           }
         }
       }
-      actions.addAll(getParameterTypeChangeFixes(method, expression, parameterType));
+      if (GeneratedSourcesFilter.isInProjectAndNotGenerated(methodCall)) {
+        actions.addAll(getParameterTypeChangeFixes(method, expression, parameterType));
+      }
     }
     return actions;
   }
@@ -140,10 +143,10 @@ public class VariableTypeFromCallFix implements IntentionAction {
     }
     List<IntentionAction> result = new ArrayList<IntentionAction>();
     final PsiManager manager = method.getManager();
-    if (manager.isInProject(method)) {
+    if (GeneratedSourcesFilter.isInProjectAndNotGenerated(method)) {
       final PsiMethod[] superMethods = method.findDeepestSuperMethods();
       for (PsiMethod superMethod : superMethods) {
-        if (!manager.isInProject(superMethod)) return Collections.emptyList();
+        if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(superMethod)) return Collections.emptyList();
       }
       final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
       if (resolve instanceof PsiVariable) {

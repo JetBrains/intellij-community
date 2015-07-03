@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
@@ -82,7 +83,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (containingClass instanceof PsiAnonymousClass) {
       final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
       final PsiClass baseClass = baseClassType.resolve();
-      if (baseClass != null && manager.isInProject(baseClass)) {
+      if (GeneratedSourcesFilter.isInProjectAndNotGenerated(baseClass)) {
         pullUp(method, containingClass, baseClass);
       }
     }
@@ -116,7 +117,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private static void collectClassesToPullUp(PsiManager manager, LinkedHashSet<PsiClass> classesToPullUp, PsiClassType[] extendsListTypes) {
     for (PsiClassType extendsListType : extendsListTypes) {
       PsiClass resolve = extendsListType.resolve();
-      if (resolve != null && manager.isInProject(resolve)) {
+      if (GeneratedSourcesFilter.isInProjectAndNotGenerated(resolve)) {
         classesToPullUp.add(resolve);
       }
     }
@@ -139,14 +140,16 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     PsiClass containingClass = methodWithOverrides.getContainingClass();
     if (containingClass == null) return;
     final PsiManager manager = containingClass.getManager();
-
+    if (GeneratedSourcesFilter.isInProjectAndNotGenerated(containingClass)) {
+      return;
+    }
     boolean canBePulledUp = true;
     String name = "Pull method \'" + methodWithOverrides.getName() + "\' up";
     if (containingClass instanceof PsiAnonymousClass) {
       final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
       final PsiClass baseClass = baseClassType.resolve();
       if (baseClass == null) return;
-      if (!manager.isInProject(baseClass)) return;
+      if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(baseClass)) return;
       if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         name = "Pull method \'" + methodWithOverrides.getName() + "\' up and make it abstract";
       }

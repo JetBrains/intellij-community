@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -89,8 +90,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       }
     }
 
-    PsiManager manager = file.getManager();
-    return manager.isInProject(file) && !getClassesToImport().isEmpty();
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(file) && !getClassesToImport().isEmpty();
   }
 
   @Nullable

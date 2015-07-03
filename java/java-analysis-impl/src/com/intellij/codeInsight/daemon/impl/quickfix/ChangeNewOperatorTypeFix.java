@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.*;
@@ -59,8 +60,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myType.isValid()
-           && myExpression.isValid()
-           && myExpression.getManager().isInProject(myExpression)
+           && GeneratedSourcesFilter.isInProjectAndNotGenerated(myExpression)
            && !TypeConversionUtil.isPrimitiveAndNotNull(myType)
            && (myType instanceof PsiArrayType || myExpression.getArgumentList() != null)
       ;

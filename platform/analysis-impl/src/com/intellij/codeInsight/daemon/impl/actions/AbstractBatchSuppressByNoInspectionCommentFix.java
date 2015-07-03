@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -129,7 +129,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
 
   @Override
   public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
-    return context.isValid() && PsiManager.getInstance(project).isInProject(context) && getContainer(context) != null;
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(context) && getContainer(context) != null;
   }
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {

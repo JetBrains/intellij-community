@@ -105,6 +105,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
+    // explicitly allow to annotate library or generated sources, too
     if (!startElement.isValid()) return false;
     if (!PsiUtil.isLanguageLevel5OrHigher(startElement)) return false;
     final PsiModifierListOwner myModifierListOwner = (PsiModifierListOwner)startElement;

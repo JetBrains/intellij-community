@@ -17,8 +17,8 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
@@ -70,7 +70,7 @@ public class AssociationsGroup extends ActionGroup {
         if (!XsltSupport.isXsltFile(psiFile)) return false;
         final Project project = getEventProject(e);
         if (project == null) return false;
-        return PsiManager.getInstance(project).isInProject(psiFile);
+        return GeneratedSourcesFilter.isInProjectAndNotGenerated(psiFile);
     }
 
     private static boolean isVisible(AnActionEvent e) {

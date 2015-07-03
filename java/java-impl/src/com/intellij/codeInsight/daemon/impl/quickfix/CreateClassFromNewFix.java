@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -249,7 +250,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     PsiFile targetFile = getTargetFile(expression);
-    if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
+    if (targetFile != null && !GeneratedSourcesFilter.isInProjectAndNotGenerated(targetFile)) {
       return false;
     }
 

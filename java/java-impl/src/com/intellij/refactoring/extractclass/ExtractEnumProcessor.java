@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -135,6 +136,8 @@ public class ExtractEnumProcessor {
             if (element != null) {
               if (!element.getManager().isInProject(element)) {
                 result.add(new ConflictUsageInfo(expression, StringUtil.capitalize(RefactoringUIUtil.getDescription(element, false)) + " is out of project"));
+              } else if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(element)) {
+                result.add(new ConflictUsageInfo(expression, StringUtil.capitalize(RefactoringUIUtil.getDescription(element, false)) + " is generated source code"));
               }
             }
           }

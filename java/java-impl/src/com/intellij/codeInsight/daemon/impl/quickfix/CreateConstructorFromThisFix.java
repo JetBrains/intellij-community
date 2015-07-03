@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +46,7 @@ public class CreateConstructorFromThisFix extends CreateConstructorFromThisOrSup
     do {
       e = PsiTreeUtil.getParentOfType(e, PsiClass.class);
     } while (e instanceof PsiTypeParameter);
-    if (e != null && e.isValid() && e.getManager().isInProject(e)) {
+    if (GeneratedSourcesFilter.isInProjectAndNotGenerated(e)) {
       return Collections.singletonList((PsiClass)e);
     }
     else {

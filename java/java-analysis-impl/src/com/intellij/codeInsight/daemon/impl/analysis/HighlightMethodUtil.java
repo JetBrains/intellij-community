@@ -27,6 +27,7 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -1209,7 +1210,7 @@ public class HighlightMethodUtil {
         QuickFixAction.registerQuickFixAction(info,
                                               QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, isSuperMethodStatic, false));
       }
-      if (manager.isInProject(superMethod) &&
+      if (GeneratedSourcesFilter.isInProjectAndNotGenerated(superMethod) &&
           (!isMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, superModifierList) == null)) {
         QuickFixAction.registerQuickFixAction(info,
                                               QUICK_FIX_FACTORY.createModifierListFix(superMethod, PsiModifier.STATIC, isMethodStatic, true));
@@ -1620,7 +1621,7 @@ public class HighlightMethodUtil {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method != null && context.getManager().isInProject(method)) {
+    if (GeneratedSourcesFilter.isInProjectAndNotGenerated(method)) {
       IntentionAction fix = QUICK_FIX_FACTORY.createChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context, false, 2);
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, fix);
       IntentionAction f2 = QUICK_FIX_FACTORY.createChangeMethodSignatureFromUsageReverseOrderFix(method, expressions, substitutor, context,

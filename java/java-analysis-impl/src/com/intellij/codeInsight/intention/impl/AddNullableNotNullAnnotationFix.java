@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,7 @@ public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    if (!super.isAvailable(project, file, startElement, endElement)) {
-      return false;
-    }
+    // explicitly allow to annotate library or generated sources, too
     PsiModifierListOwner owner = getContainer(file, startElement.getTextRange().getStartOffset());
     if (owner == null || AnnotationUtil.isAnnotated(owner, getAnnotationsToRemove()[0], false, false)) {
       return false;

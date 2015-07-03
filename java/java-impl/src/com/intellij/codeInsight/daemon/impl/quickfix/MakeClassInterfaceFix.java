@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,16 +50,6 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("make.class.an.interface.family");
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    final PsiClass myClass = (PsiClass)startElement;
-
-    return myClass.isValid() && myClass.getManager().isInProject(myClass);
   }
 
   @Override

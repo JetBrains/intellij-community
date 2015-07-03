@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -82,7 +81,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
         final PsiClass psiClass = ((PsiClassType)type).resolve();
         if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
           resolvableClassesFound = true;
-          final boolean inProject = method.getManager().isInProject(psiClass);
+          final boolean inProject = GeneratedSourcesFilter.isInProjectAndNotGenerated(psiClass);
           if (inProject) {
             classesInProjectFound = true;
             suitableParameters.add(parameter);

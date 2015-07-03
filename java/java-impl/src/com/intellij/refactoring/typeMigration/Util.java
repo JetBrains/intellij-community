@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public class Util {
 
     final PsiElement element = normalizeElement(e);
 
-    if (element == null || !element.getManager().isInProject(element)) {
+    if (!GeneratedSourcesFilter.isInProjectAndNotGenerated(element)) {
       return false;
     }
 

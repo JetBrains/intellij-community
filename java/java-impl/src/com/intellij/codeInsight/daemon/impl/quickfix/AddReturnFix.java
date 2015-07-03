@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -52,8 +53,7 @@ public class AddReturnFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod.isValid() &&
-           myMethod.getManager().isInProject(myMethod) &&
+    return GeneratedSourcesFilter.isInProjectAndNotGenerated(myMethod) &&
            myMethod.getBody() != null &&
            myMethod.getBody().getRBrace() != null
         ;
@@ -68,6 +68,7 @@ public class AddReturnFix implements IntentionAction {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
       PsiCodeBlock body = myMethod.getBody();
+      assert body != null;
       returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
 
       MethodReturnTypeFix.selectReturnValueInEditor(returnStatement, editor);
@@ -92,7 +93,9 @@ public class AddReturnFix implements IntentionAction {
 
   private static PsiVariable[] getDeclaredVariables(PsiMethod method) {
     List<PsiVariable> variables = new ArrayList<PsiVariable>();
-    PsiStatement[] statements = method.getBody().getStatements();
+    final PsiCodeBlock body = method.getBody();
+    assert body != null;
+    PsiStatement[] statements = body.getStatements();
     for (PsiStatement statement : statements) {
       if (statement instanceof PsiDeclarationStatement) {
         PsiElement[] declaredElements = ((PsiDeclarationStatement)statement).getDeclaredElements();

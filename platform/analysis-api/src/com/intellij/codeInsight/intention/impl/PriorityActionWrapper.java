@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,14 @@ public abstract class PriorityActionWrapper extends LocalQuickFixAndIntentionAct
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     fix.invoke(project, file, editor, startElement, endElement);
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return fix.isAvailable(project, file, startElement, endElement);
   }
 
   @NotNull

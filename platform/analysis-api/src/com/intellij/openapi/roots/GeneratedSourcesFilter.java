@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,13 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -34,6 +40,34 @@ public abstract class GeneratedSourcesFilter {
       if (filter.isGeneratedSource(file, project)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public static boolean isInProjectAndNotGenerated(@Nullable PsiElement element) {
+    if (element == null || !element.isValid()) {
+      return false;
+    }
+    final PsiManager manager = element.getManager();
+    if (manager != null && manager.isInProject(element)) {
+      return isNotGeneratedSource(element);
+    }
+    return false;
+  }
+
+  private static boolean isNotGeneratedSource(@Nullable PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    VirtualFile virtualFile = null;
+    if (file != null) {
+      virtualFile = file.getViewProvider().getVirtualFile();
+    }
+    else if (element instanceof PsiFileSystemItem) {
+      virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
+    }
+    if (file != null && file.isPhysical() && virtualFile instanceof LightVirtualFile) return true;
+
+    if (virtualFile != null) {
+      return !isGeneratedSourceByAnyFilter(virtualFile, file.getProject());
     }
     return false;
   }
