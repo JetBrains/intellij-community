@@ -30,6 +30,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.ui.MergeCommitsHighlighter;
 import git4idea.GitBranch;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -217,7 +218,7 @@ public class DeepComparator implements Disposable {
         @NotNull
         @Override
         public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-          return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(commitIndex) ? JBColor.GRAY : null);
+          return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(commitIndex) ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND : null);
         }
       };
       myUi.addHighlighter(myHighlighter);

@@ -27,7 +27,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
-  private static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._192, Gray._96);
+  public static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._128, Gray._96);
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
