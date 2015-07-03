@@ -240,7 +240,7 @@ class InitialInfoBuilder {
     }
     boolean blocksMayBeOfInterest = false;
 
-    if (myPositionOfInterest != -1 && rootBlock.getTextRange().contains(myPositionOfInterest)) {
+    if (myPositionOfInterest != -1) {
       myResult.put(wrappedRootBlock, rootBlock);
       blocksMayBeOfInterest = true;
     }

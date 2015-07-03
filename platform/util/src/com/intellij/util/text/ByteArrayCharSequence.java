@@ -15,9 +15,10 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import org.jetbrains.annotations.NotNull;
 
-public class ByteArrayCharSequence implements CharSequence {
+public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   private int hash;
   private final byte[] myChars;
 

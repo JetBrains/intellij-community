@@ -276,7 +276,8 @@ public class MarkerType {
     }
   });
 
-  private static String getSubclassedClassTooltip(@NotNull PsiClass aClass) {
+  // Used in Kotlin, please don't make private
+  public static String getSubclassedClassTooltip(@NotNull PsiClass aClass) {
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
     ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
 
@@ -307,7 +308,8 @@ public class MarkerType {
     return composeText(subclasses, start, pattern, IdeActions.ACTION_GOTO_IMPLEMENTATION);
   }
 
-  private static void navigateToSubclassedClass(MouseEvent e, @NotNull final PsiClass aClass) {
+  // Used in Kotlin, please don't make private
+  public static void navigateToSubclassedClass(MouseEvent e, @NotNull final PsiClass aClass) {
     if (DumbService.isDumb(aClass.getProject())) {
       DumbService.getInstance(aClass.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
       return;
