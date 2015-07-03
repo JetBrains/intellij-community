@@ -45,7 +45,8 @@ public abstract class DefaultVcsRootPolicy {
   @Nullable
   public abstract VirtualFile getVcsRootFor(final VirtualFile file);
 
-  public abstract void markDefaultRootsDirty(final DirtBuilder builder, VcsGuess vcsGuess);
+  @NotNull
+  public abstract DirtBuilder getDirtyRoots(@NotNull VcsGuess vcsGuess);
   
   public String getProjectConfigurationMessage(final Project project) {
     boolean isDirectoryBased = ProjectUtil.isDirectoryBased(project);

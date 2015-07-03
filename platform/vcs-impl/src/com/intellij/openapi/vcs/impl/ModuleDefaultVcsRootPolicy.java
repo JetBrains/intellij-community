@@ -133,39 +133,43 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return null;
   }
 
+  @NotNull
   @Override
-  public void markDefaultRootsDirty(final DirtBuilder builder, final VcsGuess vcsGuess) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+  public DirtBuilder getDirtyRoots(@NotNull final VcsGuess vcsGuess) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<DirtBuilder>() {
       @Override
-      public void run() {
-        final Module[] modules = myModuleManager.getModules();
+      public DirtBuilder compute() {
+        DirtBuilder builder = new DirtBuilder(vcsGuess);
+
+        Module[] modules = myModuleManager.getModules();
         if (ProjectUtil.isDirectoryBased(myProject)) {
           FilePath fp = VcsUtil.getFilePath(myBaseDir, Project.DIRECTORY_STORE_FOLDER, true);
-          final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
+          AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
           if (vcs != null) {
             builder.addDirtyDirRecursively(vcs, fp);
           }
         }
 
         for(Module module: modules) {
-          final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+          VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
           for(VirtualFile file: files) {
-            final AbstractVcs vcs = vcsGuess.getVcsForDirty(file);
+            AbstractVcs vcs = vcsGuess.getVcsForDirty(file);
             if (vcs != null) {
               builder.addDirtyDirRecursively(vcs, VcsUtil.getFilePath(file));
             }
           }
         }
 
-        final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-        final String defaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
-        final boolean haveDefaultMapping = (defaultMapping != null) && (!defaultMapping.isEmpty());
+        ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        String defaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
+        boolean haveDefaultMapping = (defaultMapping != null) && (!defaultMapping.isEmpty());
         if (haveDefaultMapping && (myBaseDir != null)) {
-          final AbstractVcs vcs = vcsGuess.getVcsForDirty(myBaseDir);
+          AbstractVcs vcs = vcsGuess.getVcsForDirty(myBaseDir);
           if (vcs != null) {
             builder.addDirtyFile(vcs, VcsUtil.getFilePath(myBaseDir));
           }
         }
+        return builder;
       }
     });
   }

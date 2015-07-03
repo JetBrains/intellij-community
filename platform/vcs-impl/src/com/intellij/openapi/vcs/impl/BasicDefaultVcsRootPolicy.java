@@ -63,12 +63,15 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
   }
 
-  public void markDefaultRootsDirty(final DirtBuilder builder, final VcsGuess vcsGuess) {
+  @NotNull
+  public DirtBuilder getDirtyRoots(@NotNull VcsGuess vcsGuess) {
     FilePath fp = VcsUtil.getFilePath(ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir));
-    final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
+    DirtBuilder dirt = new DirtBuilder(vcsGuess);
+    AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
     if (vcs != null) {
-      builder.addDirtyDirRecursively(vcs, fp);
+      dirt.addDirtyDirRecursively(vcs, fp);
     }
+    return dirt;
   }
 
 }
