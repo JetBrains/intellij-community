@@ -57,10 +57,11 @@ import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,7 +134,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters) {
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+    javaParameters.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("junit_rt")));
   }
 
   @Override

@@ -26,28 +26,17 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.ide.palette.PaletteGroup;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.pom.Navigatable;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.lw.LwComponent;
-import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
-import com.intellij.xml.util.XmlStringUtil;
-import com.jgoodies.forms.layout.FormLayout;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * @author yole
@@ -73,20 +62,22 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       params.getProgramParametersList().prepend(Integer.toString(settings.getLastPort()));
       // add +1 because idea_rt.jar will be added as the last entry to the classpath
       params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));
-      Set<String> paths = new TreeSet<String>();
-      paths.add(PathUtil.getJarPathForClass(SnapShooter.class));         // ui-designer-impl
-      paths.add(PathUtil.getJarPathForClass(BaseComponent.class));       // appcore-api
-      paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));    // openapi
-      paths.add(PathUtil.getJarPathForClass(LwComponent.class));         // UIDesignerCore
-      paths.add(PathUtil.getJarPathForClass(GridConstraints.class));     // forms_rt
-      paths.add(PathUtil.getJarPathForClass(PaletteGroup.class));        // openapi
-      paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));  // ui-impl
-      paths.add(PathUtil.getJarPathForClass(DataProvider.class));        // action-system-openapi
-      paths.add(PathUtil.getJarPathForClass(XmlStringUtil.class));       // idea
-      paths.add(PathUtil.getJarPathForClass(Navigatable.class));         // pom
-      paths.add(PathUtil.getJarPathForClass(AreaInstance.class));        // extensions
-      paths.add(PathUtil.getJarPathForClass(FormLayout.class));          // jgoodies
-      paths.addAll(PathManager.getUtilClassPath());
+      RuntimeModuleId[] modules = {
+        RuntimeModuleId.module("ui-designer"),
+        RuntimeModuleId.module("ui-designer-core"),
+        RuntimeModuleId.module("core-api"),
+        RuntimeModuleId.module("openapi"),
+        RuntimeModuleId.module("forms_rt"),
+        RuntimeModuleId.module("forms-compiler"),
+        RuntimeModuleId.module("platform-api"),
+        RuntimeModuleId.module("editor-ui-api"),
+        RuntimeModuleId.module("extensions"),
+        RuntimeModuleId.projectLibrary("jgoodies-forms"),
+      };
+      Set<String> paths = new LinkedHashSet<String>();
+      for (RuntimeModuleId module : modules) {
+        paths.addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(module));
+      }
       for(String path: paths) {
         params.getClassPath().addFirst(path);
       }

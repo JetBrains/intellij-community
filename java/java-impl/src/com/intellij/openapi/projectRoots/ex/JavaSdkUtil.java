@@ -30,6 +30,8 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,14 +52,15 @@ public class JavaSdkUtil {
 
   public static String getJunit4JarPath() {
     return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
+    //return PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.projectLibrary("JUnit4"));
   }
 
   public static String getJunit3JarPath() {
-    return PathUtil.getJarPathForClass(ReflectionUtil.forName("junit.runner.TestSuiteLoader")); //junit3 specific class
+    return PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.projectLibrary("JUnit3"));
   }
 
   public static String getIdeaRtJarPath() {
-    return PathUtil.getJarPathForClass(JavacRunner.class);
+    return PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.module("java-runtime"));
   }
 
   @NotNull
