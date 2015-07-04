@@ -102,27 +102,25 @@ public class StubTreeBuilder {
             data = stubBuilder.buildStubTree(psi);
 
             final List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
-            if (stubbedRoots.size() > 1) {
-              final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubbedRoots.size());
-              stubs.add((PsiFileStub)data);
+            final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubbedRoots.size());
+            stubs.add((PsiFileStub)data);
 
-              for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
-                final PsiFile secondaryPsi = stubbedRoot.second;
-                if (psi == secondaryPsi) continue;
-                final StubBuilder stubbedRootBuilder = stubbedRoot.first.getBuilder();
-                if (stubbedRootBuilder instanceof LightStubBuilder) {
-                  LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(secondaryPsi.getNode()));
-                }
-                final StubElement element = stubbedRootBuilder.buildStubTree(secondaryPsi);
-                if (element instanceof PsiFileStub) {
-                  stubs.add((PsiFileStub)element);
-                }
+            for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
+              final PsiFile secondaryPsi = stubbedRoot.second;
+              if (psi == secondaryPsi) continue;
+              final StubBuilder stubbedRootBuilder = stubbedRoot.first.getBuilder();
+              if (stubbedRootBuilder instanceof LightStubBuilder) {
+                LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(secondaryPsi.getNode()));
               }
-              final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
-              for (PsiFileStub stub : stubsArray) {
-                if (stub instanceof PsiFileStubImpl) {
-                  ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
-                }
+              final StubElement element = stubbedRootBuilder.buildStubTree(secondaryPsi);
+              if (element instanceof PsiFileStub) {
+                stubs.add((PsiFileStub)element);
+              }
+            }
+            final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+            for (PsiFileStub stub : stubsArray) {
+              if (stub instanceof PsiFileStubImpl) {
+                ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
               }
             }
           }

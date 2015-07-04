@@ -657,6 +657,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
     StubTree stubHolder = (StubTree)tree;
+    final FileViewProvider viewProvider = getViewProvider();
+    final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     synchronized (PsiLock.LOCK) {
       if (getTreeElement() != null) return null;
@@ -664,9 +666,27 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
-      //noinspection unchecked
-      ((StubBase)stubHolder.getRoot()).setPsi(this);
-      myStub = new SoftReference<StubTree>(stubHolder);
+      final PsiFileStub baseRoot = stubHolder.getRoot();
+      final PsiFileStub[] stubRoots = ((PsiFileStubImpl)baseRoot).getStubRootsAsIs();
+      if (stubRoots == null) {
+        LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
+        return stubHolder;
+      }
+      if (stubRoots.length != roots.size()) {
+        LOG.error("stubRoots.length = " + stubRoots.length + "; roots.size() = " + roots.size());
+      }
+      // set all stub trees to avoid reading file when stub tree for another psi root is accessed
+      int matchingRoot = 0;
+      for (Pair<IStubFileElementType, PsiFile> root : roots) {
+        final PsiFileStub matchingStub = stubRoots[matchingRoot++];
+
+        //noinspection unchecked
+        ((StubBase)matchingStub).setPsi(root.second);
+        final StubTree stubTree = new StubTree(matchingStub);
+        stubTree.setDebugInfo("created in getStubTree()");
+        if (root.second == this) stubHolder = stubTree;
+        ((PsiFileImpl)root.second).myStub = new SoftReference<StubTree>(stubTree);
+      }
       return stubHolder;
     }
   }

@@ -130,4 +130,9 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     }
     myStubRoots = roots;
   }
+
+  @Nullable
+  public PsiFileStub[] getStubRootsAsIs() {
+    return myStubRoots;
+  }
 }

@@ -18,6 +18,7 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -129,27 +130,30 @@ public class StubSerializationHelper {
       ++i;
     }
 
-    int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
-    if (stubFilesCount > 1) {
-      final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubFilesCount);
-      while (stubFilesCount-- > 0) {
-        final PsiFileStub fileStub = (PsiFileStub)deserialize(inputStream, null);
+    final int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
+    if (stubFilesCount <= 0) {
+      Logger.getInstance(getClass()).error("Incorrect stub files count during deserialization:"+stubFilesCount);
+    }
+    final Stub baseStub = deserialize(inputStream, null);
+    final List<PsiFileStub> stubs = ContainerUtil.newArrayListWithCapacity(stubFilesCount);
+    if (baseStub instanceof PsiFileStub) stubs.add((PsiFileStub)baseStub);
+    for (int j = 1; j < stubFilesCount; j++) {
+      final Stub deserialize = deserialize(inputStream, null);
+      if (deserialize instanceof PsiFileStub) {
+        final PsiFileStub fileStub = (PsiFileStub)deserialize;
         stubs.add(fileStub);
       }
-      final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
-      for (PsiFileStub stub : stubsArray) {
-        if (stub instanceof PsiFileStubImpl) {
-          ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
-        }
+      else {
+        Logger.getInstance(getClass()).error("Stub root must be PsiFileStub for files with several stub roots");
       }
-      return stubsArray[0];
     }
-    else {
-      if (stubFilesCount != 1) {
-        Logger.getInstance(getClass()).error("Incorrect stub files count during deserialization:"+stubFilesCount);
+    final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+    for (PsiFileStub stub : stubsArray) {
+      if (stub instanceof PsiFileStubImpl) {
+        ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
       }
-      return deserialize(inputStream, null);
     }
+    return baseStub;
   }
 
   String intern(String str) {
