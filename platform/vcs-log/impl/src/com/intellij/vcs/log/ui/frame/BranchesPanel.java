@@ -4,10 +4,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ScrollUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
@@ -51,15 +51,6 @@ public class BranchesPanel extends JPanel {
     myReferencePainter = new VcsRefPainter(myUI.getColorManager(), true);
 
     recreateComponents();
-
-    myUI.addLogListener(new VcsLogListener() {
-      @Override
-      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refresh) {
-        if (refresh) {
-          rebuild(dataPack.getRefs());
-        }
-      }
-    });
   }
 
   private void recreateComponents() {
@@ -113,6 +104,12 @@ public class BranchesPanel extends JPanel {
     removeAll();
     recreateComponents();
     getParent().validate();
+  }
+
+  public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
+    if (permGraphChanged) {
+      rebuild(dataPack.getRefs());
+    }
   }
 
   public JComponent createScrollPane() {

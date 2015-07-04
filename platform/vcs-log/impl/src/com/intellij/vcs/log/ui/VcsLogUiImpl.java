@@ -83,7 +83,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     myVisiblePack = pack;
 
-    myMainFrame.updateDataPack(myVisiblePack);
+    myMainFrame.updateDataPack(myVisiblePack, permGraphChanged);
     setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
     fireFilterChangeEvent(myVisiblePack, permGraphChanged);
     repaintUI();

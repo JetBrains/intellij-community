@@ -134,11 +134,13 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
    * Components may want to update their fields and/or rebuild.
    *
    * @param dataPack new data pack.
+   * @param permGraphChanged true if permanent graph itself was changed.
    */
-  public void updateDataPack(@NotNull VisiblePack dataPack) {
+  public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myDetailsPanel.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack);
+    myBranchesPanel.updateDataPack(dataPack, permGraphChanged);
   }
 
   private void updateWhenDetailsAreLoaded(final CommitSelectionListener selectionChangeListener) {
