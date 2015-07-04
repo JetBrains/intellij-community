@@ -31,11 +31,11 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui.AbstractAddOptionsDialog
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,23 +106,17 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     if (!showDialog) {
       return CommandCvsHandler.createAddFilesHandler(project, roots);
     }
-    final CvsHandler[] handler = new CvsHandler[1];
+    final Ref<CvsHandler> handler = new Ref<CvsHandler>();
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
         final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
-        handler[0] = !dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots);
+        handler.set(!dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots));
       }
     };
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      application.invokeAndWait(runnable, ModalityState.any());
-    }
+    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.any());
 
-    return handler[0];
+    return handler.get();
   }
 
   @Override
