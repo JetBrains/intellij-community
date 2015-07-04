@@ -37,7 +37,12 @@ public class EditSourceUtil {
 
   @Nullable
   public static Navigatable getDescriptor(PsiElement element) {
-    PsiElement original = getNavigatableOriginalElement(element);
+    return getDescriptor(element, false);
+  }
+
+  @Nullable
+  public static Navigatable getDescriptor(PsiElement element, boolean ignoreGeneratedSourceInfo) {
+    PsiElement original = ignoreGeneratedSourceInfo ? null : getNavigatableOriginalElement(element);
     if (original != null) {
       element = original;
     } else if (!canNavigate(element)) {
