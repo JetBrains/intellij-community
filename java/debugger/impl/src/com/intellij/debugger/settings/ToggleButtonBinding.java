@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class ToggleButtonBinding extends FieldDataBinding{
   }
 
   public void doSaveData(Object to, Field field) throws IllegalAccessException{
-    field.set(to, myToggleButton.isSelected()? Boolean.TRUE : Boolean.FALSE);
+    field.set(to, myToggleButton.isSelected());
   }
 
   protected boolean isModified(Object obj, Field field) throws IllegalAccessException {
