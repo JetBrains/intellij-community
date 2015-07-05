@@ -195,7 +195,8 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
 
   private enum ProblemType {
     LOCK_REQUEST_LOST,
-    LOCK_LEVEL_RAISED
+    LOCK_LEVEL_RAISED,
+    BOTH_PROVIDED_AND_REQUIRE_USED
   }
 
   private static class MyInspectionVisitor extends JavaElementVisitor {
@@ -236,8 +237,17 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
 
       final LockType bodyType = getLockByLevel(visitor.mySeverity);
       final LockType methodType = getLockTypeFromDefinition(method, LOCK_REQUIRED);
+      final LockType methodSuppress = getLockTypeFromDefinition(method, LOCK_PROVIDED);
 
-      final ProblemType problem = checkAssignment(bodyType, methodType);
+      final ProblemType problem;
+      if (methodType != null && methodSuppress != null) {
+        problem = ProblemType.BOTH_PROVIDED_AND_REQUIRE_USED;
+      }
+      else {
+        final LockType methodLock = methodType != null ? methodType : methodSuppress;
+        problem = checkAssignment(bodyType, methodLock);
+      }
+
       if (problem == ProblemType.LOCK_REQUEST_LOST) {
         reportProblemIfNeeded(problem, visitor.myPlacesWithLastSeverity);
       }
@@ -346,7 +356,7 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
 
     @Nullable
     private static LockType getLockTypeFromCall(@NotNull PsiCallExpression callExpression) {
-      final PsiElement resolvedMethod = resolveCallStrictly(callExpression);;
+      final PsiElement resolvedMethod = resolveCallStrictly(callExpression);
 
       final LockType methodLockType = getLockTypeFromDefinition(resolvedMethod, LOCK_REQUIRED);
       LockType anonymousType = null;

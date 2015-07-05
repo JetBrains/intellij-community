@@ -83,4 +83,8 @@ public class ReadWriteLockInspectionTest extends LightCodeInsightFixtureTestCase
   public void testAnnotatedParameters() {
     doTest();
   }
+
+  public void testLockProvidedMethods() {
+    doTest();
+  }
 }
