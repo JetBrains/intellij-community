@@ -26,13 +26,13 @@ import com.intellij.openapi.components.impl.BasePathMacroManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -45,8 +45,12 @@ import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 import org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -177,7 +181,9 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   protected void addJUnitDefaultLib(ModifiableRootModel rootModel, String junitName, ExpandMacroToPathMap macroMap) {
     final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(junitName);
     final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-    modifiableModel.addRoot(getJunitClsUrl(junitName.contains("4")), OrderRootType.CLASSES);
+    for (String url : getJunitClsUrls(junitName.contains("4"))) {
+      modifiableModel.addRoot(url, OrderRootType.CLASSES);
+    }
     modifiableModel.commit();
   }
 
@@ -290,15 +296,13 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     return lib;
   }
 
-  static String getJunitClsUrl(final boolean version4) {
-    String url = version4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
-    final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(url));
-    if (localFile != null) {
-      final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
-      url = jarFile != null ? jarFile.getUrl() : localFile.getUrl();
+  static List<String> getJunitClsUrls(final boolean version4) {
+    RuntimeModuleId moduleId = version4 ? RuntimeModuleId.projectLibrary("JUnit4") : RuntimeModuleId.projectLibrary("JUnit3");
+    List<String> urls = new ArrayList<String>();
+    for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(moduleId)) {
+      urls.add(VfsUtil.getUrlForLibraryRoot(new File(path)));
     }
-
-    return url;
+    return urls;
   }
 
 

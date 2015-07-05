@@ -120,7 +120,7 @@ public class EclipseClasspathWriter {
         if (files.length > 0) {
           if (libraryName != null &&
               libraryName.contains(IdeaXml.JUNIT) &&
-              Comparing.strEqual(files[0], EclipseClasspathReader.getJunitClsUrl(libraryName.contains("4")))) {
+              EclipseClasspathReader.getJunitClsUrls(libraryName.contains("4")).equals(Arrays.asList(files))) {
             final Element orderEntry =
               addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JUNIT_CONTAINER + "/" + libraryName.substring(IdeaXml.JUNIT.length()),
                             classpathRoot);

@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +37,9 @@ import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.PlatformRepository;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -44,7 +48,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -251,19 +257,18 @@ public class JdkUtil {
         writer.close();
       }
 
-      String classpath = PathUtil.getJarPathForClass(commandLineWrapper);
-      final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
-      if (!classpath.equals(utilRtPath)) {
-        classpath += File.pathSeparator + utilRtPath;
-      }
+      Set<String> classpath = new LinkedHashSet<String>();
+      PlatformRepository repository = PlatformLoader.getInstance().getRepository();
+      classpath.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("java-runtime")));
+      classpath.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("util-rt")));
       final Class<UrlClassLoader> ourUrlClassLoader = UrlClassLoader.class;
       if (ourUrlClassLoader.getName().equals(vmParametersList.getPropertyValue("java.system.class.loader"))) {
-        classpath += File.pathSeparator + PathUtil.getJarPathForClass(ourUrlClassLoader);
-        classpath += File.pathSeparator + PathUtil.getJarPathForClass(THashMap.class);
+        classpath.addAll(repository.getModuleRootPaths(RuntimeModuleId.module("util")));
+        classpath.addAll(repository.getModuleRootPaths(RuntimeModuleId.projectLibrary("Trove4j")));
       }
 
       commandLine.addParameter("-classpath");
-      commandLine.addParameter(classpath);
+      commandLine.addParameter(StringUtil.join(classpath, File.pathSeparator));
     }
     catch (IOException e) {
       LOG.error(e);
