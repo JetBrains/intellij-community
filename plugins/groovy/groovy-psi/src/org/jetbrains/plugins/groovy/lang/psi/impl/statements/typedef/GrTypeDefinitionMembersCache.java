@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,9 +113,11 @@ public class GrTypeDefinitionMembersCache {
       @Nullable
       @Override
       public Result<PsiClass[]> compute() {
+        final List<PsiClass> result = ContainerUtil.newArrayList();
         final GrTypeDefinitionBody body = myDefinition.getBody();
-        PsiClass[] inners = body != null ? body.getInnerClasses() : PsiClass.EMPTY_ARRAY;
-        return Result.create(inners, myTreeChangeTracker);
+        if (body != null) ContainerUtil.addAll(result, body.getInnerClasses());
+        result.addAll(AstTransformContributor.runContributorsForClasses(myDefinition));
+        return Result.create(result.toArray(new PsiClass[result.size()]), myTreeChangeTracker);
       }
     });
   }
