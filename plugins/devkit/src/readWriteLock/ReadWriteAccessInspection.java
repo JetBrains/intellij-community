@@ -16,14 +16,16 @@
 package org.jetbrains.idea.devkit.readWriteLock;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.*;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.readWriteLock.LockType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -224,9 +226,15 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
           return;
         }
 
+        // Ignore nulls
+        if (expr instanceof PsiLiteralExpression && ((PsiLiteralExpression)expr).getValue() == null) {
+          continue;
+        }
+
         final LockType returnLock = tryToGetExpressionType(expr);
         if (returnLock != methodLock) {
-          reportProblemIfNeeded(checkAssignment(returnLock, methodLock), statement);
+          reportProblemIfNeeded(checkAssignment(returnLock, methodLock), statement,
+                                new AnnotateElementQuickFix(method, LOCK_ANONYMOUS, returnLock));
         }
       }
     }
@@ -249,12 +257,13 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
       }
 
       if (problem == ProblemType.LOCK_REQUEST_LOST) {
-        reportProblemIfNeeded(problem, visitor.myPlacesWithLastSeverity);
+        reportProblemIfNeeded(problem, visitor.myPlacesWithLastSeverity,
+                              new AnnotateElementQuickFix(method, LOCK_REQUIRED, bodyType));
       }
       else {
         final PsiIdentifier identifier = method.getNameIdentifier();
         if (identifier != null) {
-          reportProblemIfNeeded(problem, identifier);
+          reportProblemIfNeeded(problem, identifier, null);
         }
       }
     }
@@ -269,7 +278,7 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
       final LockType lType = tryToGetExpressionType(expression.getLExpression());
       final LockType rType = tryToGetExpressionType(r);
 
-      reportProblemIfNeeded(checkAssignment(rType, lType), expression);
+      reportProblemIfNeeded(checkAssignment(rType, lType), expression, null);
     }
 
     @Override
@@ -282,7 +291,8 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
       final LockType varType = getLockTypeFromDefinition(variable, LOCK_ANONYMOUS);
       final LockType initType = tryToGetExpressionType(initializer);
 
-      reportProblemIfNeeded(checkAssignment(initType, varType), variable);
+      reportProblemIfNeeded(checkAssignment(initType, varType), variable,
+                            new AnnotateElementQuickFix(variable, LOCK_ANONYMOUS, initType));
     }
 
     @Override
@@ -307,22 +317,27 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
         final LockType parameterType = getLockTypeFromDefinition(parameter, LOCK_ANONYMOUS);
         final LockType argumentType = tryToGetExpressionType(argument);
 
-        reportProblemIfNeeded(checkAssignment(argumentType, parameterType), argument);
+        reportProblemIfNeeded(checkAssignment(argumentType, parameterType), argument,
+                              new AnnotateElementQuickFix(parameter, LOCK_ANONYMOUS, argumentType));
       }
     }
 
-    private void reportProblemIfNeeded(@Nullable ProblemType problem, @NotNull PsiElement place) {
-      reportProblemIfNeeded(problem, Collections.singleton(place));
+    private void reportProblemIfNeeded(@Nullable ProblemType problem, @NotNull PsiElement place, @Nullable LocalQuickFix quickFix) {
+      reportProblemIfNeeded(problem, Collections.singleton(place), quickFix);
     }
 
-    private void reportProblemIfNeeded(@Nullable ProblemType problem, @NotNull Collection<PsiElement> places) {
+    private void reportProblemIfNeeded(@Nullable ProblemType problem,
+                                       @NotNull Collection<PsiElement> places,
+                                       @Nullable LocalQuickFix quickFix) {
       if (problem == null) {
         return;
       }
 
+      LocalQuickFix[] fixes = quickFix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{quickFix};
+
       for (PsiElement element : places) {
         myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(
-          element, problem.name(), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, false));
+          element, problem.name(), fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, false));
       }
     }
   }
@@ -370,6 +385,72 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
       }
 
       return getLockLevel(methodLockType) > getLockLevel(anonymousType) ? methodLockType : anonymousType;
+    }
+  }
+
+  private static class AnnotateElementQuickFix extends LocalQuickFixOnPsiElement {
+    @NotNull private final String myAnnotation;
+    @Nullable private final LockType myType;
+
+    public AnnotateElementQuickFix(@NotNull PsiModifierListOwner element,
+                                   @NotNull String annotation,
+                                   @Nullable LockType lockType) {
+      super(element);
+      myAnnotation = annotation;
+      myType = lockType;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      final PsiElement element = getStartElement();
+      String elementName = element.getClass().getSimpleName();
+
+      if (element instanceof NavigatablePsiElement) {
+        final ItemPresentation presentation = ((NavigatablePsiElement)element).getPresentation();
+        if (presentation != null) {
+          elementName = presentation.getPresentableText();
+        }
+      }
+      return "Annotate " + elementName + " as " + getAnnotationText();
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "readWrite";
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      if (!startElement.isValid() || !(startElement instanceof PsiModifierListOwner)) {
+        return;
+      }
+
+      if (myType == null) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiModifierListOwner)startElement, myAnnotation);
+        if (annotation == null || !FileModificationService.getInstance().preparePsiElementForWrite(annotation)) {
+          return;
+        }
+        annotation.delete();
+        return;
+      }
+
+      final PsiAnnotation dummyAnnotation = JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
+        getAnnotationText(), startElement);
+      final PsiNameValuePair[] attributes = dummyAnnotation.getParameterList().getAttributes();
+
+      new AddAnnotationPsiFix(myAnnotation, ((PsiModifierListOwner)startElement), attributes).invoke(project, file, startElement,
+                                                                                                     startElement);
+    }
+
+    @NotNull
+    private String getAnnotationText() {
+      if (myType == null) {
+        return "(no annotation)";
+      }
+      return "@" + myAnnotation + "(" + myType.getClass().getSimpleName() + "." + myType.name() + ")";
     }
   }
 }
