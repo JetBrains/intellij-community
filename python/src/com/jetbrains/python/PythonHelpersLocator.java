@@ -20,13 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 
 public class PythonHelpersLocator {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
-  private static final String COMMUNITY_SUFFIX = "-community";
-
   private PythonHelpersLocator() {}
 
   /**
@@ -34,20 +33,8 @@ public class PythonHelpersLocator {
    */
   @NotNull
   public static File getHelpersRoot() {
-    @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
-    if (jarPath.endsWith(".jar")) {
-      final File jarFile = new File(jarPath);
-
-      LOG.assertTrue(jarFile.exists(), "jar file cannot be null");
-      File pluginBaseDir = jarFile.getParentFile().getParentFile();
-      return new File(pluginBaseDir, "helpers");
-    }
-
-    if (jarPath.endsWith(COMMUNITY_SUFFIX)) {
-      jarPath = jarPath.substring(0, jarPath.length() - COMMUNITY_SUFFIX.length());
-    }
-
-    return new File(jarPath + "-helpers");
+    //todo[nik,runtime-modules] remove python-helper module
+    return new File(PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.moduleResource("python-community", "helpers")));
   }
 
   /**
