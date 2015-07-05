@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD, ElementType.TYPE, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
+@Target({ElementType.METHOD, ElementType.TYPE})
 public @interface LockRequired {
   LockType value();
 }
