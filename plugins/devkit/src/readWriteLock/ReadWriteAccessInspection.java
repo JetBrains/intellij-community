@@ -173,8 +173,17 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
     }
 
     int maxSeverity = 0;
-    for (PsiMethod method : methods) {
-      maxSeverity = Math.max(maxSeverity, getLockLevel(getLockTypeFromDefinition(method, LOCK_REQUIRED)));
+    outer: for (PsiMethod method : methods) {
+      int currentSeverity = getLockLevel(getLockTypeFromDefinition(method, LOCK_REQUIRED));
+
+      final PsiMethod[] superMethods = method.findDeepestSuperMethods();
+      for (PsiMethod superMethod : superMethods) {
+        if (getLockLevel(getLockTypeFromDefinition(superMethod, LOCK_REQUIRED)) >= currentSeverity) {
+          continue outer;
+        }
+      }
+
+      maxSeverity = Math.max(maxSeverity, currentSeverity);
     }
     return getLockByLevel(maxSeverity);
   }
