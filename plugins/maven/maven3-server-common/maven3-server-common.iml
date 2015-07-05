@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="maven-server-api" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="commons-logging" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="Maven3">
         <CLASSES>

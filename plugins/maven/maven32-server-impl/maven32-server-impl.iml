@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="maven-server-api" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="commons-logging" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="Maven32">
         <CLASSES>
@@ -21,56 +21,7 @@
         <jarDirectory url="file://$MODULE_DIR$/lib/maven32/lib" recursive="false" />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-common/lib/nexus-indexer-3.0.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-common/lib-src/nexus-indexer-3.0.4-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-common/lib/maven-dependency-tree-1.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-common/lib-src/maven-dependency-tree-1.2-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="maven" scope="TEST" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-common/lib/archetype-common-2.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-common/lib/archetype-catalog-2.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-common/lib/nexus-indexer-artifact-1.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="maven3-server-common" />
   </component>
 </module>

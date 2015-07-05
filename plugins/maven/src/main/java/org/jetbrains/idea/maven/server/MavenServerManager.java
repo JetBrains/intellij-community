@@ -58,8 +58,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.slf4j.Logger;
-import org.slf4j.impl.Log4jLoggerFactory;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -302,17 +302,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
                            NotificationType.WARNING).notify(null);
         }
 
-        final List<String> classPath = new ArrayList<String>();
-        classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
         if (currentMavenVersion == null || StringUtil.compareVersionNumbers(currentMavenVersion, "3.1") < 0) {
-          classPath.add(PathUtil.getJarPathForClass(Logger.class));
-          classPath.add(PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
+          params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("Slf4j")));
         }
-
-        classPath.addAll(PathManager.getUtilClassPath());
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
+        //todo[nik,runtime-modules] include resource-en.jar to module paths
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
-        params.getClassPath().addAll(classPath);
         params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(forceMaven2));
 
         String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
@@ -391,54 +385,27 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   public List<File> collectClassPathAndLibsFolder(boolean forceMaven2) {
     final String currentMavenVersion = forceMaven2 ? "2.2.1" : getCurrentMavenVersion();
     File mavenHome = forceMaven2 ? BundledMavenPathHolder.myBundledMaven2Home : currentMavenVersion == null ? BundledMavenPathHolder.myBundledMaven3Home : getCurrentMavenHomeFile();
-
-    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final List<File> classpath = new ArrayList<File>();
-    final String root = pluginFileOrDir.getParent();
-
-    if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(root, "maven-server-api"));
-      File parentFile = getMavenPluginParentFile();
-      if (forceMaven2 || (currentMavenVersion != null && StringUtil.compareVersionNumbers(currentMavenVersion, "3") < 0)) {
-        classpath.add(new File(root, "maven2-server-impl"));
-        addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
-        // use bundled maven 2.2.1 for all 2.0.x version (since we use org.apache.maven.project.interpolation.StringSearchModelInterpolator introduced in 2.1.0)
-        if (StringUtil.compareVersionNumbers(currentMavenVersion, "2.1.0") < 0) {
-          mavenHome = BundledMavenPathHolder.myBundledMaven2Home;
-        }
-      }
-      else {
-        classpath.add(new File(root, "maven3-server-common"));
-        addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
-
-        if (currentMavenVersion == null || StringUtil.compareVersionNumbers(currentMavenVersion, "3.1") < 0) {
-          classpath.add(new File(root, "maven30-server-impl"));
-        }
-        else {
-          classpath.add(new File(root, "maven32-server-impl"));
-        }
+    RuntimeModuleId serverModule;
+    if (forceMaven2 || (currentMavenVersion != null && StringUtil.compareVersionNumbers(currentMavenVersion, "3") < 0)) {
+      serverModule = RuntimeModuleId.module("maven2-server-impl");
+      // use bundled maven 2.2.1 for all 2.0.x version (since we use org.apache.maven.project.interpolation.StringSearchModelInterpolator introduced in 2.1.0)
+      if (StringUtil.compareVersionNumbers(currentMavenVersion, "2.1.0") < 0) {
+        mavenHome = BundledMavenPathHolder.myBundledMaven2Home;
       }
     }
     else {
-      classpath.add(new File(root, "maven-server-api.jar"));
-
-      if (forceMaven2 || (currentMavenVersion != null && StringUtil.compareVersionNumbers(currentMavenVersion, "3") < 0)) {
-        classpath.add(new File(root, "maven2-server-impl.jar"));
-        addDir(classpath, new File(root, "maven2-server-lib"));
+      if (currentMavenVersion == null || StringUtil.compareVersionNumbers(currentMavenVersion, "3.1") < 0) {
+        serverModule = RuntimeModuleId.module("maven30-server-impl");
       }
       else {
-        classpath.add(new File(root, "maven3-server-common.jar"));
-        addDir(classpath, new File(root, "maven3-server-lib"));
-
-        if (currentMavenVersion == null || StringUtil.compareVersionNumbers(currentMavenVersion, "3.1") < 0) {
-          classpath.add(new File(root, "maven30-server-impl.jar"));
-        }
-        else {
-          classpath.add(new File(root, "maven32-server-impl.jar"));
-        }
+        serverModule = RuntimeModuleId.module("maven32-server-impl");
       }
     }
 
+    final List<File> classpath = new ArrayList<File>();
+    for (String path : PlatformLoader.getInstance().getRepository().getModuleClasspath(serverModule)) {
+      classpath.add(new File(path));
+    }
     addMavenLibs(classpath, mavenHome);
     return classpath;
   }
