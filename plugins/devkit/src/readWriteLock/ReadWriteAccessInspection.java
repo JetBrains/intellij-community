@@ -240,6 +240,10 @@ public class ReadWriteAccessInspection extends LocalInspectionTool {
     }
 
     private void analyzeMethodLockRequirement(@NotNull PsiMethod method) {
+      if (method.getBody() == null) {
+        return;
+      }
+
       final MyMethodLockComputingVisitor visitor = new MyMethodLockComputingVisitor();
       method.acceptChildren(visitor);
 
