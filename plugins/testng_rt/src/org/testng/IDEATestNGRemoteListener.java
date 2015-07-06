@@ -13,7 +13,7 @@ import java.util.*;
  * User: anna
  * Date: 5/22/13
  */
-public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener{
+public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener, IInvokedMethodListener {
 
   private final PrintStream myPrintStream;
   private final List<String> myCurrentSuites = new ArrayList<String>();
@@ -49,6 +49,14 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
     myCurrentSuites.clear();
   }
+
+  public synchronized void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
+    if (!testResult.getMethod().isTest()) {
+      onConfigurationStart(new DelegatedResult(testResult));
+    }
+  }
+  //should be covered by test listeners
+  public void afterInvocation(IInvokedMethod method, ITestResult testResult) {}
 
   public synchronized void onConfigurationSuccess(ITestResult result) {
     onConfigurationSuccess(new DelegatedResult(result));
@@ -101,13 +109,15 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     myInvocationCounts.put(qualifiedName, invocationCount + 1);
   }
 
-  public void onConfigurationSuccess(ExposedTestResult result) {
+  public void onConfigurationStart(ExposedTestResult result) {
     onTestStart(result, null, -1, true);
+  }
+
+  public void onConfigurationSuccess(ExposedTestResult result) {
     onTestFinished(result);
   }
 
   public void onConfigurationFailure(ExposedTestResult result) {
-    onTestStart(result, null, -1, true);
     onTestFailure(result);
   }
   

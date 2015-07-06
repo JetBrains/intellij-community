@@ -32,7 +32,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 public class TestNGTreeHierarchyTest {
@@ -210,11 +209,15 @@ public class TestNGTreeHierarchyTest {
     final String className = "a.ATest";
     listener.onSuiteStart(className, true);
     for(String methodName : new String[] {"test1", "test2"}) {
-      listener.onConfigurationSuccess(new MockTestNGResult(className, "setUp"));
+      final MockTestNGResult setUp = new MockTestNGResult(className, "setUp");
+      listener.onConfigurationStart(setUp);
+      listener.onConfigurationSuccess(setUp);
       final MockTestNGResult result = new MockTestNGResult(className, methodName);
       listener.onTestStart(result);
       listener.onTestFinished(result);
-      listener.onConfigurationSuccess(new MockTestNGResult(className, "tearDown"));
+      final MockTestNGResult tearDown = new MockTestNGResult(className, "tearDown");
+      listener.onConfigurationStart(tearDown);
+      listener.onConfigurationSuccess(tearDown);
     }
     listener.onSuiteFinish(className);
 
@@ -253,7 +256,9 @@ public class TestNGTreeHierarchyTest {
     final IDEATestNGRemoteListener listener = createListener(buf);
     final String className = "a.ATest";
     listener.onSuiteStart(className, true);
-    listener.onConfigurationFailure(new MockTestNGResult(className, "setUp", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY));
+    final MockTestNGResult setUp = new MockTestNGResult(className, "setUp", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY);
+    listener.onConfigurationStart(setUp);
+    listener.onConfigurationFailure(setUp);
     listener.onSuiteFinish(className);
 
     Assert.assertEquals("output: " + buf, "\n" +
