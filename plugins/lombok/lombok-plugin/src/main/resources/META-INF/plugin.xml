@@ -35,7 +35,6 @@
     <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
     <projectConfigurable instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
-    <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="FIRST"/>
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
 
     <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
@@ -202,7 +201,9 @@
 		<ul>
 		<li>0.9.6
 				<ol>
-				    <>li</li>
+				    <li>Fixed #47: Feature request: support onX annotations via @__</li>
+				    <li>Fixed #122: [occasional] on rename: cannot share data context between Swing events</li>
+				    <li>Fixed #123: SpinAllocator has exhausted! Too many threads or you're going to get StackOverflow</li>
 				</ol>
 			</li>
 		<li>0.9.5

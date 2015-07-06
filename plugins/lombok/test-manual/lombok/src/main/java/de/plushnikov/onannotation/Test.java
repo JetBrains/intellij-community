@@ -10,8 +10,8 @@ import javax.validation.constraints.Max;
 
 @AllArgsConstructor(onConstructor=@__(@Deprecated))
 public class Test {
-    @Getter(onMethod=@_({@Id, @Column(name="unique-id")}))
-    @Setter(onParam=@_(@Max(10000)))
+    @Getter(onMethod=@__({@Id, @Column(name="unique-id")}))
+    @Setter(onParam=@__(@Max(100030)))
     private long unid;
 
     public static void main(String[] args) {
