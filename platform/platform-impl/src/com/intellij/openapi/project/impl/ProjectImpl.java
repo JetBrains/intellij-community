@@ -109,13 +109,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return super.isDisposed() || temporarilyDisposed;
   }
 
-  public boolean isLight() {
+  @TestOnly
+  boolean isLight() {
     return myLight;
   }
 
   private volatile boolean temporarilyDisposed;
   @TestOnly
-  public void setTemporarilyDisposed(boolean disposed) {
+  void setTemporarilyDisposed(boolean disposed) {
     temporarilyDisposed = disposed;
   }
 
@@ -123,7 +124,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   boolean isTemporarilyDisposed() {
     return temporarilyDisposed;
   }
-
 
   @Override
   public void setProjectName(@NotNull String projectName) {
