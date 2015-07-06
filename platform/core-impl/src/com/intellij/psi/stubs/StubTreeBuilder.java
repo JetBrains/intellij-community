@@ -65,6 +65,9 @@ public class StubTreeBuilder {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       if (builder != null) {
         data = builder.buildStubTree(inputData);
+        if (data instanceof PsiFileStubImpl && !((PsiFileStubImpl)data).rootsAreSet()) {
+          ((PsiFileStubImpl)data).setStubRoots(new PsiFileStub[]{(PsiFileStubImpl)data});
+        }
       }
       else {
         final LanguageFileType languageFileType = (LanguageFileType)fileType;

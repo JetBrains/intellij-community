@@ -667,11 +667,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       if (derefdOnLock != null) return derefdOnLock;
 
       final PsiFileStub baseRoot = stubHolder.getRoot();
-      final PsiFileStub[] stubRoots = ((PsiFileStubImpl)baseRoot).getStubRootsAsIs();
-      if (stubRoots == null) {
+      if (baseRoot instanceof PsiFileStubImpl && !((PsiFileStubImpl)baseRoot).rootsAreSet()) {
         LOG.error("Stub roots must be set when stub tree was read or built with StubTreeLoader");
         return stubHolder;
       }
+      final PsiFileStub[] stubRoots = baseRoot.getStubRoots();
       if (stubRoots.length != roots.size()) {
         LOG.error("stubRoots.length = " + stubRoots.length + "; roots.size() = " + roots.size());
       }
