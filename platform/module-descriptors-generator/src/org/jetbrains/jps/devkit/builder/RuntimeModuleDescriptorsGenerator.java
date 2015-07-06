@@ -153,11 +153,15 @@ public class RuntimeModuleDescriptorsGenerator {
       for (JpsLibrary library : libraries) {
         List<File> actualFiles = new ArrayList<File>();
         for (File file : library.getFiles(JpsOrderRootType.COMPILED)) {
+          if (!file.exists()) {
+            myMessageHandler.reportError("Cannot find '" + getLibraryId(library).getStringId() + "' library file: " + file.getAbsolutePath());
+            continue;
+          }
           Bytes bytes = new Bytes(calcDigest(md5, buffer, file));
           File actual = actualLocations.get(bytes);
           if (actual == null) {
             myMessageHandler.reportError(
-              "Cannot find actual location for " + file.getAbsolutePath() + " from '" + getLibraryId(library) + "' library");
+              "Cannot find actual location for " + file.getAbsolutePath() + " from '" + getLibraryId(library).getStringId() + "' library");
           }
           else {
             actualFiles.add(actual);
