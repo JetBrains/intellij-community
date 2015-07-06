@@ -257,7 +257,8 @@ public class ResolveImportUtil {
   }
 
   /**
-   * Tries to find referencedName under the parent element.
+   * Tries to find referencedName under the parent element. Used to resolve any names that look imported.
+   * Parent might happen to be a PyFile(__init__.py), then it is treated <i>both</i> as a file and as ist base dir.
    *
    * @param parent          element under which to look for referenced name; if null, null is returned.
    * @param referencedName  which name to look for.
@@ -265,15 +266,17 @@ public class ResolveImportUtil {
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
    * @return the element the referencedName resolves to, or null.
+   * @todo: Honor module's __all__ value.
+   * @todo: Honor package's __path__ value (hard).
    */
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
                                         @Nullable final PsiFile containingFile, boolean fileOnly, boolean checkForPackage) {
     PsiDirectory dir = null;
     PsiElement resultElement = null;
+    PsiElement possibleResult = null;
     final PyResolveContext resolveContext = PyResolveContext.defaultContext();
     if (parent instanceof PyFileImpl) {
-      PsiElement possibleResult = null;
       if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
@@ -291,15 +294,11 @@ public class ResolveImportUtil {
         resultElement = moduleMember;
       }
       if (resultElement != null && !PyUtil.instanceOf(resultElement, PsiFile.class, PsiDirectory.class) &&
-          PsiTreeUtil.getStubOrPsiParentOfType(resultElement, PyExceptPart.class) == null && !isDunderAll(resultElement)) {
+          PsiTreeUtil.getStubOrPsiParentOfType(resultElement, PyExceptPart.class) == null) {
         return resultElement;
       }
 
       if (possibleResult != null) return possibleResult;
-
-      if (resultElement != null) {
-        return resultElement;
-      }
     }
     else if (parent instanceof PsiDirectory) {
       dir = (PsiDirectory)parent;
@@ -326,11 +325,7 @@ public class ResolveImportUtil {
         }
       }
     }
-    return null;
-  }
-
-  private static boolean isDunderAll(@NotNull PsiElement element) {
-    return (element instanceof PyElement) && PyNames.ALL.equals(((PyElement)element).getName());
+    return resultElement;
   }
 
   @Nullable
