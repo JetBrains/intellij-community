@@ -19,7 +19,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
@@ -527,7 +527,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       if (renamed) {
         file = dir.findChild(externalInfo!!.fileName)
         if (file != null) {
-          writeAction {
+          runWriteAction {  }
+          runWriteAction {
             file!!.rename(this, fileName)
           }
         }
@@ -537,7 +538,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         file = DirectoryBasedStorage.getFile(fileName, dir, this)
       }
 
-      writeAction {
+      runWriteAction {
         file!!.getOutputStream(this).use {
           byteOut.writeTo(it)
         }
