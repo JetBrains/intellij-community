@@ -191,8 +191,6 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       PsiElement range = getMethodRange(method);
       LineMarkerInfo info = createSuperMethodLineMarkerInfo(range, AllIcons.Gutter.ImplementingMethod, Pass.UPDATE_OVERRIDEN_MARKERS);
       result.add(info);
-      PsiClass sClass = siblingInheritedViaSubClass.getContainingClass();
-      String sName = sClass == null ? null : sClass.getQualifiedName();
     }
   }
 

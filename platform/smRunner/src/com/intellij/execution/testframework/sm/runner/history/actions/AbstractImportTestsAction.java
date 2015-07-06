@@ -19,20 +19,14 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerRegistry;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,9 +34,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -153,7 +145,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public static class ImportRunProfile implements RunProfile {
     private final VirtualFile myFile;
     private final Project myProject;
-    private RunnerAndConfigurationSettingsImpl mySettings;
+    private RunConfiguration myConfiguration;
     private boolean myImported;
     private SMTRunnerConsoleProperties myProperties;
 
@@ -164,20 +156,21 @@ public abstract class AbstractImportTestsAction extends AnAction {
         final Document document = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(myFile));
         final Element config = document.getRootElement().getChild("config");
         if (config != null) {
-          mySettings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project));
-          try {
-            mySettings.readExternal(config);
-            final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-            if (executor != null) {
-              final RunConfiguration configuration = mySettings.getConfiguration();
-              if (configuration instanceof SMRunnerConsolePropertiesProvider) {
-                myProperties = ((SMRunnerConsolePropertiesProvider)configuration).createTestConsoleProperties(executor);
+          String configTypeId = config.getAttributeValue("configId");
+          if (configTypeId != null) {
+            final ConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(configTypeId);
+            if (configurationType != null) {
+              myConfiguration = configurationType.getConfigurationFactories()[0].createTemplateConfiguration(project);
+              myConfiguration.setName(config.getAttributeValue("name"));
+              myConfiguration.readExternal(config);
+
+              final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+              if (executor != null) {
+                if (myConfiguration instanceof SMRunnerConsolePropertiesProvider) {
+                  myProperties = ((SMRunnerConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor);
+                }
               }
             }
-          }
-          catch (InvalidDataException e) {
-            LOG.info(e);
-            mySettings = null;
           }
         }
       }
@@ -192,13 +185,9 @@ public abstract class AbstractImportTestsAction extends AnAction {
         myImported = true;
         return new ImportedTestRunnableState(this, VfsUtilCore.virtualToIoFile(myFile));
       }
-      if (mySettings != null) {
+      if (myConfiguration != null) {
         try {
-          final RunConfiguration configuration = mySettings.getConfiguration();
-          if (configuration instanceof UserDataHolder) {
-            ((UserDataHolder)configuration).putUserData(TestResultsXmlFormatter.SETTINGS, mySettings);
-          }
-          return configuration.getState(executor, environment);
+          return myConfiguration.getState(executor, environment);
         }
         catch (Throwable e) {
           LOG.info(e);
@@ -210,7 +199,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
 
     @Override
     public String getName() {
-      return myImported && mySettings != null ? mySettings.getName() : myFile.getNameWithoutExtension();
+      return myImported && myConfiguration != null ? myConfiguration.getName() : myFile.getNameWithoutExtension();
     }
 
     @Nullable
@@ -224,7 +213,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     }
 
     public RunConfiguration getInitialConfiguration() {
-      return mySettings != null ? mySettings.getConfiguration() : null;
+      return myConfiguration;
     }
 
     public Project getProject() {

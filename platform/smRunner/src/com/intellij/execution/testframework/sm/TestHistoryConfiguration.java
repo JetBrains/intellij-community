@@ -18,9 +18,7 @@ package com.intellij.execution.testframework.sm;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
-import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -28,7 +26,6 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -86,12 +83,8 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
   public Icon getIcon(String file) {
     final ConfigurationBean bean = myState.getHistoryElements().get(file);
     if (bean != null) {
-      ConfigurationType[] types = Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
-      for (ConfigurationType type : types) {
-        if (type.getId().equals(bean.configurationId)) {
-          return type.getIcon();
-        }
-      }
+      ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(bean.configurationId);
+      if (type != null) return type.getIcon();
     }
     return null;
   }

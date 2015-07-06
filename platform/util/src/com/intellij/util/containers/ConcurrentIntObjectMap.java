@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,10 @@ public interface ConcurrentIntObjectMap<V> {
   @NotNull
   Collection<V> values();
   boolean containsValue(@NotNull V value);
+  /**
+   * @return the previous value associated with the specified key,
+   * or {@code null} if there was no mapping for the key
+   */
   V putIfAbsent(int key, @NotNull V value);
 
   interface IntEntry<V> {

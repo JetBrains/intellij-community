@@ -277,8 +277,7 @@ public class TabPostFormatProcessorTest {
       allowing(myDocument).getTextLength(); will(returnValue(text.length()));
     }});
     
-    final LineSet lines = new LineSet();
-    lines.documentCreated(myDocument);
+    final LineSet lines = LineSet.createLineSet(myDocument.getCharsSequence());
     myMockery.checking(new Expectations() {{
       allowing(myDocument).getLineNumber(with(any(int.class))); will(new CustomAction("getLineNumber()") {
         @Override
