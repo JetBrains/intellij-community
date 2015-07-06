@@ -20,6 +20,30 @@ public class ConstantValueVariableUse {
         if ((i) == 2 && true && true) { // polyadic
             f(<warning descr="Value of 'i' is known to be constant">i</warning>);
         }
+
+        int j = 10;
+        while (i < 10 && j == 10) {
+            f(<warning descr="Value of 'j' is known to be constant">j</warning>);
+        }
+        for (; i < 10 && j == 10; ) {
+            f(<warning descr="Value of 'j' is known to be constant">j</warning>);
+        }
+
+        if (i == 3) {
+            i = 4;
+            System.out.println(i);
+        }
     }
 
+}
+class C {
+    private int hash;
+    @Override
+    public int hashCode() {
+        int h = hash;
+        if (h == 0) {
+            hash = h = "StringUtil.stringHashCode(this, 0, length())".hashCode();
+        }
+        return h;
+    }
 }
