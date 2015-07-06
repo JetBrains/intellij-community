@@ -66,7 +66,6 @@ public class TestResultsXmlFormatter {
 
   public static final String ROOT_ELEM = "root";
   
-  public static final Key<RunnerAndConfigurationSettingsImpl> SETTINGS = Key.create("RUN_CONFIGURATION_SETTINGS");
 
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
@@ -125,19 +124,14 @@ public class TestResultsXmlFormatter {
       endElement(ELEM_COUNT);
     }
 
-    RunnerAndConfigurationSettingsImpl settings =
-      (RunnerAndConfigurationSettingsImpl)RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).getSettings(myRuntimeConfiguration);
-    if (settings == null && myRuntimeConfiguration instanceof UserDataHolder) {
-      settings = ((UserDataHolder)myRuntimeConfiguration).getUserData(SETTINGS);
+    final Element config = new Element("config");
+    try {
+      myRuntimeConfiguration.writeExternal(config);
+      config.setAttribute("configId", myRuntimeConfiguration.getType().getId());
+      config.setAttribute("name", myRuntimeConfiguration.getName());
     }
-    if (settings != null) {
-      final Element config = new Element("config");
-      try {
-        settings.writeExternal(config);
-      }
-      catch (WriteExternalException ignore) {}
-      processJDomElement(config);
-    }
+    catch (WriteExternalException ignore) {}
+    processJDomElement(config);
 
     CompositeFilter f = new CompositeFilter(myRuntimeConfiguration.getProject());
     for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
