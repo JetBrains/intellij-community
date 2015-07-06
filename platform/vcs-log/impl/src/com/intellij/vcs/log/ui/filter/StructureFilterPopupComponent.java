@@ -246,6 +246,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       else {
         setVisible(myRoot, state);
       }
+
+      myIcon.prepare(state);
     }
 
     @Override

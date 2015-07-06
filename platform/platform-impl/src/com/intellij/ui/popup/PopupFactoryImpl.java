@@ -50,7 +50,10 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.EmptyIcon;
@@ -65,6 +68,9 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -218,6 +224,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
+      registerAction("handleActionToggle1", KeyEvent.VK_SPACE, 0, new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          handleToggleAction();
+        }
+      });
+
       addListSelectionListener(new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
@@ -269,6 +282,52 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
       ActionMenu.showDescriptionInStatusBar(true, myComponent, null);
       super.dispose();
+    }
+
+    @Override
+    public void handleSelect(boolean handleFinalChoices, InputEvent e) {
+      final Object selectedValue = getList().getSelectedValue();
+      final ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+
+      if (actionPopupStep != null) {
+        ToggleAction toggleAction = getToggleAction(selectedValue, actionPopupStep);
+        if (toggleAction != null) {
+          actionPopupStep.performAction(toggleAction, e != null ? e.getModifiers() : 0);
+          getList().repaint();
+          return;
+        }
+      }
+
+      super.handleSelect(handleFinalChoices, e);
+    }
+
+    protected void handleToggleAction() {
+      final Object[] selectedValues = getList().getSelectedValues();
+
+      ListPopupStep<Object> listStep = getListStep();
+      final ActionPopupStep actionPopupStep = ObjectUtils.tryCast(listStep, ActionPopupStep.class);
+      if (actionPopupStep == null) return;
+
+      List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, new Function<Object, ToggleAction>() {
+        @Override
+        public ToggleAction fun(Object o) {
+          return getToggleAction(o, actionPopupStep);
+        }
+      });
+
+      for (ToggleAction action : filtered) {
+        actionPopupStep.performAction(action, 0);
+      }
+
+      getList().repaint();
+    }
+
+    @Nullable
+    private static ToggleAction getToggleAction(@Nullable Object value, @NotNull ActionPopupStep actionPopupStep) {
+      ActionItem item = value instanceof ActionItem ? (ActionItem)value : null;
+      if (item == null) return null;
+      if (!actionPopupStep.isSelectable(item)) return null;
+      return item.getAction() instanceof ToggleAction ? (ToggleAction)item.getAction() : null;
     }
   }
 
@@ -740,15 +799,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
         myFinalRunnable = new Runnable() {
           @Override
           public void run() {
-            final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                                                          ActionManager.getInstance(), eventModifiers);
-            event.setInjectedContext(action.isInInjectedContext());
-            if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-              action.actionPerformed(event);
-            }
+            performAction(action, eventModifiers);
           }
         };
         return FINAL_CHOICE;
+      }
+    }
+
+    public void performAction(@NotNull AnAction action, int modifiers) {
+      final DataManager mgr = DataManager.getInstance();
+      final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
+      final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
+                                                    ActionManager.getInstance(), modifiers);
+      event.setInjectedContext(action.isInInjectedContext());
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+        action.actionPerformed(event);
       }
     }
 
