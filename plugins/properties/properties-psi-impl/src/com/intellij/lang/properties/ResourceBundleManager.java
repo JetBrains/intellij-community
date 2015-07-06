@@ -104,14 +104,11 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
       @Override
       public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
-        if (!(child instanceof PsiFile)) {
-          return;
-        }
-        PropertiesFile file = PropertiesImplUtil.getPropertiesFile((PsiFile)child);
-        if (file == null) {
-          return;
-        }
-        final VirtualFile virtualFile = file.getVirtualFile();
+        if (!(child instanceof PsiFile)) return;
+        PsiFile psiFile = (PsiFile)child;
+        if (!PropertiesImplUtil.canBePropertyFile(psiFile)) return;
+
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
         final NotNullLazyValue<String> url = new NotNullLazyValue<String>() {
           @NotNull
           @Override

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,8 +118,12 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   @Nullable
   public static PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
-    if (file == null) return null;
+    if (!canBePropertyFile(file)) return null;
     return file instanceof PropertiesFile ? (PropertiesFile)file : XmlPropertiesFileImpl.getPropertiesFile(file);
+  }
+
+  public static boolean canBePropertyFile(PsiFile file) {
+    return file instanceof PropertiesFile || file instanceof XmlFile;
   }
 
   @NotNull
