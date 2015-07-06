@@ -42,6 +42,6 @@
     <orderEntry type="module" module-name="built-in-server" scope="RUNTIME" />
     <orderEntry type="library" name="imgscalr" level="project" />
     <orderEntry type="module" module-name="built-in-server-api" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" exported="" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>
