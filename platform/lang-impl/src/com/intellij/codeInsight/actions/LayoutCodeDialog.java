@@ -151,7 +151,7 @@ public class LayoutCodeDialog extends DialogWrapper {
       myLastRunOptions.saveRearrangeState(myFile.getLanguage(), myRunOptions.isRearrangeCode());
     }
 
-    if (!mySelectedTextRadioButton.isSelected()) {
+    if (!mySelectedTextRadioButton.isSelected() && myOnlyVCSChangedTextRb.isEnabled()) {
       myLastRunOptions.saveProcessVcsChangedTextState(myOnlyVCSChangedTextRb.isSelected());
     }
   }
@@ -201,8 +201,8 @@ public class LayoutCodeDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    super.doOKAction();
     saveCurrentConfiguration();
+    super.doOKAction();
   }
 
   public LayoutCodeOptions getRunOptions() {
