@@ -193,8 +193,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-                      eventSet.resume();
-                      return;
+                      for (Event event : eventSet) {
+                        if (event instanceof LocatableEvent && SuspendManagerUtil.isEvaluating(getSuspendManager(),
+                                                          getVirtualMachineProxy().getThreadReferenceProxy(
+                                                            ((LocatableEvent)event).thread()))) {
+                          eventSet.resume();
+                          return;
+                        }
+                      }
                     }
                   }
                 }
