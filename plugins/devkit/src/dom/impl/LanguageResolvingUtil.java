@@ -164,9 +164,7 @@ class LanguageResolvingUtil {
       return null;
     }
 
-    final PsiMethod method = methods[0];
-    final Pair<PsiElement, String> pair = StringExpressionHelper.evaluateConstantExpression(method);
-    return pair != null ? pair.second : null;
+    return getStringConstantExpression(methods[0]);
   }
 
   private static String computeConstantSuperCtorCallParameter(PsiClass languagePsiClass, int index) {
@@ -204,15 +202,14 @@ class LanguageResolvingUtil {
     if (argumentExpressions.length < index + 1) {
       return null;
     }
-    return computeConstant(languagePsiClass, argumentExpressions[index]);
+
+    return getStringConstantExpression(argumentExpressions[index]);
   }
 
-  private static String computeConstant(PsiClass languagePsiClass, PsiExpression returnValue) {
-    final PsiConstantEvaluationHelper constantEvaluationHelper =
-      JavaPsiFacade.getInstance(languagePsiClass.getProject()).getConstantEvaluationHelper();
-
-    final Object constant = constantEvaluationHelper.computeConstantExpression(returnValue);
-    return constant instanceof String ? ((String)constant) : null;
+  @Nullable
+  private static String getStringConstantExpression(PsiElement psiElement) {
+    final Pair<PsiElement, String> pair = StringExpressionHelper.evaluateConstantExpression(psiElement);
+    return pair != null ? pair.second : null;
   }
 
   @Nullable
