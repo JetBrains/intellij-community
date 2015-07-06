@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class JavacOutputParser extends OutputParser {
         final String filePath = part1.replace(File.separatorChar, '/');
         final Boolean fileExists = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
           public Boolean compute(){
-            return LocalFileSystem.getInstance().findFileByPath(filePath) != null? Boolean.TRUE : Boolean.FALSE;
+            return LocalFileSystem.getInstance().findFileByPath(filePath) != null;
           }
         });
         if (!fileExists.booleanValue()) {
@@ -236,7 +236,7 @@ public class JavacOutputParser extends OutputParser {
         protected void doExecute(final String line, @Nullable final String filePath, final Callback callback) {
           final boolean fileExists = filePath != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
             public Boolean compute(){
-              return LocalFileSystem.getInstance().findFileByPath(filePath) != null? Boolean.TRUE : Boolean.FALSE;
+              return LocalFileSystem.getInstance().findFileByPath(filePath) != null;
             }
           });
           if (fileExists) {

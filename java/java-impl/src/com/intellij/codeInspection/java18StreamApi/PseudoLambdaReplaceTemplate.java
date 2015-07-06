@@ -19,17 +19,12 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +111,7 @@ class PseudoLambdaReplaceTemplate {
     } else if (!(returnType instanceof PsiArrayType)) {
       return null;
     }
-    return validate(parameterTypes, returnType, method);
+    return validate(parameterTypes, returnType, null, method);
   }
 
   @Nullable
@@ -136,7 +131,9 @@ class PseudoLambdaReplaceTemplate {
     if (argumentTypes.length != expectedParameters.length) {
       return null;
     }
-    return validate(argumentTypes, methodReturnType, expression);
+    final JavaResolveResult result = expression.getMethodExpression().advancedResolve(false);
+    final PsiSubstitutor methodSubstitutor = result.getSubstitutor();
+    return validate(argumentTypes, methodReturnType, methodSubstitutor, expression);
   }
 
   public String getStreamApiMethodName() {
@@ -151,7 +148,10 @@ class PseudoLambdaReplaceTemplate {
     return myAcceptDefaultValue;
   }
 
-  private ValidationInfo validate(final PsiType[] arguments, final PsiType methodReturnType, final PsiElement context) {
+  private ValidationInfo validate(final PsiType[] arguments,
+                                  final PsiType methodReturnType,
+                                  final @Nullable PsiSubstitutor methodSubstitutor,
+                                  final PsiElement context) {
     int lambdaPosition = -1;
     int defaultValuePosition = -1;
     int iterablePosition = -1;
@@ -168,7 +168,7 @@ class PseudoLambdaReplaceTemplate {
 
     for (int i = 0; i < arguments.length; i++) {
       PsiType type = arguments[i];
-      if (isFunction(type, methodReturnType, context)) {
+      if (isFunction(type, methodReturnType, methodSubstitutor, context)) {
         if (lambdaPosition == -1) {
           lambdaPosition = i;
           continue;
@@ -207,7 +207,7 @@ class PseudoLambdaReplaceTemplate {
     return new ValidationInfo(lambdaPosition, iterablePosition, defaultValuePosition);
   }
 
-  private boolean isFunction(PsiType type, PsiType baseMethodReturnType, PsiElement context) {
+  private boolean isFunction(PsiType type, PsiType baseMethodReturnType, PsiSubstitutor methodSubstitutor, PsiElement context) {
     if (type instanceof PsiMethodReferenceType) {
       final PsiMethodReferenceExpression expression = ((PsiMethodReferenceType)type).getExpression();
       final PsiMethod resolvedMethod = (PsiMethod)expression.resolve();
@@ -219,20 +219,21 @@ class PseudoLambdaReplaceTemplate {
         return false;
       }
       final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
-      return isSuitableLambdaRole(returnType, baseMethodReturnType, context);
+      return isSuitableLambdaRole(returnType, baseMethodReturnType, methodSubstitutor, context);
     } else if (type instanceof PsiLambdaExpressionType) {
       final PsiLambdaExpression expression = ((PsiLambdaExpressionType)type).getExpression();
       final PsiType psiType = LambdaUtil.getFunctionalInterfaceReturnType(expression.getFunctionalInterfaceType());
-      return isSuitableLambdaRole(psiType, baseMethodReturnType, context);
-    } else if (isSuitableFunctionalType(type, baseMethodReturnType, context)) {
+      return isSuitableLambdaRole(psiType, baseMethodReturnType, methodSubstitutor, context);
+    } else if (isSuitableFunctionalType(type, baseMethodReturnType, methodSubstitutor, context)) {
       return true;
     }
     return isJavaLangClassType(type) && myLambdaRole == LambdaRole.PREDICATE;
   }
 
-  private boolean isSuitableLambdaRole(final PsiType lambdaReturnType,
-                                       final PsiType baseMethodReturnType,
-                                       final PsiElement context) {
+  private boolean isSuitableLambdaRole(PsiType lambdaReturnType,
+                                       PsiType baseMethodReturnType,
+                                       PsiSubstitutor methodSubstitutor,
+                                       PsiElement context) {
     if (lambdaReturnType == null) {
       return false;
     }
@@ -244,6 +245,9 @@ class PseudoLambdaReplaceTemplate {
     }
     else {
       LOG.assertTrue(myLambdaRole == LambdaRole.FUNCTION);
+      if (methodSubstitutor != null) {
+        lambdaReturnType = methodSubstitutor.substitute(lambdaReturnType);
+      }
       if (baseMethodReturnType instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)baseMethodReturnType).resolveGenerics();
         final Map<PsiTypeParameter, PsiType> substitutionMap = resolveResult.getSubstitutor().getSubstitutionMap();
@@ -274,49 +278,44 @@ class PseudoLambdaReplaceTemplate {
     return false;
   }
 
-  private boolean isSuitableFunctionalType(final PsiType type, final PsiType baseMethodReturnType, final PsiElement context) {
+  private boolean isSuitableFunctionalType(final PsiType type,
+                                           final PsiType baseMethodReturnType,
+                                           final @Nullable PsiSubstitutor methodSubstitutor,
+                                           final PsiElement context) {
     if (type instanceof PsiClassType) {
-      PsiClass targetClass = ((PsiClassType)type).resolve();
-      if (targetClass != null) {
-        if (targetClass instanceof PsiAnonymousClass) {
-          targetClass = ((PsiAnonymousClass)targetClass).getBaseClassType().resolve();
-          if (targetClass == null) {
+      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+      if (resolvedClass != null) {
+        if (resolvedClass instanceof PsiAnonymousClass) {
+          final PsiClass baseClass = ((PsiAnonymousClass)resolvedClass).getBaseClassType().resolve();
+          if (baseClass == null) {
             return false;
           }
-        }
-        if (!LambdaUtil.isFunctionalClass(targetClass)) {
-          return false;
-        }
-        PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(targetClass);
-        final PsiMethod[] methods = ((PsiClassType)type).resolve().findMethodsByName(method.getName(), false);
-        if (methods.length != 1) {
-          return false;
-        }
-        method = methods[0];
-        if (method == null) {
-          return false;
-        }
-        final PsiType psiType;
-        if (type instanceof PsiClassReferenceType) {
-          final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-          final PsiClass resolvedClass = ((PsiClassReferenceType)type).resolve();
-          final PsiTypeParameter[] typeParameters = resolvedClass.getTypeParameters();
-          final PsiType[] substitutedTypeParameters = reference.getTypeParameters();
-
-          LOG.assertTrue(typeParameters.length == substitutedTypeParameters.length);
-          final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
-          for (int i = 0; i < typeParameters.length; i++) {
-            PsiTypeParameter parameter = typeParameters[i];
-            PsiType t = substitutedTypeParameters[i];
-            substitutionMap.put(parameter, t);
+          if (!LambdaUtil.isFunctionalClass(baseClass)) {
+            return false;
           }
-          PsiSubstitutor substitutor = PsiSubstitutorImpl.createSubstitutor(substitutionMap);
-          psiType = substitutor.substitute(method.getReturnType());
+          PsiMethod superMethod = LambdaUtil.getFunctionalInterfaceMethod(baseClass);
+          if (superMethod == null) {
+            return false;
+          }
+          final PsiMethod[] methods = resolvedClass.findMethodsByName(superMethod.getName(), false);
+          PsiMethod method = null;
+          for (PsiMethod m : methods) {
+            if (PsiSuperMethodUtil.isSuperMethod(m, superMethod)) {
+              method = m;
+            }
+          }
+          if (method == null) {
+            return false;
+          }
+          final PsiType psiType = methodSubstitutor == null ? method.getReturnType() : methodSubstitutor.substitute(method.getReturnType());
+          return isSuitableLambdaRole(psiType, baseMethodReturnType, methodSubstitutor, context);
         } else {
-          psiType = method.getReturnType();
+          if (!LambdaUtil.isFunctionalClass(resolvedClass)) {
+            return false;
+          }
+          return isSuitableLambdaRole(LambdaUtil.getFunctionalInterfaceReturnType(type), baseMethodReturnType, methodSubstitutor, context);
         }
-        return isSuitableLambdaRole(psiType, baseMethodReturnType, context);
-      }
+        }
       return false;
     } else {
       return false;
@@ -340,16 +339,18 @@ class PseudoLambdaReplaceTemplate {
     int lambdaIndex = validationInfo.getLambdaPosition();
 
     final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+    final PsiExpression iterableExpression = expressions[validationInfo.getIterablePosition()];
+    final String pipelineHead = createPipelineHeadText(iterableExpression, force);
+    if (pipelineHead == null) {
+      return expression;
+    }
+
     PsiExpression lambdaExpression = expressions[lambdaIndex];
     if (!force) {
       lambdaExpression = convertClassTypeExpression(lambdaExpression);
-      lambdaExpression = convertToJavaLambda(lambdaExpression, myStreamApiMethodName);
+      lambdaExpression = convertToJavaLambda(lambdaExpression);
     }
     LOG.assertTrue(lambdaExpression != null);
-
-    final PsiExpression iterableExpression = expressions[validationInfo.getIterablePosition()];
-    final String pipelineHead = createPipelineHeadText(iterableExpression, lambdaExpression, force);
-
 
     final String lambdaExpressionText;
     final String elementText;
@@ -391,38 +392,6 @@ class PseudoLambdaReplaceTemplate {
     return JavaPsiFacade.getElementFactory(project).createExpressionFromText(sb.toString(), null);
   }
 
-  private static void convertNewExpression(PsiMethod containingMethod, PsiNewExpression newExpression, PsiClass expectedReturnClass) {
-    final String expectedReturnQName = expectedReturnClass.getQualifiedName();
-    LOG.assertTrue(expectedReturnQName != null);
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(newExpression.getProject());
-    PsiAnonymousClass anonymousClass = PsiTreeUtil.findChildOfType(newExpression, PsiAnonymousClass.class);
-    LOG.assertTrue(anonymousClass != null);
-    PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.findChildOfType(anonymousClass, PsiJavaCodeReferenceElement.class);
-    LOG.assertTrue(referenceElement != null);
-    final PsiReferenceParameterList parameterList = PsiTreeUtil.findChildOfType(referenceElement, PsiReferenceParameterList.class);
-    final PsiJavaCodeReferenceElement newCodeReferenceElement = factory.createReferenceFromText(expectedReturnClass.getQualifiedName()
-                                                                                                +
-                                                                                                (parameterList == null
-                                                                                                 ? ""
-                                                                                                 : parameterList.getText()), null);
-    referenceElement.replace(newCodeReferenceElement);
-    final List<PsiMethod> methods = ContainerUtil.filter(anonymousClass.getMethods(), new Condition<PsiMethod>() {
-      @Override
-      public boolean value(PsiMethod method) {
-        return !"equals".equals(method.getName());
-      }
-    });
-    LOG.assertTrue(methods.size() == 1, methods);
-    final PsiMethod method = methods.get(0);
-    method.setName(expectedReturnClass.getMethods()[0].getName());
-    final PsiTypeElement element = containingMethod.getReturnTypeElement();
-    if (element != null) {
-      final PsiReferenceParameterList genericParameter = PsiTreeUtil.findChildOfType(element, PsiReferenceParameterList.class);
-      element.replace(
-        factory.createTypeElementFromText(expectedReturnQName + (genericParameter == null ? "" : genericParameter.getText()), null));
-    }
-  }
-
   @Nullable
   private static String findSuitableTailMethodForCollection(PsiMethod lambdaHandler) {
     final PsiType type = lambdaHandler.getReturnType();
@@ -454,10 +423,7 @@ class PseudoLambdaReplaceTemplate {
     return null;
   }
 
-  private static PsiExpression convertToJavaLambda(PsiExpression expression, String streamApiMethodName) {
-    if (streamApiMethodName.equals(StreamApiConstants.FAKE_FIND_MATCHED)) {
-      streamApiMethodName = StreamApiConstants.FILTER;
-    }
+  private static PsiExpression convertToJavaLambda(PsiExpression expression) {
     if (expression instanceof PsiMethodReferenceExpression) {
       return expression;
     }
@@ -473,70 +439,23 @@ class PseudoLambdaReplaceTemplate {
       if (!(type instanceof PsiClassType)) {
         return null;
       }
-      final PsiClass lambdaClass = ((PsiClassType)type).resolve();
+      final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+      final PsiClass lambdaClass = result.getElement();
       if (lambdaClass == null) {
         return null;
       }
-      final String methodName = lambdaClass.getMethods()[0].getName();
-      if (tryConvertPseudoLambdaToStreamApi(method, resolveStreamApiLambdaClass(expression.getProject(), streamApiMethodName))) {
-        return expression;
-      }
-      else {
-        return JavaPsiFacade.getElementFactory(expression.getProject())
-          .createExpressionFromText(expression.getText() + "::" + methodName, null);
-      }
+      final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(lambdaClass);
+      LOG.assertTrue(functionalInterfaceMethod != null);
+      final String methodName = functionalInterfaceMethod.getName();
+      return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + methodName, null);
+    }
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiType expressionType = expression.getType();
+      final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(expressionType);
+      LOG.assertTrue(method != null);
+      return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText() + "::" + method.getName(), null);
     }
     return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true);
-  }
-
-  @NotNull
-  private static PsiClass resolveStreamApiLambdaClass(Project project, String streamApiMethodName) {
-    final PsiClass javaUtilStream = JavaPsiFacade.getInstance(project)
-      .findClass(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, GlobalSearchScope.notScope(GlobalSearchScope.projectScope(project)));
-    LOG.assertTrue(javaUtilStream != null);
-    final PsiMethod[] methods = javaUtilStream.findMethodsByName(streamApiMethodName, false);
-    LOG.assertTrue(methods.length == 1);
-    final PsiMethod method = methods[0];
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    LOG.assertTrue(parameters.length == 1);
-    final PsiType type = parameters[0].getType();
-    LOG.assertTrue(type instanceof PsiClassType);
-    final PsiClass resolved = ((PsiClassType)type).resolve();
-    LOG.assertTrue(resolved != null);
-    return resolved;
-  }
-
-  private static boolean tryConvertPseudoLambdaToStreamApi(final @NotNull PsiMethod method, final @NotNull PsiClass expectedReturnClass) {
-    final PsiType currentReturnType = method.getReturnType();
-    if (!(currentReturnType instanceof PsiClassType)) {
-      LOG.error("pseudo-lambda return type must be class " + currentReturnType);
-      return true;
-    }
-    final PsiClass resolvedCurrentReturnType = ((PsiClassType)currentReturnType).resolve();
-    if (expectedReturnClass.getManager().areElementsEquivalent(expectedReturnClass, resolvedCurrentReturnType)) {
-      return true;
-    }
-    final PsiCodeBlock body = method.getBody();
-    Collection<PsiReturnStatement> returnStatements = PsiTreeUtil.findChildrenOfType(body, PsiReturnStatement.class);
-    returnStatements = ContainerUtil.filter(returnStatements, new Condition<PsiReturnStatement>() {
-      @Override
-      public boolean value(PsiReturnStatement statement) {
-        return PsiTreeUtil.getParentOfType(statement, PsiMethod.class) == method;
-      }
-    });
-    if (returnStatements.size() != 1) {
-      return false;
-    }
-    final PsiReturnStatement returnStatement = ContainerUtil.getFirstItem(returnStatements);
-    assert returnStatement != null;
-    final PsiExpression returnValue = returnStatement.getReturnValue();
-    if (returnValue instanceof PsiNewExpression) {
-      convertNewExpression(method, (PsiNewExpression)returnValue, expectedReturnClass);
-      return true;
-    }
-    else {
-      return false;
-    }
   }
 
   @NotNull
@@ -552,7 +471,7 @@ class PseudoLambdaReplaceTemplate {
     return expression;
   }
 
-  private static String createPipelineHeadText(PsiExpression collectionExpression, PsiExpression lambdaExpression, boolean force) {
+  private static String createPipelineHeadText(PsiExpression collectionExpression, boolean force) {
     if (collectionExpression instanceof PsiNewExpression) {
       final PsiDiamondType.DiamondInferenceResult diamondResolveResult =
         PsiDiamondTypeImpl.resolveInferredTypesNoCheck((PsiNewExpression)collectionExpression, collectionExpression);
@@ -569,13 +488,20 @@ class PseudoLambdaReplaceTemplate {
       final PsiType newType = copiedExpression.getType();
       if (!currentType.equals(newType)) {
         collectionExpression = AddTypeArgumentsFix.addTypeArguments(copiedExpression, currentType);
+        if (collectionExpression == null) {
+          return null;
+        }
       }
     }
     final PsiType type = collectionExpression.getType();
     if (type instanceof PsiClassType) {
       final PsiClass resolved = ((PsiClassType)type).resolve();
       LOG.assertTrue(resolved != null && resolved.getQualifiedName() != null, type);
-      return collectionExpression.getText() + ".stream()";
+      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        return collectionExpression.getText() + ".stream()";
+      } else {
+        return "java.util.stream.StreamSupport.stream(" + collectionExpression.getText() + ".spliterator(), false)";
+      }
     }
     else if (type instanceof PsiArrayType) {
       return CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + collectionExpression.getText() + ")";

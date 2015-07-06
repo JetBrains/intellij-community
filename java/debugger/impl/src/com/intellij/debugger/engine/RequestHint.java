@@ -224,7 +224,7 @@ public class RequestHint {
           boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
             public Boolean compute() {
               PsiElement contextElement = PositionUtil.getContextElement(context);
-              return (contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement))? Boolean.TRUE : Boolean.FALSE;
+              return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
             }
           }).booleanValue();
 

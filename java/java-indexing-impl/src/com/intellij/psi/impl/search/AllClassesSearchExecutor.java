@@ -81,7 +81,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     for (final String name : names) {
       ProgressIndicatorProvider.checkCanceled();
-      final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+      final PsiClass[] classes = MethodUsagesSearcher.resolveInReadAction(project, new Computable<PsiClass[]>() {
         @Override
         public PsiClass[] compute() {
           return cache.getClassesByName(name, scope);
@@ -97,21 +97,27 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  public static Project processClassNames(Project project, GlobalSearchScope scope, final Consumer<String> consumer) {
+  public static Project processClassNames(final Project project, final GlobalSearchScope scope, final Consumer<String> consumer) {
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
-    PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {
-      int i = 0;
-
+    MethodUsagesSearcher.resolveInReadAction(project, new Computable<Void>() {
       @Override
-      public boolean process(String s) {
-        if (indicator != null && i++ % 512 == 0) {
-          indicator.checkCanceled();
-        }
-        consumer.consume(s);
-        return true;
+      public Void compute() {
+        PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {
+          int i = 0;
+
+          @Override
+          public boolean process(String s) {
+            if (indicator != null && i++ % 512 == 0) {
+              indicator.checkCanceled();
+            }
+            consumer.consume(s);
+            return true;
+          }
+        }, scope, IdFilter.getProjectIdFilter(project, true));
+        return null;
       }
-    }, scope, IdFilter.getProjectIdFilter(project, true));
+    });
 
     if (indicator != null) {
       indicator.checkCanceled();

@@ -102,14 +102,14 @@ public class CompoundShelfFileProcessor {
   }
 
   public Collection<String> getServerFiles() {
-    if (myServerStreamProvider == null || !myServerStreamProvider.isEnabled()) {
+    if (myServerStreamProvider == null || !myServerStreamProvider.getEnabled()) {
       return Collections.emptyList();
     }
     return myServerStreamProvider.listSubFiles(FILE_SPEC, RoamingType.PER_USER);
   }
 
   public String copyFileFromServer(final String serverFileName, final List<String> localFileNames) {
-    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+    if (myServerStreamProvider != null && myServerStreamProvider.getEnabled()) {
       try {
         File file = new File(new File(myShelfPath), serverFileName);
         if (!file.exists()) {
@@ -137,7 +137,7 @@ public class CompoundShelfFileProcessor {
 
   public String renameFileOnServer(final String serverFileName, final Collection<String> serverFileNames, final Collection<String> localFileNames) {
     String newName = getNewFileName(serverFileName, serverFileNames, localFileNames);
-    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+    if (myServerStreamProvider != null && myServerStreamProvider.getEnabled()) {
       renameFileOnProvider(newName, FILE_SPEC + serverFileName, FILE_SPEC + newName, myServerStreamProvider);
     }
     return newName;
@@ -145,7 +145,7 @@ public class CompoundShelfFileProcessor {
   }
 
   private void renameFileOnProvider(@NotNull String newName, @NotNull String oldFilePath, @NotNull String newFilePath, @NotNull StreamProvider serverStreamProvider) {
-    if (!serverStreamProvider.isEnabled()) {
+    if (!serverStreamProvider.getEnabled()) {
       return;
     }
 
@@ -164,7 +164,7 @@ public class CompoundShelfFileProcessor {
   }
 
   private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file) throws IOException {
-    if (serverStreamProvider.isEnabled() && serverStreamProvider.isApplicable(newFilePath, RoamingType.PER_USER)) {
+    if (serverStreamProvider.getEnabled() && serverStreamProvider.isApplicable(newFilePath, RoamingType.PER_USER)) {
       byte[] content = FileUtil.loadFileBytes(file);
       serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER);
     }
@@ -206,7 +206,7 @@ public class CompoundShelfFileProcessor {
       writer.close();
     }
 
-    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+    if (myServerStreamProvider != null && myServerStreamProvider.getEnabled()) {
       copyFileContentToProviders(FILE_SPEC + patchPath.getName(), myServerStreamProvider, patchPath);
     }
   }
@@ -216,7 +216,7 @@ public class CompoundShelfFileProcessor {
   }
 
   public void saveFile(final File from, final File to) throws IOException {
-    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+    if (myServerStreamProvider != null && myServerStreamProvider.getEnabled()) {
       copyFileContentToProviders(FILE_SPEC + to.getName(), myServerStreamProvider, from);
     }
     FileUtil.copy(from, to);
@@ -224,7 +224,7 @@ public class CompoundShelfFileProcessor {
 
   public void delete(final String name) {
     FileUtil.delete(new File(getBaseIODir(), name));
-    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+    if (myServerStreamProvider != null && myServerStreamProvider.getEnabled()) {
       StorageUtil.delete(myServerStreamProvider, FILE_SPEC + name, RoamingType.PER_USER);
     }
   }

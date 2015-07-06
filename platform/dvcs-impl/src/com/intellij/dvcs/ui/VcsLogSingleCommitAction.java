@@ -28,7 +28,7 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
 
   @Override
   protected boolean isEnabled(@NotNull MultiMap<Repo, VcsFullCommitDetails> grouped) {
-    return grouped.size() == 1;
+    return grouped.values().size() == 1;
   }
 
   @Override

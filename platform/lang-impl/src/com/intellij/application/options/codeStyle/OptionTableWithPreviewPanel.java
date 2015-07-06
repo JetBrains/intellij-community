@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -352,11 +351,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     myOptions.add(new BooleanOption(null, fieldName, title, groupName, null, null));
   }
 
-  protected void addOption(
-    @NotNull String filedName, @NotNull String title, @Nullable String groupName, int undefinedValue, int falseValue, int trueValue) {
-    myOptions.add(new TriStateOption(null, filedName, title, groupName, null, null, undefinedValue, falseValue, trueValue));
-  }
-
   protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
                            @NotNull String[] options, @NotNull int[] values) {
     myOptions.add(new SelectionOption(null, fieldName, title, groupName, null, null, options, values));
@@ -420,7 +414,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     @Override
     public Object getValue(CodeStyleSettings settings) {
       try {
-        return field.getBoolean(getSettings(settings)) ? Boolean.TRUE : Boolean.FALSE;
+        return field.getBoolean(getSettings(settings));
       }
       catch (IllegalAccessException ignore) {
         return null;
@@ -436,61 +430,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       }
     }
   }
-
-
-  private class TriStateOption extends Option {
-
-    private int myUndefinedValue;
-    private int myFalseValue;
-    private int myTrueValue;
-
-    public TriStateOption(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
-                          @NotNull String fieldName,
-                          @NotNull String title,
-                          @Nullable String groupName,
-                          @Nullable OptionAnchor anchor,
-                          @Nullable String anchorFiledName,
-                          int undefinedValue,
-                          int falseValue,
-                          int trueValue) {
-      super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
-      myUndefinedValue = undefinedValue;
-      myFalseValue = falseValue;
-      myTrueValue = trueValue;
-    }
-
-    @Override
-    public Object getValue(CodeStyleSettings settings) {
-      try {
-        int value = field.getInt(getSettings(settings));
-        return getState(value);
-      }
-      catch (IllegalAccessException e) {
-        return null;
-      }
-    }
-
-    @Override
-    public void setValue(Object value, CodeStyleSettings settings) {
-      try {
-        int intValue =
-          ThreeStateCheckBox.State.DONT_CARE.equals(value) ? myUndefinedValue :
-            ThreeStateCheckBox.State.SELECTED.equals(value) ? myTrueValue : myFalseValue;
-        field.setInt(getSettings(settings), intValue);
-      }
-      catch (IllegalAccessException ignored) {
-      }
-    }
-
-    public ThreeStateCheckBox.State getState(Object value) {
-      if (value instanceof Integer) {
-        if (value.equals(myTrueValue)) return ThreeStateCheckBox.State.SELECTED;
-        if (value.equals(myFalseValue)) return ThreeStateCheckBox.State.NOT_SELECTED;
-      }
-      return ThreeStateCheckBox.State.DONT_CARE;
-    }
-  }
-
 
   private class SelectionOption extends Option {
     @NotNull final String[] options;
@@ -746,7 +685,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final JCheckBox myCheckBox = new JBCheckBox();
     private final JPanel myEmptyLabel = new JPanel();
     private final JLabel myIntLabel = new JLabel();
-    private final ThreeStateCheckBox myTriStateCheckBox = new ThreeStateCheckBox();
 
     @NotNull
     @Override
@@ -786,10 +724,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       else if (value instanceof Integer) {
         myIntLabel.setText(value.toString());
         return myIntLabel;
-      }
-      else if (value instanceof ThreeStateCheckBox.State) {
-        myTriStateCheckBox.setState((ThreeStateCheckBox.State)value);
-        return myTriStateCheckBox;
       }
 
       myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
@@ -849,7 +783,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final JCheckBox myBooleanEditor = new JBCheckBox();
     private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
     private MyIntOptionEditor myIntOptionsEditor = new MyIntOptionEditor();
-    private ThreeStateCheckBox myTriStateOptionsEditor = new ThreeStateCheckBox();
     private Component myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
 
@@ -865,7 +798,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       };
       myBooleanEditor.addActionListener(itemChoosen);
       myOptionsEditor.addActionListener(itemChoosen);
-      myTriStateOptionsEditor.addActionListener(itemChoosen);
       myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
       myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
     }
@@ -882,13 +814,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return myOptionsEditor.getEditorValue();
       }
       else if (myCurrentEditor == myBooleanEditor) {
-        return myBooleanEditor.isSelected() ? Boolean.TRUE : Boolean.FALSE;
+        return myBooleanEditor.isSelected();
       }
       else if (myCurrentEditor == myIntOptionsEditor) {
         return myIntOptionsEditor.getPresentableValue();
-      }
-      else if (myCurrentEditor == myTriStateOptionsEditor) {
-        return myTriStateOptionsEditor.getState();
       }
 
       return null;
@@ -916,11 +845,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           myIntOptionsEditor.setMaxValue(intOption.getMaxValue());
           myIntOptionsEditor.setDefaultValue(intOption.getDefaultValue());
           myIntOptionsEditor.setDefaultValueText(intOption.getDefaultValueText());
-        }
-        else if (node.getKey() instanceof TriStateOption) {
-          TriStateOption triStateOption = (TriStateOption)node.getKey();
-          myCurrentEditor = myTriStateOptionsEditor;
-          myTriStateOptionsEditor.setState(triStateOption.getState(node.getValue()));
         }
         else {
           myCurrentEditor = myOptionsEditor;

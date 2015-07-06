@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
   }
 
   @Override
-  public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
+  public boolean isFileIgnored(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -93,7 +93,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
 
   @Nullable
   @Override
-  public FileType findFileTypeByName(String fileTypeName) {
+  public FileType findFileTypeByName(@NotNull String fileTypeName) {
     for (FileType type : myAllFileTypes) {
       if (type.getName().equals(fileTypeName)) {
         return type;

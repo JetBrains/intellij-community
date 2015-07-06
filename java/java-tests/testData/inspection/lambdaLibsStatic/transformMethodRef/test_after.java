@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 class c {
   void m() {
-      Collections.emptyList().stream().map(input -> {
+      Collections.<String>emptyList().stream().map(input -> {
           Collectors c;
           ArrayList l;
           System.out.println(input);

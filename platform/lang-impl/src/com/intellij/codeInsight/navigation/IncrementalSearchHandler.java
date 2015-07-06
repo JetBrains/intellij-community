@@ -374,7 +374,8 @@ public class IncrementalSearchHandler {
         MyPanel comp = (MyPanel)hint.getComponent();
         if (comp.getTruePreferredSize().width > comp.getSize().width){
           Rectangle bounds = hint.getBounds();
-          hint.updateBounds(bounds.x, bounds.y);
+          hint.pack();
+          hint.updateLocation(bounds.x, bounds.y);
         }
         updatePosition(editor, hintData, false, false);
       }

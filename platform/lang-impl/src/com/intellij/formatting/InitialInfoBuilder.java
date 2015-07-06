@@ -203,6 +203,9 @@ class InitialInfoBuilder {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
       }
+      if (!isInsideFormattingRanges && !myCollectAlignmentsInsideFormattingRange) {
+        return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
+      }
 
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null
@@ -241,6 +244,7 @@ class InitialInfoBuilder {
       myResult.put(wrappedRootBlock, rootBlock);
       blocksMayBeOfInterest = true;
     }
+    
     final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
     
     State state = new State(rootBlock, wrappedRootBlock, currentWrapParent, blocksAreReadOnly, rootBlockIsRightBlock);

@@ -594,7 +594,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public FileType findFileTypeByName(String fileTypeName) {
+  public FileType findFileTypeByName(@NotNull String fileTypeName) {
     FileType type = getStdFileType(fileTypeName);
     // TODO: Abstract file types are not std one, so need to be restored specially,
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
@@ -738,7 +738,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
   }
 
-  private void unregisterFileTypeWithoutNotification(FileType fileType) {
+  private void unregisterFileTypeWithoutNotification(@NotNull FileType fileType) {
     myPatternsTable.removeAllAssociations(fileType);
     mySchemesManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
@@ -793,14 +793,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
+  public boolean isFileIgnored(@NotNull VirtualFile file) {
     return myIgnoredFileCache.isFileIgnored(file);
   }
 
   @Override
-  @SuppressWarnings({"deprecation"})
   @NotNull
   public String[] getAssociatedExtensions(@NotNull FileType type) {
+    //noinspection deprecation
     return myPatternsTable.getAssociatedExtensions(type);
   }
 
@@ -1033,7 +1033,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       FileNameMatcher[] unresolvedMappingKeys = myUnresolvedMappings.keySet().toArray(new FileNameMatcher[myUnresolvedMappings.size()]);
       Arrays.sort(unresolvedMappingKeys, new Comparator<FileNameMatcher>() {
         @Override
-        public int compare(FileNameMatcher o1, FileNameMatcher o2) {
+        public int compare(@NotNull FileNameMatcher o1, @NotNull FileNameMatcher o2) {
           return o1.getPresentableString().compareTo(o2.getPresentableString());
         }
       });
@@ -1080,7 +1080,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private boolean isApproved(FileNameMatcher matcher) {
+  private boolean isApproved(@NotNull FileNameMatcher matcher) {
     Pair<FileType, Boolean> pair = myRemovedMappings.get(matcher);
     return pair != null && pair.getSecond();
   }
@@ -1234,7 +1234,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static boolean shouldSave(FileType fileType) {
+  private static boolean shouldSave(@NotNull FileType fileType) {
     return fileType != FileTypes.UNKNOWN && !fileType.isReadOnly();
   }
 
@@ -1248,6 +1248,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return getFileTypeComponentName();
   }
 
+  @NotNull
   public static String getFileTypeComponentName() {
     return PlatformUtils.isIdeaCommunity() ? "CommunityFileTypes" : "FileTypeManager";
   }
@@ -1274,7 +1275,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     fireFileTypesChanged();
   }
 
-  public void associate(FileType fileType, FileNameMatcher matcher, boolean fireChange) {
+  public void associate(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
     if (!myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
@@ -1286,7 +1287,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  public void removeAssociation(FileType fileType, FileNameMatcher matcher, boolean fireChange) {
+  public void removeAssociation(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
     if (myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
@@ -1311,7 +1312,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
   }
 
-  private void registerReDetectedMappings(StandardFileType pair) {
+  private void registerReDetectedMappings(@NotNull StandardFileType pair) {
     FileType fileType = pair.fileType;
     if (fileType == PlainTextFileType.INSTANCE) return;
     for (FileNameMatcher matcher : pair.matchers) {
@@ -1333,6 +1334,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
+  @NotNull
   Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
     return myRemovedMappings;
   }

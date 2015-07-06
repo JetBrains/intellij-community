@@ -68,4 +68,9 @@ class HgCommandProcessHandler extends OSProcessHandler {
       return HgCommandProcessHandler.this.executeOnPooledThread(runnable);
     }
   }
+
+  @Override
+  protected boolean useNonBlockingRead() {
+    return false;
+  }
 }

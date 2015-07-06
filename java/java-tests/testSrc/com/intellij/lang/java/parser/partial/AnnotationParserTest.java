@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java.parser.partial;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
@@ -36,14 +35,7 @@ public class AnnotationParserTest extends JavaParsingTestCase {
   public void testParameterizedAnnotation () { doParserTest("@Nullable<T>"); }
   public void testFirstNameMissed() { doParserTest("@Anno(value1, param2=value2)"); }
 
-  private void doParserTest(final String text) {
-    doParserTest(text, new MyTestParser());
-  }
-
-  private static class MyTestParser implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseAnnotations(builder);
-    }
+  private void doParserTest(String text) {
+    doParserTest(text, builder -> JavaParser.INSTANCE.getDeclarationParser().parseAnnotations(builder));
   }
 }

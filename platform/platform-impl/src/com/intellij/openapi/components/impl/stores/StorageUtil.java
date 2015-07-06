@@ -67,6 +67,9 @@ import java.util.List;
 public class StorageUtil {
   static final Logger LOG = Logger.getInstance(StorageUtil.class);
 
+  @TestOnly
+  public static String DEBUG_LOG = "";
+
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
   private static final Pair<byte[], String> NON_EXISTENT_FILE_DATA = Pair.create(null, SystemProperties.getLineSeparator());
@@ -126,7 +129,7 @@ public class StorageUtil {
   public static VirtualFile writeFile(@Nullable File file,
                                       @NotNull Object requestor,
                                       @Nullable VirtualFile virtualFile,
-                                      @NotNull BufferExposingByteArrayOutputStream content,
+                                      @NotNull Element element,
                                       @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
     final VirtualFile result;
     if (file != null && (virtualFile == null || !virtualFile.isValid())) {
@@ -137,29 +140,38 @@ public class StorageUtil {
       assert result != null;
     }
 
-    boolean equals = isEqualContent(result, lineSeparatorIfPrependXmlProlog, content);
-    if (equals) {
-      LOG.warn("Content equals, but it must be handled not on this level: " + result.getName());
-    }
-    else {
-      if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
-        DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
+    if (LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
+      BufferExposingByteArrayOutputStream content =
+        writeToBytes(element, (lineSeparatorIfPrependXmlProlog == null ? LineSeparator.LF : lineSeparatorIfPrependXmlProlog).getSeparatorString());
+      if (isEqualContent(result, lineSeparatorIfPrependXmlProlog, content)) {
+        if (result.getName().equals("project.default.xml")) {
+          LOG.warn("todo fix project.default.xml");
+          return result;
+        }
+        else {
+          throw new IllegalStateException("Content equals, but it must be handled not on this level: " + result.getName());
+        }
       }
-      doWrite(requestor, result, content, lineSeparatorIfPrependXmlProlog);
+      else {
+        if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
+          DEBUG_LOG = result.getPath() + ":\n" + content + "\nOld Content:\n" + LoadTextUtil.loadText(result) + "\n---------";
+        }
+        doWrite(requestor, result, content, lineSeparatorIfPrependXmlProlog);
+      }
     }
+
+    doWrite(requestor, result, element, lineSeparatorIfPrependXmlProlog);
     return result;
   }
 
-  @TestOnly
-  public static String DEBUG_LOG = "";
-
   private static void doWrite(@NotNull final Object requestor,
                               @NotNull final VirtualFile file,
-                              @NotNull final BufferExposingByteArrayOutputStream content,
+                              @NotNull Object content,
                               @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Save " + file.getPresentableUrl());
     }
+    String lineSeparator = (lineSeparatorIfPrependXmlProlog == null ? LineSeparator.LF : lineSeparatorIfPrependXmlProlog).getSeparatorString();
     AccessToken token = WriteAction.start();
     try {
       OutputStream out = file.getOutputStream(requestor);
@@ -168,17 +180,24 @@ public class StorageUtil {
           out.write(XML_PROLOG);
           out.write(lineSeparatorIfPrependXmlProlog.getSeparatorBytes());
         }
-        content.writeTo(out);
+        if (content instanceof Element) {
+          JDOMUtil.writeParent((Element)content, out, lineSeparator);
+        }
+        else {
+          ((BufferExposingByteArrayOutputStream)content).writeTo(out);
+        }
       }
       finally {
         out.close();
       }
     }
     catch (FileNotFoundException e) {
+      // may be element is not long-lived, so, we must write it to byte array
+      final BufferExposingByteArrayOutputStream byteArray = content instanceof Element ? writeToBytes((Element)content, lineSeparator) : ((BufferExposingByteArrayOutputStream)content);
       throw new ReadOnlyModificationException(file, e, new StateStorage.SaveSession() {
         @Override
         public void save() throws IOException {
-          doWrite(requestor, file, content, lineSeparatorIfPrependXmlProlog);
+          doWrite(requestor, file, byteArray, lineSeparatorIfPrependXmlProlog);
         }
       });
     }
@@ -187,28 +206,27 @@ public class StorageUtil {
     }
   }
 
-  private static boolean isEqualContent(VirtualFile result,
+  private static boolean isEqualContent(@NotNull VirtualFile result,
                                         @Nullable LineSeparator lineSeparatorIfPrependXmlProlog,
                                         @NotNull BufferExposingByteArrayOutputStream content) throws IOException {
-    boolean equals = true;
     int headerLength = lineSeparatorIfPrependXmlProlog == null ? 0 : XML_PROLOG.length + lineSeparatorIfPrependXmlProlog.getSeparatorBytes().length;
-    int toWriteLength = headerLength + content.size();
+    if (result.getLength() != (headerLength + content.size())) {
+      return false;
+    }
 
-    if (result.getLength() != toWriteLength) {
-      equals = false;
+    byte[] oldContent = result.contentsToByteArray();
+
+    if (lineSeparatorIfPrependXmlProlog != null &&
+        (!ArrayUtil.startsWith(oldContent, XML_PROLOG) || !ArrayUtil.startsWith(oldContent, XML_PROLOG.length, lineSeparatorIfPrependXmlProlog.getSeparatorBytes()))) {
+      return false;
     }
-    else {
-      byte[] bytes = result.contentsToByteArray();
-      if (lineSeparatorIfPrependXmlProlog != null) {
-        if (!ArrayUtil.startsWith(bytes, XML_PROLOG) || !ArrayUtil.startsWith(bytes, XML_PROLOG.length, lineSeparatorIfPrependXmlProlog.getSeparatorBytes())) {
-          equals = false;
-        }
-      }
-      if (!ArrayUtil.startsWith(bytes, headerLength, content.toByteArray())) {
-        equals = false;
+
+    for (int i = headerLength; i < oldContent.length; i++) {
+      if (oldContent[i] != content.getInternalBuffer()[i - headerLength]) {
+        return false;
       }
     }
-    return equals;
+    return true;
   }
 
   public static void deleteFile(@NotNull File file, @NotNull final Object requestor, @Nullable final VirtualFile virtualFile) throws IOException {

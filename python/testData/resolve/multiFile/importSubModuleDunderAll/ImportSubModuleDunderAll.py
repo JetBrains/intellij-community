@@ -1,4 +1,4 @@
-from pkg1 import m1
+import pkg1.m1
 
-print(m1)
-#     <ref>
+print(pkg1.m1)
+#          <ref>

@@ -75,7 +75,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
           }
         }
       }
-      final ASTNode previous = PyUtil.getPreviousNonWhitespace(beforeWhat);
+      final ASTNode previous = PyPsiUtils.getPrevNonWhitespaceSibling(beforeWhat);
       PyUtil.addListNode(this, param, beforeWhat, !isLast || params.length == 0 ||
                                           previous.getElementType() == PyTokenTypes.COMMA, isLast,
                                           beforeWhat.getElementType() != PyTokenTypes.RPAR);

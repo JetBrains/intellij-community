@@ -816,7 +816,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @Nullable
   protected Wrap arrangeChildWrap(final ASTNode child, Wrap defaultWrap) {
-    return myWrapManager.arrangeChildWrap(child, myNode, getSettings(), defaultWrap, this);
+    return myWrapManager.arrangeChildWrap(child, myNode, mySettings, myJavaSettings, defaultWrap, this);
   }
 
   @NotNull

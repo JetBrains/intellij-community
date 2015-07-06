@@ -30,7 +30,7 @@ public class QuickListsPanel extends ConfigurableBase<QuickListsUi, List<QuickLi
   @NotNull
   @Override
   protected List<QuickList> getSettings() {
-    return QuickListsManager.getInstance().getQuickLists();
+    return QuickListsManager.getInstance().getSchemeManager().getAllSchemes();
   }
 
   @Override

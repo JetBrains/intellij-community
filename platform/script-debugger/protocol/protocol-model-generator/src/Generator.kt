@@ -88,7 +88,7 @@ class Generator(outputDir: String, rootPackage: String, requestClassName: String
   }
 
   fun resolveType(typedObject: ItemDescriptor, scope: ResolveAndGenerateScope): TypeDescriptor {
-    val optional = typedObject is ItemDescriptor.Named && (typedObject : ItemDescriptor.Named).optional()
+    val optional = typedObject is ItemDescriptor.Named && typedObject.optional()
     return switchByType(typedObject, object : TypeVisitor<TypeDescriptor> {
       override fun visitRef(refName: String): TypeDescriptor {
         return TypeDescriptor(resolveRefType(scope.getDomainName(), refName, scope.getTypeDirection()), optional)
@@ -120,7 +120,7 @@ class Generator(outputDir: String, rootPackage: String, requestClassName: String
       }
 
       override fun visitArray(items: ProtocolMetaModel.ArrayItemType): TypeDescriptor {
-        val type = scope.resolveType<ProtocolMetaModel.ArrayItemType>(items).type
+        val type = scope.resolveType(items).type
         return TypeDescriptor(ListType(type), optional, false, type == BoxableType.ANY_STRING)
       }
 
@@ -244,7 +244,7 @@ fun capitalizeFirstChar(s: String): String {
 }
 
 fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
-  val refName = if (typedObject is ItemDescriptor.Referenceable) (typedObject : ItemDescriptor.Referenceable).ref() else null
+  val refName = if (typedObject is ItemDescriptor.Referenceable) typedObject.ref() else null
   if (refName != null) {
     return visitor.visitRef(refName)
   }
@@ -265,7 +265,7 @@ fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
         return visitor.visitObject(null)
       }
 
-      val properties = (typedObject : ItemDescriptor.Type).properties()
+      val properties = typedObject.properties()
       if (properties == null || properties.isEmpty()) {
         return visitor.visitMap()
       }

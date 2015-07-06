@@ -12,6 +12,6 @@ class c {
       System.out.println(input);
       //do something
       int i = 1;
-      return input;
+      return input.intern();
   }).collect(Collectors.toList());
 }

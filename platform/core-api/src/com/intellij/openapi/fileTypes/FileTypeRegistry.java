@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FileTypeRegistry {
   public static Getter<FileTypeRegistry> ourInstanceGetter;
 
-  public abstract boolean isFileIgnored(@NonNls @NotNull VirtualFile file);
+  public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
   public static FileTypeRegistry getInstance() {
     return ourInstanceGetter.get();
@@ -86,7 +86,7 @@ public abstract class FileTypeRegistry {
    * Finds a file type with the specified name.
    */
   @Nullable
-  public abstract FileType findFileTypeByName(String fileTypeName);
+  public abstract FileType findFileTypeByName(@NotNull String fileTypeName);
 
   /**
    * Pluggable file type detector by content

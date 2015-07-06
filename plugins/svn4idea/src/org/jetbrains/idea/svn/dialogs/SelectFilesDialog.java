@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     }
 
     public void setChecked(final String entry, final boolean checked) {
-      mySelectedFiles.put(entry, checked ? Boolean.TRUE : Boolean.FALSE);
+      mySelectedFiles.put(entry, checked);
       getOKAction().setEnabled(isOKActionEnabled());
     }
 

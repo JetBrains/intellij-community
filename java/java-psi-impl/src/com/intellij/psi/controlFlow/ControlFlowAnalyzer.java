@@ -1262,13 +1262,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myStartStatementStack.pushStatement(expression.getRExpression() == null ? expression : expression.getRExpression(), false);
     myEndStatementStack.pushStatement(expression.getRExpression() == null ? expression : expression.getRExpression(), false);
 
-    PsiExpression rExpr = expression.getRExpression();
-    if (rExpr != null) {
-      rExpr.accept(this);
-    }
-
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
+      PsiExpression rExpr = expression.getRExpression();
+      if (rExpr != null) {
+        rExpr.accept(this);
+      }
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lExpr;
       PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
       PsiVariable variable = getUsedVariable(referenceExpression);
@@ -1293,6 +1292,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     else if (lExpr != null) {
       lExpr.accept(this);
+      PsiExpression rExpr = expression.getRExpression();
+      if (rExpr != null) {
+        rExpr.accept(this);
+      }
     }
 
     myStartStatementStack.popStatement();

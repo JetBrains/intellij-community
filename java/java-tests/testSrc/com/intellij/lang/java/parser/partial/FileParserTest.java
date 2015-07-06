@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.java.parser.partial;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
@@ -40,14 +39,20 @@ public class FileParserTest extends JavaParsingTestCase {
   public void testUnclosedImport2() { doParserTest("import java.awt."); }
   public void testUnclosedImport3() { doParserTest("import static a"); }
 
-  public void testExtraSemicolons() { doParserTest("package p;;\n" +
-                                                   "import a;;\n" +
-                                                   "class C{};"); }
+  public void testExtraSemicolons() {
+    doParserTest(
+      "package p;;\n" +
+      "import a;;\n" +
+      "class C{};");
+  }
 
-  public void testFileWithClass() { doParserTest("package a;\n" +
-                                                 "import b;\n" +
-                                                 "public class C { }\n" +
-                                                 "class D { }"); }
+  public void testFileWithClass() {
+    doParserTest(
+      "package a;\n" +
+      "import b;\n" +
+      "public class C { }\n" +
+      "class D { }");
+  }
 
   public void testBindBefore0() { doParserTest("class A{\n  // comment\n  int field;\n}"); }
   public void testBindBefore1() { doParserTest("class A{\n  // comment\n\n  int field;\n}"); }
@@ -61,14 +66,7 @@ public class FileParserTest extends JavaParsingTestCase {
   public void testBindDocComment3() { doParserTest("class A {\n /** field comment */\n int f;\n}"); }
   public void testBindDocComment4() { doParserTest("class A {\n /** field comment */\n// field comment\n int f;\n}"); }
 
-  private void doParserTest(final String text) {
-    doParserTest(text, new MyTestParser());
-  }
-
-  private static class MyTestParser implements TestParser {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getFileParser().parse(builder);
-    }
+  private void doParserTest(String text) {
+    doParserTest(text, builder -> JavaParser.INSTANCE.getFileParser().parse(builder));
   }
 }

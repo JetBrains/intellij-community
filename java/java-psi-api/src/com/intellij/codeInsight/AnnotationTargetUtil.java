@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation.TargetType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,28 +29,27 @@ import java.util.Set;
  * @author peter
  */
 public class AnnotationTargetUtil {
-  public static final Set<PsiAnnotation.TargetType> DEFAULT_TARGETS = Collections.unmodifiableSet(ContainerUtil.newHashSet(
-    PsiAnnotation.TargetType.PACKAGE, PsiAnnotation.TargetType.TYPE, PsiAnnotation.TargetType.ANNOTATION_TYPE,
-    PsiAnnotation.TargetType.FIELD, PsiAnnotation.TargetType.METHOD, PsiAnnotation.TargetType.CONSTRUCTOR,
-    PsiAnnotation.TargetType.PARAMETER, PsiAnnotation.TargetType.LOCAL_VARIABLE));
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.AnnotationUtil");
-  private static final PsiAnnotation.TargetType[] PACKAGE_TARGETS = {PsiAnnotation.TargetType.PACKAGE};
-  private static final PsiAnnotation.TargetType[] TYPE_USE_TARGETS = {PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] ANNOTATION_TARGETS = {PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE, PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] TYPE_TARGETS = {PsiAnnotation.TargetType.TYPE, PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] TYPE_PARAMETER_TARGETS = {
-    PsiAnnotation.TargetType.TYPE_PARAMETER, PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] CONSTRUCTOR_TARGETS = {PsiAnnotation.TargetType.CONSTRUCTOR, PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] METHOD_TARGETS = {PsiAnnotation.TargetType.METHOD, PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] FIELD_TARGETS = {PsiAnnotation.TargetType.FIELD, PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] PARAMETER_TARGETS = {PsiAnnotation.TargetType.PARAMETER, PsiAnnotation.TargetType.TYPE_USE};
-  private static final PsiAnnotation.TargetType[] LOCAL_VARIABLE_TARGETS ={
-    PsiAnnotation.TargetType.LOCAL_VARIABLE, PsiAnnotation.TargetType.TYPE_USE};
+
+  public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
+    TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE);
+
+  private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
+  private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};
+  private static final TargetType[] ANNOTATION_TARGETS = {TargetType.ANNOTATION_TYPE, TargetType.TYPE, TargetType.TYPE_USE};
+  private static final TargetType[] TYPE_TARGETS = {TargetType.TYPE, TargetType.TYPE_USE};
+  private static final TargetType[] TYPE_PARAMETER_TARGETS = {TargetType.TYPE_PARAMETER, TargetType.TYPE_USE};
+  private static final TargetType[] CONSTRUCTOR_TARGETS = {TargetType.CONSTRUCTOR, TargetType.TYPE_USE};
+  private static final TargetType[] METHOD_TARGETS = {TargetType.METHOD, TargetType.TYPE_USE};
+  private static final TargetType[] FIELD_TARGETS = {TargetType.FIELD, TargetType.TYPE_USE};
+  private static final TargetType[] PARAMETER_TARGETS = {TargetType.PARAMETER, TargetType.TYPE_USE};
+  private static final TargetType[] LOCAL_VARIABLE_TARGETS = {TargetType.LOCAL_VARIABLE, TargetType.TYPE_USE};
 
   @NotNull
-  public static PsiAnnotation.TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
+  public static TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     if (owner == null) {
-      return PsiAnnotation.TargetType.EMPTY_ARRAY;
+      return TargetType.EMPTY_ARRAY;
     }
 
     if (owner instanceof PsiType || owner instanceof PsiTypeElement) {
@@ -90,24 +90,27 @@ public class AnnotationTargetUtil {
       if (element instanceof PsiLocalVariable) {
         return LOCAL_VARIABLE_TARGETS;
       }
+      if (element instanceof PsiReceiverParameter) {
+        return TYPE_USE_TARGETS;
+      }
     }
 
-    return PsiAnnotation.TargetType.EMPTY_ARRAY;
+    return TargetType.EMPTY_ARRAY;
   }
 
   @Nullable
-  public static Set<PsiAnnotation.TargetType> extractRequiredAnnotationTargets(@Nullable PsiAnnotationMemberValue value) {
+  public static Set<TargetType> extractRequiredAnnotationTargets(@Nullable PsiAnnotationMemberValue value) {
     if (value instanceof PsiReference) {
-      PsiAnnotation.TargetType targetType = translateTargetRef((PsiReference)value);
+      TargetType targetType = translateTargetRef((PsiReference)value);
       if (targetType != null) {
         return Collections.singleton(targetType);
       }
     }
     else if (value instanceof PsiArrayInitializerMemberValue) {
-      Set <PsiAnnotation.TargetType> targets = ContainerUtil.newHashSet();
+      Set <TargetType> targets = ContainerUtil.newHashSet();
       for (PsiAnnotationMemberValue initializer : ((PsiArrayInitializerMemberValue)value).getInitializers()) {
         if (initializer instanceof PsiReference) {
-          PsiAnnotation.TargetType targetType = translateTargetRef((PsiReference)initializer);
+          TargetType targetType = translateTargetRef((PsiReference)initializer);
           if (targetType != null) {
             targets.add(targetType);
           }
@@ -120,12 +123,12 @@ public class AnnotationTargetUtil {
   }
 
   @Nullable
-  private static PsiAnnotation.TargetType translateTargetRef(@NotNull PsiReference reference) {
+  private static TargetType translateTargetRef(@NotNull PsiReference reference) {
     PsiElement field = reference.resolve();
     if (field instanceof PsiEnumConstant) {
       String name = ((PsiEnumConstant)field).getName();
       try {
-        return PsiAnnotation.TargetType.valueOf(name);
+        return TargetType.valueOf(name);
       }
       catch (IllegalArgumentException e) {
         LOG.warn("Unknown target: " + name);

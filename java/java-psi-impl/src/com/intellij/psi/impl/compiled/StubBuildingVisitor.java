@@ -83,7 +83,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    String fqn = getFqn(name, myShortName);
+    String fqn = getFqn(name, myShortName, myParent instanceof PsiClassStub ? ((PsiClassStub)myParent).getQualifiedName() : null);
     String shortName = myShortName != null && name.endsWith(myShortName) ? myShortName : PsiNameHelper.getShortClassName(fqn);
 
     int flags = myAccess | access;
@@ -149,7 +149,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  public static String getFqn(@NotNull String internalName, @Nullable String shortName) {
+  public static String getFqn(@NotNull String internalName, @Nullable String shortName, @Nullable String parentName) {
     if (shortName == null || !internalName.endsWith(shortName)) {
       return getClassName(internalName);
     }
@@ -157,7 +157,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       return shortName;
     }
     else {
-      return getClassName(internalName.substring(0, internalName.length() - shortName.length() - 1)) + "." + shortName;
+      if (parentName == null) {
+        parentName = getClassName(internalName.substring(0, internalName.length() - shortName.length() - 1));
+      }
+      return parentName + "." + shortName;
     }
   }
 

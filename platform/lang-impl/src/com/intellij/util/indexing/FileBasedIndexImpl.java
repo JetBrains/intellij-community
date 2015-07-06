@@ -1716,9 +1716,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     fc.putUserData(IndexingDataKeys.PROJECT, project);
   }
 
+  static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
+
   private void updateSingleIndex(@NotNull ID<?, ?> indexId, final int inputId, @Nullable FileContent currentFC)
     throws StorageException {
-    if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
+    if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
     myLocalModCount++;
@@ -1726,7 +1728,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
 
-    if (currentFC != null && currentFC.getUserData(ourPhysicalContentKey) == null) {
+    boolean hasContent = currentFC != null;
+    if (hasContent && currentFC.getUserData(ourPhysicalContentKey) == null) {
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
 
@@ -1735,10 +1738,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final Computable<Boolean> update = index.update(inputId, currentFC);
 
     try {
-      scheduleUpdate(indexId,
-                     createUpdateComputableWithBufferingDisabled(update),
-                     createIndexedStampUpdateRunnable(indexId, inputId, currentFC != null)
-      );
+      scheduleUpdate(indexId, update, inputId, hasContent);
     } catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
       if (causeToRebuildIndex != null) {
@@ -1750,51 +1750,51 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
-
-  @NotNull
-  private Runnable createIndexedStampUpdateRunnable(@NotNull final ID<?, ?> indexId,
-                                                    final int fileId,
-                                                    final boolean hasContent) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (hasContent) {
-          IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
-        }
-        else {
-          IndexingStamp.setFileIndexedStateUnindexed(fileId, indexId);
-        }
-        if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(fileId);
-      }
-    };
-  }
-
-  @NotNull
-  private Computable<Boolean> createUpdateComputableWithBufferingDisabled(@NotNull final Computable<Boolean> update) {
-    return new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        Boolean result;
-        final StorageGuard.StorageModeExitHandler lock = setDataBufferingEnabled(false);
-        try {
-          result = update.compute();
-        }
-        finally {
-          lock.leave();
-        }
-        return result;
-      }
-    };
-  }
-
-  private void scheduleUpdate(@NotNull ID<?, ?> indexId, @NotNull Computable<Boolean> update, @NotNull Runnable successRunnable) {
+  private void scheduleUpdate(@NotNull final ID<?, ?> indexId, final Computable<Boolean> update, final int inputId, final boolean hasContent) {
     if (myNotRequiringContentIndices.contains(indexId) && !Registry.is("idea.concurrent.scanning.files.to.index")) {
-      myContentlessIndicesUpdateQueue.submit(update, successRunnable);
+      myContentlessIndicesUpdateQueue.submit(
+        new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return updateWithBufferingEnabled(update);
+          }
+        },
+        new Runnable() {
+          @Override
+          public void run() {
+            indexedStampUpdate(indexId, inputId, hasContent);
+          }
+        });
     }
     else {
-      Boolean result = update.compute();
-      if (result == Boolean.TRUE) ApplicationManager.getApplication().runReadAction(successRunnable);
+      if (updateWithBufferingEnabled(update)) {
+        AccessToken accessToken = ReadAction.start();
+        try {
+          indexedStampUpdate(indexId, inputId, hasContent);
+        } finally {
+          accessToken.finish();
+        }
+      }
+    }
+  }
+
+  protected void indexedStampUpdate(@NotNull ID<?, ?> indexId, int fileId, boolean hasContent) {
+    if (hasContent) {
+      IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+    }
+    else {
+      IndexingStamp.setFileIndexedStateUnindexed(fileId, indexId);
+    }
+    if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(fileId);
+  }
+
+  protected boolean updateWithBufferingEnabled(@NotNull final Computable<Boolean> update) {
+    final StorageGuard.StorageModeExitHandler lock = setDataBufferingEnabled(false);
+    try {
+      return update.compute();
+    }
+    finally {
+      lock.leave();
     }
   }
 

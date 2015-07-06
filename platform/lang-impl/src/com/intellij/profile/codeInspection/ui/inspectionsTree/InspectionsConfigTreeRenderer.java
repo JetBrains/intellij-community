@@ -29,6 +29,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.renderer.DefaultTreeRenderer;
@@ -54,8 +55,9 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
 
     Object object = node.getUserObject();
-
-    final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+    boolean reallyHasFocus = ((TreeTableTree)tree).getTreeTable().hasFocus();
+    final Color background = selected ? (reallyHasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground())
+                                      : UIUtil.getTreeTextBackground();
     UIUtil.changeBackGround(component, background);
     Color foreground =
       selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeTextForeground();

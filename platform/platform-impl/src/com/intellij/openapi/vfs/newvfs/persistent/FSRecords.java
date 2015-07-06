@@ -1053,6 +1053,32 @@ public class FSRecords implements Forceable {
     }
   }
 
+  // returns id, parent(id), parent(parent(id)), ... rootId
+  @NotNull
+  public static TIntArrayList getParents(int id) {
+    TIntArrayList result = new TIntArrayList(10);
+    r.lock();
+    try {
+      int parentId;
+      do {
+        result.add(id);
+        parentId = getRecordInt(id, PARENT_OFFSET);
+        if (parentId == id || result.size() % 128 == 0 && result.contains(parentId)) {
+          LOG.error("Cyclic parent child relations in the database. id = " + parentId);
+          return result;
+        }
+        id = parentId;
+      } while (parentId != 0);
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+    finally {
+      r.unlock();
+    }
+    return result;
+  }
+
   public static void setParent(int id, int parent) {
     if (id == parent) {
       LOG.error("Cyclic parent/child relations");

@@ -43,6 +43,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -550,7 +551,12 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     @NotNull
     public PsiFile getFile() {
-      return PsiUtilCore.getPsiFile(project, virtualFile);
+      return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+        @Override
+        public PsiFile compute() {
+          return PsiUtilCore.getPsiFile(project, virtualFile);
+        }
+      });
     }
 
     @NotNull

@@ -43,11 +43,11 @@ public class QuickListsManager implements ExportableApplicationComponent {
   private static final String LIST_TAG = "list";
 
   private final ActionManager myActionManager;
-  private final SchemesManager<QuickList, QuickList> mySchemesManager;
+  private final SchemesManager<QuickList, QuickList> mySchemeManager;
 
   public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
     myActionManager = actionManager;
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC,
+    mySchemeManager = schemesManagerFactory.createSchemesManager(FILE_SPEC,
                                                                   new BaseSchemeProcessor<QuickList>() {
                                                                     @NotNull
                                                                     @Override
@@ -73,7 +73,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   @Override
   @NotNull
   public File[] getExportFiles() {
-    return new File[]{mySchemesManager.getRootDirectory()};
+    return new File[]{mySchemeManager.getRootDirectory()};
   }
 
   @NotNull
@@ -99,7 +99,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   public void initComponent() {
     for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
       for (final String path : provider.getBundledListsRelativePaths()) {
-        mySchemesManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
+        mySchemeManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
           @Override
           public QuickList convert(Element element) throws Throwable {
             return createItem(element);
@@ -107,7 +107,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
         });
       }
     }
-    mySchemesManager.loadSchemes();
+    mySchemeManager.loadSchemes();
     registerActions();
   }
 
@@ -116,20 +116,20 @@ public class QuickListsManager implements ExportableApplicationComponent {
   }
 
   @NotNull
-  public List<QuickList> getQuickLists() {
-    return mySchemesManager.getAllSchemes();
+  public SchemesManager<QuickList, QuickList> getSchemeManager() {
+    return mySchemeManager;
   }
 
   @NotNull
   public QuickList[] getAllQuickLists() {
-    Collection<QuickList> lists = mySchemesManager.getAllSchemes();
+    Collection<QuickList> lists = mySchemeManager.getAllSchemes();
     return lists.toArray(new QuickList[lists.size()]);
   }
 
   private void registerActions() {
     // to prevent exception if 2 or more targets have the same name
     Set<String> registeredIds = new THashSet<String>();
-    for (QuickList list : mySchemesManager.getAllSchemes()) {
+    for (QuickList list : mySchemeManager.getAllSchemes()) {
       String actionId = list.getActionId();
       if (registeredIds.add(actionId)) {
         myActionManager.registerAction(actionId, new InvokeQuickListAction(list));
@@ -145,7 +145,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
 
   public void setQuickLists(@NotNull List<QuickList> quickLists) {
     unregisterActions();
-    mySchemesManager.setSchemes(quickLists);
+    mySchemeManager.setSchemes(quickLists);
     registerActions();
   }
 

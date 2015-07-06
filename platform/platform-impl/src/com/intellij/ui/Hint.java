@@ -55,13 +55,4 @@ public interface Hint {
   void pack();
 
   void setLocation(@NotNull RelativePoint point);
-
-  /**
-   * Pack and set location
-   * @param x
-   * @param y
-   * @deprecated use {@link Hint#setLocation(com.intellij.ui.awt.RelativePoint)} ()}
-   */
-  void updateBounds(int x, int y);
-
 }

@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author spleaner
  */
-public class UnknownRunConfiguration implements RunConfiguration {
+public class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBeforeRunSteps {
   private final ConfigurationFactory myFactory;
   private Element myStoredElement;
   private String myName;

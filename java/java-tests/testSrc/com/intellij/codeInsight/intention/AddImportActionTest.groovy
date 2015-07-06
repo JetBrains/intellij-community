@@ -17,8 +17,11 @@ package com.intellij.codeInsight.intention
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.impl.source.codeStyle.ImportHelper
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -74,7 +77,7 @@ public class Foo {
 }
 '''
     importClass()
-    myFixture.checkResult '''import foo.*;
+    myFixture.checkResult '''import foo.StringValue;
 
 public class Foo {
     String<caret>Value sv;
