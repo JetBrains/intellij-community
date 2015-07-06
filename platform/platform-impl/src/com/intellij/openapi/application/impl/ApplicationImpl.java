@@ -58,8 +58,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
@@ -1189,6 +1191,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
         else {
           publisher.applicationDeactivated(ideFrame);
+          IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+          if (focusManager instanceof FocusManagerImpl) {
+            ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(ideFrame, focusManager.getLastFocusedFor(ideFrame));
+          }
         }
         return true;
       }
