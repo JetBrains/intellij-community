@@ -5,7 +5,7 @@
   "icon-size": 60,
 
   "contents": [  
-    { "x": 100, "y": 125, "type": "file", "path": "../../out/robovm-studio/RoboVM Studio $VERSION.app" },
+    { "x": 100, "y": 125, "type": "file", "path": "../../out/robovm-studio/RoboVM Studio.app" },
     { "x": 300, "y": 125, "type": "link", "path": "/Applications" }   
   ]
 
