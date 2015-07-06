@@ -639,6 +639,8 @@ public class TextMergeTool implements MergeTool {
         int sourceStartLine = change.getStartLine(sourceSide);
         int sourceEndLine = change.getEndLine(sourceSide);
 
+        if (sourceStartLine == sourceEndLine) return; // can't append deletion
+
         enterBulkChangeUpdateBlock();
         try {
           DiffUtil.applyModification(getContent(outputSide).getDocument(), outputEndLine, outputEndLine,
