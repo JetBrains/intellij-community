@@ -19,6 +19,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -145,6 +146,41 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = CtrlMouseHandler.getInfo(editor, CtrlMouseHandler.BrowseMode.Declaration)
 
     assert doc == "private void m ()"
+  }
+
+  public void testAsterisksFiltering() {
+    configure """\
+      class C {
+        /**
+         * For example, {@link String#String(byte[],
+         * int, int,
+         * String)}.
+         */
+        public void <caret>m() { }
+      }""".stripIndent()
+
+    def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
+    def doc = new JavaDocumentationProvider().generateDoc(method, null)
+
+    def expected =
+      "<html><head>" +
+      "    <style type=\"text/css\">" +
+      "        #error {" +
+      "            background-color: #eeeeee;" +
+      "            margin-bottom: 10px;" +
+      "        }" +
+      "        p {" +
+      "            margin: 5px 0;" +
+      "        }" +
+      "    </style>" +
+      "</head><body>" +
+      "<small><b><a href=\"psi_element://C\"><code>C</code></a></b></small>" +
+      "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>\n     " +
+      "For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\">" +
+      "<code>String.String(byte[], int, int, String)</code>" +
+      "</a>.</body></html>"
+
+    assert doc == expected
   }
 
   private void configure(String text) {
