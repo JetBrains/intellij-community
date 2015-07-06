@@ -27,26 +27,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class MessageBusFactory {
 
-  private static final AtomicReference<Impl> ourImpl = new AtomicReference<Impl>(new Impl() {
-    @NotNull
-    @Override
-    public MessageBus newMessageBus(@NotNull Object owner) {
-      return new MessageBusImpl.RootBus(owner);
-    }
-
-    @NotNull
-    @Override
-    public MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
-      return parentBus == null ? newMessageBus(owner) : new MessageBusImpl(owner, parentBus);
-    }
-  });
+  private static final AtomicReference<Impl> ourImpl = new AtomicReference<Impl>(Impl.DEFAULT);
 
   private MessageBusFactory() {}
 
+  @NotNull
   public static MessageBus newMessageBus(@NotNull Object owner) {
     return ourImpl.get().newMessageBus(owner);
   }
 
+  @NotNull
   public static MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
     return ourImpl.get().newMessageBus(owner, parentBus);
   }
@@ -56,6 +46,20 @@ public class MessageBusFactory {
   }
 
   public interface Impl {
+
+    Impl DEFAULT = new Impl() {
+      @NotNull
+      @Override
+      public MessageBus newMessageBus(@NotNull Object owner) {
+        return new MessageBusImpl.RootBus(owner);
+      }
+
+      @NotNull
+      @Override
+      public MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
+        return parentBus == null ? newMessageBus(owner) : new MessageBusImpl(owner, parentBus);
+      }
+    };
 
     @NotNull
     MessageBus newMessageBus(@NotNull Object owner);
