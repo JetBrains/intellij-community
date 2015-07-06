@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.FutureResult;
 import com.sun.jna.IntegerType;
@@ -396,14 +397,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       final Class<? extends Clipboard> aClass = clipboard.getClass();
       if (!"sun.awt.X11.XClipboard".equals(aClass.getName())) return null;
 
-      final Method getClipboardFormats;
-      try {
-        getClipboardFormats = aClass.getDeclaredMethod("getClipboardFormats");
-        getClipboardFormats.setAccessible(true);
-      }
-      catch (Exception ignore) {
-        return null;
-      }
+      Method getClipboardFormats = ReflectionUtil.getDeclaredMethod(aClass, "getClipboardFormats");
 
       final String timeout = System.getProperty(DATA_TRANSFER_TIMEOUT_PROPERTY);
       System.setProperty(DATA_TRANSFER_TIMEOUT_PROPERTY, SHORT_TIMEOUT);

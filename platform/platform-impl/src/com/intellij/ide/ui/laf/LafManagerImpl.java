@@ -50,6 +50,7 @@ import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -77,7 +78,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -451,15 +451,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (arrow == null) return null;
 
     try {
-      final Method method = arrow.getClass().getMethod("getInvertedIcon");
+      final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
       if (method != null) {
-        method.setAccessible(true);
         return (Icon)method.invoke(arrow);
       }
-
-      return null;
-    }
-    catch (NoSuchMethodException e1) {
       return null;
     }
     catch (InvocationTargetException e1) {
@@ -690,19 +685,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       public SynthStyle getStyle(final JComponent c, final Region id) {
         final SynthStyle style = original.getStyle(c, id);
         if (id == Region.POPUP_MENU) {
-          try {
-            Field f = style.getClass().getDeclaredField("xThickness");
-            f.setAccessible(true);
-            final Object x = f.get(style);
-            if (x instanceof Integer && (Integer)x == 0) {
-              // workaround for Sun bug #6636964
-              f.set(style, 1);
-              f = style.getClass().getDeclaredField("yThickness");
-              f.setAccessible(true);
-              f.set(style, 3);
-            }
-          }
-          catch (Exception ignore) {
+          final Integer x = ReflectionUtil.getField(style.getClass(), style, int.class, "xThickness");
+          if (x != null && x == 0) {
+            // workaround for Sun bug #6636964
+            ReflectionUtil.setField(style.getClass(), style, int.class, "xThickness", 1);
+            ReflectionUtil.setField(style.getClass(), style, int.class, "yThickness", 3);
           }
         }
         return style;
