@@ -26,6 +26,7 @@ import org.jetbrains.jps.devkit.model.*;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
@@ -54,13 +55,25 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
 
   @Override
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
+    loadRuntimeResources(module, rootModel);
+  }
+
+  private static void loadRuntimeResources(@NotNull JpsModule module, @NotNull Element element) {
     RuntimeResourceListState state = new RuntimeResourceListState();
-    XmlSerializer.deserializeInto(state, rootModel);
+    XmlSerializer.deserializeInto(state, element);
     if (!state.myRoots.isEmpty()) {
       JpsRuntimeResourceRootsCollection roots = JpsRuntimeResourcesService.getInstance().getOrCreateRoots(module);
       for (RuntimeResourceRootState root : state.myRoots) {
         roots.addRoot(root.myName, root.myUrl);
       }
+    }
+  }
+
+  @Override
+  public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
+    Element componentTag = JDomSerializationUtil.findComponent(rootElement, RUNTIME_RESOURCES_COMPONENT_NAME);
+    if (componentTag != null) {
+      loadRuntimeResources(module, componentTag);
     }
   }
 

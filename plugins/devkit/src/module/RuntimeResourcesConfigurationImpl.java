@@ -95,21 +95,35 @@ public class RuntimeResourcesConfigurationImpl extends RuntimeResourcesConfigura
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
+    /*
+    JpsDevKitModelSerializerExtension.RuntimeResourceListState state = getState();
+    XmlSerializer.serializeInto(state, element);
+    */
+  }
+
+  @NotNull
+  JpsDevKitModelSerializerExtension.RuntimeResourceListState getState() {
     JpsDevKitModelSerializerExtension.RuntimeResourceListState state = new JpsDevKitModelSerializerExtension.RuntimeResourceListState();
     for (RuntimeResourceRoot root : myRoots.values()) {
       state.myRoots.add(new RuntimeResourceRootState(root.getName(), root.getUrl()));
     }
-    XmlSerializer.serializeInto(state, element);
+    return state;
   }
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     JpsDevKitModelSerializerExtension.RuntimeResourceListState state = new JpsDevKitModelSerializerExtension.RuntimeResourceListState();
     XmlSerializer.deserializeInto(state, element);
+    loadState(state);
+  }
+
+  void loadState(@Nullable JpsDevKitModelSerializerExtension.RuntimeResourceListState state) {
     myRoots.clear();
-    VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
-    for (RuntimeResourceRootState root : state.myRoots) {
-      myRoots.put(root.myName, new RuntimeResourceRoot(root.myName, pointerManager.create(root.myUrl, this, null)));
+    if (state != null) {
+      VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
+      for (RuntimeResourceRootState root : state.myRoots) {
+        myRoots.put(root.myName, new RuntimeResourceRoot(root.myName, pointerManager.create(root.myUrl, this, null)));
+      }
     }
   }
 
