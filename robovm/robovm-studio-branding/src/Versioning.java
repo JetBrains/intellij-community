@@ -40,8 +40,8 @@ import java.io.StringWriter;
  */
 public class Versioning {
     public static void main(String[] args) throws ParserConfigurationException, IOException, SAXException, TransformerException {
-        if (args.length != 2) {
-            System.out.println("Usage: Versioning <robovm-idea-pom-xml> <robovm-studio-application-xml");
+        if (args.length != 3) {
+            System.out.println("Usage: Versioning <robovm-idea-pom-xml> <robovm-studio-application-xml> <dmg-json>");
             System.exit(-1);
         }
 
@@ -81,6 +81,8 @@ public class Versioning {
       FileWriter writer = new FileWriter(new File(args[1]));
       writer.write(xmlString);
       writer.close();
+
+      
 
       System.out.println(version + (isSnapshot? " EAP": ""));
     }
