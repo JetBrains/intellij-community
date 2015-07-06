@@ -37,12 +37,10 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
-import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +57,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.PlatformRepository;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
@@ -101,15 +100,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
       final String root = pluginFileOrDir.getParent();
 
-      if (pluginFileOrDir.isDirectory()) {
-        File parentFile = getMavenPluginParentFile();
-        myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
-        myBundledMaven3Home = new File(parentFile, "maven30-server-impl/lib/maven3");
-      }
-      else {
-        myBundledMaven2Home = new File(root, "maven2");
-        myBundledMaven3Home = new File(root, "maven3");
-      }
+      PlatformRepository repository = PlatformLoader.getInstance().getRepository();
+      myBundledMaven2Home = new File(repository.getModuleRootPath(RuntimeModuleId.moduleResource("maven2-server-impl", "maven2")));
+      myBundledMaven3Home = new File(repository.getModuleRootPath(RuntimeModuleId.moduleResource("maven30-server-impl", "maven3")));
     }
   }
 
@@ -303,7 +296,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
 
         if (currentMavenVersion == null || StringUtil.compareVersionNumbers(currentMavenVersion, "3.1") < 0) {
-          params.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("Slf4j")));
+          params.getClassPath().addAll(
+            PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("Slf4j")));
         }
         //todo[nik,runtime-modules] include resource-en.jar to module paths
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
@@ -408,11 +402,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
     addMavenLibs(classpath, mavenHome);
     return classpath;
-  }
-
-  private static File getMavenPluginParentFile() {
-    File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-    return luceneLib.getParentFile().getParentFile().getParentFile();
   }
 
   private static void addMavenLibs(List<File> classpath, File mavenHome) {
