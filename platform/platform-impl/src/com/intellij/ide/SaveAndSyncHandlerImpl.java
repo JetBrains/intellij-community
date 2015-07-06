@@ -102,9 +102,11 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Applic
     frameStateManager.addListener(new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
+        LOG.debug("save(): enter");
         if (canSyncOrSave()) {
           saveProjectsAndDocuments();
         }
+        LOG.debug("save(): exit");
       }
 
       @Override
@@ -139,11 +141,10 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Applic
 
   @Override
   public void saveProjectsAndDocuments() {
-    LOG.debug("enter: save()");
-
     if (!ApplicationManager.getApplication().isDisposed() &&
         mySettings.isSaveOnFrameDeactivation() &&
         myBlockSaveOnFrameDeactivationCount.get() == 0) {
+      LOG.debug("saving documents");
       FileDocumentManager.getInstance().saveAllDocuments();
 
       for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
@@ -153,8 +154,6 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Applic
 
       LOG.debug("saving application settings");
       ApplicationManagerEx.getApplicationEx().saveSettings();
-
-      LOG.debug("exit: save()");
     }
   }
 
@@ -195,21 +194,25 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Applic
 
   @Override
   public void blockSaveOnFrameDeactivation() {
+    LOG.debug("save blocked");
     myBlockSaveOnFrameDeactivationCount.incrementAndGet();
   }
 
   @Override
   public void unblockSaveOnFrameDeactivation() {
     myBlockSaveOnFrameDeactivationCount.decrementAndGet();
+    LOG.debug("save unblocked");
   }
 
   @Override
   public void blockSyncOnFrameActivation() {
+    LOG.debug("sync blocked");
     myBlockSyncOnFrameActivationCount.incrementAndGet();
   }
 
   @Override
   public void unblockSyncOnFrameActivation() {
     myBlockSyncOnFrameActivationCount.decrementAndGet();
+    LOG.debug("sync unblocked");
   }
 }
