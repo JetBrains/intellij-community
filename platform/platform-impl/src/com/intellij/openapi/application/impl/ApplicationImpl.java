@@ -1191,10 +1191,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
         else {
           publisher.applicationDeactivated(ideFrame);
-          IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
-          if (focusManager instanceof FocusManagerImpl) {
-            ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(ideFrame, focusManager.getLastFocusedFor(ideFrame));
-          }
         }
         return true;
       }

@@ -39,7 +39,10 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -804,10 +807,11 @@ public class IdeEventQueue extends EventQueue {
       // Only Dialogs and Frames get window activated events.
       // Let's handle Windows this way.
 
+      final Window eventWindow = we.getWindow();
       if (we.getID() == WindowEvent.WINDOW_ACTIVATED || we.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
         appImpl.myCancelDeactivation = true;
         if (!appImpl.isActive()) {
-          appImpl.tryToApplyActivationState(true, we.getWindow());
+          appImpl.tryToApplyActivationState(true, eventWindow);
         }
       }
       else if (we.getID() == WindowEvent.WINDOW_DEACTIVATED) {
@@ -821,13 +825,31 @@ public class IdeEventQueue extends EventQueue {
         Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
           public void actionPerformed(ActionEvent evt) {
             if (appImpl.isActive() && !appImpl.isDeactivationCanceled()) {
-              appImpl.tryToApplyActivationState(false, we.getWindow());
+              appImpl.tryToApplyActivationState(false, eventWindow);
             }
           }
         });
 
         timer.setRepeats(false);
         timer.start();
+      }
+
+      if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+        Component frame = UIUtil.findUltimateParent(eventWindow);
+        Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
+        IdeFrame[] allProjectFrames = WindowManager.getInstance().getAllProjectFrames();
+
+        if (focusOwnerInDeactivatedWindow != null) {
+          for (IdeFrame ideFrame : allProjectFrames) {
+            JFrame aFrame = WindowManager.getInstance().getFrame(ideFrame.getProject());
+            if (aFrame.equals(frame)) {
+              IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+              if (focusManager instanceof FocusManagerImpl) {
+                ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(ideFrame, focusOwnerInDeactivatedWindow);
+              }
+            }
+          }
+        }
       }
     }
 
