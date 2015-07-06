@@ -2,7 +2,6 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <runtime-resource name="maven2" url="file://$MODULE_DIR$/lib/maven2" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
@@ -118,5 +117,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="maven" scope="TEST" />
+  </component>
+  <component name="RuntimeResources">
+    <runtime-resource name="maven2" url="file://$MODULE_DIR$/lib/maven2" />
   </component>
 </module>
