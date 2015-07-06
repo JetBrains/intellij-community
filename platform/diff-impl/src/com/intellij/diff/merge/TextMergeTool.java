@@ -594,6 +594,12 @@ public class TextMergeTool implements MergeTool {
 
       @CalledWithWriteLock
       public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side) {
+        if (change.isResolved(side)) return;
+        if (!change.getType().isChange(side)) {
+          change.markResolved();
+          return;
+        }
+
         ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         ThreeSide outputSide = ThreeSide.BASE;
 
@@ -621,6 +627,9 @@ public class TextMergeTool implements MergeTool {
 
       @CalledWithWriteLock
       public void appendChange(@NotNull TextMergeChange change, @NotNull Side side) {
+        if (change.isResolved(side)) return;
+        if (!change.getType().isChange(side)) return;
+
         ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         ThreeSide oppositeSide = side.select(ThreeSide.RIGHT, ThreeSide.LEFT);
         ThreeSide outputSide = ThreeSide.BASE;
@@ -870,7 +879,7 @@ public class TextMergeTool implements MergeTool {
 
         @Override
         protected boolean isEnabled(@NotNull TextMergeChange change) {
-          return !change.isResolved(mySide);
+          return !change.isResolved(mySide) && change.getType().isChange(mySide);
         }
 
         @Override

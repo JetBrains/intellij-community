@@ -60,9 +60,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myEndLines[side.getIndex()] = fragment.getEndLine(side);
     }
 
-    if (!getType().isChange(Side.LEFT)) myResolved[Side.LEFT.getIndex()] = true;
-    if (!getType().isChange(Side.RIGHT)) myResolved[Side.RIGHT.getIndex()] = true;
-
     installHighlighter();
   }
 
@@ -283,6 +280,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       else {
         Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
         assert versionSide != null;
+
+        if (!getType().isChange(versionSide)) return null;
 
         boolean isAppendable = getStartLine(mySide) != getEndLine(mySide) &&
                                (getStartLine(ThreeSide.BASE) != getEndLine(ThreeSide.BASE) || isConflict());
