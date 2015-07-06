@@ -7,6 +7,11 @@ awk '!/idea-version/' src/main/resources/META-INF/plugin.xml > plugin.xml.tmp &&
 mvn -Didea.home="$IDEA_HOME" clean package -Pdeployment
 git checkout -- src/main/resources/META-INF/plugin.xml
 cd ../..
+
+java -cp . Versioning robovm/robovm-idea/pom.xml robovm/robovm-studio-branding/
+java -cp . Versioning robovm/robovm-idea/pom.xml robovm/robovm-studio-branding/src/idea/IdeaApplicationInfo.xml
+rm Versioning.class
+
 ant -f build-robovm.xml
 rm -rf out/robovm-studio
 mkdir -p out/robovm-studio

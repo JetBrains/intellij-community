@@ -5,6 +5,8 @@
     <option name="formatter" value="ECLIPSE" />
     <option name="id" value="1434706435886" />
     <option name="name" value="default" />
+    <option name="pathToConfigFileJava" value="$PROJECT_DIR$/../robovm/formatter.xml" />
+    <option name="selectedJavaProfile" value="RoboVM" />
   </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
@@ -39,7 +41,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA jdk" project-jdk-type="IDEA JDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="IntelliJ IDEA Community Edition IC-142.SNAPSHOT" project-jdk-type="IDEA JDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="SvnBranchConfigurationManager">

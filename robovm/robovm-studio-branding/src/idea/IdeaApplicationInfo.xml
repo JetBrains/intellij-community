@@ -1,34 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <component>
-  <version major="1" minor="5" patch="0" full="1.5.0" eap="true"/>
+  <version eap="true" full="1.4.1 EAP" major="1" minor="4" patch="1"/>
   <company name="RoboVM AB" url="http://robovm.com"/>
-  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__" apiVersion="142.0"/>
-  <install-over minbuild="0.1" maxbuild="999.999999" version="0"/>
-  <logo url="/robovm_studio_logo.png" textcolor="aaaaaa" progressColor="FDA916" progressY="230" progressTailIcon="/robovm_studio_progress_tail.png"/>
-  <about url="/robovm_studio_about.png" foreground="aaaaaa" copyrightForeground="aaaaaa" linkColor="ff7f00" logoX="300" logoY="265" logoW="75" logoH="30"/>
-  <icon size32="/icon_rvm.png" size16="/icon_rvm_small.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_rvm_128.png" ico="idea_rvm.ico"/>
+  <build apiVersion="142.0" date="__BUILD_DATE__" number="RS-1.4.1"/>
+  <install-over maxbuild="999.999999" minbuild="0.1" version="0"/>
+  <logo progressColor="FDA916" progressTailIcon="/robovm_studio_progress_tail.png" progressY="230" textcolor="aaaaaa" url="/robovm_studio_logo.png"/>
+  <about copyrightForeground="aaaaaa" foreground="aaaaaa" linkColor="ff7f00" logoH="30" logoW="75" logoX="300" logoY="265" url="/robovm_studio_about.png"/>
+  <icon ico="idea_rvm.ico" size12="/toolwindows/toolWindowProject.png" size128="/icon_rvm_128.png" size16="/icon_rvm_small.png" size32="/icon_rvm.png"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="RoboVM Studio" fullname="RoboVM Studio" script="robovm"/>
+  <names fullname="RoboVM Studio" product="RoboVM Studio" script="robovm"/>
 
   <welcome-screen logo-url="/robovm_studio_welcome_logo.png"/>
   <editor background-url="/robovm_studio_logo_welcome.png"/>
 
   <plugins url="http://plugins.jetbrains.com/"/>
-  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
-               patches="http://download.jetbrains.com/idea/"/>
+  <update-urls check="http://www.jetbrains.com/updates/updates.xml" patches="http://download.jetbrains.com/idea/"/>
 
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="https://www.jetbrains.com/idea/documentation"/>
   <support url="https://www.jetbrains.com/support/idea/index.html"/>
-  <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
-            release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR" release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
   <whatsnew url="http://robovm.com/blog"/>
-  <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
-          mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
+  <keymap mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf" win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"/>
   <third-party url="http://www.jetbrains.org/"/>
   <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
   <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
   <plugins-page title="Select Other Plugins"/>
 
-  <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml" service="https://www.jetbrains.com/idea/statistics/index.jsp"/>
+  <statistics service="https://www.jetbrains.com/idea/statistics/index.jsp" settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"/>
 </component>
