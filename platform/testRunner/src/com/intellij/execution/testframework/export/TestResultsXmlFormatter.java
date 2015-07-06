@@ -206,9 +206,11 @@ public class TestResultsXmlFormatter {
     if (node.isConfig()) {
       attrs.put(ATTR_CONFIG, "true");
     }
+    boolean started = false;
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
-    startElement(elemName, attrs);
     if (node.isLeaf()) {
+      started = true;
+      startElement(elemName, attrs);
       final StringBuilder buffer = new StringBuilder();
       final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
       final Ref<SAXException> error = new Ref<SAXException>();
@@ -255,10 +257,16 @@ public class TestResultsXmlFormatter {
           //ignore configurations during export
           continue;
         }
+        if (!started) {
+          started = true;
+          startElement(elemName, attrs);
+        }
         processNode(child, filter);
       }
     }
-    endElement(elemName);
+    if (started) {
+      endElement(elemName);
+    }
   }
 
   private void writeOutput(ConsoleViewContentType type, StringBuilder text, Filter filter) throws SAXException {
