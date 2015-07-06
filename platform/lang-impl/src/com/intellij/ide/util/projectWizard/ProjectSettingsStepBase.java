@@ -50,8 +50,8 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   private final NullableConsumer<ProjectSettingsStepBase> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
   protected File myProjectDirectory;
-  private JButton myCreateButton;
-  private JLabel myErrorLabel;
+  protected JButton myCreateButton;
+  protected JLabel myErrorLabel;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator projectGenerator,
                                  NullableConsumer<ProjectSettingsStepBase> callback) {
@@ -71,10 +71,45 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   public JPanel createPanel() {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
-    myErrorLabel = new JLabel("");
-    myErrorLabel.setForeground(JBColor.RED);
-    myCreateButton = new JButton("Create");
-    myCreateButton.addActionListener(new ActionListener() {
+    final JLabel label = createErrorLabel();
+    final JButton button = createActionButton();
+    button.addActionListener(createCloseActionListener());
+    final JPanel scrollPanel = createAndFillContentPanel();
+    initGeneratorListeners();
+    registerValidators();
+    final JBScrollPane scrollPane = new JBScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+    final JPanel bottomPanel = new JPanel(new BorderLayout());
+
+    bottomPanel.add(label, BorderLayout.NORTH);
+    bottomPanel.add(button, BorderLayout.EAST);
+    mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+    return mainPanel;
+  }
+
+  protected final JLabel createErrorLabel() {
+    JLabel errorLabel = new JLabel("");
+    errorLabel.setForeground(JBColor.RED);
+
+    myErrorLabel = errorLabel;
+
+    return errorLabel;
+  }
+
+  protected final JButton createActionButton() {
+    JButton button = new JButton("Create");
+    button.putClientProperty(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
+
+    myCreateButton = button;
+    return button;
+  }
+
+  @NotNull
+  protected final ActionListener createCloseActionListener() {
+    return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         boolean isValid = checkValid();
@@ -86,22 +121,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
           myCallback.consume(ProjectSettingsStepBase.this);
         }
       }
-    });
-    myCreateButton.putClientProperty(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
-    final JPanel scrollPanel = createAndFillContentPanel();
-    initGeneratorListeners();
-    registerValidators();
-    final JBScrollPane scrollPane = new JBScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(null);
-    mainPanel.add(scrollPane, BorderLayout.CENTER);
-
-    final JPanel bottomPanel = new JPanel(new BorderLayout());
-
-    bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
-    bottomPanel.add(myCreateButton, BorderLayout.EAST);
-    mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-    return mainPanel;
+    };
   }
 
   protected final JPanel createContentPanelWithAdvancedSettingsPanel() {
@@ -126,7 +146,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     }
   }
 
-  protected Icon getIcon() {
+  protected final Icon getIcon() {
     return myProjectGenerator.getLogo();
   }
 
@@ -137,11 +157,6 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     panel.add(component);
 
     return panel;
-  }
-
-  @Nullable
-  protected JPanel extendBasePanel() {
-    return null;
   }
 
   protected void registerValidators() {
@@ -250,15 +265,15 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     return myProjectGenerator;
   }
 
-  public String getProjectLocation() {
+  public final String getProjectLocation() {
     return myLocationField.getText();
   }
 
-  public void setLocation(@NotNull final String location) {
+  public final void setLocation(@NotNull final String location) {
     myLocationField.setText(location);
   }
 
-  private LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
+  protected final LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
     myProjectDirectory = findSequentNonExistingUntitled();
     myLocationField.setText(myProjectDirectory.toString());
