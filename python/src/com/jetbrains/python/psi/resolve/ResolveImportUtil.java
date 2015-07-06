@@ -269,83 +269,56 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
                                         @Nullable final PsiFile containingFile, boolean fileOnly, boolean checkForPackage) {
-    if (parent == null) {
-      return null;
-    }
-    else if (parent instanceof PyFile) {
-      return resolveInPackageModule((PyFile)parent, referencedName, containingFile, fileOnly, checkForPackage);
+    PsiDirectory dir = null;
+    PsiElement resultElement = null;
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext();
+    if (parent instanceof PyFileImpl) {
+      PsiElement possibleResult = null;
+      if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
+        dir = ((PyFile)parent).getContainingDirectory();
+        possibleResult = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
+      }
+
+      final PyModuleType moduleType = new PyModuleType((PyFile)parent);
+      final List<? extends RatedResolveResult> results = moduleType.resolveMember(referencedName, null, AccessDirection.READ,
+                                                                                  resolveContext);
+      final PsiElement moduleMember = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
+      if (!fileOnly || PyUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
+        resultElement = moduleMember;
+      }
+      if (resultElement != null && !PyUtil.instanceOf(resultElement, PsiFile.class, PsiDirectory.class) &&
+          PsiTreeUtil.getStubOrPsiParentOfType(resultElement, PyExceptPart.class) == null && !isDunderAll(resultElement)) {
+        return resultElement;
+      }
+
+      if (possibleResult != null) return possibleResult;
+
+      if (resultElement != null) {
+        return resultElement;
+      }
     }
     else if (parent instanceof PsiDirectory) {
-      return resolveInPackageDirectory(parent, referencedName, containingFile, fileOnly, checkForPackage);
+      dir = (PsiDirectory)parent;
     }
-    else {
-      return resolveMemberFromReferenceTypeProviders(parent, referencedName);
+    else if (parent != null) {
+      PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
+      if (refType != null) {
+        final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
+        if (result != null && !result.isEmpty()) {
+          return result.get(0).getElement();
+        }
+      }
     }
-  }
-
-  @Nullable
-  private static PsiElement resolveInPackageModule(@NotNull PyFile parent, @NotNull String referencedName,
-                                                   @Nullable PsiFile containingFile, boolean fileOnly, boolean checkForPackage) {
-    final PsiElement moduleMember = resolveModuleMember(parent, referencedName);
-    final PsiElement resolved = !fileOnly || PyUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class) ?
-                                moduleMember : null;
-    if (resolved != null && !preferResolveInDirectoryOverModule(resolved)) {
-      return resolved;
-    }
-
-    final PsiElement resolvedInDirectory = resolveInPackageDirectory(parent, referencedName, containingFile, fileOnly, checkForPackage);
-    if (resolvedInDirectory != null) {
-      return resolvedInDirectory;
-    }
-
-    return resolved;
-  }
-
-  private static boolean preferResolveInDirectoryOverModule(@NotNull PsiElement resolved) {
-    return PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyExceptPart.class) != null ||
-           PyUtil.instanceOf(resolved, PsiFile.class, PsiDirectory.class) ||  // XXX: Workaround for PY-9439
-           isDunderAll(resolved);
-  }
-
-  @Nullable
-  private static PsiElement resolveModuleMember(@NotNull PyFile file, @NotNull String referencedName) {
-    final PyModuleType moduleType = new PyModuleType(file);
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext();
-    final List<? extends RatedResolveResult> results = moduleType.resolveMember(referencedName, null, AccessDirection.READ,
-                                                                                resolveContext);
-    return results != null && !results.isEmpty() ? results.get(0).getElement() : null;
-  }
-
-  @Nullable
-  private static PsiElement resolveInPackageDirectory(@Nullable PsiElement parent, @NotNull String referencedName,
-                                                      @Nullable PsiFile containingFile, boolean fileOnly,
-                                                      boolean checkForPackage) {
-    final PsiElement parentDir = PyUtil.turnInitIntoDir(parent);
-    if (parentDir instanceof PsiDirectory) {
-      final PsiElement resolved = resolveInDirectory(referencedName, containingFile, (PsiDirectory)parentDir, fileOnly, checkForPackage);
-      if (resolved != null) {
-        return resolved;
+    if (dir != null) {
+      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
+      if (result != null) {
+        return result;
       }
       if (parent instanceof PsiFile) {
-        return resolveForeignImports((PsiFile)parent, referencedName);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiElement resolveForeignImports(@NotNull PsiFile foothold, @NotNull String referencedName) {
-    return new QualifiedNameResolverImpl(referencedName).fromElement(foothold).withoutRoots().firstResult();
-  }
-
-  @Nullable
-  private static PsiElement resolveMemberFromReferenceTypeProviders(@NotNull PsiElement parent, @NotNull String referencedName) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext();
-    PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
-    if (refType != null) {
-      final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
-      if (result != null && !result.isEmpty()) {
-        return result.get(0).getElement();
+        final PsiElement element = new QualifiedNameResolverImpl(referencedName).fromElement(parent).withoutRoots().firstResult();
+        if (element != null) {
+          return element;
+        }
       }
     }
     return null;
