@@ -82,7 +82,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
     List<M> result = myTargetClassToIntermediateMemberInfosMap.get(baseClass);
 
     if (result == null) {
-      Set<M> list = getIntermediateClassesMemberInfosList(baseClass);
+      Set<M> list = getIntermediateClassesMemberInfosList(baseClass, new HashSet<C>());
       result = Collections.unmodifiableList(new ArrayList<M>(list));
       myTargetClassToIntermediateMemberInfosMap.put(baseClass, result);
     }
@@ -90,7 +90,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
     return result;
   }
 
-  private Set<M> getIntermediateClassesMemberInfosList(C targetClass) {
+  private Set<M> getIntermediateClassesMemberInfosList(C targetClass, Set<C> visited) {
     LinkedHashSet<M> result = myTargetClassToMemberInfosListMap.get(targetClass);
     if(result == null) {
       result = new LinkedHashSet<M>();
@@ -100,7 +100,9 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
         result.addAll(memberInfos);
       }
       for (C subclass : subclasses) {
-        result.addAll(getIntermediateClassesMemberInfosList(subclass));
+        if (visited.add(subclass)) {
+          result.addAll(getIntermediateClassesMemberInfosList(subclass, visited));
+        }
       }
       myTargetClassToMemberInfosListMap.put(targetClass, result);
     }
