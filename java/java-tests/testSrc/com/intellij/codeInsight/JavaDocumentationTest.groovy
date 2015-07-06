@@ -14,110 +14,137 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight
+
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+
 /**
  * @author peter
  */
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
 
   public void testConstructorDoc() {
-    configure '''
-class Foo { Foo() {} Foo(int param) {} }
+    configure """\
+      class Foo { Foo() {} Foo(int param) {} }
 
-class Foo2 {{
-  new Foo<caret>
-}}
-'''
+      class Foo2 {{
+        new Foo<caret>
+      }}""".stripIndent()
+
     def originalElement = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
-    def doc = new JavaDocumentationProvider().generateDoc(
-      DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file),
-      originalElement
-    )
+    def element = DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file)
+    def doc = new JavaDocumentationProvider().generateDoc(element, originalElement)
 
-    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo()">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo(int)">Foo(int param)</a><br></html>"""
+    def expected =
+      "<html>" +
+      "Candidates for new <b>Foo</b>() are:<br>" +
+      "&nbsp;&nbsp;<a href=\"psi_element://Foo#Foo()\">Foo()</a><br>" +
+      "&nbsp;&nbsp;<a href=\"psi_element://Foo#Foo(int)\">Foo(int param)</a><br>" +
+      "</html>"
+
+    assert doc == expected
   }
 
   public void testConstructorDoc2() {
-    configure '''
-class Foo { Foo() {} Foo(int param) {} }
+    configure """\
+      class Foo { Foo() {} Foo(int param) {} }
 
-class Foo2 {{
-  new Foo(<caret>)
-}}
-'''
+      class Foo2 {{
+        new Foo(<caret>)
+      }}""".stripIndent()
 
     def elementAt = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
     def exprList = PsiTreeUtil.getParentOfType(elementAt, PsiExpressionList.class)
-    def doc = new JavaDocumentationProvider().generateDoc(
-      exprList,
-      elementAt
-    )
+    def doc = new JavaDocumentationProvider().generateDoc(exprList, elementAt)
 
-    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo()">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo(int)">Foo(int param)</a><br></html>"""
+    def expected =
+      "<html>" +
+      "Candidates for new <b>Foo</b>() are:<br>" +
+      "&nbsp;&nbsp;<a href=\"psi_element://Foo#Foo()\">Foo()</a><br>" +
+      "&nbsp;&nbsp;<a href=\"psi_element://Foo#Foo(int)\">Foo(int param)</a><br>" +
+      "</html>"
+
+    assert doc == expected
   }
 
   public void testMethodDocWhenInArgList() {
-    configure '''
-class Foo { void doFoo() {} }
+    configure """\
+      class Foo { void doFoo() {} }
 
-class Foo2 {{
-  new Foo().doFoo(<caret>)
-}}
-'''
+      class Foo2 {{
+        new Foo().doFoo(<caret>)
+      }}""".stripIndent()
+
     def exprList = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiExpressionList.class)
-    def doc = new JavaDocumentationProvider().generateDoc(
-      exprList,
-      null
-    )
+    def doc = new JavaDocumentationProvider().generateDoc(exprList, null)
 
-    assert doc == """<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://Foo"><code>Foo</code></a></b></small><PRE>void&nbsp;<b>doFoo</b>()</PRE></body></html>"""
+    def expected =
+      "<html><head>" +
+      "    <style type=\"text/css\">" +
+      "        #error {" +
+      "            background-color: #eeeeee;" +
+      "            margin-bottom: 10px;" +
+      "        }" +
+      "        p {" +
+      "            margin: 5px 0;" +
+      "        }" +
+      "    </style>" +
+      "</head><body>" +
+      "<small><b><a href=\"psi_element://Foo\"><code>Foo</code></a></b></small>" +
+      "<PRE>void&nbsp;<b>doFoo</b>()</PRE>" +
+      "</body></html>"
+
+    assert doc == expected
   }
 
   public void testGenericMethod() {
-    configure '''
-class Bar<T> { java.util.List<T> foo(T param); }
+    configure """\
+      class Bar<T> { java.util.List<T> foo(T param); }
 
-class Foo {{
-  new Bar<String>().f<caret>oo();
-}}
-'''
+      class Foo {{
+        new Bar<String>().f<caret>oo();
+      }}""".stripIndent()
+
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) == """Bar
- java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)"""
+    def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
+
+    assert doc == "Bar\n java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)"
   }
 
   public void testGenericField() {
-    configure '''
-class Bar<T> { T field; }
+    configure """\
+      class Bar<T> { T field; }
 
-class Foo {{
-  new Bar<Integer>().fi<caret>eld
-}}
-'''
+      class Foo {{
+        new Bar<Integer>().fi<caret>eld
+      }}""".stripIndent()
+
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) == """Bar
- java.lang.Integer field"""
+    def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
+
+    assert doc == "Bar\n java.lang.Integer field"
   }
   
   public void testMethodInAnonymousClass() {
-    configure '''
-class Foo {{
-  new Runnable() {
-    @Override
-    public void run() {
-      <caret>m();
-    }
-    
-    private void m() {}
-  }.run();
-}}
-'''
-    assert CtrlMouseHandler.getInfo(editor, CtrlMouseHandler.BrowseMode.Declaration) == "private void m ()"
+    configure """\
+      class Foo {{
+        new Runnable() {
+          @Override
+          public void run() {
+            <caret>m();
+          }
+
+          private void m() {}
+        }.run();
+      }}""".stripIndent()
+
+    def doc = CtrlMouseHandler.getInfo(editor, CtrlMouseHandler.BrowseMode.Declaration)
+
+    assert doc == "private void m ()"
   }
 
   private void configure(String text) {
