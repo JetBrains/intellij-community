@@ -75,8 +75,8 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
     }
     // Pass comments and whitespaces
-    element1 = PyPsiUtils.getSignificantToTheRight(element1, false);
-    element2 = PyPsiUtils.getSignificantToTheLeft(element2, false);
+    element1 = PyPsiUtils.getNextSignificantLeaf(element1, false);
+    element2 = PyPsiUtils.getPrevSignificantLeaf(element2, false);
     if (element1 == null || element2 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyBundle.message("refactoring.extract.method.error.bad.selection"),
@@ -158,7 +158,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
 
     // return elements if they are really first and last elements of statements
     if (element1 == PsiTreeUtil.getDeepestFirst(statement1) &&
-        element2 == PyPsiUtils.getSignificantToTheLeft(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
+        element2 == PyPsiUtils.getPrevSignificantLeaf(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
       return Couple.of(statement1, statement2);
     }
     return null;

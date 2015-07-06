@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,7 +414,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     @Override
     public Object getValue(CodeStyleSettings settings) {
       try {
-        return field.getBoolean(getSettings(settings)) ? Boolean.TRUE : Boolean.FALSE;
+        return field.getBoolean(getSettings(settings));
       }
       catch (IllegalAccessException ignore) {
         return null;
@@ -814,7 +814,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return myOptionsEditor.getEditorValue();
       }
       else if (myCurrentEditor == myBooleanEditor) {
-        return myBooleanEditor.isSelected() ? Boolean.TRUE : Boolean.FALSE;
+        return myBooleanEditor.isSelected();
       }
       else if (myCurrentEditor == myIntOptionsEditor) {
         return myIntOptionsEditor.getPresentableValue();

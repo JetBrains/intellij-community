@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -29,12 +30,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class EditSourceUtil {
   private EditSourceUtil() { }
 
   @Nullable
-  public static Navigatable getDescriptor(final PsiElement element) {
-    if (!canNavigate(element)) {
+  public static Navigatable getDescriptor(PsiElement element) {
+    PsiElement original = getNavigatableOriginalElement(element);
+    if (original != null) {
+      element = original;
+    } else if (!canNavigate(element)) {
       return null;
     }
     if (element instanceof PomTargetPsiElement) {
@@ -52,6 +58,16 @@ public class EditSourceUtil {
     OpenFileDescriptor desc = new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset);
     desc.setUseCurrentWindow(FileEditorManager.USE_CURRENT_WINDOW.isIn(navigationElement));
     return desc;
+  }
+
+  private static PsiElement getNavigatableOriginalElement(PsiElement element) {
+    final List<? extends PsiElement> originalElements = GeneratedSourcesFilter.collectAllOriginalElements(element);
+    for (PsiElement original: originalElements) {
+      if (canNavigate(original)) {
+        return original;
+      }
+    }
+    return null;
   }
 
   public static boolean canNavigate(PsiElement element) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
                                                PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER);
       PsiMethod[] superMethods = method.findSuperMethods();
       if (superMethods.length > 0) {
-        overrides = !superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT) ? Boolean.TRUE : Boolean.FALSE;
+        overrides = !superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT);
       }
       else {
         overrides = null;

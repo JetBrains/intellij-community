@@ -293,7 +293,7 @@ public class ReferenceExpressionCompletionContributor {
       final String prefix = getItemText(object);
       if (prefix == null) return;
 
-      addArraysAsListConversions(element, prefix, itemType, result, qualifier, expectedType);
+      addConversionsToArray(element, prefix, itemType, result, qualifier, expectedType);
 
       addToArrayConversions(element, object, prefix, itemType, result, qualifier, expectedType);
 
@@ -345,24 +345,23 @@ public class ReferenceExpressionCompletionContributor {
     return false;
   }
 
-  private static void addArraysAsListConversions(final PsiElement element, final String prefix, final PsiType itemType, final Consumer<LookupElement> result,
-                                                 @Nullable PsiElement qualifier,
-                                                 final PsiType expectedType) throws IncorrectOperationException {
-    PsiType componentType = PsiUtil.extractIterableTypeParameter(expectedType, true);
-    if (componentType == null ||
-        !(itemType instanceof PsiArrayType) ||
-        !componentType.isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {
-      return;
-
-    }
+  private static void addConversionsToArray(final PsiElement element,
+                                            final String prefix,
+                                            final PsiType itemType,
+                                            final Consumer<LookupElement> result,
+                                            @Nullable PsiElement qualifier,
+                                            final PsiType expectedType) throws IncorrectOperationException {
+    final String methodName = getArraysConversionMethod(itemType, expectedType);
+    if (methodName == null) return;
+    
     final String qualifierText = getQualifierText(qualifier);
-    final PsiExpression conversion = createExpression("java.util.Arrays.asList(" + qualifierText + prefix + ")", element);
+    final PsiExpression conversion = createExpression("java.util.Arrays." + methodName + "(" + qualifierText + prefix + ")", element);
     final LookupItem item = new ExpressionLookupItem(conversion);
 
-    @NonNls final String presentable = "Arrays.asList(" + qualifierText + prefix + ")";
+    @NonNls final String presentable = "Arrays." + methodName + "(" + qualifierText + prefix + ")";
     item.setLookupString(StringUtil.isEmpty(qualifierText) ? presentable : prefix);
     item.setPresentableText(presentable);
-    item.addLookupStrings(prefix, presentable, "asList(" + prefix + ")");
+    item.addLookupStrings(prefix, presentable, methodName + "(" + prefix + ")");
     item.setIcon(PlatformIcons.METHOD_ICON);
     item.setInsertHandler(new InsertHandler<LookupElement>() {
       @Override
@@ -376,7 +375,7 @@ public class ReferenceExpressionCompletionContributor {
         startOffset -= qualifierText.length();
         final Project project = element.getProject();
         final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(project).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
-        @NonNls final String newText = "java.util.Arrays.asList(" + callSpace + qualifierText + prefix + callSpace + ")";
+        @NonNls final String newText = "java.util.Arrays." + methodName + "(" + callSpace + qualifierText + prefix + callSpace + ")";
         document.replaceString(startOffset, tailOffset, newText);
 
         PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -392,6 +391,32 @@ public class ReferenceExpressionCompletionContributor {
       }
     });
     result.consume(item);
+  }
+
+  @Nullable
+  private static String getArraysConversionMethod(PsiType itemType, PsiType expectedType) {
+    String methodName = "asList";
+    PsiType componentType = PsiUtil.extractIterableTypeParameter(expectedType, true);
+    if (componentType == null) {
+      methodName = "stream";
+      componentType = getStreamComponentType(expectedType);
+      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(componentType);
+      if (unboxedType != null) {
+        componentType = unboxedType;
+      }
+    }
+
+    if (componentType == null ||
+        !(itemType instanceof PsiArrayType) ||
+        !componentType.isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {
+      return null;
+
+    }
+    return methodName;
+  }
+
+  private static PsiType getStreamComponentType(PsiType expectedType) {
+    return PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, 0, true);
   }
 
   private static void addToArrayConversions(final PsiElement element, final Object object, final String prefix, final PsiType itemType,

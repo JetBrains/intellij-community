@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
@@ -32,9 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Matcher;
 
 /**
  * @author Dmitry Batkovich
@@ -103,14 +100,11 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
       @Override
       public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
-        if (!(child instanceof PsiFile)) {
-          return;
-        }
-        PropertiesFile file = PropertiesImplUtil.getPropertiesFile((PsiFile)child);
-        if (file == null) {
-          return;
-        }
-        final VirtualFile virtualFile = file.getVirtualFile();
+        if (!(child instanceof PsiFile)) return;
+        PsiFile psiFile = (PsiFile)child;
+        if (!PropertiesImplUtil.canBePropertyFile(psiFile)) return;
+
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
         final NotNullLazyValue<String> url = new NotNullLazyValue<String>() {
           @NotNull
           @Override

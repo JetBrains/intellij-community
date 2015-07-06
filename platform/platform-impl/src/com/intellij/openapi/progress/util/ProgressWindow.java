@@ -394,6 +394,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
+    stopSystemActivity();
   }
 
   @Override

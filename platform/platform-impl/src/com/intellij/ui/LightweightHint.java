@@ -388,16 +388,19 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     setSize(myComponent.getPreferredSize());
   }
 
-  @Override
-  public void updateBounds(int x, int y) {
-    setSize(myComponent.getPreferredSize());
-    updateLocation(x, y);
-  }
-
   public void updateLocation(int x, int y) {
     Point point = new Point(x, y);
     fixActualPoint(point);
     setLocation(new RelativePoint(myParentComponent, point));
+  }
+
+  public void updatePosition(Balloon.Position position) {
+    if (myHintHint != null) {
+      myHintHint.setPreferredPosition(position);
+    }
+    if (myCurrentIdeTooltip != null) {
+      myCurrentIdeTooltip.setPreferredPosition(position);
+    }
   }
 
   public final JComponent getComponent() {

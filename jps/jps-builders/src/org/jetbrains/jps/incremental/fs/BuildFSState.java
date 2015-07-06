@@ -18,10 +18,8 @@ package org.jetbrains.jps.incremental.fs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -52,7 +50,6 @@ public class BuildFSState {
   // alternatively, when false, after first scan will rely on external notifications about changes
   private final boolean myAlwaysScanFS;
   private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
-  private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<File>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget<?>, FilesDelta>());
 
   public BuildFSState(boolean alwaysScanFS) {
@@ -105,10 +102,6 @@ public class BuildFSState {
 
   public final void clearRecompile(final BuildRootDescriptor rd) {
     getDelta(rd.getTarget()).clearRecompile(rd);
-  }
-
-  public long getEventRegistrationStamp(File file) {
-    return myRegistrationStamps.get(file);
   }
 
   public boolean hasWorkToDo(BuildTarget<?> target) {
@@ -166,15 +159,16 @@ public class BuildFSState {
     return !myAlwaysScanFS && myInitialScanPerformed.contains(target);
   }
 
-  public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, BuildTarget<?> target) {
+  @NotNull
+  public FilesDelta getEffectiveFilesDelta(@NotNull CompileContext context, BuildTarget<?> target) {
     if (target instanceof ModuleBuildTarget) {
       // multiple compilation rounds are applicable to ModuleBuildTarget only
       final FilesDelta lastRoundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (lastRoundDelta != null) {
-        return lastRoundDelta.getSourcesToRecompile();
+        return lastRoundDelta;
       }
     }
-    return getDelta(target).getSourcesToRecompile();
+    return getDelta(target);
   }
 
   public boolean isMarkedForRecompilation(@Nullable CompileContext context, CompilationRound round, BuildRootDescriptor rd, File file) {
@@ -183,46 +177,45 @@ public class BuildFSState {
       delta = getDelta(rd.getTarget());
     }
     
-    final Map<BuildRootDescriptor, Set<File>> recompile = delta.getSourcesToRecompile();
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (recompile) {
-      final Set<File> files = recompile.get(rd);
-      return files != null && files.contains(file);
-    }
+    return delta.isMarkedRecompile(rd, file);
   }
 
   /**
    * Note: marked file will well be visible as "dirty" only on the next compilation round!
    * @throws IOException
    */
-  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
-    return markDirty(context, CompilationRound.NEXT, file, rd, tsStorage, saveEventStamp);
+  public final boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+    return markDirty(context, CompilationRound.NEXT, file, rd, tsStorage);
   }
 
-  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(round == CompilationRound.NEXT? NEXT_ROUND_DELTA_KEY : CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
       roundDelta.markRecompile(rd, file);
     }
 
-    final boolean marked = getDelta(rd.getTarget()).markRecompile(rd, file);
-    if (marked) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(rd.getTarget() + ": MARKED DIRTY: " + file.getPath());
+    final FilesDelta filesDelta = getDelta(rd.getTarget());
+    filesDelta.lockData();
+    try {
+      final boolean marked = filesDelta.markRecompile(rd, file);
+      if (marked) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(rd.getTarget() + ": MARKED DIRTY: " + file.getPath());
+        }
+        if (tsStorage != null) {
+          tsStorage.removeStamp(file, rd.getTarget());
+        }
       }
-      if (saveEventStamp) {
-        myRegistrationStamps.put(file, System.currentTimeMillis());
+      else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(rd.getTarget() + ": NOT MARKED DIRTY: " + file.getPath());
+        }
       }
-      if (tsStorage != null) {
-        tsStorage.removeStamp(file, rd.getTarget());
-      }
+      return marked;
     }
-    else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(rd.getTarget() + ": NOT MARKED DIRTY: " + file.getPath());
-      }
+    finally {
+     filesDelta.unlockData();
     }
-    return marked;
   }
 
   private static boolean isInCurrentContextTargets(CompileContext context, BuildRootDescriptor rd) {
@@ -254,7 +247,6 @@ public class BuildFSState {
     clearContextChunk(null);
     myInitialScanPerformed.clear();
     myDeltas.clear();
-    myRegistrationStamps.clear();
   }
 
   public void clearContextRoundData(@Nullable CompileContext context) {
@@ -286,10 +278,11 @@ public class BuildFSState {
   }
 
   public <R extends BuildRootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final @NotNull T target, final FileProcessor<R, T> processor) throws IOException {
-    final Map<BuildRootDescriptor, Set<File>> data = getSourcesToRecompile(context, target);
     final CompileScope scope = context.getScope();
-    synchronized (data) {
-      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : data.entrySet()) {
+    final FilesDelta delta = getEffectiveFilesDelta(context, target);
+    delta.lockData();
+    try {
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : delta.getSourcesToRecompile().entrySet()) {
         //noinspection unchecked
         R root = (R)entry.getKey();
         if (!target.equals(root.getTarget())) {
@@ -305,8 +298,11 @@ public class BuildFSState {
           }
         }
       }
+      return true;
     }
-    return true;
+    finally {
+      delta.unlockData();
+    }
   }
 
   /**
@@ -314,36 +310,44 @@ public class BuildFSState {
    */
   public boolean markAllUpToDate(CompileContext context, final BuildRootDescriptor rd, final Timestamps stamps) throws IOException {
     boolean marked = false;
-    final FilesDelta delta = getDelta(rd.getTarget());
-    final Set<File> files = delta.clearRecompile(rd);
-    if (files != null) {
-      CompileScope scope = context.getScope();
-      final long compilationStartStamp = context.getCompilationStartStamp();
-      for (File file : files) {
-        if (scope.isAffected(rd.getTarget(), file)) {
-          final long currentFileStamp = FileSystemUtil.lastModified(file);
-          if (!rd.isGenerated() && (currentFileStamp > compilationStartStamp || getEventRegistrationStamp(file) > compilationStartStamp)) {
-            // if the file was modified after the compilation had started,
-            // do not save the stamp considering file dirty
+    final BuildTarget<?> target = rd.getTarget();
+    final FilesDelta delta = getDelta(target);
+    final long targetBuildStartStamp = context.getCompilationStartStamp(target);
+    // prevent modifications to the data structure from external FS events
+    delta.lockData();
+    try {
+      final Set<File> files = delta.clearRecompile(rd);
+      if (files != null) {
+        CompileScope scope = context.getScope();
+        for (File file : files) {
+          if (scope.isAffected(target, file)) {
+            final long currentFileStamp = FileSystemUtil.lastModified(file);
+            if (!rd.isGenerated() && currentFileStamp > targetBuildStartStamp) {
+              // if the file was modified after the compilation had started,
+              // do not save the stamp considering file dirty
+              if (Utils.IS_TEST_MODE) {
+                LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
+              }
+              delta.markRecompile(rd, file);
+            }
+            else {
+              marked = true;
+              stamps.saveStamp(file, target, currentFileStamp);
+            }
+          }
+          else {
             if (Utils.IS_TEST_MODE) {
-              LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
+              LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
             }
             delta.markRecompile(rd, file);
           }
-          else {
-            marked = true;
-            stamps.saveStamp(file, rd.getTarget(), currentFileStamp);
-          }
-        }
-        else {
-          if (Utils.IS_TEST_MODE) {
-            LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
-          }
-          delta.markRecompile(rd, file);
         }
       }
+      return marked;
     }
-    return marked;
+    finally {
+      delta.unlockData();
+    }
   }
 
   private static void setContextTargets(@Nullable CompileContext context, @Nullable Set<? extends BuildTarget<?>> targets) {

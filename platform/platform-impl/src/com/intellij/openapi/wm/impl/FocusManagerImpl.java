@@ -985,7 +985,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         @Override
         public void run() {
           if (ApplicationManager.getApplication().isActive()) {
-            window.toFront();
+            if (window instanceof JFrame && ((JFrame)window).getState() == Frame.ICONIFIED) {
+              ((JFrame)window).setState(Frame.NORMAL);
+            } else {
+              window.toFront();
+            }
           }
         }
       });
@@ -1094,7 +1098,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (mgr.getFocusOwner() == null) {
         Component c = getComponent(myLastFocusedAtDeactivation, ideFrame);
         if (c == null || !c.isShowing()) {
-          c = getComponent(myLastFocused, ideFrame);
+          c = getComponent(myLastFocusedAtDeactivation, ideFrame);
         }
 
         final boolean mouseEventAhead = IdeEventQueue.isMouseEventAhead(null);

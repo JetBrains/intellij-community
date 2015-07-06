@@ -20,7 +20,8 @@ import java.io.IOException
 import java.io.InputStream
 
 public interface StreamProvider {
-  public open fun isEnabled(): Boolean = true
+  public open val enabled: Boolean
+    get() = true
 
   /**
    * fileSpec Only main fileSpec, not version

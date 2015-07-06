@@ -223,7 +223,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
         exprNode.addChild(add);
       }
       else {
-        ASTNode next = PyUtil.getNextNonWhitespace(closingTokens[closingTokens.length - 1]);
+        ASTNode next = PyPsiUtils.getNextNonWhitespaceSibling(closingTokens[closingTokens.length - 1]);
         if (next != null) {
           ASTNode comma = createComma();
           exprNode.addChild(comma, next);

@@ -39,17 +39,23 @@ public class FileTypeAssocTable<T> {
   private final Map<CharSequence, T> myExactFileNameAnyCaseMappings;
   private final List<Pair<FileNameMatcher, T>> myMatchingMappings;
 
-  private FileTypeAssocTable(@NotNull Map<CharSequence, T> extensionMappings, @NotNull Map<CharSequence, T> exactFileNameMappings, @NotNull Map<CharSequence, T> exactFileNameAnyCaseMappings, List<Pair<FileNameMatcher, T>> matchingMappings) {
-    myExtensionMappings = new THashMap<CharSequence, T>(extensionMappings, CharSequenceHashingStrategy.CASE_INSENSITIVE);
-    
-    myExactFileNameMappings = new THashMap<CharSequence, T>(exactFileNameMappings, CharSequenceHashingStrategy.CASE_SENSITIVE);
-    myExactFileNameAnyCaseMappings = new THashMap<CharSequence, T>(exactFileNameAnyCaseMappings, CharSequenceHashingStrategy.CASE_INSENSITIVE);
+  private FileTypeAssocTable(@NotNull Map<CharSequence, T> extensionMappings,
+                             @NotNull Map<CharSequence, T> exactFileNameMappings,
+                             @NotNull Map<CharSequence, T> exactFileNameAnyCaseMappings,
+                             @NotNull List<Pair<FileNameMatcher, T>> matchingMappings) {
+    myExtensionMappings = new THashMap<CharSequence, T>(Math.max(10, extensionMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    myExtensionMappings.putAll(extensionMappings);
+    myExactFileNameMappings = new THashMap<CharSequence, T>(Math.max(10, exactFileNameMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_SENSITIVE);
+    myExactFileNameMappings.putAll(exactFileNameMappings);
+    myExactFileNameAnyCaseMappings = new THashMap<CharSequence, T>(Math.max(10, exactFileNameAnyCaseMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    myExactFileNameAnyCaseMappings.putAll(exactFileNameAnyCaseMappings);
 
     myMatchingMappings = new ArrayList<Pair<FileNameMatcher, T>>(matchingMappings);
   }
 
   public FileTypeAssocTable() {
-    this(Collections.<CharSequence, T>emptyMap(), Collections.<CharSequence, T>emptyMap(), Collections.<CharSequence, T>emptyMap(), Collections.<Pair<FileNameMatcher, T>>emptyList());
+    this(Collections.<CharSequence, T>emptyMap(), Collections.<CharSequence, T>emptyMap(), Collections.<CharSequence, T>emptyMap(),
+         Collections.<Pair<FileNameMatcher, T>>emptyList());
   }
 
   public boolean isAssociatedWith(@NotNull T type, @NotNull FileNameMatcher matcher) {

@@ -35,6 +35,8 @@ import java.util.List;
  * @author yole
  */
 public class PyImportOptimizer implements ImportOptimizer {
+  private static final boolean SORT_IMPORTS = true;
+
   @Override
   public boolean supports(PsiFile file) {
     return true;
@@ -148,9 +150,11 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     private void applyResults() {
-      Collections.sort(myBuiltinImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
-      Collections.sort(myThirdPartyImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
-      Collections.sort(myProjectImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      if (SORT_IMPORTS) {
+        Collections.sort(myBuiltinImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+        Collections.sort(myThirdPartyImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+        Collections.sort(myProjectImports, AddImportHelper.IMPORT_BY_NAME_COMPARATOR);
+      }
 
       markGroupBegin(myThirdPartyImports);
       markGroupBegin(myProjectImports);

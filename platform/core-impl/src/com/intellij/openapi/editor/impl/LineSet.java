@@ -15,31 +15,134 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.LineIterator;
-import com.intellij.openapi.editor.ex.util.SegmentArrayWithData;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.text.MergingCharSequence;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.Arrays;
 
 /**
  * Data structure specialized for working with document text lines, i.e. stores information about line mapping to document
  * offsets and provides convenient ways to work with that information like retrieving target line by document offset etc.
  * <p/>
- * Not thread-safe.
+ * Immutable.
  */
 public class LineSet{
-  private SegmentArrayWithData mySegments = new SegmentArrayWithData();
   private static final int MODIFIED_MASK = 0x4;
   private static final int SEPARATOR_MASK = 0x3;
 
+  private final int[] myStarts;
+  private final int[] myFlags;
+  private final int myLength;
+
+  private LineSet(int[] starts, int[] flags, int length) {
+    myStarts = starts;
+    myFlags = flags;
+    myLength = length;
+  }
+
+  public static LineSet createLineSet(CharSequence text) {
+    return createLineSet(text, false);
+  }
+
+  private static LineSet createLineSet(CharSequence text, boolean markModified) {
+    TIntArrayList starts = new TIntArrayList();
+    TIntArrayList flags = new TIntArrayList();
+
+    LineTokenizer lineTokenizer = new LineTokenizer(text);
+    while (!lineTokenizer.atEnd()) {
+      starts.add(lineTokenizer.getOffset());
+      flags.add(lineTokenizer.getLineSeparatorLength() | (markModified ? MODIFIED_MASK : 0));
+      lineTokenizer.advance();
+    }
+    return new LineSet(starts.toNativeArray(), flags.toNativeArray(), text.length());
+  }
+
+  LineSet update(CharSequence prevText, int _start, int _end, CharSequence replacement, boolean wholeTextReplaced) {
+    if (myLength == 0) {
+      return createLineSet(replacement, !wholeTextReplaced);
+    }
+
+    int startOffset = _start;
+    if (replacement.length() > 0 && replacement.charAt(0) == '\n' && startOffset > 0 && prevText.charAt(startOffset - 1) == '\r') {
+      startOffset--;
+    }
+    int startLine = findLineIndex(startOffset);
+    startOffset = getLineStart(startLine);
+
+    int endOffset = _end;
+    if (replacement.length() > 0 && replacement.charAt(replacement.length() - 1) == '\r' && endOffset < prevText.length() && prevText.charAt(endOffset) == '\n') {
+      endOffset++;
+    }
+    int endLine = findLineIndex(endOffset);
+    endOffset = getLineEnd(endLine);
+    if (!isLastEmptyLine(endLine)) endLine++;
+
+    replacement = new MergingCharSequence(
+      new MergingCharSequence(prevText.subSequence(startOffset, _start), replacement),
+      prevText.subSequence(_end, endOffset));
+
+    LineSet patch = createLineSet(replacement, true);
+    LineSet applied = applyPatch(startOffset, endOffset, startLine, endLine, patch);
+    if (doTest) {
+      final MergingCharSequence newText = new MergingCharSequence(
+        new MergingCharSequence(prevText.subSequence(0, startOffset), replacement),
+        prevText.subSequence(endOffset, prevText.length()));
+      applied.checkEquals(createLineSet(newText));
+    }
+    return wholeTextReplaced ? applied.clearModificationFlags() : applied;
+  }
+
+  private void checkEquals(LineSet fresh) {
+    if (getLineCount() != fresh.getLineCount()) {
+      throw new AssertionError();
+    }
+    for (int i = 0; i < getLineCount(); i++) {
+      boolean start = getLineStart(i) != fresh.getLineStart(i);
+      boolean end = getLineEnd(i) != fresh.getLineEnd(i);
+      boolean sep = getSeparatorLength(i) != fresh.getSeparatorLength(i);
+      if (start || end || sep) {
+        throw new AssertionError();
+      }
+    }
+  }
+
+  @NotNull
+  private LineSet applyPatch(int startOffset, int endOffset, int startLine, int endLine, LineSet patch) {
+    int lineShift = patch.myStarts.length - (endLine - startLine);
+    int lengthShift = patch.myLength - (endOffset - startOffset);
+
+    int newLineCount = myStarts.length + lineShift;
+    int[] starts = new int[newLineCount];
+    int[] flags = new int[newLineCount];
+
+    for (int i = 0; i < startLine; i++) {
+      starts[i] = myStarts[i];
+      flags[i] = myFlags[i];
+    }
+    for (int i = 0; i < patch.myStarts.length; i++) {
+      starts[startLine + i] = patch.myStarts[i] + startOffset;
+      flags[startLine + i] = patch.myFlags[i];
+    }
+    for (int i = endLine; i < myStarts.length; i++) {
+      starts[lineShift + i] = myStarts[i] + lengthShift;
+      flags[lineShift + i] = myFlags[i];
+    }
+    return new LineSet(starts, flags, myLength + lengthShift);
+  }
+
   public int findLineIndex(int offset) {
-    int lineIndex = mySegments.findSegmentIndex(offset);
-    assert lineIndex >= 0;
-    return lineIndex;
+    if (offset < 0 || offset > myLength) {
+      throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Should be in range: [0, " + myLength + "]");
+    }
+    if (myLength == 0) return 0;
+    if (offset == myLength) return getLineCount() - 1;
+
+    int bsResult = Arrays.binarySearch(myStarts, offset);
+    return bsResult >= 0 ? bsResult : -bsResult - 2;
   }
 
   public LineIterator createIterator() {
@@ -47,340 +150,60 @@ public class LineSet{
   }
 
   public final int getLineStart(int index) {
-    int lineStart = mySegments.getSegmentStart(index);
-    assert lineStart >= 0;
-    return lineStart;
+    checkLineIndex(index);
+    return isLastEmptyLine(index) ? myLength : myStarts[index];
+  }
+
+  private boolean isLastEmptyLine(int index) {
+    return index == myFlags.length && index > 0 && (myFlags[index - 1] & SEPARATOR_MASK) > 0;
   }
 
   public final int getLineEnd(int index) {
-    return mySegments.getSegmentEnd(index);
+    checkLineIndex(index);
+    return index >= myStarts.length - 1 ? myLength : myStarts[index + 1];
+  }
+
+  private void checkLineIndex(int index) {
+    if (index < 0 || index >= getLineCount()) {
+      throw new IndexOutOfBoundsException("Wrong line: " + index + ". Available lines count: " + getLineCount());
+    }
   }
 
   final boolean isModified(int index) {
-    return (mySegments.getSegmentData(index) & MODIFIED_MASK) != 0;
+    checkLineIndex(index);
+    return !isLastEmptyLine(index) && (myFlags[index] & MODIFIED_MASK) != 0;
   }
-  final void setModified(int index) {
-    setSegmentModified(mySegments, index);
+
+  final LineSet setModified(int index) {
+    if (isLastEmptyLine(index) || isModified(index)) return this;
+
+    int[] flags = myFlags.clone();
+    flags[index] |= MODIFIED_MASK;
+    return new LineSet(myStarts, flags, myLength);
+  }
+
+  LineSet clearModificationFlags() {
+    int[] flags = myFlags.clone();
+    for (int i = 0; i < flags.length; i++) {
+      flags[i] &= ~MODIFIED_MASK;
+    }
+    return new LineSet(myStarts, flags, myLength);
   }
 
   final int getSeparatorLength(int index) {
-    return mySegments.getSegmentData(index) & SEPARATOR_MASK;
+    checkLineIndex(index);
+    return index < myFlags.length ? myFlags[index] & SEPARATOR_MASK : 0;
   }
 
   final int getLineCount() {
-    return mySegments.getSegmentCount();
+    return myStarts.length + (isLastEmptyLine(myStarts.length) ? 1 : 0);
   }
 
-  public void documentCreated(@NotNull Document document) {
-    initSegments(document.getCharsSequence(), false);
-  }
-
-  public void changedUpdate(DocumentEvent e1) {
-    DocumentEventImpl e = (DocumentEventImpl) e1;
-    if (e.isOnlyOneLineChanged() && mySegments.getSegmentCount() > 0) {
-      processOneLineChange(e);
-    } else {
-      if (mySegments.getSegmentCount() == 0 || e.getStartOldIndex() >= mySegments.getSegmentCount() ||
-          e.getStartOldIndex() < 0) {
-        initSegments(e.getDocument().getCharsSequence(), true);
-        return;
-      }
-
-      final int optimizedLineShift = e.getOptimizedLineShift();
-
-      if (optimizedLineShift != -1) {
-        processOptimizedMultilineInsert(e, optimizedLineShift);
-      } else {
-        final int optimizedOldLineShift = e.getOptimizedOldLineShift();
-
-        if (optimizedOldLineShift != -1) {
-          processOptimizedMultilineDelete(e, optimizedOldLineShift);
-        } else {
-          processMultilineChange(e);
-        }
-      }
-    }
-
-    if (e.isWholeTextReplaced()) {
-      clearModificationFlags();
-    }
-  }
-
+  @TestOnly
   public static void setTestingMode(boolean testMode) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
     doTest = testMode;
   }
 
   private static boolean doTest = false;
-
-  private void processOptimizedMultilineDelete(final DocumentEventImpl e, final int optimizedLineShift) {
-    final int insertionPoint = e.getOffset();
-    final int changedLineIndex = e.getStartOldIndex();
-    final int lengthDiff = e.getOldLength();
-
-    SegmentArrayWithData workingCopySegmentsForTesting = null;
-    SegmentArrayWithData segments; //
-
-    if (doTest) {
-      segments = new SegmentArrayWithData();
-      workingCopySegmentsForTesting = new SegmentArrayWithData();
-      fillSegments(segments, workingCopySegmentsForTesting);
-    } else {
-      segments = mySegments;
-    }
-
-    final int oldSegmentStart = segments.getSegmentStart(changedLineIndex);
-    final int lastChangedEnd = segments.getSegmentEnd(changedLineIndex + optimizedLineShift);
-    final short lastChangedData = segments.getSegmentData(changedLineIndex + optimizedLineShift);
-    final int newSegmentEnd = oldSegmentStart + (insertionPoint - oldSegmentStart) + (lastChangedEnd - insertionPoint - lengthDiff);
-
-    segments.remove(changedLineIndex, changedLineIndex + optimizedLineShift);
-
-    if (newSegmentEnd != 0) {
-      segments.setElementAt(
-        changedLineIndex,
-        oldSegmentStart, newSegmentEnd,
-        lastChangedData | MODIFIED_MASK
-      );
-    } else {
-      segments.remove(changedLineIndex, changedLineIndex + 1);
-    }
-
-// update data after lineIndex, shifting with optimizedLineShift
-    final int segmentCount = segments.getSegmentCount();
-    for(int i = changedLineIndex + 1; i < segmentCount; ++i) {
-      segments.setElementAt(i, segments.getSegmentStart(i) - lengthDiff,
-        segments.getSegmentEnd(i) - lengthDiff,
-        segments.getSegmentData(i)
-      );
-    }
-
-    if (doTest) {
-      final SegmentArrayWithData data = mySegments;
-      mySegments = segments;
-      addEmptyLineAtEnd();
-
-      doCheckResults(workingCopySegmentsForTesting, e, data, segments);
-    } else {
-      addEmptyLineAtEnd();
-    }
-  }
-
-  private void processOptimizedMultilineInsert(final DocumentEventImpl e, final int optimizedLineShift) {
-    final int insertionPoint = e.getOffset();
-    final int changedLineIndex = e.getStartOldIndex();
-    final int lengthDiff = e.getNewLength();
-    final LineTokenizer tokenizer = new LineTokenizer(e.getNewFragment());
-
-    SegmentArrayWithData workingCopySegmentsForTesting = null;
-    SegmentArrayWithData segments; //
-
-    if (doTest) {
-      segments = new SegmentArrayWithData();
-      workingCopySegmentsForTesting = new SegmentArrayWithData();
-      fillSegments(segments, workingCopySegmentsForTesting);
-    } else {
-      segments = mySegments;
-    }
-
-    int i;
-
-    // update data after lineIndex, shifting with optimizedLineShift
-    for(i = segments.getSegmentCount() - 1; i > changedLineIndex; --i) {
-      segments.setElementAt(i + optimizedLineShift, segments.getSegmentStart(i) + lengthDiff,
-        segments.getSegmentEnd(i) + lengthDiff,
-        segments.getSegmentData(i)
-      );
-    }
-
-    final int oldSegmentEnd = segments.getSegmentEnd(changedLineIndex);
-    final int oldSegmentStart = segments.getSegmentStart(changedLineIndex);
-    final short oldSegmentData = segments.getSegmentData(changedLineIndex);
-
-    final int newChangedLineEnd = insertionPoint + tokenizer.getLineSeparatorLength() + tokenizer.getOffset() + tokenizer.getLength();
-    segments.setElementAt(
-      changedLineIndex,
-      oldSegmentStart, newChangedLineEnd,
-      tokenizer.getLineSeparatorLength() | MODIFIED_MASK
-    );
-
-    tokenizer.advance();
-    i = 1;
-    int lastFragmentLength = 0;
-
-    while(!tokenizer.atEnd()) {
-      lastFragmentLength = tokenizer.getLineSeparatorLength() != 0 ? 0:tokenizer.getLength();
-      segments.setElementAt(
-        changedLineIndex + i,
-        insertionPoint + tokenizer.getOffset(),
-        insertionPoint + tokenizer.getOffset() + tokenizer.getLength() + tokenizer.getLineSeparatorLength(),
-        tokenizer.getLineSeparatorLength() | MODIFIED_MASK
-      );
-      i++;
-      tokenizer.advance();
-    }
-
-    segments.setElementAt(
-      changedLineIndex + optimizedLineShift, insertionPoint + lengthDiff - lastFragmentLength,
-      oldSegmentEnd + lengthDiff,
-      oldSegmentData | MODIFIED_MASK
-    );
-
-    if (doTest) {
-      final SegmentArrayWithData data = mySegments;
-      mySegments = segments;
-      addEmptyLineAtEnd();
-
-      doCheckResults(workingCopySegmentsForTesting, e, data, segments);
-    } else {
-      addEmptyLineAtEnd();
-    }
-  }
-
-  private void doCheckResults(final SegmentArrayWithData workingCopySegmentsForTesting, final DocumentEventImpl e,
-                              final SegmentArrayWithData data,
-                              final SegmentArrayWithData segments) {
-    mySegments = workingCopySegmentsForTesting;
-    processMultilineChange(e);
-    mySegments = data;
-
-    assert workingCopySegmentsForTesting.getSegmentCount() == segments.getSegmentCount();
-    for(int i =0; i < segments.getSegmentCount();++i) {
-      assert workingCopySegmentsForTesting.getSegmentStart(i) == segments.getSegmentStart(i);
-      assert workingCopySegmentsForTesting.getSegmentEnd(i) == segments.getSegmentEnd(i);
-      assert workingCopySegmentsForTesting.getSegmentData(i) == segments.getSegmentData(i);
-    }
-
-    processMultilineChange(e);
-  }
-
-  private void fillSegments(final SegmentArrayWithData segments, final SegmentArrayWithData workingCopySegmentsForTesting) {
-    for(int i = mySegments.getSegmentCount() - 1; i >=0; --i) {
-      segments.setElementAt(
-        i,
-        mySegments.getSegmentStart(i),
-        mySegments.getSegmentEnd(i),
-        mySegments.getSegmentData(i)
-      );
-      workingCopySegmentsForTesting.setElementAt(
-        i,
-        mySegments.getSegmentStart(i),
-        mySegments.getSegmentEnd(i),
-        mySegments.getSegmentData(i)
-      );
-    }
-  }
-
-  private void processMultilineChange(DocumentEventImpl e) {
-    int offset = e.getOffset();
-    CharSequence newString = e.getNewFragment();
-    CharSequence chars = e.getDocument().getCharsSequence();
-
-    int oldStartLine = e.getStartOldIndex();
-    int offset1 = getLineStart(oldStartLine);
-    if (offset1 != offset) {
-      CharSequence prefix = chars.subSequence(offset1, offset);
-      newString = new MergingCharSequence(prefix, newString);
-    }
-
-    int oldEndLine = findLineIndex(e.getOffset() + e.getOldLength());
-    if (oldEndLine < 0) {
-      oldEndLine = getLineCount() - 1;
-    }
-    int offset2 = getLineEnd(oldEndLine);
-    if (offset2 != offset + e.getOldLength()) {
-      final int start = offset + e.getNewLength();
-      final int length = offset2 - offset - e.getOldLength();
-      CharSequence postfix = chars.subSequence(start, start + length);
-      newString = new MergingCharSequence(newString, postfix);
-    }
-
-    updateSegments(newString, oldStartLine, oldEndLine, offset1, e);
-    // We add empty line at the end, if the last line ends by line separator.
-    addEmptyLineAtEnd();
-  }
-
-  private void updateSegments(CharSequence newText, int oldStartLine, int oldEndLine, int offset1,
-                                              DocumentEventImpl e) {
-    int count = 0;
-    LineTokenizer lineTokenizer = new LineTokenizer(newText);
-    for (int index = oldStartLine; index <= oldEndLine; index++) {
-      if (!lineTokenizer.atEnd()) {
-        setSegmentAt(mySegments, index, lineTokenizer, offset1, true);
-        lineTokenizer.advance();
-      } else {
-        mySegments.remove(index, oldEndLine + 1);
-        break;
-      }
-      count++;
-    }
-    if (!lineTokenizer.atEnd()) {
-      SegmentArrayWithData insertSegments = new SegmentArrayWithData();
-      int i = 0;
-      while (!lineTokenizer.atEnd()) {
-        setSegmentAt(insertSegments, i, lineTokenizer, offset1, true);
-        lineTokenizer.advance();
-        count++;
-        i++;
-      }
-      mySegments.insert(insertSegments, oldEndLine + 1);
-    }
-    int shift = e.getNewLength() - e.getOldLength();
-    mySegments.shiftSegments(oldStartLine + count, shift);
-  }
-
-  private void processOneLineChange(DocumentEventImpl e) {
-    // Check, if the change on the end of text
-    if (e.getOffset() >= mySegments.getSegmentEnd(mySegments.getSegmentCount() - 1)) {
-      mySegments.changeSegmentLength(mySegments.getSegmentCount() - 1, e.getNewLength() - e.getOldLength());
-      setSegmentModified(mySegments, mySegments.getSegmentCount() - 1);
-    } else {
-      mySegments.changeSegmentLength(e.getStartOldIndex(), e.getNewLength() - e.getOldLength());
-      setSegmentModified(mySegments, e.getStartOldIndex());
-    }
-  }
-
-  public void clearModificationFlags() {
-    for (int i = 0; i < mySegments.getSegmentCount(); i++) {
-      mySegments.setSegmentData(i, mySegments.getSegmentData(i) & ~MODIFIED_MASK);
-    }
-  }
-
-  private static void setSegmentAt(SegmentArrayWithData segmentArrayWithData, int index, LineTokenizer lineTokenizer, int offsetShift, boolean isModified) {
-    int offset = lineTokenizer.getOffset() + offsetShift;
-    int length = lineTokenizer.getLength();
-    int separatorLength = lineTokenizer.getLineSeparatorLength();
-    int separatorAndModifiedFlag = separatorLength;
-    if(isModified) {
-      separatorAndModifiedFlag |= MODIFIED_MASK;
-    }
-    segmentArrayWithData.setElementAt(index, offset, offset + length + separatorLength, separatorAndModifiedFlag);
-  }
-
-  private static void setSegmentModified(SegmentArrayWithData segments, int i) {
-    segments.setSegmentData(i, segments.getSegmentData(i)|MODIFIED_MASK);
-  }
-
-  private void initSegments(CharSequence text, boolean toSetModified) {
-    mySegments.removeAll();
-    LineTokenizer lineTokenizer = new LineTokenizer(text);
-    int i = 0;
-    while(!lineTokenizer.atEnd()) {
-      setSegmentAt(mySegments, i, lineTokenizer, 0, toSetModified);
-      i++;
-      lineTokenizer.advance();
-    }
-    // We add empty line at the end, if the last line ends by line separator.
-    addEmptyLineAtEnd();
-  }
-
-  // Add empty line at the end, if the last line ends by line separator.
-  private void addEmptyLineAtEnd() {
-    int segmentCount = mySegments.getSegmentCount();
-    if(segmentCount > 0 && getSeparatorLength(segmentCount-1) > 0) {
-      mySegments.setElementAt(segmentCount, mySegments.getSegmentEnd(segmentCount-1),  mySegments.getSegmentEnd(segmentCount-1), 0);
-      setSegmentModified(mySegments, segmentCount);
-    }
-  }
 
 }
