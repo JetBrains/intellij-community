@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
@@ -36,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -54,9 +57,21 @@ public class PyImportedModuleType implements PyType {
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = myImportedModule.resolve();
-    if (resolved != null) {
-      final PsiFile containingFile = location != null ? location.getContainingFile() : null;
-      List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, containingFile, false, true));
+    if (resolved instanceof PyFile) {
+      final PyFile file = (PyFile)resolved;
+      return new PyModuleType(file, myImportedModule).resolveMember(name, location, direction, resolveContext);
+    }
+    else if (resolved instanceof PsiDirectory) {
+      List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, null, true, true));
+      if (location != null && ResolveImportUtil.getPointInImport(location) == PointInImport.NONE) {
+        final Set<PsiElement> imported = Sets.newHashSet(PyModuleType.collectImportedSubmodules((PsiDirectory)resolved, location));
+        elements = ContainerUtil.filter(elements, new Condition<PsiElement>() {
+          @Override
+          public boolean value(PsiElement element) {
+            return imported.contains(element);
+          }
+        });
+      }
       return ResolveImportUtil.rateResults(elements);
     }
     return null;
