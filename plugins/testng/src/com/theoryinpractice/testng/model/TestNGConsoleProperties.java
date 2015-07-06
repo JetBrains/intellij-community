@@ -34,23 +34,22 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<TestNGConfiguration> {
-  private final TestNGConfiguration myConfiguration;
 
   public TestNGConsoleProperties(TestNGConfiguration config, Executor executor) {
     super("TestNG", config, executor);
-    myConfiguration = config;
   }
 
   @NotNull
   @Override
   protected GlobalSearchScope initScope() {
-    final String testObject = myConfiguration.getPersistantData().TEST_OBJECT;
+    final TestNGConfiguration configuration = getConfiguration(); 
+    final String testObject = configuration.getPersistantData().TEST_OBJECT;
     if (TestType.CLASS.getType().equals(testObject) ||
         TestType.METHOD.getType().equals(testObject)) {
       return super.initScope();
     }
     else {
-      final SourceScope sourceScope = myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration);
+      final SourceScope sourceScope = configuration.getPersistantData().getScope().getSourceScope(configuration);
       return sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(getProject());
     }
   }
