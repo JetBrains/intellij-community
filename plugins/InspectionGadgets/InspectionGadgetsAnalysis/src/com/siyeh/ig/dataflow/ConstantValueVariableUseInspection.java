@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,18 +48,14 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
-    return new ReplaceReferenceWithExpressionFix(expression);
+    return new ReplaceReferenceWithExpressionFix(expression.getText());
   }
 
-  private static class ReplaceReferenceWithExpressionFix
-    extends InspectionGadgetsFix {
-    private final SmartPsiElementPointer<PsiExpression> expression;
+  private static class ReplaceReferenceWithExpressionFix extends InspectionGadgetsFix {
     private final String myText;
 
-    ReplaceReferenceWithExpressionFix(
-      PsiExpression expression) {
-      this.expression = SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression);
-      myText = expression.getText();
+    ReplaceReferenceWithExpressionFix(String text) {
+      myText = text;
     }
 
 
@@ -78,13 +74,13 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-
-      PsiExpression exp = expression.getElement();
-      if (exp == null) return;
-      element.replace(exp);
+      if (!(element instanceof PsiExpression)) {
+        return;
+      }
+      final PsiExpression expression = (PsiExpression)element;
+      PsiReplacementUtil.replaceExpression(expression, myText);
     }
   }
 
@@ -220,8 +216,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
       super.visitAssignmentExpression(assignment);
       final PsiExpression lhs = assignment.getLExpression();
       if (lhs instanceof PsiReferenceExpression) {
-        PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)lhs;
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();
         if (variable.equals(target)) {
           written = true;
