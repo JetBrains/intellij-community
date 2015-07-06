@@ -27,6 +27,16 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  * @author peter
  */
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
+  private static final String STYLE_BLOCK =
+    "    <style type=\"text/css\">" +
+    "        #error {" +
+    "            background-color: #eeeeee;" +
+    "            margin-bottom: 10px;" +
+    "        }" +
+    "        p {" +
+    "            margin: 5px 0;" +
+    "        }" +
+    "    </style>";
 
   public void testConstructorDoc() {
     configure """\
@@ -84,17 +94,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(exprList, null)
 
     def expected =
-      "<html><head>" +
-      "    <style type=\"text/css\">" +
-      "        #error {" +
-      "            background-color: #eeeeee;" +
-      "            margin-bottom: 10px;" +
-      "        }" +
-      "        p {" +
-      "            margin: 5px 0;" +
-      "        }" +
-      "    </style>" +
-      "</head><body>" +
+      "<html><head>" + STYLE_BLOCK + "</head><body>" +
       "<small><b><a href=\"psi_element://Foo\"><code>Foo</code></a></b></small>" +
       "<PRE>void&nbsp;<b>doFoo</b>()</PRE>" +
       "</body></html>"
@@ -163,22 +163,32 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<html><head>" +
-      "    <style type=\"text/css\">" +
-      "        #error {" +
-      "            background-color: #eeeeee;" +
-      "            margin-bottom: 10px;" +
-      "        }" +
-      "        p {" +
-      "            margin: 5px 0;" +
-      "        }" +
-      "    </style>" +
-      "</head><body>" +
+      "<html><head>" + STYLE_BLOCK + "</head><body>" +
       "<small><b><a href=\"psi_element://C\"><code>C</code></a></b></small>" +
       "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>\n     " +
       "For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\">" +
       "<code>String.String(byte[], int, int, String)</code>" +
       "</a>.</body></html>"
+
+    assert doc == expected
+  }
+
+  public void testInlineTagSpacing() {
+    configure """\
+      class C {
+        /** Visit the "{@code /login}" URL. */
+        public void <caret>m() { }
+      }""".stripIndent()
+
+    def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
+    def doc = new JavaDocumentationProvider().generateDoc(method, null)
+
+    def expected =
+      "<html><head>" + STYLE_BLOCK + "</head><body>" +
+      "<small><b><a href=\"psi_element://C\"><code>C</code></a></b></small>" +
+      "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>" +
+      " Visit the \"<code>/login</code>\" URL." +
+      "</body></html>"
 
     assert doc == expected
   }
