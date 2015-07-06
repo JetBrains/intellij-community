@@ -113,6 +113,7 @@ public interface CodeStyleSettingsCustomizable {
 
   enum WrappingOrBraceOption {
     RIGHT_MARGIN,
+    WRAP_ON_TYPING,
     KEEP_CONTROL_STATEMENT_IN_ONE_LINE,
     LINE_COMMENT_AT_FIRST_COLUMN,
     BLOCK_COMMENT_AT_FIRST_COLUMN,
@@ -285,6 +286,17 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.NEXT_LINE,
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED,
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+  };
+
+  String[] WRAP_ON_TYPING_OPTIONS = {
+    ApplicationBundle.message("wrapping.wrap.on.typing.no.wrap"),
+    ApplicationBundle.message("wrapping.wrap.on.typing.wrap"),
+    ApplicationBundle.message("wrapping.wrap.on.typing.default")
+  };
+  int [] WRAP_ON_TYPING_VALUES = {
+    CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,
+    CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue,
+    CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue
   };
 
   void showAllStandardOptions();
