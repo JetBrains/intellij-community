@@ -1199,6 +1199,11 @@ public class BuildManager implements ApplicationComponent{
       protected boolean shouldDestroyProcessRecursively() {
         return true;
       }
+
+      @Override
+      protected boolean useNonBlockingRead() {
+        return false;
+      }
     };
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
