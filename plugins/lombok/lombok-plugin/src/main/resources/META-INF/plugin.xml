@@ -203,6 +203,7 @@
 		<li>0.9.6
 				<ol>
 				    <li>Fixed #47: Feature request: support onX annotations via @__</li>
+				    <li>Fixed #77: Support new @Singular annotation for @Builder collection fields</li>
 				    <li>Fixed #123: SpinAllocator has exhausted! Too many threads or you're going to get StackOverflow</li>
 				</ol>
 			</li>
