@@ -129,7 +129,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @NotNull
-  private MultiMap<AbstractVcs, FilePath> convertPaths(@Nullable final Collection<FilePath> from) {
+  private MultiMap<AbstractVcs, FilePath> groupByVcs(@Nullable final Collection<FilePath> from) {
     if (from == null) return MultiMap.empty();
     MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
     for (FilePath path : from) {
@@ -144,8 +144,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @Override
   public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
     try {
-      final MultiMap<AbstractVcs, FilePath> filesConverted = convertPaths(filesDirty);
-      final MultiMap<AbstractVcs, FilePath> dirsConverted = convertPaths(dirsRecursivelyDirty);
+      final MultiMap<AbstractVcs, FilePath> filesConverted = groupByVcs(filesDirty);
+      final MultiMap<AbstractVcs, FilePath> dirsConverted = groupByVcs(dirsRecursivelyDirty);
       if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
       if (LOG.isDebugEnabled()) {
