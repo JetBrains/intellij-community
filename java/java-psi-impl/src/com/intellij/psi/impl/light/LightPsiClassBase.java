@@ -186,8 +186,7 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
   @Nullable
   @Override
   public PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
-    // TODO
-    return null;
+    return PsiClassImplUtil.findInnerByName(this, name, checkBases);
   }
 
   @Nullable
