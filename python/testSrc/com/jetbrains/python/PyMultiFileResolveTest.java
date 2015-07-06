@@ -407,7 +407,4 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertResolvesTo(PyFile.class, "z.py");
   }
 
-  public void testImportSubModuleDunderAll() {
-    assertResolvesTo(PyFile.class, "m1.py");
-  }
 }
