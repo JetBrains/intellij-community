@@ -17,10 +17,13 @@ package org.jetbrains.jps.devkit.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsNamedElement;
+import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author nik
  */
 public interface JpsRuntimeResourceRoot extends JpsNamedElement {
   @NotNull String getUrl();
+
+  JpsModule getModule();
 }

@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.devkit.model.JpsRuntimeResourceRoot;
@@ -79,10 +78,17 @@ public class RuntimeModuleDescriptorsGenerator {
     myMessageHandler.showProgressMessage(includedModules.size() + " modules detected in " + distRoot);
     List<JpsLibrary> allLibraries = new ArrayList<JpsLibrary>(myProject.getLibraryCollection().getLibraries());
     List<RuntimeModuleDescriptor> descriptorsToAdd = new ArrayList<RuntimeModuleDescriptor>();
+    List<JpsRuntimeResourceRoot> runtimeResourceRoots = new ArrayList<JpsRuntimeResourceRoot>();
     for (JpsModule module : myProject.getModules()) {
       for (boolean test : BOOLEANS) {
         RuntimeModuleDescriptor descriptor = includedModules.remove(getRuntimeModuleName(module, test));
-        ContainerUtil.addIfNotNull(descriptorsToAdd, descriptor);
+        if (descriptor != null) {
+          JpsRuntimeResourceRootsCollection roots = JpsRuntimeResourcesService.getInstance().getRoots(module);
+          if (roots != null) {
+            runtimeResourceRoots.addAll(roots.getRoots());
+          }
+          descriptorsToAdd.add(descriptor);
+        }
       }
       allLibraries.addAll(module.getLibraryCollection().getLibraries());
     }
@@ -111,30 +117,62 @@ public class RuntimeModuleDescriptorsGenerator {
     }
 
     descriptorsToAdd.addAll(detectActualLocations(usedLibraries, jars));
+    descriptorsToAdd.addAll(detectActualLocations(runtimeResourceRoots, distRoot));
     generateDescriptorsZip(new File(distRoot, RepositoryConstants.MODULE_DESCRIPTORS_DIR_NAME), descriptorsToAdd);
   }
 
-  private List<RuntimeModuleDescriptor> detectActualLocations(Set<JpsLibrary> libraries, List<IntellijJarInfo> jars) {
-    class Bytes {
-      final byte[] myBytes;
-
-      public Bytes(byte[] bytes) {
-        myBytes = bytes;
+  private List<RuntimeModuleDescriptor> detectActualLocations(List<JpsRuntimeResourceRoot> roots, File distRoot){
+    List<RuntimeModuleDescriptor> result = new ArrayList<RuntimeModuleDescriptor>();
+    try {
+      String[] jarDirs = {"lib", "plugins"};
+      Map<Bytes, File> actualLocations = new HashMap<Bytes, File>();
+      MessageDigest md5 = MessageDigest.getInstance("MD5");
+      byte[] buffer = new byte[16 * 1024];
+      for (String dir : jarDirs) {
+        calcDigestRecursively(md5, buffer, new File(distRoot, dir), actualLocations);
       }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return Arrays.equals(myBytes, ((Bytes)o).myBytes);
-      }
-
-      @Override
-      public int hashCode() {
-        return Arrays.hashCode(myBytes);
+      for (JpsRuntimeResourceRoot root : roots) {
+        File file = JpsPathUtil.urlToFile(root.getUrl());
+        if (!file.exists()) {
+          myMessageHandler.reportError("Runtime resource '" + root.getName() + "' refers to non-exitent file " + file.getAbsolutePath());
+          continue;
+        }
+        File actualFile = actualLocations.get(new Bytes(calcDigestRecursively(md5, buffer, file, new HashMap<Bytes, File>())));
+        if (actualFile == null) {
+          myMessageHandler.reportError("Cannot find actual location for " + file.getAbsolutePath() + " from '" + root.getName() + "' runtime resource");
+        }
+        else {
+          result.add(new LibraryDescriptor(RuntimeModuleId.moduleResource(root.getModule().getName(), root.getName()), Collections.singletonList(actualFile)));
+        }
       }
     }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    return result;
+  }
 
+  private static class Bytes {
+    final byte[] myBytes;
+
+    public Bytes(byte[] bytes) {
+      myBytes = bytes;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      return Arrays.equals(myBytes, ((Bytes)o).myBytes);
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(myBytes);
+    }
+  }
+
+  private List<RuntimeModuleDescriptor> detectActualLocations(Set<JpsLibrary> libraries, List<IntellijJarInfo> jars) {
     List<RuntimeModuleDescriptor> descriptors = new ArrayList<RuntimeModuleDescriptor>();
     Map<Bytes, File> actualLocations = new HashMap<Bytes, File>();
     try {
@@ -175,6 +213,30 @@ public class RuntimeModuleDescriptorsGenerator {
     }
 
     return descriptors;
+  }
+
+  private static byte[] calcDigestRecursively(MessageDigest md5, byte[] buffer, File file, Map<Bytes, File> locations) throws IOException {
+    if (file.isFile()) {
+      byte[] bytes = calcDigest(md5, buffer, file);
+      locations.put(new Bytes(bytes), file);
+      return bytes;
+    }
+    File[] children = file.listFiles();
+    if (children != null) {
+      List<byte[]> hashes = new ArrayList<byte[]>();
+      for (File child : children) {
+        if (child.getName().startsWith(".git")) continue;
+        hashes.add(child.getName().getBytes("UTF-8"));
+        hashes.add(calcDigestRecursively(md5, buffer, child, locations));
+      }
+      md5.reset();
+      for (byte[] hash : hashes) {
+        md5.update(hash);
+      }
+    }
+    byte[] bytes = md5.digest();
+    locations.put(new Bytes(bytes), file);
+    return bytes;
   }
 
   private static byte[] calcDigest(MessageDigest md5, byte[] buffer, File file) throws IOException {

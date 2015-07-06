@@ -18,6 +18,7 @@ package org.jetbrains.jps.devkit.model.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.devkit.model.JpsRuntimeResourceRoot;
 import org.jetbrains.jps.model.ex.JpsElementBase;
+import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author nik
@@ -56,5 +57,10 @@ public class JpsRuntimeResourceRootImpl extends JpsElementBase<JpsRuntimeResourc
 
   @Override
   public void applyChanges(@NotNull JpsRuntimeResourceRootImpl modified) {
+  }
+
+  @Override
+  public JpsModule getModule() {
+    return (JpsModule)getParent().getParent();
   }
 }
