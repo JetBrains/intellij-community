@@ -862,7 +862,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @TestOnly
   public static boolean isLight(@NotNull Project project) {
-    return ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("light_temp_");
+    return project instanceof ProjectImpl && ((ProjectImpl)project).isLight();
   }
 
   @Override
