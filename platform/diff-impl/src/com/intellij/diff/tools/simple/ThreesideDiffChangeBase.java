@@ -61,6 +61,10 @@ public abstract class ThreesideDiffChangeBase {
     return getDiffType() == TextDiffType.CONFLICT;
   }
 
+  public boolean isChange(@NotNull Side side) {
+    return myType.isChange(side);
+  }
+
   //
   // Type
   //

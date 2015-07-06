@@ -281,7 +281,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
         Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
         assert versionSide != null;
 
-        if (!getType().isChange(versionSide)) return null;
+        if (!isChange(versionSide)) return null;
 
         boolean isAppendable = getStartLine(mySide) != getEndLine(mySide) &&
                                (getStartLine(ThreeSide.BASE) != getEndLine(ThreeSide.BASE) || isConflict());

@@ -582,7 +582,7 @@ public class TextMergeTool implements MergeTool {
         for (TextMergeChange change : getAllChanges()) {
           if (change.isResolved()) continue;
           if (!acceptConflicts && change.isConflict()) continue;
-          if (side != null && !change.getType().isChange(side)) continue;
+          if (side != null && !change.isChange(side)) continue;
           return change;
         }
         return null;
@@ -595,7 +595,7 @@ public class TextMergeTool implements MergeTool {
       @CalledWithWriteLock
       public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side) {
         if (change.isResolved(side)) return;
-        if (!change.getType().isChange(side)) {
+        if (!change.isChange(side)) {
           change.markResolved();
           return;
         }
@@ -628,7 +628,7 @@ public class TextMergeTool implements MergeTool {
       @CalledWithWriteLock
       public void appendChange(@NotNull TextMergeChange change, @NotNull Side side) {
         if (change.isResolved(side)) return;
-        if (!change.getType().isChange(side)) return;
+        if (!change.isChange(side)) return;
 
         ThreeSide sourceSide = side.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         ThreeSide oppositeSide = side.select(ThreeSide.RIGHT, ThreeSide.LEFT);
@@ -879,7 +879,7 @@ public class TextMergeTool implements MergeTool {
 
         @Override
         protected boolean isEnabled(@NotNull TextMergeChange change) {
-          return !change.isResolved(mySide) && change.getType().isChange(mySide);
+          return !change.isResolved(mySide) && change.isChange(mySide);
         }
 
         @Override
@@ -932,7 +932,7 @@ public class TextMergeTool implements MergeTool {
           for (TextMergeChange change : allChanges) {
             if (change.isConflict()) continue;
             if (change.isResolved()) continue;
-            Side masterSide = change.getType().isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
+            Side masterSide = change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT;
             replaceChange(change, masterSide);
           }
         }
@@ -959,7 +959,7 @@ public class TextMergeTool implements MergeTool {
           for (TextMergeChange change : allChanges) {
             if (change.isConflict()) continue;
             if (change.isResolved(mySide)) continue;
-            if (!change.getType().isChange(mySide)) continue;
+            if (!change.isChange(mySide)) continue;
             replaceChange(change, mySide);
           }
         }
@@ -985,7 +985,7 @@ public class TextMergeTool implements MergeTool {
           ThreeSide left = mySide.select(ThreeSide.LEFT, ThreeSide.BASE);
           ThreeSide right = mySide.select(ThreeSide.BASE, ThreeSide.RIGHT);
           for (TextMergeChange mergeChange : myAllMergeChanges) {
-            if (!mergeChange.getType().isChange(mySide)) continue;
+            if (!mergeChange.isChange(mySide)) continue;
             Color color = mergeChange.getDiffType().getColor(getEditor(ThreeSide.BASE));
             boolean isResolved = mergeChange.isResolved(mySide);
             if (!handler.process(mergeChange.getStartLine(left), mergeChange.getEndLine(left),
