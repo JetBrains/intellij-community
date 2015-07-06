@@ -72,9 +72,23 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile("optimizeImports/" + getTestName(true) + ".py");
+  // PY-16351
+  public void testNoExtraBlankLineAfterImportBlock() {
+    final String testName = getTestName(true);
+    myFixture.copyDirectoryToProject(testName, "");
+    myFixture.configureByFile("main.py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
-    myFixture.checkResultByFile("optimizeImports/" + getTestName(true) + ".after.py");
+    myFixture.checkResultByFile(testName + "/main.after.py");
+  }
+
+  private void doTest() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
+    myFixture.checkResultByFile(getTestName(true) + ".after.py");
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/optimizeImports";
   }
 }
