@@ -15,8 +15,7 @@ cd ../..
 ## is defined by the ROBOVM_IDEA_PLUGIN_VERSION environment 
 ## variable, based on which the respective tag will be
 ## pulled in
-javac -d . robovm/robovm-studio-branding/src/Versioning.java 
-java -cp . Versioning robovm/robovm-idea/pom.xml robovm/robovm-studio-branding/
+javac -d . robovm/robovm-studio-branding/src/Versioning.java
 version=$(java -cp . Versioning robovm/robovm-idea/pom.xml robovm/robovm-studio-branding/src/idea/IdeaApplicationInfo.xml robovm/robovm-studio-dmg/dmg.json)
 rm Versioning.class
 

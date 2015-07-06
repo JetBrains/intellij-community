@@ -39,7 +39,8 @@ import java.io.StringWriter;
  * robovm/robovm-studio-branding/idea/IdeaApplicationInfo.xml
  */
 public class Versioning {
-    public static void main(String[] args) throws ParserConfigurationException, IOException, SAXException, TransformerException {
+    public static void main(String[] args) throws ParserConfigurationException, IOException, SAXException,
+            TransformerException {
         if (args.length != 3) {
             System.out.println("Usage: Versioning <robovm-idea-pom-xml> <robovm-studio-application-xml> <dmg-json>");
             System.exit(-1);
@@ -61,29 +62,27 @@ public class Versioning {
         int minor = Integer.parseInt(tokens[1]);
         int patch = Integer.parseInt(tokens[2]);
 
-      Document versionXml = builder.parse(new File(args[1]));
-      versionNode = versionXml.getElementsByTagName("version").item(0);
-      versionNode.getAttributes().getNamedItem("major").setTextContent("" + major);
-      versionNode.getAttributes().getNamedItem("minor").setTextContent("" + minor);
-      versionNode.getAttributes().getNamedItem("patch").setTextContent("" + patch);
-      versionNode.getAttributes().getNamedItem("full").setTextContent(version + (isSnapshot? " EAP": ""));
-      versionNode.getAttributes().getNamedItem("eap").setTextContent(isSnapshot ? "true" : "false");
+        Document versionXml = builder.parse(new File(args[1]));
+        versionNode = versionXml.getElementsByTagName("version").item(0);
+        versionNode.getAttributes().getNamedItem("major").setTextContent("" + major);
+        versionNode.getAttributes().getNamedItem("minor").setTextContent("" + minor);
+        versionNode.getAttributes().getNamedItem("patch").setTextContent("" + patch);
+        versionNode.getAttributes().getNamedItem("full").setTextContent(version + (isSnapshot ? " EAP" : ""));
+        versionNode.getAttributes().getNamedItem("eap").setTextContent(isSnapshot ? "true" : "false");
 
-      Node buildNode = versionXml.getElementsByTagName("build").item(0);
-      buildNode.getAttributes().getNamedItem("number").setTextContent("RS-" + major + "." + minor + "." + patch);
+        Node buildNode = versionXml.getElementsByTagName("build").item(0);
+        buildNode.getAttributes().getNamedItem("number").setTextContent("RS-" + major + "." + minor + "." + patch);
 
-      Transformer transformer = TransformerFactory.newInstance().newTransformer();
-      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-      StreamResult result = new StreamResult(new StringWriter());
-      DOMSource source = new DOMSource(versionXml);
-      transformer.transform(source, result);
-      String xmlString = result.getWriter().toString();
-      FileWriter writer = new FileWriter(new File(args[1]));
-      writer.write(xmlString);
-      writer.close();
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        StreamResult result = new StreamResult(new StringWriter());
+        DOMSource source = new DOMSource(versionXml);
+        transformer.transform(source, result);
+        String xmlString = result.getWriter().toString();
+        FileWriter writer = new FileWriter(new File(args[1]));
+        writer.write(xmlString);
+        writer.close();
 
-      
-
-      System.out.println(version + (isSnapshot? " EAP": ""));
+        System.out.println(version + (isSnapshot ? "-SNAPSHOT" : ""));
     }
 }

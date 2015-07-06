@@ -164,9 +164,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   buildCrossPlatformZip("$paths.artifacts/idea${args.buildNumber}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
                         paths.distWin, paths.distUnix, paths.distMac)
 
-  def macAppRoot = isEap() ?
-                   "RoboVM Studio ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" :
-                   "RoboVM Studio ${p("component.version.major")}.${p("component.version.minor")}.app/Contents"
+  def macAppRoot = "RoboVM Studio.app/Contents"
 
   String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
