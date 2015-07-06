@@ -69,6 +69,7 @@ public class IDEARemoteTestNG extends TestNG {
         final IDEATestNGRemoteListener listener = new IDEATestNGRemoteListener();
         addListener((ISuiteListener)listener);
         addListener((ITestListener)listener);
+        addListener((IInvokedMethodListener)listener);
         super.run();
         System.exit(0);
       }

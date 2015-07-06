@@ -44,6 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,9 +57,24 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
     Presentation presentation = e.getPresentation();
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      enable = !getCancellableProcesses(e.getProject()).isEmpty() || !getActiveDescriptors(e.getDataContext()).isEmpty();
-      presentation.setText(getTemplatePresentation().getText());
+    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+      List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getDataContext());
+      List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(e.getProject());
+      int todoSize = stoppableDescriptors.size() + cancellableProcesses.size();
+      if (todoSize > 1) {
+        presentation.setText(getTemplatePresentation().getText()+"...");
+      }
+      else if (todoSize == 1) {
+        if (stoppableDescriptors.size() ==1) {
+          presentation.setText(ExecutionBundle.message("stop.configuration.action.name", stoppableDescriptors.get(0).getDisplayName()));
+        } else {
+          TaskInfo taskInfo = cancellableProcesses.get(0).first;
+          presentation.setText(taskInfo.getCancelText() + " " + taskInfo.getTitle());
+        }
+      } else {
+        presentation.setText(getTemplatePresentation().getText());
+      }
+      enable = todoSize > 0;
     }
     else {
       RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
@@ -91,18 +108,22 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    ProcessHandler activeProcessHandler = getHandler(dataContext);
-
     Project project = e.getProject();
-    List<Pair<TaskInfo, ProgressIndicator>> backgroundTasks = getCancellableProcesses(project);
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      if (canBeStopped(activeProcessHandler) && backgroundTasks.isEmpty()) {
-        stopProcess(activeProcessHandler);
+    List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(project);
+    List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);
+    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+      int todoSize = cancellableProcesses.size() + stoppableDescriptors.size();
+      if (todoSize == 1) {
+        if (!stoppableDescriptors.isEmpty()) {
+          stopProcess(stoppableDescriptors.get(0));
+        } else {
+          cancellableProcesses.get(0).second.cancel();
+        }
         return;
       }
 
       Pair<List<HandlerItem>, HandlerItem>
-        handlerItems = getItemsList(backgroundTasks, getActiveDescriptors(dataContext), activeProcessHandler);
+        handlerItems = getItemsList(cancellableProcesses, stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
       if (handlerItems == null || handlerItems.first.isEmpty()) {
         return;
       }
@@ -147,18 +168,24 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         })
         .setRequestFocus(true)
         .createPopup();
-      if (project == null) {
+      InputEvent inputEvent = e.getInputEvent();
+      Component component = inputEvent != null ? inputEvent.getComponent() : null;
+      if (component != null && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+        popup.showUnderneathOf(component);
+      }
+      else if (project == null) {
         popup.showInBestPositionFor(dataContext);
       }
       else {
         popup.showCenteredInCurrentWindow(project);
       }
     }
-    else if (activeProcessHandler != null) {
-      stopProcess(activeProcessHandler);
+    else {
+      stopProcess(getRecentlyStartedContentDescriptor(dataContext));
     }
   }
 
+  @NotNull
   private static List<Pair<TaskInfo, ProgressIndicator>> getCancellableProcesses(@Nullable Project project) {
     IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
     StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
@@ -176,24 +203,24 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   @Nullable
   private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<Pair<TaskInfo, ProgressIndicator>> tasks,
                                                                    List<RunContentDescriptor> descriptors,
-                                                                   ProcessHandler activeProcessHandler) {
+                                                                   RunContentDescriptor toSelect) {
     if (tasks.isEmpty() && descriptors.isEmpty()) {
       return null;
     }
 
     List<HandlerItem> items = new ArrayList<HandlerItem>(tasks.size() + descriptors.size());
     HandlerItem selected = null;
-    for (RunContentDescriptor descriptor : descriptors) {
+    for (final RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
       if (handler != null) {
         HandlerItem item = new HandlerItem(descriptor.getDisplayName(), descriptor.getIcon(), false) {
           @Override
           void stop() {
-            stopProcess(handler);
+            stopProcess(descriptor);
           }
         };
         items.add(item);
-        if (handler == activeProcessHandler) {
+        if (descriptor == toSelect) {
           selected = item;
         }
       }
@@ -212,7 +239,9 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     return Pair.create(items, selected);
   }
 
-  private static void stopProcess(@NotNull ProcessHandler processHandler) {
+  private static void stopProcess(@Nullable RunContentDescriptor descriptor) {
+    ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
+    if (processHandler == null) return;
     if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
       ((KillableProcess)processHandler).killProcess();
       return;
@@ -227,23 +256,21 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   }
 
   @Nullable
-  static ProcessHandler getHandler(@NotNull DataContext dataContext) {
+  static RunContentDescriptor getRecentlyStartedContentDescriptor(@NotNull DataContext dataContext) {
     final RunContentDescriptor contentDescriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
     if (contentDescriptor != null) {
       // toolwindow case
-      return contentDescriptor.getProcessHandler();
+      return contentDescriptor;
     }
     else {
       // main menu toolbar
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      final RunContentDescriptor selectedContent =
-        project == null ? null : ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
-      return selectedContent == null ? null : selectedContent.getProcessHandler();
+      return project == null ? null : ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
     }
   }
 
   @NotNull
-  private static List<RunContentDescriptor> getActiveDescriptors(final DataContext dataContext) {
+  private static List<RunContentDescriptor> getActiveStoppableDescriptors(final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Collections.emptyList();
@@ -254,14 +281,15 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     }
     final List<RunContentDescriptor> activeDescriptors = new ArrayList<RunContentDescriptor>();
     for (RunContentDescriptor descriptor : runningProcesses) {
-      if (canBeStopped(descriptor.getProcessHandler())) {
+      if (canBeStopped(descriptor)) {
         activeDescriptors.add(descriptor);
       }
     }
     return activeDescriptors;
   }
 
-  private static boolean canBeStopped(@Nullable ProcessHandler processHandler) {
+  private static boolean canBeStopped(@Nullable RunContentDescriptor descriptor) {
+    @Nullable ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
     return processHandler != null && !processHandler.isProcessTerminated()
            && (!processHandler.isProcessTerminating()
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
