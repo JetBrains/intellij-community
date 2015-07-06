@@ -211,7 +211,7 @@ public class PyBlock implements ASTBlock {
     }
 
     if (childType == PyElementTypes.STATEMENT_LIST) {
-      if (hasLineBreaksBefore(child, 1) || needLineBreakInStatement()) {
+      if (hasLineBreaksBeforeInSameParent(child, 1) || needLineBreakInStatement()) {
         childIndent = Indent.getNormalIndent();
       }
     }
@@ -258,7 +258,7 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
              parentType == PyElementTypes.SET_COMP_EXPRESSION || parentType == PyElementTypes.DICT_COMP_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACE || !hasLineBreaksBefore(child, 1)) {
+      if (childType == PyTokenTypes.RBRACE || !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -297,7 +297,7 @@ public class PyBlock implements ASTBlock {
               (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) ||
               (parentType == PyElementTypes.PARAMETER_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS)) &&
              !isIndentNext(child) &&
-             !hasLineBreaksBefore(myNode.getFirstChildNode(), 1) &&
+             !hasLineBreaksBeforeInSameParent(myNode.getFirstChildNode(), 1) &&
              !ourListElementTypes.contains(childType)) {
 
       if (!ourBrackets.contains(childType)) {
@@ -311,7 +311,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.GENERATOR_EXPRESSION || parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
-      if (childType == PyTokenTypes.RPAR || !hasLineBreaksBefore(child, 1)) {
+      if (childType == PyTokenTypes.RPAR || !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -340,7 +340,7 @@ public class PyBlock implements ASTBlock {
     else if (parentType == PyElementTypes.REFERENCE_EXPRESSION) {
       if (child != myNode.getFirstChildNode()) {
         childIndent = Indent.getNormalIndent();
-        if (hasLineBreaksBefore(child, 1)) {
+        if (hasLineBreaksBeforeInSameParent(child, 1)) {
           if (isInControlStatement()) {
             childIndent = Indent.getContinuationIndent();
           }
@@ -364,7 +364,7 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
-    if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2) && child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
+    if (isAfterStatementList(child) && !hasLineBreaksBeforeInSameParent(child, 2) && child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
       // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
     }
@@ -461,7 +461,7 @@ public class PyBlock implements ASTBlock {
     final IElementType elementType = elem.getNode().getElementType();
     final ASTNode firstChildNode = firstChild.getNode();
     if (ourHangingIndentOwners.contains(elementType) && PyTokenTypes.OPEN_BRACES.contains(firstChildNode.getElementType())) {
-      if (hasLineBreaksAfter(firstChildNode, 1)) {
+      if (hasLineBreakAfterIgnoringComments(firstChildNode)) {
         return true;
       }
       final PsiElement[] items = getItems(elem);
@@ -635,20 +635,35 @@ public class PyBlock implements ASTBlock {
     return node != null && (node.getElementType() == TokenType.WHITE_SPACE || PyTokenTypes.WHITESPACE.contains(node.getElementType()));
   }
 
-  private static boolean hasLineBreaksBefore(@NotNull ASTNode child, int minCount) {
-    final ASTNode treePrev = child.getTreePrev();
+  private static boolean hasLineBreaksBeforeInSameParent(@NotNull ASTNode node, int minCount) {
+    final ASTNode treePrev = node.getTreePrev();
     return (treePrev != null && isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(treePrev), minCount)) ||
-           isWhitespaceWithLineBreaks(child.getFirstChildNode(), minCount);
+           // Can happen, e.g. when you delete a statement from the beginning of a statement list
+           isWhitespaceWithLineBreaks(node.getFirstChildNode(), minCount);
   }
 
-  private static boolean hasLineBreaksAfter(@NotNull ASTNode child, int minCount) {
-    final ASTNode treeNext = child.getTreeNext();
-    return (treeNext != null && isWhitespaceWithLineBreaks(TreeUtil.findLastLeaf(treeNext), minCount)) ||
-           isWhitespaceWithLineBreaks(child.getLastChildNode(), minCount);
+  private static boolean hasLineBreakAfterIgnoringComments(@NotNull ASTNode node) {
+    for (ASTNode next = TreeUtil.nextLeaf(node); next != null; next = TreeUtil.nextLeaf(next)) {
+      if (isWhitespace(next)) {
+        if (next.textContains('\n')) {
+          return true;
+        }
+      }
+      else if (next.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        return true;
+      }
+      else {
+        break;
+      }
+    }
+    return false;
   }
 
   private static boolean isWhitespaceWithLineBreaks(@Nullable ASTNode node, int minCount) {
     if (isWhitespace(node)) {
+      if (minCount == 1) {
+        return node.textContains('\n');
+      }
       final String prevNodeText = node.getText();
       int count = 0;
       for (int i = 0; i < prevNodeText.length(); i++) {
@@ -702,7 +717,7 @@ public class PyBlock implements ASTBlock {
 
       PsiElement psi2 = node2.getPsi();
       // skip not inline comments to handles blank lines between various declarations
-      if (psi2 instanceof PsiComment && hasLineBreaksBefore(node2, 1)) {
+      if (psi2 instanceof PsiComment && hasLineBreaksBeforeInSameParent(node2, 1)) {
         final PsiElement nonCommentAfter = PyPsiUtils.getNextNonCommentSibling(psi2, true);
         if (nonCommentAfter != null) {
           psi2 = nonCommentAfter;
@@ -742,7 +757,7 @@ public class PyBlock implements ASTBlock {
         }
       }
 
-      if (psi2 instanceof PsiComment && !hasLineBreaksBefore(psi2.getNode(), 1) && myContext.getPySettings().SPACE_BEFORE_NUMBER_SIGN) {
+      if (psi2 instanceof PsiComment && !hasLineBreaksBeforeInSameParent(psi2.getNode(), 1) && myContext.getPySettings().SPACE_BEFORE_NUMBER_SIGN) {
         return Spacing.createSpacing(2, 0, 0, false, 0);
       }
     }
@@ -798,7 +813,7 @@ public class PyBlock implements ASTBlock {
       // doesn't request childAttributes from the correct block
       while (lastChild != null) {
         final IElementType last_type = lastChild.getElementType();
-        if (last_type == PyElementTypes.STATEMENT_LIST && hasLineBreaksBefore(lastChild, 1)) {
+        if (last_type == PyElementTypes.STATEMENT_LIST && hasLineBreaksBeforeInSameParent(lastChild, 1)) {
           if (dedentAfterLastStatement((PyStatementList)lastChild.getPsi())) {
             break;
           }

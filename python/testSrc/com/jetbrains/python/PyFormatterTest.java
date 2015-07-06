@@ -608,6 +608,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-16393
+  public void testHangingIndentDetectionIgnoresComments() {
+    doTest();
+  }
+
   // PY-15530
   public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
     doTest();
