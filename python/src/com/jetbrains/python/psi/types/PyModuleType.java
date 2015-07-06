@@ -388,7 +388,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                               @NotNull PsiElement location,
                                                                               @Nullable final Set<String> existingNames) {
 
-    return ContainerUtil.mapNotNull(collectImportedSubmodules(pyPackage, location),
+    final List<PsiElement> elements = collectImportedSubmodules(pyPackage, location);
+    return elements != null ? ContainerUtil.mapNotNull(elements,
                                     new Function<PsiElement, LookupElement>() {
                                       @Override
                                       public LookupElement fun(PsiElement element) {
@@ -400,10 +401,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                         }
                                         return null;
                                       }
-                                    });
+                                    }) : Collections.<LookupElement>emptyList();
   }
 
-  @NotNull
+  @Nullable
   public static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
     final PsiElement parentAnchor;
     if (pyPackage instanceof PyFile && PyUtil.isPackage(((PyFile)pyPackage))) {
@@ -413,7 +414,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       parentAnchor = pyPackage;
     }
     else {
-      throw new IllegalArgumentException("Package argument should be either standard Python package or namespace package");
+      return null;
     }
 
     final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(location);
