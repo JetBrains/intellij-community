@@ -201,6 +201,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                           return;
                         }
                       }
+                      ((SuspendManagerImpl)getSuspendManager()).popContext(context);
                     }
                   }
                 }
