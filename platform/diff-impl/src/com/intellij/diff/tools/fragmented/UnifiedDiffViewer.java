@@ -32,10 +32,9 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil.DocumentData;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.LineTokenizer;
@@ -51,6 +50,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -61,10 +61,7 @@ import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -125,6 +122,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     new MyOpenInEditorWithMouseAction().register(getEditors());
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
+
+    DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.LEFT, true), myPanel);
+    DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT, true), myPanel);
+    DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.RIGHT, true), myPanel);
+    DiffUtil.registerAction(new AppendSelectedChangesAction(Side.RIGHT, true), myPanel);
   }
 
   @Override
@@ -209,7 +211,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   protected List<AnAction> createEditorPopupActions() {
-    return TextDiffViewerUtil.createEditorPopupActions();
+    List<AnAction> group = new ArrayList<AnAction>();
+
+    group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
+    group.add(new AppendSelectedChangesAction(Side.LEFT, false));
+    group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
+    group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
+    group.add(new RevertSelectedChangesAction(Side.LEFT));
+    group.add(new RevertSelectedChangesAction(Side.RIGHT));
+    group.add(Separator.getInstance());
+
+    group.addAll(TextDiffViewerUtil.createEditorPopupActions());
+
+    return group;
   }
 
   @CalledInAwt
@@ -623,26 +637,163 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     scheduleRediff();
   }
 
-  @CalledWithWriteLock
-  public void applyChange(@NotNull UnifiedDiffChange change, @NotNull Side sourceSide) {
-    if (myStateIsOutOfDate || myChangedBlockData == null) return;
+  //
+  // Modification operations
+  //
 
-    Side affectedSide = sourceSide.other();
-    if (!isEditable(affectedSide, true)) return;
+  private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
+    @NotNull protected final Side myModifiedSide;
+    private final boolean myShortcut;
+
+    public ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
+      myModifiedSide = modifiedSide;
+      myShortcut = shortcut;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (myShortcut) {
+        // consume shortcut even if there are nothing to do - avoid calling some other action
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      if (editor != getEditor()) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      if (!isEditable(myModifiedSide, true) || isStateIsOutOfDate()) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(isSomeChangeSelected());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      final List<UnifiedDiffChange> selectedChanges = getSelectedChanges();
+      if (selectedChanges.isEmpty()) return;
+
+      if (!isEditable(myModifiedSide, true)) return;
+      if (isStateIsOutOfDate()) return;
+
+      String title = e.getPresentation().getText() + " selected changes";
+      DiffUtil.executeWriteCommand(getDocument(myModifiedSide), e.getProject(), title, new Runnable() {
+        @Override
+        public void run() {
+          // state is invalidated during apply(), but changes are in reverse order, so they should not conflict with each other
+          apply(selectedChanges);
+          scheduleRediff();
+        }
+      });
+    }
+
+    protected boolean isSomeChangeSelected() {
+      if (myChangedBlockData == null) return false;
+      List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
+      if (changes.isEmpty()) return false;
+
+      List<Caret> carets = getEditor().getCaretModel().getAllCarets();
+      if (carets.size() != 1) return true;
+      Caret caret = carets.get(0);
+      if (caret.hasSelection()) return true;
+      int line = getEditor().getDocument().getLineNumber(getEditor().getExpectedCaretOffset());
+
+      for (UnifiedDiffChange change : changes) {
+        if (DiffUtil.isSelectedByLine(line, change.getLine1(), change.getLine2())) return true;
+      }
+      return false;
+    }
+
+    @CalledWithWriteLock
+    protected abstract void apply(@NotNull List<UnifiedDiffChange> changes);
+  }
+
+  private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
+    public ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+      super(focusedSide.other(), shortcut);
+
+      setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
+      getTemplatePresentation().setText("Replace");
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow));
+    }
+
+    @Override
+    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
+      for (UnifiedDiffChange change : changes) {
+        replaceChange(change, myModifiedSide.other());
+      }
+    }
+  }
+
+  private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
+    public AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+      super(focusedSide.other(), shortcut);
+
+      setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
+      getTemplatePresentation().setText("Insert");
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown));
+    }
+
+    @Override
+    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
+      for (UnifiedDiffChange change : changes) {
+        appendChange(change, myModifiedSide.other());
+      }
+    }
+  }
+
+  private class RevertSelectedChangesAction extends ApplySelectedChangesActionBase {
+    public RevertSelectedChangesAction(@NotNull Side focusedSide) {
+      super(focusedSide, false);
+      getTemplatePresentation().setText("Revert");
+      getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
+    }
+
+    @Override
+    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
+      for (UnifiedDiffChange change : changes) {
+        replaceChange(change, myModifiedSide.other());
+      }
+    }
+  }
+
+  @CalledWithWriteLock
+  public void replaceChange(@NotNull UnifiedDiffChange change, @NotNull Side sourceSide) {
+    Side outputSide = sourceSide.other();
 
     Document document1 = getDocument(Side.LEFT);
     Document document2 = getDocument(Side.RIGHT);
 
     LineFragment lineFragment = change.getLineFragment();
 
-    DiffUtil.applyModification(affectedSide.select(document1, document2),
-                               affectedSide.getStartLine(lineFragment), affectedSide.getEndLine(lineFragment),
+    DiffUtil.applyModification(outputSide.select(document1, document2),
+                               outputSide.getStartLine(lineFragment), outputSide.getEndLine(lineFragment),
                                sourceSide.select(document1, document2),
                                sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
 
     // no need to mark myStateIsOutOfDate - it will be made by DocumentListener
     // TODO: we can apply change manually, without marking state out-of-date. But we'll have to schedule rediff anyway.
-    scheduleRediff();
+  }
+
+  @CalledWithWriteLock
+  public void appendChange(@NotNull UnifiedDiffChange change, @NotNull final Side sourceSide) {
+    Side outputSide = sourceSide.other();
+
+    Document document1 = getDocument(Side.LEFT);
+    Document document2 = getDocument(Side.RIGHT);
+
+    LineFragment lineFragment = change.getLineFragment();
+    if (sourceSide.getStartLine(lineFragment) == sourceSide.getEndLine(lineFragment)) return;
+
+    DiffUtil.applyModification(outputSide.select(document1, document2),
+                               outputSide.getEndLine(lineFragment), outputSide.getEndLine(lineFragment),
+                               sourceSide.select(document1, document2),
+                               sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
   }
 
   //
@@ -775,6 +926,26 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       if (DiffUtil.isSelectedByLine(caretLine, change.getLine1(), change.getLine2())) return change;
     }
     return null;
+  }
+
+  @NotNull
+  @CalledInAwt
+  private List<UnifiedDiffChange> getSelectedChanges() {
+    if (myChangedBlockData == null) return Collections.emptyList();
+    final BitSet lines = DiffUtil.getSelectedLines(myEditor);
+    List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
+
+    List<UnifiedDiffChange> affectedChanges = new ArrayList<UnifiedDiffChange>();
+    for (int i = changes.size() - 1; i >= 0; i--) {
+      UnifiedDiffChange change = changes.get(i);
+      int line1 = change.getLine1();
+      int line2 = change.getLine2();
+
+      if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
+        affectedChanges.add(change);
+      }
+    }
+    return affectedChanges;
   }
 
   @CalledInAwt
