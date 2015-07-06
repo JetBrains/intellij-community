@@ -510,10 +510,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-14615
-  public void testImplicitlyImportedSubModule() {
-    doMultiFileTest();
-  }
+
 
   @NotNull
   @Override
