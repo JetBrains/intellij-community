@@ -169,18 +169,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     Project project = getConfiguration().getProject();
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
-
-
-    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
-    for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
-    }
-
-    // Append coverage parameters if appropriate
-    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
-    }
-
+    
     final String parameters = getConfiguration().getProgramParameters();
     getConfiguration().setProgramParameters(null);
     try {
@@ -191,6 +180,16 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     }
     javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
     configureClasspath(javaParameters);
+
+    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
+    for (Object patcher : patchers) {
+      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
+    }
+
+    // Append coverage parameters if appropriate
+    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
+    }
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().add("@name" + parameters);
