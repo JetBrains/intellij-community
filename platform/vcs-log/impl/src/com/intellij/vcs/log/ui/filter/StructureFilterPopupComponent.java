@@ -252,17 +252,18 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
           setVisible(myRoot, state);
         }
       }
-
-      myIcon.prepare(state);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
-      Presentation presentation = e.getPresentation();
-      myIcon.prepare(isSelected(e) && isEnabled());
-      presentation.setIcon(myIcon);
+      updateIcon();
+      e.getPresentation().setIcon(myIcon);
+    }
+
+    private void updateIcon() {
+      myIcon.prepare(isVisible(myRoot) && isEnabled());
     }
 
     private boolean isEnabled() {
