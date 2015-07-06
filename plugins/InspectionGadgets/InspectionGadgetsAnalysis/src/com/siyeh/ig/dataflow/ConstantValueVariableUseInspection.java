@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,6 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
     ReplaceReferenceWithExpressionFix(String text) {
       myText = text;
     }
-
 
     @Override
     @NotNull
@@ -121,25 +121,28 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
       if (body == null) {
         return false;
       }
-      if (!(condition instanceof PsiBinaryExpression)) {
+      if (!(condition instanceof PsiPolyadicExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)condition;
-      final IElementType tokenType =
-        binaryExpression.getOperationTokenType();
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND == tokenType) {
-        return checkCondition(lhs, body) ||
-               checkCondition(rhs, body);
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          if (checkCondition(operand, body)) {
+            return true;
+          }
+        }
+        return false;
       }
       if (JavaTokenType.EQEQ != tokenType) {
         return false;
       }
-      if (rhs == null) {
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      if (operands.length != 2) {
         return false;
       }
+      final PsiExpression lhs = operands[0];
+      final PsiExpression rhs = operands[1];
       if (PsiUtil.isConstantExpression(lhs)) {
         return checkConstantValueVariableUse(rhs, lhs, body);
       }
@@ -162,6 +165,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
           return false;
         }
       }
+      expression = ParenthesesUtils.stripParentheses(expression);
       if (!(expression instanceof PsiReferenceExpression)) {
         return false;
       }
