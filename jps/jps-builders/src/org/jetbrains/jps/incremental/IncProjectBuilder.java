@@ -47,6 +47,7 @@ import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
+import org.jetbrains.jps.incremental.fs.FilesDelta;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -60,9 +61,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -82,7 +81,7 @@ public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
-  private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
+  //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", SystemInfo.isWindows ? "true" : "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
@@ -143,10 +142,10 @@ public class IncProjectBuilder {
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
         if (scope.isAffected(target)) {
           BuildOperations.ensureFSStateInitialized(context, target);
-          final Map<BuildRootDescriptor, Set<File>> toRecompile = fsState.getSourcesToRecompile(context, target);
-          //noinspection SynchronizationOnLocalVariableOrMethodParameter
-          synchronized (toRecompile) {
-            for (Set<File> files : toRecompile.values()) {
+          final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
+          delta.lockData();
+          try {
+            for (Set<File> files : delta.getSourcesToRecompile().values()) {
               for (File file : files) {
                 if (scope.isAffected(target, file)) {
                   // this will serve as a marker that compiler has work to do
@@ -155,6 +154,9 @@ public class IncProjectBuilder {
                 }
               }
             }
+          }
+          finally {
+            delta.unlockData();
           }
         }
       }
@@ -663,7 +665,6 @@ public class IncProjectBuilder {
             buildChunkIfAffected(context, scope, chunk);
           }
           finally {
-            context.updateCompilationStartStamp();
             pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk));
             pd.dataManager.flush(true);
           }
@@ -810,7 +811,6 @@ public class IncProjectBuilder {
               }
             }
             finally {
-              myContext.updateCompilationStartStamp();
               myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
               myProjectDescriptor.dataManager.flush(true);
             }
@@ -929,8 +929,11 @@ public class IncProjectBuilder {
   }
 
   private void buildTargetsChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
+    final BuildFSState fsState = myProjectDescriptor.fsState;
     boolean doneSomething;
     try {
+      context.setCompilationStartStamp(chunk.getTargets(), System.currentTimeMillis());
+
       sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.STARTED);
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
 
@@ -940,11 +943,14 @@ public class IncProjectBuilder {
 
       doneSomething = processDeletedPaths(context, chunk.getTargets());
 
-      myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);
+      fsState.beforeChunkBuildStart(context, chunk);
 
       doneSomething |= runBuildersForChunk(context, chunk);
 
-      onChunkBuildComplete(context, chunk);
+      fsState.clearContextRoundData(context);
+      fsState.clearContextChunk(context);
+
+      BuildOperations.markTargetsUpToDate(context, chunk);
 
       //if (doneSomething && GENERATE_CLASSPATH_INDEX) {
       //  myAsyncTasks.add(SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
@@ -983,7 +989,7 @@ public class IncProjectBuilder {
             final Collection<String> paths = entry.getValue();
             if (paths != null) {
               for (String path : paths) {
-                myProjectDescriptor.fsState.registerDeleted(target, new File(path), null);
+                fsState.registerDeleted(target, new File(path), null);
               }
             }
           }
@@ -1004,40 +1010,40 @@ public class IncProjectBuilder {
     myMessageDispatcher.processMessage(new BuildingTargetProgressMessage(targets, event));
   }
 
-  private static void createClasspathIndex(final BuildTargetChunk chunk) {
-    final Set<File> outputDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    for (BuildTarget<?> target : chunk.getTargets()) {
-      if (target instanceof ModuleBuildTarget) {
-        File outputDir = ((ModuleBuildTarget)target).getOutputDir();
-        if (outputDir != null && outputDirs.add(outputDir)) {
-          try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FILE_NAME)));
-            try {
-              writeIndex(writer, outputDir, "");
-            }
-            finally {
-              writer.close();
-            }
-          }
-          catch (IOException e) {
-            // Ignore. Failed to create optional classpath index
-          }
-        }
-      }
-    }
-  }
+  //private static void createClasspathIndex(final BuildTargetChunk chunk) {
+  //  final Set<File> outputDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+  //  for (BuildTarget<?> target : chunk.getTargets()) {
+  //    if (target instanceof ModuleBuildTarget) {
+  //      File outputDir = ((ModuleBuildTarget)target).getOutputDir();
+  //      if (outputDir != null && outputDirs.add(outputDir)) {
+  //        try {
+  //          BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputDir, CLASSPATH_INDEX_FILE_NAME)));
+  //          try {
+  //            writeIndex(writer, outputDir, "");
+  //          }
+  //          finally {
+  //            writer.close();
+  //          }
+  //        }
+  //        catch (IOException e) {
+  //          // Ignore. Failed to create optional classpath index
+  //        }
+  //      }
+  //    }
+  //  }
+  //}
 
-  private static void writeIndex(final BufferedWriter writer, final File file, final String path) throws IOException {
-    writer.write(path);
-    writer.write('\n');
-    final File[] files = file.listFiles();
-    if (files != null) {
-      for (File child : files) {
-        final String _path = path.isEmpty() ? child.getName() : path + "/" + child.getName();
-        writeIndex(writer, child, _path);
-      }
-    }
-  }
+  //private static void writeIndex(final BufferedWriter writer, final File file, final String path) throws IOException {
+  //  writer.write(path);
+  //  writer.write('\n');
+  //  final File[] files = file.listFiles();
+  //  if (files != null) {
+  //    for (File child : files) {
+  //      final String _path = path.isEmpty() ? child.getName() : path + "/" + child.getName();
+  //      writeIndex(writer, child, _path);
+  //    }
+  //  }
+  //}
 
 
   private boolean processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
@@ -1284,15 +1290,6 @@ public class IncProjectBuilder {
         compiledClass.save();
       }
     }
-  }
-
-  private static void onChunkBuildComplete(CompileContext context, @NotNull BuildTargetChunk chunk) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final BuildFSState fsState = pd.fsState;
-    fsState.clearContextRoundData(context);
-    fsState.clearContextChunk(context);
-
-    BuildOperations.markTargetsUpToDate(context, chunk);
   }
 
   private static CompileContext createContextWrapper(final CompileContext delegate) {
