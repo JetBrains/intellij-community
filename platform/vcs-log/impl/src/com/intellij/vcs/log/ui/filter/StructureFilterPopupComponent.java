@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
 
@@ -244,7 +245,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         setVisibleOnly(myRoot);
       }
       else {
-        setVisible(myRoot, state);
+        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
+            setVisibleOnly(myRoot);
+        }
+        else {
+          setVisible(myRoot, state);
+        }
       }
 
       myIcon.prepare(state);
