@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -39,7 +38,7 @@ public class AccessorsInfo {
   }
 
   public static AccessorsInfo build(@NotNull PsiField psiField) {
-    final PsiAnnotation accessorsFieldAnnotation = AnnotationUtil.findAnnotation(psiField, ACCESSORS_ANNOTATION_NAME);
+    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationUtil.findAnnotation(psiField, ACCESSORS_ANNOTATION_NAME);
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation, containingClass);
@@ -51,7 +50,7 @@ public class AccessorsInfo {
   public static AccessorsInfo build(@Nullable PsiClass psiClass) {
     PsiClass containingClass = psiClass;
     while (null != containingClass) {
-      final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
+      final PsiAnnotation accessorsClassAnnotation = PsiAnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
       if (null != accessorsClassAnnotation) {
         return buildFromAnnotation(accessorsClassAnnotation, containingClass);
       }

@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.handler;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CustomExceptionHandler;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -33,7 +32,7 @@ public class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
   }
 
   public boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, PsiClassType exceptionClassType) {
-    final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiModifierListOwner, ANNOTATION_FQN);
+    final PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiModifierListOwner, ANNOTATION_FQN);
     if (psiAnnotation == null) {
       return false;
     }
