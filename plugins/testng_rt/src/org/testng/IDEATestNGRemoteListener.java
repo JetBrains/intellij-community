@@ -35,7 +35,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       if (allMethods != null) {
         int count = 0;
         for (ITestNGMethod method : allMethods) {
-          if (method.isTest()) count++;
+          if (method.isTest()) count += method.getInvocationCount();
         }
         myPrintStream.println("##teamcity[testCount count = \'" + count + "\']");
       }
