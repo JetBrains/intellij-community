@@ -144,10 +144,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     super.addNode(nodeToAdd, parent);
   }
 
-  public void addNode(MyNode nodeToAdd, MyNode parent, boolean delayRedraw) {
-    super.addNode(nodeToAdd, parent, delayRedraw);
-  }
-
   @Override
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
@@ -234,28 +230,28 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       }
       final String[] groupPath = myPlainMode ? null : myContext.myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
-        addNode(moduleNode, myRoot, true);
-      } else {
+        myRoot.add(moduleNode);
+      }
+      else {
         final MyNode moduleGroupNode = ModuleGroupUtil
           .buildModuleGroupPath(new ModuleGroup(groupPath), myRoot, moduleGroup2NodeMap,
                                 new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
                                   @Override
                                   public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
-                                    addNode(parentChildRelation.getChild(), parentChildRelation.getParent(), true);
+                                    parentChildRelation.getParent().add(parentChildRelation.getChild());
                                   }
                                 },
                                 new Function<ModuleGroup, MyNode>() {
                                   @Override
                                   public MyNode fun(final ModuleGroup moduleGroup) {
-                                    final NamedConfigurable moduleGroupConfigurable =
-                                      createModuleGroupConfigurable(moduleGroup);
+                                    final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
                                     return new MyNode(moduleGroupConfigurable, true);
                                   }
                                 });
-        addNode(moduleNode, moduleGroupNode, true);
+        moduleGroupNode.add(moduleNode);
       }
     }
-    addNodeCompleted(myRoot);
+    sortDescendants(myRoot);
     if (myProject.isDefault()) {  //do not add modules node in case of template project
       myRoot.removeAllChildren();
     }
@@ -297,7 +293,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                  ? null
                                  : group != null ? group.getGroupPath() : null;
       if (groupPath == null || groupPath.length == 0){
-        addNode(moduleNode, myRoot);
+        myRoot.add(moduleNode);
       } else {
         final MyNode moduleGroupNode = ModuleGroupUtil
           .updateModuleGroupPath(new ModuleGroup(groupPath), myRoot, new Function<ModuleGroup, MyNode>() {
@@ -309,7 +305,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           }, new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
             @Override
             public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
-              addNode(parentChildRelation.getChild(), parentChildRelation.getParent());
+              parentChildRelation.getParent().add(parentChildRelation.getChild());
             }
           }, new Function<ModuleGroup, MyNode>() {
             @Override
@@ -318,14 +314,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
               return new MyNode(moduleGroupConfigurable, true);
             }
           });
-        addNode(moduleNode, moduleGroupNode);
+        moduleGroupNode.add(moduleNode);
       }
       Module module = (Module)moduleNode.getConfigurable().getEditableObject();
       myFacetEditorFacade.addFacetsNodes(module, moduleNode);
       addNodesFromExtensions(module, moduleNode);
     }
-    TreeUtil.sort(myRoot, getNodeComparator());
-    ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
+    sortDescendants(myRoot);
     return true;
   }
 

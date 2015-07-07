@@ -171,14 +171,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     MyNode facetTypeNode = new MyNode(facetTypeConfigurable);
     addNode(facetTypeNode, myRoot);
 
-    for (Module module : myModuleManager.getModules()) {
-      Collection<? extends Facet> facets = FacetManager.getInstance(module).getFacetsByType(facetType.getId());
-      FacetEditorFacadeImpl editorFacade = ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade();
-      for (Facet facet : facets) {
-        addFacetNode(facetTypeNode, facet, editorFacade, true);
-      }
-    }
-    addNodeCompleted(facetTypeNode);
+    FacetEditorFacadeImpl editorFacade = ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade();
+    addFacetNodes(facetTypeNode, ProjectFacetManager.getInstance(myProject).getFacets(facetType.getId()), editorFacade);
     return facetTypeNode;
   }
 
@@ -203,14 +197,13 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return addFacetTypeNode(facetType);
   }
 
-  public void addFacetNode(
-    @NotNull MyNode facetTypeNode,
-    @NotNull Facet facet,
-    @NotNull FacetEditorFacadeImpl editorFacade,
-    boolean delayRedraw) {
-    FacetConfigurable facetConfigurable = editorFacade.getOrCreateConfigurable(facet);
-    addNode(new FacetConfigurableNode(facetConfigurable), facetTypeNode, delayRedraw);
-    myContext.getDaemonAnalyzer().queueUpdate(new FacetProjectStructureElement(myContext, facet));
+  public void addFacetNodes(@NotNull MyNode facetTypeNode, @NotNull List<? extends Facet> facets, @NotNull FacetEditorFacadeImpl editorFacade) {
+    for (Facet facet : facets) {
+      FacetConfigurable facetConfigurable = editorFacade.getOrCreateConfigurable(facet);
+      facetTypeNode.add(new FacetConfigurableNode(facetConfigurable));
+      myContext.getDaemonAnalyzer().queueUpdate(new FacetProjectStructureElement(myContext, facet));
+    }
+    sortDescendants(facetTypeNode);
   }
 
   @Nullable

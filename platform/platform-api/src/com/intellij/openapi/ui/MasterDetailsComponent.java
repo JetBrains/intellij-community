@@ -580,20 +580,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected void addNode(MyNode nodeToAdd, MyNode parent) {
     parent.add(nodeToAdd);
-    TreeUtil.sort(parent, getNodeComparator());
-    ((DefaultTreeModel)myTree.getModel()).reload(parent);
+    sortDescendants(parent);
   }
 
-  protected void addNode(MyNode nodeToAdd, MyNode parent, boolean delayRedraw) {
-    parent.add(nodeToAdd);
-    if (!delayRedraw) {
-      addNodeCompleted(parent);
-    }
-  }
-
-  protected void addNodeCompleted(MyNode parent) {
-    TreeUtil.sort(parent, getNodeComparator());
-    ((DefaultTreeModel)myTree.getModel()).reload(parent);
+  protected void sortDescendants(MyNode root) {
+    TreeUtil.sort(root, getNodeComparator());
+    ((DefaultTreeModel)myTree.getModel()).reload(root);
   }
 
   protected Comparator<MyNode> getNodeComparator() {
