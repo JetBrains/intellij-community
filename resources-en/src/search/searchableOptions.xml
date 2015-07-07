@@ -19853,10 +19853,9 @@
     <option name="native-to-ascii" hit="Transparent native-to-ascii conversion" />
     <option name="transparent" hit="Transparent native-to-ascii conversion" />
   </configurable>
-  <configurable id="Console Folding" configurable_name="Console Folding">
+  <configurable id="Console" configurable_name="Console">
     <option name="" hit="" />
-    <option name="console" hit="Console Folding" />
-    <option name="folding" hit="Console Folding" />
+    <option name="console" hit="Console" />
     <option name="exceptions" hit="Exceptions" />
     <option name="console" hit="Fold console lines that contain" />
     <option name="contain" hit="Fold console lines that contain" />
