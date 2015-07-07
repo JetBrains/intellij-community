@@ -395,13 +395,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable) {
+    public void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable) {
     }
 
     @Override
     public void setDefaultContentUiType(@NotNull ToolWindowContentUiType type) {
     }
 
+    @NotNull
     @Override
     public ToolWindowContentUiType getContentUiType() {
       return ToolWindowContentUiType.TABBED;

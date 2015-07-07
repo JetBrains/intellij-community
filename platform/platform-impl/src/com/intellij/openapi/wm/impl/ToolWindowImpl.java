@@ -239,7 +239,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void setContentUiType(ToolWindowContentUiType type, @Nullable Runnable runnable) {
+  public void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setContentUiType(myId, type);
     if (runnable != null) {
@@ -252,6 +252,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myToolWindowManager.setDefaultContentUiType(this, type);
   }
 
+  @NotNull
   @Override
   public ToolWindowContentUiType getContentUiType() {
     ApplicationManager.getApplication().assertIsDispatchThread();
