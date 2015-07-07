@@ -347,12 +347,13 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   private boolean noIntersections(Rectangle bounds) {
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
-    if (owner == null || !SystemInfo.isWindows && !owner.isFocused()) {
-      return false; // disable expandable hints if IDEA has no focus
-    }
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
     Window focus = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    boolean focused = SystemInfo.isWindows || owner.isFocused();
     for (Window other : owner.getOwnedWindows()) {
+      if (!focused && !SystemInfo.isWindows) {
+        focused = other.isFocused();
+      }
       if (popup != other && other.isVisible() && bounds.x + 10 >= other.getX() && bounds.intersects(other.getBounds())) {
         return false;
       }
@@ -360,7 +361,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         focus = null; // already checked
       }
     }
-    return focus == owner || focus == null || !owner.getBounds().intersects(focus.getBounds());
+    return focused && (focus == owner || focus == null || !owner.getBounds().intersects(focus.getBounds()));
   }
 
   private void hideHint() {
