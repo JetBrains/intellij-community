@@ -20,16 +20,13 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * User: anna
  */
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
-  private String myText;
-
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);
   }
@@ -59,9 +56,11 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
     return getChildComponent().getText();
   }
 
-  public void setText(String text) {
-    final ComboBoxModel model = getChildComponent().getModel();
-    model.setSelectedItem(text);
-    myText = text;
+  public void setText(@NotNull String text) {
+    getChildComponent().setText(text);
+  }
+
+  public void setTextAndAddToHistory(@NotNull String text) {
+    getChildComponent().setTextAndAddToHistory(text);
   }
 }
