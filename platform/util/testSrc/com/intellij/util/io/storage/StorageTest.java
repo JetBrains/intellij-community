@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -30,15 +31,20 @@ import java.io.File;
 import java.io.IOException;
 
 public class StorageTest extends TestCase {
-  private Storage myStorage;
+  protected Storage myStorage;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myStorage = new Storage(getFileName());
+    myStorage = createStorage(getFileName());
   }
 
-  private String getFileName() {
+  @NotNull
+  protected Storage createStorage(String fileName) throws IOException {
+    return new Storage(fileName);
+  }
+
+  protected String getFileName() {
     return FileUtil.getTempDirectory() + File.separatorChar + getName();
   }
 
@@ -111,7 +117,7 @@ public class StorageTest extends TestCase {
     appendNBytes(r, 512);
   }
 
-  private void appendNBytes(final int r, final int len) throws IOException {
+  protected void appendNBytes(final int r, final int len) throws IOException {
     DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
     for (int i = 0; i < len; i++) {
       out.write(0);
