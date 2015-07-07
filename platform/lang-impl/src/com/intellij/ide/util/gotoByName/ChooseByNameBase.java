@@ -486,10 +486,7 @@ public abstract class ChooseByNameBase {
     myTextField.setActionMap(actionMap);
 
     myTextFieldPanel.add(myTextField);
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    boolean presentationMode = UISettings.getInstance().PRESENTATION_MODE;
-    int size = presentationMode ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
-    Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, size);
+    Font editorFont = getEditorFont();
     myTextField.setFont(editorFont);
 
     if (checkBoxName != null) {
@@ -1778,5 +1775,12 @@ public abstract class ChooseByNameBase {
 
   public JTextField getTextField() {
     return myTextField;
+  }
+
+  public static Font getEditorFont() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int size = UISettings.getInstance().PRESENTATION_MODE
+               ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
+    return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 }
