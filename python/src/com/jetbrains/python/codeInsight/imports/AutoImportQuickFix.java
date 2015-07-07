@@ -98,16 +98,16 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   public String getText() {
     if (myUseQualifiedImport) return PyBundle.message("ACT.qualify.with.module");
     else if (myImports.size() == 1) {
-      return "Import '" + myImports.get(0).getPresentableText(myInitialName) + "'";
+      return PyBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText(myInitialName));
     }
     else {
-      return PyBundle.message("ACT.NAME.use.import");
+      return PyBundle.message("QFIX.auto.import.import.this.name");
     }
   }
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("ACT.FAMILY.import");
+    return PyBundle.message("QFIX.auto.import.family");
   }
 
   public boolean showHint(Editor editor) {
@@ -211,13 +211,13 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Import locally";
+        return PyBundle.message("QFIX.local.auto.import.family");
       }
 
       @NotNull
       @Override
       public String getText() {
-        return super.getText() + " locally";
+        return PyBundle.message("QFIX.local.auto.import.import.locally", super.getText());
       }
 
       @NotNull
