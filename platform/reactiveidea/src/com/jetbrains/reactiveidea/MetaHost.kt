@@ -36,20 +36,22 @@ public open class MetaHost(public val reactiveModel: ReactiveModel,
   private var life: Lifetime? = null;
 
   protected fun initModel(initFunc: ((MapModel) -> MapModel) = { m -> m }) {
+    var parent = path;
+    var parentLifetime: Lifetime? = null
+    while (parent != Path()) {
+      parent = parent.dropLast(1)
+      parentLifetime = parent.getIn(reactiveModel.root)?.meta?.valAt("lifetime") as? Lifetime
+      if (parentLifetime != null) {
+        break
+      }
+    }
+    if (parentLifetime == null) {
+      throw RuntimeException("Shouldn't happens!")
+    }
+    life = Lifetime.create(parentLifetime).lifetime
+
     reactiveModel.transaction { m ->
-      var parent = path;
-      var parentLifetime: Lifetime? = null
-      while(parent != Path()) {
-        parent = parent.dropLast(1)
-        parentLifetime = parent.getIn(m)?.meta?.valAt("lifetime") as? Lifetime
-        if(parentLifetime != null) {
-          break
-        }
-      }
-      if(parentLifetime == null) {
-        throw RuntimeException("Shouldn't happens!")
-      }
-      life = Lifetime.create(parentLifetime).lifetime
+
       val hostMeta = PersistentHashMap.create(buildMeta())
       initFunc(path.putIn(m, MapModel(meta = hostMeta)))
     }
