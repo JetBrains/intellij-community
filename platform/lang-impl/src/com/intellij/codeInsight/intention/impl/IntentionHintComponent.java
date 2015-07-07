@@ -99,13 +99,15 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
   private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
-  
+
   private static Border createActiveBorder() {
-    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
+    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(
+      NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1));
   }
-  
+
   private static  Border createActiveBorderSmall() {
-    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1));
+    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(
+      SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1));
   }
 
   private static Color getBorderColor() {
@@ -159,14 +161,18 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     component.showIntentionHintImpl(!showExpanded, position);
     Disposer.register(project, component);
     if (showExpanded) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!editor.isDisposed() && editor.getComponent().isShowing()) {
-            component.showPopup(false);
+      if (ApplicationManager.getApplication().isServer()) {
+        component.showPopup(false);
+      } else {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (!editor.isDisposed() && editor.getComponent().isShowing()) {
+              component.showPopup(false);
+            }
           }
-        }
-      }, project.getDisposed());
+        }, project.getDisposed());
+      }
     }
 
     return component;
@@ -274,7 +280,8 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
   @NotNull
   private static Point getHintPosition(Editor editor) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
+    if (ApplicationManager.getApplication().isUnitTestMode() ||
+      ApplicationManager.getApplication().isServer()) return new Point();
     final int offset = editor.getCaretModel().getOffset();
     final VisualPosition pos = editor.offsetToVisualPosition(offset);
     int line = pos.line;
@@ -467,10 +474,10 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     boolean committed = PsiDocumentManager.getInstance(myFile.getProject()).isCommitted(myEditor.getDocument());
     final PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(myFile, myEditor.getCaretModel().getOffset()) : null;
     final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
-    
+
     final ScopeHighlighter highlighter = new ScopeHighlighter(myEditor);
     final ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
-    
+
     myPopup.addListener(new JBPopupListener.Adapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
@@ -485,7 +492,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
         final Object source = e.getSource();
         highlighter.dropHighlight();
         injectionHighlighter.dropHighlight();
-        
+
         if (source instanceof DataProvider) {
           final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
           if (selectedItem instanceof IntentionActionWithTextCaching) {
@@ -574,7 +581,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     }
 
     private void showImpl(JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
-      if (!parentComponent.isShowing()) return;
+      if (!parentComponent.isShowing() && !ApplicationManager.getApplication().isServer()) return;
       super.show(parentComponent, x, y, focusBackComponent, new HintHint(parentComponent, new Point(x, y)));
     }
 
