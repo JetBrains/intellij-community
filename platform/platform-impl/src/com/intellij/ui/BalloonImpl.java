@@ -1014,14 +1014,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       UnfairTextRange balloonRange;
       UnfairTextRange pointerRange;
       if (isTopBottomPointer()) {
-        balloonRange = new UnfairTextRange(bounds.x + arc, bounds.x + bounds.width - arc * 2);
+        balloonRange = new UnfairTextRange(bounds.x + arc - 1, bounds.x + bounds.width - arc * 2 + 1);
         pointerRange = new UnfairTextRange(targetPoint.x - pointerWidth / 2, targetPoint.x + pointerWidth / 2);
       }
       else {
-        balloonRange = new UnfairTextRange(bounds.y + arc, bounds.y + bounds.height - arc * 2);
+        balloonRange = new UnfairTextRange(bounds.y + arc - 1, bounds.y + bounds.height - arc * 2 + 1);
         pointerRange = new UnfairTextRange(targetPoint.y - pointerWidth / 2, targetPoint.y + pointerWidth / 2);
       }
-
       return balloonRange.contains(pointerRange);
     }
 
