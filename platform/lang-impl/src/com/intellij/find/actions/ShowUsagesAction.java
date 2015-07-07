@@ -25,6 +25,7 @@ import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -247,6 +248,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
 
     final MyTable table = new MyTable();
+    table.setFont(ChooseByNameBase.getEditorFont());
     final AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
 
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<UsageNode>());
@@ -571,7 +573,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(table);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
-    table.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight()+2);
+    table.setRowHeight(Math.max(PlatformIcons.CLASS_ICON.getIconHeight(), table.getFontMetrics(table.getFont()).getHeight()) + 2);
     table.setShowGrid(false);
     table.setShowVerticalLines(false);
     table.setShowHorizontalLines(false);
