@@ -79,7 +79,7 @@ public class VcsUserImpl implements VcsUser {
   }
 
   @NotNull
-  private static String getNameInStandardForm(@NotNull String name) {
+  public static String getNameInStandardForm(@NotNull String name) {
     Pair<String, String> firstAndLastName = getFirstAndLastName(name);
     if (firstAndLastName != null) {
       return firstAndLastName.first.toLowerCase() + " " + firstAndLastName.second.toLowerCase();

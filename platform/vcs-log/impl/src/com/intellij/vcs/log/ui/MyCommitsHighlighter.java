@@ -16,6 +16,8 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -67,8 +69,16 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   }
 
   private boolean areTheOnlyUsers(@NotNull Map<VirtualFile, VcsUser> currentUsers) {
-    Set<VcsUser> allUsers = myDataHolder.getAllUsers();
-    return allUsers.size() == currentUsers.values().size() && currentUsers.values().containsAll(allUsers);
+    NotNullFunction<VcsUser, String> nameToString = new NotNullFunction<VcsUser, String>() {
+      @NotNull
+      @Override
+      public String fun(VcsUser user) {
+        return VcsUserImpl.getNameInStandardForm(user.getName());
+      }
+    };
+    Set<String> allUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myDataHolder.getAllUsers(), nameToString));
+    Set<String> currentUserNames = ContainerUtil.newHashSet(ContainerUtil.map(currentUsers.values(), nameToString));
+    return allUserNames.size() == currentUserNames.size() && currentUserNames.containsAll(allUserNames);
   }
 
   private boolean isFilteredByCurrentUser() {
