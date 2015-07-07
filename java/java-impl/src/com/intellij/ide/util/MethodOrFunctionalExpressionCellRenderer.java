@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCell
   }
 
   protected Icon getIcon(PsiElement element) {
-    return element instanceof PsiMethod ? myMethodCellRenderer.getIcon(element) : null;
+    return element instanceof PsiMethod ? myMethodCellRenderer.getIcon(element) : super.getIcon(element);
   }
 
   public String getContainerText(final NavigatablePsiElement element, final String name) {
