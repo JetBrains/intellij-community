@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -394,10 +394,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public VirtualFileSystemEntry findChildById(int id, boolean cachedOnly) {
-    synchronized (myData) {
-      if (ArrayUtil.indexOf(myData.myChildrenIds, id) >= 0) {
-        return VfsData.getFileById(id, this);
-      }
+    if (ArrayUtil.indexOf(myData.myChildrenIds, id) >= 0) {
+      return VfsData.getFileById(id, this);
     }
     if (cachedOnly) return null;
 
