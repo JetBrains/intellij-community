@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -24,7 +25,6 @@ import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Collections;
 
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
@@ -49,8 +49,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
       String currentBranch = provider.getCurrentBranch(details.getRoot());
       VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
-      if (currentBranch != null &&
-          (branchFilter == null || !Collections.singleton(currentBranch).containsAll(branchFilter.getBranchNames()))) {
+      if (currentBranch != null && (branchFilter == null || !isFilteredByCurrentBranch(currentBranch, branchFilter))) {
         Condition<Hash> condition =
           myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
         if (condition.value(details.getId())) {
@@ -59,6 +58,10 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       }
     }
     return VcsCommitStyle.DEFAULT;
+  }
+
+  private boolean isFilteredByCurrentBranch(@NotNull String currentBranch, @NotNull VcsLogBranchFilter branchFilter) {
+    return branchFilter.getBranchNames().size() == 1 && currentBranch.equals(ContainerUtil.getFirstItem(branchFilter.getBranchNames()));
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
