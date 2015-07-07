@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,6 +106,12 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
                                                  myStorage.length(), recordsLength, getRecordSize()));
     }
     return recordsLength / getRecordSize();
+  }
+
+  @TestOnly
+  public int getLiveRecordsCount() throws IOException {
+    ensureFreeRecordsScanned();
+    return getRecordsCount() - myFreeRecordsList.size();
   }
 
   private void ensureFreeRecordsScanned() throws IOException {

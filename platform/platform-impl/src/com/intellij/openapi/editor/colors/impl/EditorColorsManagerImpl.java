@@ -102,7 +102,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
 
       @Override
-      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+      public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
+        LafManager.getInstance().updateUI();
+        EditorFactory.getInstance().refreshAllEditors();
+
         fireChanges(mySchemesManager.getCurrentScheme());
       }
 
@@ -235,21 +238,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
-    setGlobalSchemeInner(scheme);
-
-    LafManager.getInstance().updateUI();
-    EditorFactory.getInstance().refreshAllEditors();
-
-    fireChanges(scheme);
+    mySchemesManager.setCurrent(scheme == null ? getDefaultScheme() : scheme);
   }
 
   private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
-    mySchemesManager.setCurrentSchemeName(scheme == null ? getDefaultScheme().getName() : scheme.getName());
+    mySchemesManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
   }
 
   @NotNull
   private DefaultColorsScheme getDefaultScheme() {
-    return myDefaultColorSchemesManager.getAllSchemes()[0];
+    return myDefaultColorSchemesManager.getFirstScheme();
   }
 
   @NotNull

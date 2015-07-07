@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.util.List;
 
 class QuickListPanel {
   private final CollectionListModel<Object> actionsModel;
@@ -49,26 +49,18 @@ class QuickListPanel {
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
     myActionsList.setEnabled(true);
 
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(MouseEvent e) {
-        excludeSelectionAction();
-        return true;
-      }
-    }.installOn(myActionsList);
-
     myListPanel.add(ToolbarDecorator.createDecorator(myActionsList)
                       .setAddAction(new AnActionButtonRunnable() {
                         @Override
                         public void run(AnActionButton button) {
-                          java.util.List<QuickList> items = model.getItems();
+                          List<QuickList> items = model.getItems();
                           ChooseActionsDialog dialog = new ChooseActionsDialog(myActionsList, KeymapManager.getInstance().getActiveKeymap(), items.toArray(new QuickList[items.size()]));
                           if (dialog.showAndGet()) {
                             String[] ids = dialog.getTreeSelectedActionIds();
                             for (String id : ids) {
                               includeActionId(id);
                             }
-                            java.util.List<Object> list = actionsModel.getItems();
+                            List<Object> list = actionsModel.getItems();
                             int size = list.size();
                             ListSelectionModel selectionModel = myActionsList.getSelectionModel();
                             if (size > 0) {
@@ -132,13 +124,6 @@ class QuickListPanel {
     actionsModel.removeAll();
     for (String id : item.getActionIds()) {
       includeActionId(id);
-    }
-  }
-
-  private void excludeSelectionAction() {
-    int[] ids = myActionsList.getSelectedIndices();
-    for (int i = ids.length - 1; i >= 0; i--) {
-      actionsModel.remove(ids[i]);
     }
   }
 

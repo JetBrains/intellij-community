@@ -178,6 +178,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("HM", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testSOEOnSelfInheritance() throws Exception {
+    doTest(false, IGNORE_CONFLICTS, new RefactoringTestUtil.MemberDescriptor("test", PsiMethod.class));
+  }
+
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) {
     doTest(true, membersToFind);
   }

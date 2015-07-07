@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.maven.embedder;
 
-import java.lang.reflect.Field;
+import com.intellij.util.ReflectionUtil;
 
 class FieldAccessor<FIELD_TYPE> {
   private volatile FIELD_TYPE myWagonManagerCache;
@@ -31,24 +31,10 @@ class FieldAccessor<FIELD_TYPE> {
 
   public FIELD_TYPE getField() {
     if (myWagonManagerCache == null) {
-      Object value = getFieldValue(myHostClass, myFieldName, myHost);
+      Object value = ReflectionUtil.getField(myHostClass, myHost, null, myFieldName);
       //noinspection unchecked
       myWagonManagerCache = (FIELD_TYPE)value;
     }
     return myWagonManagerCache;
-  }
-
-  private Object getFieldValue(Class c, String fieldName, Object o) {
-    try {
-      Field f = c.getDeclaredField(fieldName);
-      f.setAccessible(true);
-      return f.get(o);
-    }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

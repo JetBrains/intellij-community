@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.CharSequenceWithStringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CharSequenceSubSequence implements CharSequence, CharArrayExternalizable {
+public class CharSequenceSubSequence implements CharSequence, CharArrayExternalizable, CharSequenceWithStringHash {
   private final CharSequence myChars;
   private final int myStart;
   private final int myEnd;
@@ -48,6 +50,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
     return myChars.charAt(index + myStart);
   }
 
+  @NotNull
   @Override
   public CharSequence subSequence(int start, int end) {
     if (start == myStart && end == myEnd) return this;
@@ -60,6 +63,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
     return StringFactory.createShared(CharArrayUtil.fromSequence(myChars, myStart, myEnd));
   }
 
+  @NotNull
   public CharSequence getBaseSequence() {
     return myChars;
   }
@@ -68,5 +72,15 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   public void getChars(int start, int end, @NotNull char[] dest, int destPos) {
     assert end - start <= myEnd - myStart;
     CharArrayUtil.getChars(myChars, dest, start + myStart, destPos, end - start);
+  }
+
+  private int hash;
+  @Override
+  public int hashCode() {
+    int h = hash;
+    if (h == 0) {
+      hash = h = StringUtil.stringHashCode(this, 0, length());
+    }
+    return h;
   }
 }

@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings("UnusedParameters")
 public abstract class SchemesManager<T extends Scheme, E extends ExternalizableScheme> {
   @NotNull
   public abstract Collection<E> loadSchemes();
@@ -40,13 +41,28 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
    */
   public abstract void clearAllSchemes();
 
+  @SuppressWarnings("NullableProblems")
   @NotNull
   public abstract List<T> getAllSchemes();
 
   @Nullable
   public abstract T findSchemeByName(@NotNull String schemeName);
 
-  public abstract void setCurrentSchemeName(@Nullable String schemeName);
+  @Deprecated
+  /**
+   * @deprecated Use {@link #setCurrent}
+   */
+  public void setCurrentSchemeName(@Nullable String schemeName) {
+  }
+
+  public final void setCurrent(@Nullable T scheme) {
+    setCurrent(scheme, true);
+  }
+
+  public void setCurrent(@Nullable T scheme, boolean notify) {
+    //noinspection deprecation
+    setCurrentSchemeName(scheme == null ? null : scheme.getName());
+  }
 
   @Nullable
   public abstract T getCurrentScheme();
@@ -65,10 +81,10 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
   }
 
   public void setSchemes(@NotNull List<T> schemes) {
-    setSchemes(schemes, null);
+    setSchemes(schemes, null, null);
   }
 
-  public void setSchemes(@NotNull List<T> schemes, @Nullable Condition<T> removeCondition) {
+  public void setSchemes(@NotNull List<T> newSchemes, @Nullable T newCurrentScheme, @Nullable Condition<T> removeCondition) {
   }
 
   /**

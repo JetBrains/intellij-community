@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionContributorEP;
+import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -31,7 +33,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
@@ -163,31 +164,7 @@ class LanguageResolvingUtil {
       return null;
     }
 
-    final PsiMethod method = methods[0];
-    final PsiCodeBlock body = method.getBody();
-
-    if (body == null) {
-      return null;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1) {
-      return null;
-    }
-
-
-    final PsiStatement statement = statements[0];
-    if (!(statement instanceof PsiReturnStatement)) {
-      return null;
-    }
-    final PsiReturnStatement returnStatement =
-      (PsiReturnStatement)statement;
-    final PsiExpression returnValue = returnStatement.getReturnValue();
-    if (returnValue == null ||
-        !PsiUtil.isConstantExpression(returnValue)) {
-      return null;
-    }
-
-    return computeConstant(languagePsiClass, returnValue);
+    return getStringConstantExpression(methods[0]);
   }
 
   private static String computeConstantSuperCtorCallParameter(PsiClass languagePsiClass, int index) {
@@ -225,15 +202,14 @@ class LanguageResolvingUtil {
     if (argumentExpressions.length < index + 1) {
       return null;
     }
-    return computeConstant(languagePsiClass, argumentExpressions[index]);
+
+    return getStringConstantExpression(argumentExpressions[index]);
   }
 
-  private static String computeConstant(PsiClass languagePsiClass, PsiExpression returnValue) {
-    final PsiConstantEvaluationHelper constantEvaluationHelper =
-      JavaPsiFacade.getInstance(languagePsiClass.getProject()).getConstantEvaluationHelper();
-
-    final Object constant = constantEvaluationHelper.computeConstantExpression(returnValue);
-    return constant instanceof String ? ((String)constant) : null;
+  @Nullable
+  private static String getStringConstantExpression(PsiElement psiElement) {
+    final Pair<PsiElement, String> pair = StringExpressionHelper.evaluateConstantExpression(psiElement);
+    return pair != null ? pair.second : null;
   }
 
   @Nullable

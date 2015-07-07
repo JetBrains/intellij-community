@@ -149,8 +149,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       synchronized (myLineSetLock) {
         lineSet = myLineSet;
         if (lineSet == null) {
-          lineSet = new LineSet();
-          lineSet.documentCreated(this);
+          lineSet = LineSet.createLineSet(myText);
           myLineSet = lineSet;
         }
       }
@@ -205,9 +204,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           markers.add(marker);
         }
       }
-      LineSet lineSet = getLineSet();
       lineLoop:
-      for (int line = 0; line < lineSet.getLineCount(); line++) {
+      for (int line = 0; line < getLineCount(); line++) {
+        LineSet lineSet = getLineSet();
         if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
         int whiteSpaceStart = -1;
         final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
@@ -636,7 +635,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void clearLineModificationFlags() {
-    getLineSet().clearModificationFlags();
+    myLineSet = getLineSet().clearModificationFlags();
   }
 
   void clearLineModificationFlagsExcept(@NotNull int[] caretLines) {
@@ -647,10 +646,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         modifiedLines.add(line);
       }
     }
-    clearLineModificationFlags();
+    lineSet = lineSet.clearModificationFlags();
     for (int i = 0; i < modifiedLines.size(); i++) {
-      lineSet.setModified(modifiedLines.get(i));
+      lineSet = lineSet.setModified(modifiedLines.get(i));
     }
+    myLineSet = lineSet;
   }
 
   private void updateText(@NotNull ImmutableText newText,
@@ -673,8 +673,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
       }
       myTextString = null;
+      ImmutableText prevText = myText;
       myText = newText;
-      changedUpdate(event, newModificationStamp);
+      changedUpdate(event, newModificationStamp, prevText);
     }
     finally {
       if (!enableRecursiveModifications) {
@@ -724,11 +725,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
+  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, ImmutableText prevText) {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
-      getLineSet().changedUpdate(event);
+      myLineSet = getLineSet().update(prevText, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewFragment(), event.isWholeTextReplaced());
       if (myTabTrackingRequestors > 0) {
         updateMightContainTabs(event.getNewFragment());
       }
@@ -885,7 +886,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public final int getLineCount() {
-    if (getTextLength() == 0) return 0;
     int lineCount = getLineSet().getLineCount();
     assert lineCount >= 0;
     return lineCount;

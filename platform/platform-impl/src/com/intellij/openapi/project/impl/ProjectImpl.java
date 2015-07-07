@@ -76,6 +76,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public boolean myOptimiseTestLoadSpeed;
   private String myName;
   private String myOldName;
+  private final boolean myLight;
 
   protected ProjectImpl(@NotNull ProjectManager projectManager,
                         @NotNull String filePath,
@@ -98,6 +99,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
       myOldName = "";  // new project
     }
+    
+    // light project may be changed later during test, so we need to remember its initial state 
+    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains("light_temp_");
   }
 
   @Override
@@ -105,9 +109,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return super.isDisposed() || temporarilyDisposed;
   }
 
+  @TestOnly
+  boolean isLight() {
+    return myLight;
+  }
+
   private volatile boolean temporarilyDisposed;
   @TestOnly
-  public void setTemporarilyDisposed(boolean disposed) {
+  void setTemporarilyDisposed(boolean disposed) {
     temporarilyDisposed = disposed;
   }
 
@@ -115,7 +124,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   boolean isTemporarilyDisposed() {
     return temporarilyDisposed;
   }
-
 
   @Override
   public void setProjectName(@NotNull String projectName) {

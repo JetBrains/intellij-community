@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -174,16 +175,10 @@ class JrtHandler extends ArchiveHandler {
   }
 
   private static Method method(String name, Class<?>... parameterTypes) {
-    try {
-      List<String> parts = StringUtil.split(name, "#");
-      Class<?> aClass = cls(parts.get(0));
-      Method method = aClass.getMethod(parts.get(1), parameterTypes);
-      method.setAccessible(true);
-      return method;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    List<String> parts = StringUtil.split(name, "#");
+    Class<?> aClass = cls(parts.get(0));
+    String methodName = parts.get(1);
+    return ReflectionUtil.getMethod(aClass, methodName, parameterTypes);
   }
 
   private static Object call(Method method, Object... args) {

@@ -34,23 +34,21 @@ import javax.swing.*;
 
 public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnitConfiguration> {
 
-  private final JUnitConfiguration myConfiguration;
 
   public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration, Executor executor) {
     super("JUnit", configuration, executor);
-    myConfiguration = configuration;
   }
 
   @NotNull
   @Override
   protected GlobalSearchScope initScope() {
-    final JUnitConfiguration.Data persistentData = myConfiguration.getPersistentData();
+    final JUnitConfiguration.Data persistentData = getConfiguration().getPersistentData();
     final String testObject = persistentData.TEST_OBJECT;
     //ignore invisible setting
     if (JUnitConfiguration.TEST_CATEGORY.equals(testObject) ||
         JUnitConfiguration.TEST_PATTERN.equals(testObject) ||
         JUnitConfiguration.TEST_PACKAGE.equals(testObject)) {
-      final SourceScope sourceScope = persistentData.getScope().getSourceScope(myConfiguration);
+      final SourceScope sourceScope = persistentData.getScope().getSourceScope(getConfiguration());
       return sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(getProject());
     }
     else {

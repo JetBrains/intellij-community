@@ -8,7 +8,12 @@ class Foo {
   void foo(int i) {}
 
   /**
-  * {<warning>@linke</warning>}
-  */
+   * {<warning>@linke</warning>}
+   */
   int field;
+
+  /**
+   * Don't ever think of going here: {<warning>@link/login</warning>}
+   */
+  void m() {}
 }

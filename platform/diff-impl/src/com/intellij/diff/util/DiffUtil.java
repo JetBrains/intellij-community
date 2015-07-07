@@ -284,6 +284,11 @@ public class DiffUtil {
     group.addAll(actions);
   }
 
+  @NotNull
+  public static String getSettingsConfigurablePath() {
+    return "Settings | Tools | Diff";
+  }
+
   // Titles
 
   @NotNull

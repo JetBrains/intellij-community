@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import java.lang.reflect.Field;
+import com.intellij.util.ReflectionUtil;
 
 public class FieldAccessor<FIELD_TYPE> {
   private volatile FIELD_TYPE myValueCache;
@@ -38,17 +38,7 @@ public class FieldAccessor<FIELD_TYPE> {
   }
 
   private static Object getFieldValue(Class c, String fieldName, Object o) {
-    try {
-      Field f = c.getDeclaredField(fieldName);
-      f.setAccessible(true);
-      return f.get(o);
-    }
-    catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
+    return ReflectionUtil.getField(c, o, null, fieldName);
   }
 
   public static <FIELD_TYPE> FIELD_TYPE get(Class hostClass, Object host, String fieldName) {

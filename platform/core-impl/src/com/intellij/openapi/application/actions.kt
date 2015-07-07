@@ -17,7 +17,10 @@ package com.intellij.openapi.application
 
 import javax.swing.SwingUtilities
 
-public inline fun writeAction(runnable: () -> Unit) {
+/**
+ * @exclude Internal use only
+ */
+public inline fun runWriteAction(runnable: () -> Unit) {
   val token = WriteAction.start()
   try {
     runnable()
@@ -27,6 +30,9 @@ public inline fun writeAction(runnable: () -> Unit) {
   }
 }
 
+/**
+ * @exclude Internal use only
+ */
 public fun invokeAndWaitIfNeed(runnable: () -> Unit) {
   val app = ApplicationManager.getApplication()
   if (app == null) {

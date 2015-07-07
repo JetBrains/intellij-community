@@ -125,7 +125,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   @Override
   boolean apply() {
-    return setError(apply(myConfigurable));
+    // do not apply changes of a single configurable if it is not modified
+    return setError(apply(myApplyAction.isEnabled() ? myConfigurable : null));
   }
 
   void openLink(Configurable configurable) {

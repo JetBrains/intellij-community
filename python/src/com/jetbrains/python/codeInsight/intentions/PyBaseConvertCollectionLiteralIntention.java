@@ -98,16 +98,17 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
       replacedElement = literal;
     }
 
+    final String innerText = stripLiteralBraces(replacedElement);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final PyExpression newLiteral = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file),
-                                                                              myLeftBrace + stripLiteralBraces(literal) + myRightBrace);
+                                                                              myLeftBrace + innerText + myRightBrace);
     replacedElement.replace(newLiteral);
   }
 
   @NotNull
-  private static String stripLiteralBraces(@NotNull PySequenceExpression literal) {
+  private static String stripLiteralBraces(@NotNull PsiElement literal) {
     if (literal instanceof PyTupleExpression) {
-      return literal.getText().trim();
+      return literal.getText();
     }
 
     final PsiElement firstChild = literal.getFirstChild();
@@ -130,7 +131,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
       contentEndOffset = replacedText.length();
     }
 
-    return literal.getText().substring(contentStartOffset, contentEndOffset).trim();
+    return literal.getText().substring(contentStartOffset, contentEndOffset);
   }
 
   @Nullable

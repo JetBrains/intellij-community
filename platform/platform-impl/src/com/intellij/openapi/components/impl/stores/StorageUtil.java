@@ -152,11 +152,8 @@ public class StorageUtil {
           throw new IllegalStateException("Content equals, but it must be handled not on this level: " + result.getName());
         }
       }
-      else {
-        if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
-          DEBUG_LOG = result.getPath() + ":\n" + content + "\nOld Content:\n" + LoadTextUtil.loadText(result) + "\n---------";
-        }
-        doWrite(requestor, result, content, lineSeparatorIfPrependXmlProlog);
+      else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        DEBUG_LOG = result.getPath() + ":\n" + content + "\nOld Content:\n" + LoadTextUtil.loadText(result) + "\n---------";
       }
     }
 

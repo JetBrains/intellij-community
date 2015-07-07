@@ -201,7 +201,8 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     }
 
     final String currentTime = getCurrentTime();
-    outCommand(String.format(TEMPLATE_TEST_FINISHED, currentTime, result.getDuration() / MILLION, stepFullName), true);
+    final Long duration = result.getDuration();
+    outCommand(String.format(TEMPLATE_TEST_FINISHED, currentTime, (duration == null ? 0 : duration.longValue()) / MILLION, stepFullName), true);
   }
 
   private void closeScenario() {

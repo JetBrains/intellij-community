@@ -56,6 +56,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
@@ -406,7 +407,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // suspend policy to match the suspend policy of the context:
       // if all threads were suspended, then during stepping all the threads must be suspended
       // if only event thread were suspended, then only this particular thread must be suspended during stepping
-      stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? EventRequest.SUSPEND_EVENT_THREAD : EventRequest.SUSPEND_ALL);
+      stepRequest.setSuspendPolicy(Registry.is("debugger.step.resumes.one.thread") ? EventRequest.SUSPEND_EVENT_THREAD
+                                                                                   : suspendContext.getSuspendPolicy());
 
       if (hint != null) {
         //noinspection HardCodedStringLiteral
@@ -1464,7 +1466,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class StepOutCommand extends ResumeCommand {
+  private class StepOutCommand extends StepCommand {
     private final int myStepSize;
 
     public StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
@@ -1489,7 +1491,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class StepIntoCommand extends ResumeCommand {
+  private class StepIntoCommand extends StepCommand {
     private final boolean myForcedIgnoreFilters;
     private final MethodFilter mySmartStepFilter;
     @Nullable
@@ -1536,7 +1538,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class StepOverCommand extends ResumeCommand {
+  private class StepOverCommand extends StepCommand {
     private final boolean myIsIgnoreBreakpoints;
     private final int myStepSize;
 
@@ -1574,7 +1576,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private class RunToCursorCommand extends ResumeCommand {
+  private class RunToCursorCommand extends StepCommand {
     private final RunToCursorBreakpoint myRunToCursorBreakpoint;
     private final boolean myIgnoreBreakpoints;
 
@@ -1622,9 +1624,27 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  public abstract class ResumeCommand extends SuspendContextCommandImpl {
+  private abstract class StepCommand extends ResumeCommand {
+    public StepCommand(SuspendContextImpl suspendContext) {
+      super(suspendContext);
+    }
 
-    private final ThreadReferenceProxyImpl myContextThread;
+    @Override
+    protected void resumeAction() {
+      SuspendContextImpl context = getSuspendContext();
+      if (context != null
+          && Registry.is("debugger.step.resumes.one.thread")
+          && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+        getSuspendManager().resumeThread(context, myContextThread);
+      }
+      else {
+        super.resumeAction();
+      }
+    }
+  }
+
+  public abstract class ResumeCommand extends SuspendContextCommandImpl {
+    protected final ThreadReferenceProxyImpl myContextThread;
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
@@ -1640,8 +1660,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.process.resumed"));
-      getSuspendManager().resume(getSuspendContext());
+      resumeAction();
       myDebugProcessDispatcher.getMulticaster().resumed(getSuspendContext());
+    }
+
+    protected void resumeAction() {
+      getSuspendManager().resume(getSuspendContext());
     }
 
     public ThreadReferenceProxyImpl getContextThread() {

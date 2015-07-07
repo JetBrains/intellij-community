@@ -4,6 +4,7 @@ Reports any calls to overridable methods of the current class during object cons
 A call is during object construction if it is made inside a constructor, in an non-static instance initializer,
 in a non-static field initializer or inside a <b>clone()</b>, <b>readObject()</b> or <b>readObjectNoData()</b> method.
 Methods are overridable if they are not declared <b>final</b>, <b>static</b> or <b>private</b>.
+Package local methods are considered safe, even though they are overridable.
 Such calls may result in subtle bugs, as the object is not guaranteed to be initialized
 before the method call occurs.
 <!-- tooltip end -->

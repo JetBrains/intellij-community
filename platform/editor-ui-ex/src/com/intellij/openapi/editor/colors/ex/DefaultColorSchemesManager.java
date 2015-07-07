@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -57,8 +58,14 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
     }
   }
 
+  @NotNull
   public DefaultColorsScheme[] getAllSchemes() {
     return mySchemes.toArray(new DefaultColorsScheme[mySchemes.size()]);
+  }
+
+  @NotNull
+  public DefaultColorsScheme getFirstScheme() {
+    return mySchemes.get(0);
   }
 
   @Nullable

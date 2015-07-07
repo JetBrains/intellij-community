@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -39,6 +41,10 @@ public abstract class AstTransformContributor {
   }
 
   public void collectFields(@NotNull final GrTypeDefinition clazz, Collection<GrField> collector) {
+
+  }
+
+  public void collectClasses(@NotNull final GrTypeDefinition clazz, Collection<PsiClass> collector) {
 
   }
 
@@ -70,5 +76,20 @@ public abstract class AstTransformContributor {
       }
     });
     return fields != null ? fields : Collections.<GrField>emptyList();
+  }
+
+  @NotNull
+  public static List<PsiClass> runContributorsForClasses(@NotNull final GrTypeDefinition clazz) {
+    List<PsiClass> fields = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<PsiClass>>() {
+      @Override
+      public List<PsiClass> compute() {
+        List<PsiClass> collector = ContainerUtil.newArrayList();
+        for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+          contributor.collectClasses(clazz, collector);
+        }
+        return collector;
+      }
+    });
+    return fields != null ? fields : Collections.<PsiClass>emptyList();
   }
 }

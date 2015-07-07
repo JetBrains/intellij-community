@@ -38,6 +38,11 @@ public class PyUnusedImportTest extends PyTestCase {
     doTest("test1.py");
   }
 
+  // PY-5621
+  public void testUnusedSubmodule() {
+    doTest("test1.py");
+  }
+
   // PY-6380
   public void testUnusedAfterStarImport() {
     doTest("test1.py");

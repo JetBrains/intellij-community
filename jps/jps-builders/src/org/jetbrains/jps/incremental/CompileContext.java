@@ -19,8 +19,11 @@ import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -58,9 +61,9 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
 
   void setDone(float done);
 
-  long getCompilationStartStamp();
+  long getCompilationStartStamp(BuildTarget<?> target);
 
-  void updateCompilationStartStamp();
+  void setCompilationStartStamp(Collection<BuildTarget<?>> target, long stamp);
 
   void markNonIncremental(ModuleBuildTarget target);
 

@@ -262,8 +262,8 @@
     <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
                          id="preferences.externalDependencies" displayName="Required Plugins"/>
 
-    <applicationConfigurable parentId="preferences.editor" instance="com.intellij.execution.console.ConsoleFoldingConfigurable" id="Console Folding"
-                             displayName="Console Folding"/>
+    <applicationConfigurable parentId="preferences.editor" instance="com.intellij.execution.console.ConsoleConfigurable" id="Console"
+                             displayName="Console"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider"/>

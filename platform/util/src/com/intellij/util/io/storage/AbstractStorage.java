@@ -31,6 +31,7 @@ import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -219,6 +220,13 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   public boolean isDirty() {
     synchronized (myLock) {
       return myDataTable.isDirty() || myRecordsTable.isDirty();
+    }
+  }
+
+  @TestOnly
+  public int getLiveRecordsCount() throws IOException {
+    synchronized (myLock) {
+      return myRecordsTable.getLiveRecordsCount();
     }
   }
 

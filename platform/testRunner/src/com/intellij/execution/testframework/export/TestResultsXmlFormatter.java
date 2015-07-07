@@ -66,7 +66,6 @@ public class TestResultsXmlFormatter {
 
   public static final String ROOT_ELEM = "root";
   
-  public static final Key<RunnerAndConfigurationSettingsImpl> SETTINGS = Key.create("RUN_CONFIGURATION_SETTINGS");
 
   private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
@@ -125,19 +124,14 @@ public class TestResultsXmlFormatter {
       endElement(ELEM_COUNT);
     }
 
-    RunnerAndConfigurationSettingsImpl settings =
-      (RunnerAndConfigurationSettingsImpl)RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).getSettings(myRuntimeConfiguration);
-    if (settings == null && myRuntimeConfiguration instanceof UserDataHolder) {
-      settings = ((UserDataHolder)myRuntimeConfiguration).getUserData(SETTINGS);
+    final Element config = new Element("config");
+    try {
+      myRuntimeConfiguration.writeExternal(config);
+      config.setAttribute("configId", myRuntimeConfiguration.getType().getId());
+      config.setAttribute("name", myRuntimeConfiguration.getName());
     }
-    if (settings != null) {
-      final Element config = new Element("config");
-      try {
-        settings.writeExternal(config);
-      }
-      catch (WriteExternalException ignore) {}
-      processJDomElement(config);
-    }
+    catch (WriteExternalException ignore) {}
+    processJDomElement(config);
 
     CompositeFilter f = new CompositeFilter(myRuntimeConfiguration.getProject());
     for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
@@ -212,9 +206,11 @@ public class TestResultsXmlFormatter {
     if (node.isConfig()) {
       attrs.put(ATTR_CONFIG, "true");
     }
+    boolean started = false;
     String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
-    startElement(elemName, attrs);
     if (node.isLeaf()) {
+      started = true;
+      startElement(elemName, attrs);
       final StringBuilder buffer = new StringBuilder();
       final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
       final Ref<SAXException> error = new Ref<SAXException>();
@@ -261,10 +257,16 @@ public class TestResultsXmlFormatter {
           //ignore configurations during export
           continue;
         }
+        if (!started) {
+          started = true;
+          startElement(elemName, attrs);
+        }
         processNode(child, filter);
       }
     }
-    endElement(elemName);
+    if (started) {
+      endElement(elemName);
+    }
   }
 
   private void writeOutput(ConsoleViewContentType type, StringBuilder text, Filter filter) throws SAXException {

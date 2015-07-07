@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.documentation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -31,12 +30,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
-  @NonNls public static final String CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup";
-  @NonNls public static final String CODEASSISTS_QUICKJAVADOC_FEATURE = "codeassists.quickjavadoc";
+  @SuppressWarnings("SpellCheckingInspection") public static final String CODEASSISTS_QUICKJAVADOC_FEATURE = "codeassists.quickjavadoc";
+  @SuppressWarnings("SpellCheckingInspection") public static final String CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup";
+  @SuppressWarnings("SpellCheckingInspection") public static final String CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE = "codeassists.quickjavadoc.ctrln";
 
   public ShowQuickDocInfoAction() {
     setEnabledInModalContext(true);
@@ -58,7 +57,6 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
       }
     };
   }
-
 
   @Override
   protected boolean isValidForLookup() {
@@ -137,8 +135,8 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
       }
       actionPerformedImpl(project, editor);
     }
-    else if (project != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
+    else if (project != null && element != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE);
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
         public void run() {
@@ -147,5 +145,4 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
       }, getCommandName(), null);
     }
   }
-
 }

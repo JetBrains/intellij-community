@@ -53,7 +53,9 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -717,9 +719,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc
-    String message = next ? "Press again to go to the next file" : "Press again to go to the previous file";
+    StringBuffer message = new StringBuffer(next ? "Press again to go to the next file" : "Press again to go to the previous file")
+      .append("<br>").append("<span style='color:#").append(ColorUtil.toHex(JBColor.gray)).append("'>").append("<small>")
+      .append("You can disable this feature in ").append(DiffUtil.getSettingsConfigurablePath())
+      .append("</small>").append("</span>");
 
-    final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
+    final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message.toString()));
     Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUI.scale(40) : JBUI.scale(40));
 
     if (editor == null) {

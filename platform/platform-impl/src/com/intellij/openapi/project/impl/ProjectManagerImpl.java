@@ -697,6 +697,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @Override
   public void unblockReloadingProjectOnExternalChanges() {
+    assert myReloadBlockCount.get() > 0;
     if (myReloadBlockCount.decrementAndGet() == 0 && myChangedFilesAlarm.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL, ApplicationManager.getApplication().getDisposed());
     }
@@ -862,7 +863,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @TestOnly
   public static boolean isLight(@NotNull Project project) {
-    return ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("light_temp_");
+    return project instanceof ProjectImpl && ((ProjectImpl)project).isLight();
   }
 
   @Override

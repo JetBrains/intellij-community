@@ -31,6 +31,7 @@
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="defaultImportContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor"/>
     <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor"/>
+    <extensionPoint name="builderStrategySupport" interface="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySupport"/>
     <extensionPoint name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
@@ -112,6 +113,8 @@
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.GrInheritConstructorContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor"/>
+    <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor"/>
+    <builderStrategySupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
