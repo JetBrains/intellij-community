@@ -46,17 +46,21 @@ public class TestCaseLoader {
   public static final String TARGET_TEST_GROUP = "idea.test.group";
   public static final String TARGET_TEST_PATTERNS = "idea.test.patterns";
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
+  public static final String INCLUDING_PERFORMANCE_TESTS_FLAG = "idea.including.performance.tests";
   public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
   private final List<Class> myClassList = new ArrayList<Class>();
   private Class myFirstTestClass;
   private Class myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
-  private final boolean myIsPerformanceTestsRun;
+  private final boolean myForceLoadPerformanceTests;
 
-  public TestCaseLoader(String classFilterName, boolean isPerformanceTestsRun) {
-    myIsPerformanceTestsRun = isPerformanceTestsRun;
-
+  public TestCaseLoader(String classFilterName) {
+    this(classFilterName, false);
+  }
+  
+  public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
+    myForceLoadPerformanceTests = forceLoadPerformanceTests;
     String patterns = System.getProperty(TARGET_TEST_PATTERNS);
     if (patterns != null) {
       myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
@@ -142,7 +146,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
-    if (TestAll.isPerformanceTest(testCaseClass) && !myIsPerformanceTestsRun) return true;
+    if (!myForceLoadPerformanceTests && TestAll.shouldExcludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
