@@ -527,20 +527,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     return b;
   }
 
-  @Nullable
-  public static Component findNearestModalComponent(@NotNull Component c) {
-    Component eachParent = c;
-    while (eachParent != null) {
-      if (eachParent instanceof IdeFrame) return eachParent;
-      if (eachParent instanceof JDialog) {
-        if (((JDialog)eachParent).isModal()) return eachParent;
-      }
-      eachParent = eachParent.getParent();
-    }
-
-    return null;
-  }
-
   public final BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
