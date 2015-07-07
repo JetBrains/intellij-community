@@ -1,0 +1,24 @@
+
+<!DOCTYPE products SYSTEM "updates.dtd">
+
+<products>
+  <product name="RoboVM Studio">    
+    <code>RS</code>
+
+    <channel id="RS" name="RoboVM Studio" status="release"
+             url="https://robovm.com"
+             feedback="http://robovm.com"
+             majorVersion="1">
+      <build number="RS-1.5.0" version="1.5.0" releaseDate="20150708">
+        <message>RoboVM Studio 1.5 is available.</message>
+        <button name="Download" url="https://download.robovm.org/archives/robovm-studio/robovm-studio-1.5.0.dmg" download="true"/>
+        <button name="What's New" url="http://robovm.com/robovm-1-5-released-robovm-studio/"/>
+      </build>
+      <build number="RS-1.4.0" version="1.4.0" releaseDate="20150708">
+        <message>RoboVM Studio 1.4 is available.</message>
+        <button name="Download" url="https://download.robovm.org/archives/robovm-studio/robovm-studio-1.4.0.dmg" download="true"/>
+        <button name="What's New" url="http://robovm.com/robovm-1-4-released-robovm-studio/"/>
+      </build>
+    </channel>
+  </product>
+</products>
