@@ -154,10 +154,17 @@ public class GrTypeDefinitionMembersCache {
     return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<PsiMethod[]>() {
       @Override
       public Result<PsiMethod[]> compute() {
-        List<PsiMethod> result = ContainerUtil.newArrayList();
+        final Collection<PsiMethod> result = ContainerUtil.newHashSet();
+
         GrClassImplUtil.collectMethodsFromBody(myDefinition, result);
 
+        final Map<MethodSignature, PsiMethod> methodMap = new HashMap<MethodSignature, PsiMethod>();
+        for (PsiMethod method : result) {
+          methodMap.put(method.getSignature(PsiSubstitutor.EMPTY), method);
+        }
+
         for (PsiMethod method : AstTransformContributor.runContributorsForMethods(myDefinition)) {
+          result.remove(methodMap.get(method.getSignature(PsiSubstitutor.EMPTY)));
           GrClassImplUtil.addExpandingReflectedMethods(result, method);
         }
 

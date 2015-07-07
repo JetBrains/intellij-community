@@ -33,11 +33,20 @@ public abstract class GrBuilderStrategySupport {
   public static final ExtensionPointName<GrBuilderStrategySupport> EP = ExtensionPointName.create("org.intellij.groovy.builderStrategySupport");
   public static final String BUILDER_FQN = "groovy.transform.builder.Builder";
   public static final String ORIGIN_INFO = "by @Builder";
+  public static final String STRATEGY_ATTRIBUTE = "builderStrategy";
 
   public static class Members {
+    public static final Members EMPTY = new Members() {
+      @Override
+      public void addFrom(Members other) {
+        // do nothing
+      }
+    };
+
     public final Collection<PsiMethod> methods = ContainerUtil.newArrayList();
     public final Collection<GrField> fields = ContainerUtil.newArrayList();
     public final Collection<PsiClass> classes = ContainerUtil.newArrayList();
+
     public void addFrom(Members other) {
       methods.addAll(other.methods);
       fields.addAll(other.fields);
@@ -53,7 +62,7 @@ public abstract class GrBuilderStrategySupport {
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(annotatedMember, BUILDER_FQN);
     if (annotation == null) return null;
 
-    final PsiAnnotationMemberValue strategy = annotation.findDeclaredAttributeValue("builderStrategy");
+    final PsiAnnotationMemberValue strategy = annotation.findDeclaredAttributeValue(STRATEGY_ATTRIBUTE);
     if (strategy instanceof GrReferenceExpression) {
       final PsiElement element = ((GrReferenceExpression)strategy).resolve();
       return element instanceof PsiClass ? ((PsiClass)element).getQualifiedName() : null;
