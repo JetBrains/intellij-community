@@ -579,8 +579,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void addNode(MyNode nodeToAdd, MyNode parent) {
-    parent.add(nodeToAdd);
-    sortDescendants(parent);
+    int i = TreeUtil.indexedBinarySearch(parent, nodeToAdd, getNodeComparator());
+    int insertionPoint = i >= 0 ? i : -i - 1;
+    ((DefaultTreeModel)myTree.getModel()).insertNodeInto(nodeToAdd, parent, insertionPoint);
   }
 
   protected void sortDescendants(MyNode root) {
