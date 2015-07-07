@@ -314,7 +314,7 @@ public class LineStatusTrackerDrawing {
       int currentEnd = currentStartShift + fragment.getEndOffset2();
       TextDiffType type = DiffUtil.getDiffType(fragment);
 
-      highlighters.add(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
+      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
     }
 
     Disposer.register(parentDisposable, new Disposable() {

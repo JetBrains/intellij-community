@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,15 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
+import java.util.Collections;
+import java.util.List;
 
 public class DiffDrawUtil {
+  private static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
+  private static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
+  private static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
+  private static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+
   private DiffDrawUtil() {
   }
 
@@ -166,17 +174,11 @@ public class DiffDrawUtil {
   @NotNull
   private static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
                                                   @Nullable final Editor editor,
-                                                  final boolean ignored,
-                                                  final boolean showStripes) {
+                                                  final boolean ignored) {
     return new TextAttributes() {
       @Override
       public Color getBackgroundColor() {
         return ignored ? type.getIgnoredColor(editor) : type.getColor(editor);
-      }
-
-      @Override
-      public Color getErrorStripeColor() {
-        return showStripes ? type.getMarkerColor(editor) : null;
       }
     };
   }
@@ -212,55 +214,57 @@ public class DiffDrawUtil {
   // TODO: desync of range and line markers
 
   @NotNull
-  public static RangeHighlighter createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
     return createHighlighter(editor, start, end, type, false);
   }
 
   @NotNull
-  public static RangeHighlighter createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
-                                                   boolean ignored) {
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
+                                                         boolean ignored) {
     return createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE);
   }
 
 
   @NotNull
-  public static RangeHighlighter createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
-                                                   boolean ignored, @NotNull HighlighterTargetArea area) {
-    TextAttributes attributes = getTextAttributes(type, editor, ignored, true);
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
+                                                         boolean ignored, @NotNull HighlighterTargetArea area) {
+    TextAttributes attributes = start != end ? getTextAttributes(type, editor, ignored) : null;
+    TextAttributes stripeAttributes = start != end ? getStripeTextAttributes(type, editor) : null;
 
-    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.SELECTION - 3,
-                                                                               start != end ? attributes : null, area);
-
-    // TODO: diff looks cool with wide markers. Maybe we can keep them ?
-    highlighter.setThinErrorStripeMark(true);
+    RangeHighlighter highlighter = editor.getMarkupModel()
+      .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, area);
 
     installGutterRenderer(highlighter, type, ignored);
 
-    return highlighter;
+    if (stripeAttributes == null) return Collections.singletonList(highlighter);
+
+    RangeHighlighter stripeHighlighter = editor.getMarkupModel()
+      .addRangeHighlighter(start, end, STRIPE_LAYER, stripeAttributes, area);
+
+    return ContainerUtil.list(highlighter, stripeHighlighter);
   }
 
   @NotNull
-  public static RangeHighlighter createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
-    TextAttributes attributes = getTextAttributes(type, editor, false, false);
+  public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
+    TextAttributes attributes = getTextAttributes(type, editor, false);
 
     RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(start, end, HighlighterLayer.SELECTION - 2, attributes, HighlighterTargetArea.EXACT_RANGE);
+      .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);
 
     if (start == end) installEmptyRangeRenderer(highlighter, type);
 
-    return highlighter;
+    return Collections.singletonList(highlighter);
   }
 
   @NotNull
-  public static RangeHighlighter createLineMarker(@NotNull Editor editor, int line, @NotNull final TextDiffType type,
-                                                  @NotNull final SeparatorPlacement placement) {
+  public static List<RangeHighlighter> createLineMarker(@NotNull Editor editor, int line, @NotNull final TextDiffType type,
+                                                        @NotNull final SeparatorPlacement placement) {
     return createLineMarker(editor, line, type, placement, false);
   }
 
   @NotNull
-  public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
-                                                  @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
-    TextAttributes attributes = getStripeTextAttributes(type, editor);
+  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
+                                                        @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
     LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
       @Override
       public void drawLine(Graphics g, int x1, int x2, int y) {
@@ -275,12 +279,12 @@ public class DiffDrawUtil {
         }
       }
     };
-    return createLineMarker(editor, line, placement, attributes, renderer);
+    return createLineMarker(editor, line, placement, type, renderer);
   }
 
   @NotNull
-  public static RangeHighlighter createBorderLineMarker(@NotNull final Editor editor, int line,
-                                                        @NotNull final SeparatorPlacement placement) {
+  public static List<RangeHighlighter> createBorderLineMarker(@NotNull final Editor editor, int line,
+                                                              @NotNull final SeparatorPlacement placement) {
     LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
       @Override
       public void drawLine(Graphics g, int x1, int x2, int y) {
@@ -295,35 +299,40 @@ public class DiffDrawUtil {
   }
 
   @NotNull
-  public static RangeHighlighter createLineMarker(@NotNull final Editor editor, int line, @NotNull final SeparatorPlacement placement,
-                                                  @Nullable TextAttributes attributes, @NotNull LineSeparatorRenderer renderer) {
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
-    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset, offset, HighlighterLayer.SELECTION - 1, attributes,
-                                                                          HighlighterTargetArea.LINES_IN_RANGE);
-    marker.setThinErrorStripeMark(true);
-
+  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final SeparatorPlacement placement,
+                                                        @Nullable TextDiffType type, @NotNull LineSeparatorRenderer renderer) {
     // We won't use addLineHighlighter as it will fail to add marker into empty document.
-    //RangeHighlighter marker = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
+    //RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
 
-    marker.setLineSeparatorPlacement(placement);
-    marker.setLineSeparatorRenderer(renderer);
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
+    RangeHighlighter highlighter = editor.getMarkupModel()
+      .addRangeHighlighter(offset, offset, LINE_MARKER_LAYER, null, HighlighterTargetArea.LINES_IN_RANGE);
 
-    return marker;
+    highlighter.setLineSeparatorPlacement(placement);
+    highlighter.setLineSeparatorRenderer(renderer);
+
+    if (type == null) return Collections.singletonList(highlighter);
+
+    TextAttributes stripeAttributes = getStripeTextAttributes(type, editor);
+    RangeHighlighter stripeHighlighter = editor.getMarkupModel()
+      .addRangeHighlighter(offset, offset, STRIPE_LAYER, stripeAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+
+    return ContainerUtil.list(highlighter, stripeHighlighter);
   }
 
   @NotNull
-  public static RangeHighlighter createLineSeparatorHighlighter(@NotNull Editor editor,
-                                                                int offset1,
-                                                                int offset2,
-                                                                @NotNull BooleanGetter condition) {
-    RangeHighlighter marker = editor.getMarkupModel().addRangeHighlighter(offset1, offset2, HighlighterLayer.SELECTION - 1, null,
-                                                                          HighlighterTargetArea.LINES_IN_RANGE);
+  public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor,
+                                                                      int offset1,
+                                                                      int offset2,
+                                                                      @NotNull BooleanGetter condition) {
+    RangeHighlighter marker = editor.getMarkupModel()
+      .addRangeHighlighter(offset1, offset2, LINE_MARKER_LAYER, null, HighlighterTargetArea.LINES_IN_RANGE);
 
     DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, condition);
     marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
     marker.setLineSeparatorRenderer(renderer);
     marker.setLineMarkerRenderer(renderer);
 
-    return marker;
+    return Collections.singletonList(marker);
   }
 }

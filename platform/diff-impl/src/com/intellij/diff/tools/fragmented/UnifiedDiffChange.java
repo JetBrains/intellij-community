@@ -137,15 +137,15 @@ public class UnifiedDiffChange {
   }
 
   private void createHighlighter(@NotNull TextDiffType type, int start, int end, boolean ignored) {
-    myHighlighters.add(DiffDrawUtil.createHighlighter(myEditor, start, end, type, ignored));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(myEditor, start, end, type, ignored));
   }
 
   private void createInlineHighlighter(@NotNull TextDiffType type, int start, int end) {
-    myHighlighters.add(DiffDrawUtil.createInlineHighlighter(myEditor, start, end, type));
+    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(myEditor, start, end, type));
   }
 
   private void createLineMarker(@NotNull TextDiffType type, int line, @NotNull SeparatorPlacement placement) {
-    myHighlighters.add(DiffDrawUtil.createLineMarker(myEditor, line, type, placement));
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(myEditor, line, type, placement));
   }
 
   public int getLine1() {
