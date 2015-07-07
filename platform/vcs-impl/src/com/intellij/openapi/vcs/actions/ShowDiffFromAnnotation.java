@@ -19,12 +19,12 @@ import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,7 +53,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-class ShowDiffFromAnnotation extends AnAction implements UpToDateLineNumberListener {
+class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
   private final FileAnnotation myFileAnnotation;
   private final AbstractVcs myVcs;
   private final VirtualFile myFile;
