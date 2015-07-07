@@ -49,7 +49,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
 
   private final PsiReference myReference;
 
-  private final List<ImportCandidateHolder> myImports; // from where and what to import
+  protected final List<ImportCandidateHolder> myImports; // from where and what to import
   private final String myInitialName;
 
   boolean myUseQualifiedImport;
@@ -199,18 +199,31 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
 
   @NotNull
   public AutoImportQuickFix forLocalImport() {
-    return new AutoImportQuickFix(getStartElement(), myReference, myInitialName, myUseQualifiedImport) {
+    return new AutoImportQuickFix(AutoImportQuickFix.this.getStartElement(),
+                                  AutoImportQuickFix.this.myReference,
+                                  AutoImportQuickFix.this.myInitialName,
+                                  AutoImportQuickFix.this.myUseQualifiedImport) {
+
+      {
+        myImports.addAll(AutoImportQuickFix.this.myImports);
+      }
 
       @NotNull
       @Override
       public String getFamilyName() {
-        return "import locally";
+        return "Import locally";
+      }
+
+      @NotNull
+      @Override
+      public String getText() {
+        return super.getText() + " locally";
       }
 
       @NotNull
       @Override
       protected ImportFromExistingAction createAction() {
-        return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, myUseQualifiedImport, true);
+        return new ImportFromExistingAction(getStartElement(), AutoImportQuickFix.this.myImports, AutoImportQuickFix.this.myInitialName, myUseQualifiedImport, true);
       }
     };
   }
