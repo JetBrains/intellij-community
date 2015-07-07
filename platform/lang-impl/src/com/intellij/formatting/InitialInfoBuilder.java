@@ -203,7 +203,7 @@ class InitialInfoBuilder {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
       }
-      if (!isInsideFormattingRanges && !myCollectAlignmentsInsideFormattingRange) {
+      if (!myCollectAlignmentsInsideFormattingRange && !isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock)) {
         return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
       }
 
@@ -407,6 +407,11 @@ class InitialInfoBuilder {
     }
     
     return false;
+  }
+
+  private boolean isInsideFormattingRanges(final Block block, boolean rootIsRightBlock) {
+    if (myAffectedRanges == null) return true;
+    return !myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock);
   }
 
   public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {
