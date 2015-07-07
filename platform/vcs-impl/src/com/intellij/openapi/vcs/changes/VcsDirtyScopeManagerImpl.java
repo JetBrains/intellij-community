@@ -22,22 +22,22 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author max
@@ -48,11 +48,10 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
-
-  private final DirtBuilder myDirtBuilder;
   private final VcsGuess myGuess;
 
-  private final MyProgressHolder myProgressHolder;
+  private final DirtBuilder myDirtBuilder;
+  @Nullable private DirtBuilder myDirtInProgress;
 
   private boolean myDisposed;
   private final Object LOCK = new Object();
@@ -65,7 +64,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myGuess = new VcsGuess(myProject);
     myDirtBuilder = new DirtBuilder(myGuess);
 
-    myProgressHolder = new MyProgressHolder();
     ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
   }
 
@@ -125,6 +123,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     synchronized (LOCK) {
       myDisposed = true;
       myDirtBuilder.reset();
+      myDirtInProgress = null;
     }
   }
 
@@ -155,16 +154,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       boolean hasSomethingDirty;
       synchronized (LOCK) {
         if (myDisposed) return;
-        for (AbstractVcs vcs : filesConverted.keySet()) {
-          for (FilePath path : filesConverted.get(vcs)) {
-            myDirtBuilder.addDirtyFile(vcs, path);
-          }
-        }
-        for (AbstractVcs vcs : dirsConverted.keySet()) {
-          for (FilePath path : dirsConverted.get(vcs)) {
-            myDirtBuilder.addDirtyDirRecursively(vcs, path);
-          }
-        }
+        markDirty(myDirtBuilder, filesConverted, false);
+        markDirty(myDirtBuilder, dirsConverted, true);
         hasSomethingDirty = !myDirtBuilder.isEmpty();
       }
 
@@ -173,6 +164,21 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     }
     catch (ProcessCanceledException ignore) {
+    }
+  }
+
+  private static void markDirty(@NotNull DirtBuilder dirtBuilder,
+                                @NotNull MultiMap<AbstractVcs, FilePath> filesOrDirs,
+                                boolean recursively) {
+    for (AbstractVcs vcs : filesOrDirs.keySet()) {
+      for (FilePath path : filesOrDirs.get(vcs)) {
+        if (recursively) {
+          dirtBuilder.addDirtyDirRecursively(vcs, path);
+        }
+        else {
+          dirtBuilder.addDirtyFile(vcs, path);
+        }
+      }
     }
   }
 
@@ -216,95 +222,78 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     filePathsDirty(null, Collections.singleton(path));
   }
 
-  private class MyProgressHolder {
-    private VcsInvalidated myInProgressState;
-    private DirtBuilderReader myInProgressDirtBuilder;
-
-    public MyProgressHolder() {
-      myInProgressDirtBuilder = new DirtBuilder(myGuess);
-      myInProgressState = null;
-    }
-
-    public void takeNext(final DirtBuilderReader dirtBuilder) {
-      myInProgressDirtBuilder = dirtBuilder;
-      myInProgressState = null;
-    }
-
-    private MyProgressHolder(final DirtBuilderReader dirtBuilder, final VcsInvalidated vcsInvalidated) {
-      myInProgressDirtBuilder = dirtBuilder;
-      myInProgressState = vcsInvalidated;
-    }
-
-    public VcsInvalidated calculateInvalidated() {
-      if (myInProgressDirtBuilder != null) {
-        final Scopes scopes = new Scopes(myProject, myGuess);
-        scopes.takeDirt(myInProgressDirtBuilder);
-        return scopes.retrieveAndClear();
-      }
-      return myInProgressState;
-    }
-
-    public void takeInvalidated(final VcsInvalidated invalidated) {
-      myInProgressState = invalidated;
-      myInProgressDirtBuilder = null;
-    }
-
-    public void processed() {
-      myInProgressState = null;
-      myInProgressDirtBuilder = null;
-    }
-
-    public MyProgressHolder copy() {
-      return new MyProgressHolder(myInProgressDirtBuilder, myInProgressState);
-    }
-  }
-
   @Override
   @Nullable
   public VcsInvalidated retrieveScopes() {
+    DirtBuilder dirtBuilder;
     synchronized (LOCK) {
       if (myDisposed) return null;
-      myProgressHolder.takeNext(new DirtBuilder(myDirtBuilder));
+      dirtBuilder = new DirtBuilder(myDirtBuilder);
+      myDirtInProgress = dirtBuilder;
       myDirtBuilder.reset();
     }
+    return calculateInvalidated(dirtBuilder);
+  }
 
-    VcsInvalidated invalidated = myProgressHolder.calculateInvalidated();
-    synchronized (LOCK) {
-      if (!myDisposed) {
-        myProgressHolder.takeInvalidated(invalidated);
+  @NotNull
+  private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
+    MultiMap<AbstractVcs, FilePath> files = dirt.getFilesForVcs();
+    MultiMap<AbstractVcs, FilePath> dirs = dirt.getDirsForVcs();
+    if (dirt.isEverythingDirty()) {
+      dirs.putAllValues(getEverythingDirtyRoots());
+    }
+    Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
+
+    Map<AbstractVcs, VcsDirtyScopeImpl> scopes = ContainerUtil.newHashMap();
+    for (AbstractVcs key : keys) {
+      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject);
+      scopes.put(key, scope);
+      scope.addDirtyData(dirs.get(key), files.get(key));
+    }
+
+    return new VcsInvalidated(new ArrayList<VcsDirtyScope>(scopes.values()), dirt.isEverythingDirty());
+  }
+
+  @NotNull
+  private MultiMap<AbstractVcs, FilePath> getEverythingDirtyRoots() {
+    MultiMap<AbstractVcs, FilePath> dirtyRoots = MultiMap.createSet();
+    dirtyRoots.putAllValues(groupByVcs(toFilePaths(DefaultVcsRootPolicy.getInstance(myProject).getDirtyRoots())));
+
+    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
+    for (VcsDirectoryMapping mapping : mappings) {
+      if (!mapping.isDefaultMapping() && mapping.getVcs() != null) {
+        AbstractVcs vcs = myVcsManager.findVcsByName(mapping.getVcs());
+        if (vcs != null) {
+          dirtyRoots.putValue(vcs, VcsUtil.getFilePath(mapping.getDirectory(), true));
+        }
       }
     }
-    return invalidated;
+    return dirtyRoots;
   }
 
   @Override
   public void changesProcessed() {
     synchronized (LOCK) {
-      if (!myDisposed) {
-        myProgressHolder.processed();
-      }
+      myDirtInProgress = null;
     }
   }
 
   @NotNull
   @Override
   public Collection<FilePath> whatFilesDirty(@NotNull final Collection<FilePath> files) {
-    final Collection<FilePath> result = new ArrayList<FilePath>();
-    final Ref<MyProgressHolder> inProgressHolderRef = new Ref<MyProgressHolder>();
-    final Ref<MyProgressHolder> currentHolderRef = new Ref<MyProgressHolder>();
-
+    DirtBuilder dirtBuilder;
+    DirtBuilder dirtBuilderInProgress;
     synchronized (LOCK) {
-      if (!myDisposed) {
-        inProgressHolderRef.set(myProgressHolder.copy());
-        currentHolderRef.set(new MyProgressHolder(new DirtBuilder(myDirtBuilder), null));
-      }
+      if (myDisposed) return Collections.emptyList();
+      dirtBuilder = new DirtBuilder(myDirtBuilder);
+      dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder(myGuess);
     }
 
-    final VcsInvalidated inProgressInvalidated = inProgressHolderRef.get() == null ? null : inProgressHolderRef.get().calculateInvalidated();
-    final VcsInvalidated currentInvalidated = currentHolderRef.get() == null ? null : currentHolderRef.get().calculateInvalidated();
+    VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);
+    VcsInvalidated inProgress = calculateInvalidated(dirtBuilderInProgress);
+    Collection<FilePath> result = ContainerUtil.newArrayList();
     for (FilePath fp : files) {
-      if (inProgressInvalidated != null && inProgressInvalidated.isFileDirty(fp)
-          || currentInvalidated != null && currentInvalidated.isFileDirty(fp)) {
+      if (invalidated.isFileDirty(fp) || inProgress.isFileDirty(fp)) {
         result.add(fp);
       }
     }
