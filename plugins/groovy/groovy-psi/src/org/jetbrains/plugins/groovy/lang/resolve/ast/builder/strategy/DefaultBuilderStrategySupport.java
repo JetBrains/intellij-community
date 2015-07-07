@@ -88,10 +88,9 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
         builderClass.addMethod(createFieldSetter(builderClass, field, annotation));
       }
 
-      final LightMethodBuilder buildMethod = new LightMethodBuilder(getManager(), getBuildMethodName(annotation));
-      buildMethod.setContainingClass(builderClass);
-      buildMethod.setOriginInfo(ORIGIN_INFO);
-      buildMethod.setMethodReturnType(builtType == null ? myElementFactory.createType(myContainingClass) : builtType);
+      final LightMethodBuilder buildMethod = createBuildMethod(
+        annotation, builtType == null ? myElementFactory.createType(myContainingClass) : builtType, builderClass
+      );
       return builderClass.addMethod(buildMethod);
     }
 
@@ -137,17 +136,6 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
       myMembers.classes.add(builderClass);
     }
 
-    @NotNull
-    private LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass, @NotNull GrVariable field, @NotNull PsiAnnotation annotation) {
-      final String name = field.getName();
-      final LightMethodBuilder fieldSetter = new LightMethodBuilder(getManager(), getFieldMethodName(annotation, name));
-      fieldSetter.addModifier(PsiModifier.PUBLIC);
-      fieldSetter.addParameter(name, field.getType(), false);
-      fieldSetter.setContainingClass(builderClass);
-      fieldSetter.setMethodReturnType(myElementFactory.createType(builderClass));
-      fieldSetter.setNavigationElement(field);
-      return fieldSetter;
-    }
 
     @NotNull
     private static String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
@@ -160,17 +148,38 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
       final String builderClassName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderClassName");
       return builderClassName == null ? String.format("%s%s", clazz.getName(), "Builder") : builderClassName;
     }
+  }
 
-    @NotNull
-    private static String getFieldMethodName(@NotNull PsiAnnotation annotation, @NotNull String fieldName) {
-      final String prefix = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "prefix");
-      return prefix == null ? fieldName : String.format("%s%s", prefix, StringUtil.capitalize(fieldName));
-    }
+  @NotNull
+  public static LightMethodBuilder createBuildMethod(@NotNull PsiAnnotation annotation, @NotNull PsiType builtType, PsiClass builderClass) {
+    final LightMethodBuilder buildMethod = new LightMethodBuilder(annotation.getManager(), getBuildMethodName(annotation));
+    buildMethod.setContainingClass(builderClass);
+    buildMethod.setOriginInfo(ORIGIN_INFO);
+    buildMethod.setMethodReturnType(builtType);
+    return buildMethod;
+  }
 
-    @NotNull
-    private static String getBuildMethodName(@NotNull PsiAnnotation annotation) {
-      final String buildMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "buildMethodName");
-      return buildMethodName == null ? "build" : buildMethodName;
-    }
+  @NotNull
+  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass, @NotNull GrVariable field, @NotNull PsiAnnotation annotation) {
+    final String name = field.getName();
+    final LightMethodBuilder fieldSetter = new LightMethodBuilder(builderClass.getManager(), getFieldMethodName(annotation, name));
+    fieldSetter.addModifier(PsiModifier.PUBLIC);
+    fieldSetter.addParameter(name, field.getType());
+    fieldSetter.setContainingClass(builderClass);
+    fieldSetter.setMethodReturnType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass));
+    fieldSetter.setNavigationElement(field);
+    return fieldSetter;
+  }
+
+  @NotNull
+  private static String getFieldMethodName(@NotNull PsiAnnotation annotation, @NotNull String fieldName) {
+    final String prefix = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "prefix");
+    return StringUtil.isEmptyOrSpaces(prefix) ? fieldName : String.format("%s%s", prefix, StringUtil.capitalize(fieldName));
+  }
+
+  @NotNull
+  private static String getBuildMethodName(@NotNull PsiAnnotation annotation) {
+    final String buildMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "buildMethodName");
+    return buildMethodName == null ? "build" : buildMethodName;
   }
 }

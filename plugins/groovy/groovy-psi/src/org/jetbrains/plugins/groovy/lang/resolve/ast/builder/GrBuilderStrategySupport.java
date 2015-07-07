@@ -18,13 +18,13 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
 
 import java.util.Collection;
 
@@ -62,12 +62,29 @@ public abstract class GrBuilderStrategySupport {
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(annotatedMember, BUILDER_FQN);
     if (annotation == null) return null;
 
-    final PsiAnnotationMemberValue strategy = annotation.findDeclaredAttributeValue(STRATEGY_ATTRIBUTE);
-    if (strategy instanceof GrReferenceExpression) {
-      final PsiElement element = ((GrReferenceExpression)strategy).resolve();
-      return element instanceof PsiClass ? ((PsiClass)element).getQualifiedName() : null;
-    }
+    final PsiClass strategy = getDeclaredClassAttribute(annotation, STRATEGY_ATTRIBUTE);
+    return strategy == null ? null : strategy.getQualifiedName();
+  }
 
-    return DefaultBuilderStrategySupport.DEFAULT_STRATEGY_FQN;
+  @Nullable
+  @Contract("null,_ -> null")
+  public static PsiClass getDeclaredClassAttribute(@Nullable PsiAnnotation annotation, @NotNull String attributeName) {
+    if (annotation == null) return null;
+    final PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof GrReferenceExpression) {
+      final PsiElement element = ((GrReferenceExpression)value).resolve();
+      return element instanceof PsiClass ? (PsiClass)element : null;
+    }
+    else if (value instanceof PsiClassObjectAccessExpression) {
+      PsiType type = ((PsiClassObjectAccessExpression)value).getOperand().getType();
+      if (type instanceof PsiClassType) {
+        return ((PsiClassType)type).resolve();
+      }
+    }
+    return null;
+  }
+
+  public static PsiType createType(PsiClass clazz) {
+    return JavaPsiFacade.getElementFactory(clazz.getProject()).createType(clazz);
   }
 }

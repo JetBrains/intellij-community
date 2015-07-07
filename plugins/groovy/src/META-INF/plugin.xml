@@ -117,6 +117,7 @@
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor"/>
     <builderStrategySupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport"/>
     <builderStrategySupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuilderStrategySupport"/>
+    <builderStrategySupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport"/>
 
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
