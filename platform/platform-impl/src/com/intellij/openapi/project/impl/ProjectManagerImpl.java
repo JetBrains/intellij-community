@@ -697,7 +697,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
   @Override
   public void unblockReloadingProjectOnExternalChanges() {
-    assert myReloadBlockCount.get() >= 0;
+    assert myReloadBlockCount.get() > 0;
     if (myReloadBlockCount.decrementAndGet() == 0 && myChangedFilesAlarm.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL, ApplicationManager.getApplication().getDisposed());
     }
