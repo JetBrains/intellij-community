@@ -17,6 +17,8 @@
 package com.jetbrains.reactiveidea
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandAdapter
+import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
@@ -30,8 +32,6 @@ import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.Signal
-import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 
@@ -42,26 +42,40 @@ public class DocumentHost(lifetime: Lifetime, reactModel: ReactiveModel, path: P
 
   public val documentUpdated: com.jetbrains.reactivemodel.Signal<Any?>
 
+  private val pendingEvents = arrayListOf<DocumentEvent>()
+
   init {
     initModel()
     val listener = object : DocumentAdapter() {
       override fun documentChanged(e: DocumentEvent) {
-        if (!recursionGuard.locked) {
-          recursionGuard.lock {
-            val transaction: (MapModel) -> MapModel = { m ->
-              if (e.isWholeTextReplaced()) {
-                (path / "text").putIn(m, PrimitiveModel(doc.getText()))
-              } else {
-                val result = (path / "events" / Last).putIn(m, documentEvent(e))
-                val events = (path / "events").getIn(result) as ListModel
-                doc.putUserData(TIMESTAMP, events.size())
-                result
-              }
+        pendingEvents.add(e)
+      }
+    }
+
+    val commandListener = object : CommandAdapter() {
+      override fun commandFinished(event: CommandEvent?) {
+        if (event?.getCommandName() != "doc sync") {
+          val transaction: (MapModel) -> MapModel = { m ->
+            var result = m
+            for (e in pendingEvents) {
+              result = (path / "events" / Last).putIn(result, documentEvent(e))
             }
-            reactiveModel.transaction(transaction)
+            var i = doc.getUserData(TIMESTAMP)
+            if (i == null) i = 0
+            doc.putUserData(TIMESTAMP, i + pendingEvents.size())
+
+            result
           }
+          reactiveModel.transaction(transaction)
+        } else {
+          pendingEvents.clear()
         }
       }
+    }
+
+    CommandProcessor.getInstance().addCommandListener(commandListener)
+    lifetime += {
+      CommandProcessor.getInstance().removeCommandListener(commandListener)
     }
 
     val textSignal = com.jetbrains.reactivemodel.reaction(true, "document text", reactModel.subscribe(lifetime, path / "text")) { model ->
