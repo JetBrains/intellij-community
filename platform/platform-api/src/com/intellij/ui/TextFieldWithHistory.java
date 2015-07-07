@@ -86,6 +86,11 @@ public class TextFieldWithHistory extends ComboBox {
     hidePopup();
   }
 
+  public void setTextAndAddToHistory(String text) {
+    getTextEditor().setText(text);
+    myModel.addElement(text);
+  }
+
   public void addCurrentTextToHistory() {
     final String item = getText();
     myModel.addElement(item);
