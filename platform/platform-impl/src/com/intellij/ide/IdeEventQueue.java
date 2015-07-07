@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -796,7 +797,7 @@ public class IdeEventQueue extends EventQueue {
 
   private static AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
 
-  private static boolean processAppActivationEvents(AWTEvent e) {
+  private boolean processAppActivationEvents(AWTEvent e) {
     Application app = ApplicationManager.getApplication();
     if (!(app instanceof ApplicationImpl)) return false;
     final ApplicationImpl appImpl = (ApplicationImpl)app;
@@ -809,6 +810,9 @@ public class IdeEventQueue extends EventQueue {
 
       final Window eventWindow = we.getWindow();
       if (we.getID() == WindowEvent.WINDOW_ACTIVATED || we.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+        //if () {
+        //  getPopupManager().closeAllPopups();
+        //}
         appImpl.myCancelDeactivation = true;
         if (!appImpl.isActive()) {
           OpenAPIAccessor.getApplicationImplAccessor().applyActivation(appImpl, eventWindow);
