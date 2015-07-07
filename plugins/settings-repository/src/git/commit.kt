@@ -13,11 +13,11 @@ import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
 import java.net.InetAddress
 
-fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator): Boolean {
-  indicator.checkCanceled()
+fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator?): Boolean {
+  indicator?.checkCanceled()
 
   val diff = manager.repository.computeIndexDiff()
-  val changed = diff.diff(indicator.asProgressMonitor(), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
+  val changed = diff.diff(indicator?.asProgressMonitor(), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
 
   // don't worry about untracked/modified only in the FS files
   if (!changed || (diff.getAdded().isEmpty() && diff.getChanged().isEmpty() && diff.getRemoved().isEmpty())) {
@@ -44,7 +44,7 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator): Boolean
     LOG.debug(indexDiffToString(diff))
   }
 
-  indicator.checkCanceled()
+  indicator?.checkCanceled()
 
   val builder = StringBuilder()
   builder.append(ApplicationInfoEx.getInstanceEx()!!.getFullApplicationName())
@@ -52,55 +52,55 @@ fun commit(manager: GitRepositoryManager, indicator: ProgressIndicator): Boolean
   builder.append(' ')
 
   // we use Github (edit via web UI) terms here
-  addCompactList("Update", diff.getChanged(), builder)
-  addCompactList("Create", diff.getAdded(), builder)
-  addCompactList("Delete", diff.getRemoved(), builder)
+  builder.appendCompactList("Update", diff.getChanged())
+  builder.appendCompactList("Create", diff.getAdded())
+  builder.appendCompactList("Delete", diff.getRemoved())
 
-  manager.commit(builder.toString())
+  manager.repository.commit(builder.toString())
   return true
 }
 
 private fun indexDiffToString(diff: IndexDiff): String {
   val builder = StringBuilder()
   builder.append("To commit:")
-  addList("Added", diff.getAdded(), builder)
-  addList("Changed", diff.getChanged(), builder)
-  addList("Deleted", diff.getRemoved(), builder)
-  addList("Modified on disk relative to the index", diff.getModified(), builder)
-  addList("Untracked files", diff.getUntracked(), builder)
-  addList("Untracked folders", diff.getUntrackedFolders(), builder)
-  addList("Missing", diff.getMissing(), builder)
+  builder.addList("Added", diff.getAdded())
+  builder.addList("Changed", diff.getChanged())
+  builder.addList("Deleted", diff.getRemoved())
+  builder.addList("Modified on disk relative to the index", diff.getModified())
+  builder.addList("Untracked files", diff.getUntracked())
+  builder.addList("Untracked folders", diff.getUntrackedFolders())
+  builder.addList("Missing", diff.getMissing())
   return builder.toString()
 }
 
-private fun addCompactList(name: String, list: Collection<String>, builder: StringBuilder) {
-  addList(name, list, builder, true)
+private fun StringBuilder.appendCompactList(name: String, list: Collection<String>) {
+  addList(name, list, true)
 }
 
-private fun addList(name: String, list: Collection<String>, builder: StringBuilder, compact: Boolean = false) {
+private fun StringBuilder.addList(name: String, list: Collection<String>, compact: Boolean = false) {
   if (list.isEmpty()) {
     return
   }
 
   if (compact) {
-    if (builder.length() != 0 && builder.charAt(builder.length() - 1) != ' ') {
-      builder.append('\t')
+    if (length() != 0 && charAt(length() - 1) != ' ') {
+      append('\t')
     }
-    builder.append(name)
+    append(name)
   }
   else {
-    builder.append('\t').append(name).append(':')
+    append('\t').append(name).append(':')
   }
-  builder.append(' ')
+  append(' ')
 
   var isNotFirst = false
   for (path in list) {
     if (isNotFirst) {
-      builder.append(',').append(' ')
+      append(',').append(' ')
     }
     else {
       isNotFirst = true
     }
-    builder.append(if (compact) PathUtilRt.getFileName(path) else path)
+    append(if (compact) PathUtilRt.getFileName(path) else path)
   }
 }

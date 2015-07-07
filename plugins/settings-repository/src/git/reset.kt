@@ -34,7 +34,7 @@ class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(
           if (toTheirs) {
             repository.deleteAllFiles(result.deleted)
             result.changed.removeAll(result.deleted)
-            manager.commit(commitMessage)
+            repository.commit(commitMessage)
           }
           else {
             LOG.debug("uninitialized remote (empty) - we don't need to merge")

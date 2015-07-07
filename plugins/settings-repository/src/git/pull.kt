@@ -74,7 +74,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
         }
       }
 
-      manager.commit()
+      repository.commit()
 
       return mergeResult.result.toMutable().addChanged(mergedFiles)
     }
@@ -279,7 +279,7 @@ open class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndica
             mergeStatus = MergeResult.MergeStatus.MERGED_NOT_COMMITTED
           }
           if (commit && !squash) {
-            newHeadId = manager.commit(commitMessage, refLogMessage.toString()).getId()
+            newHeadId = repository.commit(commitMessage, refLogMessage.toString()).getId()
             mergeStatus = MergeResult.MergeStatus.MERGED
           }
           if (commit && squash) {

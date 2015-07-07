@@ -12,6 +12,8 @@ import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.revwalk.RevWalkUtils
+import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.FetchResult
@@ -315,3 +317,23 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
 }
 
 fun ObjectReader.getCachedBytes(dirCacheEntry: DirCacheEntry) = open(dirCacheEntry.getObjectId(), Constants.OBJ_BLOB).getCachedBytes()
+
+public fun Repository.getAheadCommitsCount(): Int {
+  val config = getConfig()
+  val shortBranchName = Repository.shortenRefName(config.getRemoteBranchFullName())
+  val trackingBranch = BranchConfig(config, shortBranchName).getTrackingBranch() ?: return -1
+  val tracking = getRef(trackingBranch) ?: return -1
+  val local = getRef("${Constants.R_HEADS}$shortBranchName") ?: return -1
+  val walk = RevWalk(this)
+  val localCommit = walk.parseCommit(local.getObjectId())
+  val trackingCommit = walk.parseCommit(tracking.getObjectId())
+
+  walk.setRevFilter(RevFilter.MERGE_BASE)
+  walk.markStart(localCommit)
+  walk.markStart(trackingCommit)
+  val mergeBase = walk.next()
+
+  walk.reset()
+  walk.setRevFilter(RevFilter.ALL)
+  return RevWalkUtils.count(walk, localCommit, mergeBase)
+}

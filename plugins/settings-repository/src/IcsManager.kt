@@ -1,11 +1,10 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.ide.ApplicationLoadListener
-import com.intellij.notification.Notification
-import com.intellij.notification.Notifications
-import com.intellij.notification.NotificationsAdapter
-import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
@@ -22,11 +21,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.AtomicNotNullLazyValue
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.UIUtil
@@ -41,7 +36,6 @@ import org.jetbrains.settingsRepository.git.processChildren
 import java.io.File
 import java.io.InputStream
 import java.util.LinkedHashSet
-import java.util.concurrent.Future
 import kotlin.properties.Delegates
 
 val PLUGIN_NAME: String = "Settings Repository"
@@ -105,7 +99,7 @@ public class IcsManager : ApplicationLoadListener {
 
   volatile var repositoryActive = false
 
-  private volatile var autoSyncFuture: Future<*>? = null
+  private val autoSync = AutoSync(this)
 
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode()) {
@@ -163,29 +157,12 @@ public class IcsManager : ApplicationLoadListener {
         override fun run(indicator: ProgressIndicator) {
           indicator.setIndeterminate(true)
 
-          val autoFuture = autoSyncFuture
-          if (autoFuture != null) {
-            if (autoFuture.isDone()) {
-              autoSyncFuture = null
-            }
-            else if (autoSyncFuture != null) {
-              LOG.info("Wait for auto sync future")
-              indicator.setText("Wait for auto sync completion")
-              while (!autoFuture.isDone()) {
-                if (indicator.isCanceled()) {
-                  return
-                }
-                Thread.sleep(5)
-              }
-            }
-          }
+          autoSync.waitAutoSync(indicator)
 
           if (localRepositoryInitializer == null) {
             try {
               // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
-              if (repositoryManager.canCommit()) {
-                repositoryManager.commit(indicator)
-              }
+              repositoryManager.commitIfCan(indicator)
               // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
             }
             catch (e: ProcessCanceledException) {
@@ -302,111 +279,22 @@ public class IcsManager : ApplicationLoadListener {
 
     (application as ApplicationImpl).getStateStore().getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
 
+    autoSync.registerListeners(application)
+
     application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
       override fun beforeProjectLoaded(project: Project) {
-        if (!project.isDefault()) {
-          registerProjectLevelProviders(project)
-
-          project.getMessageBus().connect().subscribe(Notifications.TOPIC, object: NotificationsAdapter() {
-            override fun notify(notification: Notification) {
-              if (!repositoryActive || project.isDisposed()) {
-                return
-              }
-
-              if (when {
-                notification.getGroupId() == VcsBalloonProblemNotifier.NOTIFICATION_GROUP.getDisplayId() -> {
-                  val message = notification.getContent()
-                  message.startsWith("VCS Update Finished") ||
-                      message == VcsBundle.message("message.text.file.is.up.to.date") ||
-                      message == VcsBundle.message("message.text.all.files.are.up.to.date")
-                }
-
-                notification.getGroupId() == VcsNotifier.NOTIFICATION_GROUP_ID.getDisplayId() && notification.getTitle() == "Push successful" -> true
-
-                else -> false
-              }) {
-                autoSync()
-              }
-            }
-          })
+        if (project.isDefault()) {
+          return
         }
+
+        registerProjectLevelProviders(project)
+        autoSync.registerListeners(project)
       }
 
       override fun afterProjectClosed(project: Project) {
-        autoSync()
+        autoSync.autoSync()
       }
     })
-  }
-
-  private fun autoSync() {
-    if (!repositoryActive) {
-      return
-    }
-
-    var future = autoSyncFuture
-    if (future != null && !future.isDone()) {
-      return
-    }
-
-    val app = ApplicationManagerEx.getApplicationEx() as ApplicationImpl
-    future = app.executeOnPooledThread {
-      if (autoSyncFuture == future) {
-        try {
-          // should be first - could take time, so, may be, during this time something will be saved/committed
-          val updater = repositoryManager.fetch()
-
-          if (!(app.isDisposed() || app.isDisposeInProgress())) {
-            cancelAndDisableAutoCommit()
-            // to ensure that repository will not be in uncompleted state and changes will be pushed
-            ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread())
-            try {
-              // we merge in EDT non-modal to ensure that new settings will be properly applied
-              app.invokeAndWait({
-                if (!(app.isDisposed() || app.isDisposeInProgress())) {
-                  try {
-                    val updateResult = updater.merge()
-                    if (updateResult != null && updateStoragesFromStreamProvider(app.getStateStore(), updateResult)) {
-                      // force to avoid saveAll & confirmation
-                      app.exit(true, true, true, true)
-                    }
-                  }
-                  catch (e: Throwable) {
-                    if (e is AuthenticationException || e is NoRemoteRepositoryException) {
-                      LOG.warn(e)
-                    }
-                    else {
-                      LOG.error(e)
-                    }
-                  }
-                }
-              }, ModalityState.NON_MODAL)
-
-              if (!updater.definitelySkipPush) {
-                repositoryManager.push()
-              }
-            }
-            finally {
-              autoCommitEnabled = true
-              ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread())
-            }
-          }
-        }
-        catch (e: ProcessCanceledException) {
-        }
-        catch (e: Throwable) {
-          if (e is AuthenticationException || e is NoRemoteRepositoryException) {
-            LOG.warn(e)
-          }
-          else {
-            LOG.error(e)
-          }
-        }
-        finally {
-          autoSyncFuture = null
-        }
-      }
-    }
-    autoSyncFuture = future
   }
 
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {

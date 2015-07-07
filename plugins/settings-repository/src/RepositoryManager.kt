@@ -1,6 +1,5 @@
 package org.jetbrains.settingsRepository
 
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import gnu.trove.THashSet
 import java.io.InputStream
@@ -38,13 +37,15 @@ public interface RepositoryManager {
   /**
    * Not all implementations support progress indicator (will not be updated on progress)
    */
-  public fun commit(indicator: ProgressIndicator): Boolean
+  public fun commit(indicator: ProgressIndicator? = null): Boolean
+
+  public fun getAheadCommitsCount(): Int
 
   public fun commit(paths: List<String>)
 
-  public fun push(indicator: ProgressIndicator = EmptyProgressIndicator())
+  public fun push(indicator: ProgressIndicator? = null)
 
-  public fun fetch(): Updater
+  public fun fetch(indicator: ProgressIndicator? = null): Updater
 
   public fun pull(indicator: ProgressIndicator): UpdateResult?
 
@@ -61,6 +62,12 @@ public interface RepositoryManager {
 
     // valid only if merge was called before
     val definitelySkipPush: Boolean
+  }
+}
+
+fun RepositoryManager.commitIfCan(indicator: ProgressIndicator? = null) {
+  if (canCommit()) {
+    commit(indicator)
   }
 }
 

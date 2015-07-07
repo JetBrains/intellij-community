@@ -8,11 +8,9 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import org.eclipse.jgit.errors.TransportException
-import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
 import org.jetbrains.jgit.dirCache.AddLoadedFile
@@ -81,10 +79,6 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.setUpstream(url, branch ?: Constants.MASTER)
   }
 
-  fun commit(message: String? = null, reflogComment: String? = null): RevCommit {
-    return repository.commit(message, reflogComment)
-  }
-
   override fun isRepositoryExists() = repository.getObjectDatabase().exists()
 
   override fun hasUpstream() = getUpstream() != null
@@ -97,16 +91,18 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator): Boolean {
+  override fun commit(indicator: ProgressIndicator?): Boolean {
     synchronized (lock) {
       return commit(this, indicator)
     }
   }
 
+  override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
+
   override fun commit(paths: List<String>) {
   }
 
-  override fun push(indicator: ProgressIndicator) {
+  override fun push(indicator: ProgressIndicator?) {
     LOG.debug("Push")
 
     val refSpecs = SmartList(RemoteConfig(repository.getConfig(), Constants.DEFAULT_REMOTE_NAME).getPushRefSpecs())
@@ -152,8 +148,8 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     }
   }
 
-  override fun fetch(): Updater {
-    val pullTask = Pull(this, EmptyProgressIndicator())
+  override fun fetch(indicator: ProgressIndicator?): Updater {
+    val pullTask = Pull(this, indicator ?: EmptyProgressIndicator())
     val refToMerge = pullTask.fetch()
     return object : Updater {
       override var definitelySkipPush = false
@@ -161,7 +157,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       override fun merge(): UpdateResult? {
         synchronized (lock) {
           val committed = commit(pullTask.indicator)
-          if (refToMerge == null && !committed && BranchTrackingStatus.of(repository, repository.getConfig().getRemoteBranchFullName()).getAheadCount() == 0) {
+          if (refToMerge == null && !committed && getAheadCommitsCount() == 0) {
             definitelySkipPush = true
             return null
           }
