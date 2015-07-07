@@ -26,6 +26,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -73,6 +74,10 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
   @Override
   public void loadState(State state) {
     myState = state;
+  }
+  
+  public Collection<String> getFiles() {
+    return myState.getHistoryElements().keySet();
   }
   
   public String getConfigurationName(String file) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
+import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -22,12 +23,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 public class 
   ImportTestsGroup extends ActionGroup {
@@ -47,20 +49,27 @@ public class
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     final Project project = e.getProject();
-    final File[] files = AbstractImportTestsAction.getTestHistoryRoot(project).listFiles();
-    if (files == null) return EMPTY_ARRAY;
-    Arrays.sort(files, new Comparator<File>() {
+    final Collection<String> filePaths = TestHistoryConfiguration.getInstance(project).getFiles();
+    final File testHistoryRoot = AbstractImportTestsAction.getTestHistoryRoot(project);
+    final List<File> fileNames = ContainerUtil.map(filePaths, new Function<String, File>() {
+      @Override
+      public File fun(String fileName) {
+        return new File(testHistoryRoot, fileName);
+      }
+    }); 
+    Collections.sort(fileNames, new Comparator<File>() {
       @Override
       public int compare(File f1, File f2) {
         return f1.lastModified() > f2.lastModified() ? -1 : 1;
       }
     });
-    final AnAction[] actions = new AnAction[files.length + 2];
-    for (int i = 0; i < files.length; i++) {
-      actions[i] = new ImportTestsFromHistoryAction(myProperties, project, files[i].getName());
+    final int historySize = fileNames.size();
+    final AnAction[] actions = new AnAction[historySize + 2];
+    for (int i = 0; i < historySize; i++) {
+      actions[i] = new ImportTestsFromHistoryAction(myProperties, project, fileNames.get(i).getName());
     }
-    actions[files.length] = Separator.getInstance();
-    actions[files.length + 1] = new ImportTestsFromFileAction(myProperties); 
+    actions[historySize] = Separator.getInstance();
+    actions[historySize + 1] = new ImportTestsFromFileAction(myProperties); 
     return actions;
   }
 
