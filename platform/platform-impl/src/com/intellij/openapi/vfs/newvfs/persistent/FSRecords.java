@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
@@ -124,7 +125,7 @@ public class FSRecords implements Forceable {
     w = lock.writeLock();
   }
 
-  static void writeAttributesToRecord(int id, int parentId, FileAttributes attributes, String name) {
+  static void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
     w.lock();
     try {
       setName(id, name);
@@ -1053,15 +1054,18 @@ public class FSRecords implements Forceable {
     }
   }
 
-  // returns id, parent(id), parent(parent(id)), ... rootId
+  // returns id, parent(id), parent(parent(id)), ...  (already known id or rootId)
   @NotNull
-  public static TIntArrayList getParents(int id) {
+  public static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
     TIntArrayList result = new TIntArrayList(10);
     r.lock();
     try {
       int parentId;
       do {
         result.add(id);
+        if (idCache.containsKey(id)) {
+          break;
+        }
         parentId = getRecordInt(id, PARENT_OFFSET);
         if (parentId == id || result.size() % 128 == 0 && result.contains(parentId)) {
           LOG.error("Cyclic parent child relations in the database. id = " + parentId);
@@ -1163,7 +1167,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static void setName(int id, String name) {
+  public static void setName(int id, @NotNull String name) {
     w.lock();
     try {
       incModCount(id);
