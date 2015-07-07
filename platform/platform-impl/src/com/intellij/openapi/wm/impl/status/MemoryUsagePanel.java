@@ -25,6 +25,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +57,6 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
   private long myLastTotal = -1;
   private long myLastUsed = -1;
-  private ScheduledFuture<?> myFuture;
   private Image myBufferedImage;
   private boolean myWasPressed;
 
@@ -72,12 +73,34 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
     setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
     updateUI();
+
+    new UiNotifyConnector(this, new Activatable() {
+      private ScheduledFuture<?> myFuture;
+
+      @Override
+      public void showNotify() {
+        myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+          public void run() {
+            if (isDisplayable()) {
+              updateState();
+            }
+          }
+        }, 1, 5, TimeUnit.SECONDS);
+      }
+
+      @Override
+      public void hideNotify() {
+        if (myFuture != null) {
+          myFuture.cancel(true);
+          myFuture = null;
+        }
+      }
+    });
+
   }
 
   @Override
   public void dispose() {
-    myFuture.cancel(true);
-    myFuture = null;
   }
 
   @Override
@@ -211,21 +234,6 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @Override
   public Dimension getMaximumSize() {
     return getPreferredSize();
-  }
-
-  /**
-   * Invoked when enclosed frame is being shown.
-   */
-  @Override
-  public void addNotify() {
-    myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      public void run() {
-        if (isDisplayable()) {
-          updateState();
-        }
-      }
-    }, 1, 5, TimeUnit.SECONDS);
-    super.addNotify();
   }
 
   private void updateState() {
