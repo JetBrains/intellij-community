@@ -160,14 +160,14 @@ public class DiffDrawUtil {
   }
 
   //
-  // Colors
+  // Impl
   //
 
   @NotNull
-  public static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
-                                                 @Nullable final Editor editor,
-                                                 final boolean ignored,
-                                                 final boolean showStripes) {
+  private static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
+                                                  @Nullable final Editor editor,
+                                                  final boolean ignored,
+                                                  final boolean showStripes) {
     return new TextAttributes() {
       @Override
       public Color getBackgroundColor() {
@@ -182,14 +182,25 @@ public class DiffDrawUtil {
   }
 
   @NotNull
-  public static TextAttributes getStripeTextAttributes(@NotNull final TextDiffType type,
-                                                       @NotNull final Editor editor) {
+  private static TextAttributes getStripeTextAttributes(@NotNull final TextDiffType type,
+                                                        @NotNull final Editor editor) {
     return new TextAttributes() {
       @Override
       public Color getErrorStripeColor() {
         return type.getMarkerColor(editor);
       }
     };
+  }
+
+  private static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
+                                            @NotNull TextDiffType type,
+                                            boolean ignoredFoldingOutline) {
+    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline));
+  }
+
+  private static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter,
+                                                @NotNull TextDiffType type) {
+    highlighter.setCustomRenderer(new DiffEmptyHighlighterRenderer(type));
   }
 
   //
@@ -238,21 +249,6 @@ public class DiffDrawUtil {
     if (start == end) installEmptyRangeRenderer(highlighter, type);
 
     return highlighter;
-  }
-
-  public static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
-                                           @NotNull TextDiffType type) {
-    installGutterRenderer(highlighter, type, false);
-  }
-
-  public static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
-                                           @NotNull TextDiffType type,
-                                           boolean ignoredFoldingOutline) {
-    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline));
-  }
-
-  public static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter, @NotNull TextDiffType type) {
-    highlighter.setCustomRenderer(new DiffEmptyHighlighterRenderer(type));
   }
 
   @NotNull
