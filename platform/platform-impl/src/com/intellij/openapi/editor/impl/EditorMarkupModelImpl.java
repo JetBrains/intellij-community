@@ -169,7 +169,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private static class PositionedStripe {
-    private final Color color;
+    private Color color;
     private int yEnd;
     private final boolean thin;
     private final int layer;
@@ -753,8 +753,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       });
       // sorted by layer
-      final List<PositionedStripe> thinStripes = new ArrayList<PositionedStripe>();
-      final List<PositionedStripe> wideStripes = new ArrayList<PositionedStripe>();
+      final List<PositionedStripe> thinStripes = new ArrayList<PositionedStripe>(); // layer desc
+      final List<PositionedStripe> wideStripes = new ArrayList<PositionedStripe>(); // layer desc
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
@@ -799,7 +799,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             }
             if (stripe == null) {
               // started new stripe, draw previous above
-              if (yStart[0] != ys) {
+              if (i == 0 && yStart[0] != ys) {
                 if (!stripes.isEmpty()) {
                   PositionedStripe top = stripes.get(0);
                   drawSpot(g, top.thin, yStart[0], ys, top.color);
@@ -811,8 +811,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               ends.offer(stripe);
             }
             else {
-              // key changed, reinsert into queue
-              if (stripe.yEnd != ye) {
+              if (stripe.yEnd < ye) {
+                if (!color.equals(stripe.color)) {
+                  // paint previous stripe on this layer
+                  if (i == 0 && yStart[0] != ys) {
+                    drawSpot(g, stripe.thin, yStart[0], ys, stripe.color);
+                    yStart[0] = ys;
+                  }
+                  stripe.color = color;
+                }
+
+                // key changed, reinsert into queue
                 ends.remove(stripe);
                 stripe.yEnd = ye;
                 ends.offer(stripe);
