@@ -258,53 +258,61 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ourPsiManager = null;
         ourModule = createMainModule(descriptor.getModuleType());
 
-        VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-        assert dummyRoot != null;
-        dummyRoot.refresh(false, false);
-
-        try {
-          ourSourceRoot = dummyRoot.createChildDirectory(this, "src");
-          cleanSourceRoot();
+        boolean shouldConfigureModule = true;
+        if (descriptor instanceof LightProjectDescriptorEx) {
+          ((LightProjectDescriptorEx)descriptor).setupModule(ourModule);
+          
+          shouldConfigureModule = ((LightProjectDescriptorEx)descriptor).shouldConfigureModule();
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        
+        if (shouldConfigureModule) {
+          VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+          assert dummyRoot != null;
+          dummyRoot.refresh(false, false);
 
-        FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
-          @Override
-          public boolean isInSet(@NotNull final VirtualFile file) {
-            return ourSourceRoot != null &&
-                   file.getFileSystem() == ourSourceRoot.getFileSystem() &&
-                   ourProject != null &&
-                   ourProject.isOpen();
+          try {
+            ourSourceRoot = dummyRoot.createChildDirectory(this, "src");
+            cleanSourceRoot();
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
 
-          @Override
-          public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
-            VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-              @Override
-              public boolean visitFile(@NotNull VirtualFile file) {
-                iterator.processFile(file);
-                return true;
-              }
-            });
-          }
-        }, null);
-
-        updateModel(ourModule, new Consumer<ModifiableRootModel>() {
-          @Override
-          public void consume(ModifiableRootModel model) {
-            if (descriptor.getSdk() != null) {
-              model.setSdk(descriptor.getSdk());
+          FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
+            @Override
+            public boolean isInSet(@NotNull final VirtualFile file) {
+              return ourSourceRoot != null &&
+                     file.getFileSystem() == ourSourceRoot.getFileSystem() &&
+                     ourProject != null &&
+                     ourProject.isOpen();
             }
 
-            ContentEntry contentEntry = model.addContentEntry(ourSourceRoot);
-            contentEntry.addSourceFolder(ourSourceRoot, false);
+            @Override
+            public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
+              VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+                @Override
+                public boolean visitFile(@NotNull VirtualFile file) {
+                  iterator.processFile(file);
+                  return true;
+                }
+              });
+            }
+          }, null);
 
-            descriptor.configureModule(ourModule, model, contentEntry);
-          }
-        });
+          updateModel(ourModule, new Consumer<ModifiableRootModel>() {
+            @Override
+            public void consume(ModifiableRootModel model) {
+              if (descriptor.getSdk() != null) {
+                model.setSdk(descriptor.getSdk());
+              }
 
+              ContentEntry contentEntry = model.addContentEntry(ourSourceRoot);
+              contentEntry.addSourceFolder(ourSourceRoot, false);
+
+              descriptor.configureModule(ourModule, model, contentEntry);
+            }
+          });
+        }
         MessageBusConnection connection = ourProject.getMessageBus().connect();
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
           @Override
