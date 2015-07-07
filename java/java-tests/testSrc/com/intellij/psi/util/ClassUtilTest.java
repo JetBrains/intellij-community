@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
   public void testFindPsiClassByJvmName() {
     myFixture.configureByFile("ManyClasses.java");
+
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1$1"));
@@ -42,8 +43,9 @@ public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(sub);
     assertEquals("Local$", ((PsiClass)sub.getParent()).getName());
 
-    final PsiClass fooLocal2 = ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$2FooLocal");
-    assertEquals("Runnable", fooLocal2.getImplementsListTypes() [0].getClassName());
+    PsiClass fooLocal2 = ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$2FooLocal");
+    assertNotNull(fooLocal2);
+    assertEquals("Runnable", fooLocal2.getImplementsListTypes()[0].getClassName());
   }
 
   @Override

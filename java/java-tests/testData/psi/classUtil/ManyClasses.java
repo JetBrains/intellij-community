@@ -1,8 +1,3 @@
-import java.lang.Comparable;
-import java.lang.Integer;
-import java.lang.Override;
-import java.lang.Runnable;
-
 public class ManyClasses {
   public void foo() {
     Runnable r = new Runnable() {
@@ -20,8 +15,7 @@ public class ManyClasses {
     class FooLocal {
       Runnable r = new Runnable() {
         @Override
-        public void run() {
-        }
+        public void run() { }
       };
     }
   }
@@ -29,25 +23,17 @@ public class ManyClasses {
   public void bar() {
     class FooLocal implements Runnable {
       @Override
-      public void run() {
-      }
+      public void run() { }
     }
   }
   
-  public class Child {
-    
-  }
-  
+  public class Child { }
 }
 
 class Local {
-  public static class Sub {
-
-  }
+  public static class Sub { }
 }
 
 class Local$ {
-  public static class Sub {
-
-  }
+  public static class Sub { }
 }

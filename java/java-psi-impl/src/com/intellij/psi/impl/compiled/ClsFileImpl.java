@@ -565,16 +565,16 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       String fqn = StubBuildingVisitor.getFqn(internalName, className, null);
       String packageName = getPackageName(fqn, className);
       PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(packageName, true);
-      StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);
+
       try {
+        StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);
         reader.accept(visitor, ClassReader.SKIP_FRAMES);
+        PsiClassStub<?> result = visitor.getResult();
+        if (result == null) return null;
       }
       catch (OutOfOrderInnerClassException e) {
         return null;
       }
-
-      PsiClassStub<?> result = visitor.getResult();
-      if (result == null) return null;
 
       return stub;
     }
