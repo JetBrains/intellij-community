@@ -177,4 +177,23 @@ public class CompactRecordsTable extends AbstractRecordsTable {
     }
     myStorage.putInt(sizeAndCapacityOfRecordAbsoluteOffset, (currentValue & SIZE_MASK) | (capacity << CAPACITY_SHIFT));
   }
+
+  @Override
+  public void deleteRecord(int record) throws IOException {
+    final int sizeAndCapacityOfRecordAbsoluteOffset = getOffset(record, SIZE_AND_CAPACITY_OFFSET);
+    final int sizeAndCapacityValue = myStorage.getInt(sizeAndCapacityOfRecordAbsoluteOffset);
+
+    final int addressOfRecordAbsoluteOffset = getOffset(record, ADDRESS_OFFSET);
+    final int existingAddressValue = myStorage.getInt(addressOfRecordAbsoluteOffset);
+
+    super.deleteRecord(record);
+
+    if (sizeAndCapacityValue < 0) {
+      super.deleteRecord(-sizeAndCapacityValue);
+    }
+
+    if (existingAddressValue < 0) {
+      super.deleteRecord(-existingAddressValue);
+    }
+  }
 }
