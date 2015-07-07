@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.event.CaretAdapter
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.editor.impl.CaretModelImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -75,6 +76,7 @@ public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: 
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")
 
 
+    val caretModel = editor.getCaretModel()
     val selectionReaction = com.jetbrains.reactivemodel.reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated) { selection, caret, _ ->
 
       selection as MapModel?
@@ -85,7 +87,7 @@ public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: 
           CommandProcessor.getInstance().executeCommand(editor.getProject(), {
             try {
               if (caret != null) {
-                editor.getCaretModel().moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
+                caretModel.moveToOffset((caret["offset"] as PrimitiveModel<Int>).value)
               }
               if (selection != null) {
                 editor.getSelectionModel().setSelection(
@@ -111,7 +113,7 @@ public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: 
 
     val caretListener = object : CaretAdapter() {
       override fun caretPositionChanged(e: CaretEvent) {
-        if (!caretGuard.locked) {
+        if (!caretGuard.locked && !(caretModel as CaretModelImpl).isDocumentChanged()) {
           caretGuard.lock {
             sendSelectionAndCaret()
           }
@@ -119,14 +121,14 @@ public class EditorHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: 
       }
     }
 
-    editor.getCaretModel().addCaretListener(caretListener)
+    caretModel.addCaretListener(caretListener)
     lifetime += {
-      editor.getCaretModel().removeCaretListener(caretListener)
+      caretModel.removeCaretListener(caretListener)
     }
 
     val selectionListener = object : SelectionListener {
       override fun selectionChanged(e: SelectionEvent) {
-        if (!caretGuard.locked) {
+        if (!caretGuard.locked && !(caretModel as CaretModelImpl).isDocumentChanged()) {
           caretGuard.lock {
             sendSelectionAndCaret()
           }

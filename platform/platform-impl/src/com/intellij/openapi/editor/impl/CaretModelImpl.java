@@ -55,6 +55,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
 
+  public boolean isDocumentChanged() {
+    return isDocumentChanged;
+  }
+
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
     myCarets.add(new CaretImpl(myEditor));
