@@ -31,4 +31,8 @@ public class PyiResolveTest extends PyMultiFileResolveTestCase {
   public void testClassInsidePyiFile() {
     assertResolvesTo(PyClass.class, "C");
   }
+
+  public void testBuiltinInt() {
+    assertResolvesTo(PyClass.class, "int");
+  }
 }
