@@ -41,7 +41,7 @@ public abstract class BaseSchemeProcessor<T extends ExternalizableScheme> implem
   }
 
   @Override
-  public void onCurrentSchemeChanged(Scheme newCurrentScheme) {
+  public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
   }
 
   @Nullable

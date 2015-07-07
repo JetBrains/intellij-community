@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -164,8 +165,7 @@ public class CodeStyleSchemesModel {
       myUsePerProjectSettings || myGlobalSelected == null ? null : myGlobalSelected.getName();
     projectSettingsManager.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
 
-    CodeStyleSchemes.getInstance().setSchemes(mySchemes);
-    CodeStyleSchemes.getInstance().setCurrentScheme(myGlobalSelected);
+    ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemeManager().setSchemes(mySchemes, myGlobalSelected, null);
 
     // We want to avoid the situation when 'real code style' differs from the copy stored here (e.g. when 'real code style' changes
     // are 'committed' by pressing 'Apply' button). So, we reset the copies here assuming that this method is called on 'Apply'

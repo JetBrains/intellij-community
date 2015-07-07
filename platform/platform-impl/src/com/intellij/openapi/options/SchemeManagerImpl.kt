@@ -21,11 +21,11 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.impl.stores.DirectoryBasedStorage
 import com.intellij.openapi.components.impl.stores.DirectoryStorageData
 import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.components.impl.stores.StreamProvider
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.util.Comparing
@@ -64,7 +64,6 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   private val readOnlyExternalizableSchemes = THashMap<String, E>()
 
   private var currentScheme: T? = null
-  private var currentSchemeName: String? = null
 
   private var directory: VirtualFile? = null
 
@@ -86,56 +85,55 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       updateExtension = false
     }
 
-    val virtualFileTracker = if (provider != null && provider.enabled) null else ServiceManager.getService(javaClass<VirtualFileTracker>())
-    if (virtualFileTracker != null) {
-      val baseDirPath = ioDirectory.getAbsolutePath().replace(File.separatorChar, '/')
-      virtualFileTracker.addTracker(LocalFileSystem.PROTOCOL_PREFIX + baseDirPath, object : VirtualFileAdapter() {
+    if (provider == null || !provider.enabled) {
+      service<VirtualFileTracker>()?.addTracker("${LocalFileSystem.PROTOCOL_PREFIX}${ioDirectory.getAbsolutePath().replace(File.separatorChar, '/')}", object : VirtualFileAdapter() {
         override fun contentsChanged(event: VirtualFileEvent) {
           if (event.getRequestor() != null || !isMy(event)) {
             return
           }
 
-          val scheme = findExternalizableSchemeByFileName(event.getFile().getName())
+          val oldScheme = findExternalizableSchemeByFileName(event.getFile().getName())
           var oldCurrentScheme: T? = null
-          if (scheme != null) {
-            oldCurrentScheme = getCurrentScheme()
+          if (oldScheme != null) {
+            oldCurrentScheme = currentScheme
             @suppress("UNCHECKED_CAST")
-            removeScheme(scheme as T)
-            processor.onSchemeDeleted(scheme)
+            removeScheme(oldScheme as T)
+            processor.onSchemeDeleted(oldScheme)
           }
 
-          val readScheme = readSchemeFromFile(event.getFile(), false)
-          if (readScheme != null) {
-            processor.initScheme(readScheme)
-            processor.onSchemeAdded(readScheme)
+          val newScheme = readSchemeFromFile(event.getFile(), false)
+          if (newScheme != null) {
+            processor.initScheme(newScheme)
+            processor.onSchemeAdded(newScheme)
 
-            var newCurrentScheme = getCurrentScheme()
-            if (oldCurrentScheme != null && newCurrentScheme == null) {
-              setCurrentSchemeName(readScheme.getName())
-              newCurrentScheme = getCurrentScheme()
-            }
+            updateCurrentScheme(oldCurrentScheme, newScheme)
+          }
+        }
 
-            if (oldCurrentScheme !== newCurrentScheme) {
-              processor.onCurrentSchemeChanged(oldCurrentScheme)
-            }
+        private fun updateCurrentScheme(oldCurrentScheme: T?, newCurrentScheme: E? = null) {
+          if (oldCurrentScheme != currentScheme && currentScheme == null) {
+            @suppress("UNCHECKED_CAST")
+            setCurrent(newCurrentScheme as T? ?: schemes.firstOrNull())
           }
         }
 
         override fun fileCreated(event: VirtualFileEvent) {
-          if (event.getRequestor() == null) {
-            if (event.getFile().isDirectory()) {
-              val dir = getDirectory()
-              if (event.getFile() == dir) {
-                for (file in dir!!.getChildren()) {
-                  if (isMy(file)) {
-                    schemeCreatedExternally(file)
-                  }
+          if (event.getRequestor() != null) {
+            return
+          }
+
+          if (event.getFile().isDirectory()) {
+            val dir = getDirectory()
+            if (event.getFile() == dir) {
+              for (file in dir!!.getChildren()) {
+                if (isMy(file)) {
+                  schemeCreatedExternally(file)
                 }
               }
             }
-            else if (isMy(event)) {
-              schemeCreatedExternally(event.getFile())
-            }
+          }
+          else if (isMy(event)) {
+            schemeCreatedExternally(event.getFile())
           }
         }
 
@@ -148,45 +146,26 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
 
         override fun fileDeleted(event: VirtualFileEvent) {
-          if (event.getRequestor() == null) {
-            if (event.getFile().isDirectory()) {
-              val dir = directory
-              if (event.getFile() == dir) {
-                directory = null
-                for (file in dir!!.getChildren()) {
-                  if (isMy(file)) {
-                    schemeDeletedExternally(file)
-                  }
-                }
-              }
-            }
-            else if (isMy(event)) {
-              schemeDeletedExternally(event.getFile())
+          if (event.getRequestor() != null) {
+            return
+          }
+
+          var oldCurrentScheme = currentScheme
+          if (event.getFile().isDirectory()) {
+            val dir = directory
+            if (event.getFile() == dir) {
+              directory = null
+              removeExternalizableSchemes()
             }
           }
-        }
-
-        private fun schemeDeletedExternally(file: VirtualFile) {
-          val scheme = findExternalizableSchemeByFileName(file.getName())
-          var oldCurrentScheme: T? = null
-          if (scheme != null) {
-            oldCurrentScheme = getCurrentScheme()
+          else if (isMy(event)) {
+            val scheme = findExternalizableSchemeByFileName(event.getFile().getName()) ?: return
             @suppress("UNCHECKED_CAST")
             removeScheme(scheme as T)
             processor.onSchemeDeleted(scheme)
           }
 
-          var newCurrentScheme = getCurrentScheme()
-          if (oldCurrentScheme != null && newCurrentScheme == null) {
-            if (!schemes.isEmpty()) {
-              setCurrentSchemeName(schemes.get(0).getName())
-              newCurrentScheme = getCurrentScheme()
-            }
-          }
-
-          if (oldCurrentScheme !== newCurrentScheme) {
-            processor.onCurrentSchemeChanged(oldCurrentScheme)
-          }
+          updateCurrentScheme(oldCurrentScheme)
         }
       }, false, ApplicationManager.getApplication())
     }
@@ -279,20 +258,25 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
   public fun reload() {
     // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
+    removeExternalizableSchemes()
+
+    loadSchemes()
+  }
+
+  private fun removeExternalizableSchemes() {
+    // todo check is bundled/read-only schemes correctly handled
     for (i in schemes.indices.reversed()) {
       val scheme = schemes.get(i)
       @suppress("UNCHECKED_CAST")
       if (scheme is ExternalizableScheme && getState(scheme as E) != BaseSchemeProcessor.State.NON_PERSISTENT) {
-        schemes.remove(i)
-        if (scheme === currentScheme) {
+        if (scheme == currentScheme) {
           currentScheme = null
         }
+
+        processor.onSchemeDeleted(scheme as E)
       }
     }
-
     retainExternalInfo(schemes)
-
-    loadSchemes()
   }
 
   private fun findExternalizableSchemeByFileName(fileName: String): E? {
@@ -620,7 +604,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
   override fun getRootDirectory() = ioDirectory
 
-  override fun setSchemes(newSchemes: List<T>, removeCondition: Condition<T>?) {
+  override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) {
+    val oldCurrentScheme = currentScheme
     if (removeCondition == null) {
       schemes.clear()
     }
@@ -636,15 +621,18 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
     schemes.addAll(newSchemes)
 
-    if (currentSchemeName != null) {
-      currentScheme = findSchemeByName(currentSchemeName!!)
-      if (currentScheme != null) {
-        return
+    if (oldCurrentScheme != newCurrentScheme) {
+      if (newCurrentScheme != null) {
+        currentScheme = newCurrentScheme
+      }
+      else if (oldCurrentScheme != null && !schemes.contains(oldCurrentScheme)) {
+        currentScheme = schemes.firstOrNull()
+      }
+
+      if (oldCurrentScheme != currentScheme) {
+        processor.onCurrentSchemeChanged(oldCurrentScheme)
       }
     }
-
-    currentScheme = schemes.firstOrNull()
-    currentSchemeName = currentScheme?.getName()
   }
 
   private fun retainExternalInfo(newSchemes: List<T>) {
@@ -745,21 +733,15 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     return null
   }
 
-  override fun setCurrentSchemeName(schemeName: String?) {
-    currentSchemeName = schemeName
-    currentScheme = null
+  override fun setCurrent(scheme: T?, notify: Boolean) {
+    val oldCurrent = currentScheme
+    currentScheme = scheme
+    if (notify && oldCurrent != scheme) {
+      processor.onCurrentSchemeChanged(oldCurrent)
+    }
   }
 
-  override fun getCurrentScheme(): T? {
-    var scheme = currentScheme
-    if (scheme == null && currentSchemeName != null) {
-      scheme = findSchemeByName(currentSchemeName!!)
-      if (scheme != null) {
-        currentScheme = scheme
-      }
-    }
-    return scheme
-  }
+  override fun getCurrentScheme() = currentScheme
 
   override fun removeScheme(scheme: T) {
     for (i in schemes.size() - 1 downTo 0) {

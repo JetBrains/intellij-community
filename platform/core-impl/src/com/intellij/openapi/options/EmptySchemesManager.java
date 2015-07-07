@@ -49,10 +49,6 @@ public class EmptySchemesManager extends SchemesManager {
   }
 
   @Override
-  public void setCurrentSchemeName(String schemeName) {
-  }
-
-  @Override
   public Scheme getCurrentScheme() {
     return null;
   }
