@@ -59,6 +59,9 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
+    if (projectGenerator instanceof WebProjectTemplate) {
+      ((WebProjectTemplate)projectGenerator).reset();
+    }
     myCallback = callback;
     myProjectDirectory = findSequentNonExistingUntitled();
   }
