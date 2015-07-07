@@ -15,24 +15,34 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IFileElementType;
-import com.jetbrains.python.PythonParserDefinition;
+import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyiParserDefinition extends PythonParserDefinition {
-  public static final IFileElementType PYTHON_STUB_FILE = new PyiFileElementType(PyiLanguageDialect.getInstance());
+public class PyiFileType extends PythonFileType {
+  public static PythonFileType INSTANCE = new PyiFileType();
 
-  @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
-    return new PyiFile(viewProvider);
+  protected PyiFileType() {
+    super(new PyiLanguageDialect());
   }
 
+  @NotNull
   @Override
-  public IFileElementType getFileNodeType() {
-    return PYTHON_STUB_FILE;
+  public String getName() {
+    return PyiLanguageDialect.ID;
+  }
+
+  @NotNull
+  @Override
+  public String getDescription() {
+    return "Python stub";
+  }
+
+  @NotNull
+  @Override
+  public String getDefaultExtension() {
+    return "pyi";
   }
 }

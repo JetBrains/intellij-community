@@ -15,24 +15,18 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IFileElementType;
-import com.jetbrains.python.PythonParserDefinition;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyiParserDefinition extends PythonParserDefinition {
-  public static final IFileElementType PYTHON_STUB_FILE = new PyiFileElementType(PyiLanguageDialect.getInstance());
-
+public class PyiFileTypeFactory extends FileTypeFactory {
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
-    return new PyiFile(viewProvider);
-  }
-
-  @Override
-  public IFileElementType getFileNodeType() {
-    return PYTHON_STUB_FILE;
+  public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+    final PythonFileType instance = PyiFileType.INSTANCE;
+    consumer.consume(instance, instance.getDefaultExtension());
   }
 }

@@ -560,6 +560,8 @@
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.PyTypingAnnotationInjector"/>
+    <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
+    <fileTypeFactory implementation="com.jetbrains.python.pyi.PyiFileTypeFactory"/>
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
   </extensions>

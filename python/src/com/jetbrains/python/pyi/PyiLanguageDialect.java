@@ -15,24 +15,20 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IFileElementType;
-import com.jetbrains.python.PythonParserDefinition;
+import com.intellij.lang.Language;
+import com.jetbrains.python.PythonLanguage;
 
 /**
  * @author vlan
  */
-public class PyiParserDefinition extends PythonParserDefinition {
-  public static final IFileElementType PYTHON_STUB_FILE = new PyiFileElementType(PyiLanguageDialect.getInstance());
+public class PyiLanguageDialect extends Language {
+  public static final String ID = "PythonStub";
 
-  @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
-    return new PyiFile(viewProvider);
+  protected PyiLanguageDialect() {
+    super(PythonLanguage.getInstance(), ID);
   }
 
-  @Override
-  public IFileElementType getFileNodeType() {
-    return PYTHON_STUB_FILE;
+  public static PyiLanguageDialect getInstance() {
+    return (PyiLanguageDialect)PyiFileType.INSTANCE.getLanguage();
   }
 }

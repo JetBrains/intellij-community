@@ -15,24 +15,20 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IFileElementType;
-import com.jetbrains.python.PythonParserDefinition;
+import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
+import com.jetbrains.python.psi.PyClass;
 
 /**
  * @author vlan
  */
-public class PyiParserDefinition extends PythonParserDefinition {
-  public static final IFileElementType PYTHON_STUB_FILE = new PyiFileElementType(PyiLanguageDialect.getInstance());
-
+public class PyiResolveTest extends PyMultiFileResolveTestCase {
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
-    return new PyiFile(viewProvider);
+  protected String getTestDataPath() {
+    return PythonTestUtil.getTestDataPath() + "/pyi/resolve";
   }
 
-  @Override
-  public IFileElementType getFileNodeType() {
-    return PYTHON_STUB_FILE;
+  public void testClassInsidePyiFile() {
+    assertResolvesTo(PyClass.class, "C");
   }
 }

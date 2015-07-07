@@ -15,16 +15,24 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
 public class PyiFile extends PyFileImpl {
   public PyiFile(FileViewProvider viewProvider) {
-    super(viewProvider);
+    super(viewProvider, PyiLanguageDialect.getInstance());
+  }
+
+  @NotNull
+  @Override
+  public FileType getFileType() {
+    return PyiFileType.INSTANCE;
   }
 
   @Override
