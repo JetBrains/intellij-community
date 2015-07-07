@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
@@ -346,6 +347,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   private boolean noIntersections(Rectangle bounds) {
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
+    if (owner == null || !SystemInfo.isWindows && !owner.isFocused()) {
+      return false; // disable expandable hints if IDEA has no focus
+    }
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
     Window focus = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
     for (Window other : owner.getOwnedWindows()) {
