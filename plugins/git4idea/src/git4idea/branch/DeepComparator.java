@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -177,7 +176,7 @@ public class DeepComparator implements Disposable {
                   @NotNull Map<GitRepository, GitBranch> repositoriesWithCurrentBranches,
                   @NotNull VcsLogDataProvider dataProvider,
                   @NotNull String branchToCompare) {
-      super(project, "Comparing branches...");
+      super(project, "Comparing Branches...");
       myProject = project;
       myUi = ui;
       myRepositoriesWithCurrentBranches = repositoriesWithCurrentBranches;
@@ -218,7 +217,8 @@ public class DeepComparator implements Disposable {
         @NotNull
         @Override
         public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-          return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(commitIndex) ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND : null);
+          return VcsCommitStyleFactory
+            .foreground(!myNonPickedCommits.contains(commitIndex) ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND : null);
         }
       };
       myUi.addHighlighter(myHighlighter);

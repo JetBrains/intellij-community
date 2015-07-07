@@ -51,7 +51,8 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
       VcsLogBranchFilter branchFilter = myFilterUi.getFilters().getBranchFilter();
       if (currentBranch != null &&
           (branchFilter == null || !Collections.singleton(currentBranch).containsAll(branchFilter.getBranchNames()))) {
-        Condition<Hash> condition = myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
+        Condition<Hash> condition =
+          myDataHolder.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
         if (condition.value(details.getId())) {
           return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
         }
@@ -61,12 +62,13 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull
-    private static final String ID = "CURRENT_BRANCH";
+    @NotNull private static final String ID = "CURRENT_BRANCH";
 
     @NotNull
     @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogFilterUi filterUi) {
+    public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder,
+                                               @NotNull VcsLogUiProperties uiProperties,
+                                               @NotNull VcsLogFilterUi filterUi) {
       return new CurrentBranchHighlighter(logDataHolder, uiProperties, filterUi);
     }
 

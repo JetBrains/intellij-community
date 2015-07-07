@@ -80,8 +80,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull
-    private static final String ID = "MY_COMMITS";
+    @NotNull private static final String ID = "MY_COMMITS";
 
     @NotNull
     @Override
