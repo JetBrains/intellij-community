@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteArrayCharSequence implements CharSequenceWithStringHash {
@@ -30,12 +31,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   public int hashCode() {
     int h = hash;
     if (h == 0) {
-      byte[] chars = myChars;
-
-      for (byte aChar : chars) {
-        h = 31 * h + aChar;
-      }
-      hash = h;
+      hash = h = StringUtil.stringHashCode(this, 0, length());
     }
     return h;
   }
