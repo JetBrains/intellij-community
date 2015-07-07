@@ -146,6 +146,8 @@ class UISettingsState : BaseState() {
   var hideNavigationOnFocusLoss by property(true)
   @get:OptionTag("DND_WITH_PRESSED_ALT_ONLY")
   var dndWithPressedAltOnly by property(false)
+  @get:OptionTag("LANGUAGE_FLAGS")
+  var languageFlags by property(false)  // Android Studio: used reflectively by FlagManager.showFlagsForLanguages
   @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE")
   var defaultAutoScrollToSource by property(false)
   @Transient
