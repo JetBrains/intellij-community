@@ -123,6 +123,8 @@ public class UnimplementInterfaceAction implements IntentionAction {
     }
     element.delete();
 
+    if (target == psiClass) return;
+
     final Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
     for (PsiClass aClass : psiClass.getSupers()) {
       Collections.addAll(superMethods, aClass.getAllMethods());
