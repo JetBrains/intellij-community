@@ -27,14 +27,13 @@ import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Lifetime
 import com.jetbrains.reactivemodel.util.createMeta
-import com.jetbrains.reactivemodel.util.emptyMeta
 import com.jetbrains.reactivemodel.util.lifetime
+import com.jetbrains.reactivemodel.util.*
 import java.util.HashMap
 
 
-public class ProjectViewHost(val project: Project, val projectView: ProjectView?, lifetime: Lifetime,
-                             reactiveModel: ReactiveModel, p: Path, val treeStructure: AbstractTreeStructure,
-                             val viewPane: AbstractProjectViewPSIPane) : MetaHost(lifetime, reactiveModel, p) {
+public class ProjectViewHost(val project: Project, val projectView: ProjectView?, reactiveModel: ReactiveModel,
+                             p: Path, val treeStructure: AbstractTreeStructure, val viewPane: AbstractProjectViewPSIPane) : MetaHost(reactiveModel, p) {
 
   val paneId = viewPane.getId()
   val comp = GroupByTypeComparator(projectView, paneId)
@@ -84,9 +83,9 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
         val path = openDirs[ptrManager.createSmartPsiElementPointer(dir)]
         if (path != null) {
           reactiveModel.transaction { m ->
-            val descr = path.getIn(m)!!.meta.valAt("descriptor") as AbstractTreeNode<*>
-            val index = path.getIn(m)!!.meta.valAt("index") as Int
-            updateChilds(m, descr, path, index)
+            val descr = path.getIn(m)!!.meta["descriptor"] as AbstractTreeNode<*>
+            val index = path.getIn(m)!!.meta["index"] as Int
+            updateChilds(m, descr, path.dropLast(1), index)
           }
         }
       }
@@ -111,14 +110,16 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
     map.put("order", PrimitiveModel(index))
     map.put("childs", MapModel())
 
-    val stateSignal = reactiveModel.subscribe(lifetime, path / descriptor.toString())
-    com.jetbrains.reactivemodel.reaction(true, "update state of project tree node", stateSignal) { state ->
-      if (state != null) {
-        state as MapModel
-        val openState = (state["state"] as PrimitiveModel<*>).value
-        if (openState == "open" && (state["childs"] == null || (state["childs"] as MapModel).isEmpty())) {
-          reactiveModel.transaction { m ->
-            updateChilds(m, descriptor, path, index)
+    if(state != "leaf") {
+      val stateSignal = reactiveModel.subscribe(meta.lifetime(), path / descriptor.toString())
+      reaction(true, "update state of project tree node", stateSignal) { state ->
+        if (state != null) {
+          state as MapModel
+          val openState = (state["state"] as PrimitiveModel<*>).value
+          if (openState == "open" && (state["childs"] == null || (state["childs"] as MapModel).isEmpty())) {
+            reactiveModel.transaction { m ->
+              updateChilds(m, descriptor, path, index)
+            }
           }
         }
       }
@@ -134,7 +135,7 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
     val childsLifetime = Lifetime.create(parentLifetime).lifetime
     if (descriptor.getValue() is PsiDirectory) {
       val ptr = ptrManager.createSmartPsiElementPointer(descriptor.getValue() as PsiDirectory)
-      openDirs[ptr] = path
+      openDirs[ptr] = parentPath
       childsLifetime += {
         openDirs.remove(ptr)
       }

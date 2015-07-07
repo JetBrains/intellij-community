@@ -29,7 +29,7 @@ import com.jetbrains.reactivemodel.util.Lifetime
 import gnu.trove.TObjectIntHashMap
 import java.util.*
 
-class TabViewHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path) : MetaHost(lifetime, reactiveModel, path) {
+class TabViewHost(reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveModel, path) {
   companion object {
     val editorsPath = "editors"
   }
@@ -42,7 +42,7 @@ class TabViewHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path) 
   var currentIdx = 0
 
   fun addEditor(editor: Editor, file: VirtualFile) {
-    EditorHost(Lifetime.create(lifetime).lifetime, reactiveModel, path / editorsPath / currentIdx.toString(), file, editor, true)
+    EditorHost(reactiveModel, path / editorsPath / currentIdx.toString(), file, editor, true)
     fileToEditorIdx.put(file, currentIdx++)
   }
 
@@ -76,7 +76,7 @@ class TabViewHost(lifetime: Lifetime, reactiveModel: ReactiveModel, path: Path) 
   }
 
   /**
-   * Get first convinient editor for set active if current active removed
+   * Get first convenient editor for set active if current active removed
    */
   private fun getActiveEditorCandidate(m: MapModel, removed: Int): String? {
     return ((path / editorsPath).getIn(m) as MapModel).keySet()

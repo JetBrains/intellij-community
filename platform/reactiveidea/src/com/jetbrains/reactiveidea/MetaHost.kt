@@ -15,28 +15,45 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.github.krukow.clj_lang.IPersistentMap
 import com.github.krukow.clj_lang.PersistentHashMap
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
+import com.jetbrains.reactivemodel.getIn
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.putIn
 import com.jetbrains.reactivemodel.util.Lifetime
+import com.jetbrains.reactivemodel.util.emptyMeta
+import com.jetbrains.reactivemodel.util.get
 import java.util.*
 
 /**
- * Base host. initalize model with metadata
+ * Base host. Initialize model with metadata
  */
-public open class MetaHost(val lifetime: Lifetime,
-                           public val reactiveModel: ReactiveModel,
+public open class MetaHost(public val reactiveModel: ReactiveModel,
                            public val path: Path) {
 
+  private var life: Lifetime? = null;
+
   protected fun initModel(initFunc: ((MapModel) -> MapModel) = { m -> m }) {
-    val hostMeta = PersistentHashMap.create(buildMeta())
     reactiveModel.transaction { m ->
+      var parent = path;
+      var parentLifetime: Lifetime? = null
+      while(parent != Path()) {
+        parent = parent.dropLast(1)
+        parentLifetime = parent.getIn(m)?.meta?.valAt("lifetime") as? Lifetime
+        if(parentLifetime != null) {
+          break
+        }
+      }
+      if(parentLifetime == null) {
+        throw RuntimeException("Shouldn't happens!")
+      }
+      life = Lifetime.create(parentLifetime).lifetime
+      val hostMeta = PersistentHashMap.create(buildMeta())
       initFunc(path.putIn(m, MapModel(meta = hostMeta)))
     }
   }
-
 
   protected open fun buildMeta(): HashMap<String, Any> {
     val map = HashMap<String, Any>()
@@ -44,4 +61,7 @@ public open class MetaHost(val lifetime: Lifetime,
     map["lifetime"] = lifetime
     return map
   }
+
+  val lifetime: Lifetime
+    get() = life as Lifetime;
 }

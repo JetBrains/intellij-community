@@ -81,8 +81,7 @@ public class ClientMarkupHost(val markupModel: MarkupModelEx,
 
 public class ServerMarkupHost(val markupModel: MarkupModelEx,
                               reactiveModel: ReactiveModel,
-                              path: Path,
-                              lifetime: Lifetime) : MetaHost(lifetime, reactiveModel, path) {
+                              path: Path) : MetaHost(reactiveModel, path) {
   var markupIdFactory = 0
   val markupIdKey = Key<String>("com.jetbrains.reactiveidea.markupId")
   volatile var disposed = false;

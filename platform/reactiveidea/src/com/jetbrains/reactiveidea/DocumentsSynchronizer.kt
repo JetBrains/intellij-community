@@ -105,27 +105,31 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         val projectView = ProjectView.getInstance(project)
         val viewPane = projectView.getProjectViewPaneById(ProjectViewPane.ID) as AbstractProjectViewPSIPane
         val treeStructure = viewPane.createStructure()
-        viewHost = ProjectViewHost(project, projectView, lifetime.lifetime, serverModel, Path("project-view"), treeStructure, viewPane)
+        viewHost = ProjectViewHost(project, projectView, serverModel, Path("project-view"), treeStructure, viewPane)
       })
 
-      tabHost = TabViewHost(lifetime.lifetime, serverModel, Path("tab-view"))
+      tabHost = TabViewHost(serverModel, Path("tab-view"))
 
 
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-              val editors = FileEditorManager.getInstance(project).getAllEditors(file)
-                  .filter { it is TextEditor }
-                  .map { (it as TextEditor).getEditor() }
+              if(!lifetime.lifetime.isTerminated) {
+                val editors = FileEditorManager.getInstance(project).getAllEditors(file)
+                    .filter { it is TextEditor }
+                    .map { (it as TextEditor).getEditor() }
 
-              if (!editors.isEmpty()) {
-                val editor = editors.first()
-                tabHost!!.addEditor(editor, file)
+                if (!editors.isEmpty()) {
+                  val editor = editors.first()
+                  tabHost!!.addEditor(editor, file)
+                }
               }
             }
 
             override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-              tabHost!!.removeEditor(file)
+              if(!lifetime.lifetime.isTerminated) {
+                tabHost!!.removeEditor(file)
+              }
             }
 
             override fun selectionChanged(event: FileEditorManagerEvent) {
@@ -176,9 +180,6 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
 
     serverEditorTracker.setActiveEditors(activeEditors)
   }
-
-  private fun isClient(): Boolean = System.getProperty("com.jetbrains.reactiveidea.client") == "true"
-
 
   override fun disposeComponent() {
     lifetime.terminate()
