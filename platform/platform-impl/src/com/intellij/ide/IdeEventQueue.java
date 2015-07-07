@@ -811,11 +811,14 @@ public class IdeEventQueue extends EventQueue {
       if (we.getID() == WindowEvent.WINDOW_ACTIVATED || we.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
         appImpl.myCancelDeactivation = true;
         if (!appImpl.isActive()) {
-          appImpl.tryToApplyActivationState(true, eventWindow);
+          OpenAPIAccessor.getApplicationImplAccessor().applyActivation(appImpl, eventWindow);
         }
       }
       else if (we.getID() == WindowEvent.WINDOW_DEACTIVATED) {
         requestToDeactivateTime.getAndSet(System.currentTimeMillis());
+
+        // For stuf that cannot wait timeout we notify about deactivation
+        OpenAPIAccessor.getApplicationImplAccessor().applyDeactivation(appImpl, eventWindow);
 
         // We do not know for sure that application is going to be inactive,
         // we could just be showing a popup or another transient window.
@@ -824,8 +827,8 @@ public class IdeEventQueue extends EventQueue {
 
         Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
           public void actionPerformed(ActionEvent evt) {
-            if (appImpl.isActive() && !appImpl.isDeactivationCanceled()) {
-              appImpl.tryToApplyActivationState(false, eventWindow);
+            if (appImpl.isActiveDelayed() && !appImpl.isDeactivationCanceled()) {
+              OpenAPIAccessor.getApplicationImplAccessor().applyDelayedDeactivation(appImpl, eventWindow);
             }
           }
         });
