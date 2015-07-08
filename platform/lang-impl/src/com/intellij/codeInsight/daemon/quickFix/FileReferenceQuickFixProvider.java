@@ -170,10 +170,13 @@ public class FileReferenceQuickFixProvider {
         String templateName = myReference.getNewFileTemplateName();
         if (templateName != null) {
           Project project = myReference.getElement().getProject();
-          FileTemplate template = FileTemplateManager.getInstance(project).getTemplate(templateName);
+          FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+          FileTemplate template = fileTemplateManager.getTemplate(templateName);
+          if (template == null) template = fileTemplateManager.findInternalTemplate(templateName);
+
           if (template != null) {
             try {
-              return template.getText(FileTemplateManager.getInstance(project).getDefaultProperties());
+              return template.getText(fileTemplateManager.getDefaultProperties());
             } catch (IOException ex) {
               throw new RuntimeException(ex);
             }

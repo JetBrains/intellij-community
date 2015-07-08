@@ -456,9 +456,9 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameCompleteMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
-    <internalFileTemplate name="Html"/>
-    <internalFileTemplate name="Html5"/>
-    <internalFileTemplate name="Xhtml"/>
+    <internalFileTemplate name="Html File"/>
+    <internalFileTemplate name="Html4 File"/>
+    <internalFileTemplate name="Xhtml File"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
