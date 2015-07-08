@@ -301,7 +301,12 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected void loadFrameState() {
     final Window frame = getFrame();
-    if (!WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
+    if(myDimensionKey == null) {
+      final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
+      if (ideFrame != null) {
+        frame.setBounds(ideFrame.suggestChildFrameBounds());
+      }
+    } else if(!WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
       final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
       if (ideFrame != null) {
         frame.setBounds(ideFrame.suggestChildFrameBounds());
