@@ -23,8 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.xml.XmlEntityDecl;
@@ -76,7 +78,7 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       final PsiElement element = file.findElementAt(start + i);
-      if (element != null && element.getNode().getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
+      if (element != null && isCharacterElement(element)) {
         if (c == '<' || c == '>' || c == '&' || c == '"' || c == '\'' || c > 0xff) {
           final String escape = ESCAPES.getValue(file).get(c);
           if (escape != null) {
@@ -89,6 +91,17 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
     }
     return result.toString();
   }
+
+  private static boolean isCharacterElement(PsiElement element) {
+    final IElementType type = element.getNode().getElementType();
+    if (type == XmlTokenType.XML_DATA_CHARACTERS) return true;
+    if (type == XmlTokenType.XML_START_TAG_START) {
+      if (element.getNextSibling() instanceof PsiErrorElement) return true;
+      if (element.getParent() instanceof PsiErrorElement) return true;
+    }
+    return false;
+  }
+
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return ApplicationManager.getApplication().isInternal() && file instanceof XmlFile;
