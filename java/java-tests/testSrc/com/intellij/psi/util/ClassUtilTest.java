@@ -23,6 +23,11 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
  * @author yole
  */
 public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/psi/classUtil/";
+  }
+
   public void testFindPsiClassByJvmName() {
     myFixture.configureByFile("ManyClasses.java");
 
@@ -32,6 +37,12 @@ public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1FooLocal"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$1FooLocal$1"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Child"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Child$"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Ma$ked"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Ma$ked$Ne$ted"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Edge"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Edge$"));
+    assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$Edge$$$tu_pid_ne$s"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "Local"));
     assertNotNull(ClassUtil.findPsiClassByJVMName(getPsiManager(), "Local$Sub"));
 
@@ -46,10 +57,5 @@ public class ClassUtilTest extends LightCodeInsightFixtureTestCase {
     PsiClass fooLocal2 = ClassUtil.findPsiClassByJVMName(getPsiManager(), "ManyClasses$2FooLocal");
     assertNotNull(fooLocal2);
     assertEquals("Runnable", fooLocal2.getImplementsListTypes()[0].getClassName());
-  }
-
-  @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/psi/classUtil/";
   }
 }

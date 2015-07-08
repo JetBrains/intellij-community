@@ -28,6 +28,18 @@ public class ManyClasses {
   }
   
   public class Child { }
+
+  public class Child$ { }
+
+  public class Ma$ked {
+    public class Ne$ted { }
+  }
+
+  public class Edge { }
+
+  public class Edge$ {
+    public class $tu_pid_ne$s { }
+  }
 }
 
 class Local {

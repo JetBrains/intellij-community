@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassUtil {
-  private ClassUtil() {}
+  private ClassUtil() { }
 
   public static String extractPackageName(String className) {
     if (className != null) {
       int i = className.lastIndexOf('.');
-      return i == -1 ? "" : className.substring(0, i);                                
-
+      return i == -1 ? "" : className.substring(0, i);
     }
     return null;
   }
@@ -40,10 +39,10 @@ public class ClassUtil {
   }
 
   public static String createNewClassQualifiedName(String qualifiedName, String className) {
-    if (className == null){
+    if (className == null) {
       return null;
     }
-    if (qualifiedName == null || qualifiedName.isEmpty()){
+    if (qualifiedName == null || qualifiedName.isEmpty()) {
       return className;
     }
     return qualifiedName + "." + extractClassName(className);
@@ -65,7 +64,7 @@ public class ClassUtil {
       buf.append(qName);
     }
     else {
-      final PsiClass parentClass = getContainerClass(aClass);
+      final PsiClass parentClass = getContainingClass(aClass);
       if (parentClass != null) {
         formatClassName(parentClass, buf);
         buf.append("$");
@@ -79,7 +78,7 @@ public class ClassUtil {
   }
 
   @Nullable
-  private static PsiClass getContainerClass(@NotNull PsiClass aClass) {
+  private static PsiClass getContainingClass(@NotNull PsiClass aClass) {
     PsiElement parent = aClass.getContext();
     while (parent != null && !(parent instanceof PsiClass)) {
       parent = parent.getContext();
@@ -89,18 +88,20 @@ public class ClassUtil {
 
   public static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass) {
     final int[] result = {-1};
-    final PsiClass containingClass = getContainerClass(psiClass);
+    final PsiClass containingClass = getContainingClass(psiClass);
     if (containingClass != null) {
       containingClass.accept(new JavaRecursiveElementVisitor() {
         private int myCurrentIdx = 0;
 
-        @Override public void visitElement(PsiElement element) {
+        @Override
+        public void visitElement(PsiElement element) {
           if (result[0] == -1) {
             super.visitElement(element);
           }
         }
 
-        @Override public void visitClass(PsiClass aClass) {
+        @Override
+        public void visitClass(PsiClass aClass) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
             myCurrentIdx++;
@@ -114,11 +115,13 @@ public class ClassUtil {
     return result[0];
   }
 
-  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull final PsiClass containingClass) {
+  @SuppressWarnings("unused")
+  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull PsiClass containingClass) {
     return findNonQualifiedClassByIndex(indexName, containingClass, false);
   }
 
-  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull final PsiClass containingClass,
+  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName,
+                                                      @NotNull final PsiClass containingClass,
                                                       final boolean jvmCompatible) {
     String prefix = getDigitPrefix(indexName);
     final int idx = !prefix.isEmpty() ? Integer.parseInt(prefix) : -1;
@@ -127,13 +130,15 @@ public class ClassUtil {
     containingClass.accept(new JavaRecursiveElementVisitor() {
       private int myCurrentIdx = 0;
 
-      @Override public void visitElement(PsiElement element) {
+      @Override
+      public void visitElement(PsiElement element) {
         if (result[0] == null) {
           super.visitElement(element);
         }
       }
 
-      @Override public void visitClass(PsiClass aClass) {
+      @Override
+      public void visitClass(PsiClass aClass) {
         if (!jvmCompatible) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
@@ -156,7 +161,8 @@ public class ClassUtil {
         }
       }
 
-      @Override public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      @Override
+      public void visitTypeParameter(final PsiTypeParameter classParameter) {
         if (!jvmCompatible) {
           super.visitTypeParameter(classParameter);
         }
@@ -180,61 +186,71 @@ public class ClassUtil {
     return i == 0 ? "" : indexName.substring(0, i);
   }
 
-
   /**
-   * Finds anonymous classes. Uses javac notation.
-   * @param psiManager project to search
-   * @param externalName class qualified name
-   * @return found psiClass
+   * Looks for inner and anonymous classes by FQN in a javac notation ('pkg.Top$Inner').
    */
   @Nullable
-  public static PsiClass findPsiClass(@NotNull PsiManager psiManager, @NotNull String externalName){
-    return findPsiClass(psiManager, externalName, null, false);
+  public static PsiClass findPsiClass(@NotNull PsiManager manager, @NotNull String name) {
+    return findPsiClass(manager, name, null, false);
   }
 
   @Nullable
-  public static PsiClass findPsiClass(@NotNull PsiManager psiManager,
-                                      @NotNull String externalName,
-                                      PsiClass psiClass,
+  public static PsiClass findPsiClass(@NotNull PsiManager manager,
+                                      @NotNull String name,
+                                      @Nullable PsiClass parent,
                                       boolean jvmCompatible) {
-    return findPsiClass(psiManager, externalName, psiClass, jvmCompatible, GlobalSearchScope.allScope(psiManager.getProject()));
+    GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
+    return findPsiClass(manager, name, parent, jvmCompatible, scope);
   }
 
   @Nullable
-  public static PsiClass findPsiClass(@NotNull PsiManager psiManager,
-                                      @NotNull String externalName,
-                                      @Nullable PsiClass psiClass,
-                                      boolean jvmCompatible, 
+  public static PsiClass findPsiClass(@NotNull PsiManager manager,
+                                      @NotNull String name,
+                                      @Nullable PsiClass parent,
+                                      boolean jvmCompatible,
                                       @NotNull GlobalSearchScope scope) {
-    for (int pos = 0; pos < externalName.length(); pos++) {
-      if (externalName.charAt(pos) == '$') {
-        PsiClass parentClass = psiClass;
-        if (parentClass == null) {
-          parentClass = JavaPsiFacade.getInstance(psiManager.getProject())
-            .findClass(externalName.substring(0, pos), scope);
-        }
-        if (parentClass == null) continue;
-        PsiClass res = findSubclass(psiManager, externalName.substring(pos + 1), parentClass, jvmCompatible);
-        if (res != null) return res;
+    if (parent != null) {
+      return findSubClass(name, parent, jvmCompatible);
+    }
+
+    PsiClass result = JavaPsiFacade.getInstance(manager.getProject()).findClass(name, scope);
+    if (result != null) return result;
+
+    int p = 0;
+    while ((p = name.indexOf('$', p + 1)) > 0 && p < name.length() - 1) {
+      String prefix = name.substring(0, p);
+      parent = JavaPsiFacade.getInstance(manager.getProject()).findClass(prefix, scope);
+      if (parent != null) {
+        String suffix = name.substring(p + 1);
+        result = findSubClass(suffix, parent, jvmCompatible);
+        if (result != null) return result;
       }
     }
-    return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(externalName, scope);
+
+    return null;
   }
 
   @Nullable
-  private static PsiClass findSubclass(@NotNull PsiManager psiManager,
-                                       @NotNull String externalName,
-                                       final PsiClass psiClass,
-                                       final boolean jvmCompatible) {
-    for (int pos = 0; pos < externalName.length(); pos++) {
-      if (externalName.charAt(pos) == '$') {
-        PsiClass anonymousClass = findNonQualifiedClassByIndex(externalName.substring(0, pos), psiClass, jvmCompatible);
-        if (anonymousClass == null) return null;
-        PsiClass res = findPsiClass(psiManager, externalName.substring(pos), anonymousClass, jvmCompatible);
-        if (res != null) return res;
+  private static PsiClass findSubClass(@NotNull String name, @NotNull PsiClass parent, boolean jvmCompatible) {
+    PsiClass result = isIndexed(name) ? findNonQualifiedClassByIndex(name, parent, jvmCompatible) : parent.findInnerClassByName(name, false);
+    if (result != null) return result;
+
+    int p = 0;
+    while ((p = name.indexOf('$', p + 1)) > 0 && p < name.length() - 1) {
+      String prefix = name.substring(0, p);
+      PsiClass subClass = isIndexed(prefix) ? findNonQualifiedClassByIndex(prefix, parent, jvmCompatible) : parent.findInnerClassByName(prefix, false);
+      if (subClass != null) {
+        String suffix = name.substring(p + 1);
+        result = findSubClass(suffix, subClass, jvmCompatible);
+        if (result != null) return result;
       }
     }
-    return findNonQualifiedClassByIndex(externalName, psiClass, jvmCompatible);
+
+    return null;
+  }
+
+  private static boolean isIndexed(String name) {
+    return Character.isDigit(name.charAt(0));
   }
 
   @Nullable
@@ -245,13 +261,14 @@ public class ClassUtil {
       if (parentName == null) {
         return null;
       }
-      
       return parentName + "$" + aClass.getName();
     }
     return aClass.getQualifiedName();
   }
 
-
+  /**
+   * Looks for inner and anonymous classes by internal name ('pkg/Top$Inner').
+   */
   @Nullable
   public static PsiClass findPsiClassByJVMName(@NotNull PsiManager manager, @NotNull String jvmClassName) {
     return findPsiClass(manager, jvmClassName.replace('/', '.'), null, true);
