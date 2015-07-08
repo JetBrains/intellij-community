@@ -191,8 +191,15 @@ public class DebugProcessEvents extends DebugProcessImpl {
               protected void action() throws Exception {
                 if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL && !DebuggerSession.enableBreakpointsDuringEvaluation()) {
                   // check if there is already one request with policy SUSPEND_ALL
-                  for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
+                  contexts: for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+                      for (Event event : eventSet) {
+                        if (event instanceof StepEvent) {
+                          // if step event is present - switch context
+                          ((SuspendManagerImpl)getSuspendManager()).popContext(context);
+                          continue contexts;
+                        }
+                      }
                       eventSet.resume();
                       return;
                     }
