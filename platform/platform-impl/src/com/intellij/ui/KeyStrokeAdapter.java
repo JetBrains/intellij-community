@@ -133,7 +133,7 @@ public class KeyStrokeAdapter implements KeyListener {
    * @return a key stroke or {@code null} if {@code ch} is undefined
    */
   private static KeyStroke getKeyStroke(char ch, int modifiers) {
-    return KeyEvent.CHAR_UNDEFINED == ch ? null : KeyStroke.getKeyStroke(ch, modifiers);
+    return KeyEvent.CHAR_UNDEFINED == ch ? null : KeyStroke.getKeyStroke(ch/*TODO:MAC, modifiers*/);
   }
 
   /**
