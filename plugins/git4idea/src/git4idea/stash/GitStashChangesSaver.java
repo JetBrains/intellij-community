@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
@@ -92,12 +92,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
     GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
   }
 
-  @Override
-  public void refresh() {
-    // we'll refresh more but this way we needn't compute what files under roots etc
-    LocalFileSystem.getInstance().refreshIoFiles(myChangeManager.getAffectedPaths());
-  }
-
   private void stash(Collection<VirtualFile> roots) throws VcsException {
     for (VirtualFile root : roots) {
       final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
@@ -131,6 +125,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH);
     GitCommandResult result = myGit.stashPop(repository, conflictDetector);
+    VfsUtil.markDirtyAndRefresh(false, true, false, root);
     if (result.success()) {
       return false;
     }

@@ -304,11 +304,6 @@ public class GitUpdateProcess {
     return compoundResult.join(result);
   }
 
-  private void restoreLocalChanges() {
-    mySaver.restoreLocalChanges();
-    mySaver.refresh();
-  }
-
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify() {
     return new GitFetcher(myProject, myProgressIndicator, false).fetchRootsAndNotify(myRepositories, "Update failed", false);

@@ -112,10 +112,4 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   protected void showSavedChanges() {
     myShelveViewManager.activateView(myShelvedLists.get(myShelvedLists.keySet().iterator().next()));
   }
-
-  @Override
-  public void refresh() {
-    // refreshed inside shelve manager
-  }
-
 }

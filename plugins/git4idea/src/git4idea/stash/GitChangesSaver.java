@@ -54,11 +54,6 @@ public abstract class GitChangesSaver {
   protected GitConflictResolver.Params myParams;
 
   /**
-   * Refreshes files changed during save or load.
-   */
-  public abstract void refresh();
-
-  /**
    * Returns an instance of the proper GitChangesSaver depending on the given save changes policy.
    * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
@@ -94,13 +89,6 @@ public abstract class GitChangesSaver {
       return;
     }
     save(rootsToSave);
-  }
-
-  /**
-   * Loads local changes from stash or shelf, and sorts the changes back to the change lists they were before update.
-   */
-  public void restoreLocalChanges() {
-    load();
   }
 
   public void notifyLocalChangesAreNotRestored() {
