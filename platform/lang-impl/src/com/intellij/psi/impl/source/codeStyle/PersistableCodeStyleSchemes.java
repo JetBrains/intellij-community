@@ -40,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
   additionalExportFile = CodeStyleSchemesImpl.CODE_STYLES_DIR_PATH
 )
 class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element> {
+  public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
+
   public PersistableCodeStyleSchemes(@NotNull SchemesManagerFactory schemesManagerFactory) {
     super(schemesManagerFactory);
   }
@@ -47,6 +49,8 @@ class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements Persis
   @Nullable
   @Override
   public Element getState() {
+    CodeStyleScheme currentScheme = getCurrentScheme();
+    CURRENT_SCHEME_NAME = currentScheme == null ? null : currentScheme.getName();
     return XmlSerializer.serialize(this, new SerializationFilter() {
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {

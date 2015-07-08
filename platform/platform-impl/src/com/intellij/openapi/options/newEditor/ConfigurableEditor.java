@@ -226,6 +226,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   final ActionCallback select(final Configurable configurable) {
+    assert !myDisposed : "Already disposed";
     ActionCallback callback = myCardPanel.select(configurable, false);
     callback.doWhenDone(new Runnable() {
       @Override

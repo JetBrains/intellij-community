@@ -86,13 +86,14 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
           resolver = WebServerPathToFileManager.getInstance(project).getResolver(path);
 
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-          PathInfo result = findByRelativePath(path, moduleRootManager.getSourceRoots(), resolver, moduleName);
-          if (result == null) {
-            result = findByRelativePath(path, moduleRootManager.getContentRoots(), resolver, moduleName);
-            if (result == null) {
-              result = findInModuleLibraries(path, module, resolver);
+          for (RootProvider rootProvider : RootProvider.values()) {
+            PathInfo result = findByRelativePath(path, rootProvider.getRoots(moduleRootManager), resolver, moduleName);
+            if (result != null) {
+              return result;
             }
           }
+
+          PathInfo result = findInModuleLibraries(path, module, resolver);
           if (result != null) {
             return result;
           }
@@ -110,15 +111,13 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
     }
 
     resolver = WebServerPathToFileManager.getInstance(project).getResolver(path);
-    PathInfo result = findByRelativePath(project, path, modules, true, resolver);
-    if (result == null) {
-      // let's find in content roots
-      result = findByRelativePath(project, path, modules, false, resolver);
-      if (result == null) {
-        return findInLibraries(project, modules, path, resolver);
+    for (RootProvider rootProvider : RootProvider.values()) {
+      PathInfo result = findByRelativePath(project, path, modules, rootProvider, resolver);
+      if (result != null) {
+        return result;
       }
     }
-    return result;
+    return findInLibraries(project, modules, path, resolver);
   }
 
   @Nullable
@@ -332,12 +331,12 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
   private static PathInfo findByRelativePath(@NotNull Project project,
                                              @NotNull String path,
                                              @NotNull Module[] modules,
-                                             boolean inSourceRoot,
+                                             @NotNull RootProvider rootProvider,
                                              @NotNull PairFunction<String, VirtualFile, VirtualFile> resolver) {
     for (Module module : modules) {
       if (!module.isDisposed()) {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        PathInfo result = findByRelativePath(path, inSourceRoot ? moduleRootManager.getSourceRoots() : moduleRootManager.getContentRoots(), resolver, null);
+        PathInfo result = findByRelativePath(path, rootProvider.getRoots(moduleRootManager), resolver, null);
         if (result != null) {
           result.moduleName = getModuleNameQualifier(project, module);
           return result;
@@ -345,5 +344,28 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
       }
     }
     return null;
+  }
+
+  private enum RootProvider {
+    SOURCE {
+      @Override
+      public VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager) {
+        return rootManager.getSourceRoots();
+      }
+    },
+    CONTENT {
+      @Override
+      public VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager) {
+        return rootManager.getContentRoots();
+      }
+    },
+    EXCLUDED {
+      @Override
+      public VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager) {
+        return rootManager.getExcludeRoots();
+      }
+    };
+
+    public abstract VirtualFile[] getRoots(@NotNull ModuleRootManager rootManager);
   }
 }

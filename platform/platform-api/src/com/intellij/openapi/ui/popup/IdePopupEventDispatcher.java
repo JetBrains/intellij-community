@@ -29,4 +29,6 @@ public interface IdePopupEventDispatcher {
   boolean requestFocus();
 
   boolean close();
+
+  void setRestoreFocusSilentely();
 }

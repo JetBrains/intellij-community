@@ -87,7 +87,11 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
         setText("[incomplete] " + name);
         setIcon(wrapIconWithWarningDecorator(icon));
       }
-      else if (sdk instanceof PyDetectedSdk){
+      else if (PythonSdkType.hasInvalidRemoteCredentials(sdk)) {
+        setText("[invalid] " + name);
+        setIcon(wrapIconWithWarningDecorator(icon));
+      }
+      else if (sdk instanceof PyDetectedSdk) {
         setText(name);
         setIcon(IconLoader.getTransparentIcon(icon));
       }

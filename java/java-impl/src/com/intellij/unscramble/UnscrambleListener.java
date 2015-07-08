@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * @author Konstantin Bulenkov
  */
-public class UnscrambleListener implements ApplicationActivationListener {
+public class UnscrambleListener extends ApplicationActivationListener.Adapter {
   private static final int MAX_STACKTRACE_SIZE = 100 * 1024;
   private String stacktrace = null;
 

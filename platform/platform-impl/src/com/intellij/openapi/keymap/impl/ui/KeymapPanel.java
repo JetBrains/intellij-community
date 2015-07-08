@@ -150,7 +150,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CHANGE_TOPIC, this);
+    //ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CHANGE_TOPIC, this);
   }
 
   @Override
@@ -777,8 +777,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     ensureUniqueKeymapNames();
     KeymapManagerImpl keymapManager = (KeymapManagerImpl)KeymapManager.getInstance();
     // we must specify the same filter, which was used to get original items
-    keymapManager.setKeymaps(myEditor.apply(), KEYMAP_FILTER);
-    keymapManager.setActiveKeymap(myEditor.getModel().getSelected());
+    keymapManager.setKeymaps(myEditor.apply(), myEditor.getModel().getSelected(), KEYMAP_FILTER);
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
@@ -818,6 +817,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public JComponent createComponent() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CHANGE_TOPIC, this);
     return this;
   }
 

@@ -8,7 +8,7 @@ import static java.util.Arrays.*;
 public class Foo {
   {
     Block<Integer[]> b2 = Arrays::sort;
-    sort((byte[]) null);
+    sort((byte[])null);
   }
 
   public interface Block<T> {

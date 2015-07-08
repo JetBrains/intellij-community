@@ -103,4 +103,9 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
   public void testConvertSetToList() {
     doIntentionTest(CONVERT_SET_TO_LIST);
   }
+
+  // PY-16335
+  public void testConvertLiteralPreservesFormattingAndComments() {
+    doIntentionTest(CONVERT_TUPLE_TO_LIST);
+  }
 }

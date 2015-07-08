@@ -1068,16 +1068,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     callback.setRejected();
   }
 
-  private class AppListener implements ApplicationActivationListener {
-    @Override
-    public void applicationDeactivated(IdeFrame ideFrame) {
-      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Component parent = UIUtil.findUltimateParent(owner);
-
-      if (parent == ideFrame) {
-        myLastFocusedAtDeactivation.put(ideFrame, owner);
-      }
-    }
+  private class AppListener extends ApplicationActivationListener.Adapter {
 
     @Override
     public void applicationActivated(final IdeFrame ideFrame) {
@@ -1091,6 +1082,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       } else {
         focusLastFocusedComponent(ideFrame);
       }
+    }
+
+    @Override
+    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        Component parent = UIUtil.findUltimateParent(owner);
+
+        if (parent == ideFrame) {
+          myLastFocusedAtDeactivation.put(ideFrame, owner);
+        }
     }
 
     private void focusLastFocusedComponent(IdeFrame ideFrame) {

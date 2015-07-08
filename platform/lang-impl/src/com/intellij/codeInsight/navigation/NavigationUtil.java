@@ -19,6 +19,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.navigation.NavigationItem;
@@ -114,6 +115,9 @@ public final class NavigationUtil {
       }
     };
     list.setCellRenderer(renderer);
+
+    list.setFont(ChooseByNameBase.getEditorFont());
+
     if (selection != null) {
       list.setSelectedValue(selection, true);
     }
@@ -137,7 +141,12 @@ public final class NavigationUtil {
     }
     renderer.installSpeedSearch(builder, true);
 
-    return builder.setItemChoosenCallback(runnable).createPopup();
+    JBPopup popup = builder.setItemChoosenCallback(runnable).createPopup();
+
+    builder.getScrollPane().setBorder(null);
+    builder.getScrollPane().setViewportBorder(null);
+
+    return popup;
   }
 
   public static boolean activateFileWithPsiElement(@NotNull PsiElement elt) {

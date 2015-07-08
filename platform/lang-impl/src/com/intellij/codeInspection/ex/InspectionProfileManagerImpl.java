@@ -131,10 +131,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
       }
 
       @Override
-      public void onCurrentSchemeChanged(final Scheme oldCurrentScheme) {
+      public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
         Profile current = mySchemesManager.getCurrentScheme();
         if (current != null) {
-          fireProfileChanged((Profile)oldCurrentScheme, current, null);
+          fireProfileChanged((Profile)oldScheme, current, null);
         }
         onProfilesChanged();
       }
@@ -287,9 +287,10 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   public void setRootProfile(String rootProfile) {
     Profile current = mySchemesManager.getCurrentScheme();
     if (current != null && !Comparing.strEqual(rootProfile, current.getName())) {
-      fireProfileChanged(current, getProfile(rootProfile), null);
+      Profile scheme = getProfile(rootProfile);
+      fireProfileChanged(current, scheme, null);
+      mySchemesManager.setCurrent(scheme, false);
     }
-    mySchemesManager.setCurrentSchemeName(rootProfile);
   }
 
   @Override

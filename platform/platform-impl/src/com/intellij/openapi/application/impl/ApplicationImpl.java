@@ -131,10 +131,36 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   private volatile boolean myActive;
+  private volatile boolean myActiveDelayed;
   public volatile boolean myCancelDeactivation;
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
+
+  static {
+        OpenAPIAccessor.setApplicationImplAccessor(new OpenAPIAccessor.ApplicationImplAccessor() {
+
+          @Override
+          public boolean applyActivation(ApplicationImpl app, Window window) {
+            return app.applyActivation(window);
+          }
+
+          @Override
+          public boolean applyDeactivation(ApplicationImpl app, Window window) {
+            return app.applyDeactivation(window);
+          }
+
+          @Override
+          public boolean applyDelayedDeactivation(ApplicationImpl app, Window window) {
+            return app.applyDelayedDeactivation(window);
+          }
+        });
+  }
+
+  public boolean isActiveDelayed() {
+    return myActiveDelayed;
+  }
+
   private static class Status {
     // higher three bits are for IS_* flags
     // lower bits are for edtSafe counter
@@ -1177,26 +1203,45 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myCancelDeactivation;
   }
 
-  public boolean tryToApplyActivationState(boolean active, Window window) {
-    final Component frame = UIUtil.findUltimateParent(window);
+  boolean applyActivation (Window window) {
+    if (!isActive()) {
+      myActive = true;
+      myActiveDelayed = true;
+      IdeFrame ideFrame = getIdeFrameFromWindow(window);
+      if (ideFrame != null) {
+        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
+      }
+    }
+    return false;
+  }
 
-    if (frame instanceof IdeFrame) {
-      final IdeFrame ideFrame = (IdeFrame)frame;
-      if (isActive() != active) {
-        myActive = active;
-        System.setProperty("idea.active", String.valueOf(myActive));
-        ApplicationActivationListener publisher = getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC);
-        if (active) {
-          publisher.applicationActivated(ideFrame);
-        }
-        else {
-          publisher.applicationDeactivated(ideFrame);
-        }
+  boolean applyDeactivation (Window window) {
+    if (isActive()) {
+      myActive = false;
+      IdeFrame ideFrame = getIdeFrameFromWindow(window);
+      if (ideFrame != null) {
+        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
         return true;
       }
     }
-
     return false;
+  }
+
+  boolean applyDelayedDeactivation (Window window) {
+    if (isActiveDelayed()) {
+      myActiveDelayed = false;
+      IdeFrame ideFrame = getIdeFrameFromWindow(window);
+      if (ideFrame != null) {
+        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  IdeFrame getIdeFrameFromWindow (Window window) {
+    final Component frame = UIUtil.findUltimateParent(window);
+    return (frame instanceof IdeFrame) ? (IdeFrame)frame : null;
   }
 
   @Override

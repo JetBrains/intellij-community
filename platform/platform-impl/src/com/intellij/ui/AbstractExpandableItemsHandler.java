@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
@@ -348,7 +349,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
     Window focus = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    boolean focused = SystemInfo.isWindows || owner.isFocused();
     for (Window other : owner.getOwnedWindows()) {
+      if (!focused && !SystemInfo.isWindows) {
+        focused = other.isFocused();
+      }
       if (popup != other && other.isVisible() && bounds.x + 10 >= other.getX() && bounds.intersects(other.getBounds())) {
         return false;
       }
@@ -356,7 +361,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         focus = null; // already checked
       }
     }
-    return focus == owner || focus == null || !owner.getBounds().intersects(focus.getBounds());
+    return focused && (focus == owner || focus == null || !owner.getBounds().intersects(focus.getBounds()));
   }
 
   private void hideHint() {

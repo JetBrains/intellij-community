@@ -144,6 +144,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       return getThreadReference().status();
     }
+    catch (IllegalThreadStateException e) {
+      return ThreadReference.THREAD_STATUS_ZOMBIE;
+    }
     catch (ObjectCollectedException ignored) {
       return ThreadReference.THREAD_STATUS_ZOMBIE;
     }

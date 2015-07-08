@@ -17,9 +17,12 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.AbstractRecordsTable;
+import com.intellij.util.io.storage.RecordIdIterator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.BitSet;
 
 // Twice as compact as AbstractRecordsTable: 8 bytes per record: int offset ([0..Integer.MAX_INT]), int ((capacity [0..0xFFFF) << 16) | (size [-1..0xFFFF)))
 // if int offset is overflowed then new 8 byte record is created to
@@ -176,5 +179,85 @@ public class CompactRecordsTable extends AbstractRecordsTable {
       return;
     }
     myStorage.putInt(sizeAndCapacityOfRecordAbsoluteOffset, (currentValue & SIZE_MASK) | (capacity << CAPACITY_SHIFT));
+  }
+
+  @Override
+  public void deleteRecord(int record) throws IOException {
+    final int sizeAndCapacityOfRecordAbsoluteOffset = getOffset(record, SIZE_AND_CAPACITY_OFFSET);
+    final int sizeAndCapacityValue = myStorage.getInt(sizeAndCapacityOfRecordAbsoluteOffset);
+
+    final int addressOfRecordAbsoluteOffset = getOffset(record, ADDRESS_OFFSET);
+    final int existingAddressValue = myStorage.getInt(addressOfRecordAbsoluteOffset);
+
+    super.deleteRecord(record);
+
+    if (sizeAndCapacityValue < 0) {
+      super.deleteRecord(-sizeAndCapacityValue);
+    }
+
+    if (existingAddressValue < 0) {
+      super.deleteRecord(-existingAddressValue);
+    }
+  }
+
+  @Override
+  public RecordIdIterator createRecordIdIterator() throws IOException {
+    final BitSet extraRecordsIds = buildIdSetOfExtraRecords();
+    final RecordIdIterator iterator = super.createRecordIdIterator();
+
+    return new RecordIdIterator() {
+      int nextId = scanToNextId();
+
+      private int scanToNextId() {
+        while(iterator.hasNextId()) {
+          int next = iterator.nextId();
+          if ( !extraRecordsIds.get(next)) return next;
+        }
+        return -1;
+      }
+
+      @Override
+      public boolean hasNextId() {
+        return nextId != -1;
+      }
+
+      @Override
+      public int nextId() {
+        assert hasNextId();
+        int result = nextId;
+        nextId = scanToNextId();
+        return result;
+      }
+
+      @Override
+      public boolean validId() {
+        assert hasNextId();
+        return getSize(nextId) != -1;
+      }
+    };
+  }
+
+  @NotNull
+  private BitSet buildIdSetOfExtraRecords() throws IOException {
+    final BitSet extraRecords = new BitSet();
+
+    final RecordIdIterator iterator = super.createRecordIdIterator();
+    while(iterator.hasNextId()) {
+      int recordId = iterator.nextId();
+      final int sizeAndCapacityOfRecordAbsoluteOffset = getOffset(recordId, SIZE_AND_CAPACITY_OFFSET);
+      final int sizeAndCapacityValue = myStorage.getInt(sizeAndCapacityOfRecordAbsoluteOffset);
+
+      final int addressOfRecordAbsoluteOffset = getOffset(recordId, ADDRESS_OFFSET);
+      final int existingAddressValue = myStorage.getInt(addressOfRecordAbsoluteOffset);
+
+      if (sizeAndCapacityValue < 0) {
+        extraRecords.set(-sizeAndCapacityValue);
+      }
+
+      if (existingAddressValue < 0) {
+        extraRecords.set(-existingAddressValue);
+      }
+    }
+    return extraRecords;
   }
 }

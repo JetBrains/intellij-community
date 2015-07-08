@@ -1510,9 +1510,21 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (aClass == null) return null;
 
-    if (!InheritanceUtil.hasEnclosingInstanceInScope(aClass, expr, false, false) &&
-        !resolvesToImmediateSuperInterface(expr, qualifier, aClass, languageLevel)) {
-      return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
+    if (!InheritanceUtil.hasEnclosingInstanceInScope(aClass, expr, false, false)) {
+      if (!resolvesToImmediateSuperInterface(expr, qualifier, aClass, languageLevel)) {
+        return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
+      }
+      
+      if (expr instanceof PsiSuperExpression) {
+        final PsiElement resolved = ((PsiReferenceExpression)expr.getParent()).resolve();
+        //15.11.2
+        //The form T.super.Identifier refers to the field named Identifier of the lexically enclosing instance corresponding to T,
+        //but with that instance viewed as an instance of the superclass of T.
+        if (resolved instanceof PsiField) {
+          String description = JavaErrorMessages.message("is.not.an.enclosing.class", formatClass(aClass));
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create();
+        }
+      }
     }
 
     if (qualifier != null && aClass.isInterface() && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {

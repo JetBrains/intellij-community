@@ -37,8 +37,6 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @NonNls
   static final String CODE_STYLES_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/codestyles";
 
-  public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
-
   protected final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
 
   public CodeStyleSchemesImpl(@NotNull SchemesManagerFactory schemesManagerFactory) {
@@ -87,9 +85,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
   @Override
   public void setCurrentScheme(CodeStyleScheme scheme) {
-    String schemeName = scheme == null ? null : scheme.getName();
-    mySchemesManager.setCurrentSchemeName(schemeName);
-    CURRENT_SCHEME_NAME = schemeName;
+    mySchemesManager.setCurrent(scheme);
   }
 
   @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
@@ -138,6 +134,11 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @Override
   public void setSchemes(@NotNull List<CodeStyleScheme> schemes) {
     mySchemesManager.setSchemes(schemes);
+  }
+
+  @NotNull
+  public SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemeManager() {
+    return mySchemesManager;
   }
 
   @Override

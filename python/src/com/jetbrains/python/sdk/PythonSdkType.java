@@ -57,9 +57,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remote.CredentialsType;
-import com.intellij.remote.RemoteSdkCredentialsHolder;
-import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -1004,6 +1002,29 @@ public class PythonSdkType extends SdkType {
       if (!((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).isValid()) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public static boolean hasInvalidRemoteCredentials(Sdk sdk) {
+    if (PySdkUtil.isRemote(sdk)) {
+      final Ref<Boolean> result = Ref.create(false);
+      //noinspection ConstantConditions
+      ((PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData()).switchOnConnectionType(new RemoteSdkConnectionAcceptor() {
+        @Override
+        public void ssh(@NotNull RemoteCredentialsHolder cred) {
+        }
+
+        @Override
+        public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
+          result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
+        }
+
+        @Override
+        public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        }
+      });
+      return result.get();
     }
     return false;
   }

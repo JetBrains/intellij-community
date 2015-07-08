@@ -19,6 +19,7 @@ package com.intellij.formatting;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -191,9 +192,8 @@ class InitialInfoBuilder {
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
 
-    boolean isInsideFormattingRanges = isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock);
     if (myCollectAlignmentsInsideFormattingRange && rootBlock.getAlignment() != null
-        && isInsideFormattingRanges && !myInsideFormatRestrictingTag)
+        && isAffectedByFormatting(rootBlock) && !myInsideFormatRestrictingTag)
     {
       myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
     }
@@ -203,7 +203,7 @@ class InitialInfoBuilder {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
       }
-      if (!isInsideFormattingRanges && !myCollectAlignmentsInsideFormattingRange) {
+      if (!myCollectAlignmentsInsideFormattingRange && !isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock)) {
         return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
       }
 
@@ -384,6 +384,29 @@ class InitialInfoBuilder {
       if (myAffectedRanges == null) return false;
       return myAffectedRanges.isWhitespaceReadOnly(myCurrentWhiteSpace.getTextRange());
     }
+  }
+
+  private boolean isAffectedByFormatting(final Block block) {
+    if (myAffectedRanges == null) return true;
+
+    List<FormatTextRanges.FormatTextRange> allRanges = myAffectedRanges.getRanges();
+    Document document = myModel.getDocument();
+    int docLength = document.getTextLength();
+    
+    for (FormatTextRanges.FormatTextRange range : allRanges) {
+      int startOffset = range.getStartOffset();
+      if (startOffset >= docLength) continue;
+      
+      int lineNumber = document.getLineNumber(startOffset);
+      int lineEndOffset = document.getLineEndOffset(lineNumber);
+
+      int blockStartOffset = block.getTextRange().getStartOffset();
+      if (blockStartOffset >= startOffset && blockStartOffset < lineEndOffset) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   private boolean isInsideFormattingRanges(final Block block, boolean rootIsRightBlock) {

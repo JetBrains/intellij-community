@@ -78,7 +78,7 @@ public class QuickDocOnMouseOverManager {
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(
       ApplicationActivationListener.TOPIC,
-      new ApplicationActivationListener() {
+      new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           myApplicationActive = true;

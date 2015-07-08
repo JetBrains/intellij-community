@@ -50,9 +50,6 @@ public class FrameDiffTool implements DiffTool {
         Disposer.dispose(builder);
         return;
       }
-      if (hints.contains(DiffTool.HINT_DIFF_IS_APPROXIMATE)) {
-        diffPanel.setPatchAppliedApproximately(); // todo read only and not variants
-      }
       final Runnable onOkRunnable = request.getOnOkRunnable();
       if (onOkRunnable != null){
         builder.setOkOperation(new Runnable() {
@@ -84,9 +81,6 @@ public class FrameDiffTool implements DiffTool {
       if (diffPanel == null) {
         Disposer.dispose(frameWrapper);
         return;
-      }
-      if (hints.contains(DiffTool.HINT_DIFF_IS_APPROXIMATE)) {
-        diffPanel.setPatchAppliedApproximately();
       }
       frameWrapper.setTitle(request.getWindowTitle());
       DiffUtil.initDiffFrame(diffPanel.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
@@ -142,7 +136,11 @@ public class FrameDiffTool implements DiffTool {
   }
 
   protected DiffPanelImpl createDiffPanelImpl(@NotNull DiffRequest request, @Nullable Window window, @NotNull Disposable parentDisposable) {
-    return (DiffPanelImpl) DiffManagerImpl.createDiffPanel(request, window, parentDisposable, this);
+    DiffPanelImpl panel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window, parentDisposable, this);
+    if (request.getHints().contains(DiffTool.HINT_DIFF_IS_APPROXIMATE)) {
+      panel.setPatchAppliedApproximately(); // todo read only and not variants
+    }
+    return panel;
   }
 
   static void showDiffDialog(DialogBuilder builder, Collection hints) {

@@ -66,6 +66,7 @@ public abstract class CodeStyleSchemes {
 
   public abstract void addScheme(@NotNull CodeStyleScheme currentScheme);
 
+  @Deprecated
   public abstract void setSchemes(@NotNull List<CodeStyleScheme> schemes);
 }
 

@@ -27,6 +27,8 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.CharSequenceWithStringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
  * @version 5.3, January 10, 2007
  */
 @SuppressWarnings({"AssignmentToForLoopParameter","UnnecessaryThis"})
-public final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable {
+public final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
   /**
    * Holds the default size for primitive blocks of characters.
    */
@@ -248,6 +250,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
     return true;
   }
 
+  private int hash;
   /**
    * Returns the hash code for this text.
    *
@@ -255,10 +258,9 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    */
   @Override
   public int hashCode() {
-    int h = 0;
-    final int length = this.length();
-    for (int i = 0; i < length;) {
-      h = 31 * h + charAt(i++);
+    int h = hash;
+    if (h == 0) {
+      hash = h = StringUtil.stringHashCode(this, 0, length());
     }
     return h;
   }

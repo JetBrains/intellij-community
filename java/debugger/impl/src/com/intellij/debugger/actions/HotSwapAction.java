@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.HotSwapUI;
+import com.intellij.debugger.ui.HotSwapUIImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -57,6 +57,6 @@ public class HotSwapAction extends AnAction{
     DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
 
-    e.getPresentation().setEnabled(session != null && session.isAttached() && session.getProcess().canRedefineClasses());
+    e.getPresentation().setEnabled(session != null && HotSwapUIImpl.canHotSwap(session));
   }
 }

@@ -63,6 +63,7 @@ public class TestAll implements Test {
   public static int ourMode = SAVE_MEMORY_SNAPSHOT /*| START_GUARD | RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
 
   private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
+  private static final boolean INCLUDING_PERFORMANCE_TESTS = System.getProperty(TestCaseLoader.INCLUDING_PERFORMANCE_TESTS_FLAG) != null;
 
   private static final int MAX_FAILURE_TEST_COUNT = 150;
 
@@ -113,7 +114,7 @@ public class TestAll implements Test {
       classFilterName = "";
     }
 
-    myTestCaseLoader = new TestCaseLoader(classFilterName, isPerformanceTestsRun());
+    myTestCaseLoader = new TestCaseLoader(classFilterName);
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
     myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
     fillTestCases(myTestCaseLoader, packageRoot, classRoots);
@@ -388,6 +389,10 @@ public class TestAll implements Test {
   private static boolean isPerformanceTestsRun() {
     return PERFORMANCE_TESTS_ONLY;
   }
+  
+  private static boolean isIncludingPerformanceTestsRun() {
+    return INCLUDING_PERFORMANCE_TESTS;
+  }
 
   @Nullable
   private static Test getTest(@NotNull final Class<?> testCaseClass) {
@@ -407,11 +412,12 @@ public class TestAll implements Test {
 
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
         JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
-        if (!isPerformanceTest(testCaseClass) || !isPerformanceTestsRun()) {
+        boolean runEverything = isIncludingPerformanceTestsRun() || (isPerformanceTest(testCaseClass) && isPerformanceTestsRun());
+        if (!runEverything) {
           try {
             adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
           }
-          catch (NoTestsRemainException ignored) { }
+          catch (NoTestsRemainException ignored) {}
         }
         return adapter;
       }
@@ -426,7 +432,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (isPerformanceTestsRun() ^ (hasPerformance(name) || isPerformanceTest(testCaseClass)))
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ (hasPerformance(name) || isPerformanceTest(testCaseClass))))
               return;
 
             Method method = findTestMethod((TestCase)test);
@@ -465,6 +471,9 @@ public class TestAll implements Test {
     }
   }
 
+  public static boolean shouldExcludePerformanceTestCase(Class aClass) {
+    return !isIncludingPerformanceTestsRun() && !isPerformanceTestsRun() && isPerformanceTest(aClass);
+  }
 
   public static boolean isPerformanceTest(Class aClass) {
     return hasPerformance(aClass.getSimpleName());

@@ -94,7 +94,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.GCUtil;import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.GCUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -261,6 +262,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ourPsiManager = null;
         ourModule = createMainModule(descriptor.getModuleType());
 
+        if (descriptor instanceof LightProjectDescriptorEx) {
+          ((LightProjectDescriptorEx)descriptor).setupModule(ourModule);
+          
+          if(!((LightProjectDescriptorEx)descriptor).shouldConfigureModule()) return;
+        }
+        
         VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
         assert dummyRoot != null;
         dummyRoot.refresh(false, false);

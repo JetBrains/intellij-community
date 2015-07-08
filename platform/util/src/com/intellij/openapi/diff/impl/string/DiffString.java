@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.string;
 import com.intellij.openapi.diff.LineTokenizerBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,13 +26,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DiffString implements CharSequence {
+public class DiffString extends CharArrayCharSequence {
   @NotNull public static final DiffString EMPTY = new DiffString(new char[0], 0, 0);
-
-  @NotNull private final char[] myData;
-  private final int myStart;
-  private final int myLength;
-  private int myHash;
 
   @Nullable
   public static DiffString createNullable(@Nullable String string) {
@@ -58,63 +54,43 @@ public class DiffString implements CharSequence {
   }
 
   private DiffString(@NotNull char[] data, int start, int length) {
-    myData = data;
-    myStart = start;
-    myLength = length;
-  }
-
-  @Override
-  public int length() {
-    return myLength;
+    super(data, start, start + length);
   }
 
   public boolean isEmpty() {
-    return myLength == 0;
+    return length() == 0;
   }
 
-  @Override
-  public char charAt(int index) {
-    if (index < 0 || index >= myLength) {
-      throw new StringIndexOutOfBoundsException(index);
-    }
-    return data(index);
-  }
-
-  public char data(int index) {
-    return myData[myStart + index];
+  private char data(int index) {
+    return charAt(index);
   }
 
   @NotNull
   public DiffString substring(int start) {
-    return substring(start, myLength);
+    return substring(start, length());
   }
 
   @NotNull
   public DiffString substring(int start, int end) {
-    if (start == 0 && end == myLength) return this;
-    checkBounds(start, end - start, myLength);
-    return create(myData, myStart + start, end - start);
+    if (start == 0 && end == length()) return this;
+    checkBounds(start, end - start, length());
+    return create(myChars, myStart + start, end - start);
   }
 
+  @NotNull
   @Override
   public DiffString subSequence(int start, int end) {
     return substring(start, end);
   }
 
   @NotNull
-  @Override
-  public String toString() {
-    return new String(myData, myStart, myLength);
-  }
-
-  @NotNull
   public DiffString copy() {
-    return create(Arrays.copyOfRange(myData, myStart, myStart + myLength));
+    return create(Arrays.copyOfRange(myChars, myStart, myStart + length()));
   }
 
   public void copyData(@NotNull char[] dst, int start) {
-    checkBounds(start, myLength, dst.length);
-    System.arraycopy(myData, myStart, dst, start, myLength);
+    checkBounds(start, length(), dst.length);
+    System.arraycopy(myChars, myStart, dst, start, length());
   }
 
   @Override
@@ -124,24 +100,13 @@ public class DiffString implements CharSequence {
 
     DiffString that = (DiffString)o;
 
-    if (myLength != that.myLength) return false;
+    if (length() != that.length()) return false;
     if (hashCode() != that.hashCode()) return false;
-    for (int i = 0; i < myLength; i++) {
+    for (int i = 0; i < length(); i++) {
       if (data(i) != that.data(i)) return false;
     }
 
     return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int h = myHash;
-    if (h == 0) {
-      h = StringUtil.stringHashCode(myData, myStart, myStart + myLength);
-      if (h == 0) h = 1;
-      myHash = h;
-    }
-    return h;
   }
 
   @Nullable
@@ -160,13 +125,13 @@ public class DiffString implements CharSequence {
     if (s1.isEmpty()) return s2;
     if (s2.isEmpty()) return s1;
 
-    if (s1.myData == s2.myData && s1.myStart + s1.myLength == s2.myStart) {
-      return create(s1.myData, s1.myStart, s1.myLength + s2.myLength);
+    if (s1.myChars == s2.myChars && s1.myStart + s1.length() == s2.myStart) {
+      return create(s1.myChars, s1.myStart, s1.length() + s2.length());
     }
 
-    char[] data = new char[s1.myLength + s2.myLength];
-    System.arraycopy(s1.myData, s1.myStart, data, 0, s1.myLength);
-    System.arraycopy(s2.myData, s2.myStart, data, s1.myLength, s2.myLength);
+    char[] data = new char[s1.length() + s2.length()];
+    System.arraycopy(s1.myChars, s1.myStart, data, 0, s1.length());
+    System.arraycopy(s2.myChars, s2.myStart, data, s1.length(), s2.length());
     return create(data);
   }
 
@@ -174,7 +139,7 @@ public class DiffString implements CharSequence {
     if (s1.isEmpty()) return true;
     if (s2.isEmpty()) return true;
 
-    if (s1.myData == s2.myData && s1.myStart + s1.myLength == s2.myStart) {
+    if (s1.myChars == s2.myChars && s1.myStart + s1.length() == s2.myStart) {
       return true;
     }
 
@@ -193,7 +158,7 @@ public class DiffString implements CharSequence {
     int len = 0;
     for (int i = 0; i < length; i++) {
       DiffString string = strings[start + i];
-      len += string == null ? 0 : string.myLength;
+      len += string == null ? 0 : string.length();
     }
 
     if (len == 0) return EMPTY;
@@ -203,32 +168,32 @@ public class DiffString implements CharSequence {
     for (int i = 0; i < length; i++) {
       DiffString string = strings[start + i];
       if (string == null || string.isEmpty()) continue;
-      System.arraycopy(string.myData, string.myStart, data, index, string.myLength);
-      index += string.myLength;
+      System.arraycopy(string.myChars, string.myStart, data, index, string.length());
+      index += string.length();
     }
     return create(data);
   }
 
   @NotNull
   public static DiffString concatenate(@NotNull DiffString s, char c) {
-    if (s.myStart + s.myLength < s.myData.length && s.data(s.myLength) == c) {
-      return create(s.myData, s.myStart, s.myLength + 1);
+    if (s.myStart + s.length() < s.myChars.length && s.data(s.length()) == c) {
+      return create(s.myChars, s.myStart, s.length() + 1);
     }
 
-    char[] data = new char[s.myLength + 1];
-    System.arraycopy(s.myData, s.myStart, data, 0, s.myLength);
-    data[s.myLength] = c;
+    char[] data = new char[s.length() + 1];
+    System.arraycopy(s.myChars, s.myStart, data, 0, s.length());
+    data[s.length()] = c;
     return create(data);
   }
 
   @NotNull
   public static DiffString concatenate(char c, @NotNull DiffString s) {
     if (s.myStart > 0 && s.data(-1) == c) {
-      return create(s.myData, s.myStart - 1, s.myLength + 1);
+      return create(s.myChars, s.myStart - 1, s.length() + 1);
     }
 
-    char[] data = new char[s.myLength + 1];
-    System.arraycopy(s.myData, s.myStart, data, 1, s.myLength);
+    char[] data = new char[s.length() + 1];
+    System.arraycopy(s.myChars, s.myStart, data, 1, s.length());
     data[0] = c;
     return create(data);
   }
@@ -251,16 +216,16 @@ public class DiffString implements CharSequence {
       DiffString string = strings[start + i];
       if (string == null || string.isEmpty()) continue;
       if (data == null) {
-        data = string.myData;
+        data = string.myChars;
         startIndex = string.myStart;
-        endIndex = string.myStart + string.myLength;
+        endIndex = string.myStart + string.length();
         continue;
       }
-      if (data != string.myData || string.myStart != endIndex) {
+      if (data != string.myChars || string.myStart != endIndex) {
         linearized = false;
         break;
       }
-      endIndex += string.myLength;
+      endIndex += string.length();
     }
 
     if (linearized) {
@@ -288,7 +253,7 @@ public class DiffString implements CharSequence {
   public boolean isEmptyOrSpaces() {
     if (isEmpty()) return true;
 
-    for (int i = 0; i < myLength; i++) {
+    for (int i = 0; i < length(); i++) {
       if (!isWhiteSpace(data(i))) return false;
     }
     return true;
@@ -297,7 +262,7 @@ public class DiffString implements CharSequence {
   @NotNull
   public DiffString trim() {
     int start = 0;
-    int end = myLength;
+    int end = length();
 
     while (start < end && isWhiteSpace(data(start))) start++;
     while (end > start && isWhiteSpace(data(end - 1))) end--;
@@ -309,14 +274,14 @@ public class DiffString implements CharSequence {
   public DiffString trimLeading() {
     int i = 0;
 
-    while (i < myLength && isWhiteSpace(data(i))) i++;
+    while (i < length() && isWhiteSpace(data(i))) i++;
 
-    return substring(i, myLength);
+    return substring(i, length());
   }
 
   @NotNull
   public DiffString trimTrailing() {
-    int end = myLength;
+    int end = length();
 
     while (end > 0 && isWhiteSpace(data(end - 1))) end--;
 
@@ -327,7 +292,7 @@ public class DiffString implements CharSequence {
   public DiffString getLeadingSpaces() {
     int i = 0;
 
-    while (i < myLength && data(i) == ' ') i++;
+    while (i < length() && data(i) == ' ') i++;
 
     return substring(0, i);
   }
@@ -336,14 +301,14 @@ public class DiffString implements CharSequence {
   public DiffString skipSpaces() {
     DiffString s = trim();
     int count = 0;
-    for (int i = 0; i < s.myLength; i++) {
+    for (int i = 0; i < s.length(); i++) {
       if (isWhiteSpace(s.data(i))) count++;
     }
     if (count == 0) return s;
 
-    char[] data = new char[s.myLength - count];
+    char[] data = new char[s.length() - count];
     int index = 0;
-    for (int i = 0; i < s.myLength; i++) {
+    for (int i = 0; i < s.length(); i++) {
       if (isWhiteSpace(s.data(i))) continue;
       data[index] = s.data(i);
       index++;
@@ -357,7 +322,7 @@ public class DiffString implements CharSequence {
 
   public boolean endsWith(char c) {
     if (isEmpty()) return false;
-    return data(myLength - 1) == c;
+    return data(length() - 1) == c;
   }
 
   public static void checkBounds(int start, int length, int maxLength) {

@@ -577,7 +577,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     settings.setRightMarginShown(false);
     settings.setLineMarkerAreaShown(false);
     settings.setIndentGuidesShown(false);
-    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(fileType, DefaultColorSchemesManager.getInstance().getAllSchemes()[0], project));
+    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(fileType, DefaultColorSchemesManager.getInstance().getFirstScheme(), project));
 
     return editor;
   }

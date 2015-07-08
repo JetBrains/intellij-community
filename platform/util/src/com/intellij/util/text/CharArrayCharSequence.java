@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CharArrayCharSequence implements CharSequenceBackedByArray {
+public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSequenceWithStringHash {
   protected final char[] myChars;
   protected final int myStart;
   protected final int myEnd;
@@ -29,9 +30,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
 
   public CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
     if (start < 0 || end > chars.length || start > end) {
-      throw new IndexOutOfBoundsException("chars.length:" + chars.length +
-                                          ", start:" + start +
-                                          ", end:" + end);
+      throw new IndexOutOfBoundsException("chars.length:" + chars.length + ", start:" + start + ", end:" + end);
     }
     myChars = chars;
     myStart = start;
@@ -48,6 +47,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     return myChars[index + myStart];
   }
 
+  @NotNull
   @Override
   public CharSequence subSequence(int start, int end) {
     return start == 0 && end == length() ? this : new CharArrayCharSequence(myChars, myStart + start, myStart + end);
@@ -62,15 +62,10 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
   @Override
   @NotNull
   public char[] getChars() {
-    if (myStart == 0 /*&& myEnd == myChars.length*/) return myChars;
+    if (myStart == 0) return myChars;
     char[] chars = new char[length()];
     System.arraycopy(myChars, myStart, chars, 0, length());
     return chars;
-  }
-
-  @Override
-  public int hashCode() {
-    return StringUtil.stringHashCode(myChars, myStart, myEnd);
   }
 
   @Override
@@ -107,5 +102,15 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
 
     System.arraycopy(myChars, myStart + start, cbuf, off, readChars);
     return readChars;
+  }
+
+  private int hash;
+  @Override
+  public int hashCode() {
+    int h = hash;
+    if (h == 0) {
+      hash = h = StringUtil.stringHashCode(this, 0, length());
+    }
+    return h;
   }
 }
