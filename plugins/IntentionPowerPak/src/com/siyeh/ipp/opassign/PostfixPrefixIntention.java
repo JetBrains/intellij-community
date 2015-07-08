@@ -16,6 +16,7 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -32,11 +33,22 @@ public class PostfixPrefixIntention extends MutablyNamedIntention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
+        final IElementType tokenType;
         if (element instanceof PsiPrefixExpression) {
           final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
-          return prefixExpression.getOperand() != null;
+          tokenType = prefixExpression.getOperationTokenType();
+          if (prefixExpression.getOperand() == null) {
+            return false;
+          }
         }
-        return element instanceof PsiPostfixExpression;
+        else if (element instanceof PsiPostfixExpression) {
+          final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)element;
+          tokenType = postfixExpression.getOperationTokenType();
+        }
+        else {
+          return false;
+        }
+        return JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType);
       }
     };
   }
