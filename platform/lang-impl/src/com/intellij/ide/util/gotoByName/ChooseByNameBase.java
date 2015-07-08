@@ -75,6 +75,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,6 +103,8 @@ import java.util.*;
 import java.util.List;
 
 public abstract class ChooseByNameBase {
+  public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
   protected final Project myProject;
   protected final ChooseByNameModel myModel;
@@ -532,15 +535,8 @@ public abstract class ChooseByNameBase {
                   return;
                 }
 
-                if (oppositeComponent != null && myProject != null && !myProject.isDisposed()) {
-                  ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-                  ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
-                  if (toolWindow != null) {
-                    JComponent toolWindowComponent = toolWindow.getComponent();
-                    if (SwingUtilities.isDescendingFrom(oppositeComponent, toolWindowComponent)) {
-                      return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
-                    }
-                  }
+                if (isDescendingFromTemporarilyFocusableToolWindow(oppositeComponent)) {
+                  return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
                 }
 
                 EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
@@ -706,6 +702,17 @@ public abstract class ChooseByNameBase {
     if (modalityState != null) {
       rebuildList(myInitialIndex, 0, modalityState, null);
     }
+  }
+
+  private boolean isDescendingFromTemporarilyFocusableToolWindow(@Nullable Component component) {
+    if (component == null || myProject == null || myProject.isDisposed()) return false;
+
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
+    JComponent toolWindowComponent = toolWindow != null ? toolWindow.getComponent() : null;
+    return toolWindowComponent != null &&
+           toolWindowComponent.getClientProperty(TEMPORARILY_FOCUSABLE_COMPONENT_KEY) != null &&
+           SwingUtilities.isDescendingFrom(component, toolWindowComponent);
   }
 
   private void addCard(JComponent comp, String cardId) {
@@ -885,7 +892,24 @@ public abstract class ChooseByNameBase {
 
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myTextFieldPanel, myTextField);
     builder.setLocateWithinScreenBounds(false);
-    builder.setCancelCallback(new Computable<Boolean>() {
+    builder.setKeyEventHandler(new BooleanFunction<KeyEvent>() {
+      @Override
+      public boolean fun(KeyEvent event) {
+        if (myTextPopup == null || !AbstractPopup.isCloseRequest(event) || !myTextPopup.isCancelKeyEnabled()) {
+          return false;
+        }
+
+        IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+        if (isDescendingFromTemporarilyFocusableToolWindow(focusManager.getFocusOwner())) {
+          focusManager.requestFocus(myTextField, true);
+          return false;
+        }
+        else {
+          myTextPopup.cancel(event);
+          return true;
+        }
+      }
+    }).setCancelCallback(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         myTextPopup = null;
