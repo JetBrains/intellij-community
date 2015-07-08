@@ -16,7 +16,7 @@
 package com.intellij.diff.actions;
 
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.openapi.diff.FragmentContent;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
@@ -38,8 +37,6 @@ import java.nio.charset.Charset;
  */
 public class DocumentFragmentContent implements DocumentContent {
   // TODO: reuse DocumentWindow ?
-
-  public static final Key<Document> ORIGINAL_DOCUMENT = FragmentContent.ORIGINAL_DOCUMENT; // TODO: replace with own one ?
 
   @NotNull private final DocumentContent myOriginal;
 
@@ -180,7 +177,7 @@ public class DocumentFragmentContent implements DocumentContent {
     final Document originalDocument = rangeMarker.getDocument();
 
     Document result = EditorFactory.getInstance().createDocument("");
-    result.putUserData(ORIGINAL_DOCUMENT, originalDocument);
+    result.putUserData(UndoManager.ORIGINAL_DOCUMENT, originalDocument);
     return result;
   }
 }

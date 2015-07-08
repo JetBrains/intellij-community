@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
@@ -172,7 +173,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     updateEditorCanBeTyped();
     myEditor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null); // guarded blocks
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myDocument, new MyReadonlyFragmentModificationHandler());
-    myDocument.putUserData(DocumentFragmentContent.ORIGINAL_DOCUMENT, getDocument(myMasterSide)); // use undo of master document
+    myDocument.putUserData(UndoManager.ORIGINAL_DOCUMENT, getDocument(myMasterSide)); // use undo of master document
 
     myDocument.addDocumentListener(new MyOnesideDocumentListener());
   }

@@ -16,12 +16,15 @@
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class UndoManager {
+  public static final Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
 
   public static UndoManager getInstance(Project project) {
     return project.getComponent(UndoManager.class);
