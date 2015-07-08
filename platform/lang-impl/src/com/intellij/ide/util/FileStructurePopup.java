@@ -788,7 +788,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     final boolean selected = getDefaultValue(action);
     chkFilter.setSelected(selected);
-    myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !selected : selected);
+    myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter && ((FileStructureFilter) action).isReverted() ? !selected : selected);
     chkFilter.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -796,7 +796,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         if (!myAutoClicked.contains(chkFilter)) {
           saveState(action, state);
         }
-        myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
+        myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter && ((FileStructureFilter) action).isReverted() ? !state : state);
         //final String filter = mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
         //mySpeedSearch.hidePopup();
         Object selection = ContainerUtil.getFirstItem(myAbstractTreeBuilder.getSelectedElements());
