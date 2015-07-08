@@ -144,6 +144,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
+  private boolean myUseJavaFilter = true;
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
 
@@ -681,7 +682,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Editor editor = getCompletionEditor();
     int findTargetFlags = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED;
     PsiElement element = TargetElementUtil.findTargetElement(editor, findTargetFlags);
-    
+
     // if no references found in injected fragment, try outer document
     if (element == null && editor instanceof EditorWindow) {
       element = TargetElementUtil.findTargetElement(((EditorWindow)editor).getDelegate(), findTargetFlags);
@@ -1485,9 +1486,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
   }
   
-  private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, 
+  private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings,
                                            boolean ignoreExtraHighlighting) throws Exception {
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), 
+    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),
                                                                  checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, getHostFile());
     data.init();
     return collectAndCheckHighlighting(data);
@@ -1510,7 +1511,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     final long start = System.currentTimeMillis();
-    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter, myTestRootDisposable);
+    final boolean useJavaFilter = myUseJavaFilter;
+    if (useJavaFilter) {
+      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter, myTestRootDisposable);
+    }
 
     //    ProfilingUtil.startCPUProfiling();
     List<HighlightInfo> infos;
@@ -1519,7 +1523,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       removeDuplicatedRangesForInjected(infos);
     }
     finally {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+      if (useJavaFilter) {
+        ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+      }
     }
     //    ProfilingUtil.captureCPUSnapshot("testing");
     final long elapsed = System.currentTimeMillis() - start;
@@ -1527,6 +1533,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     data.checkResult(infos, file.getText());
     hardRefToFileElement.hashCode(); // use it so gc won't collect it
     return elapsed;
+  }
+
+  public void setUseJavaFilter(boolean useJavaFilter) {
+    myUseJavaFilter = useJavaFilter;
   }
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
@@ -1669,10 +1679,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final int fileOffset = editor.getCaretModel().getOffset();
     PsiElement hostElement = file.getViewProvider().findElementAt(fileOffset, file.getLanguage());
     PsiElement injectedElement = InjectedLanguageUtil.findElementAtNoCommit(file, fileOffset);
-    
+
     PsiFile injectedFile = injectedElement != null ? injectedElement.getContainingFile() : null;
     Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-    
+
     List<IntentionAction> result = new ArrayList<IntentionAction>();
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
@@ -1680,7 +1690,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
         HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
         final IntentionAction action = actionInGroup.getAction();
-        
+
         if (ShowIntentionActionsHandler.availableFor(file, editor, action)
           || (injectedElement != null && hostElement != injectedElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
           descriptors.add(actionInGroup);
@@ -1691,7 +1701,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // add all intention options for simplicity
     for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
       result.add(descriptor.getAction());
-      
+
       if (injectedElement != null && injectedElement != hostElement) {
         List<IntentionAction> options = descriptor.getOptions(injectedElement, injectedEditor);
         if (options != null) {
@@ -1702,7 +1712,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
         }
       }
-      
+
       if (hostElement != null) {
         List<IntentionAction> options = descriptor.getOptions(hostElement, editor);
         if (options != null) {
