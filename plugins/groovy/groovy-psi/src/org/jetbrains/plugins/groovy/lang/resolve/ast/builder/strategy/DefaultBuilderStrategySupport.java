@@ -67,7 +67,6 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
       if (builderAnno == null || !DEFAULT_STRATEGY_FQN.equals(getStrategy(myContainingClass))) return;
       final PsiClass builderClass = createBuilderClass(builderAnno, myContainingClass.getCodeFields());
       final LightMethodBuilder builderMethod = createBuilderMethod(builderClass, builderAnno);
-      myMembers.classes.add(builderClass);
       myMembers.methods.add(builderMethod);
     }
 
@@ -126,21 +125,19 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters());
       LightMethodBuilder builderMethod = createBuilderMethod(builderClass, annotation);
       myMembers.methods.add(builderMethod);
-      myMembers.classes.add(builderClass);
     }
 
     private void processFactoryMethod(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters(), method.getReturnType());
       LightMethodBuilder builderMethod = createBuilderMethod(builderClass, annotation);
       myMembers.methods.add(builderMethod);
-      myMembers.classes.add(builderClass);
     }
 
 
     @NotNull
     private static String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderMethodName");
-      return builderMethodName == null ? "builder" : builderMethodName;
+      return StringUtil.isEmpty(builderMethodName) ? "builder" : builderMethodName;
     }
 
     @NotNull
@@ -174,12 +171,12 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
   @NotNull
   private static String getFieldMethodName(@NotNull PsiAnnotation annotation, @NotNull String fieldName) {
     final String prefix = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "prefix");
-    return StringUtil.isEmptyOrSpaces(prefix) ? fieldName : String.format("%s%s", prefix, StringUtil.capitalize(fieldName));
+    return StringUtil.isEmpty(prefix) ? fieldName : String.format("%s%s", prefix, StringUtil.capitalize(fieldName));
   }
 
   @NotNull
   private static String getBuildMethodName(@NotNull PsiAnnotation annotation) {
     final String buildMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "buildMethodName");
-    return buildMethodName == null ? "build" : buildMethodName;
+    return StringUtil.isEmpty(buildMethodName) ? "build" : buildMethodName;
   }
 }
