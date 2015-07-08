@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,17 +90,18 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
 
   @Override
   public boolean isConstructor() {
-    return (myFlags & CONSTRUCTOR) != 0;
+    return BitUtil.isSet(myFlags, CONSTRUCTOR);
   }
 
   @Override
   public boolean isVarArgs() {
-    return (myFlags & VARARGS) != 0;
+    return BitUtil.isSet(myFlags, VARARGS);
   }
 
   public boolean isParsedViaGenericSignature() {
     return BitUtil.isSet(myFlags, PARSED_VIA_GENERIC_SIGNATURE);
   }
+
   @Override
   public boolean isAnnotationMethod() {
     return isAnnotationMethod(myFlags);
@@ -176,7 +177,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     return flags;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiMethodStub[");

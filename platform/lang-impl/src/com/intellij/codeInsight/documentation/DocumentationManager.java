@@ -147,6 +147,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     updateComponent();
   }
 
+  @Override
+  public void createToolWindow(PsiElement element, PsiElement originalElement) {
+    super.createToolWindow(element, originalElement);
+
+    if (myToolWindow != null) {
+      myToolWindow.getComponent().putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, Boolean.TRUE);
+    }
+  }
+
   /**
    * @return    <code>true</code> if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
    *            the user presses a key);

@@ -72,6 +72,12 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
+    <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction"
+            text="Escape XML/HTML Entities"
+            description="Escape XML characters with entities according to schema information">
+      <add-to-group group-id="EditMenu" anchor="last"/>
+    </action>
+
     <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
             text="Open in default _browser" description="Open selected file in default browser"
