@@ -113,7 +113,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   def assertContains(String... items) {
-    myFixture.assertPreferredCompletionItems(0, items)
+    assert myFixture.lookupElementStrings.containsAll(items as List)
   }
 
   public void testRecalculateItemsOnBackspace() {
