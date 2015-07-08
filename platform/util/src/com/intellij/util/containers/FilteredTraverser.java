@@ -28,7 +28,7 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   protected final Meta<T> myMeta;
 
   protected FilteredTraverser(@Nullable Meta<T> meta) {
-    myMeta = meta == null ? FilteredTraverser.<T>emptyMeta() : meta;
+    myMeta = meta == null ? Meta.<T>empty() : meta;
   }
 
   @NotNull
@@ -81,7 +81,7 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
 
   @NotNull
   public Self reset() {
-    return newInstance(FilteredTraverser.<T>emptyMeta().exclude(myMeta.excludeFilter).withRoots(myMeta.roots));
+    return newInstance(Meta.<T>empty().exclude(myMeta.excludeFilter).withRoots(myMeta.roots));
   }
 
   @NotNull
@@ -139,12 +139,6 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
     return rawIterable().toString();
   }
 
-  protected static <T> Meta<T> emptyMeta() {
-    return new Meta<T>(EmptyIterable.<T>getInstance(), false, false,
-                       Conditions.alwaysTrue(),
-                       Conditions.alwaysTrue(),
-                       Conditions.alwaysFalse());
-  }
 
   protected static class Meta<T> {
     final Iterable<? extends T> roots;
@@ -191,6 +185,13 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
     public Meta<T> exclude(Condition<? super T> filter) {
       // exclude filter is always accumulated
       return new Meta<T>(roots, skipExpanded, expandOnly, expandFilter, resultFilter, Conditions.or2(excludeFilter, filter));
+    }
+
+    private static final Meta<?> EMPTY = new Meta<Object>(
+      JBIterable.empty(), false, false, Conditions.TRUE, Conditions.TRUE, Conditions.FALSE);
+
+    public static <T> Meta<T> empty() {
+      return (Meta<T>)EMPTY;
     }
   }
 }
