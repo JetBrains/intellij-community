@@ -22,6 +22,9 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -230,6 +233,10 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @Nullable
   public
   String getNewFileTemplateName() {
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(myText);
+    if (fileType != UnknownFileType.INSTANCE) {
+      return fileType.getName() + " File." + fileType.getDefaultExtension();
+    }
     return null;
   }
 

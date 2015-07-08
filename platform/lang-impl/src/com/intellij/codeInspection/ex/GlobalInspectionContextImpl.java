@@ -520,6 +520,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
                 @Override
                 public Document compute() {
+                  if (getProject().isDisposed()) throw new ProcessCanceledException();
                   PsiFile psi = PsiManager.getInstance(getProject()).findFile(file);
                   Document document = psi == null ? null : shouldProcess(psi, headlessEnvironment, localScopeFiles);
                   if (document != null) {

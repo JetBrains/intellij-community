@@ -1,61 +1,42 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.testFramework.FixtureRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.PathUtilRt
-import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
-import org.hamcrest.CoreMatchers
-import org.hamcrest.Matchers
 import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.edit
+import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.git
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
-import org.jetbrains.settingsRepository.git.commit
-import org.jetbrains.settingsRepository.git.computeIndexDiff
-import org.jetbrains.settingsRepository.icsManager
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
 import org.junit.Rule
+import org.junit.rules.TestRule
 import java.io.File
-import javax.swing.SwingUtilities
+import kotlin.properties.Delegates
 
-val testDataPath: String = "${PathManager.getHomePath()}/settings-repository/testData"
+val testDataPath: String = "${PlatformTestUtil.getCommunityPath()}/plugins/settings-repository/testData"
 
-fun getProvider(): StreamProvider {
-  val provider = (ApplicationManager.getApplication() as ApplicationImpl).getStateStore().getStateStorageManager().getStreamProvider()
-  Assert.assertThat(provider, CoreMatchers.notNullValue())
-  return provider!!
-}
-
-val repositoryManager: GitRepositoryManager
-  get() = icsManager.repositoryManager as GitRepositoryManager
-
-val repository: Repository
-  get() = repositoryManager.repository
-
-
-fun save(path: String, data: ByteArray) {
-  getProvider().saveContent(path, data, data.size(), RoamingType.PER_USER)
-}
-
-fun addAndCommit(path: String): FileInfo {
-  val data = FileUtil.loadFileBytes(File(testDataPath, PathUtilRt.getFileName(path)))
-  save(path, data)
-  repositoryManager.commit(EmptyProgressIndicator())
-  return FileInfo(path, data)
+fun StreamProvider.save(path: String, data: ByteArray) {
+  saveContent(path, data, data.size(), RoamingType.PER_USER)
 }
 
 fun Repository.add(data: ByteArray, path: String): Repository {
@@ -64,28 +45,22 @@ fun Repository.add(data: ByteArray, path: String): Repository {
   return this
 }
 
-fun delete(data: ByteArray, directory: Boolean) {
-  val addedFile = "\$APP_CONFIG$/remote.xml"
-  save(addedFile, data)
-  getProvider().delete(if (directory) "\$APP_CONFIG$" else addedFile, RoamingType.PER_USER)
-
-  val diff = repository.computeIndexDiff()
-  Assert.assertThat(diff.diff(), CoreMatchers.equalTo(false))
-  Assert.assertThat(diff.getAdded(), Matchers.empty())
-  Assert.assertThat(diff.getChanged(), Matchers.empty())
-  Assert.assertThat(diff.getRemoved(), Matchers.empty())
-  Assert.assertThat(diff.getModified(), Matchers.empty())
-  Assert.assertThat(diff.getUntracked(), Matchers.empty())
-  Assert.assertThat(diff.getUntrackedFolders(), Matchers.empty())
-}
-
 abstract class TestCase {
-  var fixture: IdeaProjectTestFixture? = null
+  val fixtureManager = FixtureRule()
 
   val tempDirManager = TemporaryDirectory()
   public Rule fun getTemporaryFolder(): TemporaryDirectory = tempDirManager
 
+  public Rule fun getFixtureRule(): TestRule = fixtureManager
+
   val testHelper = RespositoryHelper()
+
+  open val icsManager by Delegates.lazy {
+    val icsManager = IcsManager(tempDirManager.newDirectory())
+    icsManager.repositoryManager.createRepositoryIfNeed()
+    icsManager.repositoryActive = true
+    icsManager
+  }
 
   Rule
   public fun getTestWatcher(): RespositoryHelper = testHelper
@@ -94,83 +69,10 @@ abstract class TestCase {
     get() = testHelper.repository!!
 
   companion object {
-    private var ICS_DIR: File? = null
-
     init {
       Logger.setFactory(javaClass<TestLoggerFactory>())
     }
-
-    // BeforeClass doesn't work in Kotlin
-    public fun setIcsDir() {
-      val icsDirPath = System.getProperty("ics.settingsRepository")
-      if (icsDirPath == null) {
-        // we must not create file (i.e. this file doesn't exist)
-        ICS_DIR = FileUtilRt.generateRandomTemporaryPath()
-        System.setProperty("ics.settingsRepository", ICS_DIR!!.getAbsolutePath())
-      }
-      else {
-        ICS_DIR = File(FileUtil.expandUserHome(icsDirPath))
-        FileUtil.delete(ICS_DIR!!)
-      }
-    }
   }
-
-  Before
-  public fun setUp() {
-    if (ICS_DIR == null) {
-      setIcsDir()
-    }
-
-    fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture()
-    SwingUtilities.invokeAndWait(object : Runnable {
-      override fun run() {
-        fixture!!.setUp()
-      }
-    })
-
-    (icsManager.repositoryManager as GitRepositoryManager).createRepositoryIfNeed()
-    icsManager.repositoryActive = true
-  }
-
-  After
-  public fun tearDown() {
-    icsManager.repositoryActive = false
-    try {
-      if (fixture != null) {
-        SwingUtilities.invokeAndWait(object : Runnable {
-          override fun run() {
-            fixture!!.tearDown()
-          }
-        })
-      }
-    }
-    finally {
-      repositoryManager.deleteRepository()
-    }
-  }
-
-  fun createFileRemote(branchName: String? = null, initialCommit: Boolean = true): File {
-    val repository = getRemoteRepository(branchName)
-
-    val workTree: File = repository.getWorkTree()
-    if (initialCommit) {
-      val addedFile = "\$APP_CONFIG$/remote.xml"
-      FileUtil.copy(File(testDataPath, "remote.xml"), File(workTree, addedFile))
-      repository.edit(AddFile(addedFile))
-      repository.commit("")
-    }
-    return workTree
-  }
-
-  fun getRemoteRepository(branchName: String? = null): Repository {
-    val repository = testHelper.getRepository(ICS_DIR!!)
-    if (branchName != null) {
-      // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
-      repository.commit("")
-      Git(repository).checkout().setCreateBranch(true).setName(branchName).call()
-    }
-    return repository
-  }
-
-  fun createRepository() = git.createRepository(tempDirManager.newDirectory())
 }
+
+fun TemporaryDirectory.createRepository(directoryName: String? = null) = git.createRepository(newDirectory(directoryName))
