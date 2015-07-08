@@ -277,6 +277,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testTypeParameterWithinMethodHierarchy() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testClassWithInnerStaticImport() throws Exception {
     doTest("ClassWithInnerStaticImport");
   }

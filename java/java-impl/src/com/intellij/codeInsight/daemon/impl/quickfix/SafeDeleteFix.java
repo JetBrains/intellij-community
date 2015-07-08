@@ -59,7 +59,7 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (startElement instanceof PsiParameter) {
       SafeDeleteProcessor.createInstance(project, null, elements, false, false, true).run();
     } else {
-      SafeDeleteHandler.invoke(project, elements, false);
+      SafeDeleteHandler.invoke(project, elements, true);
     }
   }
 

@@ -154,9 +154,37 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
       return parametersToDelete;
     }
-    else {
-      return Collections.singletonList(element);
+    else if (element instanceof PsiTypeParameter) {
+      final PsiTypeParameterListOwner owner = ((PsiTypeParameter)element).getOwner();
+      if (owner instanceof PsiMethod && !owner.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
+        if (typeParameterList != null) {
+          final int index = typeParameterList.getTypeParameterIndex((PsiTypeParameter)element);
+          if (index >= 0) {
+            final ArrayList<PsiTypeParameter> overriders = new ArrayList<PsiTypeParameter>();
+            overriders.add((PsiTypeParameter)element);
+            OverridingMethodsSearch.search((PsiMethod)owner).forEach(new Processor<PsiMethod>() {
+              public boolean process(PsiMethod overrider) {
+                final PsiTypeParameter[] typeParameters = overrider.getTypeParameters();
+                if (index < typeParameters.length) {
+                  overriders.add(typeParameters[index]);
+                }
+                return true;
+              }
+            });
+            if (!overriders.isEmpty()) {
+              String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.type.parameters", UsageViewUtil.getLongName(owner));
+              int result = ApplicationManager.getApplication().isUnitTestMode() 
+                           ? Messages.YES :Messages.showYesNoCancelDialog(project, message, SafeDeleteHandler.REFACTORING_NAME, Messages.getQuestionIcon());
+              if (result == Messages.CANCEL) return null;
+              if (result == Messages.YES) return overriders;
+            }
+          }
+        }
+      }
     }
+    
+    return Collections.singletonList(element);
   }
 
   @Override
