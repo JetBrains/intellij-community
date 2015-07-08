@@ -314,6 +314,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final String anchor) {
+    assert EventQueue.isDispatchThread() : "Must be EDT";
     myOrderedWidgets.add(widget.ID());
 
     JPanel panel;
@@ -608,6 +609,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   @Override
   public void removeWidget(@NotNull final String id) {
+    assert EventQueue.isDispatchThread() : "Must be EDT";
     final WidgetBean bean = myWidgetMap.get(id);
     if (bean != null) {
       if (Position.LEFT == bean.position) {
