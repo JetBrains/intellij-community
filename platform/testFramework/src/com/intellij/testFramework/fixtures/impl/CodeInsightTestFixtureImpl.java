@@ -143,8 +143,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
-  private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
-  private boolean myUseJavaFilter = true;
+  private VirtualFileFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
 
@@ -1511,9 +1510,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     final long start = System.currentTimeMillis();
-    final boolean useJavaFilter = myUseJavaFilter;
-    if (useJavaFilter) {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter, myTestRootDisposable);
+    final VirtualFileFilter fileTreeAccessFilter = myFileTreeAccessFilter;
+    if (fileTreeAccessFilter != null) {
+      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(fileTreeAccessFilter, myTestRootDisposable);
     }
 
     //    ProfilingUtil.startCPUProfiling();
@@ -1523,7 +1522,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       removeDuplicatedRangesForInjected(infos);
     }
     finally {
-      if (useJavaFilter) {
+      if (fileTreeAccessFilter != null) {
         ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
       }
     }
@@ -1535,8 +1534,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return elapsed;
   }
 
-  public void setUseJavaFilter(boolean useJavaFilter) {
-    myUseJavaFilter = useJavaFilter;
+  public void setFileTreeAccessFilterForHighlighting(@Nullable VirtualFileFilter fileTreeAccessFilter) {
+    myFileTreeAccessFilter = fileTreeAccessFilter;
   }
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
@@ -1729,12 +1728,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void allowTreeAccessForFile(@NotNull final VirtualFile file) {
-    myJavaFilesFilter.allowTreeAccessForFile(file);
+    assert myFileTreeAccessFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
+    ((FileTreeAccessFilter)myFileTreeAccessFilter).allowTreeAccessForFile(file);
   }
 
   @Override
   public void allowTreeAccessForAllFiles() {
-    myJavaFilesFilter.allowTreeAccessForAllFiles();
+    assert myFileTreeAccessFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
+    ((FileTreeAccessFilter)myFileTreeAccessFilter).allowTreeAccessForAllFiles();
   }
 
   private static class SelectionAndCaretMarkupLoader {

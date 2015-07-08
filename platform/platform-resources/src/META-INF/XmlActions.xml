@@ -73,8 +73,8 @@
     </action>
 
     <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction"
-            text="Escape XML/HTML Entities"
-            description="Escape XML characters with entities according to schema information">
+            text="Encode XML/HTML Special Characters"
+            description="Escape XML/HTML special characters with entities">
       <add-to-group group-id="EditMenu" anchor="last"/>
     </action>
 

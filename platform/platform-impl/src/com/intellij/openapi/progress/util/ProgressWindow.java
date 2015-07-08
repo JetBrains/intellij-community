@@ -403,6 +403,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   protected void enableCancel(boolean enable) {
-    myDialog.enableCancelButtonIfNeeded(enable);
+    if (myDialog != null) {
+      myDialog.enableCancelButtonIfNeeded(enable);
+    }
   }
 }
