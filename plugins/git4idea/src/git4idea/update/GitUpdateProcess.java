@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -35,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -50,7 +48,6 @@ import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
-import git4idea.stash.GitChangesSaver;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +74,6 @@ public class GitUpdateProcess {
   private final UpdatedFiles myUpdatedFiles;
   private final ProgressIndicator myProgressIndicator;
   private final GitMerger myMerger;
-  private final GitChangesSaver mySaver;
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
 
@@ -95,10 +91,6 @@ public class GitUpdateProcess {
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);
-    mySaver = GitChangesSaver.getSaver(myProject, platformFacade, myGit,
-                                       myProgressIndicator,
-                                       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()),
-                                       GitVcsSettings.getInstance(project).updateChangesPolicy());
   }
 
   /**
@@ -232,11 +224,7 @@ public class GitUpdateProcess {
         // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
         // But if updater.update() fails with exception for the first root, then the value would not be assigned.
         // In this case we don't restore local changes either, because update failed.
-        if (incomplete.get() || compoundResult.isNull() || !compoundResult.get().isSuccess()) {
-          mySaver.notifyLocalChangesAreNotRestored();
-          return false;
-        }
-        return true;
+        return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
       }
     });
     return compoundResult.get();

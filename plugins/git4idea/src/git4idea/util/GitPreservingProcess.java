@@ -78,7 +78,7 @@ public class GitPreservingProcess {
     myDestinationName = destinationName;
     myProgressIndicator = indicator;
     myOperation = operation;
-    myStashMessage = String.format("%s %s at %s", StringUtil.capitalize(myOperationTitle), myDestinationName,
+    myStashMessage = String.format("Uncommitted changes before %s at %s", StringUtil.capitalize(myOperationTitle),
                                    DateFormatUtil.formatDateTime(Clock.getTime()));
     mySaver = configureSaver(saveMethod);
   }
@@ -104,6 +104,9 @@ public class GitPreservingProcess {
             if (autoLoadDecision == null || autoLoadDecision.compute()) {
               LOG.debug("loading");
               load();
+            }
+            else {
+              mySaver.notifyLocalChangesAreNotRestored();
             }
           }
         }
