@@ -562,6 +562,7 @@
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.PyTypingAnnotationInjector"/>
     <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
     <fileTypeFactory implementation="com.jetbrains.python.pyi.PyiFileTypeFactory"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
   </extensions>
