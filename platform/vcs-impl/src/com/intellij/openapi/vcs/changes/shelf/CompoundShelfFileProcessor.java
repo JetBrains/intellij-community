@@ -52,7 +52,7 @@ public class CompoundShelfFileProcessor {
 
   public CompoundShelfFileProcessor(String shelfBaseDirPath) {
     this(((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider(),
-         shelfBaseDirPath + File.separator + SHELF_DIR_NAME);
+         shelfBaseDirPath);
   }
 
   public CompoundShelfFileProcessor(@Nullable StreamProvider serverStreamProvider, String shelfPath) {
