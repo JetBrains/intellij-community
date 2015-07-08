@@ -503,8 +503,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     @Override
     public Object getValue(CodeStyleSettings settings) {
       try {
-        int value = field.getInt(getSettings(settings));
-        return value == myDefaultValue && myDefaultValueText != null ? myDefaultValueText : value;
+        return field.getInt(getSettings(settings));
       }
       catch (IllegalAccessException e) {
         return null;
@@ -515,11 +514,11 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     public void setValue(Object value, CodeStyleSettings settings) {
       //noinspection EmptyCatchBlock
       try {
-        if (myDefaultValueText != null && !myDefaultValueText.equals(value)) {
+        if (value instanceof Integer) {
           field.setInt(getSettings(settings), ((Integer)value).intValue());
         }
         else {
-          field.setInt(getSettings(settings), -1);
+          field.setInt(getSettings(settings), myDefaultValue);
         }
       }
       catch (IllegalAccessException e) {
@@ -537,9 +536,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     public int getDefaultValue() {
       return myDefaultValue;
     }
-    
-    public boolean isDefaultText(Object value) {
-      return myDefaultValueText != null && myDefaultValueText.equals(value);
+
+    public boolean isDefaultValue(Object value) {
+      return value instanceof Integer && ((Integer)value).intValue() == myDefaultValue;
     }
 
     @Nullable
@@ -697,8 +696,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       boolean isEnabled = true;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((TreeTable)table).getTree().
         getPathForRow(row).getLastPathComponent();
+      Option key = null;
       if (node instanceof MyTreeNode) {
         isEnabled = ((MyTreeNode)node).isEnabled();
+        key = ((MyTreeNode)node).getKey();
       }
       if (!table.isEnabled()) {
         isEnabled = false;
@@ -722,7 +723,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return myComboBox;
       }
       else if (value instanceof Integer) {
-        myIntLabel.setText(value.toString());
+        if (key instanceof IntOption && ((IntOption)key).isDefaultValue(value)) {
+          myIntLabel.setText(((IntOption)key).getDefaultValueText());
+        }
+        else {
+          myIntLabel.setText(value.toString());
+        }
         return myIntLabel;
       }
 
@@ -738,15 +744,13 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private int myMinValue;
     private int myMaxValue;
     private int myDefaultValue;
-    private String myDefaultValueText;
 
     private MyIntOptionEditor() {
       super();
     }
 
     public Object getPresentableValue() {
-      int value = validateAndGetIntOption();
-      return value == myDefaultValue && myDefaultValueText != null ? myDefaultValueText : value;
+      return validateAndGetIntOption();
     }
 
     private int validateAndGetIntOption() {
@@ -769,10 +773,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
     public void setDefaultValue(int defaultValue) {
       myDefaultValue = defaultValue;
-    }
-
-    public void setDefaultValueText(String defaultValueText) {
-      myDefaultValueText = defaultValueText;
     }
   }
 
@@ -840,11 +840,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         else if (node.getKey() instanceof IntOption) {
           IntOption intOption = (IntOption)node.getKey();
           myCurrentEditor = myIntOptionsEditor;
-          myIntOptionsEditor.setText(intOption.isDefaultText(node.getValue()) ? "" : node.getValue().toString());
+          myIntOptionsEditor.setText(intOption.isDefaultValue(node.getValue()) ? "" : node.getValue().toString());
           myIntOptionsEditor.setMinValue(intOption.getMinValue());
           myIntOptionsEditor.setMaxValue(intOption.getMaxValue());
           myIntOptionsEditor.setDefaultValue(intOption.getDefaultValue());
-          myIntOptionsEditor.setDefaultValueText(intOption.getDefaultValueText());
         }
         else {
           myCurrentEditor = myOptionsEditor;
