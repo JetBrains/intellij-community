@@ -1878,6 +1878,10 @@
                      key="pointless.arithmetic.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.PointlessArithmeticExpressionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousLiteralUnderscore" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="suspicious.literal.underscore.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.numeric.SuspiciousLiteralUnderscoreInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnaryPlus" bundle="com.siyeh.InspectionGadgetsBundle" key="unary.plus.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.UnaryPlusInspection"/>
