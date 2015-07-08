@@ -64,7 +64,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
   
-  public void testPlaceInsideLambda() throws Exception {
+  public void testPlaceInsideLambdaBody() throws Exception {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
