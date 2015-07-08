@@ -37,16 +37,18 @@ import java.util.Map;
 
 class JrtHandler extends ArchiveHandler {
   static {
+    //noinspection ConstantConditions
     assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
   }
+
   private static final URI ROOT_URI = URI.create("jrt:/");
   private static final Map<String, Object> EMPTY_ENV = Collections.emptyMap();
 
   private static class JrtEntryInfo extends EntryInfo {
     private final String myModule;
 
-    public JrtEntryInfo(EntryInfo parent, @NotNull String shortName, @NotNull String module, long length, long timestamp) {
-      super(parent, shortName, false, length, timestamp);
+    public JrtEntryInfo(@NotNull String shortName, @NotNull String module, long length, long timestamp, EntryInfo parent) {
+      super(shortName, false, length, timestamp, parent);
       myModule = module;
     }
   }
@@ -116,8 +118,8 @@ class JrtHandler extends ArchiveHandler {
           boolean dir = (Boolean)call(isDirectory, attributes);
           long length = (Long)call(size, attributes);
           long modified = (Long)call(toMillis, call(lastModifiedTime, attributes));
-          EntryInfo entry = dir ? new EntryInfo(parent, shortName, true, length, modified)
-                                : new JrtEntryInfo(parent, shortName, module, length, modified);
+          EntryInfo entry = dir ? new EntryInfo(shortName, true, length, modified, parent)
+                                : new JrtEntryInfo(shortName, module, length, modified, parent);
           map.put(path, entry);
 
           return null;

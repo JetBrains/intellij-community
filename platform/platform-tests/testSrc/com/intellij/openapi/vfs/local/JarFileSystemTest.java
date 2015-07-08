@@ -186,7 +186,7 @@ public class JarFileSystemTest extends PlatformTestCase {
     assertContent(newEntry, "some text");
   }
 
-  public void testInvalidJar() throws Exception {
+  public void testInvalidJar() {
     String jarPath = PathManagerEx.getTestDataPath() + "/vfs/maven-toolchain-1.0.jar";
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
     assertNotNull(vFile);
@@ -196,7 +196,7 @@ public class JarFileSystemTest extends PlatformTestCase {
     assertNotNull(classFile);
   }
 
-  public void testJarRootForLocalFile() throws Exception {
+  public void testJarRootForLocalFile() {
     String rtJarPath = PlatformTestUtil.getRtJarPath();
 
     VirtualFile rtJarFile = LocalFileSystem.getInstance().findFileByPath(rtJarPath);
@@ -222,7 +222,7 @@ public class JarFileSystemTest extends PlatformTestCase {
   }
 
   private static void assertContent(VirtualFile file, String expected) throws IOException {
-    String content = new String(file.contentsToByteArray());
+    String content = new String(file.contentsToByteArray(), file.getCharset());
     assertEquals(expected, content);
   }
 }

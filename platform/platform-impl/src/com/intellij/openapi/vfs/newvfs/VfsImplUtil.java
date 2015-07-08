@@ -51,8 +51,7 @@ public class VfsImplUtil {
 
   private static final String FILE_SEPARATORS = "/" + File.separator;
 
-  private VfsImplUtil() {
-  }
+  private VfsImplUtil() { }
 
   @Nullable
   public static NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
