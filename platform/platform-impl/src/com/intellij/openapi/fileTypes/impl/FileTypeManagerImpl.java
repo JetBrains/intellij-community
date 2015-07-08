@@ -92,7 +92,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
-  private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
+  private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
   private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
@@ -444,12 +444,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType != null) return fileType;
     }
 
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < mySpecialFileTypes.size(); i++) {
-      FileTypeIdentifiableByVirtualFile type = mySpecialFileTypes.get(i);
+    for (FileTypeIdentifiableByVirtualFile type : mySpecialFileTypes) {
       if (type.isMyFileType(file)) {
         if (toLog()) {
-          log("F: Special file type for "+file.getName()+"; type: "+type.getName());
+          log("F: Special file type for " + file.getName() + "; type: " + type.getName());
         }
         return type;
       }
@@ -743,7 +741,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     mySchemesManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
       final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
-      mySpecialFileTypes.remove(fakeFileType);
+      mySpecialFileTypes = ArrayUtil.remove(mySpecialFileTypes, fakeFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
   }
 
@@ -1121,7 +1119,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
-      mySpecialFileTypes.add((FileTypeIdentifiableByVirtualFile)fileType);
+      mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)fileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
   }
 
