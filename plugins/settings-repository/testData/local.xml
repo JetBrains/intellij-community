@@ -1,0 +1,6 @@
+<application>
+  <component name="CrucibleSettings">
+    <option name="SERVER_URL" value="http://crucible.labs.intellij.net" />
+    <option name="USERNAME" value="develar" />
+  </component>
+</application>

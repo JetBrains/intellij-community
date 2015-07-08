@@ -108,6 +108,30 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     return recordsLength / getRecordSize();
   }
 
+  public RecordIdIterator createRecordIdIterator() throws IOException {
+    return new RecordIdIterator() {
+      private final int count = getRecordsCount();
+      private int recordId = 1;
+
+      @Override
+      public boolean hasNextId() {
+        return recordId <= count;
+      }
+
+      @Override
+      public int nextId() {
+        assert hasNextId();
+        return recordId++;
+      }
+
+      @Override
+      public boolean validId() {
+        assert hasNextId();
+        return getSize(recordId) != -1;
+      }
+    };
+  }
+
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
     ensureFreeRecordsScanned();

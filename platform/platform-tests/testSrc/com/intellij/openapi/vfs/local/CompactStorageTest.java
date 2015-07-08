@@ -23,14 +23,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.persistent.CompactRecordsTable;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.AbstractRecordsTable;
+import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.Storage;
 import com.intellij.util.io.storage.StorageTest;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 public class CompactStorageTest extends StorageTest {
   @NotNull
@@ -46,23 +49,83 @@ public class CompactStorageTest extends StorageTest {
 
   public void testDeleteRemovesExtendedRecords() throws IOException {
     TIntArrayList recordsList = new TIntArrayList();
-    for(int i = 0; i < 60000; ++i) recordsList.add(createTestRecord());
+    // 60000 records of 40000 bytes each: exercise extra record creation
+    int recordCount = 60000;
+    for(int i = 0; i < recordCount; ++i) recordsList.add(createTestRecord());
     for (int r: recordsList.toNativeArray()) myStorage.deleteRecord(r);
 
-    Disposer.dispose(myStorage);
-    myStorage = createStorage(getFileName());
-    assertEquals(myStorage.getLiveRecordsCount(), 0);
+    assertEquals(0, myStorage.getLiveRecordsCount());
   }
+
+  public void testCompactAndIterators() throws IOException {
+    TIntArrayList recordsList = new TIntArrayList();
+    // 1000 records after deletion greater than 3M limit for init time compaction
+    final int recordCount = 2000;
+    for(int i = 0; i < recordCount; ++i) recordsList.add(createTestRecord());
+    final int physicalRecordCount = myStorage.getLiveRecordsCount();
+    for (int i = 0; i < recordCount / 2; ++i) myStorage.deleteRecord(recordsList.getQuick(i));
+    int logicalRecordCount = countLiveLogicalRecords();
+    assertEquals(recordCount / 2, logicalRecordCount);
+
+    Disposer.dispose(myStorage);  // compact is triggered
+    myStorage = createStorage(getFileName());
+    assertEquals(myStorage.getLiveRecordsCount(), physicalRecordCount / 2);
+
+    logicalRecordCount = 0;
+
+    RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
+    while(recordIdIterator.hasNextId()) {
+      boolean validId = recordIdIterator.validId();
+      int nextId = recordIdIterator.nextId();
+      if (!validId) continue;
+      ++logicalRecordCount;
+      checkTestRecord(nextId);
+    }
+
+    assertEquals(recordCount / 2, logicalRecordCount);
+  }
+
+  protected int countLiveLogicalRecords() throws IOException {
+    RecordIdIterator recordIdIterator = myStorage.createRecordIdIterator();
+    int logicalRecordCount = 0;
+
+    while(recordIdIterator.hasNextId()) {
+      boolean validId = recordIdIterator.validId();
+      recordIdIterator.nextId();
+      if (!validId) continue;
+      ++logicalRecordCount;
+    }
+    return logicalRecordCount;
+  }
+
+  private static final int TIMES_LIMIT = 10000;
 
   protected int createTestRecord() throws IOException {
     final int r = myStorage.createNewRecord();
 
     DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
-    for (int i = 0; i < 10000; i++) {
-      out.writeInt(i);
+    try {
+      Random random = new Random(r);
+      for (int i = 0; i < TIMES_LIMIT; i++) {
+        out.writeInt(random.nextInt());
+      }
+    }
+    finally {
+      out.close();
     }
 
-    out.close();
     return r;
+  }
+
+  private void checkTestRecord(int id) throws IOException {
+    DataInputStream stream = myStorage.readStream(id);
+    try {
+      Random random = new Random(id);
+      for (int i = 0; i < TIMES_LIMIT; i++) {
+        assertEquals(random.nextInt(), stream.readInt());
+      }
+    } finally {
+      stream.close();
+    }
   }
 }

@@ -1639,6 +1639,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return getInfo(id).isSplit();
   }
 
+  @NotNull
   ToolWindowContentUiType getContentUiType(String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
@@ -1651,7 +1652,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandList);
   }
 
-  public void setContentUiType(String id, ToolWindowContentUiType type) {
+  public void setContentUiType(String id, @NotNull ToolWindowContentUiType type) {
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     checkId(id);
     WindowInfoImpl info = getInfo(id);
@@ -2002,7 +2003,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
-  public void setDefaultContentUiType(ToolWindowImpl toolWindow, ToolWindowContentUiType type) {
+  public void setDefaultContentUiType(ToolWindowImpl toolWindow, @NotNull ToolWindowContentUiType type) {
     final WindowInfoImpl info = getInfo(toolWindow.getId());
     if (info.wasRead()) return;
     toolWindow.setContentUiType(type, null);
@@ -2327,7 +2328,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     @Override
-    public void contentUiTypeChanges(InternalDecorator source, ToolWindowContentUiType type) {
+    public void contentUiTypeChanges(InternalDecorator source, @NotNull ToolWindowContentUiType type) {
       setContentUiType(source.getToolWindow().getId(), type);
     }
 

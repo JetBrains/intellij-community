@@ -1054,7 +1054,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  // returns id, parent(id), parent(parent(id)), ...  (already known id or rootId)
+  // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
   @NotNull
   public static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
     TIntArrayList result = new TIntArrayList(10);

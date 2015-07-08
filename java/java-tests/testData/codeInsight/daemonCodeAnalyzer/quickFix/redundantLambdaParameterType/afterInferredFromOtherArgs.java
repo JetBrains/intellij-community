@@ -10,6 +10,6 @@ class ReturnTypeCompatibility {
     }
 
     public static void main(String[] args) {
-        call("",  i -> "");
+        call("", i -> "");
     }
 }

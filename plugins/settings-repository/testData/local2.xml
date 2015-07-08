@@ -1,0 +1,10 @@
+<application>
+  <component name="PluginManagerConfigurable">
+    <option name="proportions">
+      <list>
+        <option value="0.5" />
+      </list>
+    </option>
+    <available-proportions />
+  </component>
+</application>

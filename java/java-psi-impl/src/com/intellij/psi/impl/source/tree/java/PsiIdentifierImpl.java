@@ -43,27 +43,6 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
     }
   }
 
-  @Override
-  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
-    PsiElement result = super.replace(newElement);
-
-    // We want to reformat method parameters on method name change as well because there is a possible situation that they are aligned
-    // and method name change breaks the alignment.
-    // Example:
-    //     public void test(int i,
-    //                      int j) {}
-    // Suppose we're renaming the method to test123. We get the following if parameter list is not reformatted:
-    //     public void test123(int i,
-    //                     int j) {}
-    PsiElement methodCandidate = result.getParent();
-    if (methodCandidate instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)methodCandidate;
-      CodeEditUtil.markToReformat(method.getParameterList().getNode(), true);
-    }
-
-    return result;
-  }
-
   public String toString(){
     return "PsiIdentifier:" + getText();
   }

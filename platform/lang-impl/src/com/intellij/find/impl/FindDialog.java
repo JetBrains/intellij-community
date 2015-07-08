@@ -885,25 +885,25 @@ public class FindDialog extends DialogWrapper {
 
     myCbCaseSensitive = createCheckbox(FindBundle.message("find.options.case.sensitive"));
     findOptionsPanel.add(myCbCaseSensitive);
-    ItemListener l = new ItemListener() {
+    ItemListener liveResultsPreviewUpdateListener = new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         scheduleResultsUpdate();
       }
     };
-    myCbCaseSensitive.addItemListener(l);
+    myCbCaseSensitive.addItemListener(liveResultsPreviewUpdateListener);
 
     myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
-    myCbPreserveCase.addItemListener(l);
+    myCbPreserveCase.addItemListener(liveResultsPreviewUpdateListener);
     findOptionsPanel.add(myCbPreserveCase);
     myCbPreserveCase.setVisible(myModel.isReplaceState());
     myCbWholeWordsOnly = createCheckbox(FindBundle.message("find.options.whole.words.only"));
-    myCbWholeWordsOnly.addItemListener(l);
+    myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
 
     findOptionsPanel.add(myCbWholeWordsOnly);
 
     myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
-    myCbRegularExpressions.addItemListener(l);
+    myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
 
     final JPanel regExPanel = new JPanel();
     regExPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1073,13 +1073,13 @@ public class FindDialog extends DialogWrapper {
                                    ? FindBundle.message("find.scope.all.projects.radio")
                                    : FindBundle.message("find.scope.whole.project.radio"), true);
     scopePanel.add(myRbProject, gbConstraints);
-    ItemListener l = new ItemListener() {
+    ItemListener resultsPreviewUpdateListener = new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         scheduleResultsUpdate();
       }
     };
-    myRbProject.addItemListener(l);
+    myRbProject.addItemListener(resultsPreviewUpdateListener);
 
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
@@ -1089,7 +1089,7 @@ public class FindDialog extends DialogWrapper {
                                   ? FindBundle.message("find.scope.project.radio")
                                   : FindBundle.message("find.scope.module.radio"), false);
     scopePanel.add(myRbModule, gbConstraints);
-    myRbModule.addItemListener(l);
+    myRbModule.addItemListener(resultsPreviewUpdateListener);
 
     gbConstraints.gridx = 1;
     gbConstraints.gridwidth = 2;
@@ -1121,7 +1121,7 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     myRbDirectory = new JRadioButton(FindBundle.message("find.scope.directory.radio"), false);
     scopePanel.add(myRbDirectory, gbConstraints);
-    myRbDirectory.addItemListener(l);
+    myRbDirectory.addItemListener(resultsPreviewUpdateListener);
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
@@ -1154,6 +1154,7 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.insets = new Insets(0, 16, 0, 0);
     myCbWithSubdirectories = createCheckbox(true, FindBundle.message("find.scope.directory.recursive.checkbox"));
     myCbWithSubdirectories.setSelected(true);
+    myCbWithSubdirectories.addItemListener(resultsPreviewUpdateListener);
     scopePanel.add(myCbWithSubdirectories, gbConstraints);
 
 
@@ -1175,7 +1176,7 @@ public class FindDialog extends DialogWrapper {
         scheduleResultsUpdate();
       }
     });
-    myRbCustomScope.addItemListener(l);
+    myRbCustomScope.addItemListener(resultsPreviewUpdateListener);
 
     Disposer.register(myDisposable, myScopeCombo);
     scopePanel.add(myScopeCombo, gbConstraints);

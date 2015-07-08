@@ -8,14 +8,14 @@ public class Foo {
 class Bar {
   public static void main(String[] args) {
       Foo.bar(new Runnable() {
-          @Override
-          public void run() {
-              doRun();
-          }
-
-          private void doRun() {
-              // Woo-hoo
-          }
+        @Override
+        public void run() {
+          doRun();
+        }
+  
+        private void doRun() {
+          // Woo-hoo
+        }
       });
   }
 }

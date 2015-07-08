@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -107,7 +108,7 @@ public class JavaTestFinder implements TestFinder {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(klass.getProject());
 
     String klassName = klass.getName();
-    Pattern pattern = Pattern.compile(".*" + klassName + ".*", Pattern.CASE_INSENSITIVE);
+    Pattern pattern = Pattern.compile(".*" + StringUtil.escapeToRegexp(klassName) + ".*", Pattern.CASE_INSENSITIVE);
 
     HashSet<String> names = new HashSet<String>();
     cache.getAllClassNames(names);

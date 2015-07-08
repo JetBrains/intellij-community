@@ -25,7 +25,7 @@ class C {
       I.super.m();
       <error descr="Unqualified super reference is not allowed in extension method">super.<error descr="Cannot resolve method 'm()'">m</error></error>();
 
-      System.out.println(I.super.i);
+      System.out.println(<error descr="'C.I' is not an enclosing class">I.super</error>.i);
       System.out.println(<error descr="Unqualified super reference is not allowed in extension method">super.<error descr="Cannot resolve symbol 'i'">i</error></error>);
     }
 

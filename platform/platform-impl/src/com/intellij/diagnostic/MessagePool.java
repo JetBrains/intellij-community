@@ -15,8 +15,8 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
@@ -26,21 +26,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
   private static final int MAX_POOL_SIZE_FOR_FATALS = 100;
 
-  private final List<AbstractMessage> myIdeFatals = new ArrayList<AbstractMessage>();
+  private final List<AbstractMessage> myIdeFatals = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final List<MessagePoolListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final MessageGrouper myFatalsGrouper;
-  private boolean ourJvmIsShuttingDown = false;
 
   MessagePool(int maxGroupSize, int timeout) {
     myFatalsGrouper = new MessageGrouper(timeout, maxGroupSize);
-    JobScheduler.getScheduler().scheduleWithFixedDelay(myFatalsGrouper, (long)300, (long)300, TimeUnit.MILLISECONDS);
   }
 
   private static class MessagePoolHolder {
@@ -66,13 +63,6 @@ public class MessagePool {
       return tooMany;
     }
     return null;
-  }
-
-  public boolean hasUnreadMessages() {
-    for (AbstractMessage message : myIdeFatals) {
-      if (!message.isRead()) return true;
-    }
-    return false;
   }
 
   public List<AbstractMessage> getFatalErrors(boolean aIncludeReadMessages, boolean aIncludeSubmittedMessages) {
@@ -106,8 +96,6 @@ public class MessagePool {
   }
 
   private void notifyListenersAdd() {
-    if (ourJvmIsShuttingDown) return;
-
     for (MessagePoolListener messagePoolListener : myListeners) {
       messagePoolListener.newEntryAdded();
     }
@@ -125,30 +113,22 @@ public class MessagePool {
     }
   }
 
-  public void setJvmIsShuttingDown() {
-    ourJvmIsShuttingDown = true;
-  }
-
   private class MessageGrouper implements Runnable {
-
     private final int myTimeOut;
     private final int myMaxGroupSize;
-
     private final List<AbstractMessage> myMessages = new ArrayList<AbstractMessage>();
-    private int myAccumulatedTime;
+    private final Alarm myAlarm;
 
     public MessageGrouper(int timeout, int maxGroupSize) {
       myTimeOut = timeout;
       myMaxGroupSize = maxGroupSize;
+      myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     }
 
     public void run() {
-      myAccumulatedTime += 300;
-      if (myAccumulatedTime > myTimeOut) {
-        synchronized(myMessages) {
-          if (myMessages.size() > 0) {
-            post();
-          }
+      synchronized (myMessages) {
+        if (myMessages.size() > 0) {
+          post();
         }
       }
     }
@@ -163,16 +143,17 @@ public class MessagePool {
       myMessages.clear();
       myIdeFatals.add(message);
       notifyListenersAdd();
-      myAccumulatedTime = 0;
     }
 
     public boolean addToGroup(@NotNull AbstractMessage message) {
-      myAccumulatedTime = 0;
       boolean result = myMessages.isEmpty();
       synchronized(myMessages) {
         myMessages.add(message);
         if (myMessages.size() >= myMaxGroupSize) {
           post();
+        } else {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(this, myTimeOut);
         }
       }
       return result;

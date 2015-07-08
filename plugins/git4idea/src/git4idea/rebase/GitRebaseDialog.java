@@ -204,7 +204,7 @@ public class GitRebaseDialog extends DialogWrapper {
       GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
       return true;
     }
-    catch (Exception e) {
+    catch (VcsException e) {
       LOG.debug(e);
       return false;
     }

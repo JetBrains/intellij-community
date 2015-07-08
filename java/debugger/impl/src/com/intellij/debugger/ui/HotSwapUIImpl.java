@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PairFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -74,11 +75,10 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
 
     ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerAdapter() {
       private MessageBusConnection myConn = null;
-      private int mySessionCount = 0;
 
       @Override
       public void sessionAttached(DebuggerSession session) {
-        if (mySessionCount++ == 0) {
+        if (myConn == null) {
           myConn = bus.connect();
           myConn.subscribe(CompilerTopics.COMPILATION_STATUS, new MyCompilationStatusListener());
         }
@@ -86,13 +86,12 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
 
       @Override
       public void sessionDetached(DebuggerSession session) {
-        mySessionCount = Math.max(0, mySessionCount - 1);
-        if (mySessionCount == 0) {
-          final MessageBusConnection conn = myConn;
-          if (conn != null) {
-            Disposer.dispose(conn);
-            myConn = null;
-          }
+        if (!getHotSwappableDebugSessions().isEmpty()) return;
+
+        final MessageBusConnection conn = myConn;
+        if (conn != null) {
+          Disposer.dispose(conn);
+          myConn = null;
         }
       }
     });
@@ -340,18 +339,27 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
           }
         }
 
-        final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>();
-        Collection<DebuggerSession> debuggerSessions = DebuggerManagerEx.getInstanceEx(myProject).getSessions();
-        for (final DebuggerSession debuggerSession : debuggerSessions) {
-          if (debuggerSession.isAttached() && debuggerSession.getProcess().canRedefineClasses()) {
-            sessions.add(debuggerSession);
-          }
-        }
+        List<DebuggerSession> sessions = getHotSwappableDebugSessions();
         if (!sessions.isEmpty()) {
           hotSwapSessions(sessions, generated);
         }
       }
       myPerformHotswapAfterThisCompilation = true;
     }
+  }
+
+  public static boolean canHotSwap(@NotNull DebuggerSession debuggerSession) {
+    return debuggerSession.isAttached() && debuggerSession.getProcess().canRedefineClasses();
+  }
+
+  @NotNull
+  private List<DebuggerSession> getHotSwappableDebugSessions() {
+    final List<DebuggerSession> sessions = new SmartList<DebuggerSession>();
+    for (final DebuggerSession debuggerSession : DebuggerManagerEx.getInstanceEx(myProject).getSessions()) {
+      if (canHotSwap(debuggerSession)) {
+        sessions.add(debuggerSession);
+      }
+    }
+    return sessions;
   }
 }

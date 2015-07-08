@@ -1420,7 +1420,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       addActionListener(this);
       setRepeats(true);
       final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           setDelay(TIMER_DELAY);

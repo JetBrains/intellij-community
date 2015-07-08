@@ -712,6 +712,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) {
+          // Update when a change has been finalized.
+          // For instance, selecting an element with mouse fires two consecutive ListSelectionEvent events.
+          return;
+        }
         if (!selected.isNull()) {
           main.remove(selected.get());
         }

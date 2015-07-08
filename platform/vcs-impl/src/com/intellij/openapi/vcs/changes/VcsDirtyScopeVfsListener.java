@@ -32,7 +32,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -125,15 +124,14 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
-      final VirtualFile file = getFileForEvent(event);
-      if (file == null) {
+      if (event instanceof VFileCreateEvent) continue;
+      final VirtualFile file = event.getFile();
+
+      if (file == null || !file.isInLocalFileSystem()) {
         continue;
       }
 
-      if (event instanceof VFileDeleteEvent) {
-        if (!file.isInLocalFileSystem()) { continue; }
-        dirtyFilesAndDirs.add(file);
-      } else if (event instanceof VFileMoveEvent || event instanceof VFilePropertyChangeEvent) {
+      if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFilePropertyChangeEvent) {
         dirtyFilesAndDirs.add(file);
       }
     }
@@ -149,8 +147,8 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent) continue;
 
-      final VirtualFile file = getFileForEvent(event);
-      if (file == null) {
+      final VirtualFile file = event.getFile();
+      if (file == null || !file.isInLocalFileSystem()) {
         continue;
       }
 
@@ -179,11 +177,6 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       myQueue.add(dirtyFilesAndDirs);
     }
     myZipperUpdater.request();
-  }
-
-  @Nullable
-  private static VirtualFile getFileForEvent(VFileEvent event) {
-    return VcsUtil.getVirtualFile(event.getPath());
   }
 
   /**

@@ -194,7 +194,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   @Override
   @Nls
   public String getDisplayName() {
-    return "Console Folding";
+    return "Console";
   }
 
   @Override

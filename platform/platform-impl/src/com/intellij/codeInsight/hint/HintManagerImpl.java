@@ -188,6 +188,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     };
   }
 
+  public boolean isHint(Window component) {
+    return myHintsStack.contains(component);
+  }
+
   @NotNull
   private HintInfo[] getHintsStackArray() {
     return myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
