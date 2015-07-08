@@ -98,7 +98,6 @@ public abstract class GitChangesSaver {
 
   /**
    * Loads local changes from stash or shelf, and sorts the changes back to the change lists they were before update.
-   * @param context
    */
   public void restoreLocalChanges() {
     load();
