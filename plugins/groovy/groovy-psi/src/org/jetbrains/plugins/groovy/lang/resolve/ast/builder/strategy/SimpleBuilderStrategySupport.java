@@ -53,7 +53,7 @@ public class SimpleBuilderStrategySupport extends GrBuilderStrategySupport {
     fieldSetter.addModifier(PsiModifier.PUBLIC);
     fieldSetter.addParameter(name, field.getType(), false);
     fieldSetter.setContainingClass(builderClass);
-    fieldSetter.setMethodReturnType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass));
+    fieldSetter.setMethodReturnType(createType(builderClass));
     fieldSetter.setNavigationElement(field);
     fieldSetter.setOriginInfo(ORIGIN_INFO);
     return fieldSetter;
@@ -62,6 +62,8 @@ public class SimpleBuilderStrategySupport extends GrBuilderStrategySupport {
   @NotNull
   public static String getFieldMethodName(@NotNull PsiAnnotation annotation, @NotNull String fieldName) {
     final String prefix = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "prefix");
-    return String.format("%s%s", prefix == null ? "set" : prefix, StringUtil.capitalize(fieldName));
+    return prefix == null ? "set" + StringUtil.capitalize(fieldName)
+                          : prefix.isEmpty() ? fieldName
+                                             : prefix + StringUtil.capitalize(fieldName);
   }
 }
