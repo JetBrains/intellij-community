@@ -50,7 +50,7 @@ public class ExternalBuilderStrategySupport extends GrBuilderStrategySupport {
   private static Pair<PsiAnnotation, GrTypeDefinition> getConstructedClass(GrTypeDefinition builderClass) {
     if (!EXTERNAL_STRATEGY_FQN.equals(getStrategy(builderClass))) return null;
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(builderClass, BUILDER_FQN);
-    final PsiClass constructedClass = getDeclaredClassAttribute(annotation, "forClass");
+    final PsiClass constructedClass = getClassAttributeValue(annotation, "forClass");
     if (!(constructedClass instanceof GrTypeDefinition)) return null;
     return Pair.create(annotation, (GrTypeDefinition)constructedClass);
   }

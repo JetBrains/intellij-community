@@ -62,13 +62,13 @@ public abstract class GrBuilderStrategySupport {
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(annotatedMember, BUILDER_FQN);
     if (annotation == null) return null;
 
-    final PsiClass strategy = getDeclaredClassAttribute(annotation, STRATEGY_ATTRIBUTE);
+    final PsiClass strategy = getClassAttributeValue(annotation, STRATEGY_ATTRIBUTE);
     return strategy == null ? null : strategy.getQualifiedName();
   }
 
   @Nullable
   @Contract("null,_ -> null")
-  public static PsiClass getDeclaredClassAttribute(@Nullable PsiAnnotation annotation, @NotNull String attributeName) {
+  public static PsiClass getClassAttributeValue(@Nullable PsiAnnotation annotation, @NotNull String attributeName) {
     if (annotation == null) return null;
     final PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
     if (value instanceof GrReferenceExpression) {
