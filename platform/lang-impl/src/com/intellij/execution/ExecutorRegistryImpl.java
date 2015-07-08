@@ -16,15 +16,23 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -32,6 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class ExecutorRegistryImpl extends ExecutorRegistry {
@@ -210,11 +219,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      final RunnerAndConfigurationSettings selectedConfiguration = getConfiguration(project);
+      final RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
       boolean enabled = false;
       String text;
       final String textWithMnemonic = getTemplatePresentation().getTextWithMnemonic();
       if (selectedConfiguration != null) {
+        presentation.setIcon(getInformativeIcon(project, selectedConfiguration));
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
 
         ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
@@ -234,8 +244,42 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       presentation.setText(text);
     }
 
+    private Icon getInformativeIcon(Project project, final RunnerAndConfigurationSettings selectedConfiguration) {
+      final ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+
+      List<RunContentDescriptor> runningDescriptors =
+        executionManager.getRunningDescriptors(new Condition<RunnerAndConfigurationSettings>() {
+          @Override
+          public boolean value(RunnerAndConfigurationSettings s) {
+            return s == selectedConfiguration;
+          }
+        });
+      runningDescriptors = ContainerUtil.filter(runningDescriptors, new Condition<RunContentDescriptor>() {
+        @Override
+        public boolean value(RunContentDescriptor descriptor) {
+          RunContentDescriptor contentDescriptor =
+            executionManager.getContentManager().findContentDescriptor(myExecutor, descriptor.getProcessHandler());
+          return contentDescriptor != null && executionManager.getExecutors(contentDescriptor).contains(myExecutor);
+        }
+      });
+
+      if (!runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId()) && selectedConfiguration.isSingleton()) {
+        return AllIcons.Actions.Restart;
+      }
+      if (runningDescriptors.isEmpty()) {
+        return myExecutor.getIcon();
+      }
+
+      if (runningDescriptors.size() == 1) {
+        return ExecutionUtil.getLiveIndicator(myExecutor.getIcon());
+      }
+      else {
+        return IconUtil.addText(myExecutor.getIcon(), String.valueOf(runningDescriptors.size()));
+      }
+    }
+
     @Nullable
-    private RunnerAndConfigurationSettings getConfiguration(@NotNull final Project project) {
+    private RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull final Project project) {
       return RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
     }
 
@@ -246,7 +290,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      RunnerAndConfigurationSettings configuration = getConfiguration(project);
+      RunnerAndConfigurationSettings configuration = getSelectedConfiguration(project);
       ExecutionEnvironmentBuilder builder = configuration == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, configuration);
       if (builder == null) {
         return;

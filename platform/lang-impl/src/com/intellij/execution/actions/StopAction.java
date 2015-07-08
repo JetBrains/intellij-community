@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,9 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         presentation.setText(getTemplatePresentation().getText());
       }
       enable = todoSize > 0;
+      if (todoSize > 1) {
+        icon = IconUtil.addText(icon, String.valueOf(todoSize));
+      }
     }
     else {
       RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);

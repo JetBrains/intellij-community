@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
@@ -45,14 +46,11 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.*;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -60,10 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
 import java.util.*;
-import java.util.List;
 
 public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
@@ -296,7 +291,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
-              toolWindow.setIcon(getLiveIndicator(myToolwindowIdToBaseIconMap.get(executor.getToolWindowId())));
+              content.setIcon(ExecutionUtil.getLiveIndicator(descriptor.getIcon()));
+              toolWindow.setIcon(ExecutionUtil.getLiveIndicator(myToolwindowIdToBaseIconMap.get(executor.getToolWindowId())));
             }
           });
         }
@@ -321,7 +317,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                 }
               }
               Icon base = myToolwindowIdToBaseIconMap.get(toolWindowId);
-              toolWindow.setIcon(alive ? getLiveIndicator(base) : base);
+              toolWindow.setIcon(alive ? ExecutionUtil.getLiveIndicator(base) : base);
 
               Icon icon = descriptor.getIcon();
               content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
@@ -364,37 +360,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }, myProject.getDisposed());
   }
 
-  private final static int INDICATOR_SIZE = 4;
-  private static Icon getLiveIndicator(final Icon base) {
-    return new LayeredIcon(base, new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D)g.create();
-        try {
-          GraphicsUtil.setupAAPainting(g2d);
-          g2d.setColor(Color.GREEN);
-          Ellipse2D.Double shape =
-            new Ellipse2D.Double(x + getIconWidth() - INDICATOR_SIZE, y + getIconHeight() - INDICATOR_SIZE, INDICATOR_SIZE, INDICATOR_SIZE);
-          g2d.fill(shape);
-          g2d.setColor(ColorUtil.withAlpha(Color.BLACK, .40));
-          g2d.draw(shape);
-        }
-        finally {
-          g2d.dispose();
-        }
-      }
-
-      @Override
-      public int getIconWidth() {
-        return base != null ? base.getIconWidth() : 13;
-      }
-
-      @Override
-      public int getIconHeight() {
-        return base != null ? base.getIconHeight() : 13;
-      }
-    });
-  }
 
   @Nullable
   @Override
