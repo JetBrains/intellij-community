@@ -19,10 +19,20 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SmartList
 import org.junit.rules.ExternalResource
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 import java.io.File
+import java.io.IOException
 
 public class TemporaryDirectory : ExternalResource() {
   private val files = SmartList<File>()
+
+  private var sanitizedName: String? = null
+
+  override fun apply(base: Statement, description: Description): Statement {
+    sanitizedName = FileUtil.sanitizeName(description.getMethodName())
+    return super.apply(base, description)
+  }
 
   override fun after() {
     for (file in files) {
@@ -31,9 +41,24 @@ public class TemporaryDirectory : ExternalResource() {
     files.clear()
   }
 
-  public fun newDirectory(): File {
-    val file = FileUtilRt.generateRandomTemporaryPath()
+  public fun newDirectory(directoryName: String? = null): File {
+    val tempDirectory = FileUtilRt.getTempDirectory()
+    var testFileName = sanitizedName!!
+    if (directoryName != null) {
+      testFileName += "_$directoryName"
+    }
+
+    var file = File(tempDirectory, testFileName)
+    var i = 0
+    while (file.exists() && i < 9) {
+      file = File(tempDirectory, "${testFileName}_$i")
+      i++
+    }
+
+    if (file.exists()) {
+      throw IOException("Couldn't generate unique random path")
+    }
     files.add(file)
-    return file;
+    return file
   }
 }

@@ -1,18 +1,30 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository
 
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.*
+import com.intellij.openapi.components.impl.stores.StorageUtil
+import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.options.SchemesManagerFactory
-import com.intellij.openapi.options.SchemesManagerFactoryImpl
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -20,12 +32,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.AtomicNotNullLazyValue
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
-import com.intellij.util.ui.UIUtil
-import gnu.trove.THashSet
 import org.jetbrains.keychain.CredentialsStore
 import org.jetbrains.keychain.FileCredentialsStore
 import org.jetbrains.keychain.OsXCredentialsStore
@@ -35,7 +44,6 @@ import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
 import java.io.File
 import java.io.InputStream
-import java.util.LinkedHashSet
 import kotlin.properties.Delegates
 
 val PLUGIN_NAME: String = "Settings Repository"
@@ -43,7 +51,7 @@ val PLUGIN_NAME: String = "Settings Repository"
 val LOG: Logger = Logger.getInstance(javaClass<IcsManager>())
 
 val icsManager by Delegates.lazy {
-  ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsManager>())
+  ApplicationLoadListener.EP_NAME.findExtension(javaClass<IcsApplicationLoadListener>()).icsManager
 }
 
 val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
@@ -60,8 +68,9 @@ val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
   }
 }
 
-public class IcsManager : ApplicationLoadListener {
+class IcsManager(dir: File) {
   val settings: IcsSettings
+  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, File(dir, "repository"))
 
   init {
     try {
@@ -73,11 +82,9 @@ public class IcsManager : ApplicationLoadListener {
     }
   }
 
-  val readOnlySourcesManager = ReadOnlySourcesManager(settings)
+  val readOnlySourcesManager = ReadOnlySourcesManager(settings, dir)
 
   public val repositoryService: RepositoryService = GitRepositoryService()
-
-  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore)
 
   private val commitAlarm = SingleAlarm(object : Runnable {
     override fun run() {
@@ -95,11 +102,11 @@ public class IcsManager : ApplicationLoadListener {
   }, settings.commitDelay)
 
   private volatile var autoCommitEnabled = true
-  private volatile var writeAndDeleteProhibited = false
 
   volatile var repositoryActive = false
 
-  private val autoSync = AutoSync(this)
+  private val autoSyncManager = AutoSyncManager(this)
+  private val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode()) {
@@ -107,9 +114,9 @@ public class IcsManager : ApplicationLoadListener {
     }
   }
 
-  private inner class ApplicationLevelProvider : IcsStreamProvider(null) {
+  inner class ApplicationLevelProvider : IcsStreamProvider(null) {
     override fun delete(fileSpec: String, roamingType: RoamingType) {
-      if (writeAndDeleteProhibited) {
+      if (syncManager.writeAndDeleteProhibited) {
         throw IllegalStateException("Delete is prohibited now")
       }
 
@@ -143,107 +150,7 @@ public class IcsManager : ApplicationLoadListener {
     }
   }
 
-  public fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
-    ApplicationManager.getApplication()!!.assertIsDispatchThread()
-
-    var exception: Throwable? = null
-    var restartApplication = false
-    var updateResult: UpdateResult? = null
-    cancelAndDisableAutoCommit()
-    try {
-      ApplicationManager.getApplication()!!.saveSettings()
-      writeAndDeleteProhibited = true
-      ProgressManager.getInstance().run(object : Task.Modal(project, IcsBundle.message("task.sync.title"), true) {
-        override fun run(indicator: ProgressIndicator) {
-          indicator.setIndeterminate(true)
-
-          autoSync.waitAutoSync(indicator)
-
-          if (localRepositoryInitializer == null) {
-            try {
-              // we commit before even if sync "RESET_TO_THEIRS" — preserve history and ability to undo
-              repositoryManager.commitIfCan(indicator)
-              // well, we cannot commit? No problem, upcoming action must do something smart and solve the situation
-            }
-            catch (e: ProcessCanceledException) {
-              LOG.debug("Canceled")
-              return
-            }
-            catch (e: Throwable) {
-              LOG.error(e)
-
-              // "RESET_TO_*" will do "reset hard", so, probably, error will be gone, so, we can continue operation
-              if (syncType == SyncType.MERGE) {
-                exception = e
-                return
-              }
-            }
-          }
-
-          if (indicator.isCanceled()) {
-            return
-          }
-
-          try {
-            when (syncType) {
-              SyncType.MERGE -> {
-                updateResult = repositoryManager.pull(indicator)
-                if (localRepositoryInitializer != null) {
-                  // must be performed only after initial pull, so, local changes will be relative to remote files
-                  localRepositoryInitializer()
-                  repositoryManager.commit(indicator)
-                  updateResult = updateResult.concat(repositoryManager.pull(indicator))
-                }
-                repositoryManager.push(indicator)
-              }
-              SyncType.OVERWRITE_LOCAL -> {
-                // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
-                updateResult = repositoryManager.resetToTheirs(indicator)
-              }
-              SyncType.OVERWRITE_REMOTE -> {
-                updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
-                repositoryManager.push(indicator)
-              }
-            }
-          }
-          catch (e: ProcessCanceledException) {
-            LOG.debug("Canceled")
-            return
-          }
-          catch (e: Throwable) {
-            if (e !is AuthenticationException && e !is NoRemoteRepositoryException) {
-              LOG.error(e)
-            }
-            exception = e
-            return
-          }
-
-          repositoryActive = true
-          if (updateResult != null) {
-            restartApplication = updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
-          }
-          if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
-            (SchemesManagerFactory.getInstance() as SchemesManagerFactoryImpl).process {
-              it.reload()
-            }
-          }
-        }
-      })
-    }
-    finally {
-      autoCommitEnabled = true
-      writeAndDeleteProhibited = false
-    }
-
-    if (restartApplication) {
-      // force to avoid saveAll & confirmation
-      (ApplicationManager.getApplication() as ApplicationImpl).exit(true, true, true, true)
-    }
-    else if (exception != null) {
-      throw exception!!
-    }
-    return updateResult
-  }
+  fun sync(syncType: SyncType, project: Project?, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
 
   private fun cancelAndDisableAutoCommit() {
     if (autoCommitEnabled) {
@@ -263,23 +170,12 @@ public class IcsManager : ApplicationLoadListener {
     }
   }
 
-  override fun beforeApplicationLoaded(application: Application) {
-    try {
-      val oldPluginDir = File(PathManager.getSystemPath(), "settingsRepository")
-      val newPluginDir = getPluginSystemDir()
-      if (oldPluginDir.exists() && !newPluginDir.exists()) {
-        FileUtil.rename(oldPluginDir, newPluginDir)
-      }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-
+  fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
     (application as ApplicationImpl).getStateStore().getStateStorageManager().setStreamProvider(ApplicationLevelProvider())
 
-    autoSync.registerListeners(application)
+    autoSyncManager.registerListeners(application)
 
     application.getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
       override fun beforeProjectLoaded(project: Project) {
@@ -288,11 +184,11 @@ public class IcsManager : ApplicationLoadListener {
         }
 
         registerProjectLevelProviders(project)
-        autoSync.registerListeners(project)
+        autoSyncManager.registerListeners(project)
       }
 
       override fun afterProjectClosed(project: Project) {
-        autoSync.autoSync()
+        autoSyncManager.autoSync()
       }
     })
   }
@@ -315,7 +211,7 @@ public class IcsManager : ApplicationLoadListener {
     }
 
     override fun saveContent(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      if (writeAndDeleteProhibited) {
+      if (syncManager.writeAndDeleteProhibited) {
         throw IllegalStateException("Save is prohibited now")
       }
 
@@ -341,60 +237,24 @@ public class IcsManager : ApplicationLoadListener {
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: IComponentStore.Reloadable, updateResult: UpdateResult): Boolean {
-  val changedComponentNames = LinkedHashSet<String>()
-  val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
-  val changed = stateStorages.first!!
-  val deleted = stateStorages.second!!
-  if (changed.isEmpty() && deleted.isEmpty()) {
-    return false
-  }
+class IcsApplicationLoadListener : ApplicationLoadListener {
+  private val pluginSystemDir = getPluginSystemDir()
 
-  return UIUtil.invokeAndWaitIfNeeded(object : Computable<Boolean> {
-    override fun compute(): Boolean {
-      val notReloadableComponents: Collection<String>
-      val token = WriteAction.start()
-      try {
-        updateStateStorage(changedComponentNames, changed, false)
-        updateStateStorage(changedComponentNames, deleted, true)
+  val icsManager = IcsManager(pluginSystemDir)
 
-        if (changedComponentNames.isEmpty()) {
-          return false
-        }
-
-        notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-
-        val changedStorageSet = THashSet(changed)
-        changedStorageSet.addAll(deleted)
-        (store as ComponentStoreImpl).reinitComponents(changedComponentNames, notReloadableComponents, changedStorageSet)
-      }
-      finally {
-        token.finish()
-      }
-
-      if (notReloadableComponents.isEmpty()) {
-        return false
-      }
-      return ComponentStoreImpl.askToRestart(store, notReloadableComponents, null)
-    }
-  })!!
-}
-
-private fun updateStateStorage(changedComponentNames: Set<String>, stateStorages: Collection<FileBasedStorage>, deleted: Boolean) {
-  for (stateStorage in stateStorages) {
+  override fun beforeApplicationLoaded(application: Application) {
     try {
-      stateStorage.updatedFromStreamProvider(changedComponentNames, deleted)
+      val oldPluginDir = File(PathManager.getSystemPath(), "settingsRepository")
+      if (oldPluginDir.exists() && !pluginSystemDir.exists()) {
+        FileUtil.rename(oldPluginDir, pluginSystemDir)
+      }
     }
     catch (e: Throwable) {
       LOG.error(e)
     }
-  }
-}
 
-enum class SyncType {
-  MERGE,
-  OVERWRITE_LOCAL,
-  OVERWRITE_REMOTE
+    icsManager.beforeApplicationLoaded(application)
+  }
 }
 
 class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
