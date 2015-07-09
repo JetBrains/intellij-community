@@ -57,5 +57,6 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocToken.class), ArbitraryPlaceUrlReferenceProvider.INSTANCE);
     // todo register for all ?
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiComment.class), ArbitraryPlaceUrlReferenceProvider.INSTANCE);
+    registrar.registerReferenceProvider(xmlAttributeValue(), ArbitraryPlaceUrlReferenceProvider.INSTANCE, PsiReferenceRegistrar.LOWER_PRIORITY);
   }
 }
