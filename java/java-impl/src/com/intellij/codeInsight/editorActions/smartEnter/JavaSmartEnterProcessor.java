@@ -274,10 +274,15 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   @Override
   @Nullable
   protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
-    final PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
+    PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (atCaret instanceof PsiWhiteSpace) return null;
-    if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText()) && !(atCaret.getParent() instanceof PsiArrayInitializerExpression)) return null;
+    if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) {
+      atCaret = atCaret.getParent();
+      if (!(atCaret instanceof PsiAnonymousClass || atCaret instanceof PsiArrayInitializerExpression)) {
+        return null;
+      }
+    }
 
     PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
                                                               PsiStatement.class,

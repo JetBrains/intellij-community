@@ -33,6 +33,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   
   public void testAddMissingSemicolonToPackageStatement() { doTest(); }
 
+  public void testAddMissingSemicolonAfterAnonymous() { doTest(); }
+
   public void testAddMissingParen() throws Exception { doTest(); }
 
   public void testCompleteIf() throws Exception { doTest(); }
