@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.ui.components.JBList
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.PathUtil
@@ -58,6 +59,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     String pathForClass = PathUtil.getJarPathForClass(AbstractCollection.class);
     moduleBuilder.addLibrary("util", pathForClass);
+    String platformApiJar = PathUtil.getJarPathForClass(JBList.class)
+    moduleBuilder.addLibrary("platform-api", platformApiJar);
   }
 
   public void testExtensionsHighlighting() throws Throwable {
@@ -236,6 +239,15 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.testHighlighting("languageAttribute.xml",
                                "MyLanguageAttributeEPBean.java")
+  }
+
+  public void testIconAttribute() {
+    myFixture.addClass("package icons; " +
+                       "public class MyIcons {" +
+                       "  public static final javax.swing.Icon MyCustomIcon = null; " +
+                       "}")
+    myFixture.testHighlighting("iconAttribute.xml",
+                               "MyIconAttributeEPBean.java")
   }
 
   public void testPluginModule() throws Throwable {
