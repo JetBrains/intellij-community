@@ -91,6 +91,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
         Color bg = selected ? ((focus || table.hasFocus()) ? table.getSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground())
                             : table.getBackground();
         component.setBackground(bg);
+        ((JLabel) component).setText("");
         return component;
       }
 
