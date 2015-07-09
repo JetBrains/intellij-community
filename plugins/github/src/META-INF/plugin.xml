@@ -26,7 +26,6 @@
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                         serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider" />
-    <checkoutCompletedListener implementation="org.jetbrains.plugins.github.extensions.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
     <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
   </extensions>
 
