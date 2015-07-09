@@ -84,7 +84,7 @@ class IcsManager(dir: File) {
 
   val readOnlySourcesManager = ReadOnlySourcesManager(settings, dir)
 
-  public val repositoryService: RepositoryService = GitRepositoryService()
+  val repositoryService: RepositoryService = GitRepositoryService()
 
   private val commitAlarm = SingleAlarm(object : Runnable {
     override fun run() {
@@ -238,19 +238,27 @@ class IcsManager(dir: File) {
 }
 
 class IcsApplicationLoadListener : ApplicationLoadListener {
-  private val pluginSystemDir = getPluginSystemDir()
-
-  val icsManager = IcsManager(pluginSystemDir)
+  var icsManager: IcsManager by Delegates.notNull()
+    private set
 
   override fun beforeApplicationLoaded(application: Application) {
-    try {
-      val oldPluginDir = File(PathManager.getSystemPath(), "settingsRepository")
-      if (oldPluginDir.exists() && !pluginSystemDir.exists()) {
-        FileUtil.rename(oldPluginDir, pluginSystemDir)
-      }
+    if (application.isUnitTestMode()) {
+      return
     }
-    catch (e: Throwable) {
-      LOG.error(e)
+
+    val pluginSystemDir = getPluginSystemDir()
+    icsManager = IcsManager(pluginSystemDir)
+
+    if (!pluginSystemDir.exists()) {
+      try {
+        val oldPluginDir = File(PathManager.getSystemPath(), "settingsRepository")
+        if (oldPluginDir.exists()) {
+          FileUtil.rename(oldPluginDir, pluginSystemDir)
+        }
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
     }
 
     icsManager.beforeApplicationLoaded(application)

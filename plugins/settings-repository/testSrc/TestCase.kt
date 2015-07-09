@@ -17,12 +17,10 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.StreamProvider
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.FixtureRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.TestLoggerFactory
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.AddFile
 import org.jetbrains.jgit.dirCache.edit
@@ -53,26 +51,14 @@ abstract class TestCase {
 
   public Rule fun getFixtureRule(): TestRule = fixtureManager
 
-  val testHelper = RespositoryHelper()
-
-  open val icsManager by Delegates.lazy {
+  val icsManager by Delegates.lazy {
     val icsManager = IcsManager(tempDirManager.newDirectory())
     icsManager.repositoryManager.createRepositoryIfNeed()
     icsManager.repositoryActive = true
     icsManager
   }
 
-  Rule
-  public fun getTestWatcher(): RespositoryHelper = testHelper
-
-  val remoteRepository: Repository
-    get() = testHelper.repository!!
-
-  companion object {
-    init {
-      Logger.setFactory(javaClass<TestLoggerFactory>())
-    }
-  }
+  val provider by Delegates.lazy { icsManager.ApplicationLevelProvider() }
 }
 
 fun TemporaryDirectory.createRepository(directoryName: String? = null) = git.createRepository(newDirectory(directoryName))

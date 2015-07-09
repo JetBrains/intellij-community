@@ -16,21 +16,15 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.mock.MockVirtualFileSystem
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
-import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.Matchers
 import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.empty
 import org.jetbrains.jgit.dirCache.AddFile
@@ -38,53 +32,27 @@ import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.AM
-import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.commit
 import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.resetHard
-import org.junit.After
 import org.junit.Assert.assertThat
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import javax.swing.SwingUtilities
+import kotlin.properties.Delegates
 
 class GitTest : TestCase() {
-  companion object {
-    private var ICS_DIR: File? = null
-
-    // BeforeClass doesn't work in Kotlin
-    public fun setIcsDir() {
-      val icsDirPath = System.getProperty("ics.settingsRepository")
-      if (icsDirPath == null) {
-        // we must not create file (i.e. this file doesn't exist)
-        ICS_DIR = FileUtilRt.generateRandomTemporaryPath()
-        System.setProperty("ics.settingsRepository", ICS_DIR!!.getAbsolutePath())
-      }
-      else {
-        ICS_DIR = File(FileUtil.expandUserHome(icsDirPath))
-        FileUtil.delete(ICS_DIR!!)
-      }
-    }
-  }
-
-  override val icsManager: IcsManager
-    get() = org.jetbrains.settingsRepository.icsManager
-
   private val repositoryManager: GitRepositoryManager
     get() = icsManager.repositoryManager as GitRepositoryManager
 
   private val repository: Repository
     get() = repositoryManager.repository
 
-  private val provider: StreamProvider
-    get() {
-      val provider = (ApplicationManager.getApplication() as ApplicationImpl).getStateStore().getStateStorageManager().getStreamProvider()
-      assertThat(provider, CoreMatchers.notNullValue())
-      return provider!!
-    }
+  val remoteRepository by Delegates.lazy {
+    tempDirManager.createRepository("upstream")
+  }
 
   private fun delete(data: ByteArray, directory: Boolean) {
     val addedFile = "\$APP_CONFIG$/remote.xml"
@@ -92,13 +60,13 @@ class GitTest : TestCase() {
     provider.delete(if (directory) "\$APP_CONFIG$" else addedFile, RoamingType.PER_USER)
 
     val diff = repository.computeIndexDiff()
-    assertThat(diff.diff(), CoreMatchers.equalTo(false))
-    assertThat(diff.getAdded(), Matchers.empty())
-    assertThat(diff.getChanged(), Matchers.empty())
-    assertThat(diff.getRemoved(), Matchers.empty())
-    assertThat(diff.getModified(), Matchers.empty())
-    assertThat(diff.getUntracked(), Matchers.empty())
-    assertThat(diff.getUntrackedFolders(), Matchers.empty())
+    assertThat(diff.diff(), equalTo(false))
+    assertThat(diff.getAdded(), empty())
+    assertThat(diff.getChanged(), empty())
+    assertThat(diff.getRemoved(), empty())
+    assertThat(diff.getModified(), empty())
+    assertThat(diff.getUntracked(), empty())
+    assertThat(diff.getUntrackedFolders(), empty())
   }
 
   private fun addAndCommit(path: String): FileInfo {
@@ -106,22 +74,6 @@ class GitTest : TestCase() {
     provider.save(path, data)
     repositoryManager.commit(EmptyProgressIndicator())
     return FileInfo(path, data)
-  }
-
-  Before
-  public fun setUp() {
-    if (ICS_DIR == null) {
-      setIcsDir()
-    }
-
-    (icsManager.repositoryManager as GitRepositoryManager).createRepositoryIfNeed()
-    icsManager.repositoryActive = true
-  }
-
-  After
-  public fun tearDown() {
-    icsManager.repositoryActive = false
-    repositoryManager.deleteRepository()
   }
 
   public Test fun add() {
@@ -308,7 +260,6 @@ class GitTest : TestCase() {
     provider.save("\$APP_CONFIG$/remote.xml", data)
     repositoryManager.commit(EmptyProgressIndicator())
 
-    val remoteRepository = testHelper.repository!!
     remoteRepository.deletePath("\$APP_CONFIG$/remote.xml")
     remoteRepository.commit("delete remote.xml")
 
@@ -325,7 +276,6 @@ class GitTest : TestCase() {
     provider.delete("\$APP_CONFIG$/remote.xml", RoamingType.PER_USER)
     repositoryManager.commit(EmptyProgressIndicator())
 
-    val remoteRepository = testHelper.repository!!
     remoteRepository.writePath("\$APP_CONFIG$/remote.xml", AM.MARKER_ACCEPT_THEIRS)
     remoteRepository.commit("")
 
@@ -362,7 +312,7 @@ class GitTest : TestCase() {
   }
 
   fun getRemoteRepository(branchName: String? = null): Repository {
-    val repository = testHelper.getRepository(ICS_DIR!!)
+    val repository = remoteRepository
     if (branchName != null) {
       // jgit cannot checkout&create branch if no HEAD (no commits in our empty repository), so we create initial empty commit
       repository.commit("")
@@ -398,7 +348,7 @@ class GitTest : TestCase() {
     "
     so, we do "git reset --hard"
      */
-    testHelper.repository!!.resetHard()
+    remoteRepository.resetHard()
   }
 
   private fun sync(syncType: SyncType) {

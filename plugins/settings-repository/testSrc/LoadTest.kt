@@ -29,12 +29,9 @@ import org.jetbrains.settingsRepository.git.commit
 import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.File
-import kotlin.properties.Delegates
 
 class LoadTest : TestCase() {
   private val dirPath = "\$ROOT_CONFIG$/keymaps"
-
-  val provider by Delegates.lazy { icsManager.ApplicationLevelProvider() }
 
   private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), RoamingType.PER_USER, provider, tempDirManager.newDirectory("schemes"))
 

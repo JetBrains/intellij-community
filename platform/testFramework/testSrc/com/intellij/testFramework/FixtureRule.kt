@@ -16,10 +16,17 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.junit.rules.ExternalResource
 
 public class FixtureRule() : ExternalResource() {
+  companion object {
+    init {
+      Logger.setFactory(javaClass<TestLoggerFactory>())
+    }
+  }
+
   val projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture()
 
   override fun before() {
