@@ -1,4 +1,4 @@
-PsiJavaFile:LocalVar.java
+PsiJavaFile:LocalVar0.java
   PsiDeclarationStatement
     PsiLocalVariable:list
       PsiModifierList:
