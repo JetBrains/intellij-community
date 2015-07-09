@@ -275,7 +275,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testPrivateInterfaceMethodBody() { doTest(); }
 
   public void testArrayInitializerRBracket() throws Exception { doTest(); }
-  
+  public void testArrayInitializerRBrace() { doTest(); }
+  public void testArrayInitializerSeveralLines() { doTest(); }
+
   public void testReturnInLambda() { doTest(); }
   
   private void doTestBracesNextLineStyle() throws Exception {
