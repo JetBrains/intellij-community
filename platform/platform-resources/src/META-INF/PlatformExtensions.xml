@@ -392,6 +392,7 @@
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
 
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
+    <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.FileWatcherImpl" />
 
   </extensions>
 </idea-plugin>
