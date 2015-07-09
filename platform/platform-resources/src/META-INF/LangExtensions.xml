@@ -725,6 +725,7 @@
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleOptionsProvider"/>
 
     <projectService serviceInterface="com.intellij.ide.todo.TodoView"
                     serviceImplementation="com.intellij.ide.todo.TodoView"/>
