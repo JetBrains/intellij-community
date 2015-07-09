@@ -73,18 +73,28 @@ public class DvcsUtil {
   private static final int SHORT_HASH_LENGTH = 8;
   private static final int LONG_HASH_LENGTH = 40;
 
-  public static void installStatusBarWidget(@NotNull Project project, @NotNull StatusBarWidget widget) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    if (statusBar != null) {
-      statusBar.addWidget(widget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
-    }
+  public static void installStatusBarWidget(@NotNull final Project project, @NotNull final StatusBarWidget widget) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          statusBar.addWidget(widget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
+        }
+      }
+    });
   }
 
-  public static void removeStatusBarWidget(@NotNull Project project, @NotNull StatusBarWidget widget) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    if (statusBar != null) {
-      statusBar.removeWidget(widget.ID());
-    }
+  public static void removeStatusBarWidget(@NotNull final Project project, @NotNull final StatusBarWidget widget) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          statusBar.removeWidget(widget.ID());
+        }
+      }
+    });
   }
 
   @NotNull
