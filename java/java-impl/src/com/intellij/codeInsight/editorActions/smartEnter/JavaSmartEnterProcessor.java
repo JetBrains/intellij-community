@@ -248,7 +248,8 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
     final PsiElement[] children = atCaret.getChildren();
     for (PsiElement child : children) {
-      if (atCaret instanceof PsiStatement && child instanceof PsiStatement) continue;
+      if (atCaret instanceof PsiStatement && child instanceof PsiStatement &&
+          !(atCaret instanceof PsiForStatement && child == ((PsiForStatement)atCaret).getInitialization())) continue;
       collectAllElements(child, res, recurse);
     }
   }

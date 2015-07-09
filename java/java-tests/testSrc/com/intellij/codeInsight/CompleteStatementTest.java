@@ -85,6 +85,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testFor() throws Exception { doTest(); }
 
+  public void testEmptyFor() { doTest(); }
+
   public void testForEach() throws Exception { doTest(); }
 
   public void testForBlock() throws Exception { doTest(); }
