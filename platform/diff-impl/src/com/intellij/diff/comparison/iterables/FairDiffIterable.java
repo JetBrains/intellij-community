@@ -15,8 +15,11 @@
  */
 package com.intellij.diff.comparison.iterables;
 
-/*
- * Matched fragments are guaranteed to have same length
+/**
+ * Elements are compared one-by-one.
+ * If range [a, b) is equal to [a', b'), than element(a + i) is equal to element(a' + i) for all i in [0, b-a)
+ *
+ * Matched fragments are guaranteed to have same length.
  */
 public interface FairDiffIterable extends DiffIterable {
 }
