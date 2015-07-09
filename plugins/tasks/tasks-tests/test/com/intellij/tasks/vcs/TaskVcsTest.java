@@ -213,7 +213,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     LocalChangeList defaultChangeListActive = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
     assertNotNull(defaultChangeListActive);
-    assertTrue(defaultChangeListActive.isDefault());
+    assertTrue(myChangeListManager.getDefaultListName(), defaultChangeListActive.isDefault());
+
     LocalChangeList defaultChangeListInactive = myChangeListManager.findChangeList("Default (1)");
     assertNotNull(defaultChangeListInactive);
     LocalChangeList anotherChangeList = myChangeListManager.findChangeList("TEST-001 Summary");
