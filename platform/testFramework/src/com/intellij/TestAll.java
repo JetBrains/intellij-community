@@ -454,8 +454,8 @@ public class TestAll implements Test {
     }
   }
 
-  public static boolean shouldRunPerformanceTest(Class aClass) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(aClass);
+  public static boolean shouldExcludePerformanceTestCase(Class aClass) {
+    return !isIncludingPerformanceTestsRun() && !isPerformanceTestsRun() && isPerformanceTest(aClass);
   }
 
   public static boolean isPerformanceTest(Class aClass) {
