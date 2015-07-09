@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class IdeaApplication {
@@ -85,7 +87,20 @@ public class IdeaApplication {
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
 
-    myArgs = args;
+    //Assuming that passing -Dkey=value as a program argument is just a convenient way to setup environment
+    ArrayList<String> arguments = new ArrayList<String>();
+    for (String arg : args) {
+      if (arg.startsWith("-D")) {
+        String[] keyValue = arg.substring(2).split("=");
+        if (keyValue.length == 2) {
+          System.setProperty(keyValue[0], keyValue[1]);
+          continue;
+        }
+      }
+      arguments.add(arg);
+    }
+
+    myArgs = ArrayUtil.toStringArray(arguments);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
