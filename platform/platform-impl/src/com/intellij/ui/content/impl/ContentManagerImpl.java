@@ -317,7 +317,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
+        if (!myDisposed) {
+          myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
+        }
       }
     }
   }
