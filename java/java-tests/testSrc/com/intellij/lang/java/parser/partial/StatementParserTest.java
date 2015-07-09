@@ -43,7 +43,9 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }
 
-  public void testLocalVar() { doParserTest("List<Integer> list;"); }
+  public void testLocalVar0() { doParserTest("List<Integer> list;"); }
+  public void testLocalVar1() { doParserTest("p.@A T<P> x;"); }
+
   public void testFor() { doParserTest("for(Iterator<String> it = null; it.hasNext();) { String s = it.next(); }"); }
 
   public void testDoNormal() { doParserTest("do{}while(true);"); }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,9 +231,9 @@ public class StatementParser {
       final PsiBuilder.Marker refPos = builder.mark();
       myParser.getDeclarationParser().parseAnnotations(builder);
       skipQualifiedName(builder);
-      final IElementType suspectedLT = builder.getTokenType();
+      final IElementType suspectedLT = builder.getTokenType(), next = builder.lookAhead(1);
       refPos.rollbackTo();
-      if (suspectedLT == JavaTokenType.LT) {
+      if (suspectedLT == JavaTokenType.LT || suspectedLT == JavaTokenType.DOT && next == JavaTokenType.AT) {
         final PsiBuilder.Marker declStatement = builder.mark();
         final PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
         if (decl == null) {
