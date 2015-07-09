@@ -30,7 +30,7 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testWide() {
-    doTest("–", "html", "&ndash;");
+    doTest("\u2013", "html", "&ndash;");
   }
 
   public void testTag() {
