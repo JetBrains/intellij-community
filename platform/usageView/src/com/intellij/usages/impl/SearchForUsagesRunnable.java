@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -319,9 +320,13 @@ class SearchForUsagesRunnable implements Runnable {
 
   @Override
   public void run() {
+    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+
     AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
     searchUsages(findUsagesStartedShown);
     endSearchForUsages(findUsagesStartedShown);
+
+    snapshot.logResponsivenessSinceCreation("Find Usages");
   }
 
   private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
