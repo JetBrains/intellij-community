@@ -43,23 +43,27 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
       if (myFirstDirectory == null) {
         myFirstDirectory = directory;
       }
-      notifyCheckoutListeners(directory, CheckoutListener.EP_NAME);
+      notifyCheckoutListeners(directory, false);
     }
   }
 
-  private void notifyCheckoutListeners(final File directory, final ExtensionPointName<CheckoutListener> epName) {
-    final CheckoutListener[] listeners = Extensions.getExtensions(epName);
+  private void notifyCheckoutListeners(final File directory, boolean checkoutCompleted) {
+    ExtensionPointName<CheckoutListener> epName = checkoutCompleted ? CheckoutListener.COMPLETED_EP_NAME : CheckoutListener.EP_NAME;
+
+    CheckoutListener[] listeners = Extensions.getExtensions(epName);
     for (CheckoutListener listener: listeners) {
       myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (myFoundProject) break;
     }
-    if (!myFoundProject && !epName.equals(CheckoutListener.COMPLETED_EP_NAME)) {
+
+    if (!checkoutCompleted) {
       final VcsAwareCheckoutListener[] vcsAwareExtensions = Extensions.getExtensions(VcsAwareCheckoutListener.EP_NAME);
       for (VcsAwareCheckoutListener extension : vcsAwareExtensions) {
-        myFoundProject = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
-        if (myFoundProject) break;
+        boolean processingCompleted = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);
+        if (processingCompleted) break;
       }
     }
+
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0){
       final Project lastOpenedProject = openProjects[openProjects.length - 1];
@@ -71,7 +75,7 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
 
   public void checkoutCompleted() {
     if (!myFoundProject && myFirstDirectory != null) {
-      notifyCheckoutListeners(myFirstDirectory, CheckoutListener.COMPLETED_EP_NAME);
+      notifyCheckoutListeners(myFirstDirectory, true);
     }
   }
 }
