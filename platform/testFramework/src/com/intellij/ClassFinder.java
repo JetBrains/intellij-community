@@ -48,7 +48,9 @@ public class ClassFinder {
   @Nullable
   private String computeClassName(final File file) {
     String absPath = file.getAbsolutePath();
-    if (absPath.endsWith("Test.class")) {
+    String name = file.getName();
+    // A test lass may be named Test*, *Test, *Tests*, *TestCase, *TestSuite, *Suite, etc
+    if (name.endsWith(".class") && (name.contains("Test") || name.contains("Suite")) ) {
       return StringUtil.trimEnd(absPath.substring(startPackageName), ".class").replace(File.separatorChar, '.');
     }
     return null;
