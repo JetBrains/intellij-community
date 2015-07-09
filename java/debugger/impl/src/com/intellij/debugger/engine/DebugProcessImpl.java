@@ -1087,7 +1087,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 // ensure args are not collected
                 for (Object arg : myArgs) {
                   if (arg instanceof ObjectReference) {
-                    ((ObjectReference)arg).disableCollection();
+                    DebuggerUtilsEx.disableCollection((ObjectReference)arg);
                   }
                 }
               }
@@ -1108,7 +1108,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 // ensure args are not collected
                 for (Object arg : myArgs) {
                   if (arg instanceof ObjectReference) {
-                    ((ObjectReference)arg).enableCollection();
+                    DebuggerUtilsEx.enableCollection((ObjectReference)arg);
                   }
                 }
               }

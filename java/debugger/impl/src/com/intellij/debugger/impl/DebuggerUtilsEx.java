@@ -886,4 +886,21 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   };
 
+  public static void disableCollection(ObjectReference reference) {
+    try {
+      reference.disableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
+  }
+
+  public static void enableCollection(ObjectReference reference) {
+    try {
+      reference.enableCollection();
+    }
+    catch (UnsupportedOperationException ignored) {
+      // ignore: some J2ME implementations does not provide this operation
+    }
+  }
 }

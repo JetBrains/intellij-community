@@ -20,6 +20,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,12 +84,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
         for (ObjectReference objectReference : myKeptReferences) {
-          try {
-            objectReference.enableCollection();
-          }
-          catch (UnsupportedOperationException ignored) {
-            // ignore: some J2ME implementations does not provide this operation
-          }
+          DebuggerUtilsEx.enableCollection(objectReference);
         }
         myKeptReferences.clear();
       }
@@ -204,12 +200,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
       final boolean added = myKeptReferences.add(reference);
       if (added) {
-        try {
-          reference.disableCollection();
-        }
-        catch (UnsupportedOperationException ignored) {
-          // ignore: some J2ME implementations does not provide this operation
-        }
+        DebuggerUtilsEx.disableCollection(reference);
       }
     }
   }
