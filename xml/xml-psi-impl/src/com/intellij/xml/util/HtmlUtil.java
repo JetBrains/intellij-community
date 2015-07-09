@@ -113,7 +113,7 @@ public class HtmlUtil {
     // nonexplicitly specified
     "map",
     // flow elements
-    "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment", "nobr"
+    "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment"
   };
 
   // flow elements are block or inline, so they should not close <p> for example
