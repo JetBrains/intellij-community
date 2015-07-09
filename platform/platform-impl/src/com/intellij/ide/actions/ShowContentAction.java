@@ -48,7 +48,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     final ToolWindow window = getWindow(e);
-    e.getPresentation().setEnabled(window != null && window.getContentManager().getContentCount() > 1);
+    e.getPresentation().setEnabledAndVisible(window != null && window.getContentManager().getContentCount() > 1);
     e.getPresentation().setText(window == null || window.getContentUiType() == ToolWindowContentUiType.TABBED
                                 ? "Show List of Tabs"
                                 : "Show List of Views");

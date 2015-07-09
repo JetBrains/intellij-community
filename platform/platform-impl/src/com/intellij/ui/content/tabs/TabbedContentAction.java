@@ -76,15 +76,14 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myContent != null && myManager.canCloseContents() && myContent.isCloseable() && myManager.isSelected(myContent));
-      presentation.setVisible(myManager.canCloseContents() && myContent.isCloseable());
+      presentation.setEnabledAndVisible(myManager.canCloseContents() && myContent.isCloseable());
       presentation.setText(myManager.getCloseActionName());
     }
   }
 
   public static class CloseAllButThisAction extends ForContent {
 
-    public CloseAllButThisAction(Content content) {
+    public CloseAllButThisAction(@NotNull Content content) {
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS_BUT_THIS), UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
     }
 
@@ -101,11 +100,10 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(myManager.getCloseAllButThisActionName());
-      presentation.setEnabled(myContent != null && myManager.canCloseContents() && myManager.getContentCount() > 1);
-      presentation.setVisible(myManager.canCloseContents() && hasCloseableContents());
+      presentation.setEnabledAndVisible(myManager.canCloseContents() && hasOtherCloseableContents());
     }
 
-    private boolean hasCloseableContents() {
+    private boolean hasOtherCloseableContents() {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
         if (myContent != content && content.isCloseable()) {
@@ -132,8 +130,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myManager.canCloseAllContents());
-      presentation.setVisible(myManager.canCloseAllContents());
+      presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
     }
   }
   public static class MyNextTabAction extends TabbedContentAction {
@@ -146,7 +143,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myManager.getContentCount() > 1);
+      e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getNextContentActionName());
     }
   }
@@ -161,7 +158,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myManager.getContentCount() > 1);
+      e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getPreviousContentActionName());
     }
   }
