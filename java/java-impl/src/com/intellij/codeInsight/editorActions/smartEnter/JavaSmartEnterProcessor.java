@@ -28,7 +28,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -195,6 +197,17 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     }
     else if (parent instanceof PsiForStatement) {
       atCaret = parent;
+    }
+
+    if (parent instanceof PsiIfStatement && atCaret == ((PsiIfStatement)parent).getElseBranch()) {
+      PsiFile file = atCaret.getContainingFile();
+      Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        TextRange elseIfRange = atCaret.getTextRange();
+        int lineStart = document.getLineStartOffset(document.getLineNumber(elseIfRange.getStartOffset()));
+        CodeStyleManager.getInstance(atCaret.getProject()).reformatText(file, lineStart, elseIfRange.getEndOffset());
+        return;
+      }
     }
 
     super.reformat(atCaret);

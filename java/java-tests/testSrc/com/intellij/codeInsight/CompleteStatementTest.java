@@ -127,6 +127,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testCompleteElseIf() throws Exception { doTest(); }
 
+  public void testReformatElseIf() { doTest(); }
+
   public void testCompleteStringLiteral() throws Exception {
     doTest();
   }
