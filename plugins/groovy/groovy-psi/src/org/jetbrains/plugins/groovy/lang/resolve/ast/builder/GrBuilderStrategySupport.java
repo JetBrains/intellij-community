@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -24,14 +25,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
 
 import java.util.Collection;
 
 public abstract class GrBuilderStrategySupport {
 
   public static final ExtensionPointName<GrBuilderStrategySupport> EP = ExtensionPointName.create("org.intellij.groovy.builderStrategySupport");
-  public static final String BUILDER_FQN = "groovy.transform.builder.Builder";
+  public static final String BUILDER_PACKAGE = "groovy.transform.builder";
+  public static final String BUILDER_FQN = BUILDER_PACKAGE + ".Builder";
   public static final String ORIGIN_INFO = "by @Builder";
   public static final String STRATEGY_ATTRIBUTE = "builderStrategy";
 
@@ -58,15 +60,6 @@ public abstract class GrBuilderStrategySupport {
   public abstract Members process(GrTypeDefinition typeDefinition);
 
   @Nullable
-  public static String getStrategy(PsiModifierListOwner annotatedMember) {
-    final PsiAnnotation annotation = PsiImplUtil.getAnnotation(annotatedMember, BUILDER_FQN);
-    if (annotation == null) return null;
-
-    final PsiClass strategy = getClassAttributeValue(annotation, STRATEGY_ATTRIBUTE);
-    return strategy == null ? null : strategy.getQualifiedName();
-  }
-
-  @Nullable
   @Contract("null,_ -> null")
   public static PsiClass getClassAttributeValue(@Nullable PsiAnnotation annotation, @NotNull String attributeName) {
     if (annotation == null) return null;
@@ -82,6 +75,19 @@ public abstract class GrBuilderStrategySupport {
       }
     }
     return null;
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isApplicable(@Nullable PsiAnnotation annotation, @NotNull String strategy) {
+    if (annotation == null) return false;
+    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue(STRATEGY_ATTRIBUTE);
+    if (attributeValue == null) {
+      return strategy == DefaultBuilderStrategySupport.DEFAULT_STRATEGY_NAME;
+    }
+    else {
+      final String value = attributeValue.getText();
+      return strategy.equals(value) || StringUtil.getQualifiedName(BUILDER_PACKAGE, strategy).equals(value);
+    }
   }
 
   public static PsiType createType(PsiClass clazz) {

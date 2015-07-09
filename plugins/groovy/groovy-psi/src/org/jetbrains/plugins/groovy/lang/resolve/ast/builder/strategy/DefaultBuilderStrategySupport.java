@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySu
 
 public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
 
-  public static final String DEFAULT_STRATEGY_FQN = "groovy.transform.builder.DefaultStrategy";
+  public static final String DEFAULT_STRATEGY_NAME = "DefaultStrategy";
 
   @NotNull
   public Members process(@NotNull final GrTypeDefinition typeDefinition) {
@@ -64,7 +64,7 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
 
     private void processTypeDefinition() {
       final PsiAnnotation builderAnno = PsiImplUtil.getAnnotation(myContainingClass, BUILDER_FQN);
-      if (builderAnno == null || !DEFAULT_STRATEGY_FQN.equals(getStrategy(myContainingClass))) return;
+      if (!isApplicable(builderAnno, DEFAULT_STRATEGY_NAME)) return;
       final PsiClass builderClass = createBuilderClass(builderAnno, myContainingClass.getCodeFields());
       final LightMethodBuilder builderMethod = createBuilderMethod(builderClass, builderAnno);
       myMembers.methods.add(builderMethod);
@@ -112,7 +112,7 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
 
     private void processMethod(@NotNull GrMethod method) {
       final PsiAnnotation annotation = PsiImplUtil.getAnnotation(method, BUILDER_FQN);
-      if (annotation == null || !DEFAULT_STRATEGY_FQN.equals(getStrategy(method))) return;
+      if (!isApplicable(annotation, DEFAULT_STRATEGY_NAME)) return;
       if (method.isConstructor()) {
         processConstructor(method, annotation);
       }

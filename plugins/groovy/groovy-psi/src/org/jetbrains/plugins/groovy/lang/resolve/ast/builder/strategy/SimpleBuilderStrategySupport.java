@@ -31,14 +31,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySu
 
 public class SimpleBuilderStrategySupport extends GrBuilderStrategySupport {
 
-  public static final String SIMPLE_STRATEGY_FQN = "groovy.transform.builder.SimpleStrategy";
+  public static final String SIMPLE_STRATEGY_NAME = "SimpleStrategy";
 
   @NotNull
   @Override
   public Members process(GrTypeDefinition typeDefinition) {
-    if (!SIMPLE_STRATEGY_FQN.equals(getStrategy(typeDefinition))) return Members.EMPTY;
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(typeDefinition, BUILDER_FQN);
-    assert annotation != null;
+    if (!isApplicable(annotation, SIMPLE_STRATEGY_NAME)) return Members.EMPTY;
     final Members result = new Members();
     for (GrField field : typeDefinition.getCodeFields()) {
       result.methods.add(createFieldSetter(typeDefinition, field, annotation));

@@ -29,7 +29,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.Def
 
 public class ExternalBuilderStrategySupport extends GrBuilderStrategySupport {
 
-  public static final String EXTERNAL_STRATEGY_FQN = "groovy.transform.builder.ExternalStrategy";
+  public static final String EXTERNAL_STRATEGY_NAME = "ExternalStrategy";
 
   @NotNull
   @Override
@@ -48,8 +48,8 @@ public class ExternalBuilderStrategySupport extends GrBuilderStrategySupport {
   }
 
   private static Pair<PsiAnnotation, GrTypeDefinition> getConstructedClass(GrTypeDefinition builderClass) {
-    if (!EXTERNAL_STRATEGY_FQN.equals(getStrategy(builderClass))) return null;
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(builderClass, BUILDER_FQN);
+    if (!isApplicable(annotation, EXTERNAL_STRATEGY_NAME)) return null;
     final PsiClass constructedClass = getClassAttributeValue(annotation, "forClass");
     if (!(constructedClass instanceof GrTypeDefinition)) return null;
     return Pair.create(annotation, (GrTypeDefinition)constructedClass);
