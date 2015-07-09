@@ -51,7 +51,7 @@ public class EditFavoritesAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setText(CommonActionsPanel.Buttons.EDIT.getText());
+    e.getPresentation().setText(getTemplatePresentation().getText());
     e.getPresentation().setIcon(CommonActionsPanel.Buttons.EDIT.getIcon());
     e.getPresentation().setEnabled(true);
     Project project = e.getProject();

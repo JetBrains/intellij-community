@@ -194,9 +194,7 @@ public interface IdeActions {
 
   @NonNls String GROUP_FAVORITES_VIEW_POPUP = "FavoritesViewPopupMenu";
   @NonNls String ADD_TO_FAVORITES = "AddToFavorites";
-  @NonNls String REMOVE_FROM_FAVORITES = "RemoveFromFavorites";
   @NonNls String ADD_NEW_FAVORITES_LIST = "AddNewFavoritesList";
-  @NonNls String RENAME_FAVORITES_LIST = "RenameFavoritesList";
   @NonNls String REMOVE_FAVORITES_LIST = "RemoveFavoritesList";
   @NonNls String REMOVE_ALL_FAVORITES_LISTS_BUT_THIS = "RemoveAllFavoritesListsButThis";
 

@@ -970,10 +970,6 @@
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
-  <action id="RemoveFromFavorites">
-    <keyboard-shortcut first-keystroke="control DELETE"/>
-  </action>
-
   <action id="FileChooser.GotoHome">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>

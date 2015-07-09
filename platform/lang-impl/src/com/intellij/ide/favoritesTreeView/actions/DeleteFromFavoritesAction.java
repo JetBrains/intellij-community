@@ -103,6 +103,11 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     }
     Set<Object> selection = builder.getSelectedElements();
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    if (listName == null) {//Selection is empty or contains several items under favorites/bookmarks/breakpoints at the same time
+      e.getPresentation().setText(CommonActionsPanel.Buttons.REMOVE.getText());
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     FavoritesListProvider provider = favoritesManager.getListProvider(listName);
@@ -111,6 +116,8 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
       e.getPresentation().setEnabled(willHandle);
       if (willHandle) {
         e.getPresentation().setText(provider.getCustomName(CommonActionsPanel.Buttons.REMOVE));
+      } else {
+        e.getPresentation().setText(CommonActionsPanel.Buttons.REMOVE.getText());
       }
       return;
     }

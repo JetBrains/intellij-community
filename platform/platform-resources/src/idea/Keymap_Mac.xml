@@ -59,9 +59,6 @@
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
     </action>
-    <action id="RemoveFromFavorites">
-      <keyboard-shortcut first-keystroke="control DELETE"/>
-    </action>
     <action id="EditorDeleteToWordStart">
       <keyboard-shortcut first-keystroke="alt BACK_SPACE"/>
     </action>
