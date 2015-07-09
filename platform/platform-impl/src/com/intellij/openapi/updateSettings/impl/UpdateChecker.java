@@ -208,7 +208,7 @@ public final class UpdateChecker {
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
         prepareUpdateCheckArgs(uriBuilder);
       }
-      String updateUrl = uriBuilder.toString();
+      String updateUrl = uriBuilder.build().toString();
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
       info = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {

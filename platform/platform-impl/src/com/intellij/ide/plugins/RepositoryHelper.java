@@ -109,9 +109,12 @@ public class RepositoryHelper {
                                                        @Nullable BuildNumber buildnumber,
                                                        boolean forceHttps,
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
-    final URIBuilder uriBuilder;
+    final String url;
     final File pluginListFile;
+    final String host;
+
     try {
+      URIBuilder uriBuilder;
       if (repositoryUrl == null) {
         uriBuilder = new URIBuilder(ApplicationInfoImpl.getShadowInstance().getPluginsListUrl());
         pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
@@ -123,19 +126,23 @@ public class RepositoryHelper {
         uriBuilder = new URIBuilder(repositoryUrl);
         pluginListFile = null;
       }
+
+      if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
+        uriBuilder.addParameter("build", (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
+      }
+
+      host = uriBuilder.getHost();
+      url = uriBuilder.build().toString();
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
-    if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
-      uriBuilder.addParameter("build", (buildnumber != null ? buildnumber.asString() : ApplicationInfoImpl.getShadowInstance().getApiVersion()));
-    }
 
     if (indicator != null) {
-      indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", uriBuilder.getHost()));
+      indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", host));
     }
 
-    RequestBuilder request = HttpRequests.request(uriBuilder.toString()).forceHttps(forceHttps);
+    RequestBuilder request = HttpRequests.request(url).forceHttps(forceHttps);
     return process(repositoryUrl, request.connect(new HttpRequests.RequestProcessor<List<IdeaPluginDescriptor>>() {
       @Override
       public List<IdeaPluginDescriptor> process(@NotNull HttpRequests.Request request) throws IOException {
@@ -153,7 +160,7 @@ public class RepositoryHelper {
 
         if (indicator != null) {
           indicator.checkCanceled();
-          indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins", uriBuilder.getHost()));
+          indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins", host));
         }
 
         if (pluginListFile != null) {
