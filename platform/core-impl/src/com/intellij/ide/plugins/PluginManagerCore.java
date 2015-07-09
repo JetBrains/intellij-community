@@ -1028,6 +1028,9 @@ public class PluginManagerCore {
     else {
       if (pluginIds != null) {
         shouldLoad = pluginIds.contains(idString);
+        if (shouldLoad && !ApplicationManager.getApplication().isUnitTestMode()) {
+          getDisabledPlugins().remove(idString);
+        }
         if (!shouldLoad) {
           Map<PluginId,IdeaPluginDescriptor> map = new THashMap<PluginId, IdeaPluginDescriptor>();
           for (IdeaPluginDescriptor pluginDescriptor : loaded) {
@@ -1110,8 +1113,15 @@ public class PluginManagerCore {
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<PluginId, IdeaPluginDescriptorImpl>();
     final Map<String, String> disabledPluginNames = new THashMap<String, String>();
     List<String> brokenPluginsList = new SmartList<String>();
+    List<String> disabledPlugins = new ArrayList<String>(getDisabledPlugins());
     String errorMessage =
       fixDescriptors(pluginDescriptors, parentLoader, idToDescriptorMap, disabledPluginNames, brokenPluginsList, result);
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !disabledPlugins.equals(getDisabledPlugins())) {
+      try {
+        saveDisabledPlugins(getDisabledPlugins(), false);
+      } catch (IOException e) {//ignore
+      }
+    }
 
     final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
     final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
