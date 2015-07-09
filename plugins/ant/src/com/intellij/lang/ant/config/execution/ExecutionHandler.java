@@ -154,7 +154,6 @@ public final class ExecutionHandler {
 
       public void onCancel() {
         antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
-        future.set(null);
       }
 
       public void run(@NotNull final ProgressIndicator indicator) {
