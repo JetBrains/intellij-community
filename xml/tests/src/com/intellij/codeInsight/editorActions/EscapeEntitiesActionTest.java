@@ -33,6 +33,10 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
     doTest("\u2013", "html", "&ndash;");
   }
 
+  public void testAttributeValue() {
+    doTest("<a alt='\u2013'></a>", "html", "<a alt='&ndash;'></a>");
+  }
+
   public void testTag() {
     doTest("<a><</a>", "html", "<a>&lt;</a>");
   }

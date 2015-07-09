@@ -95,6 +95,7 @@ public class EscapeEntitiesAction extends SimpleCodeInsightAction {
   private static boolean isCharacterElement(PsiElement element) {
     final IElementType type = element.getNode().getElementType();
     if (type == XmlTokenType.XML_DATA_CHARACTERS) return true;
+    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) return true;
     if (type == XmlTokenType.XML_START_TAG_START) {
       if (element.getNextSibling() instanceof PsiErrorElement) return true;
       if (element.getParent() instanceof PsiErrorElement) return true;
