@@ -232,7 +232,11 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEA25139() throws Exception {
     doTestBracesNextLineStyle();
   }
-  
+
+  public void testClassBracesNextLine() throws Exception {
+    doTestBracesNextLineStyle();
+  }
+
   public void testBeforeIfRBrace() throws Exception {
     CodeStyleSettingsManager.getSettings(getProject()).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     doTest();

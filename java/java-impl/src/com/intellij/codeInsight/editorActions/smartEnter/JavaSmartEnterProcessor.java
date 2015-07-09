@@ -309,7 +309,11 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-      PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), PsiCodeBlock.class);
+      PsiElement leaf = file.findElementAt(caretOffset - 1);
+      PsiElement elt = PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class);
+      if (elt == null && leaf != null && leaf.getParent() instanceof PsiClass) {
+        elt = leaf.getParent();
+      }
       reformat(elt);
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
       editor.getCaretModel().moveToOffset(caretOffset - 1);
