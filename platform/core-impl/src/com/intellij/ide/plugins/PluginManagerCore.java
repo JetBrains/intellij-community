@@ -118,17 +118,24 @@ public class PluginManagerCore {
 
   public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> disabledPlugins) {
     final File file = new File(configPath, DISABLED_PLUGINS_FILENAME);
+    List<String> requiredPlugins = StringUtil.split(System.getProperty("idea.required.plugins.id", ""), ",");
     if (file.isFile()) {
       try {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         try {
           String id;
           while ((id = reader.readLine()) != null) {
-            disabledPlugins.add(id.trim());
+            id = id.trim();
+            if (!requiredPlugins.contains(id)) {
+              disabledPlugins.add(id);
+            }
           }
         }
         finally {
           reader.close();
+          if (!requiredPlugins.isEmpty()) {
+            savePluginsList(disabledPlugins, false, new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME));
+          }
         }
       }
       catch (IOException ignored) { }
@@ -1028,9 +1035,6 @@ public class PluginManagerCore {
     else {
       if (pluginIds != null) {
         shouldLoad = pluginIds.contains(idString);
-        if (shouldLoad && !ApplicationManager.getApplication().isUnitTestMode()) {
-          getDisabledPlugins().remove(idString);
-        }
         if (!shouldLoad) {
           Map<PluginId,IdeaPluginDescriptor> map = new THashMap<PluginId, IdeaPluginDescriptor>();
           for (IdeaPluginDescriptor pluginDescriptor : loaded) {
@@ -1113,15 +1117,8 @@ public class PluginManagerCore {
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<PluginId, IdeaPluginDescriptorImpl>();
     final Map<String, String> disabledPluginNames = new THashMap<String, String>();
     List<String> brokenPluginsList = new SmartList<String>();
-    List<String> disabledPlugins = new ArrayList<String>(getDisabledPlugins());
     String errorMessage =
       fixDescriptors(pluginDescriptors, parentLoader, idToDescriptorMap, disabledPluginNames, brokenPluginsList, result);
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !disabledPlugins.equals(getDisabledPlugins())) {
-      try {
-        saveDisabledPlugins(getDisabledPlugins(), false);
-      } catch (IOException e) {//ignore
-      }
-    }
 
     final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
     final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
