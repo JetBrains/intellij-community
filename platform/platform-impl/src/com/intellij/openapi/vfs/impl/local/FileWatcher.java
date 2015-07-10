@@ -121,8 +121,12 @@ public class FileWatcher {
 
   @NotNull
   public List<String> getManualWatchRoots() {
+    PluggableFileWatcher[] watchers = getWatchers();
+    if (watchers.length == 1) {
+      return watchers[0].getManualWatchRoots();
+    }
     List<String> result = new ArrayList<String>();
-    for (PluggableFileWatcher watcher : getWatchers()) {
+    for (PluggableFileWatcher watcher : watchers) {
       result.addAll(watcher.getManualWatchRoots());
     }
     return Collections.unmodifiableList(result);
