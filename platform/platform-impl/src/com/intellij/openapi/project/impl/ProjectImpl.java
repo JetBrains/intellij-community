@@ -154,7 +154,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     final ProjectStoreClassProvider projectStoreClassProvider =
       (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
 
-    picoContainer.registerComponentImplementation(ProjectPathMacroManager.class);
+    picoContainer.registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
     picoContainer.registerComponent(new ComponentAdapter() {
       private ComponentAdapter myDelegate;
 

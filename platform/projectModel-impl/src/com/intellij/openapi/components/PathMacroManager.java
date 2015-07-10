@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class PathMacroManager implements PathMacroSubstitutor {
   public static PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
-    final PathMacroManager component = (PathMacroManager)componentManager.getPicoContainer().getComponentInstanceOfType(PathMacroManager.class);
+    final PathMacroManager component = (PathMacroManager)componentManager.getPicoContainer().getComponentInstance(PathMacroManager.class);
     assert component != null;
     return component;
   }

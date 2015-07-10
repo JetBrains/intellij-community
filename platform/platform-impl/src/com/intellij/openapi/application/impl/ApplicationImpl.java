@@ -30,6 +30,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
@@ -176,7 +177,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   protected void bootstrapPicoContainer(@NotNull String name) {
     super.bootstrapPicoContainer(name);
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ApplicationStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
+    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ApplicationPathMacroManager.class);
   }
 
   @NotNull
