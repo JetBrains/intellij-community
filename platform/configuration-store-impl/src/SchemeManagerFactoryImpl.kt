@@ -26,9 +26,9 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import java.io.File
 
-private val LOG = Logger.getInstance(javaClass<SchemesManagerFactoryImpl>())
+private val LOG = Logger.getInstance(javaClass<SchemeManagerFactoryImpl>())
 
-public class SchemesManagerFactoryImpl : SchemesManagerFactory(), SettingsSavingComponent {
+public class SchemeManagerFactoryImpl : SchemesManagerFactory(), SettingsSavingComponent {
   private val myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
 
   override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(fileSpec: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
