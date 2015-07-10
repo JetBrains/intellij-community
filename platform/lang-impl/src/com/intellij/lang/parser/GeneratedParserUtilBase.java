@@ -130,7 +130,7 @@ public class GeneratedParserUtilBase {
 
   private static boolean consumeTokens(PsiBuilder builder, boolean smart, int pin, IElementType... tokens) {
     ErrorState state = ErrorState.get(builder);
-    if (state.completionState != null && state.predicateCount == 0) {
+    if (state.completionState != null && state.predicateSign) {
       addCompletionVariant(builder, state.completionState, tokens);
     }
     // suppress single token completion
@@ -301,7 +301,7 @@ public class GeneratedParserUtilBase {
   private static void addCompletionVariantSmart(PsiBuilder builder, Object token) {
     ErrorState state = ErrorState.get(builder);
     CompletionState completionState = state.completionState;
-    if (completionState != null && state.predicateCount == 0) {
+    if (completionState != null && state.predicateSign) {
       addCompletionVariant(builder, completionState, token);
     }
   }
