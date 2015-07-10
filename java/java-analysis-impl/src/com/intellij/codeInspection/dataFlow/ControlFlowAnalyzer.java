@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
@@ -64,7 +65,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myFactory = valueFactory;
   }
 
+  @Nullable
   public ControlFlow buildControlFlow(@NotNull PsiElement codeFragment, boolean ignoreAssertions) {
+    if (PsiTreeUtil.findChildOfType(codeFragment, OuterLanguageElement.class) != null) {
+      return null;
+    }
+
     myIgnoreAssertions = ignoreAssertions;
     final PsiManager manager = codeFragment.getManager();
     GlobalSearchScope scope = codeFragment.getResolveScope();
@@ -73,7 +79,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myNpe = createClassType(manager, scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
     myAssertionError = createClassType(manager, scope, JAVA_LANG_ASSERTION_ERROR);
     myString = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
-    
+
     myExceptionHolders = new FactoryMap<PsiTryStatement, DfaVariableValue>() {
       @Nullable
       @Override
@@ -96,7 +102,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiElement parent = codeFragment.getParent();
     if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
-      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment, 
+      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment,
                                            LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
       addInstruction(new CheckReturnValueInstruction(codeFragment));
     }
