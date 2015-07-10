@@ -336,6 +336,21 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  public void testCustomDefaultInEnums() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    myFixture.addClass("package foo;" +
+                       "import static java.lang.annotation.ElementType.*;" +
+                       "@javax.annotation.meta.TypeQualifierDefault({PARAMETER, FIELD, METHOD, LOCAL_VARIABLE}) " +
+                       "@javax.annotation.Nonnull " +
+                       "public @interface NonnullByDefault {}");
+
+    myFixture.addFileToProject("foo/package-info.java", "@NonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testTrueOrEqualsSomething() {
     doTest();
     myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
