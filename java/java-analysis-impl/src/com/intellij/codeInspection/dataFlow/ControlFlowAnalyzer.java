@@ -1365,7 +1365,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       PsiType type = expression.getType();
-      addInstruction(new ConditionalGotoInstruction(elseOffset, true, condition));
+      addInstruction(new ConditionalGotoInstruction(elseOffset, true, PsiUtil.skipParenthesizedExprDown(condition)));
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 

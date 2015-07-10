@@ -189,6 +189,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testLastConstantConditionInAnd() { doTest(); }
   
   public void testCompileTimeConstant() { doTest(); }
+  public void testNoParenthesesWarnings() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
   public void testRememberLocalTransientFieldState() { doTest(); }
