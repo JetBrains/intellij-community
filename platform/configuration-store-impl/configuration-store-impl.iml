@@ -12,9 +12,9 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="platform-impl" />
   </component>
 </module>

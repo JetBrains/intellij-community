@@ -15,7 +15,16 @@
  */
 package com.intellij.configurationStore
 
-import kotlin.suppress;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.options.*
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.lang.CompoundRuntimeException
+import java.io.File
 
 private val LOG = Logger.getInstance(javaClass<SchemesManagerFactoryImpl>())
 
@@ -23,7 +32,7 @@ public class SchemesManagerFactoryImpl : SchemesManagerFactory(), SettingsSaving
   private val myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
 
   override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(fileSpec: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
-    val storageManager = (ApplicationManager.getApplication() as ApplicationImpl).getStateStore().getStateStorageManager()
+    val storageManager = (ApplicationManager.getApplication().getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore).getStateStorageManager()
     val baseDirPath = storageManager.expandMacros(fileSpec)
     val provider = storageManager.getStreamProvider()
     val manager = SchemeManagerImpl<T, E>(fileSpec, processor, roamingType, provider, File(baseDirPath))
