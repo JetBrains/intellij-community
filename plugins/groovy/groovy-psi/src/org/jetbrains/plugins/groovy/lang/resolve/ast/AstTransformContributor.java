@@ -80,7 +80,7 @@ public abstract class AstTransformContributor {
 
   @NotNull
   public static List<PsiClass> runContributorsForClasses(@NotNull final GrTypeDefinition clazz) {
-    List<PsiClass> fields = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<PsiClass>>() {
+    List<PsiClass> classes = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<PsiClass>>() {
       @Override
       public List<PsiClass> compute() {
         List<PsiClass> collector = ContainerUtil.newArrayList();
@@ -90,6 +90,6 @@ public abstract class AstTransformContributor {
         return collector;
       }
     });
-    return fields != null ? fields : Collections.<PsiClass>emptyList();
+    return classes != null ? classes : Collections.<PsiClass>emptyList();
   }
 }
