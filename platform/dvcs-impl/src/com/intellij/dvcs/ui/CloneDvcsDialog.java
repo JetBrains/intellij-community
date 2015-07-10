@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,23 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   public String getDirectoryName() {
     return myDirectoryName.getText();
+  }
+
+  @Override
+  public void show() {
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        String repo = System.getProperty("checkout.repo");
+        if (!StringUtil.isEmpty(repo)) {
+          myRepositoryURL.setText(repo);
+          System.setProperty("checkout.repo", "");
+
+        }
+      }
+    });
+    super.show();
   }
 
   /**
