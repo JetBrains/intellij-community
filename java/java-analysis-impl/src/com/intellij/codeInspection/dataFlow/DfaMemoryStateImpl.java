@@ -759,7 +759,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (!isNegated) { //Equals
-      if (c1Index.equals(c2Index)) return true;
+      if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return true;
       if (!uniteClasses(c1Index, c2Index)) return false;
 
       for (long encodedPair : myDistinctClasses.toArray()) {
@@ -774,13 +774,26 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myCachedHash = null;
     }
     else { // Not Equals
-      if (c1Index.equals(c2Index)) return false;
+      if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
       makeClassesDistinct(c1Index, c2Index);
       myCachedDistinctClassPairs = null;
       myCachedHash = null;
     }
 
     return true;
+  }
+
+  private boolean areCompatibleConstants(int i1, int i2) {
+    Double dv1 = getDoubleValue(i1);
+    return dv1 != null && dv1.equals(getDoubleValue(i2));
+  }
+
+  @Nullable
+  private Double getDoubleValue(int eqClassIndex) {
+    EqClass ec = myEqClasses.get(eqClassIndex);
+    DfaValue dfaConst = ec == null ? null : ec.findConstant(false);
+    Object constValue = dfaConst instanceof DfaConstValue ? ((DfaConstValue)dfaConst).getValue() : null;
+    return constValue instanceof Number ? ((Number)constValue).doubleValue() : null;
   }
 
   private boolean isUnknownState(DfaValue val) {
