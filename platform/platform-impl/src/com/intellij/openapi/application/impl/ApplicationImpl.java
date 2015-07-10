@@ -31,11 +31,12 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
-import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -179,8 +180,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @NotNull
-  public IApplicationStore getStateStore() {
-    return (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+  public IComponentStore getStateStore() {
+    return (IComponentStore)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @Override
@@ -492,9 +493,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
-    IApplicationStore store = getStateStore();
-    store.setOptionsPath(optionsPath);
-    store.setConfigPath(configPath);
+    IComponentStore store = getStateStore();
+    StateStorageManager storageManager = store.getStateStorageManager();
+    storageManager.addMacro(StoragePathMacros.APP_CONFIG, optionsPath);
+    storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
 
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {

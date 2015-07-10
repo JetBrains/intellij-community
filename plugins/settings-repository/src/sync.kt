@@ -141,7 +141,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: IComponentStore.Reloadable, updateResult: UpdateResult): Boolean {
+private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
   val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
   val changed = stateStorages.first!!
