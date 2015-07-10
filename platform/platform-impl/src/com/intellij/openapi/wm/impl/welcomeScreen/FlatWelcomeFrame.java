@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -35,6 +36,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -65,6 +67,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -134,26 +137,35 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   private static void handleJetBrainsProtocolCommand() {
     String command = JetBrainsProtocolHandler.getCommand();
     if (command != null) {
-      if (command.equals("checkout")) {
-        String vcs = JetBrainsProtocolHandler.getMainParameter();
-        if (vcs != null) {
-          AnAction group = ActionManager.getInstance().getAction("NewProjectFromVCS");
-          if (group instanceof ActionGroup) {
-            AnActionEvent e =
-              new AnActionEvent(null, DataManager.getInstance().getDataContext(), ActionPlaces.WELCOME_SCREEN, new Presentation(),
-                                ActionManager.getInstance(), 0);
-            for (AnAction action : ((ActionGroup)group).getChildren(e)) {
-              if (vcs.equalsIgnoreCase(action.getTemplatePresentation().getText())) {
-                action.actionPerformed(e);
-                JetBrainsProtocolHandler.clear();
-                break;
+      try {
+        if (command.equals("checkout")) {
+          String vcs = JetBrainsProtocolHandler.getMainParameter();
+          if (vcs != null) {
+            AnAction group = ActionManager.getInstance().getAction("NewProjectFromVCS");
+            if (group instanceof ActionGroup) {
+              AnActionEvent e =
+                new AnActionEvent(null, DataManager.getInstance().getDataContext(), ActionPlaces.WELCOME_SCREEN, new Presentation(),
+                                  ActionManager.getInstance(), 0);
+              for (AnAction action : ((ActionGroup)group).getChildren(e)) {
+                if (vcs.equalsIgnoreCase(action.getTemplatePresentation().getText())) {
+                  action.actionPerformed(e);
+                  break;
+                }
               }
             }
           }
+        } else if (command.equals("open")) {
+          String path = URLDecoder.decode(JetBrainsProtocolHandler.getMainParameter());
+          if (path.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+            path = path.substring(LocalFileSystem.PROTOCOL_PREFIX.length());
+          }
+          ProjectUtil.openProject(path, null, true);
         }
       }
+      finally {
+        JetBrainsProtocolHandler.clear();
+      }
     }
-
   }
 
   @Override
