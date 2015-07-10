@@ -219,11 +219,11 @@ public class PyCharmEduInitialConfigurator {
 
   private static void patchKeymap() {
     Set<String> droppedActions = ContainerUtil.newHashSet(
-      "AddToFavoritesPopup", "RemoveFromFavorites",
+      "AddToFavoritesPopup",
       "DatabaseView.ImportDataSources",
       "CompileDirty", "Compile",
       // hidden
-      "AddNewFavoritesList", "EditFavorites", "RemoveFromFavorites", "RenameFavoritesList", "RemoveFavoritesList");
+      "AddNewFavoritesList", "EditFavorites", "RenameFavoritesList", "RemoveFavoritesList");
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
 
 
