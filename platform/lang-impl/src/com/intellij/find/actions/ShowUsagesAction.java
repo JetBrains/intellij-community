@@ -158,8 +158,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public void update(@NotNull AnActionEvent e) {
     FindUsagesInFileAction.updateFindUsagesAction(e);
+    UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
+    e.getPresentation().setEnabled(usageTargets == null || usageTargets[0] instanceof PsiElementUsageTarget);
   }
 
   @Override
@@ -191,7 +193,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
       });
     }
-    else {
+    else if (usageTargets[0] instanceof PsiElementUsageTarget) {
       PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
       if (element != null) {
         startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
