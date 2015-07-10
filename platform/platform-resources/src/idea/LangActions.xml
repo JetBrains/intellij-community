@@ -635,6 +635,8 @@
       <separator/>
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="AllIcons.Actions.Back"
               use-shortcut-of="RecentFiles"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
     </group>
 
     <!-- <action id="UsageView.ImportToFavorites" class="com.intellij.ide.favoritesTreeView.ImportUsagesAction"/> -->

@@ -225,6 +225,23 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return true;
   }
 
+  public boolean canAddRoots(@NotNull String name, @NotNull Collection<AbstractTreeNode> nodes) {
+    final Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
+
+    final HashSet<AbstractUrl> set =
+      new HashSet<AbstractUrl>(ContainerUtil.map(list, new Function<TreeItem<Pair<AbstractUrl,String>>, AbstractUrl>() {
+        @Override
+        public AbstractUrl fun(TreeItem<Pair<AbstractUrl, String>> item) {
+          return item.getData().getFirst();
+        }
+      }));
+    for (AbstractTreeNode node : nodes) {
+      final Pair<AbstractUrl, String> pair = createPairForNode(node);
+      if (pair != null && !set.contains(pair.getFirst())) return true;
+    }
+    return false;
+  }
+
   private void appendChildNodes(AbstractTreeNode node, TreeItem<Pair<AbstractUrl, String>> treeItem) {
     final Collection<? extends AbstractTreeNode> children = node.getChildren();
     for (AbstractTreeNode child : children) {
