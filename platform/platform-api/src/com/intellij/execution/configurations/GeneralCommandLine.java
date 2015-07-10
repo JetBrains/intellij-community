@@ -357,6 +357,10 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   private static class MyTHashMap extends THashMap<String, String> {
+    public MyTHashMap() {
+      super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.<String>canonicalStrategy());
+    }
+
     @Override
     public String put(String key, String value) {
       if (key == null || value == null) {
