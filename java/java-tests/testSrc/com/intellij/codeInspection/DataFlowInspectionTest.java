@@ -385,4 +385,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void _testNullCheckBeforeInstanceof() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEA-113220
+
+  public void testSkipConstantConditionsWithAssignmentsInside() { doTest(); }
 }
