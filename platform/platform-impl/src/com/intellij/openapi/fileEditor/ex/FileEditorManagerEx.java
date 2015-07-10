@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.Set;
 public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
   protected final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
 
-  public static FileEditorManagerEx getInstanceEx(Project project) {
+  public static FileEditorManagerEx getInstanceEx(@NotNull Project project) {
     return (FileEditorManagerEx)getInstance(project);
   }
 
