@@ -312,7 +312,7 @@ public class IdeaApplication {
       LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
       PluginManagerCore.dumpPluginClassStatistics();
 
-      if (!willOpenProject.get()) {
+      if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow();
         lifecyclePublisher.welcomeScreenDisplayed();
       }
