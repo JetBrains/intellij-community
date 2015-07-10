@@ -510,7 +510,6 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       if (renamed) {
         file = dir.findChild(externalInfo!!.fileName)
         if (file != null) {
-          runWriteAction {  }
           runWriteAction {
             file!!.rename(this, fileName)
           }

@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="structure-view-impl" exported="" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="module" module-name="configuration-store-impl" />
   </component>
 </module>

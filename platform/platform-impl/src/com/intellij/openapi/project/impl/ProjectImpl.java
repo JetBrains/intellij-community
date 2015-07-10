@@ -158,12 +158,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     picoContainer.registerComponent(new ComponentAdapter() {
       private ComponentAdapter myDelegate;
 
+      @NotNull
       private ComponentAdapter getDelegate() {
         if (myDelegate == null) {
-          final Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
+          Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
           myDelegate = new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
         }
-
         return myDelegate;
       }
 

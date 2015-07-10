@@ -17,11 +17,13 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PlatformLangProjectStoreClassProvider implements ProjectStoreClassProvider {
+  @NotNull
   @Override
   public Class<? extends IComponentStore> getProjectStoreClass(final boolean isDefaultProject) {
     return isDefaultProject ? DefaultProjectStoreImpl.class : ProjectWithModulesStoreImpl.class;

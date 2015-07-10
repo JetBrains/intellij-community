@@ -14,5 +14,6 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="configuration-store-impl" />
   </component>
 </module>
