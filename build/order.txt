@@ -1165,6 +1165,7 @@ com/intellij/ide/ui/LafManagerImpl$2.class:/lib/idea.jar
 com/intellij/diagnostic/PerformanceWatcher.class:/lib/idea.jar
 com/intellij/openapi/options/SchemesManagerFactory.class:/lib/openapi.jar
 com/intellij/configurationStore/SchemeManagerFactoryImpl.class:/lib/idea.jar
+com/intellij/configurationStore/SchemeManagerImpl.class:/lib/idea.jar
 com/intellij/openapi/components/SettingsSavingComponent.class:/lib/openapi.jar
 com/intellij/openapi/options/SchemesManager.class:/lib/openapi.jar
 com/intellij/ide/XmlRpcServer.class:/lib/openapi.jar

@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="built-in-server-api" />
     <orderEntry type="library" exported="" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
+    <orderEntry type="module" module-name="configuration-store-impl" scope="RUNTIME" />
   </component>
 </module>
