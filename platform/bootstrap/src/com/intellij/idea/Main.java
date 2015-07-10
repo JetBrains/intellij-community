@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -58,6 +59,11 @@ public class Main {
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
     if (args.length == 1 && "%f".equals(args[0])) {
+      args = NO_ARGS;
+    }
+
+    if (args.length == 1 && args[0].startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
+      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(args[0]);
       args = NO_ARGS;
     }
 
