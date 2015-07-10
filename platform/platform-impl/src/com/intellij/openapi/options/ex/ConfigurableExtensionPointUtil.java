@@ -192,8 +192,14 @@ public class ConfigurableExtensionPointUtil {
       int weight = getInt(bundle, id + ".settings.weight");
       String help = getString(bundle, id + ".settings.help.topic");
       String name = getString(bundle, id + ".settings.display.name");
-      if (name != null && project != null && 0 <= name.indexOf('{')) {
-        name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
+      if (name != null && project != null) {
+        if (!project.isDefault() && !name.contains("{")) {
+          String named = getString(bundle, id + ".named.settings.display.name");
+          name = named != null ? named : name;
+        }
+        if (name.contains("{")) {
+          name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
+        }
       }
       node.myValue = new SortedConfigurableGroup(id, name, help, weight);
     }
