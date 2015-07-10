@@ -32,24 +32,24 @@ public abstract class PluggableFileWatcher {
 
   public abstract void initialize(@NotNull ManagingFS managingFS, FileWatcherNotificationSink notificationSink);
 
-  abstract void dispose();
+  public abstract void dispose();
 
-  abstract boolean isOperational();
+  public abstract boolean isOperational();
 
-  abstract boolean isSettingRoots();
+  public abstract boolean isSettingRoots();
 
   @NotNull
-  abstract List<String> getManualWatchRoots();
+  public abstract List<String> getManualWatchRoots();
 
-  abstract void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat);
+  public abstract void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat);
 
-  abstract boolean isWatched(@NotNull VirtualFile file);
+  public abstract boolean isWatched(@NotNull VirtualFile file);
 
-  abstract void resetChangedPaths();
-
-  @TestOnly
-  abstract void startup() throws IOException;
+  public abstract void resetChangedPaths();
 
   @TestOnly
-  abstract void shutdown() throws InterruptedException;
+  public abstract void startup() throws IOException;
+
+  @TestOnly
+  public abstract void shutdown() throws InterruptedException;
 }
