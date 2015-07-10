@@ -119,7 +119,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public boolean setSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
-    return mySteppingThroughThreads.add(threadProxy);
+    if (threadProxy != null) {
+      return mySteppingThroughThreads.add(threadProxy);
+    }
+    return false;
   }
 
   @NotNull
@@ -269,7 +272,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void stepOut(int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
     final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOutCommand(suspendContext, stepSize);
-    mySteppingThroughThreads.add(cmd.getContextThread());
+    setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, EVENT_STEP);
   }
 
@@ -280,7 +283,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void stepOver(boolean ignoreBreakpoints, int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
     final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
-    mySteppingThroughThreads.add(cmd.getContextThread());
+    setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, EVENT_STEP);
   }
 
@@ -291,7 +294,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
     final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
-    mySteppingThroughThreads.add(cmd.getContextThread());
+    setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, EVENT_STEP);
   }
 
@@ -302,7 +305,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void runToCursor(@NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
     try {
       DebugProcessImpl.ResumeCommand runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), position, ignoreBreakpoints);
-      mySteppingThroughThreads.add(runToCursorCommand.getContextThread());
+      setSteppingThrough(runToCursorCommand.getContextThread());
       resumeAction(runToCursorCommand, EVENT_STEP);
     }
     catch (EvaluateException e) {
