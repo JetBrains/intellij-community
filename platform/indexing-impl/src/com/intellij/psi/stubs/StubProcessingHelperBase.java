@@ -88,7 +88,10 @@ public abstract class StubProcessingHelperBase {
         for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
           if (stubbedRoot.second == stubBindingRoot) continue;
           if (stubbedRoot.second instanceof PsiFileImpl) {
-            final StubTree secondaryStubTree = ((PsiFileImpl)stubbedRoot.second).calcStubTree();
+            StubTree secondaryStubTree = ((PsiFileImpl)stubbedRoot.second).getStubTree();
+            if (secondaryStubTree == null) {
+              secondaryStubTree = ((PsiFileImpl)stubbedRoot.second).calcStubTree();
+            }
             final PsiFileStub root = secondaryStubTree.getRoot();
             roots.add(root);
           }
