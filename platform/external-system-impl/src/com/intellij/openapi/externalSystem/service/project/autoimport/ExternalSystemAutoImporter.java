@@ -353,8 +353,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
       for (String path : entry.getValue()) {
         final ExternalSystemTask resolveTask = processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, entry.getKey(), path);
         final ExternalSystemTaskState taskState = resolveTask == null ? null : resolveTask.getState();
-        if (taskState == null || taskState.isStopped() ||
-            (taskState == ExternalSystemTaskState.IN_PROGRESS && resolveTask.cancel())) {
+        if (taskState == null || taskState.isStopped()) {
           ExternalSystemUtil.refreshProject(
             myProject, entry.getKey(), path, myRefreshCallback, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
         }

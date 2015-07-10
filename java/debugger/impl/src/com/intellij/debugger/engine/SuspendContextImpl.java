@@ -137,6 +137,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
+  @Nullable
   @Override
   public ThreadReferenceProxyImpl getThread() {
     return myThread;

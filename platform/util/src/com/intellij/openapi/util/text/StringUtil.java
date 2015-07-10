@@ -1939,6 +1939,14 @@ public class StringUtil extends StringUtilRt {
     return -1;
   }
 
+  @Contract(pure = true)
+  public static int lastIndexOfAny(@NotNull CharSequence s, @NotNull final String chars) {
+    for (int i = s.length() - 1; i >= 0; i--) {
+      if (containsChar(chars, s.charAt(i))) return i;
+    }
+    return -1;
+  }
+
   @Nullable
   @Contract(pure = true)
   public static String substringBefore(@NotNull String text, @NotNull String subString) {

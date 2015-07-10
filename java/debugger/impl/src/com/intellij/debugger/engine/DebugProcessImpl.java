@@ -1668,6 +1668,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       getSuspendManager().resume(getSuspendContext());
     }
 
+    @Nullable
     public ThreadReferenceProxyImpl getContextThread() {
       return myContextThread;
     }
