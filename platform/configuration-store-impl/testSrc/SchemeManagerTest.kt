@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.options
+package com.intellij.configurationStore
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
-import com.intellij.openapi.options.SchemeManagerImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil

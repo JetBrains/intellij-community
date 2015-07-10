@@ -1,4 +1,4 @@
-package com.intellij.options
+package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.StreamProvider

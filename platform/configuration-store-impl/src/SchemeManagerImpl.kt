@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options
+package com.intellij.configurationStore
 
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
@@ -28,6 +28,7 @@ import com.intellij.openapi.components.impl.stores.StreamProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
+import com.intellij.openapi.options.*
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.JDOMUtil
@@ -53,13 +54,11 @@ import java.io.InputStream
 import java.util.ArrayList
 import java.util.Collections
 
-val LOG = Logger.getInstance(javaClass<SchemesManagerFactoryImpl>())
-
 public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
-                                                                      private val processor: SchemeProcessor<E>,
-                                                                      private val roamingType: RoamingType,
-                                                                      private val provider: StreamProvider?,
-                                                                      private val ioDirectory: File) : SchemesManager<T, E>(), SafeWriteRequestor {
+                                                                     private val processor: SchemeProcessor<E>,
+                                                                     private val roamingType: RoamingType,
+                                                                     private val provider: StreamProvider?,
+                                                                     private val ioDirectory: File) : SchemesManager<T, E>(), SafeWriteRequestor {
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, E>()
 
