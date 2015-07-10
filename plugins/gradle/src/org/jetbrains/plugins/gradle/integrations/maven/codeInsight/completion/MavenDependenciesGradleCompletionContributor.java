@@ -52,6 +52,7 @@ public class MavenDependenciesGradleCompletionContributor extends AbstractGradle
   private static final String NAME_LABEL = "name";
   private static final String VERSION_LABEL = "version";
   private static final String DEPENDENCIES_SCRIPT_BLOCK = "dependencies";
+  private static final int MAX_RESULT = 1000;
 
   private static final ElementPattern<PsiElement> DEPENDENCIES_CALL_PATTERN = psiElement()
     .inside(true, psiElement(GrMethodCallExpression.class).with(new PatternCondition<GrMethodCallExpression>("withInvokedExpressionText") {
@@ -64,7 +65,7 @@ public class MavenDependenciesGradleCompletionContributor extends AbstractGradle
       private boolean checkExpression(@Nullable GrMethodCallExpression expression) {
         if (expression == null) return false;
         GrExpression grExpression = expression.getInvokedExpression();
-        return grExpression != null && DEPENDENCIES_SCRIPT_BLOCK.equals(grExpression.getText());
+        return DEPENDENCIES_SCRIPT_BLOCK.equals(grExpression.getText());
       }
     }));
 
@@ -148,7 +149,7 @@ public class MavenDependenciesGradleCompletionContributor extends AbstractGradle
 
         String searchText = CompletionUtil.findReferenceOrAlphanumericPrefix(params);
         MavenArtifactSearcher searcher = new MavenArtifactSearcher();
-        List<MavenArtifactSearchResult> searchResults = searcher.search(params.getPosition().getProject(), searchText, 100);
+        List<MavenArtifactSearchResult> searchResults = searcher.search(params.getPosition().getProject(), searchText, MAX_RESULT);
         for (MavenArtifactSearchResult searchResult : searchResults) {
           for (MavenArtifactInfo artifactInfo : searchResult.versions) {
             final StringBuilder buf = new StringBuilder();
