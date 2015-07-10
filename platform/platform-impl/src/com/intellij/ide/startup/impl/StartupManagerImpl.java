@@ -26,11 +26,14 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
@@ -41,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -216,6 +220,8 @@ public class StartupManagerImpl extends StartupManagerEx {
       public void run() {
         if (myProject.isDisposed()) return;
 
+        markContentRootsForRefresh();
+
         Application app = ApplicationManager.getApplication();
         if (!app.isHeadlessEnvironment()) {
           final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
@@ -233,6 +239,16 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
       }
     });
+  }
+
+  private void markContentRootsForRefresh() {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+        if (contentRoot instanceof NewVirtualFile) {
+          ((NewVirtualFile)contentRoot).markDirtyRecursively();
+        }
+      }
+    }
   }
 
   private void checkFsSanity() {
