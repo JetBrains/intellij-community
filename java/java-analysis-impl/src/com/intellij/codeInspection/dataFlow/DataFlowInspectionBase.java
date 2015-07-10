@@ -444,7 +444,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                InspectionsBundle.message("dataflow.message.unreachable.switch.label"));
       }
     }
-    else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isCompileConstantInIfCondition(psiAnchor)) {
+    else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
       final PsiElement parent = psiAnchor.getParent();
       if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == psiAnchor) {
@@ -597,25 +597,30 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return false;
   }
 
-  private static boolean isCompileConstantInIfCondition(PsiElement element) {
-    if (element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL) {
-      return isCompileConstantInIfCondition(((PsiPrefixExpression)element).getOperand());
-    }
+  private static boolean isFlagCheck(PsiElement element) {
+    PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    if (!(statement instanceof PsiIfStatement)) return false;
 
-    if (!(element instanceof PsiReferenceExpression)) return false;
-    PsiElement resolved = ((PsiReferenceExpression)element).resolve();
+    PsiExpression condition = ((PsiIfStatement)statement).getCondition();
+    if (!PsiTreeUtil.isAncestor(condition, element, false)) return false;
+
+    if (isCompileTimeFlagReference(condition)) return true;
+
+    Collection<PsiReferenceExpression> refs = PsiTreeUtil.findChildrenOfType(condition, PsiReferenceExpression.class);
+    return ContainerUtil.or(refs, new Condition<PsiReferenceExpression>() {
+      @Override
+      public boolean value(PsiReferenceExpression ref) {
+        return isCompileTimeFlagReference(ref);
+      }
+    });
+  }
+
+  private static boolean isCompileTimeFlagReference(PsiElement element) {
+    PsiElement resolved = element instanceof PsiReferenceExpression ? ((PsiReferenceExpression)element).resolve() : null;
     if (!(resolved instanceof PsiField)) return false;
     PsiField field = (PsiField)resolved;
-
-    if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
-    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
-
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.EXCL) {
-      element = parent;
-      parent = parent.getParent();
-    }
-    return parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == element;
+    return field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC) &&
+           PsiType.BOOLEAN.equals(field.getType());
   }
 
   private static boolean isNullLiteralExpression(PsiElement expr) {
