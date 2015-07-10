@@ -498,6 +498,8 @@ public class MavenProject {
       int idx = compilerArg.indexOf('=', 3);
       if (idx >= 0) {
         optionsMap.put(compilerArg.substring(2, idx), compilerArg.substring(idx + 1));
+      } else {
+        optionsMap.put(compilerArg.substring(2), "");
       }
     }
   }

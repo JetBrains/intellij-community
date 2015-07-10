@@ -171,6 +171,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
         <compilerArgument>-Aopt1=111 -Xmx512Mb -Aopt2=222</compilerArgument>
         <compilerArgs>
             <arg>-Aopt3=333</arg>
+            <arg>-AjustKey</arg>
         </compilerArgs>
         <compilerArguments>
           <Aopt4>444</Aopt4>
@@ -186,7 +187,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
     def processorOptions = compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + "project").getProcessorOptions()
-    assert new HashMap(processorOptions) == ['opt1': '111', 'opt2': '222', 'opt3': '333', 'opt4': '444']
+    assert new HashMap(processorOptions) == ['opt1': '111', 'opt2': '222', 'opt3': '333', 'opt4': '444', 'justKey': '']
   }
 
   public void testMavenProcessorPlugin() {
