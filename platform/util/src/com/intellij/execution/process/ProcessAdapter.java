@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,16 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
 
-public abstract class ProcessAdapter implements ProcessListener{
+public abstract class ProcessAdapter implements ProcessListener {
   @Override
-  public void startNotified(final ProcessEvent event) {
-  }
+  public void startNotified(ProcessEvent event) { }
 
   @Override
-  public void processTerminated(final ProcessEvent event) {
-  }
+  public void processTerminated(ProcessEvent event) { }
 
   @Override
-  public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-  }
+  public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) { }
 
   @Override
-  public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-  }
+  public void onTextAvailable(ProcessEvent event, Key outputType) { }
 }
