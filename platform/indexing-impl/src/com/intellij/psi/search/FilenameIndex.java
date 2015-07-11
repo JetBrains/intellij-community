@@ -163,18 +163,24 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   @NotNull
   private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
                                                                     @NotNull final GlobalSearchScope scope,
-                                                                    @Nullable IdFilter idFilter) {
-    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+                                                                    @Nullable final IdFilter idFilter) {
+    final Set<String> keys = new THashSet<String>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
     index.processAllKeys(NAME, new Processor<String>() {
       @Override
       public boolean process(String value) {
         if (name.equalsIgnoreCase(value)) {
-          files.addAll(index.getContainingFiles(NAME, value, scope));
+          keys.add(value);
         }
         return true;
       }
     }, scope, idFilter);
+
+    // values accessed outside of provessAllKeys 
+    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+    for (String each : keys) {
+      files.addAll(index.getContainingFiles(NAME, each, scope));
+    }
     return files;
   }
 
