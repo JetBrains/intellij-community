@@ -44,10 +44,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
+  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String singularName) {
     final String psiFieldName = psiVariable.getName();
-    final String singularName = createSingularName(singularAnnotation, accessorsInfo.removePrefix(psiFieldName));
-
     final PsiType psiFieldType = psiVariable.getType();
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType[] psiParameterTypes = PsiTypeUtil.extractTypeParameters(psiFieldType, psiManager);
@@ -81,7 +79,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
   protected abstract String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder);
 
-  protected String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
+  public String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
     String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");
     if (StringUtil.isEmptyOrSpaces(singularName)) {
       singularName = Singulars.autoSingularize(psiFieldName);
@@ -99,5 +97,10 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       return singularName != null;
     }
     return true;
+  }
+
+  @Override
+  public String getBuildCall(@NotNull PsiVariable psiVariable) {
+    return psiVariable.getName();
   }
 }

@@ -30,9 +30,7 @@ public class NonSingularHandler implements BuilderElementHandler {
     fields.add(fieldBuilder);
   }
 
-  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
-    final String psiFieldName = accessorsInfo.removePrefix(psiVariable.getName());
-
+  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String psiFieldName) {
     methods.add(new LombokLightMethodBuilder(psiVariable.getManager(), createSetterName(psiFieldName, fluentBuilder))
         .withMethodReturnType(returnType)
         .withContainingClass(innerClass)
@@ -40,6 +38,11 @@ public class NonSingularHandler implements BuilderElementHandler {
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
         .withBody(PsiMethodUtil.createCodeBlockFromText(getAllMethodBody(psiFieldName, fluentBuilder), innerClass)));
+  }
+
+  @Override
+  public String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
+    return psiFieldName;
   }
 
   @NotNull
@@ -50,5 +53,10 @@ public class NonSingularHandler implements BuilderElementHandler {
   private String getAllMethodBody(@NotNull String psiFieldName, boolean fluentBuilder) {
     final String codeBlockTemplate = "this.{0} = {0};{1}";
     return MessageFormat.format(codeBlockTemplate, psiFieldName, fluentBuilder ? "\nreturn this;" : "");
+  }
+
+  @Override
+  public String getBuildCall(@NotNull PsiVariable psiVariable) {
+    return psiVariable.getName();
   }
 }

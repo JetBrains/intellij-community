@@ -17,6 +17,16 @@ public class EmptyBuilderElementHandler implements BuilderElementHandler {
   }
 
   @Override
-  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo) {
+  public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String singularName) {
+  }
+
+  @Override
+  public String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
+    return psiFieldName;
+  }
+
+  @Override
+  public String getBuildCall(@NotNull PsiVariable psiVariable) {
+    return psiVariable.getName();
   }
 }

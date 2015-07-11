@@ -65,4 +65,9 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
     return MessageFormat.format(codeBlockTemplate, singularName, guavaQualifiedName,
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
+
+  @Override
+  public String getBuildCall(@NotNull PsiVariable psiVariable) {
+    return psiVariable.getName() + ".build()";
+  }
 }

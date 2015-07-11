@@ -14,5 +14,9 @@ import java.util.List;
 public interface BuilderElementHandler {
   void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo);
 
-  void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, PsiAnnotation singularAnnotation, @NotNull AccessorsInfo accessorsInfo);
+  void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String singularName);
+
+  String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName);
+
+  String getBuildCall(@NotNull PsiVariable psiVariable);
 }
