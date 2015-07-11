@@ -1341,28 +1341,26 @@ public class FSRecords implements Forceable {
   @Nullable
   public static DataInputStream readAttributeWithLock(int fileId, FileAttribute att) {
     try {
-      synchronized (att.getId()) {
-        r.lock();
-        try {
-          DataInputStream stream = readAttribute(fileId, att);
-          if (stream != null && att.isVersioned()) {
-            try {
-              int actualVersion = DataInputOutputUtil.readINT(stream);
-              if (actualVersion != att.getVersion()) {
-                stream.close();
-                return null;
-              }
-            }
-            catch (IOException e) {
+      r.lock();
+      try {
+        DataInputStream stream = readAttribute(fileId, att);
+        if (stream != null && att.isVersioned()) {
+          try {
+            int actualVersion = DataInputOutputUtil.readINT(stream);
+            if (actualVersion != att.getVersion()) {
               stream.close();
               return null;
             }
           }
-          return stream;
+          catch (IOException e) {
+            stream.close();
+            return null;
+          }
         }
-        finally {
-          r.unlock();
-        }
+        return stream;
+      }
+      finally {
+        r.unlock();
       }
     }
     catch (Throwable e) {
@@ -1768,34 +1766,29 @@ public class FSRecords implements Forceable {
       super.close();
 
       try {
-        synchronized (myAttribute.getId()) {
-          final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
-          if (inlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
-            w.lock();
-            try {
+        if (inlineAttributes && _out.size() < MAX_SMALL_ATTR_SIZE) {
+          w.lock();
+          try {
 
-              rewriteDirectoryRecordWithAttrContent(_out);
-              incModCount(myFileId);
+            rewriteDirectoryRecordWithAttrContent(_out);
+            incModCount(myFileId);
 
-              return;
-            }
-            finally {
-              w.unlock();
-            }
-          } else {
-            int page;
-            w.lock();
-            try {
-              incModCount(myFileId);
+            return;
+          }
+          finally {
+            w.unlock();
+          }
+        } else {
+          int page;
+          w.lock();
+          try {
+            incModCount(myFileId);
+            page = findAttributePage(myFileId, myAttribute, true);
+            if (inlineAttributes && page < 0) {
+              rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
               page = findAttributePage(myFileId, myAttribute, true);
-              if (inlineAttributes && page < 0) {
-                rewriteDirectoryRecordWithAttrContent(new BufferExposingByteArrayOutputStream());
-                page = findAttributePage(myFileId, myAttribute, true);
-              }
-            }
-            finally {
-              w.unlock();
             }
 
             if (bulkAttrReadSupport) {
@@ -1810,6 +1803,9 @@ public class FSRecords implements Forceable {
               getAttributesStorage()
                 .writeBytes(page, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
             }
+          }
+          finally {
+            w.unlock();
           }
         }
       }
