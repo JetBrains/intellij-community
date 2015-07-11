@@ -12,10 +12,9 @@ import java.text.MessageFormat;
 
 public class SingularCollectionHandler extends AbstractSingularHandler {
 
-  protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
-    final PsiType[] psiTypes = PsiTypeUtil.extractTypeParameters(psiFieldType, methodBuilder.getManager());
-    if (psiTypes.length == 1) {
-      methodBuilder.withParameter(singularName, psiTypes[0]);
+  protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder) {
+    if (psiParameterTypes.length == 1) {
+      methodBuilder.withParameter(singularName, psiParameterTypes[0]);
     }
   }
 
@@ -27,16 +26,18 @@ public class SingularCollectionHandler extends AbstractSingularHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList(); \n" +
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{3}>(); \n" +
         "this.{0}.add({1});{2}";
 
-    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "");
+    return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "",
+        psiParameterTypes[0].getCanonicalText(false));
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList(); \n"
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = new java.util.ArrayList<{2}>(); \n"
         + "this.{0}.addAll({0});{1}";
-    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "");
+    return MessageFormat.format(codeBlockTemplate, singularName, fluentBuilder ? "\nreturn this;" : "",
+        psiParameterTypes[0].getCanonicalText(false));
   }
 }

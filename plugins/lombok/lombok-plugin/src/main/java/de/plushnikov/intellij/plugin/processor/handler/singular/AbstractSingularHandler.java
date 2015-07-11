@@ -49,17 +49,17 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     final String singularName = createSingularName(singularAnnotation, accessorsInfo.removePrefix(psiFieldName));
 
     final PsiType psiFieldType = psiVariable.getType();
-
     final PsiManager psiManager = psiVariable.getManager();
+    final PsiType[] psiParameterTypes = PsiTypeUtil.extractTypeParameters(psiFieldType, psiManager);
 
     final LombokLightMethodBuilder oneAddMethod = new LombokLightMethodBuilder(psiManager, singularName)
         .withMethodReturnType(returnType)
         .withContainingClass(innerClass)
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(PsiMethodUtil.createCodeBlockFromText(getOneMethodBody(singularName, psiFieldName, fluentBuilder), innerClass));
+        .withBody(PsiMethodUtil.createCodeBlockFromText(getOneMethodBody(singularName, psiFieldName, psiParameterTypes, fluentBuilder), innerClass));
 
-    addOneMethodParameter(singularName, psiFieldType, oneAddMethod);
+    addOneMethodParameter(singularName, psiParameterTypes, oneAddMethod);
     methods.add(oneAddMethod);
 
     final LombokLightMethodBuilder allAddMethod = new LombokLightMethodBuilder(psiManager, psiFieldName)
@@ -67,19 +67,19 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
         .withContainingClass(innerClass)
         .withNavigationElement(psiVariable)
         .withModifier(PsiModifier.PUBLIC)
-        .withBody(PsiMethodUtil.createCodeBlockFromText(getAllMethodBody(psiFieldName, fluentBuilder), innerClass));
+        .withBody(PsiMethodUtil.createCodeBlockFromText(getAllMethodBody(psiFieldName, psiParameterTypes, fluentBuilder), innerClass));
 
     addAllMethodParameter(psiFieldName, psiFieldType, allAddMethod);
     methods.add(allAddMethod);
   }
 
-  protected abstract void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder);
+  protected abstract void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder);
 
   protected abstract void addAllMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder);
 
-  protected abstract String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder);
+  protected abstract String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder);
 
-  protected abstract String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder);
+  protected abstract String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder);
 
   protected String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
     String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");

@@ -33,7 +33,7 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
     methodBuilder.withParameter(singularName, collectionType);
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
         "this.{0}.add({1});{4}";
 
@@ -41,7 +41,7 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
         + "this.{0}.addAll({0});{3}";
 

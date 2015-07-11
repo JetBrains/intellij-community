@@ -43,15 +43,14 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
     return PsiTypeUtil.getCollectionClassType((PsiClassType) psiType, project, guavaQualifiedName + ".Builder");
   }
 
-  protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull LombokLightMethodBuilder methodBuilder) {
-    final PsiType[] psiTypes = PsiTypeUtil.extractTypeParameters(psiFieldType, methodBuilder.getManager());
-    if (psiTypes.length == 2) {
-      methodBuilder.withParameter(singularName + LOMBOK_KEY, psiTypes[0]);
-      methodBuilder.withParameter(singularName + LOMBOK_VALUE, psiTypes[1]);
+  protected void addOneMethodParameter(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, @NotNull LombokLightMethodBuilder methodBuilder) {
+    if (psiParameterTypes.length == 2) {
+      methodBuilder.withParameter(singularName + LOMBOK_KEY, psiParameterTypes[0]);
+      methodBuilder.withParameter(singularName + LOMBOK_VALUE, psiParameterTypes[1]);
     }
   }
 
-  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, boolean fluentBuilder) {
+  protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
         "this.{0}.put({1}" + LOMBOK_KEY + ", {1}" + LOMBOK_VALUE + ");{4}";
 
@@ -59,7 +58,7 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
         sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
-  protected String getAllMethodBody(@NotNull String singularName, boolean fluentBuilder) {
+  protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType[] psiParameterTypes, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
         + "this.{0}.putAll({0});{3}";
 
