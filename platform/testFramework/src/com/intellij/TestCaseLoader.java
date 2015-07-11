@@ -148,7 +148,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
-    if (!myForceLoadPerformanceTests && TestAll.shouldExcludePerformanceTestCase(testCaseClass)) return true;
+    if (!myForceLoadPerformanceTests && !TestAll.shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
