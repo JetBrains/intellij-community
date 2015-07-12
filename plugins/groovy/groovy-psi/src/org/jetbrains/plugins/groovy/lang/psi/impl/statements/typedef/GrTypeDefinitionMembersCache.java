@@ -116,7 +116,7 @@ public class GrTypeDefinitionMembersCache {
         final List<PsiClass> result = ContainerUtil.newArrayList();
         final GrTypeDefinitionBody body = myDefinition.getBody();
         if (body != null) ContainerUtil.addAll(result, body.getInnerClasses());
-        result.addAll(AstTransformContributor.runContributorsForClasses(myDefinition));
+        result.addAll(AstTransformContributor.runContributors(myDefinition).getClasses());
         return Result.create(result.toArray(new PsiClass[result.size()]), myTreeChangeTracker);
       }
     });
@@ -139,12 +139,12 @@ public class GrTypeDefinitionMembersCache {
     return fields;
   }
 
-  private List<GrField> getSyntheticFields() {
-    return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<List<GrField>>() {
+  private Collection<GrField> getSyntheticFields() {
+    return CachedValuesManager.getCachedValue(myDefinition, new CachedValueProvider<Collection<GrField>>() {
       @Nullable
       @Override
-      public Result<List<GrField>> compute() {
-        return Result.create(AstTransformContributor.runContributorsForFields(myDefinition), myTreeChangeTracker,
+      public Result<Collection<GrField>> compute() {
+        return Result.create(AstTransformContributor.runContributors(myDefinition).getFields(), myTreeChangeTracker,
                              PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     });
@@ -163,7 +163,7 @@ public class GrTypeDefinitionMembersCache {
           methodMap.put(method.getSignature(PsiSubstitutor.EMPTY), method);
         }
 
-        for (PsiMethod method : AstTransformContributor.runContributorsForMethods(myDefinition)) {
+        for (PsiMethod method : AstTransformContributor.runContributors(myDefinition).getMethods()) {
           result.remove(methodMap.get(method.getSignature(PsiSubstitutor.EMPTY)));
           GrClassImplUtil.addExpandingReflectedMethods(result, method);
         }
