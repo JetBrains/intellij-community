@@ -18,16 +18,13 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
-
-import java.util.Collection;
 
 public abstract class GrBuilderStrategySupport {
 
@@ -36,25 +33,6 @@ public abstract class GrBuilderStrategySupport {
   public static final String BUILDER_FQN = BUILDER_PACKAGE + ".Builder";
   public static final String ORIGIN_INFO = "by @Builder";
   public static final String STRATEGY_ATTRIBUTE = "builderStrategy";
-
-  public static class Members {
-    public static final Members EMPTY = new Members() {
-      @Override
-      public void addFrom(Members other) {
-        // do nothing
-      }
-    };
-
-    public final Collection<PsiMethod> methods = ContainerUtil.newArrayList();
-    public final Collection<GrField> fields = ContainerUtil.newArrayList();
-    public final Collection<PsiClass> classes = ContainerUtil.newArrayList();
-
-    public void addFrom(Members other) {
-      methods.addAll(other.methods);
-      fields.addAll(other.fields);
-      classes.addAll(other.classes);
-    }
-  }
 
   @NotNull
   public abstract Members process(GrTypeDefinition typeDefinition);

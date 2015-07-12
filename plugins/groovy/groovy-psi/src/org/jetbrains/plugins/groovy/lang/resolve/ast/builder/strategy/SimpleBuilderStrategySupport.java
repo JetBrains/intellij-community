@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
@@ -27,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySupport;
 
 public class SimpleBuilderStrategySupport extends GrBuilderStrategySupport {

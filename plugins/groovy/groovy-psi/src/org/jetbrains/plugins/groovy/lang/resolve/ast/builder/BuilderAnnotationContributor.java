@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySupport.Members;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
 
 import java.util.Collection;
 
