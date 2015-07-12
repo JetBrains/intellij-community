@@ -38,9 +38,9 @@ public class SimpleBuilderStrategySupport extends GrBuilderStrategySupport {
   public Members process(GrTypeDefinition typeDefinition) {
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(typeDefinition, BUILDER_FQN);
     if (!isApplicable(annotation, SIMPLE_STRATEGY_NAME)) return Members.EMPTY;
-    final Members result = new Members();
+    final Members result = Members.create();
     for (GrField field : typeDefinition.getCodeFields()) {
-      result.methods.add(createFieldSetter(typeDefinition, field, annotation));
+      result.getMethods().add(createFieldSetter(typeDefinition, field, annotation));
     }
     return result;
   }

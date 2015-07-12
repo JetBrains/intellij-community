@@ -40,11 +40,11 @@ public class ExternalBuilderStrategySupport extends GrBuilderStrategySupport {
 
     final PsiAnnotation annotation = definitionPair.first;
     final GrTypeDefinition typeDefinition = definitionPair.second;
-    final Members result = new Members();
+    final Members result = Members.create();
     for (GrField field : typeDefinition.getCodeFields()) {
-      result.methods.add(createFieldSetter(builderClass, field, annotation));
+      result.getMethods().add(createFieldSetter(builderClass, field, annotation));
     }
-    result.methods.add(createBuildMethod(annotation, createType(typeDefinition), builderClass));
+    result.getMethods().add(createBuildMethod(annotation, createType(typeDefinition), builderClass));
     return result;
   }
 

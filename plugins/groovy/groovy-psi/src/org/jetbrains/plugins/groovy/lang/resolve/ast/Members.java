@@ -18,26 +18,83 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 import java.util.Collection;
+import java.util.Collections;
 
-public class Members {
+public abstract class Members {
+
+  @NotNull
+  public abstract Collection<PsiMethod> getMethods();
+
+  @NotNull
+  public abstract Collection<GrField> getFields();
+
+  @NotNull
+  public abstract Collection<PsiClass> getClasses();
+
+  public abstract void addFrom(@NotNull Members other);
 
   public static final Members EMPTY = new Members() {
+
+    @NotNull
     @Override
-    public void addFrom(Members other) {
+    public Collection<PsiMethod> getMethods() {
+      return Collections.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<GrField> getFields() {
+      return Collections.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Collection<PsiClass> getClasses() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public void addFrom(@NotNull Members other) {
       // do nothing
     }
   };
 
-  public final Collection<PsiMethod> methods = ContainerUtil.newArrayList();
-  public final Collection<GrField> fields = ContainerUtil.newArrayList();
-  public final Collection<PsiClass> classes = ContainerUtil.newArrayList();
+  @NotNull
+  public static Members create() {
+    return new Members() {
 
-  public void addFrom(Members other) {
-    methods.addAll(other.methods);
-    fields.addAll(other.fields);
-    classes.addAll(other.classes);
+      private final Collection<PsiMethod> methods = ContainerUtil.newArrayList();
+      private final Collection<GrField> fields = ContainerUtil.newArrayList();
+      private final Collection<PsiClass> classes = ContainerUtil.newArrayList();
+
+      @NotNull
+      @Override
+      public Collection<PsiMethod> getMethods() {
+        return methods;
+      }
+
+      @NotNull
+      @Override
+      public Collection<GrField> getFields() {
+        return fields;
+      }
+
+      @NotNull
+      @Override
+      public Collection<PsiClass> getClasses() {
+        return classes;
+      }
+
+      @Override
+      public void addFrom(@NotNull Members other) {
+        methods.addAll(other.getMethods());
+        fields.addAll(other.getFields());
+        classes.addAll(other.getClasses());
+      }
+    };
   }
 }

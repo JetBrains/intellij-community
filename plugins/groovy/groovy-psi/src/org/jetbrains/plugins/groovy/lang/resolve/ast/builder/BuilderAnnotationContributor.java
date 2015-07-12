@@ -33,17 +33,17 @@ public class BuilderAnnotationContributor extends AstTransformContributor {
 
   @Override
   public void collectMethods(@NotNull GrTypeDefinition clazz, final Collection<PsiMethod> collector) {
-    collector.addAll(collectAll(clazz).methods);
+    collector.addAll(collectAll(clazz).getMethods());
   }
 
   @Override
   public void collectClasses(@NotNull GrTypeDefinition clazz, Collection<PsiClass> collector) {
-    collector.addAll(collectAll(clazz).classes);
+    collector.addAll(collectAll(clazz).getClasses());
   }
 
   @Override
   public void collectFields(@NotNull GrTypeDefinition clazz, Collection<GrField> collector) {
-    collector.addAll(collectAll(clazz).fields);
+    collector.addAll(collectAll(clazz).getFields());
   }
 
   private static Members collectAll(final GrTypeDefinition clazz) {
@@ -51,7 +51,7 @@ public class BuilderAnnotationContributor extends AstTransformContributor {
       @Nullable
       @Override
       public Result<Members> compute() {
-        final Members result = new Members();
+        final Members result = Members.create();
         for (GrBuilderStrategySupport strategySupport : GrBuilderStrategySupport.EP.getExtensions()) {
           result.addFrom(strategySupport.process(clazz));
         }

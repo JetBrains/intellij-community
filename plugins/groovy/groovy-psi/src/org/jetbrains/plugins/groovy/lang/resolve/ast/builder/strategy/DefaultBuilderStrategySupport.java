@@ -48,7 +48,7 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
     private DefaultBuilderStrategyHandler(@NotNull GrTypeDefinition typeDefinition) {
       myContainingClass = typeDefinition;
       myElementFactory = PsiElementFactory.SERVICE.getInstance(typeDefinition.getProject());
-      myMembers = new Members();
+      myMembers = Members.create();
     }
 
     @NotNull
@@ -68,7 +68,7 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
       if (!isApplicable(builderAnno, DEFAULT_STRATEGY_NAME)) return;
       final PsiClass builderClass = createBuilderClass(builderAnno, myContainingClass.getCodeFields());
       final LightMethodBuilder builderMethod = createBuilderMethod(builderClass, builderAnno);
-      myMembers.methods.add(builderMethod);
+      myMembers.getMethods().add(builderMethod);
     }
 
     @NotNull
@@ -125,13 +125,13 @@ public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
     private void processConstructor(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters());
       LightMethodBuilder builderMethod = createBuilderMethod(builderClass, annotation);
-      myMembers.methods.add(builderMethod);
+      myMembers.getMethods().add(builderMethod);
     }
 
     private void processFactoryMethod(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters(), method.getReturnType());
       LightMethodBuilder builderMethod = createBuilderMethod(builderClass, annotation);
-      myMembers.methods.add(builderMethod);
+      myMembers.getMethods().add(builderMethod);
     }
 
 
