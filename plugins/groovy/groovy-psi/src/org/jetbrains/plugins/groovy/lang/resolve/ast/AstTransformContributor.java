@@ -44,7 +44,8 @@ public abstract class AstTransformContributor {
 
   }
 
-  public final Members collect(@NotNull final GrTypeDefinition clazz) {
+  @NotNull
+  public Members collect(@NotNull final GrTypeDefinition clazz) {
     final Members members = Members.create();
     collectMethods(clazz, members.getMethods());
     collectFields(clazz, members.getFields());
@@ -52,6 +53,7 @@ public abstract class AstTransformContributor {
     return members;
   }
 
+  @NotNull
   public static Members runContributors(@NotNull final GrTypeDefinition clazz) {
     Members result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Members>() {
       @Override

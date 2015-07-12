@@ -23,18 +23,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySupport;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createBuildMethod;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createFieldSetter;
 
-public class ExternalBuilderStrategySupport extends GrBuilderStrategySupport {
+public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String EXTERNAL_STRATEGY_NAME = "ExternalStrategy";
 
   @NotNull
   @Override
-  public Members process(GrTypeDefinition builderClass) {
+  public Members collect(@NotNull GrTypeDefinition builderClass) {
     Pair<PsiAnnotation, GrTypeDefinition> definitionPair = getConstructedClass(builderClass);
     if (definitionPair == null) return Members.EMPTY;
 

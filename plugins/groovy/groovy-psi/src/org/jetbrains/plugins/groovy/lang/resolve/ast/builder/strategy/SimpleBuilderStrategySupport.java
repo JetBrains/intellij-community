@@ -27,15 +27,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySupport;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 
-public class SimpleBuilderStrategySupport extends GrBuilderStrategySupport {
+public class SimpleBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String SIMPLE_STRATEGY_NAME = "SimpleStrategy";
 
   @NotNull
   @Override
-  public Members process(GrTypeDefinition typeDefinition) {
+  public Members collect(@NotNull GrTypeDefinition typeDefinition) {
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(typeDefinition, BUILDER_FQN);
     if (!isApplicable(annotation, SIMPLE_STRATEGY_NAME)) return Members.EMPTY;
     final Members result = Members.create();

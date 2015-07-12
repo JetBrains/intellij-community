@@ -27,15 +27,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.Members;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.GrBuilderStrategySupport;
 
-public class DefaultBuilderStrategySupport extends GrBuilderStrategySupport {
+public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String DEFAULT_STRATEGY_NAME = "DefaultStrategy";
 
   @NotNull
-  public Members process(@NotNull final GrTypeDefinition typeDefinition) {
+  @Override
+  public Members collect(@NotNull final GrTypeDefinition typeDefinition) {
     return new DefaultBuilderStrategyHandler(typeDefinition).doProcess();
   }
 

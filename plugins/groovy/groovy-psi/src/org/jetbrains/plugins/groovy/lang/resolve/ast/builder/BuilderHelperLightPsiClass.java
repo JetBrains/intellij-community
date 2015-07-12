@@ -30,7 +30,7 @@ public class BuilderHelperLightPsiClass extends LightPsiClassBuilder {
     super(containingClass, name);
     myContainingClass = containingClass;
     setScope(myContainingClass);
-    setOriginInfo(GrBuilderStrategySupport.ORIGIN_INFO);
+    setOriginInfo(BuilderAnnotationContributor.ORIGIN_INFO);
     getModifierList().addModifier(PsiModifier.STATIC);
   }
 
