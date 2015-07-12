@@ -28,7 +28,7 @@ public abstract class BuilderAnnotationContributor extends AstTransformContribut
 
   public static final String BUILDER_PACKAGE = "groovy.transform.builder";
   public static final String BUILDER_FQN = BUILDER_PACKAGE + ".Builder";
-  public static final String ORIGIN_INFO = "by @Builder";
+  public static final String ORIGIN_INFO = "via @Builder";
   public static final String STRATEGY_ATTRIBUTE = "builderStrategy";
 
   @Nullable

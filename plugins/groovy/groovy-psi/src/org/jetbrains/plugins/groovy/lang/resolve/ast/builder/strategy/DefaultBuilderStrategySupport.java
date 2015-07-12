@@ -167,6 +167,7 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     fieldSetter.setContainingClass(builderClass);
     fieldSetter.setMethodReturnType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass));
     fieldSetter.setNavigationElement(field);
+    fieldSetter.setOriginInfo(ORIGIN_INFO);
     return fieldSetter;
   }
 
