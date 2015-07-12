@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -666,5 +667,26 @@ public class GrClassImplUtil {
       ContainerUtil.addAll(result, field.getGetters());
       ContainerUtil.addIfNotNull(result, field.getSetter());
     }
+  }
+
+  public static Collection<PsiMethod> filterOutAccessors(Collection<PsiMethod> result) {
+    final TObjectIntHashMap<String> map = new TObjectIntHashMap<String>();
+    for (PsiMethod method : result) {
+      if (method instanceof GrAccessorMethod || GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
+        final String methodName = method.getName();
+        if (map.containsKey(methodName)) {
+          map.adjustValue(methodName, 1);
+        }
+        else {
+          map.put(methodName, 1);
+        }
+      }
+    }
+    return ContainerUtil.filter(result, new Condition<PsiMethod>() {
+      @Override
+      public boolean value(PsiMethod method) {
+        return !(method instanceof GrAccessorMethod) || map.get(method.getName()) <= 1;
+      }
+    });
   }
 }
