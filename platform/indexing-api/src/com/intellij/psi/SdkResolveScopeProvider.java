@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
+ * @deprecated todo remove in IDEA 16
+ * use com.intellij.psi.ResolveScopeProvider
  */
 public abstract class SdkResolveScopeProvider {
   public static final ExtensionPointName<SdkResolveScopeProvider> EP_NAME =
