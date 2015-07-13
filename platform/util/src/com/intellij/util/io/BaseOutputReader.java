@@ -73,7 +73,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
     }
 
     if (line.length() > 0) {
-      onTextAvailable(line.toString());
+      sendLine(line);
     }
 
     return read;
@@ -97,10 +97,14 @@ public abstract class BaseOutputReader extends BaseDataReader {
     while ((n = myReader.read(buffer)) > 0) {
       read = true;
       processLine(buffer, line, n);
+
+      if (line.length() > 0 && !myReader.ready()) {
+        sendLine(line);
+      }
     }
 
     if (line.length() > 0) {
-      onTextAvailable(line.toString());
+      sendLine(line);
     }
 
     return read;
@@ -118,10 +122,14 @@ public abstract class BaseOutputReader extends BaseDataReader {
       }
 
       if (c == '\n') {
-        onTextAvailable(line.toString());
-        line.setLength(0);
+        sendLine(line);
       }
     }
+  }
+
+  private void sendLine(StringBuilder line) {
+    onTextAvailable(line.toString());
+    line.setLength(0);
   }
 
   @Override
