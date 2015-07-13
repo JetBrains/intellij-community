@@ -602,6 +602,10 @@ public def layoutCommunityPlugins(String home) {
     pluginDir("Kotlin") {
       fileset(dir: "${home}/build/kotlinc/plugin/Kotlin")
     }
+
+    layoutPlugin("settings-repository") {
+      fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**")
+    }
   }
 }
 
