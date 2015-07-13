@@ -38,6 +38,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -70,9 +71,15 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull private String myDefaultDirectoryName = "";
   @NotNull protected final Project myProject;
   @NotNull protected final String myVcsDirectoryName;
+  private final String myDefaultRepoUrl;
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
+    this(project, displayName, vcsDirectoryName, null);
+  }
+
+  public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName, @Nullable String defaultUrl) {
     super(project, true);
+    myDefaultRepoUrl = defaultUrl;
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;
     init();
@@ -93,23 +100,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   public String getDirectoryName() {
     return myDirectoryName.getText();
-  }
-
-  @Override
-  public void show() {
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        String repo = System.getProperty("checkout.repo");
-        if (!StringUtil.isEmpty(repo)) {
-          myRepositoryURL.setText(repo);
-          System.setProperty("checkout.repo", "");
-
-        }
-      }
-    });
-    super.show();
   }
 
   /**
@@ -283,7 +273,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
     final DvcsRememberedInputs rememberedInputs = getRememberedInputs();
-    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
+    List<String> urls = rememberedInputs.getVisitedUrls();
+    if (myDefaultRepoUrl != null) {
+      urls.add(0, myDefaultRepoUrl);
+    }
+    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(urls, String.class));
     myRepositoryURL.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
