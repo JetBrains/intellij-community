@@ -146,8 +146,8 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
 
     private void processConstructor(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters());
-      LightMethodBuilder builderMethod = createBuilderMethod(builderClass, annotation);
-      myMembers.getMethods().add(builderMethod);
+      myMembers.getMethods().add(createBuilderMethod(builderClass, annotation));
+      myMembers.getMethods().add(createBuilderConstructor(myContainingClass, builderClass, annotation));
     }
 
     @NotNull
