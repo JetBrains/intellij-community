@@ -160,8 +160,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     FindUsagesInFileAction.updateFindUsagesAction(e);
-    UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
-    e.getPresentation().setEnabled(usageTargets == null || usageTargets[0] instanceof PsiElementUsageTarget);
+
+    if (e.getPresentation().isEnabled()) {
+      UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
+      if (usageTargets != null && !(usageTargets[0] instanceof PsiElementUsageTarget)) {
+        e.getPresentation().setEnabled(false);
+      }
+    }
   }
 
   @Override
