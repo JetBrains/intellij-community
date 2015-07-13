@@ -141,12 +141,12 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderMethodName");
       return StringUtil.isEmpty(builderMethodName) ? "builder" : builderMethodName;
     }
+  }
 
-    @NotNull
-    private static String getBuilderClassName(@NotNull PsiAnnotation annotation, @NotNull GrTypeDefinition clazz) {
-      final String builderClassName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderClassName");
-      return builderClassName == null ? String.format("%s%s", clazz.getName(), "Builder") : builderClassName;
-    }
+  @NotNull
+  public static String getBuilderClassName(@NotNull PsiAnnotation annotation, @NotNull GrTypeDefinition clazz) {
+    final String builderClassName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderClassName");
+    return builderClassName == null ? String.format("%s%s", clazz.getName(), "Builder") : builderClassName;
   }
 
   @NotNull
@@ -172,7 +172,7 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
   }
 
   @NotNull
-  private static String getFieldMethodName(@NotNull PsiAnnotation annotation, @NotNull String fieldName) {
+  public static String getFieldMethodName(@NotNull PsiAnnotation annotation, @NotNull String fieldName) {
     final String prefix = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "prefix");
     return StringUtil.isEmpty(prefix) ? fieldName : String.format("%s%s", prefix, StringUtil.capitalize(fieldName));
   }
