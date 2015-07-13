@@ -17,11 +17,11 @@
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-4.0.2-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jgit.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-4.0.2-SNAPSHOT-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jgit-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

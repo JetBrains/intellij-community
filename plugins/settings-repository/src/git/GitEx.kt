@@ -178,16 +178,8 @@ public fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<
     config.save()
   }
 
-  val rewWalk = RevWalk(repository)
-  val commit: RevCommit
-  try {
-    commit = rewWalk.parseCommit(head.getObjectId())
-  }
-  finally {
-    rewWalk.close()
-  }
-
-  val u = repository.updateRef(Constants.HEAD, !head.getName().startsWith(Constants.R_HEADS))
+  val commit = RevWalk(repository).use { it.parseCommit(head!!.getObjectId()) }
+  val u = repository.updateRef(Constants.HEAD, !head!!.getName().startsWith(Constants.R_HEADS))
   u.setNewObjectId(commit.getId())
   u.forceUpdate()
   return repository
@@ -215,7 +207,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
 public fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
   val lastCommitId = resolve(Constants.HEAD) ?: return
   val reader = newObjectReader()
-  try {
+  reader.use {
     val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).getTree()) ?: return
     if (!treeWalk.isSubtree()) {
       // not a directory
@@ -246,9 +238,6 @@ public fun Repository.processChildren(path: String, filter: ((name: String) -> B
         }
       }
     }
-  }
-  finally {
-    reader.close()
   }
 }
 
