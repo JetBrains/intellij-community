@@ -75,7 +75,10 @@ public class JetBrainsProtocolHandler {
 
   private static void init() {
     if (initialized) return;
-    processJetBrainsLauncherParameters(System.getProperty(JetBrainsProtocolHandler.class.getName(), "jetbrains://foo/bar"));
+    String property = System.getProperty(JetBrainsProtocolHandler.class.getName());
+    if (property != null && property.startsWith(PROTOCOL)) {
+      processJetBrainsLauncherParameters(property);
+    }
   }
 
   public static String getMainParameter() {
