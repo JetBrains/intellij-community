@@ -889,7 +889,7 @@ public class PyUtil {
    * @return a PsiFile if target was a PsiDirectory, or null, or target unchanged.
    */
   @Nullable
-  public static PsiElement turnDirIntoInit(PsiElement target) {
+  public static PsiElement turnDirIntoInit(@Nullable PsiElement target) {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
       final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);

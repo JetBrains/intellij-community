@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,9 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    */
   @NotNull
   List<PyFromImportStatement> getFromImports();
+
+  @Nullable
+  PsiElement findExportedName(String name);
 
   /**
    * Returns the list of import elements in all 'import xxx' statements in the top-level scope of the file.

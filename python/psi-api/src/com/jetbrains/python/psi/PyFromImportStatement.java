@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
@@ -77,7 +78,7 @@ public interface PyFromImportStatement extends PyImportStatementBase, StubBasedP
    * @return the resolved import source (file or directory containing __init__.py), or null if the import is unresolved.
    */
   @Nullable
-  PsiElement resolveImportSource();
+  PsiFileSystemItem resolveImportSource();
 
   /**
    * Resolves the import source qualified name to a number of possible files or directories. Note: performs a Python only resolve,

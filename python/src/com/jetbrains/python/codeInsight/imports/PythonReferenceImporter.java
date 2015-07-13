@@ -179,7 +179,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
         existingImportFile = addImportViaElement(refText, fix, seenFileNames, existingImportFile, importElement, importElement.resolve());
       }
       for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
-        if (!(fromImportStatement.isStarImport()) && fromImportStatement.getImportElements().length > 0) {
+        if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
           PsiElement source = fromImportStatement.resolveImportSource();
           existingImportFile = addImportViaElement(refText, fix, seenFileNames, existingImportFile, fromImportStatement.getImportElements()[0], source);
         }
@@ -194,7 +194,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
                                              PsiFile existingImportFile,
                                              PyImportElement importElement,
                                              PsiElement source) {
-    PsiElement sourceFile = PyUtil.turnDirIntoInit(source);
+    PyFile sourceFile = ((PyFile)PyUtil.turnDirIntoInit(source));
     if (sourceFile instanceof PyFileImpl) {
       PyStatement importStatement = importElement.getContainingImportStatement();
       String refName = null;
@@ -217,13 +217,12 @@ public class PythonReferenceImporter implements ReferenceImporter {
         seenFileNames.add(refName);
       }
 
-      PyFileImpl importSourceFile = (PyFileImpl)sourceFile;
-      PsiElement res = importSourceFile.findExportedName(refText);
+      PsiElement res = sourceFile.findExportedName(refText);
       // allow importing from this source if it either declares the name itself or represents a higher-level package that reexports the name
       if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && res.getContainingFile() != null &&
           PsiTreeUtil.isAncestor(source, res.getContainingFile(), false)) {
-        existingImportFile = importSourceFile;
-        fix.addImport(res, importSourceFile, importElement);
+        existingImportFile = sourceFile;
+        fix.addImport(res, sourceFile, importElement);
       }
     }
     return existingImportFile;
