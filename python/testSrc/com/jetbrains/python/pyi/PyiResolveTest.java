@@ -18,6 +18,7 @@ package com.jetbrains.python.pyi;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyTargetExpression;
 
 /**
  * @author vlan
@@ -38,5 +39,9 @@ public class PyiResolveTest extends PyMultiFileResolveTestCase {
 
   public void testFromPyiToClassInPy() {
     assertResolvesTo(PyClass.class, "C");
+  }
+
+  public void testModuleAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
   }
 }
