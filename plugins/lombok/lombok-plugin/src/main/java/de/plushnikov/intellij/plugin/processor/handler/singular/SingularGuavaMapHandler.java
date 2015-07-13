@@ -67,7 +67,7 @@ public class SingularGuavaMapHandler extends SingularMapHandler {
   }
 
   @Override
-  public String getBuildCall(@NotNull PsiVariable psiVariable) {
-    return psiVariable.getName() + ".build()";
+  public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
+    buildMethodParameters.append(fieldName).append(".build()");
   }
 }

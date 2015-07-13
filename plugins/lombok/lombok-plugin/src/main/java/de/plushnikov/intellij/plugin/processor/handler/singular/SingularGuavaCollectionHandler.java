@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ public class SingularGuavaCollectionHandler extends SingularCollectionHandler {
   }
 
   @Override
-  public String getBuildCall(@NotNull PsiVariable psiVariable) {
-    return psiVariable.getName() + ".build()";
+  public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
+    buildMethodParameters.append(fieldName).append(".build()");
   }
 }

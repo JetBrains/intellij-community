@@ -25,6 +25,17 @@ public class SingularMapHandler extends AbstractSingularHandler {
   private static final String LOMBOK_KEY = "$key";
   private static final String LOMBOK_VALUE = "$value";
 
+  @Override
+  public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
+    final String keyName = fieldName + LOMBOK_KEY;
+    final String valueName = fieldName + LOMBOK_VALUE;
+    buildMethodParameters.append("new HashMap() {{\n").
+        append("int _count = null == ").append(keyName).append(" ? 0 : ").append(keyName).append(".size();\n").
+        append("for(int _i=0; _i<_count; _i++){\n").
+        append(" put(").append(keyName).append(".get(_i), ").append(valueName).append(".get(_i));\n").
+        append("}\n").append("}}");
+  }
+
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
     final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
 

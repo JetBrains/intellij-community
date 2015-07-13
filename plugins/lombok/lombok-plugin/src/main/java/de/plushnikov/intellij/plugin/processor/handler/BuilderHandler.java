@@ -48,14 +48,12 @@ import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -280,27 +278,34 @@ public class BuilderHandler {
 
     List<PsiMethod> psiMethods = new ArrayList<PsiMethod>();
 
-    final Collection<Map.Entry<PsiVariable, BuilderElementHandler>> variableHandlerMap = new ArrayList<Map.Entry<PsiVariable, BuilderElementHandler>>();
+    final StringBuilder buildMethodParameterString = new StringBuilder(psiVariables.size() * 20);
     for (PsiVariable psiVariable : psiVariables) {
+      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiParentClass);
+      final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
+
+      final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
+      final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
+
       // skip methods already defined in builder class
-      if (!existedMethodNames.contains(psiVariable.getName())) {
-        final PsiAnnotation singularAnnotation = PsiAnnotationUtil.findAnnotation(psiVariable, Singular.class);
-        BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation);
-
-        variableHandlerMap.add(new AbstractMap.SimpleEntry<PsiVariable, BuilderElementHandler>(psiVariable, handler));
-
+      if (!existedMethodNames.contains(fieldName)) {
         final boolean fluentBuilder = isFluentBuilder(psiAnnotation);
         final PsiType returnType = createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(psiBuilderClass));
-        final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiParentClass);
 
-        final String singularName = handler.createSingularName(singularAnnotation, accessorsInfo.removePrefix(psiVariable.getName()));
+        final String singularName = handler.createSingularName(singularAnnotation, fieldName);
         handler.addBuilderMethod(psiMethods, psiVariable, psiBuilderClass, fluentBuilder, returnType, singularName);
       }
+
+      handler.appendBuildCall(buildMethodParameterString, fieldName);
+      buildMethodParameterString.append(',');
     }
 
     final String buildMethodName = getBuildMethodName(psiAnnotation);
     if (!existedMethodNames.contains(buildMethodName)) {
-      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, psiBuilderType, buildMethodName, variableHandlerMap));
+
+      if (buildMethodParameterString.length() > 0) {
+        buildMethodParameterString.deleteCharAt(buildMethodParameterString.length() - 1);
+      }
+      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, psiBuilderType, buildMethodName, buildMethodParameterString.toString()));
     }
     if (!existedMethodNames.contains(ToStringProcessor.METHOD_NAME)) {
       psiMethods.add(toStringProcessor.createToStringMethod(psiBuilderClass, Arrays.asList(psiBuilderClass.getFields()), psiAnnotation));
@@ -394,7 +399,7 @@ public class BuilderHandler {
 
   @NotNull
   private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiType psiBuilderType,
-                                      @NotNull String buildMethodName, @NotNull Collection<Map.Entry<PsiVariable, BuilderElementHandler>> variableHandlerMap) {
+                                      @NotNull String buildMethodName, @NotNull String buildMethodParameters) {
     final String codeBlockFormat;
 
     final String callExpressionText;
@@ -412,10 +417,8 @@ public class BuilderHandler {
       callExpressionText = psiMethod.getName();
     }
 
-    final String callParameterText = joinParameters(variableHandlerMap);
-
     final PsiCodeBlock psiCodeBlock = PsiMethodUtil.createCodeBlockFromText(
-        String.format(codeBlockFormat, callExpressionText, callParameterText),
+        String.format(codeBlockFormat, callExpressionText, buildMethodParameters),
         builderClass);
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
@@ -457,22 +460,6 @@ public class BuilderHandler {
     for (PsiTypeParameter psiTypeParameter : psiTypeParameters) {
       methodBuilder.withTypeParameter(psiTypeParameter);
     }
-  }
-
-  private String joinParameters(Collection<Map.Entry<PsiVariable, BuilderElementHandler>> variableHandlerMap) {
-    final StringBuilder builder = new StringBuilder(variableHandlerMap.size() * 20);
-
-    for (Map.Entry<PsiVariable, BuilderElementHandler> entry : variableHandlerMap) {
-      final PsiVariable psiVariable = entry.getKey();
-      final BuilderElementHandler handler = entry.getValue();
-
-      builder.append(handler.getBuildCall(psiVariable)).append(',');
-    }
-
-    if (variableHandlerMap.size() > 0) {
-      builder.deleteCharAt(builder.length() - 1);
-    }
-    return builder.toString();
   }
 
   public static final String ANNOTATION_FLUENT = "fluent";

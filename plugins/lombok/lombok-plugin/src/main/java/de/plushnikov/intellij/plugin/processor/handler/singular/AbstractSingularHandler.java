@@ -100,7 +100,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public String getBuildCall(@NotNull PsiVariable psiVariable) {
-    return psiVariable.getName();
+  public void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName) {
+    buildMethodParameters.append(fieldName);
   }
 }

@@ -18,5 +18,5 @@ public interface BuilderElementHandler {
 
   String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName);
 
-  String getBuildCall(@NotNull PsiVariable psiVariable);
+  void appendBuildCall(@NotNull StringBuilder buildMethodParameters, @NotNull String fieldName);
 }
