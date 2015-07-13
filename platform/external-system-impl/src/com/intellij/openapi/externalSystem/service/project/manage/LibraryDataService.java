@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -164,16 +165,19 @@ public class LibraryDataService implements ProjectDataServiceEx<LibraryData, Lib
           }
         }
         else {
-          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
-          if (jarRoot == null) {
-            LOG.warn(String.format(
-              "Can't parse contents of the JAR file at path '%s' for the library '%s''", file.getAbsolutePath(), libraryName
-            ));
-            continue;
+          VirtualFile root = virtualFile;
+          if (virtualFile.getFileType() instanceof ArchiveFileType) {
+            root = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
+            if (root == null) {
+              LOG.warn(String.format(
+                "Can't parse contents of the JAR file at path '%s' for the library '%s''", file.getAbsolutePath(), libraryName
+              ));
+              continue;
+            }
           }
           final VirtualFile[] files = model.getFiles(entry.getKey());
-          if (!ArrayUtil.contains(jarRoot, files)) {
-            model.addRoot(jarRoot, entry.getKey());
+          if (!ArrayUtil.contains(root, files)) {
+            model.addRoot(root, entry.getKey());
           }
         }
       }

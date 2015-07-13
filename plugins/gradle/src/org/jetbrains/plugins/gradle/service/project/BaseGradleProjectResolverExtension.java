@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.*;
@@ -745,6 +746,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           }
         }
       }
+    }
+
+    // add packaging type to distinguish different artifact dependencies with same groupId:artifactId:version
+    if(!FileUtilRt.extensionEquals(binaryPath.getPath(), "jar")) {
+      libraryName += (":" + FileUtilRt.getExtension(binaryPath.getPath()));
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);
