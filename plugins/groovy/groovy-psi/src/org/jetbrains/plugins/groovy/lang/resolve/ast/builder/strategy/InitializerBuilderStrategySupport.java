@@ -91,7 +91,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       for (int i = 0; i < setters.length; i++) {
         builderClass.addMethod(createFieldSetter(builderClass, setters[i], annotation, i));
       }
-      return builderClass;
+      return builderClass.addMethod(createBuildMethod(annotation, builderClass));
     }
 
     @NotNull
@@ -112,6 +112,16 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       fieldSetter.setNavigationElement(field);
       fieldSetter.setOriginInfo(ORIGIN_INFO);
       return fieldSetter;
+    }
+
+    private LightMethodBuilder createBuildMethod(@NotNull PsiAnnotation annotation, @NotNull PsiClass builderClass) {
+      LightMethodBuilder buildMethod = new LightMethodBuilder(annotation.getManager(), builderClass.getLanguage(), getBuildMethodName(annotation));
+      buildMethod.addModifier(PsiModifier.STATIC);
+      buildMethod.setContainingClass(builderClass);
+      buildMethod.setOriginInfo(ORIGIN_INFO);
+      buildMethod.setNavigationElement(annotation);
+      buildMethod.setMethodReturnType(createAllSetUnsetType(builderClass, false));
+      return buildMethod;
     }
 
     @NotNull
@@ -156,6 +166,12 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
     private static String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderMethodName");
       return StringUtil.isEmpty(builderMethodName) ? "createInitializer" : builderMethodName;
+    }
+
+    @NotNull
+    private static String getBuildMethodName(@NotNull PsiAnnotation annotation) {
+      final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "buildMethodName");
+      return StringUtil.isEmpty(builderMethodName) ? "create" : builderMethodName;
     }
 
     @NotNull
