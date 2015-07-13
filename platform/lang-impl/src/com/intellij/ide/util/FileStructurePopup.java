@@ -84,7 +84,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -104,7 +108,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final FileStructureTree myTree;
   private final FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
-  private final TreeSpeedSearch mySpeedSearch;
+  private final MyTreeSpeedSearch mySpeedSearch;
   private final SmartTreeStructure myTreeStructure;
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
@@ -187,6 +191,32 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myTree = new FileStructureTree(myTreeStructure.getRootElement(), Registry.is("fast.tree.expand.in.structure.view"));
 
     myTree.setCellRenderer(new NodeRenderer());
+
+    myTree.setTransferHandler(new TransferHandler() {
+      @Override
+      public boolean importData(JComponent comp, Transferable t) {
+
+        final Object obj;
+        try {
+          obj = t.getTransferData(DataFlavor.stringFlavor);
+        }
+        catch (UnsupportedFlavorException e) {
+          return false;
+        }
+        catch (IOException e) {
+          return false;
+        }
+
+        if (obj instanceof String) {
+          mySpeedSearch.openWithSearchText(((String)obj));
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+    });
+
 
     mySpeedSearch = new MyTreeSpeedSearch();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
@@ -1086,6 +1116,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
       });
       return cur.isEmpty() ? null : cur.get(0).node;
+    }
+
+    public void openWithSearchText(String value) {
+      if (!hasSearchPopup()) {
+        showPopup(value);
+      }
     }
   }
 

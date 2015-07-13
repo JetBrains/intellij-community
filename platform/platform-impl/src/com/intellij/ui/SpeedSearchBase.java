@@ -304,8 +304,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return null;
   }
 
+  public void showPopup(String searchText) {
+    manageSearchPopup(new SearchPopup(searchText));
+  }
+
   public void showPopup() {
-    manageSearchPopup(new SearchPopup(""));
+    showPopup("");
   }
 
   public void hidePopup() {
@@ -354,6 +358,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   @Override
   public void findAndSelectElement(@NotNull String searchQuery) {
     selectElement(findElement(searchQuery), searchQuery);
+  }
+
+  protected boolean hasSearchPopup() {
+    return mySearchPopup != null;
   }
 
   private class SearchPopup extends JPanel {
