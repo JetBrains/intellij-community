@@ -76,6 +76,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       final PsiClass builderClass = createBuilderClass(builderAnno, myContainingClass.getCodeFields());
       myMembers.getMethods().add(createBuilderMethod(builderClass, builderAnno));
       myMembers.getMethods().add(createBuilderConstructor(myContainingClass, builderClass, builderAnno));
+      myMembers.getClasses().add(builderClass);
     }
 
     @NotNull
@@ -148,6 +149,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters());
       myMembers.getMethods().add(createBuilderMethod(builderClass, annotation));
       myMembers.getMethods().add(createBuilderConstructor(myContainingClass, builderClass, annotation));
+      myMembers.getClasses().add(builderClass);
     }
 
     @NotNull

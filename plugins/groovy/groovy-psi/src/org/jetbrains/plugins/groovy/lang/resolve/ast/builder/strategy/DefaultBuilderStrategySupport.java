@@ -68,8 +68,8 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
       final PsiAnnotation builderAnno = PsiImplUtil.getAnnotation(myContainingClass, BUILDER_FQN);
       if (!isApplicable(builderAnno, DEFAULT_STRATEGY_NAME)) return;
       final PsiClass builderClass = createBuilderClass(builderAnno, myContainingClass.getCodeFields());
-      final LightMethodBuilder builderMethod = createBuilderMethod(builderClass, builderAnno);
-      myMembers.getMethods().add(builderMethod);
+      myMembers.getMethods().add(createBuilderMethod(builderClass, builderAnno));
+      myMembers.getClasses().add(builderClass);
     }
 
     @NotNull
@@ -125,16 +125,15 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
 
     private void processConstructor(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters());
-      LightMethodBuilder builderMethod = createBuilderMethod(builderClass, annotation);
-      myMembers.getMethods().add(builderMethod);
+      myMembers.getMethods().add(createBuilderMethod(builderClass, annotation));
+      myMembers.getClasses().add(builderClass);
     }
 
     private void processFactoryMethod(@NotNull GrMethod method, PsiAnnotation annotation) {
       PsiClass builderClass = createBuilderClass(annotation, method.getParameters(), method.getReturnType());
-      LightMethodBuilder builderMethod = createBuilderMethod(builderClass, annotation);
-      myMembers.getMethods().add(builderMethod);
+      myMembers.getMethods().add(createBuilderMethod(builderClass, annotation));
+      myMembers.getClasses().add(builderClass);
     }
-
 
     @NotNull
     private static String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
