@@ -23,7 +23,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public abstract class CheckoutProviderEx implements CheckoutProvider {
+  /**
+   * @return a short unique identifier such as git, hg, svn, and so on
+   */
   public abstract String getVcsId();
 
+  /**
+   * Overloads CheckoutProvider#doCheckout(Project, Listener) to provide predefined repository URL
+   */
   public abstract void doCheckout(@NotNull final Project project, @Nullable Listener listener, @Nullable String predefinedRepositoryUrl);
 }
