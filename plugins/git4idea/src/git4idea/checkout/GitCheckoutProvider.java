@@ -128,6 +128,6 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
   @Override
   public void doCheckout(@NotNull Project project,
                          @Nullable Listener listener) {
-
+    doCheckout(project, listener, null);
   }
 }
