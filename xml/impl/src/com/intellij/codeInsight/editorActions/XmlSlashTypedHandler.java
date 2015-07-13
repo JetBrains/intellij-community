@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
-    if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
+    if (XmlGtTypedHandler.fileContainsXmlLanguage(editedFile) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

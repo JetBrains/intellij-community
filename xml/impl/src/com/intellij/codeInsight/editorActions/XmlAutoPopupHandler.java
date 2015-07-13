@@ -34,7 +34,7 @@ import com.intellij.xml.util.XmlUtil;
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   @Override
   public Result checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
-    final boolean isXmlLikeFile = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
+    final boolean isXmlLikeFile = XmlGtTypedHandler.fileContainsXmlLanguage(file);
     boolean spaceInTag = isXmlLikeFile && charTyped == ' ';
 
     if (spaceInTag) {
