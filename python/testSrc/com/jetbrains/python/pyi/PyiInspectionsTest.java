@@ -38,4 +38,8 @@ public class PyiInspectionsTest extends PyTestCase {
   public void testUnresolvedModuleAttributes() {
     doTest(PyUnresolvedReferencesInspection.class);
   }
+
+  public void testUnresolvedClassAttributes() {
+    doTest(PyUnresolvedReferencesInspection.class);
+  }
 }

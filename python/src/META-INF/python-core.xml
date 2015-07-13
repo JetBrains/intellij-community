@@ -631,6 +631,7 @@
     <typeProvider implementation="com.jetbrains.python.codeInsight.PyTypingTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
 
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonBuiltinReferenceResolveProvider"/>
