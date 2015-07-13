@@ -44,7 +44,6 @@
     <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="AddToFavorites"/>
     <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="AddAllToFavorites"/>
     <action overrides="true" class="com.intellij.openapi.actionSystem.EmptyAction" id="AddToFavoritesPopup"/>
-    <action overrides="true" class="com.intellij.openapi.actionSystem.EmptyAction" id="RemoveFromFavorites"/>
 
     <action overrides="true" class="com.intellij.openapi.actionSystem.EmptyAction" id="NewHtmlFile"/>
 

@@ -19,28 +19,48 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.Arrays;
 
 /**
  * @author max
  */
 public class JdkScope extends LibraryScopeBase {
+  private final VirtualFile[] myClasses;
+  private final VirtualFile[] mySources;
   private final String myJdkName;
 
-  public JdkScope(Project project, JdkOrderEntry jdk) {
-    super(project, jdk.getRootFiles(OrderRootType.CLASSES), jdk.getRootFiles(OrderRootType.SOURCES));
-    myJdkName = jdk.getJdkName();
+  public JdkScope(Project project, JdkOrderEntry entry) {
+    this(project, entry.getRootFiles(OrderRootType.CLASSES), entry.getRootFiles(OrderRootType.SOURCES), entry.getJdkName());
   }
 
+  public JdkScope(Project project,
+                  VirtualFile[] classes,
+                  VirtualFile[] sources,
+                  String jdkName) {
+    super(project, classes, sources);
+    myClasses = classes;
+    mySources = sources;
+    myJdkName = jdkName;
+  }
+
+  @Override
   public int hashCode() {
-    return myJdkName.hashCode();
+    int result = Arrays.hashCode(myClasses);
+    result = 31 * result + Arrays.hashCode(mySources);
+    result = 31 * result + myJdkName.hashCode();
+    return result;
   }
 
+  @Override
   public boolean equals(Object object) {
     if (object == this) return true;
-    if (object == null) return false;
-    if (object.getClass() != JdkScope.class) return false;
+    if (object.getClass() != getClass()) return false;
 
     final JdkScope that = (JdkScope)object;
-    return that.myJdkName.equals(myJdkName);
+    return myJdkName.equals(that.myJdkName) &&
+           Arrays.equals(myClasses, that.myClasses) &&
+           Arrays.equals(mySources, that.mySources);
   }
 }

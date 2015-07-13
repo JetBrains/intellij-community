@@ -869,6 +869,10 @@ public class GeneratedParserUtilBase {
         VARIANTS.recycle(list.get(i));
       }
       list.setSize(start);
+      lastExpectedVariantPos = -1;
+      for (Variant variant : list) {
+        if (lastExpectedVariantPos < variant.position) lastExpectedVariantPos = variant.position;
+      }
     }
 
     boolean typeExtends(IElementType child, IElementType parent) {

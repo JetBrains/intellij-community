@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
@@ -64,7 +65,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myFactory = valueFactory;
   }
 
+  @Nullable
   public ControlFlow buildControlFlow(@NotNull PsiElement codeFragment, boolean ignoreAssertions) {
+    if (PsiTreeUtil.findChildOfType(codeFragment, OuterLanguageElement.class) != null) {
+      return null;
+    }
+
     myIgnoreAssertions = ignoreAssertions;
     final PsiManager manager = codeFragment.getManager();
     GlobalSearchScope scope = codeFragment.getResolveScope();
@@ -73,7 +79,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myNpe = createClassType(manager, scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
     myAssertionError = createClassType(manager, scope, JAVA_LANG_ASSERTION_ERROR);
     myString = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
-    
+
     myExceptionHolders = new FactoryMap<PsiTryStatement, DfaVariableValue>() {
       @Nullable
       @Override
@@ -96,7 +102,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiElement parent = codeFragment.getParent();
     if (parent instanceof PsiLambdaExpression && codeFragment instanceof PsiExpression) {
-      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment, 
+      generateBoxingUnboxingInstructionFor((PsiExpression)codeFragment,
                                            LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent));
       addInstruction(new CheckReturnValueInstruction(codeFragment));
     }
@@ -1157,17 +1163,29 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
+    boolean hasAssignment = containsAssignments(lExpr);
 
     for (int i = 1; i < operands.length; i++) {
       PsiExpression rExpr = operands[i];
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, type, lExpr, lType, rExpr, rType);
-      addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, expression.getProject()));
+      if (hasAssignment || containsAssignments(rExpr)) {
+        addInstruction(new PopInstruction());
+        addInstruction(new PopInstruction());
+        pushUnknown();
+        hasAssignment = false;
+      } else {
+        addInstruction(new BinopInstruction(op, expression.isPhysical() ? expression : null, expression.getProject()));
+      }
 
       lExpr = rExpr;
       lType = rType;
     }
+  }
+
+  private static boolean containsAssignments(@Nullable PsiElement element) {
+    return PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null;
   }
 
   @Nullable
@@ -1347,7 +1365,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       PsiType type = expression.getType();
-      addInstruction(new ConditionalGotoInstruction(elseOffset, true, condition));
+      addInstruction(new ConditionalGotoInstruction(elseOffset, true, PsiUtil.skipParenthesizedExprDown(condition)));
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 

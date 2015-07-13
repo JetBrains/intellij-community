@@ -189,6 +189,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testLastConstantConditionInAnd() { doTest(); }
   
   public void testCompileTimeConstant() { doTest(); }
+  public void testNoParenthesesWarnings() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
   public void testRememberLocalTransientFieldState() { doTest(); }
@@ -249,6 +250,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testLongDisjunctionsNotComplex() { doTest(); }
   public void testWhileNotComplex() { doTest(); }
   public void testAssertTrueNotComplex() { doTest(); }
+  public void testAssertThrowsAssertionError() { doTest(); }
   public void testManyDisjunctiveFieldAssignmentsInLoopNotComplex() { doTest(); }
   public void testManyContinuesNotComplex() { doTest(); }
   public void testFinallyNotComplex() { doTest(); }
@@ -290,6 +292,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNumberComparisonsWhenValueIsKnown() { doTest(); }
   public void testFloatComparisons() { doTest(); }
+  public void testComparingIntToDouble() { doTest(); }
 
   public void testNullableArray() { doTest(); }
 
@@ -334,6 +337,21 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
     myFixture.enableInspections(new DataFlowInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testCustomDefaultInEnums() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    myFixture.addClass("package foo;" +
+                       "import static java.lang.annotation.ElementType.*;" +
+                       "@javax.annotation.meta.TypeQualifierDefault({PARAMETER, FIELD, METHOD, LOCAL_VARIABLE}) " +
+                       "@javax.annotation.Nonnull " +
+                       "public @interface NonnullByDefault {}");
+
+    myFixture.addFileToProject("foo/package-info.java", "@NonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testTrueOrEqualsSomething() {
@@ -385,4 +403,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void _testNullCheckBeforeInstanceof() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEA-113220
+
+  public void testSkipConstantConditionsWithAssignmentsInside() { doTest(); }
 }

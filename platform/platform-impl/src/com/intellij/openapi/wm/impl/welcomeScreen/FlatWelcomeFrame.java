@@ -24,6 +24,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,28 +133,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
   }
 
   private static void handleJetBrainsProtocolCommand() {
-    String command = JetBrainsProtocolHandler.getCommand();
+    JBProtocolCommand command = JBProtocolCommand.findCommand(JetBrainsProtocolHandler.getCommand());
     if (command != null) {
-      if (command.equals("checkout")) {
-        String vcs = JetBrainsProtocolHandler.getMainParameter();
-        if (vcs != null) {
-          AnAction group = ActionManager.getInstance().getAction("NewProjectFromVCS");
-          if (group instanceof ActionGroup) {
-            AnActionEvent e =
-              new AnActionEvent(null, DataManager.getInstance().getDataContext(), ActionPlaces.WELCOME_SCREEN, new Presentation(),
-                                ActionManager.getInstance(), 0);
-            for (AnAction action : ((ActionGroup)group).getChildren(e)) {
-              if (vcs.equalsIgnoreCase(action.getTemplatePresentation().getText())) {
-                action.actionPerformed(e);
-                JetBrainsProtocolHandler.clear();
-                break;
-              }
-            }
-          }
-        }
+      try {
+        command.perform(JetBrainsProtocolHandler.getMainParameter(), JetBrainsProtocolHandler.getParameters());
+      }
+      finally {
+        JetBrainsProtocolHandler.clear();
       }
     }
-
   }
 
   @Override

@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.externalDependencies.impl;
+package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * @author Konstantin Bulenkov
  */
-public class ExternalDependenciesConfigurableProvider extends ConfigurableProvider {
-  private final Project myProject;
+public abstract class CheckoutProviderEx implements CheckoutProvider {
+  public abstract String getVcsId();
 
-  public ExternalDependenciesConfigurableProvider(Project project) {
-    myProject = project;
-  }
-
-  @Nullable
-  @Override
-  public Configurable createConfigurable() {
-    return new ExternalDependenciesConfigurable(myProject);
-  }
+  public abstract void doCheckout(@NotNull final Project project, @Nullable Listener listener, @Nullable String predefinedRepositoryUrl);
 }

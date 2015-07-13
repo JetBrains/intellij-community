@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,46 +23,37 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
- * Shows small (16x16 or less) icons as gutters
+ * Shows small (16x16 or less) icons as gutters.
+ * <p/>
  * Works in places where it's possible to resolve from literal expression
- * to an icon image
+ * to an icon image.
  *
  * @author Konstantin Bulenkov
  */
 public class IconLineMarkerProvider implements LineMarkerProvider {
-  @NonNls private static final String JAVAX_SWING_ICON = "javax.swing.Icon";
-  private static final int ICON_MAX_WEIGHT = 16;
-  private static final int ICON_MAX_HEIGHT = 16;
-  private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; //2Kb
-  private static final List<String> ICON_EXTS = Arrays.asList("png", "ico", "bmp", "gif", "jpg");
 
-  //TODO: remove old unused icons from the cache
-  private final HashMap<String, Pair<Long, Icon>> iconsCache = new HashMap<String, Pair<Long, Icon>>();
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  }
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    if (! DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER) return null;
+    if (!DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER) return null;
 
     if (element instanceof PsiAssignmentExpression) {
       final PsiExpression lExpression = ((PsiAssignmentExpression)element).getLExpression();
@@ -70,7 +61,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
       if (lExpression instanceof PsiReferenceExpression) {
         PsiElement var = ((PsiReferenceExpression)lExpression).resolve();
         if (var instanceof PsiVariable) {
-          return resolveIconInfo(((PsiVariable)var).getType(), expr);
+          return createIconLineMarker(((PsiVariable)var).getType(), expr);
         }
       }
     }
@@ -80,15 +71,15 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (method != null) {
         final PsiType returnType = method.getReturnType();
-        final LineMarkerInfo<PsiElement> result = resolveIconInfo(returnType, value);
+        final LineMarkerInfo<PsiElement> result = createIconLineMarker(returnType, value);
 
-        if (result != null || !isIconClassType(returnType) || value == null) return result;
+        if (result != null || !ProjectIconsAccessor.isIconClassType(returnType) || value == null) return result;
 
         if (methodContainsReturnStatementOnly(method)) {
           for (PsiReference ref : value.getReferences()) {
             final PsiElement field = ref.resolve();
             if (field instanceof PsiField) {
-              return resolveIconInfo(returnType, ((PsiField)field).getInitializer(), psiReturnStatement);
+              return createIconLineMarker(returnType, ((PsiField)field).getInitializer(), psiReturnStatement);
             }
           }
         }
@@ -103,7 +94,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
         PsiUtil.ensureValidType(type, "in variable: " + var + " of " + var.getClass());
       }
 
-      return resolveIconInfo(type, var.getInitializer());
+      return createIconLineMarker(type, var.getInitializer());
     }
     return null;
   }
@@ -116,113 +107,33 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   }
 
   @Nullable
-  private LineMarkerInfo<PsiElement> resolveIconInfo(PsiType type, PsiExpression initializer) {
-    return resolveIconInfo(type, initializer, initializer);
+  private static LineMarkerInfo<PsiElement> createIconLineMarker(PsiType type, @Nullable PsiExpression initializer) {
+    return createIconLineMarker(type, initializer, initializer);
   }
 
   @Nullable
-  private LineMarkerInfo<PsiElement> resolveIconInfo(PsiType type, PsiExpression initializer, PsiElement bindingElement) {
-    if (initializer != null && initializer.isValid() && isIconClassType(type)) {
-      final Project project = initializer.getProject();
-      final List<FileReference> refs = new ArrayList<FileReference>();
-      initializer.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          if (element instanceof PsiLiteralExpression) {
-            for (PsiReference ref : element.getReferences()) {
-              if (ref instanceof FileReference) {
-                refs.add((FileReference)ref);
-              }
-            }
-          }
-          super.visitElement(element);
-        }
-      });
+  private static LineMarkerInfo<PsiElement> createIconLineMarker(PsiType type,
+                                                                 @Nullable PsiExpression initializer,
+                                                                 PsiElement bindingElement) {
+    if (initializer == null) return null;
 
-      for (FileReference ref : refs) {
-        final PsiFileSystemItem psiFileSystemItem = ref.resolve();
-        VirtualFile file = null;
-        if (psiFileSystemItem == null) {
-          final ResolveResult[] results = ref.multiResolve(false);
-          for (ResolveResult result : results) {
-            final PsiElement element = result.getElement();
-            if (element instanceof PsiBinaryFile) {
-              file = ((PsiFile)element).getVirtualFile();
-              break;
-            }
-          }
-        } else {
-          file = psiFileSystemItem.getVirtualFile();
-        }
+    final Project project = initializer.getProject();
 
-        if (file == null || file.isDirectory()
-            || !isIconFileExtension(file.getExtension())
-            || file.getLength() > ICON_MAX_SIZE) continue;
+    final VirtualFile file = ProjectIconsAccessor.getInstance(project).resolveIconFile(type, initializer);
+    if (file == null) return null;
 
-        final Icon icon = getIcon(file, project);
+    final Icon icon = ProjectIconsAccessor.getInstance(project).getIcon(file);
+    if (icon == null) return null;
 
-        if (icon != null) {
-          final Ref<VirtualFile> f = Ref.create(file);
-          final GutterIconNavigationHandler<PsiElement> navHandler = new GutterIconNavigationHandler<PsiElement>() {
-            @Override
-            public void navigate(MouseEvent e, PsiElement elt) {
-              FileEditorManager.getInstance(project).openFile(f.get(), true);
-            }
-          };
-          return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,
-                                                Pass.UPDATE_ALL, null, navHandler,
-                                                GutterIconRenderer.Alignment.LEFT);
-        }
+    final GutterIconNavigationHandler<PsiElement> navHandler = new GutterIconNavigationHandler<PsiElement>() {
+      @Override
+      public void navigate(MouseEvent e, PsiElement elt) {
+        FileEditorManager.getInstance(project).openFile(file, true);
       }
-    }
-    return null;
-  }
+    };
 
-  private static boolean isIconFileExtension(String extension) {
-    return extension != null && ICON_EXTS.contains(extension.toLowerCase());
-  }
-
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-  }
-
-  private static boolean hasProperSize(Icon icon) {
-    return icon.getIconHeight() <= ICON_MAX_HEIGHT && icon.getIconWidth() <= ICON_MAX_WEIGHT;
-  }
-
-  @Nullable
-  private Icon getIcon(VirtualFile file, Project project) {
-    final String path = file.getPath();
-    final long stamp = file.getModificationStamp();
-    Pair<Long, Icon> iconInfo = iconsCache.get(path);
-    if (iconInfo == null || iconInfo.getFirst() < stamp) {
-      try {
-        final Icon icon = createOrFindBetterIcon(file, isIdeaProject(project));
-        iconInfo = new Pair<Long, Icon>(stamp, hasProperSize(icon) ? icon : null);
-        iconsCache.put(file.getPath(), iconInfo);
-      }
-      catch (Exception e) {//
-        iconInfo = null;
-        iconsCache.remove(path);
-      }
-    }
-    return iconInfo == null ? null : iconInfo.getSecond();
-  }
-
-  private static boolean isIdeaProject(Project project) {
-    if (project == null) return false;
-    VirtualFile baseDir = project.getBaseDir();
-    return baseDir != null && (baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null);
-  }
-
-  private static Icon createOrFindBetterIcon(VirtualFile file, boolean tryToFindBetter) throws IOException {
-    if (tryToFindBetter) {
-      return IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
-    }
-    return new ImageIcon(file.contentsToByteArray());
-  }
-
-  private static boolean isIconClassType(PsiType type) {
-    return InheritanceUtil.isInheritor(type, JAVAX_SWING_ICON);
+    return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,
+                                          Pass.UPDATE_ALL, null, navHandler,
+                                          GutterIconRenderer.Alignment.LEFT);
   }
 }

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import com.intellij.TestAll;
 import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.TestCase;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * This is should be first test in all tests so we can measure how long tests are starting up.
@@ -27,7 +29,20 @@ import javax.swing.*;
 public class _FirstInSuiteTest extends TestCase {
   public static long suiteStarted = 0L;
   public static boolean nothingIsCalled = false;
-
+  
+  public void testReportClassLoadingProblems() throws Exception {
+    List<Throwable> problems = TestAll.getLoadingClassProblems();
+    if (problems.isEmpty()) return;
+    
+    StringBuilder builder = new StringBuilder("The following test classes were not loaded:\n");
+    for (Throwable each : problems) {
+      builder.append(each.toString()).append("\n");
+      each.printStackTrace();
+    }
+    
+    throw new AssertionError(builder.toString());
+  }
+  
   public void testNothing() throws Exception {
     if (nothingIsCalled) return;
     nothingIsCalled = true;

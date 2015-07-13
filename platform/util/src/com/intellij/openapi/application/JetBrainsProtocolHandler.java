@@ -19,50 +19,79 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
-  public static final String MAIN_PARAMETER = "JETBRAINS_PROTOCOL_HANDLER_MAIN_PARAMETER";
-  public static final String COMMAND = "JETBRAINS_PROTOCOL_HANDLER_COMMAND";
+  private static String ourMainParameter = null;
+  private static String ourCommand = null;
+  public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
+  private static final Map<String, String> ourParameters = new HashMap<String, String>(0);
+  private static boolean initialized = false;
 
   public static void processJetBrainsLauncherParameters(String url) {
+    System.setProperty(JetBrainsProtocolHandler.class.getName(), url);
     url = url.substring(PROTOCOL.length());
     String platformPrefix = url.substring(0, url.indexOf('/'));
     url = url.substring(platformPrefix.length() + 1);
     String command = url.substring(0, url.indexOf('/'));
     url = url.substring(command.length() + 1);
     List<String> strings = StringUtil.split(url, "?");
-    String arg = strings.get(0);
-    System.setProperty(MAIN_PARAMETER, arg);
-    System.setProperty(COMMAND, command);
+    ourMainParameter = strings.get(0);
+    ourCommand = command;
 
     if (strings.size() > 1) {
       List<String> keyValues = StringUtil.split(StringUtil.join(ContainerUtil.subList(strings, 1), "?"), "&");
       for (String keyValue : keyValues) {
         if (keyValue.contains("=")) {
           int ind = keyValue.indexOf('=');
-          System.setProperty(keyValue.substring(0, ind), keyValue.substring(ind + 1));
+          String key = keyValue.substring(0, ind);
+          String value = keyValue.substring(ind + 1);
+          if (REQUIRED_PLUGINS_KEY.equals(key)) {
+            System.setProperty(key, value);
+          } else {
+            ourParameters.put(key, value);
+          }
         } else {
-          System.setProperty(keyValue, "");
+          ourParameters.put(keyValue, "");
         }
       }
     }
+
+    initialized = true;
   }
 
   @Nullable
   public static String getCommand() {
-    return System.getProperty(COMMAND);
+    init();
+    return ourCommand;
+  }
+
+  private static void init() {
+    if (initialized) return;
+    String property = System.getProperty(JetBrainsProtocolHandler.class.getName());
+    if (property != null && property.startsWith(PROTOCOL)) {
+      processJetBrainsLauncherParameters(property);
+    }
   }
 
   public static String getMainParameter() {
-    return System.getProperty(MAIN_PARAMETER);
+    init();
+    return ourMainParameter;
   }
 
   public static void clear() {
-    System.setProperty(COMMAND, "");
+    ourCommand = null;
+  }
+
+  public static Map<String, String> getParameters() {
+    init();
+    return Collections.unmodifiableMap(ourParameters);
   }
 }

@@ -330,6 +330,7 @@ public class FindDialog extends DialogWrapper {
           public void run() {
             int row = myResultsPreviewTable.getSelectedRow();
             if (row > 0) myResultsPreviewTable.setRowSelectionInterval(row - 1, row - 1);
+            TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
           }
         }
       );
@@ -344,6 +345,7 @@ public class FindDialog extends DialogWrapper {
             int row = myResultsPreviewTable.getSelectedRow();
             if (row >= 0 && row + 1 < myResultsPreviewTable.getRowCount()) {
               myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
+              TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
             }
           }
         }
