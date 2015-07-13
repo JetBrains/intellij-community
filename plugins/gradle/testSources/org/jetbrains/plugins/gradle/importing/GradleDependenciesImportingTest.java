@@ -66,6 +66,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testDependencyWithDifferentClassifiers() throws Exception {
     final VirtualFile depJar = createProjectJarSubFile("lib/dep/dep/1.0/dep-1.0.jar");
     final VirtualFile depTestsJar = createProjectJarSubFile("lib/dep/dep/1.0/dep-1.0-tests.jar");
+    final VirtualFile depNonJar = createProjectSubFile("lib/dep/dep/1.0/dep-1.0.someExt");
 
     importProject(
       "allprojects {\n" +
@@ -82,6 +83,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "dependencies {\n" +
       "  compile 'dep:dep:1.0'\n" +
       "  testCompile 'dep:dep:1.0:tests'\n" +
+      "  runtime 'dep:dep:1.0@someExt'\n" +
       "}"
     );
 
@@ -92,5 +94,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleLibDep("project", "Gradle: dep:dep:1.0:tests", depTestsJar.getUrl());
     assertModuleLibDepScope("project", "Gradle: dep:dep:1.0:tests", DependencyScope.TEST);
+
+    assertModuleLibDep("project", "Gradle: dep:dep:1.0:someExt", depNonJar.getUrl());
+    assertModuleLibDepScope("project", "Gradle: dep:dep:1.0:someExt", DependencyScope.RUNTIME);
   }
 }
