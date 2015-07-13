@@ -38,6 +38,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -273,7 +274,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
     final DvcsRememberedInputs rememberedInputs = getRememberedInputs();
-    List<String> urls = rememberedInputs.getVisitedUrls();
+    List<String> urls = new ArrayList<String>(rememberedInputs.getVisitedUrls());
     if (myDefaultRepoUrl != null) {
       urls.add(0, myDefaultRepoUrl);
     }
