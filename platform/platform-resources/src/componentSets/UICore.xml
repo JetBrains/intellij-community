@@ -10,7 +10,8 @@
     </component>
     <component>
       <interface-class>com.intellij.ide.DataManager</interface-class>
-      <implementation-class>com.intellij.ide.impl.DataManagerImpl</implementation-class>
+      <!--<implementation-class>com.intellij.ide.impl.DataManagerImpl</implementation-class>-->
+      <implementation-class>com.jetbrains.reactiveidea.ServerDataManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.idea.CommandLineApplication$MyDataManagerImpl</headless-implementation-class>
     </component>
     <component>

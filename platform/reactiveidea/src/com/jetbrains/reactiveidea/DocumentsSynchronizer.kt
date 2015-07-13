@@ -112,7 +112,7 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         viewHost = ProjectViewHost(project, projectView, serverModel, Path("project-view"), treeStructure, viewPane)
       })
 
-      tabHost = TabViewHost(serverModel, Path("tab-view"))
+      tabHost = TabViewHost(project, serverModel, Path("tab-view"))
 
 
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,

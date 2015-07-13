@@ -1,5 +1,6 @@
 package com.jetbrains.reactivemodel
 
+import com.intellij.openapi.util.Key
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapDiff
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -8,6 +9,8 @@ import com.jetbrains.reactivemodel.models.assocModelWithPath
 import java.util.ArrayList
 
 public object Last
+
+public val pathKey: Key<Path> = Key.create("com.jetbrains.reactivemodel.Path")
 
 public data class Path(val components: List<Any>) {
   public constructor(vararg cs: Any) : this(listOf(*cs))

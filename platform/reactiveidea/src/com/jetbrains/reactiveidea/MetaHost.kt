@@ -57,7 +57,7 @@ public open class MetaHost(public val reactiveModel: ReactiveModel,
     }
   }
 
-  protected open fun buildMeta(): HashMap<String, Any> {
+  protected open fun buildMeta(): Map<String, Any> {
     val map = HashMap<String, Any>()
     map["host"] = this
     map["lifetime"] = lifetime

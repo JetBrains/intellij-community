@@ -40,6 +40,9 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
   val openDirs = HashMap<SmartPsiElementPointer<PsiDirectory>, Path>()
   val ptrManager = SmartPointerManager.getInstance(project)
 
+  override fun buildMeta(): Map<String, Any> = super.buildMeta()
+      .plus("project" to project)
+
   init {
     initModel { m ->
       val root = treeStructure.getRootElement();

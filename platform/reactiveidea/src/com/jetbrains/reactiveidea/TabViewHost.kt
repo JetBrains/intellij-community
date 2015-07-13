@@ -15,18 +15,19 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.github.krukow.clj_lang.PersistentHashMap
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.Path
+import com.jetbrains.reactivemodel.ReactiveModel
+import com.jetbrains.reactivemodel.getIn
 import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.util.Lifetime
+import com.jetbrains.reactivemodel.putIn
 import gnu.trove.TObjectIntHashMap
-import java.util.*
 
-class TabViewHost(reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveModel, path) {
+class TabViewHost(val project: Project, reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveModel, path) {
   companion object {
     val editorsPath = "editors"
   }
@@ -37,6 +38,10 @@ class TabViewHost(reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveM
 
   val fileToEditorIdx = TObjectIntHashMap<VirtualFile>()
   var currentIdx = 0
+
+  override fun buildMeta(): Map<String, Any> = super.buildMeta()
+      .plus("project" to project)
+
 
   fun addEditor(editor: Editor, file: VirtualFile) {
     EditorHost(reactiveModel, path / editorsPath / currentIdx.toString(), file, editor, true)
@@ -80,7 +85,6 @@ class TabViewHost(reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveM
     }
     return setActive(model, idx)
   }
-
 
   /**
    * Get first convenient editor for set active if current active removed

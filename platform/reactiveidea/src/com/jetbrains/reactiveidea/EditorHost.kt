@@ -47,12 +47,9 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
   val caretGuard = Guard()
   val name = file.getName()
 
-  override fun buildMeta(): HashMap<String, Any> {
-    val map = super.buildMeta()
-    map["editor"] = editor
-    map["file"] = file
-    return map
-  }
+  override fun buildMeta(): Map<String, Any> = super.buildMeta()
+      .plus("editor" to editor)
+      .plus("file" to file)
 
   init {
     initModel { m ->
@@ -72,6 +69,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
     }
     val documentHost = DocumentHost(reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
     editor.putUserData(editorHostKey, this)
+    editor.putUserData(pathKey, path)
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")
 
