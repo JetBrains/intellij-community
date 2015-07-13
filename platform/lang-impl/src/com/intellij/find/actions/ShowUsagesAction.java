@@ -62,6 +62,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
@@ -163,7 +164,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     if (e.getPresentation().isEnabled()) {
       UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
-      if (usageTargets != null && !(usageTargets[0] instanceof PsiElementUsageTarget)) {
+      if (usageTargets != null && !(ArrayUtil.getFirstElement(usageTargets) instanceof PsiElementUsageTarget)) {
         e.getPresentation().setEnabled(false);
       }
     }
@@ -198,7 +199,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
       });
     }
-    else if (usageTargets[0] instanceof PsiElementUsageTarget) {
+    else if (ArrayUtil.getFirstElement(usageTargets) instanceof PsiElementUsageTarget) {
       PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
       if (element != null) {
         startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
