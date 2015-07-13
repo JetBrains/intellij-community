@@ -18,6 +18,7 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -255,6 +256,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
           DarculaInstaller.install();
         }
+      }
+
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
 
       reset();
