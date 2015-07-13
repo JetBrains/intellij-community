@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,7 +232,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         }.execute();
       }
       for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-        if (renamerFactory.isApplicable(elementToRename)) {
+        if (elementToRename != null && renamerFactory.isApplicable(elementToRename)) {
           final List<UsageInfo> usages = new ArrayList<UsageInfo>();
           final AutomaticRenamer renamer =
             renamerFactory.createRenamer(elementToRename, newName, new ArrayList<UsageInfo>());
