@@ -98,6 +98,17 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
   public Object getData(String dataId) {
     if (myEditor.isRendererMode()) return null;
 
+    // but for server edition return current editor
+    // TODO replace
+    if(ApplicationManager.getApplication().isServer()) {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return myEditor;
+      }
+      if(CommonDataKeys.PROJECT.is(dataId)) {
+        return myEditor.getProject();
+      }
+    }
+
     if (CommonDataKeys.EDITOR.is(dataId)) {
       // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
       return myEditor.getVirtualFile() == null ? myEditor : null;

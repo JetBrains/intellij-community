@@ -18,13 +18,10 @@ package com.jetbrains.reactiveidea
 import com.github.krukow.clj_lang.PersistentHashMap
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.reactivemodel.Path
-import com.jetbrains.reactivemodel.ReactiveModel
-import com.jetbrains.reactivemodel.getIn
+import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.putIn
 import com.jetbrains.reactivemodel.util.Lifetime
 import gnu.trove.TObjectIntHashMap
 import java.util.*
@@ -74,6 +71,16 @@ class TabViewHost(reactiveModel: ReactiveModel, path: Path) : MetaHost(reactiveM
   private fun setActive(m: MapModel, candidate: String): MapModel {
     return (path / editorsPath / candidate / EditorHost.activePath).putIn(m, PrimitiveModel(true))
   }
+
+  public fun setActiveEditor(m: MapModel, idx: String): MapModel {
+    val editors = (path / editorsPath).getIn(m) as MapModel
+    var model = m;
+    editors.keySet().forEach {
+      model = (path / editorsPath / it.toString() / EditorHost.activePath).putIn(model, PrimitiveModel(false))
+    }
+    return setActive(model, idx)
+  }
+
 
   /**
    * Get first convenient editor for set active if current active removed

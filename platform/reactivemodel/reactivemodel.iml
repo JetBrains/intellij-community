@@ -11,5 +11,6 @@
     <orderEntry type="library" exported="" name="clj-ds-0.0.4" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
   </component>
 </module>

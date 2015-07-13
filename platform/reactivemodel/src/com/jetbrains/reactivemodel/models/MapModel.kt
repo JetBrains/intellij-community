@@ -19,6 +19,10 @@ public data class MapModel(val hmap: PersistentHashMap<String, Model> = Persiste
   public constructor(m: Map<String, Model>, metadata: IPersistentMap<String, *> = emptyMeta())
   : this(PersistentHashMap.create(m), metadata)
 
+  public fun assocMeta(key: String, value: Any?): MapModel {
+    return MapModel(hmap, (meta as IPersistentMap<String, Any>).assoc(key, value))
+  }
+
   public override fun assoc(key: String, value: Model?): MapModel =
       if (value is AbsentModel) remove(key)
       else MapModel(hmap.plus(key, value), meta)

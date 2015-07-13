@@ -1179,7 +1179,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isUnitTestMode()) return true;
+    if (isServer() || isUnitTestMode()) return true;
 
     if (myActive == null) {
       Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();

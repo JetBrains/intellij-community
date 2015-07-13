@@ -1,7 +1,8 @@
 package com.jetbrains.reactivemodel
 
-import com.jetbrains.reactivemodel
-import com.jetbrains.reactivemodel.*
+import com.github.krukow.clj_lang.IPersistentMap
+import com.github.krukow.clj_lang.PersistentHashMap
+import com.github.krukow.clj_lang.PersistentHashSet
 import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
@@ -11,29 +12,50 @@ import java.util.HashMap
 import java.util.Queue
 
 public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
-  public var root: MapModel = MapModel(meta = createMeta("lifetime", lifetime))
+  public var root: MapModel = MapModel(meta = createMeta("lifetime", lifetime, INDEX_FIELD, PersistentHashMap.emptyMap<String, PersistentHashSet<Path>>()))
   private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
+  private val tagSubs: MutableMap<String, TagSignal<*>> = HashMap()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
   private val transactionGuard = Guard()
   private val actionToHandler: MutableMap<String, (MapModel, MapModel) -> MapModel> = HashMap()
 
   companion object {
-    private var cur : ReactiveModel? = null
-    public fun current() : ReactiveModel? {
+    val INDEX_FIELD = "index"
+
+    private var cur: ReactiveModel? = null
+    public fun current(): ReactiveModel? {
       return cur;
     }
   }
 
-  private inner class ModelSignal(val path: Path, override val lifetime: Lifetime) : com.jetbrains.reactivemodel.Signal<Model?> {
+  init {
+    cur = cur ?: this
+  }
+
+  private inner class ModelSignal(val path: Path, override val lifetime: Lifetime) : Signal<Model?> {
     override val value: Model?
       get() = path.getIn(root)
   }
 
-  public fun subscribe(lt: Lifetime = lifetime, path: Path): com.jetbrains.reactivemodel.Signal<Model?> {
+  private inner class TagSignal<T : Model>(val tag: Tag<T>, override val lifetime: Lifetime) : Signal<List<T>> {
+    override val value: List<T>
+      get() = tag.getIn(root)
+  }
+
+  public fun subscribe(lt: Lifetime = lifetime, path: Path): Signal<Model?> {
     val signal = ModelSignal(path, lt)
     subscriptions[path] = signal
     lifetime += {
       subscriptions.remove(path)
+    }
+    return signal
+  }
+
+  public fun subscribe<T : Model>(lt: Lifetime = lifetime, tag: Tag<T>): TagSignal<T> {
+    val signal = TagSignal(tag, lt)
+    tagSubs[tag.name] = signal
+    lifetime += {
+      tagSubs.remove(tag.name)
     }
     return signal
   }
@@ -61,10 +83,71 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     if (diff !is MapDiff) {
       throw AssertionError()
     }
+    newModel = updateIndexes(oldModel, newModel, diff)
     root = newModel
     fireUpdates(oldModel, newModel, diff)
     terminateLifetimes(oldModel, diff)
     return diff
+  }
+
+  class UpdateIndexVisitor(val model: MapModel, val oldModel: MapModel, val path: Path = Path()) : DiffVisitor<MapModel> {
+    override fun visitMapDiff(mapDiff: MapDiff): MapModel {
+      var newModel = model
+      for (e in mapDiff.diff) {
+        newModel = e.value.acceptVisitor(UpdateIndexVisitor(newModel, oldModel, path / e.key))
+      }
+      return newModel
+    }
+
+    override fun visitListDiff(listDiff: ListDiff): MapModel {
+      return model
+    }
+
+    override fun visitValueDiff(valueDiff: ValueDiff<*>): MapModel {
+      val newval = valueDiff.newValue
+      if (newval is MapModel) {
+        return processTagsRec(newval, path, true, model)
+      }
+      if (newval is AbsentModel) {
+        val oldModel = path.getIn(oldModel)
+        if (oldModel is MapModel) {
+          return processTagsRec(oldModel, path, false, model)
+        }
+      }
+      return model
+    }
+
+    override fun visitPrimitiveDiff(primitiveDiff: PrimitiveDiff): MapModel {
+      return model
+    }
+
+    private fun processTagsRec(newval: MapModel, path: Path, add: Boolean, model: MapModel): MapModel {
+      var newModel = model
+      newval.forEach { e ->
+        val value = e.value
+        if (e.key == tagsField) {
+          val values = value as ListModel
+          values.forEach {
+            it as PrimitiveModel<*>
+            val tag = getTag(it.value as String)
+            if (tag != null) {
+              val index = newModel.meta.index()
+              var vals: PersistentHashSet<Path> = index.valAt(tag.name, PersistentHashSet.emptySet<Path>())
+              vals = if (add) vals.cons(path) else vals.disjoin(path)
+              newModel = newModel.assocMeta(INDEX_FIELD, index.assoc(tag.name, vals))
+            }
+          }
+        } else if (value is MapModel) {
+          newModel = processTagsRec(value, path / e.key, add, newModel)
+        }
+      }
+      return newModel
+    }
+  }
+
+
+  private fun updateIndexes(oldModel: MapModel, newModel: MapModel, diff: MapDiff): MapModel {
+    return diff.acceptVisitor(UpdateIndexVisitor(newModel, oldModel))
   }
 
   class TerminateLifetimeVisitor(val oldModel: MapModel, val path: Path = Path()) : DiffVisitor<Unit> {
@@ -75,7 +158,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     }
 
     override fun visitValueDiff(valueDiff: ValueDiff<*>) {
-      if(valueDiff.newValue is AbsentModel) {
+      if (valueDiff.newValue is AbsentModel) {
         val oldModel = path.getIn(oldModel)
         if (oldModel is MapModel) {
           terminateLifetimesRec(oldModel)
@@ -83,19 +166,21 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
       }
     }
 
-    override fun visitListDiff(listDiff: ListDiff) {}
+    override fun visitListDiff(listDiff: ListDiff) {
+    }
 
-    override fun visitPrimitiveDiff(primitiveDiff: PrimitiveDiff) {}
+    override fun visitPrimitiveDiff(primitiveDiff: PrimitiveDiff) {
+    }
 
     private fun terminateLifetimesRec(oldModel: MapModel) {
       val lifetime = oldModel.meta.valAt("lifetime") as Lifetime?
-      if(lifetime != null) {
+      if (lifetime != null) {
         lifetime.terminate()
       } else {
-        val map : Map<String, Model?> = oldModel.hmap // explicit type inference
+        val map: Map<String, Model?> = oldModel.hmap // explicit type inference
         map.forEach { e ->
           val value = e.getValue()
-          if(value is MapModel) {
+          if (value is MapModel) {
             terminateLifetimesRec(value)
           }
         }
@@ -108,18 +193,24 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
   }
 
   private fun fireUpdates(oldModel: MapModel, newModel: MapModel, diff: MapDiff) {
-    com.jetbrains.reactivemodel.updates {
+    updates {
       for ((path, signal) in subscriptions) {
         if (path.getIn(diff) != null) {
-          com.jetbrains.reactivemodel.ReactGraph.scheduleUpdate(com.jetbrains.reactivemodel.Change(signal, path.getIn(oldModel), path.getIn(newModel)))
+          ReactGraph.scheduleUpdate(Change(signal, path.getIn(oldModel), path.getIn(newModel)))
+        }
+      }
+      for ((name, signal) in tagSubs) {
+        if (oldModel.meta.index()[name] != newModel.meta.index()[name]) {
+          assert(signal.tag.getIn(oldModel) != signal.tag.getIn(newModel))
+          ReactGraph.scheduleUpdate(Change(signal, signal.tag.getIn(oldModel), signal.tag.getIn(newModel)))
         }
       }
     }
   }
 
-  public fun registerHandler(l: Lifetime, action: String, handler : (MapModel, MapModel) -> MapModel) {
+  public fun registerHandler(l: Lifetime, action: String, handler: (MapModel, MapModel) -> MapModel) {
     actionToHandler[action] = handler
-    l += {actionToHandler.remove(action)}
+    l += { actionToHandler.remove(action) }
   }
 
   fun dispatch(actionModel: Model, model: MapModel): MapModel {
@@ -136,6 +227,10 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
     return model
   }
 }
+
+@suppress("UNCHECKED_CAST")
+private fun IPersistentMap<String, *>.index(): PersistentHashMap<String, PersistentHashSet<Path>> =
+    this.valAt(ReactiveModel.INDEX_FIELD) as PersistentHashMap<String, PersistentHashSet<Path>>
 
 fun test() {
   val mirror = ReactiveModel(Lifetime.Eternal, {
@@ -163,22 +258,22 @@ fun test() {
   val cSignal = model.subscribe(Lifetime.Eternal, Path("b", "c"))
 
   val mirrorBC = mirror.subscribe(Lifetime.Eternal, Path("b", "c"))
-  com.jetbrains.reactivemodel.reaction(false, "mirror/b/c", mirrorBC) {
+  reaction(false, "mirror/b/c", mirrorBC) {
     println("mirror/b/c $it")
   }
 
 
-  val cStr = com.jetbrains.reactivemodel.reaction(true, "b/c -> string", cSignal) {
+  val cStr = reaction(true, "b/c -> string", cSignal) {
     if (it == null) null
     else (it as PrimitiveModel<String>).value
   }
 
-  com.jetbrains.reactivemodel.reaction(false, "println", cStr) {
+  reaction(false, "println", cStr) {
     println("b/c $it")
   }
 
   val lookupSignal = mirror.subscribe(Lifetime.Eternal, Path("b", "lookup"))
-  com.jetbrains.reactivemodel.reaction(false, "println lookup", lookupSignal) {
+  reaction(false, "println lookup", lookupSignal) {
     println(it)
   }
 

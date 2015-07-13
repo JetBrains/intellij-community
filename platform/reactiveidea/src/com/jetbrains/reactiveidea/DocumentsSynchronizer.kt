@@ -29,11 +29,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
@@ -81,7 +81,9 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         val anAction = ActionManager.getInstance().getAction(actionName)
         if (anAction != null) {
           val dataContext = guessDataContext(contextHint, model)
-          anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
+          EdtInvocationManager.getInstance().invokeLater {
+            anAction.actionPerformed(AnActionEvent.createFromDataContext("ide-frontend", Presentation(), dataContext))
+          }
         } else {
           println("can't find idea action $args")
         }
@@ -92,7 +94,9 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
         val path = (args["path"] as ListModel).map { (it as PrimitiveModel<*>).value }.drop(1).fold(Path(), { path, part -> path / part })
         val psiPtr  = path.getIn(model)!!.meta["psi"]
         if(psiPtr is SmartPsiElementPointer<*>) {
-          FileEditorManager.getInstance(project).openFile(psiPtr.getVirtualFile(), false)
+          EdtInvocationManager.getInstance().invokeLater {
+            FileEditorManager.getInstance(project).openFile(psiPtr.getVirtualFile(), true)
+          }
         }
         model
       }
@@ -114,16 +118,6 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-              if(!lifetime.lifetime.isTerminated) {
-                val editors = FileEditorManager.getInstance(project).getAllEditors(file)
-                    .filter { it is TextEditor }
-                    .map { (it as TextEditor).getEditor() }
-
-                if (!editors.isEmpty()) {
-                  val editor = editors.first()
-                  tabHost!!.addEditor(editor, file)
-                }
-              }
             }
 
             override fun fileClosed(source: FileEditorManager, file: VirtualFile) {

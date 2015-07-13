@@ -33,14 +33,12 @@ import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Guard
-import com.jetbrains.reactivemodel.util.Lifetime
 import java.util.HashMap
 
 public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: VirtualFile,
                         val editor: Editor, val providesMarkup: Boolean) : MetaHost(reactiveModel, path) {
   companion object {
     val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
-    val tags = "@@@--^tags"
     val activePath = "active"
 
     public fun getHost(editor: Editor): EditorHost? = editor.getUserData(editorHostKey)
@@ -52,6 +50,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
   override fun buildMeta(): HashMap<String, Any> {
     val map = super.buildMeta()
     map["editor"] = editor
+    map["file"] = file
     return map
   }
 
@@ -60,18 +59,19 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
       var editorsModel: List<Model?> = (path.dropLast(1).getIn(m) as? MapModel)
           ?.values()
           ?.filter { (it as MapModel).isNotEmpty() } ?: emptyList()
-      (path / activePath).putIn(m, PrimitiveModel(editorsModel.isEmpty()))
+      var model = (path / activePath).putIn(m, PrimitiveModel(editorsModel.isEmpty()))
+      model = (path / tagsField).putIn(model, ListModel(arrayListOf(PrimitiveModel("editor"))))
+      model
     }
     lifetime += {
       val project = editor.getProject()
-      if(project != null) {
+      if (project != null) {
         val manager = FileEditorManager.getInstance(project);
         manager.closeFile(file)
       }
     }
     val documentHost = DocumentHost(reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup, caretGuard)
     editor.putUserData(editorHostKey, this)
-    reactiveModel.transaction { m -> (path / tags).putIn(m, ListModel(arrayListOf(PrimitiveModel("editor")))) }
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")
 

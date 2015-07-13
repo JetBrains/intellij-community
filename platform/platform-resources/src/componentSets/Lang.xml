@@ -86,7 +86,8 @@
 
     <component>
       <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
+      <!--<implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>-->
+      <implementation-class>com.jetbrains.reactiveidea.ServerFileEditorManager</implementation-class>
       <headless-implementation-class>com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl</headless-implementation-class>
       <option name="workspace" value="true"/>
     </component>
