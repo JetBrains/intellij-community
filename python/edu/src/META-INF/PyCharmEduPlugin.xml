@@ -12,10 +12,10 @@
     </component>
   </application-components>
 
+  <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
   <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
+  
   <application-components>
     <component>
       <implementation-class>com.jetbrains.python.edu.PyCharmEduInitialConfigurator</implementation-class>
