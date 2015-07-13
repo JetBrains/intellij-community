@@ -1,5 +1,6 @@
 package org.editorconfig.plugincomponents;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -66,6 +67,7 @@ public class SettingsProviderComponent {
             }
           }
         }
+        dirs.add(PathManager.getConfigPath());
         return new Result<Set<String>>(dirs, ProjectRootModificationTracker.getInstance(project));
       }
     });
