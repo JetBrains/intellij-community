@@ -15,7 +15,6 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,24 +22,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * @author traff
  */
 public abstract class BaseOutputReader extends BaseDataReader {
-  protected static final int DELAY_AFTER_BLOCKING_READ = 10;
-
   protected final Reader myReader;
-
-  private final char[] myBuffer = new char[8192];
-  private final StringBuilder myTextBuffer = new StringBuilder();
-  private ExecutorService myExecutorService;
-  private boolean skipLF = false;
-  private volatile Future myScheduledSubmitter;
-  private Runnable myTokenSubmitter;
 
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
     this(inputStream, charset, null);
@@ -56,56 +43,15 @@ public abstract class BaseOutputReader extends BaseDataReader {
 
   public BaseOutputReader(@NotNull Reader reader, SleepingPolicy sleepingPolicy) {
     super(sleepingPolicy);
-    if (sleepingPolicy == SleepingPolicy.BLOCKING) {
-      if (!(reader instanceof BaseInputStreamReader)) {
-        throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
-      }
-      myExecutorService = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Base output reader"));
-      myTokenSubmitter = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            Thread.sleep(DELAY_AFTER_BLOCKING_READ);
-            submitToken();
-          }
-          catch (InterruptedException ignore) { }
-        }
-      };
+    if (sleepingPolicy == SleepingPolicy.BLOCKING && !(reader instanceof BaseInputStreamReader)) {
+      throw new IllegalArgumentException("Blocking policy can be used only with BaseInputStreamReader, that doesn't lock on close");
     }
     myReader = reader;
   }
 
-  private static Reader createInputStreamReader(final @NotNull InputStream streamToRead, @Nullable Charset charset) {
-    if (charset == null) {
-      return new BaseInputStreamReader(streamToRead);
-    }
-    else {
-      return new BaseInputStreamReader(streamToRead, charset);
-    }
+  private static Reader createInputStreamReader(@NotNull InputStream stream, @Nullable Charset charset) {
+    return charset == null ? new BaseInputStreamReader(stream) : new BaseInputStreamReader(stream, charset);
   }
-
-  private void processLine(char[] buffer, StringBuilder token, int n) {
-    for (int i = 0; i < n; i++) {
-      char c = buffer[i];
-      if (skipLF && c != '\n') {
-        token.append('\r');
-      }
-
-      if (c == '\r') {
-        skipLF = true;
-      }
-      else {
-        skipLF = false;
-        token.append(c);
-      }
-
-      if (c == '\n') {
-        onTextAvailable(token.toString());
-        token.setLength(0);
-      }
-    }
-  }
-
 
   /**
    * Reads as much data as possible without blocking.
@@ -116,20 +62,19 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @throws IOException If an I/O error occurs
    */
   protected final boolean readAvailableNonBlocking() throws IOException {
-    char[] buffer = myBuffer;
-    StringBuilder token = myTextBuffer;
-    token.setLength(0);
-
+    char[] buffer = new char[8192];
+    StringBuilder line = new StringBuilder();
     boolean read = false;
-    while (myReader.ready()) {
-      int n = myReader.read(buffer);
-      if (n <= 0) break;
-      read = true;
 
-      processLine(buffer, token, n);
+    int n;
+    while (myReader.ready() && (n = myReader.read(buffer)) > 0) {
+      read = true;
+      processLine(buffer, line, n);
     }
 
-    submitToken();
+    if (line.length() > 0) {
+      onTextAvailable(line.toString());
+    }
 
     return read;
   }
@@ -144,41 +89,39 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @throws IOException If an I/O error occurs
    */
   protected final boolean readAvailableBlocking() throws IOException {
-    char[] buffer = myBuffer;
-    StringBuilder token = myTextBuffer;
-    token.setLength(0);
-
+    char[] buffer = new char[8192];
+    StringBuilder line = new StringBuilder();
     boolean read = false;
+
     int n;
     while ((n = myReader.read(buffer)) > 0) {
-      if (myScheduledSubmitter != null) myScheduledSubmitter.cancel(true);
-
       read = true;
-
-      synchronized (myTextBuffer) {
-        processLine(buffer, token, n);
-      }
-
-      myScheduledSubmitter = myExecutorService.submit(myTokenSubmitter);
+      processLine(buffer, line, n);
     }
 
-    submitToken();
+    if (line.length() > 0) {
+      onTextAvailable(line.toString());
+    }
 
     return read;
   }
 
-  private void submitToken() {
-    synchronized (myTextBuffer) {
-      if (myTextBuffer.length() != 0) {
-        onTextAvailable(myTextBuffer.toString());
-        myTextBuffer.setLength(0);
+  protected final void processLine(char[] buffer, StringBuilder line, int n) {
+    for (int i = 0; i < n; i++) {
+      char c = buffer[i];
+
+      if (c == '\n' && line.length() > 0 && line.charAt(line.length() - 1) == '\r') {
+        line.setCharAt(line.length() - 1, '\n');
+      }
+      else {
+        line.append(c);
+      }
+
+      if (c == '\n') {
+        onTextAvailable(line.toString());
+        line.setLength(0);
       }
     }
-  }
-
-  @Nullable
-  protected Future getScheduledSubmitter() {
-    return myScheduledSubmitter;
   }
 
   @Override
