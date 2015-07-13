@@ -44,6 +44,8 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   public static final Key<String> OVERRIDE_STRIP_TRAILING_SPACES_KEY = Key.create("OVERRIDE_TRIM_TRAILING_SPACES_KEY");
   public static final Key<Boolean> OVERRIDE_ENSURE_NEWLINE_KEY = Key.create("OVERRIDE_ENSURE_NEWLINE_KEY");
 
+  public static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
+
   private final Set<Document> myDocumentsToStripLater = new THashSet<Document>();
 
   @Override
@@ -64,7 +66,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     if (!document.isWritable()) return;
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     VirtualFile file = fileDocumentManager.getFile(document);
-    if (file == null || !file.isValid()) return;
+    if (file == null || !file.isValid() || Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(file))) return;
 
     final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings == null) return;
@@ -129,9 +131,10 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings == null) return;
 
+    boolean enabled = !Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(FileDocumentManager.getInstance().getFile(document)));
     String stripTrailingSpaces = settings.getStripTrailingSpaces();
-    final boolean doStrip = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    final boolean doStrip = enabled && !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    final boolean inChangedLinesOnly = enabled && !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
 
     int[] caretLines;
     if (activeEditor != null && inChangedLinesOnly && doStrip && !isVirtualSpaceEnabled) {
