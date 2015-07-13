@@ -27,6 +27,7 @@ import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResult;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -36,7 +37,7 @@ public class GitCloneDialog extends CloneDvcsDialog {
     this(project, null);
   }
 
-  public GitCloneDialog(@NotNull Project project, String defaultUrl) {
+  public GitCloneDialog(@NotNull Project project, @Nullable String defaultUrl) {
     super(project, GitVcs.NAME, GitUtil.DOT_GIT, defaultUrl);
   }
 

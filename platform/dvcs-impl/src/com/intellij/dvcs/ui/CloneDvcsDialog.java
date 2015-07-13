@@ -72,7 +72,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull private String myDefaultDirectoryName = "";
   @NotNull protected final Project myProject;
   @NotNull protected final String myVcsDirectoryName;
-  private final String myDefaultRepoUrl;
+  @Nullable private final String myDefaultRepoUrl;
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);

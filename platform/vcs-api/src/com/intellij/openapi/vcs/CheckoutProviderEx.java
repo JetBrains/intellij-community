@@ -26,6 +26,7 @@ public abstract class CheckoutProviderEx implements CheckoutProvider {
   /**
    * @return a short unique identifier such as git, hg, svn, and so on
    */
+  @NotNull
   public abstract String getVcsId();
 
   /**

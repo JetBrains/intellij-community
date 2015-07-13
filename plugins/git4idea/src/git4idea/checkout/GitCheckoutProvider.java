@@ -121,6 +121,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
   }
 
   @Override
+  @NotNull
   public String getVcsId() {
     return "git";
   }
