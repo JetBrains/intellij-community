@@ -1,4 +1,4 @@
-PsiJavaFile:AnyType.java
+PsiJavaFile:AnyTypeParams.java
   PsiTypeParameterList
     PsiJavaToken:LT('<')
     PsiTypeParameter:T

@@ -37,6 +37,8 @@ public enum JavaSdkVersion {
   JDK_1_8(LanguageLevel.JDK_1_8, "1.8"),
   JDK_1_9(LanguageLevel.JDK_1_9, "1.9");
 
+  private static final JavaSdkVersion MAX_JDK = JDK_1_9;
+
   private final LanguageLevel myMaxLanguageLevel;
   private final String myDescription;
 
@@ -80,6 +82,9 @@ public enum JavaSdkVersion {
   public static JavaSdkVersion fromLanguageLevel(@NotNull LanguageLevel languageLevel) throws IllegalArgumentException {
     if (languageLevel == LanguageLevel.JDK_1_3) {
       return JDK_1_3;
+    }
+    if (languageLevel == LanguageLevel.JDK_X) {
+      return MAX_JDK;
     }
     for (JavaSdkVersion version : values()) {
       if (version.getMaxLanguageLevel().isAtLeast(languageLevel)) {
