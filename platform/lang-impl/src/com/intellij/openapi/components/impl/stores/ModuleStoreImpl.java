@@ -64,10 +64,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return myModule.getProject();
   }
 
-  @Override
   public void load() {
-    super.load();
-
     String moduleTypeId = getMainStorageData().myOptions.get(Module.ELEMENT_TYPE);
     myModule.setOption(Module.ELEMENT_TYPE, ModuleTypeManager.getInstance().findByID(moduleTypeId).getId());
 

@@ -501,7 +501,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      store.load();
+      long t = System.currentTimeMillis();
+      init();
+      t = System.currentTimeMillis() - t;
+      LOG.info(getComponentConfigurations().length + " application components initialized in " + t + " ms");
     }
     catch (StateStorageException e) {
       throw new IOException(e);

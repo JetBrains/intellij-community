@@ -101,14 +101,6 @@ public class ApplicationStoreImpl extends ComponentStoreImpl {
   }
 
   @Override
-  public void load() {
-    long t = System.currentTimeMillis();
-    myApplication.init();
-    t = System.currentTimeMillis() - t;
-    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + t + " ms");
-  }
-
-  @Override
   @NotNull
   protected MessageBus getMessageBus() {
     return myApplication.getMessageBus();

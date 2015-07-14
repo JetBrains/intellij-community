@@ -128,7 +128,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
   @NonNls
-  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
+  static final String FILE_SPEC = "filetypes";
 
   // these flags are stored in 'packedFlags' as chunks of four bits
   private static final int AUTO_DETECTED_AS_TEXT_MASK = 1;     // set if the file was auto-detected as text

@@ -163,13 +163,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     };
   }
 
-  @Override
-  public void load() {
-    if (myProjectManager.getDefaultProjectRootElement() != null) {
-      super.load();
-    }
-  }
-
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
     @NotNull final StateStorage.ExternalizationSession externalizationSession;
 

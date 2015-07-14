@@ -36,8 +36,6 @@ public interface IComponentStore {
 
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 
-  void load();
-
   @NotNull
   StateStorageManager getStateStorageManager();
 

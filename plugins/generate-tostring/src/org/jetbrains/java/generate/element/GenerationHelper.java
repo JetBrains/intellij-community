@@ -16,10 +16,13 @@
 package org.jetbrains.java.generate.element;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 
+import java.beans.Introspector;
 import java.util.List;
 
 public class GenerationHelper {
@@ -55,8 +58,16 @@ public class GenerationHelper {
   }
 
   public static String getPropertyName(FieldElement fieldElement, Project project) {
-    String name = fieldElement.getName();
-    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    return codeStyleManager.variableNameToPropertyName(name, fieldElement.isModifierStatic() ? VariableKind.STATIC_FIELD : VariableKind.FIELD);
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    final VariableKind variableKind = fieldElement.isModifierStatic() ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
+    final String propertyName = codeStyleManager.variableNameToPropertyName(fieldElement.getName(), variableKind);
+    if (!fieldElement.isModifierStatic() && fieldElement.isBoolean()) {
+      if (propertyName.startsWith("is") && 
+          propertyName.length() > "is".length() && 
+          Character.isUpperCase(propertyName.charAt("is".length()))) {
+        return StringUtil.decapitalize(propertyName.substring("is".length()));
+      }
+    }
+    return propertyName;
   }
 }

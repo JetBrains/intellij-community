@@ -35,14 +35,12 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.Consumer;
@@ -72,30 +70,6 @@ public class DvcsUtil {
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
   private static final int SHORT_HASH_LENGTH = 8;
   private static final int LONG_HASH_LENGTH = 40;
-
-  public static void installStatusBarWidget(@NotNull final Project project, @NotNull final StatusBarWidget widget) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null) {
-          statusBar.addWidget(widget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
-        }
-      }
-    });
-  }
-
-  public static void removeStatusBarWidget(@NotNull final Project project, @NotNull final StatusBarWidget widget) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null) {
-          statusBar.removeWidget(widget.ID());
-        }
-      }
-    });
-  }
 
   @NotNull
   public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {

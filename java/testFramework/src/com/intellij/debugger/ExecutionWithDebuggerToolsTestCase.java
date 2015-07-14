@@ -87,7 +87,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected void resume(SuspendContextImpl context) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOW));
+    debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
   }
 
   protected void stepInto(SuspendContextImpl context) {
@@ -114,11 +114,16 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void onBreakpoint(SuspendContextRunnable runnable) {
+    addDefaultBreakpointListener();
+    myScriptRunnables.add(runnable);
+  }
+
+  protected void addDefaultBreakpointListener() {
     if (myPauseScriptListener == null) {
       final DebugProcessImpl debugProcess = getDebugProcess();
-      
+
       assertTrue("Debug process was not started", debugProcess != null);
-      
+
       myPauseScriptListener = new DelayedEventsProcessListener(
         new DebugProcessAdapterImpl() {
           @Override
@@ -164,7 +169,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       );
       debugProcess.addDebugProcessListener(myPauseScriptListener);
     }
-    myScriptRunnables.add(runnable);
   }
 
   protected void printFrameProxy(StackFrameProxyImpl frameProxy) throws EvaluateException {

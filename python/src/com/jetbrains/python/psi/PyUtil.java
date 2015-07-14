@@ -771,7 +771,7 @@ public class PyUtil {
     if (folder != null) {
       LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
       if (level == null) level = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
-      if (level != null) return level;
+      return level;
     }
     else {
       // However this allows us to setup language level per file manually
@@ -785,8 +785,23 @@ public class PyUtil {
           return languageLevel;
         }
       }
+      return guessLanguageLevelWithCaching(project);
     }
-    return guessLanguageLevel(project);
+  }
+
+  public static void invalidateLanguageLevelCache(@NotNull Project project) {
+    project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, null);
+  }
+
+  @NotNull
+  public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
+    LanguageLevel languageLevel = project.getUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL);
+    if (languageLevel == null) {
+      languageLevel = guessLanguageLevel(project);
+      project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, languageLevel);
+    }
+
+    return languageLevel;
   }
 
   @NotNull

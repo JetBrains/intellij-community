@@ -178,9 +178,6 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
       stateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, testAppConfigPath)
     }
 
-    override fun load() {
-    }
-
     override fun getStateStorageManager(): StateStorageManager {
       return stateStorageManager
     }

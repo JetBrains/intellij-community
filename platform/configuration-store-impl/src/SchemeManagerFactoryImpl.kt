@@ -18,6 +18,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.*
@@ -31,11 +32,11 @@ private val LOG = Logger.getInstance(javaClass<SchemeManagerFactoryImpl>())
 public class SchemeManagerFactoryImpl : SchemesManagerFactory(), SettingsSavingComponent {
   private val myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
 
-  override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(fileSpec: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
+  override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
     val storageManager = (ApplicationManager.getApplication().getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore).getStateStorageManager()
-    val baseDirPath = storageManager.expandMacros(fileSpec)
-    val provider = storageManager.getStreamProvider()
-    val manager = SchemeManagerImpl<T, E>(fileSpec, processor, roamingType, provider, File(baseDirPath))
+
+    val fileSpec = if (directoryName.startsWith('$')) directoryName else "${StoragePathMacros.ROOT_CONFIG}/$directoryName"
+    val manager = SchemeManagerImpl<T, E>(fileSpec, processor, roamingType, storageManager.getStreamProvider(), File(storageManager.expandMacros(fileSpec)))
     @suppress("CAST_NEVER_SUCCEEDS")
     myRegisteredManagers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager
