@@ -482,6 +482,16 @@ class MultiValueDictResolver(DictResolver):
 
 
 #=======================================================================================================================
+# DequeResolver
+#=======================================================================================================================
+class DequeResolver(TupleResolver):
+    def getDictionary(self, var):
+        d = TupleResolver.getDictionary(self, var)
+        d['maxlen'] = getattr(var, 'maxlen', None)
+        return d
+
+
+#=======================================================================================================================
 # FrameResolver
 #=======================================================================================================================
 class FrameResolver:
@@ -539,4 +549,5 @@ jyArrayResolver = JyArrayResolver()
 setResolver = SetResolver()
 ndarrayResolver = NdArrayResolver()
 multiValueDictResolver = MultiValueDictResolver()
+dequeResolver = DequeResolver()
 frameResolver = FrameResolver()
