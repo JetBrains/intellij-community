@@ -31,6 +31,8 @@ import com.jetbrains.reactivemodel.util.Lifetime;
 import com.jetbrains.reactivemodel.util.LifetimeDefinition;
 import com.jetbrains.reactivemodel.util.UtilPackage;
 import kotlin.Function2;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +99,18 @@ public class ModelListPopup extends ListPopupImpl {
     myModel = model;
     myPath = path;
     myLifetime = Lifetime.Companion.create(Lifetime.Eternal);
-
+    myLifetime.getLifetime().add(new Function0<Unit>() {
+      @Override
+      public Unit invoke() {
+        myModel.transaction(new Function1<MapModel, MapModel>() {
+          @Override
+          public MapModel invoke(MapModel mapModel) {
+            return (MapModel)ReactivemodelPackage.putIn(myPath, mapModel, new AbsentModel());
+          }
+        });
+        return null;
+      }
+    });
   }
 
   @Override
@@ -119,12 +132,6 @@ public class ModelListPopup extends ListPopupImpl {
   @Override
   public void dispose() {
     myLifetime.terminate();
-    myModel.transaction(new Function1<MapModel, MapModel>() {
-      @Override
-      public MapModel invoke(MapModel mapModel) {
-        return (MapModel)ReactivemodelPackage.putIn(myPath, mapModel, new AbsentModel());
-      }
-    });
     super.dispose();
   }
 
