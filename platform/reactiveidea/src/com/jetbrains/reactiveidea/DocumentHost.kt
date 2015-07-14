@@ -45,7 +45,11 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
 
 
   init {
-    initModel()
+    initModel { m ->
+      var result = (path / "text").putIn(m, PrimitiveModel(doc.getText()))
+      result = (path / "events").putIn(result, ListModel())
+      result
+    }
     val listener = object : DocumentAdapter() {
       override fun documentChanged(e: DocumentEvent) {
         if(recursionGuard.locked) {
@@ -99,13 +103,6 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
     doc.addDocumentListener(listener)
     lifetime += {
       doc.removeDocumentListener(listener)
-    }
-
-    reactModel.transaction { m ->
-      var result = (path / "text").putIn(m, PrimitiveModel(doc.getText()))
-      result = (path / "events").putIn(result, ListModel())
-
-      result
     }
 
     val listenToDocumentEvents = reaction(true, "listen to model events", reactModel.subscribe(lifetime, (path / "events"))) { model ->
