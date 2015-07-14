@@ -289,6 +289,8 @@ libraryLicense(name: "EditorConfig Java Core", libraryName: "editorconfig-core-j
 libraryLicense(name: "Fest", libraryName: "fest", version: "", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://code.google.com/p/fest/")
 libraryLicense(name: "Gherkin", libraryName: "Gherkin", version: "2.12.2", license: "MIT", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin")
 libraryLicense(name: "imgscalr", libraryName: "imgscalr", version: "4.2", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr")
+libraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0", licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/")
+libraryLicense(name: "JGit", libraryName: "jackson", version: "2.5.1", license: "Apache 2.0", licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/FasterXML/jackson")
 jetbrainsLibrary("Coverage")
 jetbrainsLibrary("CoverageReport")
 jetbrainsLibrary("JPS")
