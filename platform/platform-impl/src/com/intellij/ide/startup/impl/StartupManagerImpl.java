@@ -92,7 +92,8 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @Override
   public synchronized void registerPostStartupActivity(@NotNull Runnable runnable) {
-    LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run");
+    LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run:" +
+                                                   " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() + "; passed=" + myStartupActivitiesPassed);
     (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
   }
 
