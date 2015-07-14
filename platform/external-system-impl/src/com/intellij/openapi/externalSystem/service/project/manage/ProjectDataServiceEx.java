@@ -16,9 +16,12 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -29,11 +32,20 @@ import java.util.Collection;
 public interface ProjectDataServiceEx<E, I> extends ProjectDataService<E, I> {
 
   void importData(@NotNull Collection<DataNode<E>> toImport,
+                  @Nullable ProjectData projectData,
                   @NotNull Project project,
                   @NotNull PlatformFacade platformFacade,
                   boolean synchronous);
 
-  void removeData(@NotNull Collection<? extends I> toRemove,
+  @NotNull
+  Computable<Collection<I>> computeOrphanData(@NotNull Collection<DataNode<E>> toImport,
+                                              @NotNull ProjectData projectData,
+                                              @NotNull Project project,
+                                              @NotNull PlatformFacade platformFacade);
+
+  void removeData(@NotNull Computable<Collection<I>> toRemove,
+                  @NotNull Collection<DataNode<E>> toIgnore,
+                  @NotNull ProjectData projectData,
                   @NotNull Project project,
                   @NotNull PlatformFacade platformFacade,
                   boolean synchronous);

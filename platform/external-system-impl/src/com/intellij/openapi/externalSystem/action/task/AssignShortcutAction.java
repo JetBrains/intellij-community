@@ -36,6 +36,11 @@ public class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
   }
 
   @Override
+  protected boolean isEnabled(AnActionEvent e) {
+    return super.isEnabled(e) && !isIgnoredNode(e);
+  }
+
+  @Override
   protected void perform(@NotNull Project project,
                          @NotNull ProjectSystemId projectSystemId,
                          @NotNull TaskData taskData,

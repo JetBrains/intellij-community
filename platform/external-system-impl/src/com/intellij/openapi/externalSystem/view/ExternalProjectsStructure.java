@@ -191,8 +191,13 @@ public class ExternalProjectsStructure extends SimpleTreeStructure {
 
   private void doUpdateProject(ProjectNode node) {
     ExternalSystemNode newParentNode = myRoot;
-    node.updateProject();
-    reconnectNode(node, newParentNode);
+    if (!node.isVisible()) {
+      newParentNode.remove(node);
+    }
+    else {
+      node.updateProject();
+      reconnectNode(node, newParentNode);
+    }
   }
 
   private static void reconnectNode(ProjectNode node, ExternalSystemNode newParentNode) {

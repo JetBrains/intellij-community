@@ -48,17 +48,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -66,6 +64,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -245,13 +244,27 @@ public class ExternalSystemApiUtil {
     return result;
   }
 
+  public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
+    MultiMap<Key<?>, DataNode<?>> result = MultiMap.createLinked();
+    Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
+    queue.add(nodes);
+    while (!queue.isEmpty()) {
+      Collection<DataNode<?>> _nodes = queue.remove();
+      result.putAllValues(group(_nodes));
+      for (DataNode<?> _node : _nodes) {
+        queue.add(_node.getChildren());
+      }
+    }
+    return result;
+  }
+
   @NotNull
-  public static Map<Key<?>, List<DataNode<?>>> group(@NotNull Collection<DataNode<?>> nodes) {
+  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<DataNode<?>> nodes) {
     return groupBy(nodes, GROUPER);
   }
 
   @NotNull
-  public static <K, V> Map<DataNode<K>, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
     return groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
       @Nullable
       @Override
@@ -262,8 +275,8 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static <K, V> Map<K, List<V>> groupBy(@NotNull Collection<V> nodes, @NotNull NullableFunction<V, K> grouper) {
-    Map<K, List<V>> result = ContainerUtilRt.newHashMap();
+  public static <K, V> MultiMap<K, V> groupBy(@NotNull Collection<V> nodes, @NotNull NullableFunction<V, K> grouper) {
+    MultiMap<K, V> result = MultiMap.createLinked();
     for (V data : nodes) {
       K key = grouper.fun(data);
       if (key == null) {
@@ -275,17 +288,13 @@ public class ExternalSystemApiUtil {
           nodes));
         continue;
       }
-      List<V> grouped = result.get(key);
-      if (grouped == null) {
-        result.put(key, grouped = ContainerUtilRt.newArrayList());
-      }
-      grouped.add(data);
+      result.putValue(key, data);
     }
 
     if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
       List<K> ordered = ContainerUtilRt.newArrayList(result.keySet());
       Collections.sort(ordered, COMPARABLE_GLUE);
-      Map<K, List<V>> orderedResult = ContainerUtilRt.newLinkedHashMap();
+      MultiMap<K, V> orderedResult = MultiMap.createLinked();
       for (K k : ordered) {
         orderedResult.put(k, result.get(k));
       }
@@ -366,7 +375,7 @@ public class ExternalSystemApiUtil {
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
   }
 
-  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode> consumer) {
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
     if(node == null) return;
 
     Stack<DataNode> toProcess = ContainerUtil.newStack(node);

@@ -8,6 +8,8 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
@@ -18,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -27,6 +30,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -38,8 +42,8 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
-@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class LibraryDataService implements ProjectDataServiceEx<LibraryData, Library> {
+@Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
+public class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
   @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = new NotNullFunction<String, File>() {
@@ -62,15 +66,9 @@ public class LibraryDataService implements ProjectDataServiceEx<LibraryData, Lib
     return ProjectKeys.LIBRARY;
   }
 
-  public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
-                         @NotNull final Project project,
-                         final boolean synchronous) {
-    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    importData(toImport, project, platformFacade, synchronous);
-  }
-
   @Override
   public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
+                         @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
                          final boolean synchronous) {
@@ -185,17 +183,14 @@ public class LibraryDataService implements ProjectDataServiceEx<LibraryData, Lib
   }
 
   @Override
-  public void removeData(@NotNull final Collection<? extends Library> libraries, @NotNull final Project project, boolean synchronous) {
-    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    removeData(libraries, project, platformFacade, synchronous);
-  }
-
-  @Override
-  public void removeData(@NotNull final Collection<? extends Library> libraries,
+  public void removeData(@NotNull final Computable<Collection<Library>> toRemoveComputable,
+                         @NotNull Collection<DataNode<LibraryData>> toIgnore,
+                         @NotNull ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
                          boolean synchronous) {
-    if (libraries.isEmpty()) {
+    final Collection<Library> toRemove = toRemoveComputable.compute();
+    if (toRemove.isEmpty()) {
       return;
     }
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
@@ -204,7 +199,7 @@ public class LibraryDataService implements ProjectDataServiceEx<LibraryData, Lib
         final LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
         final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
         try {
-          for (Library library : libraries) {
+          for (Library library : toRemove) {
             String libraryName = library.getName();
             if (libraryName != null) {
               Library libraryToRemove = model.getLibraryByName(libraryName);

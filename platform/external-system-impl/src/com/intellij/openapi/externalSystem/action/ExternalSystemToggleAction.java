@@ -65,4 +65,16 @@ public abstract class ExternalSystemToggleAction extends ToggleAction implements
   protected ProjectSystemId getSystemId(AnActionEvent e) {
     return ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
   }
+
+  protected void setText(String message) {
+    getTemplatePresentation().setText(message);
+  }
+
+  protected void setDescription(String message) {
+    getTemplatePresentation().setDescription(message);
+  }
+
+  protected void setText(AnActionEvent e, String message) {
+    e.getPresentation().setText(message);
+  }
 }

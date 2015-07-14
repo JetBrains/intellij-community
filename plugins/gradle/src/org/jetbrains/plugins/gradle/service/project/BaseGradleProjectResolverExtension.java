@@ -136,6 +136,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
     if (externalProject != null) {
       ideProject.createChild(ExternalProjectDataService.KEY, externalProject);
+      ideProject.getData().setDescription(externalProject.getDescription());
     }
   }
 
@@ -165,6 +166,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       moduleData.setGroup(moduleExtendedModel.getGroup());
       moduleData.setVersion(moduleExtendedModel.getVersion());
       moduleData.setArtifacts(moduleExtendedModel.getArtifacts());
+    }
+
+    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+    if (externalProject != null) {
+      moduleData.setDescription(externalProject.getDescription());
     }
     return moduleData;
   }

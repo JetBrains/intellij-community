@@ -1,9 +1,7 @@
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -41,6 +39,9 @@ public interface PlatformFacade {
   
   @NotNull
   Collection<Module> getModules(@NotNull Project project);
+
+  @NotNull
+  Collection<Module> getModules(@NotNull Project project, @NotNull ProjectData projectData);
 
   @NotNull
   Collection<OrderEntry> getOrderEntries(@NotNull Module module);

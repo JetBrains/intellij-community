@@ -109,7 +109,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         result.put(externalTask.name, externalTask)
       }
 
-      def projectTaskPath = project.path + ':' + task.name
+      def projectTaskPath = (project.path == ':' ? ':' : project.path + ':') + task.name
       if (projectTaskPath.equals(task.path)) {
         externalTask.QName = task.path
       }

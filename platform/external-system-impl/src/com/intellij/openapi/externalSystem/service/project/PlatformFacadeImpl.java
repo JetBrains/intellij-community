@@ -9,7 +9,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +36,18 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public Collection<Module> getModules(@NotNull Project project) {
     return Arrays.asList(ModuleManager.getInstance(project).getModules());
+  }
+
+  @NotNull
+  @Override
+  public Collection<Module> getModules(@NotNull Project project, @NotNull final ProjectData projectData) {
+    return ContainerUtil.filter(getModules(project), new Condition<Module>() {
+      @Override
+      public boolean value(Module module) {
+        return ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module) &&
+               StringUtil.equals(projectData.getLinkedExternalProjectPath(), ExternalSystemApiUtil.getExternalRootProjectPath(module));
+      }
+    });
   }
 
   @NotNull
@@ -62,7 +77,8 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Nullable
   @Override
   public Module findIdeModule(@NotNull ModuleData module, @NotNull Project ideProject) {
-    return findIdeModule(module.getInternalName(), ideProject);
+    final Module ideModule = findIdeModule(module.getInternalName(), ideProject);
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(module.getOwner(), ideModule) ? ideModule : null;
   }
 
   @Nullable

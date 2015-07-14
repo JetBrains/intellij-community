@@ -98,7 +98,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
             ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
               @Override
               public void run() {
-                myProjectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), myProject, true);
+                myProjectDataManager.importData(externalProject, myProject, true);
               }
             });
           }

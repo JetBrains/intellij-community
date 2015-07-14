@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -30,13 +31,17 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.BooleanFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -51,12 +56,6 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDependencyDataService.class.getName());
 
-  @NotNull private final ModuleDataService      myModuleDataManager;
-
-  public ModuleDependencyDataService(@NotNull ModuleDataService manager) {
-    myModuleDataManager = manager;
-  }
-
   @NotNull
   @Override
   public Key<ModuleDependencyData> getTargetDataKey() {
@@ -65,16 +64,13 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
 
   @Override
   public void importData(@NotNull Collection<DataNode<ModuleDependencyData>> toImport,
+                         @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull PlatformFacade platformFacade,
                          boolean synchronous) {
-    Map<DataNode<ModuleData>, List<DataNode<ModuleDependencyData>>> byModule= ExternalSystemApiUtil.groupBy(toImport, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, List<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
+    MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
+    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
       Module ideModule = platformFacade.findIdeModule(entry.getKey().getData(), project);
-      if (ideModule == null) {
-        myModuleDataManager.importData(Collections.singleton(entry.getKey()), project, true);
-        ideModule = platformFacade.findIdeModule(entry.getKey().getData(), project);
-      }
       if (ideModule == null) {
         LOG.warn(String.format(
           "Can't import module dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
@@ -84,6 +80,17 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       }
       importData(entry.getValue(), ideModule, platformFacade, synchronous);
     }
+  }
+
+  @NotNull
+  @Override
+  public Class<ModuleOrderEntry> getOrderEntryType() {
+    return ModuleOrderEntry.class;
+  }
+
+  @Override
+  protected String getOrderEntryName(@NotNull ModuleOrderEntry orderEntry) {
+    return orderEntry.getModuleName();
   }
 
   private void importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
@@ -110,35 +117,26 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
             toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
             final String moduleName = dependencyData.getInternalName();
             Module ideDependencyModule = platformFacade.findIdeModule(moduleName, module.getProject());
-            if (ideDependencyModule == null) {
-              DataNode<ProjectData> projectNode = dependencyNode.getDataNode(ProjectKeys.PROJECT);
-              if (projectNode != null) {
-                DataNode<ModuleData> n = ExternalSystemApiUtil.find(projectNode, MODULE, new BooleanFunction<DataNode<ModuleData>>() {
-                  @Override
-                  public boolean fun(DataNode<ModuleData> node) {
-                    return node.getData().equals(dependencyData.getTarget());
-                  }
-                });
-                if (n != null) {
-                  myModuleDataManager.importData(Collections.singleton(n), module.getProject(), true);
-                  ideDependencyModule = platformFacade.findIdeModule(moduleName, module.getProject());
-                }
+
+            ModuleOrderEntry orderEntry;
+            if (module.equals(ideDependencyModule)) {
+              // skip recursive module dependency check
+              continue;
+            } else  {
+              if(ideDependencyModule == null) {
+                LOG.warn(String.format(
+                  "Can't import module dependency for '%s' module. Reason: target module (%s) is not found at the ide",
+                  module.getName(), dependencyData
+                ));
+              }
+              orderEntry = platformFacade.findIdeModuleDependency(dependencyData, moduleRootModel);
+              if (orderEntry == null) {
+                orderEntry = ideDependencyModule == null
+                             ? moduleRootModel.addInvalidModuleEntry(moduleName)
+                             : moduleRootModel.addModuleOrderEntry(ideDependencyModule);
               }
             }
 
-            if (ideDependencyModule == null) {
-              assert false;
-              return;
-            }
-            else if (ideDependencyModule.equals(module)) {
-              // Gradle api returns recursive module dependencies (a module depends on itself) for 'gradle' project.
-              continue;
-            }
-
-            ModuleOrderEntry orderEntry = platformFacade.findIdeModuleDependency(dependencyData, moduleRootModel);
-            if (orderEntry == null) {
-              orderEntry = moduleRootModel.addModuleOrderEntry(ideDependencyModule);
-            }
             orderEntry.setScope(dependencyData.getScope());
             orderEntry.setExported(dependencyData.isExported());
           }

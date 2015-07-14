@@ -101,4 +101,9 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   public void addListener(@NotNull Listener listener) {
     delegate.addListener(listener);
   }
+
+  @Override
+  public boolean getShowIgnored() {
+    return delegate.getShowIgnored();
+  }
 }

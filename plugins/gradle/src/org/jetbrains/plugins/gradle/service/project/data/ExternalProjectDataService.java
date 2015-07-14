@@ -78,6 +78,7 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
   public void importData(@NotNull final Collection<DataNode<ExternalProject>> toImport,
                          @NotNull final Project project,
                          final boolean synchronous) {
+    if(toImport.isEmpty()) return;
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(
         String.format("Expected to get a single external project but got %d: %s", toImport.size(), toImport));

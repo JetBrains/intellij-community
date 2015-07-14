@@ -17,22 +17,25 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
-import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +50,8 @@ import static com.intellij.util.containers.ContainerUtil.map2Array;
 public class ProjectDataManager {
 
   private static final Logger LOG = Logger.getInstance("#" + ProjectDataManager.class.getName());
+  private static final com.intellij.openapi.util.Key<Boolean> DATA_READY =
+    com.intellij.openapi.util.Key.create("externalSystem.data.ready");
 
   @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices;
   private final PlatformFacade myPlatformFacade;
@@ -86,104 +91,183 @@ public class ProjectDataManager {
   }
 
   @SuppressWarnings("unchecked")
-  public <T> void importData(@NotNull Collection<DataNode<?>> nodes,
-                             @NotNull Project project,
-                             @NotNull PlatformFacade platformFacade,
-                             boolean synchronous) {
+  public void importData(@NotNull Collection<DataNode<?>> nodes,
+                         @NotNull final Project project,
+                         @NotNull PlatformFacade platformFacade,
+                         boolean synchronous) {
     if (project.isDisposed()) return;
 
-    Map<Key<?>, List<DataNode<?>>> grouped = ExternalSystemApiUtil.group(nodes);
-    for (Map.Entry<Key<?>, List<DataNode<?>>> entry : grouped.entrySet()) {
-      // Simple class cast makes ide happy but compiler fails.
-      Collection<DataNode<T>> dummy = ContainerUtilRt.newArrayList();
-      for (DataNode<?> node : entry.getValue()) {
-        dummy.add((DataNode<T>)node);
+    MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
+    for (Key<?> key : myServices.getValue().keySet()) {
+      if (!grouped.containsKey(key)) {
+        grouped.put(key, Collections.<DataNode<?>>emptyList());
       }
-      importData((Key<T>)entry.getKey(), dummy, project, platformFacade, synchronous);
+    }
+
+    final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
+    // only one project(can be multi-module project) expected for per single import
+    assert projects.size() == 1 || projects.isEmpty();
+
+    final DataNode<ProjectData> projectNode = (DataNode<ProjectData>)ContainerUtil.getFirstItem(projects);
+    final ProjectData projectData;
+    ProjectSystemId projectSystemId;
+    if (projectNode != null) {
+      projectData = projectNode.getData();
+      projectSystemId = projectNode.getData().getOwner();
+      ExternalProjectsDataStorage.getInstance(project).saveInclusionSettings(projectNode);
+    }
+    else {
+      projectData = null;
+      DataNode<ModuleData> aModuleNode = (DataNode<ModuleData>)ContainerUtil.getFirstItem(grouped.get(ProjectKeys.MODULE));
+      projectSystemId = aModuleNode != null ? aModuleNode.getData().getOwner() : null;
+    }
+
+    if (projectSystemId != null) {
+      ExternalSystemUtil.scheduleExternalViewStructureUpdate(project, projectSystemId);
+    }
+
+    for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : grouped.entrySet()) {
+      doImportData(entry.getKey(), entry.getValue(), projectData, project, platformFacade, synchronous);
     }
   }
 
-  public <T> void importData(@NotNull Collection<DataNode<?>> nodes, @NotNull Project project, boolean synchronous) {
-    importData(nodes, project, myPlatformFacade, synchronous);
+  /**
+   * @deprecated to be removed in v15, use {@link #importData(Collection, Project, boolean)}
+   */
+  @Deprecated
+  public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
+    importData(nodes, project, synchronous);
   }
 
-  @SuppressWarnings("unchecked")
-  public <T> void importData(@NotNull Key<T> key,
-                             @NotNull Collection<DataNode<T>> nodes,
+  public <T> void importData(@NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
+    Collection<DataNode<?>> dummy = ContainerUtil.newSmartList();
+    for (DataNode<T> node : nodes) {
+      dummy.add(node);
+    }
+    importData(dummy, project, myPlatformFacade, synchronous);
+  }
+
+  public <T> void importData(@NotNull DataNode<T> node,
                              @NotNull Project project,
                              @NotNull PlatformFacade platformFacade,
                              boolean synchronous) {
+    Collection<DataNode<?>> dummy = ContainerUtil.newSmartList();
+    dummy.add(node);
+    importData(dummy, project, platformFacade, synchronous);
+  }
+
+  public <T> void importData(@NotNull DataNode<T> node,
+                             @NotNull Project project,
+                             boolean synchronous) {
+    importData(node, project, myPlatformFacade, synchronous);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> void doImportData(@NotNull Key<T> key,
+                                @NotNull Collection<DataNode<?>> nodes,
+                                @Nullable ProjectData projectData,
+                                @NotNull Project project,
+                                @NotNull PlatformFacade platformFacade,
+                                boolean synchronous) {
     if (project.isDisposed()) return;
 
-    ensureTheDataIsReadyToUse((Collection)nodes);
+    final List<DataNode<T>> toImport = ContainerUtil.newSmartList();
+    final List<DataNode<T>> toIgnore = ContainerUtil.newSmartList();
+
+    for (DataNode node : nodes) {
+      if (!key.equals(node.getKey())) continue;
+
+      if (node.isIgnored()) {
+        toIgnore.add(node);
+      }
+      else {
+        toImport.add(node);
+      }
+    }
+
+    ensureTheDataIsReadyToUse((Collection)toImport);
+
     List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
       LOG.warn(String.format(
         "Can't import data nodes '%s'. Reason: no service is registered for key %s. Available services for %s",
-        nodes, key, myServices.getValue().keySet()
+        toImport, key, myServices.getValue().keySet()
       ));
     }
     else {
       for (ProjectDataService<?, ?> service : services) {
         if (service instanceof ProjectDataServiceEx) {
-          ((ProjectDataServiceEx<T, ?>)service).importData(nodes, project, platformFacade, synchronous);
+          ((ProjectDataServiceEx<T, ?>)service).importData(toImport, projectData, project, platformFacade, synchronous);
         }
         else {
-          ((ProjectDataService<T, ?>)service).importData(nodes, project, synchronous);
+          ((ProjectDataService<T, ?>)service).importData(toImport, project, synchronous);
         }
       }
     }
 
-    Collection<DataNode<?>> children = ContainerUtilRt.newArrayList();
-    for (DataNode<T> node : nodes) {
-      children.addAll(node.getChildren());
+    ensureTheDataIsReadyToUse((Collection)toIgnore);
+
+    if (services != null && projectData != null) {
+      for (ProjectDataService<?, ?> service : services) {
+        if (service instanceof ProjectDataServiceEx) {
+          final ProjectDataServiceEx dataServiceEx = (ProjectDataServiceEx)service;
+          final Computable<Collection<?>> orphanIdeDataComputable =
+            dataServiceEx.computeOrphanData(toImport, projectData, project, platformFacade);
+          dataServiceEx.removeData(orphanIdeDataComputable, toIgnore, projectData, project, platformFacade, synchronous);
+        }
+      }
     }
-    importData(children, project, platformFacade, synchronous);
   }
 
-  public <T> void importData(@NotNull Key<T> key,
-                             @NotNull Collection<DataNode<T>> nodes,
-                             @NotNull Project project,
-                             boolean synchronous) {
-    importData(key, nodes, project, myPlatformFacade, synchronous);
-  }
+  public void ensureTheDataIsReadyToUse(@Nullable DataNode dataNode) {
+    if (dataNode == null) return;
+    if (Boolean.TRUE.equals(dataNode.getUserData(DATA_READY))) return;
 
-  public void ensureTheDataIsReadyToUse(DataNode dataNode) {
-    final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
-    ExternalSystemApiUtil.visit(dataNode, new Consumer<DataNode>() {
+    ExternalSystemApiUtil.visit(dataNode, new Consumer<DataNode<?>>() {
       @Override
       public void consume(DataNode dataNode) {
-        List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
-        if (services != null) {
-          try {
-            dataNode.prepareData(map2Array(services, ClassLoader.class, new Function<ProjectDataService<?, ?>, ClassLoader>() {
-              @Override
-              public ClassLoader fun(ProjectDataService<?, ?> service) {
-                return service.getClass().getClassLoader();
-              }
-            }));
-          }
-          catch (Exception e) {
-            LOG.debug(e);
-            dataNode.clear(true);
-          }
-        }
+        prepareDataToUse(dataNode);
+        dataNode.putUserData(DATA_READY, Boolean.TRUE);
       }
     });
   }
 
-  private void ensureTheDataIsReadyToUse(@NotNull Collection<DataNode<?>> nodes) {
-    for (DataNode<?> node : nodes) {
-      ensureTheDataIsReadyToUse(node);
+  @SuppressWarnings("unchecked")
+  @Deprecated
+  public <E, I> void removeData(@NotNull Key<E> key, @NotNull Collection<I> toRemove, @NotNull Project project, boolean synchronous) {
+    List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
+    for (ProjectDataService service : services) {
+      service.removeData(toRemove, project, synchronous);
     }
   }
 
   @SuppressWarnings("unchecked")
-  public <T> void removeData(@NotNull Key<?> key, @NotNull Collection<T> toRemove, @NotNull Project project, boolean synchronous) {
+  public <E, I> void removeData(@NotNull Key<E> key,
+                                @NotNull Collection<I> toRemove,
+                                @NotNull final Collection<DataNode<E>> toIgnore,
+                                @NotNull final ProjectData projectData,
+                                @NotNull Project project,
+                                @NotNull PlatformFacade platformFacade,
+                                boolean synchronous) {
     List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
-    for (ProjectDataService<?, ?> service : services) {
-      ((ProjectDataService<?, T>)service).removeData(toRemove, project, synchronous);
+    for (ProjectDataService service : services) {
+      if (service instanceof ProjectDataServiceEx) {
+        ((ProjectDataServiceEx)service).removeData(new Computable.PredefinedValueComputable<Collection>(toRemove),
+                                                   toIgnore, projectData, project, platformFacade, synchronous);
+      }
+      else {
+        service.removeData(toRemove, project, synchronous);
+      }
     }
+  }
+
+  public <E, I> void removeData(@NotNull Key<E> key,
+                                @NotNull Collection<I> toRemove,
+                                @NotNull final Collection<DataNode<E>> toIgnore,
+                                @NotNull final ProjectData projectData,
+                                @NotNull Project project,
+                                boolean synchronous) {
+    removeData(key, toRemove, toIgnore, projectData, project, myPlatformFacade, synchronous);
   }
 
   public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
@@ -201,7 +285,36 @@ public class ProjectDataManager {
 
   @NotNull
   public Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId) {
-    return !project.isDisposed() ?
-           ExternalProjectsDataStorage.getInstance(project).list(projectSystemId) : ContainerUtil.<ExternalProjectInfo>emptyList();
+    if (!project.isDisposed()) {
+      return ExternalProjectsDataStorage.getInstance(project).list(projectSystemId);
+    }
+    else {
+      return ContainerUtil.emptyList();
+    }
+  }
+
+  private void ensureTheDataIsReadyToUse(@NotNull Collection<DataNode<?>> nodes) {
+    for (DataNode<?> node : nodes) {
+      ensureTheDataIsReadyToUse(node);
+    }
+  }
+
+  private void prepareDataToUse(@NotNull DataNode dataNode) {
+    final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
+    List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
+    if (services != null) {
+      try {
+        dataNode.prepareData(map2Array(services, ClassLoader.class, new Function<ProjectDataService<?, ?>, ClassLoader>() {
+          @Override
+          public ClassLoader fun(ProjectDataService<?, ?> service) {
+            return service.getClass().getClassLoader();
+          }
+        }));
+      }
+      catch (Exception e) {
+        LOG.debug(e);
+        dataNode.clear(true);
+      }
+    }
   }
 }

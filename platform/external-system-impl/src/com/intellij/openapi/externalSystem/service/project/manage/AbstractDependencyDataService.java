@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -26,11 +26,15 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,15 +43,8 @@ import java.util.Map;
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>
-  implements ProjectDataServiceEx<E, I>
+  extends AbstractProjectDataService<E, I>
 {
-
-  public void importData(@NotNull final Collection<DataNode<E>> toImport,
-                         @NotNull final Project project,
-                         final boolean synchronous) {
-    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    importData(toImport, project, platformFacade, synchronous);
-  }
 
   public void setScope(@NotNull final DependencyScope scope, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(dependency.getOwnerModule()) {
@@ -97,22 +94,52 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
   }
 
+
+  @NotNull
   @Override
-  public void removeData(@NotNull Collection<? extends I> toRemove, @NotNull Project project, boolean synchronous) {
-    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    removeData(toRemove, project, platformFacade, synchronous);
+  public Computable<Collection<I>> computeOrphanData(@NotNull final Collection<DataNode<E>> toImport,
+                                                     @NotNull final ProjectData projectData,
+                                                     @NotNull final Project project,
+                                                     @NotNull final PlatformFacade platformFacade) {
+    return new Computable<Collection<I>>() {
+      @Override
+      public Collection<I> compute() {
+        MultiMap<String /*module name*/, String /*dep name*/> byModuleName = MultiMap.create();
+        for (DataNode<E> node : toImport) {
+          final AbstractDependencyData data = node.getData();
+          byModuleName.putValue(data.getOwnerModule().getInternalName(), data.getInternalName());
+        }
+
+        List<I> orphanEntries = ContainerUtil.newSmartList();
+        for (Module module : platformFacade.getModules(project, projectData)) {
+          for (OrderEntry entry : platformFacade.getOrderEntries(module)) {
+            if (getOrderEntryType().isInstance(entry) &&
+                !byModuleName.get(entry.getOwnerModule().getName()).contains(getOrderEntryName((I)entry))) {
+              orphanEntries.add((I)entry);
+            }
+          }
+        }
+
+        return orphanEntries;
+      }
+    };
+  }
+
+  @NotNull
+  public abstract Class<I> getOrderEntryType();
+
+  protected String getOrderEntryName(@NotNull I orderEntry) {
+    return orderEntry.getPresentableName();
   }
 
   @Override
-  public void removeData(@NotNull Collection<? extends I> toRemove,
-                         @NotNull Project project,
+  public void removeData(@NotNull final Computable<Collection<I>> toRemoveComputable,
+                         @NotNull final Collection<DataNode<E>> toIgnore,
+                         @NotNull final ProjectData projectData,
+                         @NotNull final Project project,
                          @NotNull final PlatformFacade platformFacade,
-                         boolean synchronous) {
-    if (toRemove.isEmpty()) {
-      return;
-    }
-
-    Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemove);
+                         final boolean synchronous) {
+    Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemoveComputable.compute());
     for (Map.Entry<Module, Collection<ExportableOrderEntry>> entry : byModule.entrySet()) {
       removeData(entry.getValue(), entry.getKey(), platformFacade, synchronous);
     }
