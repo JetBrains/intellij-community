@@ -32,7 +32,7 @@ com.intellij.hibernate
 W3Validators
 CFML Support
 org.jetbrains.plugins.github
-GuiceyIDEA
+Guice
 org.intellij.groovy
 IdeaServerPlugin
 com.intellij.spring.webflow
