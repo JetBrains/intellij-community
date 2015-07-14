@@ -93,7 +93,7 @@ public class VcsPushDialog extends DialogWrapper {
       public void actionPerformed(AnActionEvent e) {
         Project project = myController.getProject();
         VcsPushDialog.this.doCancelAction(e.getInputEvent());
-        ShowSettingsUtilImpl.showSettingsDialog(project, "", "force push");
+        ShowSettingsUtilImpl.showSettingsDialog(project, "vcs.Git", "force push");
       }
     });
     here.setFont(JBUI.Fonts.smallFont());
