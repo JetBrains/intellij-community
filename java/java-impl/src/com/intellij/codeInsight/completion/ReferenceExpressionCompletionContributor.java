@@ -510,8 +510,7 @@ public class ReferenceExpressionCompletionContributor {
         if (expr instanceof PsiReferenceExpression) {
           return (PsiReferenceExpression)expr;
         }
-        LOG.error("Unexpected type: " + expr.getClass() + " from text " + text);
-        return null;
+        return null; // ignore ill-formed qualified names like "org.spark-project.jetty" that can't be used from Java code anyway
       }
       catch (IncorrectOperationException e) {
         LOG.info(e);
