@@ -189,6 +189,41 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void testParameterizedClassWithParamsWithDots() throws Exception {
+    final String className = "a.TestA";
+    final Description aTestClassDescription = Description.createSuiteDescription(className);
+    final ArrayList<Description> tests = new ArrayList<Description>();
+    for (String paramName : new String[]{"[0: with - 1.1]", "[1: with - 2.1]"}) {
+      final Description param1 = Description.createSuiteDescription(paramName);
+      aTestClassDescription.addChild(param1);
+      final Description testDescription = Description.createTestDescription(className, "testName" + paramName);
+      tests.add(testDescription);
+      param1.addChild(testDescription);
+    }
+    doTest(aTestClassDescription, tests,
+           //tree
+           "##teamcity[suiteTreeStarted name='|[0: with - 1.1|]' locationHint='java:suite://a.TestA.|[0: with - 1.1|]']\n" +
+           "##teamcity[suiteTreeNode name='testName|[0: with - 1.1|]' locationHint='java:test://a.TestA.testName|[0: with - 1.1|]']\n" +
+           "##teamcity[suiteTreeEnded name='|[0: with - 1.1|]']\n" +
+           "##teamcity[suiteTreeStarted name='|[1: with - 2.1|]' locationHint='java:suite://a.TestA.|[1: with - 2.1|]']\n" +
+           "##teamcity[suiteTreeNode name='testName|[1: with - 2.1|]' locationHint='java:test://a.TestA.testName|[1: with - 2.1|]']\n" +
+           "##teamcity[suiteTreeEnded name='|[1: with - 2.1|]']\n",
+           //start
+           "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[rootName name = 'TestA' comment = 'a' location = 'java:suite://a.TestA']\n" +
+           "##teamcity[testSuiteStarted name='|[0: with - 1.1|]']\n" +
+           "##teamcity[testStarted name='testName|[0: with - 1.1|]' locationHint='java:test://a.TestA.testName|[0: with - 1.1|]']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testName|[0: with - 1.1|]']\n" +
+           "##teamcity[testSuiteFinished name='|[0: with - 1.1|]']\n" +
+           "##teamcity[testSuiteStarted name='|[1: with - 2.1|]']\n" +
+           "##teamcity[testStarted name='testName|[1: with - 2.1|]' locationHint='java:test://a.TestA.testName|[1: with - 2.1|]']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testName|[1: with - 2.1|]']\n" +
+           "##teamcity[testSuiteFinished name='|[1: with - 2.1|]']\n");
+  }
+
+  @Test
   public void test2SuitesWithTheSameTest() throws Exception {
     final Description root = Description.createSuiteDescription("root");
     final String className = "ATest";

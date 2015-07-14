@@ -382,11 +382,15 @@ public class JUnit4TestListener extends RunListener {
 
   private static String getShortName(String fqName) {
     if (fqName == null) return null;
-    if (fqName.startsWith("[")) {
+    final int idx = fqName.indexOf("[");
+    if (idx == 0) {
       //param name
       return fqName;
     }
     int lastPointIdx = fqName.lastIndexOf('.');
+    if (idx > 0 && fqName.endsWith("]")) {
+      lastPointIdx = fqName.substring(0, idx).lastIndexOf('.');
+    }
     if (lastPointIdx >= 0) {
       return fqName.substring(lastPointIdx + 1);
     }
