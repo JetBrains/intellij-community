@@ -117,9 +117,8 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
           return false;
         }
       }
-      catch (AnalysisCanceledException e) {
-        return false;
-      }
+      //error would be shown inside body
+      catch (AnalysisCanceledException ignore) {}
 
       for (PsiReturnStatement statement : PsiUtil.findReturnStatements((PsiCodeBlock)body)) {
         if (statement.getReturnValue() == null) {
