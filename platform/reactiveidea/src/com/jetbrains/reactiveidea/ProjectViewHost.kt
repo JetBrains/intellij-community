@@ -21,13 +21,11 @@ import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
-import com.jetbrains.reactivemodel.util.Lifetime
-import com.jetbrains.reactivemodel.util.createMeta
-import com.jetbrains.reactivemodel.util.lifetime
 import com.jetbrains.reactivemodel.util.*
 import java.util.HashMap
 
@@ -149,7 +147,7 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
         .filter { descr -> descr.update(); true }
         .sortBy(comp)
         .forEachIndexed { idx, descr ->
-          var name = descr.toString()
+          var name = StringUtil.notNullize(descr.toString(), "null")
           children[name] = createNode(descr, parentLifetime, nodesPath, idx)
         }
     return nodesPath.putIn(m, MapModel(children, createMeta("lifetime", childsLifetime)))
