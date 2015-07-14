@@ -421,7 +421,8 @@ binding.setVariable("platformImplementationModules", [
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
-  "xml"
+  "xml",
+  "configuration-store-impl",
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
