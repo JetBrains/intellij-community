@@ -191,16 +191,31 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget) {
-    addWidget(widget, Position.RIGHT, "__AUTODETECT__");
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        addWidget(widget, Position.RIGHT, "__AUTODETECT__");
+      }
+    });
   }
 
   @Override
-  public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor) {
-    addWidget(widget, Position.RIGHT, anchor);
+  public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final String anchor) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        addWidget(widget, Position.RIGHT, anchor);
+      }
+    });
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos) {
-    addWidget(widget, pos, "__IGNORED__");
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        addWidget(widget, pos, "__IGNORED__");
+      }
+    });
   }
 
   @Override
@@ -314,7 +329,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final String anchor) {
-    assert EventQueue.isDispatchThread() : "Must be EDT";
     myOrderedWidgets.add(widget.ID());
 
     JPanel panel;
@@ -405,9 +419,14 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       final StatusBarWidget.Multiframe mfw = (StatusBarWidget.Multiframe)widget;
       updateChildren(new ChildAction() {
         @Override
-        public void update(IdeStatusBarImpl child) {
-          StatusBarWidget widgetCopy = mfw.copy();
-          child.addWidget(widgetCopy, pos, anchor);
+        public void update(final IdeStatusBarImpl child) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              StatusBarWidget widgetCopy = mfw.copy();
+              child.addWidget(widgetCopy, pos, anchor);
+            }
+          });
         }
       });
     }
