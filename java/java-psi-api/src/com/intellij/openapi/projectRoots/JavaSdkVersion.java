@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ public enum JavaSdkVersion {
   JDK_1_7(LanguageLevel.JDK_1_7, "1.7"),
   JDK_1_8(LanguageLevel.JDK_1_8, "1.8"),
   JDK_1_9(LanguageLevel.JDK_1_9, "1.9");
-  
+
+  private static final JavaSdkVersion MAX_JDK = JDK_1_9;
+
   private final LanguageLevel myMaxLanguageLevel;
   private final String myDescription;
 
@@ -75,6 +77,9 @@ public enum JavaSdkVersion {
 
   @NotNull
   public static JavaSdkVersion fromLanguageLevel(@NotNull LanguageLevel languageLevel) throws IllegalArgumentException {
+    if (languageLevel == LanguageLevel.JDK_X) {
+      return MAX_JDK;
+    }
     JavaSdkVersion[] values = values();
     for (int i = values.length - 1; i >= 0; i--) {
       JavaSdkVersion version = values[i];

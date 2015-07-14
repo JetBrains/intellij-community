@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
@@ -24,34 +22,24 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NotNull;
-
 
 public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting9";
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
-  }
-
-  private void doTest(boolean checkWarnings, boolean checkInfos, InspectionProfileEntry... classes) {
     setLanguageLevel(LanguageLevel.JDK_1_9);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, getModule(), myTestRootDisposable);
-    enableInspectionTools(classes);
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
   }
 
-  @NotNull
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new UncheckedWarningLocalInspection(),
-      new JavacQuirksInspection(),
-      new RedundantCastInspection()
-    };
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
   public void testSafeVarargsApplicability() { doTest(true, false); }
   public void testPrivateInInterfaces() { doTest(false, false); }
+
+  public void testValueTypes() { setLanguageLevel(LanguageLevel.JDK_X); doTest(false, false); }
 }

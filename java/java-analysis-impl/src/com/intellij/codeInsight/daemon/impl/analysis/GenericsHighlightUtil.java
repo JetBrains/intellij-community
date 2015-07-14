@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -354,7 +354,7 @@ public class GenericsHighlightUtil {
   }
 
   private static HighlightInfo checkInterfaceMultipleInheritance(PsiClass aClass,
-                                                                 PsiElement place, 
+                                                                 PsiElement place,
                                                                  PsiSubstitutor derivedSubstitutor,
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  Set<PsiClass> visited,
@@ -659,7 +659,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(final PsiTypeElement typeElement) {
+  static HighlightInfo checkReferenceTypeUsedAsTypeArgument(PsiTypeElement typeElement, LanguageLevel level) {
     final PsiType type = typeElement.getType();
     if (type != PsiType.NULL && type instanceof PsiPrimitiveType ||
         type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
@@ -669,9 +669,11 @@ public class GenericsHighlightUtil {
         .getElement();
       if (element == null) return null;
 
-      String description = JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type");
-      final HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+      if (level.isAtLeast(LanguageLevel.JDK_X)) return null;
+
+      String text = JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type");
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(text).create();
+
       PsiType toConvert = type;
       if (type instanceof PsiWildcardType) {
         toConvert = ((PsiWildcardType)type).getBound();
@@ -679,8 +681,8 @@ public class GenericsHighlightUtil {
       if (toConvert instanceof PsiPrimitiveType) {
         final PsiClassType boxedType = ((PsiPrimitiveType)toConvert).getBoxedType(typeElement);
         if (boxedType != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo,
-                                                QUICK_FIX_FACTORY.createReplacePrimitiveWithBoxedTypeAction(typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
+          QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createReplacePrimitiveWithBoxedTypeAction(
+            typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
         }
       }
       return highlightInfo;
@@ -721,7 +723,7 @@ public class GenericsHighlightUtil {
     final PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    final PsiClass aClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ? 
+    final PsiClass aClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ?
                             (PsiClass)constructorOrInitializer : constructorOrInitializer.getContainingClass();
     if (aClass == null || !(aClass.isEnum() || aClass instanceof PsiEnumConstantInitializer)) return null;
     final PsiField field = (PsiField)resolved;
@@ -747,7 +749,7 @@ public class GenericsHighlightUtil {
 
   @Nullable
   public static HighlightInfo checkEnumInstantiation(PsiElement expression, PsiClass aClass) {
-    if (aClass != null && aClass.isEnum() && 
+    if (aClass != null && aClass.isEnum() &&
         (!(expression instanceof PsiNewExpression) ||
          ((PsiNewExpression)expression).getArrayDimensions().length == 0 && ((PsiNewExpression)expression).getArrayInitializer() == null)) {
       String description = JavaErrorMessages.message("enum.types.cannot.be.instantiated");
@@ -1283,8 +1285,8 @@ public class GenericsHighlightUtil {
           final PsiElement superClass = referenceElement.resolve();
           if (superClass instanceof PsiClass) {
             final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
-            if (superContainingClass != null && 
-                InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true) && 
+            if (superContainingClass != null &&
+                InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true) &&
                 !PsiTreeUtil.isAncestor(superContainingClass, containingClass, true)) {
               return true;
             }
@@ -1297,7 +1299,7 @@ public class GenericsHighlightUtil {
 
   public static void registerVariableParameterizedTypeFixes(HighlightInfo highlightInfo,
                                                             @NotNull PsiVariable variable,
-                                                            @NotNull PsiReferenceParameterList parameterList, 
+                                                            @NotNull PsiReferenceParameterList parameterList,
                                                             @NotNull JavaSdkVersion version) {
     PsiType type = variable.getType();
     if (!(type instanceof PsiClassType)) return;

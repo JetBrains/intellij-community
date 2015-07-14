@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,14 +102,19 @@ public class ReferenceParser {
     if (expect(builder, ElementType.PRIMITIVE_TYPE_BIT_SET)) {
       typeInfo.isPrimitive = true;
     }
-    else if (tokenType == JavaTokenType.IDENTIFIER) {
-      parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
-    }
-    else if ((isSet(flags, WILDCARD) || badWildcard) && tokenType == JavaTokenType.QUEST) {
-      builder.advanceLexer();
+    else if ((isSet(flags, WILDCARD) || badWildcard) && (tokenType == JavaTokenType.QUEST || isKeywordAny(builder))) {
+      if (tokenType == JavaTokenType.QUEST) {
+        builder.advanceLexer();
+      }
+      else {
+        dummy(builder);
+      }
       completeWildcardType(builder, isSet(flags, WILDCARD), type);
       typeInfo.marker = type;
       return typeInfo;
+    }
+    else if (tokenType == JavaTokenType.IDENTIFIER) {
+      parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
       emptyElement(builder, JavaElementType.DIAMOND_TYPE);
@@ -344,10 +349,8 @@ public class ReferenceParser {
 
     myParser.getDeclarationParser().parseAnnotations(builder);
 
-    if (EXPERIMENTAL_FEATURES && "any".equals(builder.getTokenText()) && getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_9)) {
-      PsiBuilder.Marker mark = builder.mark();
-      builder.advanceLexer();
-      mark.done(JavaElementType.DUMMY_ELEMENT);
+    if (isKeywordAny(builder)) {
+      dummy(builder);
     }
 
     final boolean wild = expect(builder, JavaTokenType.QUEST);
@@ -368,8 +371,7 @@ public class ReferenceParser {
   }
 
   @NotNull
-  public PsiBuilder.Marker parseReferenceList(final PsiBuilder builder, final IElementType start,
-                                              @Nullable final IElementType type, final IElementType delimiter) {
+  public PsiBuilder.Marker parseReferenceList(PsiBuilder builder, IElementType start, @Nullable IElementType type, IElementType delimiter) {
     final PsiBuilder.Marker element = builder.mark();
 
     if (expect(builder, start)) {
@@ -391,5 +393,15 @@ public class ReferenceParser {
       element.error(JavaErrorMessages.message("bound.not.expected"));
     }
     return element;
+  }
+
+  private static boolean isKeywordAny(PsiBuilder builder) {
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X) && "any".equals(builder.getTokenText());
+  }
+
+  private static void dummy(PsiBuilder builder) {
+    PsiBuilder.Marker mark = builder.mark();
+    builder.advanceLexer();
+    mark.done(JavaElementType.DUMMY_ELEMENT);
   }
 }
