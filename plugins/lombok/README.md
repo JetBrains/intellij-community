@@ -30,7 +30,7 @@ Features / Supports
 - [@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog](http://projectlombok.org/features/Log.html)
 - [@Data](http://projectlombok.org/features/Data.html)
 - [@Builder](https://projectlombok.org/features/Builder.html)
-- [@Singular](https://projectlombok.org/features/Builder.html)
+- [@Singular](https://projectlombok.org/features/Builder.html#singular)
 - [@Delegate](http://projectlombok.org/features/Delegate.html)
 - [@Value](http://projectlombok.org/features/Value.html)
 - [@Accessors](http://projectlombok.org/features/experimental/Accessors.html)
