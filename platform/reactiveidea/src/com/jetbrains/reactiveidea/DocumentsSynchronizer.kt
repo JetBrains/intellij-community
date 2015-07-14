@@ -140,7 +140,8 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
             val value = editors.value as MapModel
             value.values().filter {
               it as MapModel
-              (it[EditorHost.activePath] as PrimitiveModel<*>).value as Boolean
+              val isActive = (it[EditorHost.activePath] as PrimitiveModel<*>?)?.value
+              if (isActive == null) false else isActive as Boolean
             }.map {
               it!!.meta.valAt("editor") as Editor
             }
