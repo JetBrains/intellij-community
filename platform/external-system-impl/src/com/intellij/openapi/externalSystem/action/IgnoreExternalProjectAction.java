@@ -24,7 +24,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -48,15 +47,13 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   private static final Logger LOG = Logger.getInstance(IgnoreExternalProjectAction.class);
 
   public IgnoreExternalProjectAction() {
-    setText(ExternalSystemBundle.message("action.ignore.external.project.text", "external"));
-    setDescription(ExternalSystemBundle.message("action.ignore.external.project.description"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("action.ignore.external.project.text", "external"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.ignore.external.project.description", "external"));
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     final ProjectSystemId projectSystemId = getSystemId(e);
-    setText(e, ExternalSystemBundle.message("action.ignore.external.project.text", projectSystemId.getReadableName()));
-
     final ExternalSystemNode<ExternalConfigPathAware> projectNode = getProjectNode(e);
     if (projectNode == null || projectNode.getData() == null) return;
 
@@ -86,6 +83,21 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
         });
       }
     });
+  }
+
+  @Override
+  public boolean isSelected(AnActionEvent e) {
+    boolean selected = super.isSelected(e);
+    final ProjectSystemId projectSystemId = getSystemId(e);
+    if (selected) {
+      setText(e, ExternalSystemBundle.message("action.unignore.external.project.text", projectSystemId.getReadableName()));
+      setDescription(e, ExternalSystemBundle.message("action.unignore.external.project.description", projectSystemId.getReadableName()));
+    }
+    else {
+      setText(e, ExternalSystemBundle.message("action.ignore.external.project.text", projectSystemId.getReadableName()));
+      setDescription(e, ExternalSystemBundle.message("action.ignore.external.project.description", projectSystemId.getReadableName()));
+    }
+    return selected;
   }
 
   @Override
