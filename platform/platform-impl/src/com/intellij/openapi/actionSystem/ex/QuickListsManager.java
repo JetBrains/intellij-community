@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -38,8 +37,6 @@ import java.util.List;
 import java.util.Set;
 
 public class QuickListsManager implements ExportableApplicationComponent {
-  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/quicklists";
-
   private static final String LIST_TAG = "list";
 
   private final ActionManager myActionManager;
@@ -47,8 +44,8 @@ public class QuickListsManager implements ExportableApplicationComponent {
 
   public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
     myActionManager = actionManager;
-    mySchemeManager = schemesManagerFactory.createSchemesManager(FILE_SPEC,
-                                                                  new BaseSchemeProcessor<QuickList>() {
+    mySchemeManager = schemesManagerFactory.createSchemesManager("quicklists",
+                                                                 new BaseSchemeProcessor<QuickList>() {
                                                                     @NotNull
                                                                     @Override
                                                                     public QuickList readScheme(@NotNull Element element) {
@@ -62,7 +59,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
                                                                       return element;
                                                                     }
                                                                   },
-                                                                  RoamingType.PER_USER);
+                                                                 RoamingType.PER_USER);
   }
 
   @NotNull

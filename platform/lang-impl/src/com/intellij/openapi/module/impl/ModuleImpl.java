@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -84,7 +85,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
     super.bootstrapPicoContainer(name);
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
+    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ModulePathMacroManager.class);
   }
 
   @NotNull

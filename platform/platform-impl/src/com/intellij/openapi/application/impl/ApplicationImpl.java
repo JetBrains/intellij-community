@@ -30,12 +30,14 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
-import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,10 +60,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
 import com.intellij.util.*;
@@ -71,7 +71,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongProcedure;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -128,7 +127,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
   private boolean myLoaded;
-  @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
+  private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   private volatile boolean myActive;
   private volatile boolean myActiveDelayed;
@@ -136,26 +135,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
-
-  static {
-        OpenAPIAccessor.setApplicationImplAccessor(new OpenAPIAccessor.ApplicationImplAccessor() {
-
-          @Override
-          public boolean applyActivation(ApplicationImpl app, Window window) {
-            return app.applyActivation(window);
-          }
-
-          @Override
-          public boolean applyDeactivation(ApplicationImpl app, Window window) {
-            return app.applyDeactivation(window);
-          }
-
-          @Override
-          public boolean applyDelayedDeactivation(ApplicationImpl app, Window window) {
-            return app.applyDelayedDeactivation(window);
-          }
-        });
-  }
 
   public boolean isActiveDelayed() {
     return myActiveDelayed;
@@ -188,7 +167,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return false;
     }
 
-    @NonNls
     @Override
     public String toString() {
       return "ANY";
@@ -199,12 +177,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   protected void bootstrapPicoContainer(@NotNull String name) {
     super.bootstrapPicoContainer(name);
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ApplicationStoreImpl.class);
-    getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
+    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ApplicationPathMacroManager.class);
   }
 
   @NotNull
-  public IApplicationStore getStateStore() {
-    return (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+  public IComponentStore getStateStore() {
+    return (IComponentStore)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @Override
@@ -516,13 +494,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   public void load(@NotNull String configPath, @NotNull String optionsPath) throws IOException {
-    IApplicationStore store = getStateStore();
-    store.setOptionsPath(optionsPath);
-    store.setConfigPath(configPath);
+    IComponentStore store = getStateStore();
+    StateStorageManager storageManager = store.getStateStorageManager();
+    storageManager.addMacro(StoragePathMacros.APP_CONFIG, optionsPath);
+    storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
 
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      store.load();
+      long t = System.currentTimeMillis();
+      init();
+      t = System.currentTimeMillis() - t;
+      LOG.info(getComponentConfigurations().length + " application components initialized in " + t + " ms");
     }
     catch (StateStorageException e) {
       throw new IOException(e);
@@ -1074,7 +1056,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
   }
 
-  @NonNls
   private static String describe(Thread o) {
     if (o == null) return "null";
     return o + " " + System.identityHashCode(o);
@@ -1203,7 +1184,28 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myCancelDeactivation;
   }
 
-  boolean applyActivation (Window window) {
+  /**
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   *
+   * THIS IS AN "ABSOLUTELY-GURU METHOD".
+   * NOBODY AND UNDER ANY CIRCUMSTANCES SHOULD ADD OTHER USAGES OF IT :)
+   * ONLY DENIS IS PERMITTED TO USE THIS METHOD!!!
+   *
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   * !!!!! CAUTION !!!!!
+   *
+   * There are no legitimate usages of the method outside of IdeEventQueue.processAppActivationEvents()
+   */
+  public boolean tryToApplyActivationState(Window window, boolean activation, boolean immediate) {
+    return activation ? applyActivation(window) :
+           immediate ? applyDeactivation(window)
+                     : applyDelayedDeactivation(window);
+  }
+
+  private boolean applyActivation(Window window) {
     if (!isActive()) {
       myActive = true;
       myActiveDelayed = true;
@@ -1215,7 +1217,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return false;
   }
 
-  boolean applyDeactivation (Window window) {
+  private boolean applyDeactivation(Window window) {
     if (isActive()) {
       myActive = false;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
@@ -1227,7 +1229,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return false;
   }
 
-  boolean applyDelayedDeactivation (Window window) {
+  private boolean applyDelayedDeactivation(Window window) {
     if (isActiveDelayed()) {
       myActiveDelayed = false;
       IdeFrame ideFrame = getIdeFrameFromWindow(window);
@@ -1546,7 +1548,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDisposeInProgress = disposeInProgress;
   }
 
-  @NonNls
   @Override
   public String toString() {
     return "Application" +

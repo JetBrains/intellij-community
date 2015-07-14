@@ -64,6 +64,8 @@ import java.util.*;
  * @author yole
  */
 public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
+  public static final Key<LanguageLevel> PYTHON_LANGUAGE_LEVEL = Key.create("PYTHON_LANGUAGE_LEVEL");
+
   private final Map<Module, Sdk> myModuleSdks = new WeakHashMap<Module, Sdk>();
 
   public static void pushLanguageLevel(final Project project) {
@@ -83,6 +85,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         }
       }
     }
+    project.putUserData(PYTHON_LANGUAGE_LEVEL, PyUtil.guessLanguageLevel(project));
   }
 
   @NotNull
@@ -99,6 +102,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return LanguageLevel.getDefault();
   }
 
+  @Nullable
   public LanguageLevel getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
     return getFileLanguageLevel(project, file);
   }
@@ -112,7 +116,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     if (sdk != null) {
       return PythonSdkType.getLanguageLevelForSdk(sdk);
     }
-    return PyUtil.guessLanguageLevel(project);
+    return PyUtil.guessLanguageLevelWithCaching(project);
   }
 
   @Nullable
@@ -123,12 +127,14 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       if (sdk != null) {
         return sdk;
       }
+      return null;
+    } else {
+      return findSdkForFileOutsideTheProject(project, file);
     }
-    return findSdk(project, file);
   }
 
   @Nullable
-  private static Sdk findSdk(Project project, VirtualFile file) {
+  private static Sdk findSdkForFileOutsideTheProject(Project project, VirtualFile file) {
     if (file != null) {
       final List<OrderEntry> orderEntries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
       for (OrderEntry orderEntry : orderEntries) {
@@ -233,17 +239,18 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return false;
   }
 
-  private void updateSdkLanguageLevel(final Project project, final Sdk sdk) {
+  private void updateSdkLanguageLevel(@NotNull final Project project, final Sdk sdk) {
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
     final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     final Application application = ApplicationManager.getApplication();
+    PyUtil.invalidateLanguageLevelCache(project);
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         application.runReadAction(new Runnable() {
           @Override
           public void run() {
-            if (project != null && project.isDisposed()) {
+            if (project.isDisposed()) {
               return;
             }
             for (VirtualFile file : files) {

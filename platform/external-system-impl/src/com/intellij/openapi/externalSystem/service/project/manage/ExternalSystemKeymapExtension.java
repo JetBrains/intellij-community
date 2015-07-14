@@ -124,7 +124,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     if (manager != null) {
       for (DataNode<TaskData> each : taskData) {
         final DataNode<ModuleData> moduleData = ExternalSystemApiUtil.findParent(each, ProjectKeys.MODULE);
-        if (moduleData == null) continue;
+        if (moduleData == null || moduleData.isIgnored()) continue;
         ExternalSystemTaskAction eachAction = new ExternalSystemTaskAction(project, moduleData.getData().getInternalName(), each.getData());
 
         manager.unregisterAction(eachAction.getId());

@@ -56,17 +56,11 @@ public class ExternalProjectsState {
   public static class State {
     private ExternalProjectsViewState projectsViewState = new ExternalProjectsViewState();
 
-    private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = new FactoryMap<String, TaskActivationState>() {
+    private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = new NullSafeMap<String, TaskActivationState>() {
       @Nullable
       @Override
       protected TaskActivationState create(String key) {
         return new TaskActivationState();
-      }
-
-      @Override
-      public TaskActivationState put(String key, TaskActivationState value) {
-        if(value == null) return null;
-        return super.put(key, value);
       }
 
       @Override
@@ -76,8 +70,8 @@ public class ExternalProjectsState {
     };
 
     @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
-      keyAttributeName = "path", entryTagName = "task", sortBeforeSave = false)
+    @MapAnnotation(keyAttributeName = "path", entryTagName = "task",
+      surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false, sortBeforeSave = false)
     public Map<String, TaskActivationState> getExternalSystemsTaskActivation() {
       return myExternalSystemsTaskActivation;
     }

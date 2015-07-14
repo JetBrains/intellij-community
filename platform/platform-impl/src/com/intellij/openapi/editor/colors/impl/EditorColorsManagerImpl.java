@@ -66,7 +66,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   private final DefaultColorSchemesManager myDefaultColorSchemesManager;
   private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
-  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/colors";
+  static final String FILE_SPEC = "colors";
 
   private State myState = new State();
 

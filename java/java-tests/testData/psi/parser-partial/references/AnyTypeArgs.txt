@@ -1,0 +1,28 @@
+PsiJavaFile:AnyTypeArgs.java
+  PsiTypeElement:T<E_SRC, any, E_DST, ?>
+    PsiJavaCodeReferenceElement:T<E_SRC, any, E_DST, ?>
+      PsiIdentifier:T('T')
+      PsiReferenceParameterList
+        PsiJavaToken:LT('<')
+        PsiTypeElement:E_SRC
+          PsiJavaCodeReferenceElement:E_SRC
+            PsiIdentifier:E_SRC('E_SRC')
+            PsiReferenceParameterList
+              <empty list>
+        PsiJavaToken:COMMA(',')
+        PsiWhiteSpace(' ')
+        PsiTypeElement:any
+          PsiElement(DUMMY_ELEMENT)
+            PsiIdentifier:any('any')
+        PsiJavaToken:COMMA(',')
+        PsiWhiteSpace(' ')
+        PsiTypeElement:E_DST
+          PsiJavaCodeReferenceElement:E_DST
+            PsiIdentifier:E_DST('E_DST')
+            PsiReferenceParameterList
+              <empty list>
+        PsiJavaToken:COMMA(',')
+        PsiWhiteSpace(' ')
+        PsiTypeElement:?
+          PsiJavaToken:QUEST('?')
+        PsiJavaToken:GT('>')

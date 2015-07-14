@@ -8,6 +8,8 @@ import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
@@ -60,7 +62,12 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
     // We save all documents because there is a possible case that there is an external system config file changed inside the ide.
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ExternalSystemUtil.refreshProject(
-      project, projectSystemId, externalConfigPathAware.getLinkedExternalProjectPath(), false, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+    final ExternalProjectSettings linkedProjectSettings = ExternalSystemApiUtil.getSettings(
+      project, projectSystemId).getLinkedProjectSettings(externalConfigPathAware.getLinkedExternalProjectPath());
+    final String externalProjectPath = linkedProjectSettings == null
+                                       ? externalConfigPathAware.getLinkedExternalProjectPath()
+                                       : linkedProjectSettings.getExternalProjectPath();
+
+    ExternalSystemUtil.refreshProject(project, projectSystemId, externalProjectPath, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
 }

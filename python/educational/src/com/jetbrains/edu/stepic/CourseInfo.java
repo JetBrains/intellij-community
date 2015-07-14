@@ -19,8 +19,7 @@ public class CourseInfo {
   private String myDescription;
   @SerializedName("course_format")
   //course type in format "pycharm <language>"
-  private String myType;
-
+  private String myType = "pycharm Python";
   @SerializedName("instructors")
   List<Instructor> myInstructors = new ArrayList<Instructor>();
 
@@ -75,5 +74,21 @@ public class CourseInfo {
     public String getName() {
       return name;
     }
+  }
+
+  public void setName(String name) {
+    myName = name;
+  }
+
+  public void setInstructors(List<Instructor> instructors) {
+    myInstructors = instructors;
+  }
+
+  public void setDescription(String description) {
+    myDescription = description;
+  }
+
+  public void setType(String type) {
+    myType = type;
   }
 }

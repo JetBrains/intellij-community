@@ -143,7 +143,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private final TempDirTestFixture myTempDirFixture;
   protected final IdeaProjectTestFixture myProjectFixture;
-  private VirtualFileFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
+  private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
 
@@ -462,6 +462,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                            @NotNull final InspectionToolWrapper... toolWrappers) {
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", project, toolWrappers);
     GlobalInspectionContextForTests context = new GlobalInspectionContextForTests(project, inspectionManager.getContentManager()) {
+      @NotNull
       @Override
       protected List<Tools> getUsedTools() {
         return InspectionProfileImpl.initAndDo(new Computable<List<Tools>>() {
@@ -1510,9 +1511,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     final long start = System.currentTimeMillis();
-    final VirtualFileFilter fileTreeAccessFilter = myFileTreeAccessFilter;
+    final VirtualFileFilter fileTreeAccessFilter = myVirtualFileFilter;
+    Disposable disposable = Disposer.newDisposable();
     if (fileTreeAccessFilter != null) {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(fileTreeAccessFilter, myTestRootDisposable);
+      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(fileTreeAccessFilter, disposable);
     }
 
     //    ProfilingUtil.startCPUProfiling();
@@ -1522,9 +1524,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       removeDuplicatedRangesForInjected(infos);
     }
     finally {
-      if (fileTreeAccessFilter != null) {
-        ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
-      }
+      Disposer.dispose(disposable);
     }
     //    ProfilingUtil.captureCPUSnapshot("testing");
     final long elapsed = System.currentTimeMillis() - start;
@@ -1534,14 +1534,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return elapsed;
   }
 
-  public void setFileTreeAccessFilterForHighlighting(@Nullable VirtualFileFilter fileTreeAccessFilter) {
-    myFileTreeAccessFilter = fileTreeAccessFilter;
+  public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
+    myVirtualFileFilter = filter;
   }
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
     Collections.sort(infos, new Comparator<HighlightInfo>() {
       @Override
-      public int compare(HighlightInfo o1, HighlightInfo o2) {
+      public int compare(@NotNull HighlightInfo o1, @NotNull HighlightInfo o2) {
         final int i = o2.startOffset - o1.startOffset;
         return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
       }
@@ -1691,7 +1691,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         final IntentionAction action = actionInGroup.getAction();
 
         if (ShowIntentionActionsHandler.availableFor(file, editor, action)
-          || (injectedElement != null && hostElement != injectedElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
+            ||
+            injectedElement != null && hostElement != injectedElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action)) {
           descriptors.add(actionInGroup);
         }
       }
@@ -1728,23 +1729,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void allowTreeAccessForFile(@NotNull final VirtualFile file) {
-    assert myFileTreeAccessFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
-    ((FileTreeAccessFilter)myFileTreeAccessFilter).allowTreeAccessForFile(file);
+    assert myVirtualFileFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
+    ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForFile(file);
   }
 
   @Override
   public void allowTreeAccessForAllFiles() {
-    assert myFileTreeAccessFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
-    ((FileTreeAccessFilter)myFileTreeAccessFilter).allowTreeAccessForAllFiles();
+    assert myVirtualFileFilter instanceof FileTreeAccessFilter : "configured filter does not support this method";
+    ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForAllFiles();
   }
 
   private static class SelectionAndCaretMarkupLoader {
-    final String filePath;
-    final String newFileText;
-    final EditorTestUtil.CaretAndSelectionState caretState;
+    private final String filePath;
+    private final String newFileText;
+    private final EditorTestUtil.CaretAndSelectionState caretState;
 
     @NotNull
-    static SelectionAndCaretMarkupLoader fromFile(@NotNull String path, String charset) throws IOException {
+    private static SelectionAndCaretMarkupLoader fromFile(@NotNull String path, String charset) throws IOException {
       return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), path);
     }
 
@@ -1848,12 +1849,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private static final String END_FOLD = "</fold>";
 
   private static class Border implements Comparable<Border> {
-    public static final boolean LEFT = true;
-    public static final boolean RIGHT = false;
-    public boolean mySide;
-    public int myOffset;
-    public String myText;
-    public boolean myIsExpanded;
+    private static final boolean LEFT = true;
+    private static final boolean RIGHT = false;
+    private final boolean mySide;
+    private final int myOffset;
+    private final String myText;
+    private final boolean myIsExpanded;
 
     private Border(boolean side, int offset, String text, boolean isExpanded) {
       mySide = side;

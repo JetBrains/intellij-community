@@ -59,4 +59,16 @@ public abstract class ExternalSystemAction extends AnAction implements DumbAware
   protected boolean hasProject(AnActionEvent e) {
     return getProject(e) != null;
   }
+
+  protected void setText(String message) {
+    getTemplatePresentation().setText(message);
+  }
+
+  protected void setDescription(String message) {
+    getTemplatePresentation().setDescription(message);
+  }
+
+  protected void setText(AnActionEvent e, String message) {
+    e.getPresentation().setText(message);
+  }
 }

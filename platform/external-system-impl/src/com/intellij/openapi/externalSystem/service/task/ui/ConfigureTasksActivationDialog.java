@@ -165,6 +165,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
           final List<ProjectPopupItem> popupItems = ContainerUtil.newArrayList();
           for (DataNode<ModuleData> moduleDataNode : ExternalSystemApiUtil
             .findAllRecursively(projectData.getExternalProjectStructure(), ProjectKeys.MODULE)) {
+            if(moduleDataNode.isIgnored()) continue;
 
             final List<String> tasks = ContainerUtil.map(
               ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK), new Function<DataNode<TaskData>, String>() {

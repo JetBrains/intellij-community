@@ -31,7 +31,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
+public class ApplicationStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
 
   private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT;
@@ -40,11 +40,9 @@ public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplica
   private final ApplicationImpl myApplication;
   private final StateStorageManager myStateStorageManager;
 
-  private String myConfigPath;
-
   // created from PicoContainer
   @SuppressWarnings({"UnusedDeclaration"})
-  public ApplicationStoreImpl(final ApplicationImpl application, PathMacroManager pathMacroManager) {
+  public ApplicationStoreImpl(@NotNull final ApplicationImpl application, @NotNull PathMacroManager pathMacroManager) {
     myApplication = application;
     myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
       private boolean myConfigDirectoryRefreshed;
@@ -79,49 +77,27 @@ public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplica
 
       @Override
       protected void beforeFileBasedStorageCreate() {
-        if (!myConfigDirectoryRefreshed && (application.isUnitTestMode() || application.isDispatchThread())) {
-          try {
-            VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(getConfigPath());
-            if (configDir != null) {
-              VfsUtil.markDirtyAndRefresh(false, true, true, configDir);
-            }
+        if (myConfigDirectoryRefreshed || (!application.isUnitTestMode() && !application.isDispatchThread())) {
+          return;
+        }
+
+        try {
+          String configPath = getMacrosValue(StoragePathMacros.ROOT_CONFIG);
+          if (configPath == null) {
+            LOG.warn("Macros ROOT_CONFIG is not defined");
+            return;
           }
-          finally {
-            myConfigDirectoryRefreshed = true;
+
+          VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configPath);
+          if (configDir != null) {
+            VfsUtil.markDirtyAndRefresh(false, true, true, configDir);
           }
+        }
+        finally {
+          myConfigDirectoryRefreshed = true;
         }
       }
     };
-  }
-
-  @Override
-  public void load() {
-    long t = System.currentTimeMillis();
-    myApplication.init();
-    t = System.currentTimeMillis() - t;
-    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + t + " ms");
-  }
-
-  @Override
-  public void setOptionsPath(@NotNull String path) {
-    myStateStorageManager.addMacro(StoragePathMacros.APP_CONFIG, path);
-  }
-
-  @Override
-  public void setConfigPath(@NotNull final String configPath) {
-    myStateStorageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
-    myConfigPath = configPath;
-  }
-
-  @Override
-  @NotNull
-  public String getConfigPath() {
-    String configPath = myConfigPath;
-    if (configPath == null) {
-      // unrealistic case, but we keep backward compatibility
-      configPath = PathManager.getConfigPath();
-    }
-    return configPath;
   }
 
   @Override

@@ -44,7 +44,7 @@ import java.util.*;
   additionalExportFile = KeymapManagerImpl.KEYMAPS_DIR_PATH
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ApplicationComponent {
-  static final String KEYMAPS_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/keymaps";
+  static final String KEYMAPS_DIR_PATH = "keymaps";
 
   private final List<KeymapManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();

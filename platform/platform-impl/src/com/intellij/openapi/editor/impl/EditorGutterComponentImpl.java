@@ -1368,7 +1368,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private boolean isPopupAction(MouseEvent e) {
     GutterIconRenderer renderer = getGutterRenderer(e);
-    return renderer != null && renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
+    return renderer != null && !isNavigationBlocked(renderer, myEditor.getProject()) &&
+           renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
   }
 
   @Override
@@ -1380,7 +1381,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     GutterIconRenderer renderer = getGutterRenderer(e);
     final Project project = myEditor.getProject();
-    if (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(renderer)) {
+    if (isNavigationBlocked(renderer, project)) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available during indexing");
       return;
     }
@@ -1406,6 +1407,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         fireEventToTextAnnotationListeners(e);
       }
     }
+  }
+
+  private static boolean isNavigationBlocked(@Nullable GutterIconRenderer renderer, @Nullable Project project) {
+    return project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(renderer);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,5 +284,9 @@ public class ProjectUtil {
     //noinspection HardCodedStringLiteral
     return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
            "Projects";
+  }
+
+  public static boolean isDirectoryBased(@NotNull Project project) {
+    return project instanceof ProjectEx && StorageScheme.DIRECTORY_BASED.equals(((ProjectEx)project).getStateStore().getStorageScheme());
   }
 }

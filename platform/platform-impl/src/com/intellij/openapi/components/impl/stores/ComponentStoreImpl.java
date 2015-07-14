@@ -54,7 +54,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"deprecation"})
-public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
+public abstract class ComponentStoreImpl implements IComponentStore {
   private static final Logger LOG = Logger.getInstance(ComponentStoreImpl.class);
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
   private final List<SettingsSavingComponent> mySettingsSavingComponents = new CopyOnWriteArrayList<SettingsSavingComponent>();
@@ -540,7 +540,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   @NotNull
-  public static ReloadComponentStoreStatus reloadStore(@NotNull MultiMap<StateStorage, VirtualFile> changes, @NotNull IComponentStore.Reloadable store) {
+  public static ReloadComponentStoreStatus reloadStore(@NotNull MultiMap<StateStorage, VirtualFile> changes, @NotNull IComponentStore store) {
     Collection<String> notReloadableComponents;
     boolean willBeReloaded = false;
     try {
@@ -576,11 +576,11 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
   }
 
   // used in settings repository plugin
-  public static boolean askToRestart(@NotNull Reloadable store,
+  public static boolean askToRestart(@NotNull IComponentStore store,
                                      @NotNull Collection<String> notReloadableComponents,
                                      @Nullable MultiMap<StateStorage, VirtualFile> changedStorages) {
     StringBuilder message = new StringBuilder();
-    String storeName = store instanceof IApplicationStore ? "Application" : "Project";
+    String storeName = store instanceof IProjectStore ? "Project" : "Application";
     message.append(storeName).append(' ');
     message.append("components were changed externally and cannot be reloaded:\n\n");
     int count = 0;
@@ -595,12 +595,12 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     message.append("\nWould you like to ");
-    if (store instanceof IApplicationStore) {
-      message.append(ApplicationManager.getApplication().isRestartCapable() ? "restart" : "shutdown").append(' ');
-      message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?');
+    if (store instanceof IProjectStore) {
+      message.append("reload project?");
     }
     else {
-      message.append("reload project?");
+      message.append(ApplicationManager.getApplication().isRestartCapable() ? "restart" : "shutdown").append(' ');
+      message.append(ApplicationNamesInfo.getInstance().getProductName()).append('?');
     }
 
     if (Messages.showYesNoDialog(message.toString(),

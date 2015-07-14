@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.SchemeManagerFactoryImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -22,7 +23,6 @@ import com.intellij.openapi.components.impl.stores.ComponentStoreImpl
 import com.intellij.openapi.components.impl.stores.FileBasedStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.options.SchemesManagerFactory
-import com.intellij.openapi.options.SchemesManagerFactoryImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -118,7 +118,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               restartApplication = updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
-              (SchemesManagerFactory.getInstance() as SchemesManagerFactoryImpl).process {
+              (SchemesManagerFactory.getInstance() as SchemeManagerFactoryImpl).process {
                 it.reload()
               }
             }
@@ -141,7 +141,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
   }
 }
 
-private fun updateStoragesFromStreamProvider(store: IComponentStore.Reloadable, updateResult: UpdateResult): Boolean {
+private fun updateStoragesFromStreamProvider(store: IComponentStore, updateResult: UpdateResult): Boolean {
   val changedComponentNames = LinkedHashSet<String>()
   val stateStorages = store.getStateStorageManager().getCachedFileStateStorages(updateResult.changed, updateResult.deleted)
   val changed = stateStorages.first!!

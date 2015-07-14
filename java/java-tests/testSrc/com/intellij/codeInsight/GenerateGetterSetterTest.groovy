@@ -71,6 +71,26 @@ class Foo {
     }
 }
 '''
+  } 
+  
+  public void "test strip is of boolean fields setter"() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+    boolean isStateForceMailField;
+
+    <caret>
+}
+'''
+    generateSetter()
+    myFixture.checkResult '''
+class Foo {
+    boolean isStateForceMailField;
+
+    public void setStateForceMailField(boolean stateForceMailField) {
+        isStateForceMailField = stateForceMailField;
+    }
+}
+'''
   }
 
   public void "test strip field prefix"() {

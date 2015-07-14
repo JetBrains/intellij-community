@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.util.io;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface IApplicationStore extends IComponentStore.Reloadable {
-  void setOptionsPath(@NotNull String path);
+import java.io.IOException;
+
+class NullAppendable implements Appendable {
+  static Appendable INSTANCE = new NullAppendable();
+  @NotNull
+  @Override
+  public Appendable append(CharSequence csq) throws IOException {
+    return this;
+  }
 
   @NotNull
-  String getConfigPath();
+  @Override
+  public Appendable append(CharSequence csq, int start, int end) throws IOException {
+    return this;
+  }
 
-  void setConfigPath(@NotNull String configPath);
+  @NotNull
+  @Override
+  public Appendable append(char c) throws IOException {
+    return this;
+  }
 }

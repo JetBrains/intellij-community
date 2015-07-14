@@ -681,6 +681,7 @@ public abstract class UsefulTestCase extends TestCase {
     return ts[0];
   }
 
+  @Contract("null, _ -> fail")
   public static <T> void assertOneOf(T value, T... values) {
     boolean found = false;
     for (T v : values) {

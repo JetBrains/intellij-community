@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class SchemesManagerFactory {
   @NotNull
-  public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
+  public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String directoryName,
                                                                                                                @NotNull SchemeProcessor<E> processor,
                                                                                                                @NotNull RoamingType roamingType);
 

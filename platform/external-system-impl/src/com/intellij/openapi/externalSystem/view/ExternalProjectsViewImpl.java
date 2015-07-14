@@ -299,7 +299,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   private ActionGroup createAdditionalGearActionsGroup() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    String[] ids = new String[]{"ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks"};
+    String[] ids = new String[]{"ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks", "ExternalSystem.ShowIgnored"};
     for (String id : ids) {
       final AnAction gearAction = actionManager.getAction(id);
       if (gearAction instanceof ExternalSystemViewGearAction) {
@@ -418,14 +418,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
                                                  @Nullable ExternalSystemNode<?> parent,
                                                  @NotNull DataNode<?> dataNode) {
     final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
-    final Map<Key<?>, List<DataNode<?>>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
+    final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
       List<Key<?>> keys = contributor.getKeys();
 
       final MultiMap<Key<?>, DataNode<?>> dataNodes = MultiMap.create();
       for (Key<?> key : keys) {
-        final List<DataNode<?>> values = groups.get(key);
-        if(key != null && values != null) {
+        final Collection<DataNode<?>> values = groups.get(key);
+        if(key != null) {
           dataNodes.put(key, values);
         }
       }
@@ -462,6 +462,17 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   public void loadState(ExternalProjectsViewState state) {
     myState = state;
+  }
+
+  public boolean getShowIgnored() {
+    return myState.showIgnored;
+  }
+
+  public void setShowIgnored(boolean value) {
+    if (myState.showIgnored != value) {
+      myState.showIgnored = value;
+      scheduleStructureUpdate();
+    }
   }
 
   public boolean getGroupTasks() {

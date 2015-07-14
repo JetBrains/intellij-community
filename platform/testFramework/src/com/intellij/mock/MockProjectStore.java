@@ -125,11 +125,6 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void load() {
-    throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   public void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles) {
     throw new UnsupportedOperationException();
   }

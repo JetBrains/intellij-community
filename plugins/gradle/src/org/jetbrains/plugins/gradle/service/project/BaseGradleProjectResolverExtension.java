@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.*;
@@ -135,6 +136,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
     if (externalProject != null) {
       ideProject.createChild(ExternalProjectDataService.KEY, externalProject);
+      ideProject.getData().setDescription(externalProject.getDescription());
     }
   }
 
@@ -164,6 +166,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       moduleData.setGroup(moduleExtendedModel.getGroup());
       moduleData.setVersion(moduleExtendedModel.getVersion());
       moduleData.setArtifacts(moduleExtendedModel.getArtifacts());
+    }
+
+    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+    if (externalProject != null) {
+      moduleData.setDescription(externalProject.getDescription());
     }
     return moduleData;
   }
@@ -745,6 +752,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           }
         }
       }
+    }
+
+    // add packaging type to distinguish different artifact dependencies with same groupId:artifactId:version
+    if(!FileUtilRt.extensionEquals(binaryPath.getPath(), "jar")) {
+      libraryName += (":" + FileUtilRt.getExtension(binaryPath.getPath()));
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);

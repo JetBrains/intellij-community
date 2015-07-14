@@ -163,7 +163,7 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
         @Override
         void execute() {
           ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring {
-            dataManager.importData(node.key, [node], myProject, true)
+            dataManager.importData(node, myProject, true)
           }
         }})
     }

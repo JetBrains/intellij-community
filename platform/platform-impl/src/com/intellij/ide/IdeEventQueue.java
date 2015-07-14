@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -797,7 +796,7 @@ public class IdeEventQueue extends EventQueue {
 
   private static AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
 
-  private boolean processAppActivationEvents(AWTEvent e) {
+  private static boolean processAppActivationEvents(AWTEvent e) {
     Application app = ApplicationManager.getApplication();
     if (!(app instanceof ApplicationImpl)) return false;
     final ApplicationImpl appImpl = (ApplicationImpl)app;
@@ -815,14 +814,14 @@ public class IdeEventQueue extends EventQueue {
         //}
         appImpl.myCancelDeactivation = true;
         if (!appImpl.isActive()) {
-          OpenAPIAccessor.getApplicationImplAccessor().applyActivation(appImpl, eventWindow);
+          appImpl.tryToApplyActivationState(eventWindow, true, false);
         }
       }
       else if (we.getID() == WindowEvent.WINDOW_DEACTIVATED) {
         requestToDeactivateTime.getAndSet(System.currentTimeMillis());
 
-        // For stuf that cannot wait timeout we notify about deactivation
-        OpenAPIAccessor.getApplicationImplAccessor().applyDeactivation(appImpl, eventWindow);
+        // For stuff that cannot wait we notify about deactivation immediately
+        appImpl.tryToApplyActivationState(eventWindow, false, true);
 
         // We do not know for sure that application is going to be inactive,
         // we could just be showing a popup or another transient window.
@@ -832,7 +831,7 @@ public class IdeEventQueue extends EventQueue {
         Timer timer = new Timer(Registry.intValue("app.deactivation.timeout"), new ActionListener() {
           public void actionPerformed(ActionEvent evt) {
             if (appImpl.isActiveDelayed() && !appImpl.isDeactivationCanceled()) {
-              OpenAPIAccessor.getApplicationImplAccessor().applyDelayedDeactivation(appImpl, eventWindow);
+              appImpl.tryToApplyActivationState(eventWindow, false, false);
             }
           }
         });

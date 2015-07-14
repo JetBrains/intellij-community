@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class SourcePositionHighlighter {
   public static final ExtensionPointName<SourcePositionHighlighter> EP_NAME = ExtensionPointName.create("com.intellij.debugger.sourcePositionHighlighter");
 
-  abstract TextRange getHighlightRange(SourcePosition sourcePosition);
+  public abstract TextRange getHighlightRange(SourcePosition sourcePosition);
 
   @Nullable
   public static TextRange getHighlightRangeFor(SourcePosition sourcePosition) {

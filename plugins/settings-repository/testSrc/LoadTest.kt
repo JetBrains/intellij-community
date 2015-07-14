@@ -15,12 +15,8 @@
  */
 package org.jetbrains.settingsRepository.test
 
+import com.intellij.configurationStore.*
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.options.SchemeManagerImpl
-import com.intellij.options.TestScheme
-import com.intellij.options.TestSchemesProcessor
-import com.intellij.options.serialize
-import com.intellij.options.toByteArray
 import org.eclipse.jgit.lib.Repository
 import org.hamcrest.CoreMatchers.equalTo
 import org.jetbrains.settingsRepository.ReadonlySource

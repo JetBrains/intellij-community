@@ -58,7 +58,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -786,7 +785,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ApplicationManager.getApplication().assertWriteAccessAllowed();
 
       if (!ourProject.isDisposed()) {
-        VirtualFile projectFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
+        VirtualFile projectFile = ourProject.getProjectFile();
         File ioFile = projectFile == null ? null : VfsUtilCore.virtualToIoFile(projectFile);
         Disposer.dispose(ourProject);
         if (ioFile != null) {

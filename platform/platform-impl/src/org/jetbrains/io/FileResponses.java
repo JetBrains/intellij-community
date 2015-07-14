@@ -15,7 +15,6 @@
  */
 package org.jetbrains.io;
 
-import com.intellij.openapi.util.text.StringUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -31,7 +30,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.text.ParseException;
 import java.util.Date;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
@@ -45,18 +43,10 @@ public class FileResponses {
   }
 
   private static boolean checkCache(@NotNull HttpRequest request, @NotNull Channel channel, long lastModified) {
-    String ifModifiedSince = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
-    if (!StringUtil.isEmpty(ifModifiedSince)) {
-      try {
-        if (HttpHeaders.getDateHeader(request, HttpHeaderNames.IF_MODIFIED_SINCE).getTime() >= lastModified) {
-          send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
-          return true;
-        }
-      }
-      catch (ParseException ignored) {
-      }
-      catch (NumberFormatException ignored) {
-      }
+    Long ifModified = request.headers().getTimeMillis(HttpHeaderNames.IF_MODIFIED_SINCE);
+    if (ifModified != null && ifModified >= lastModified) {
+      send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
+      return true;
     }
     return false;
   }
@@ -71,7 +61,7 @@ public class FileResponses {
     response.headers().add(CONTENT_TYPE, getContentType(path));
     addCommonHeaders(response);
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate");
-    HttpHeaders.setDateHeader(response, HttpHeaderNames.LAST_MODIFIED, new Date(lastModified));
+    response.headers().set(HttpHeaderNames.LAST_MODIFIED, new Date(lastModified));
     return response;
   }
 

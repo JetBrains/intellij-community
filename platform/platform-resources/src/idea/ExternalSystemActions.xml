@@ -12,6 +12,8 @@
     <action id="ExternalSystem.DetachProject"
             class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"
             use-shortcut-of="$Delete"/>
+    <action id="ExternalSystem.IgnoreProject"
+            class="com.intellij.openapi.externalSystem.action.IgnoreExternalProjectAction"/>
     <action id="ExternalSystem.OpenConfig"
             class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"
             use-shortcut-of="EditSource"/>
@@ -36,6 +38,9 @@
             text="Collapse All"
             icon="AllIcons.Actions.Collapseall"
             use-shortcut-of="CollapseAll"/>
+    <action id="ExternalSystem.OpenProjectStructure" class="com.intellij.openapi.externalSystem.action.ExternalSystemOpenProjectStructureAction"
+            text="Open Project Structure"
+            icon="AllIcons.Modules.ModulesNode"/>
 
     <action id="ExternalSystem.RunTask"
             class="com.intellij.openapi.externalSystem.action.task.RunExternalSystemTaskAction"
@@ -88,18 +93,31 @@
             class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display tasks inherited from sub-projects">
     </action>
 
+    <action id="ExternalSystem.ShowIgnored"
+            class="com.intellij.openapi.externalSystem.action.task.ShowIgnoredAction" text="Show Ignored">
+    </action>
+
     <group id="ExternalSystemView.BaseProjectMenu">
       <reference ref="ExternalSystem.OpenConfig"/>
       <separator/>
       <reference id="ExternalSystem.RefreshProject"/>
       <reference id="ExternalSystem.DetachProject"/>
-
+      <reference id="ExternalSystem.IgnoreProject"/>
     </group>
 
     <group id="ExternalSystemView.ProjectMenu" popup="true">
       <reference ref="ExternalSystemView.BaseProjectMenu"/>
       <separator/>
       <reference id="ExternalSystem.ToggleAutoImport"/>
+      <separator/>
+      <reference id="ExternalSystem.OpenTasksActivationManager"/>
+    </group>
+
+    <group id="ExternalSystemView.ModuleMenu" popup="true">
+      <reference ref="ExternalSystem.OpenConfig"/>
+      <separator/>
+      <reference id="ExternalSystem.RefreshProject"/>
+      <reference id="ExternalSystem.IgnoreProject"/>
       <separator/>
       <reference id="ExternalSystem.OpenTasksActivationManager"/>
     </group>
@@ -114,6 +132,7 @@
       <separator/>
       <reference id="ExternalSystem.ExpandAll"/>
       <reference id="ExternalSystem.CollapseAll"/>
+      <reference id="ExternalSystem.OpenProjectStructure"/>
     </group>
     <group id="ExternalSystemView.ActionsToolbar.RightPanel">
     </group>

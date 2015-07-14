@@ -42,10 +42,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -624,6 +621,13 @@ public class FrameVariablesTree extends DebuggerTree {
           else {
             if (myVisibleLocals.contains(var.getName())) {
               myVars.add(var.getName());
+            }
+            else {
+              // fix for variables used in inner classes
+              if (!Comparing.equal(PsiTreeUtil.getParentOfType(reference, PsiClass.class),
+                                   PsiTreeUtil.getParentOfType(var, PsiClass.class))) {
+                myExpressions.add(new TextWithImportsImpl(reference));
+              }
             }
           }
         }

@@ -23,10 +23,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,7 @@ public class LogModel implements Disposable {
   public static final Topic<Runnable> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", Runnable.class, Topic.BroadcastDirection.NONE);
 
   private final List<Notification> myNotifications = new ArrayList<Notification>();
-  private final Map<Notification, String> myStatuses = Collections.synchronizedMap(new WeakHashMap<Notification, String>());
+  @SuppressWarnings("unchecked") private final Map<Notification, String> myStatuses = ContainerUtil.createConcurrentWeakMap(TObjectHashingStrategy.IDENTITY);
   private Trinity<Notification, String, Long> myStatusMessage;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
@@ -81,7 +83,8 @@ public class LogModel implements Disposable {
       if (myStatusMessage != null && myStatusMessage.first == statusMessage) return;
       if (myStatusMessage == null && statusMessage == null) return;
 
-      myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage, myStatuses.get(statusMessage), stamp);
+      myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage,
+                                                                      ObjectUtils.assertNotNull(myStatuses.get(statusMessage)), stamp);
     }
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }

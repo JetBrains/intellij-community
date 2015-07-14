@@ -21,13 +21,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.templates.github.ZipUtil;
+import com.intellij.util.containers.HashMap;
 import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.*;
 import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.actions.oldCourseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class CCFromCourseArchive extends DumbAwareAction {
@@ -52,7 +55,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
   }
 
   private static void unpackCourseArchive(final Project project) {
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, true);
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, false);
 
     final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
     if (virtualFile == null) {
@@ -66,7 +69,9 @@ public class CCFromCourseArchive extends DumbAwareAction {
       ZipUtil.unzip(null, new File(basePath), new File(virtualFile.getPath()), null, null, true);
       reader = new InputStreamReader(new FileInputStream(new File(basePath, "course.json")));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-      Course course = gson.fromJson(reader, Course.class);
+      OldCourse oldCourse = gson.fromJson(reader, OldCourse.class);
+      Course course = transformOldCourse(oldCourse);
+
       service.setCourse(course);
       project.getBaseDir().refresh(false, true);
       int index = 1;
@@ -103,6 +108,60 @@ public class CCFromCourseArchive extends DumbAwareAction {
       LOG.error(e.getMessage());
     }
     synchronize(project);
+  }
+
+  @NotNull
+  private static Course transformOldCourse(@NotNull final OldCourse oldCourse) {
+    Course course = new Course();
+    course.setDescription(oldCourse.description);
+    course.setName(oldCourse.name);
+    course.setAuthors(new String[]{oldCourse.author});
+
+    final ArrayList<Lesson> lessons = new ArrayList<Lesson>();
+    for (OldLesson oldLesson : oldCourse.lessons) {
+      final Lesson lesson = new Lesson();
+      lesson.setName(oldLesson.name);
+      lesson.setIndex(oldLesson.myIndex);
+
+      final ArrayList<Task> tasks = new ArrayList<Task>();
+      for (OldTask oldTask : oldLesson.taskList) {
+        final Task task = new Task();
+        task.setIndex(oldTask.myIndex);
+        task.setName(oldTask.name);
+
+        final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+        for (Map.Entry<String, OldTaskFile> entry : oldTask.taskFiles.entrySet()) {
+          final TaskFile taskFile = new TaskFile();
+          final OldTaskFile oldTaskFile = entry.getValue();
+          taskFile.setIndex(oldTaskFile.myIndex);
+
+          final ArrayList<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>();
+          for (OldTaskWindow window : oldTaskFile.taskWindows) {
+            final AnswerPlaceholder placeholder = new AnswerPlaceholder();
+
+            placeholder.setIndex(window.myIndex);
+            placeholder.setHint(window.hint);
+            placeholder.setLength(window.length);
+            placeholder.setLine(window.line);
+            placeholder.setPossibleAnswer(window.possibleAnswer);
+            placeholder.setStart(window.start);
+
+            placeholders.add(placeholder);
+          }
+
+          taskFile.setAnswerPlaceholders(placeholders);
+          taskFiles.put(entry.getKey(), taskFile);
+        }
+        task.taskFiles = taskFiles;
+        tasks.add(task);
+      }
+
+      lesson.taskList = tasks;
+
+      lessons.add(lesson);
+    }
+    course.setLessons(lessons);
+    return course;
   }
 
   public static void createAnswerFile(@NotNull final Project project,

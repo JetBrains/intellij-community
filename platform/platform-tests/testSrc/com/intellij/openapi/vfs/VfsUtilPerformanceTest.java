@@ -115,15 +115,15 @@ public class VfsUtilPerformanceTest extends PlatformTestCase {
     assertNotNull(jar);
 
     final JarFileSystem fs = JarFileSystem.getInstance();
-    final NewVirtualFile root = ManagingFS.getInstance().findRoot(jar.getPath() + "!/", fs);
-    PlatformTestUtil.startPerformanceTest("find root is slow", 500, new ThrowableRunnable() {
+    final String path = jar.getPath() + "!/";
+    final NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
+    PlatformTestUtil.startPerformanceTest("find root is slow", 5000, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
-        final String path = jar.getPath() + "!/";
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(500, null), null, false, new Processor<Object>() {
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(500, null), null, false, false, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 20000; i++) {
               NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
               assertNotNull(rootJar);
               assertSame(root, rootJar);

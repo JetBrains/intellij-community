@@ -77,6 +77,12 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     return node != null && dataClass.isInstance(node.getData()) ? (T)node.getData() : null;
   }
 
+  @SuppressWarnings("unchecked")
+  protected boolean isIgnoredNode(AnActionEvent e) {
+    ExternalSystemNode node = ContainerUtil.getFirstItem(ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext()));
+    return node != null && myExternalDataClazz.isInstance(node.getData()) && node.isIgnored();
+  }
+
   @Nullable
   protected VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
     String path = data.getLinkedExternalProjectPath();

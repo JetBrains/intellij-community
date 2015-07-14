@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
@@ -17,6 +18,7 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectStructureDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
@@ -154,14 +156,17 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     systemSettings.setLinkedProjectsSettings(projects);
 
     if (externalProjectNode != null) {
+      ExternalProjectStructureDialog dialog = new ExternalProjectStructureDialog(
+        project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
+      dialog.showAndGet();
+
       ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
         @Override
         public void execute() {
           ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
             @Override
             public void run() {
-              myProjectDataManager.importData(
-                externalProjectNode.getKey(), Collections.singleton(externalProjectNode), project, platformFacade, true);
+              myProjectDataManager.importData(externalProjectNode, project, platformFacade, true);
               myExternalProjectNode = null;
             }
           });

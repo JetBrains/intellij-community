@@ -46,4 +46,6 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
 
   public void testSafeVarargsApplicability() { doTest(true, false); }
   public void testPrivateInInterfaces() { doTest(false, false); }
+
+  public void testValueTypes() { setLanguageLevel(LanguageLevel.JDK_X); doTest(false, false); }
 }

@@ -31,7 +31,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 2/21/13 2:40 PM
  */
-@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
+@Order(ExternalSystemConstants.BUILTIN_PROJECT_DATA_SERVICE_ORDER)
 public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, Project> {
   
   @NotNull
@@ -42,6 +42,9 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
 
   @Override
   public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
+    // root project can be marked as ignored
+    if(toImport.isEmpty()) return;
+
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }

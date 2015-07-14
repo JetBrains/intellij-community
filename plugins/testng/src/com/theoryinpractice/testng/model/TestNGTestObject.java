@@ -250,7 +250,9 @@ public abstract class TestNGTestObject {
       classes.put(psiClass, psiMethods);
     }
     for (PsiMethod method : methods) {
-      psiMethods.put(method, Collections.<String>emptyList());
+      if (!psiMethods.containsKey(method)) {
+        psiMethods.put(method, Collections.<String>emptyList());
+      }
     }
   }
 }

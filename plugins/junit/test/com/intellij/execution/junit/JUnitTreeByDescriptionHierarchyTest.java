@@ -189,6 +189,41 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void testParameterizedClassWithParamsWithDots() throws Exception {
+    final String className = "a.TestA";
+    final Description aTestClassDescription = Description.createSuiteDescription(className);
+    final ArrayList<Description> tests = new ArrayList<Description>();
+    for (String paramName : new String[]{"[0: with - 1.1]", "[1: with - 2.1]"}) {
+      final Description param1 = Description.createSuiteDescription(paramName);
+      aTestClassDescription.addChild(param1);
+      final Description testDescription = Description.createTestDescription(className, "testName" + paramName);
+      tests.add(testDescription);
+      param1.addChild(testDescription);
+    }
+    doTest(aTestClassDescription, tests,
+           //tree
+           "##teamcity[suiteTreeStarted name='|[0: with - 1.1|]' locationHint='java:suite://a.TestA.|[0: with - 1.1|]']\n" +
+           "##teamcity[suiteTreeNode name='testName|[0: with - 1.1|]' locationHint='java:test://a.TestA.testName|[0: with - 1.1|]']\n" +
+           "##teamcity[suiteTreeEnded name='|[0: with - 1.1|]']\n" +
+           "##teamcity[suiteTreeStarted name='|[1: with - 2.1|]' locationHint='java:suite://a.TestA.|[1: with - 2.1|]']\n" +
+           "##teamcity[suiteTreeNode name='testName|[1: with - 2.1|]' locationHint='java:test://a.TestA.testName|[1: with - 2.1|]']\n" +
+           "##teamcity[suiteTreeEnded name='|[1: with - 2.1|]']\n",
+           //start
+           "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[rootName name = 'TestA' comment = 'a' location = 'java:suite://a.TestA']\n" +
+           "##teamcity[testSuiteStarted name='|[0: with - 1.1|]']\n" +
+           "##teamcity[testStarted name='testName|[0: with - 1.1|]' locationHint='java:test://a.TestA.testName|[0: with - 1.1|]']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testName|[0: with - 1.1|]']\n" +
+           "##teamcity[testSuiteFinished name='|[0: with - 1.1|]']\n" +
+           "##teamcity[testSuiteStarted name='|[1: with - 2.1|]']\n" +
+           "##teamcity[testStarted name='testName|[1: with - 2.1|]' locationHint='java:test://a.TestA.testName|[1: with - 2.1|]']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testName|[1: with - 2.1|]']\n" +
+           "##teamcity[testSuiteFinished name='|[1: with - 2.1|]']\n");
+  }
+
+  @Test
   public void test2SuitesWithTheSameTest() throws Exception {
     final Description root = Description.createSuiteDescription("root");
     final String className = "ATest";
@@ -287,6 +322,57 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+  
+  @Test
+  public void testSetupClassFailureForParameterizedClass() throws Exception {
+    final Description root = Description.createSuiteDescription("root");
+    final Description testA = Description.createSuiteDescription("TestA");
+    root.addChild(testA);
+    final Description paramDescription = Description.createSuiteDescription("param");
+    testA.addChild(paramDescription);
+    final Description testName = Description.createTestDescription("TestA", "testName");
+    paramDescription.addChild(testName);
+
+    final StringBuffer buf = new StringBuffer();
+    final JUnit4TestListener sender = createListener(buf);
+    sender.sendTree(root);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://TestA']\n" +
+                                          "##teamcity[suiteTreeStarted name='param' locationHint='java:suite://param']\n" +
+                                          "##teamcity[suiteTreeNode name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
+                                          "##teamcity[suiteTreeEnded name='param']\n" +
+                                          "##teamcity[suiteTreeEnded name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+    
+    buf.setLength(0);
+
+    sender.testRunStarted(testA);
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    sender.testAssumptionFailure(new Failure(testA, exception));
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "##teamcity[testSuiteStarted name='TestA']\n" +
+                                          "##teamcity[testSuiteStarted name='param']\n" +
+                                          "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
+                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "##teamcity[testSuiteFinished name='param']\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+    buf.setLength(0);
+
+    //testStarted and testFinished are called by the framework
+    sender.testRunStarted(testA);
+    sender.testAssumptionFailure(new Failure(testName, exception));
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n", StringUtil.convertLineSeparators(buf.toString()));
+    
   }
 
   @Test

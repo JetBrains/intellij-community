@@ -57,6 +57,8 @@ public interface ExternalProjectsView {
 
   void addListener(@NotNull ExternalProjectsView.Listener listener);
 
+  boolean getShowIgnored();
+
   interface Listener {
     void onDoubleClickOrEnter(@NotNull ExternalSystemNode node, InputEvent inputEvent);
   }

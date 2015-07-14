@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ public interface IComponentStore {
 
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 
-  void load();
-
   @NotNull
   StateStorageManager getStateStorageManager();
 
@@ -52,13 +50,11 @@ public interface IComponentStore {
 
   void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
 
-  interface Reloadable extends IComponentStore {
-    /**
-     * null if reloaded
-     * empty list if nothing to reload
-     * list of not reloadable components (reload is not performed)
-     */
-    @Nullable
-    Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages);
-  }
+  /**
+   * null if reloaded
+   * empty list if nothing to reload
+   * list of not reloadable components (reload is not performed)
+   */
+  @Nullable
+  Collection<String> reload(@NotNull MultiMap<StateStorage, VirtualFile> changedStorages);
 }

@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -227,10 +228,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     else {
       flat.add(projectFilePath);
       // may be not existing yet
-      final String workspaceFile = ((ProjectImpl)myProject).getStateStore().getWorkspaceFilePath();
-      if (workspaceFile != null) {
-        flat.add(workspaceFile);
-      }
+      ContainerUtil.addIfNotNull(flat, ((ProjectImpl)myProject).getStateStore().getWorkspaceFilePath());
     }
 
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {

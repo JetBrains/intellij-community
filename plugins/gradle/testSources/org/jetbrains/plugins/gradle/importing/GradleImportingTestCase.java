@@ -177,7 +177,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Override
-  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+  protected void importProject() {
     ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListenerAdapter() {
       @Override
       public void onProjectsLinked(@NotNull Collection settings) {
@@ -187,7 +187,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         }
       }
     });
-    super.importProject(config);
+    super.importProject();
   }
 
   @Override

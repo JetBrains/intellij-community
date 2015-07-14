@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@
 package com.intellij.ide.impl.convert;
 
 import com.intellij.conversion.impl.ConversionServiceImpl;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -71,21 +70,16 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
 
   @Override
   public void disposeComponent() {
-    if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) return;
-    final IProjectStore stateStore = ((ProjectEx)myProject).getStateStore();
-    final String filePath;
-    if (stateStore.getStorageScheme() == StorageScheme.DEFAULT) {
-      filePath = stateStore.getProjectFilePath();
+    if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
     }
-    else {
-      final VirtualFile baseDir = stateStore.getProjectBaseDir();
-      filePath = baseDir != null ? baseDir.getPath() : null;
-    }
-    if (filePath != null) {
-      ConversionServiceImpl.saveConversionResult(FileUtil.toSystemDependentName(filePath));
-    }
-    else {
+
+    VirtualFile file = ProjectUtil.isDirectoryBased(myProject) ? myProject.getBaseDir() : myProject.getProjectFile();
+    if (file == null) {
       LOG.info("Cannot save conversion result: filePath == null");
+    }
+    else {
+      ConversionServiceImpl.saveConversionResult(FileUtil.toSystemDependentName(file.getPath()));
     }
   }
 

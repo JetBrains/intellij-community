@@ -51,12 +51,10 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
     final List<War> warModels;
     final WebConfiguration webConfiguration = resolverCtx.getExtraProject(gradleModule, WebConfiguration.class);
     if (webConfiguration != null) {
-      warModels =
-        ContainerUtil.map(webConfiguration.getWarModels(), new Function<WebConfiguration.WarModel, War>() {
+      warModels = ContainerUtil.map(webConfiguration.getWarModels(), new Function<WebConfiguration.WarModel, War>() {
           @Override
           public War fun(WebConfiguration.WarModel model) {
-            War war =
-              new War(model.getWarName(), model.getWebAppDirName(), model.getWebAppDir());
+            War war = new War(model.getWarName(), model.getWebAppDirName(), model.getWebAppDir());
             war.setWebXml(model.getWebXml());
             war.setWebResources(map(model.getWebResources()));
             war.setClasspath(model.getClasspath());
@@ -64,12 +62,8 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
             return war;
           }
         });
+      ideModule.createChild(WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
     }
-    else {
-      // we need to create WebConfigurationModelData without war artifacts to handle removal outdated web artifacts of the project which can be previously created
-      warModels = ContainerUtil.emptyList();
-    }
-    ideModule.createChild(WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
     nextResolver.populateModuleExtraModels(gradleModule, ideModule);
   }
 

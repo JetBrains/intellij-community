@@ -1411,10 +1411,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       super.paintChildren(imageGraphics);
       imageGraphics.dispose();
       Graphics2D g2d = (Graphics2D)g.create();
-      if (UIUtil.isRetina()) {
-        g2d.scale(.5, .5);
+      try {
+        if (UIUtil.isRetina()) {
+          g2d.scale(.5, .5);
+        }
+        UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
       }
-      UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
+      finally {
+        g2d.dispose();
+      }
     }
 
     private Image makeColorTransparent(Image image, Color color) {

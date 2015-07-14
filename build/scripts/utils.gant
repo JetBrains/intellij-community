@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
@@ -80,14 +78,14 @@ binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
-binding.setVariable("yjpOptions", { String systemSelector, String platformSuffix = "" ->
-  "-agentlib:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$systemSelector".trim()
+binding.setVariable("yjpOptions", { String sessionName, String platformSuffix = "" ->
+  "-agentlib:yjpagent$platformSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$sessionName".trim()
 })
-binding.setVariable("vmOptions32yjp", { String systemSelector ->
-  "${vmOptions32()} ${yjpOptions(systemSelector)}".trim()
+binding.setVariable("vmOptions32yjp", { String sessionName ->
+  "${vmOptions32()} ${yjpOptions(sessionName)}".trim()
 })
-binding.setVariable("vmOptions64yjp", { String systemSelector ->
-  "${vmOptions64()} ${yjpOptions(systemSelector, "64")}".trim()
+binding.setVariable("vmOptions64yjp", { String sessionName ->
+  "${vmOptions64()} ${yjpOptions(sessionName, "64")}".trim()
 })
 
 binding.setVariable("isDefined", {String key ->
@@ -329,7 +327,8 @@ binding.setVariable("copyAndPatchFiles", { Closure files, String target, Map arg
 
 binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   ant.tstamp()
-  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
+  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP,
+          "PACKAGE_CODE": buildNumber.substring(0, buildNumber.indexOf('-'))])
 })
 
 binding.setVariable("commonJvmArgsForTests", {
@@ -422,7 +421,8 @@ binding.setVariable("platformImplementationModules", [
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
-  "xml"
+  "xml",
+  "configuration-store-impl",
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
@@ -521,6 +521,9 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@product_state@@", value: EAP)
     replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
     replacefilter(token: "@@year@@", value: "$todayYear")
+    replacefilter(token: "@@company_name@@", value: p("component.company.name"))
+    replacefilter(token: "@@min_year@@", value: "2000")
+    replacefilter(token: "@@max_year@@", value: "$todayYear")
     replacefilter(token: "@@version@@", value: version)
     replacefilter(token: "@@vmoptions@@", value: vmOptions)
     replacefilter(token: "@@idea_properties@@", value: coreProperties)
@@ -622,14 +625,14 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
   ant.fixcrlf(srcdir: "$target/bin", includes: "*.sh", eol: "unix")
 })
 
-binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
+binding.setVariable("winVMOptions", { String target, String yjpSessionName, String name, String name64 = null ->
   if (name != null) {
-    def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
+    def options = isEap() && yjpSessionName != null ? vmOptions32yjp(yjpSessionName) : vmOptions32()
     ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
   }
 
   if (name64 != null) {
-    def options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
+    def options = isEap() && yjpSessionName != null ? vmOptions64yjp(yjpSessionName) : vmOptions64()
     ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
   }
 
@@ -875,14 +878,14 @@ binding.setVariable("getPathToBundledJDK", { File jdkDir, String prefix, String 
   return JdkFileName.replace('\\', '/')
 })
 
-binding.setVariable("buildWinZip", { String zipPath, List paths ->
+binding.setVariable("buildWinZip", { String zipPath, List paths, String zipPrefix = "" ->
   projectBuilder.stage(".win.zip")
 
   fixIdeaPropertiesEol(paths, "dos")
 
   ant.zip(zipfile: zipPath) {
     paths.each {
-      fileset(dir: it)
+      zipfileset(dir: it, prefix: zipPrefix)
     }
   }
 
@@ -1099,6 +1102,14 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       resourcePaths.each {
         pathelement(location: it)
       }
+    }
+  }
+})
+
+binding.setVariable("layoutUpdater", { String target, String jarName = "updater.jar" ->
+  layout(target) {
+    jar(jarName) {
+      module("updater")
     }
   }
 })

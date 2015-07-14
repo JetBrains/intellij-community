@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -307,8 +305,7 @@ public class ConversionServiceImpl extends ConversionService {
   @Override
   @NotNull
   public ConversionResult convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
-    final IProjectStore stateStore = ((ProjectImpl)project).getStateStore();
-    final String url = stateStore.getPresentableUrl();
+    final String url = project.getPresentableUrl();
     assert url != null : project;
     final String projectPath = FileUtil.toSystemDependentName(url);
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBUI;
@@ -371,6 +372,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   public void setMaximized() {
+    if (Registry.is("darcula.fix.maximized.frame.bounds")) return;
+
     Component tla = myRootPane.getTopLevelAncestor();
     GraphicsConfiguration gc = (currentRootPaneGC != null) ? currentRootPaneGC
                                                            : tla.getGraphicsConfiguration();

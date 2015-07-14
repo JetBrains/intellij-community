@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @see com.intellij.openapi.project.ex.ProjectEx#getStateStore()
  */
-public interface IProjectStore extends IComponentStore.Reloadable {
+public interface IProjectStore extends IComponentStore {
   boolean checkVersion();
 
   void setProjectFilePath(@NotNull String filePath);

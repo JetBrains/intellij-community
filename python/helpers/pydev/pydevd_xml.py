@@ -77,6 +77,12 @@ if not sys.platform.startswith("java"):
     except:
         pass  #django may not be installed
 
+    try:
+        from collections import deque
+        typeMap.append((deque, pydevd_resolver.dequeResolver))
+    except:
+        pass
+
     if frame_type is not None:
         typeMap.append((frame_type, pydevd_resolver.frameResolver))
 
