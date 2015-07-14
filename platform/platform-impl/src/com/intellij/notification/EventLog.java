@@ -308,7 +308,7 @@ public class EventLog {
     public final String status;
     public final List<Pair<TextRange, HyperlinkInfo>> links;
 
-    public LogEntry(String message, String status, List<Pair<TextRange, HyperlinkInfo>> links) {
+    public LogEntry(@NotNull String message, @NotNull String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links) {
       this.message = message;
       this.status = status;
       this.links = links;
