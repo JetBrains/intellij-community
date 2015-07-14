@@ -37,6 +37,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -51,6 +52,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   private boolean myTemplateTesting;
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
+  private final EventDispatcher<TemplateManagerListener> myDispatcher = EventDispatcher.create(TemplateManagerListener.class);
 
   public TemplateManagerImpl(Project project) {
     myProject = project;
@@ -123,6 +125,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   private TemplateState initTemplateState(@NotNull Editor editor) {
     clearTemplateState(editor);
     TemplateState state = new TemplateState(myProject, editor);
+
     Disposer.register(this, state);
     editor.putUserData(TEMPLATE_STATE_KEY, state);
     return state;
@@ -135,6 +138,11 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       runnable.run();
     }
     return runnable != null;
+  }
+
+  @Override
+  public void addTemplateManagerListener(@NotNull Disposable disposable, @NotNull final TemplateManagerListener listener) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   @Override
@@ -185,6 +193,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
           editor.getSelectionModel().removeSelection();
         }
         templateState.start((TemplateImpl)template, processor, predefinedVarValues);
+        fireTemplateStarted(templateState);
       }
     };
     if (inSeparateCommand) {
@@ -465,8 +474,13 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
           predefinedVarValues.put(TemplateImpl.ARG, argument);
         }
         templateState.start(template, processor, predefinedVarValues);
+        fireTemplateStarted(templateState);
       }
     }, CodeInsightBundle.message("insert.code.template.command"), null);
+  }
+
+  private void fireTemplateStarted(TemplateState templateState) {
+    myDispatcher.getMulticaster().templateStarted(templateState);
   }
 
   private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {

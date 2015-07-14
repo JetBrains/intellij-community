@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,8 @@ public abstract class TemplateManager {
   public static TemplateManager getInstance(Project project) {
     return ServiceManager.getService(project, TemplateManager.class);
   }
+
+  public abstract void addTemplateManagerListener(@NotNull Disposable disposable, @NotNull TemplateManagerListener listener);
 
   public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template);
 
