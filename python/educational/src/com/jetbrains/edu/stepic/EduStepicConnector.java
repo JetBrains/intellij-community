@@ -164,11 +164,9 @@ public class EduStepicConnector {
   public static List<CourseInfo> getCourses() {
     try {
       List<CourseInfo> result = new ArrayList<CourseInfo>();
-      int pageNumber = 0;
-      boolean hasNext = addCoursesFromStepic(result, pageNumber);
-      while (hasNext) {
+      int pageNumber = 1;
+      while (addCoursesFromStepic(result, pageNumber)) {
         pageNumber += 1;
-        hasNext = addCoursesFromStepic(result, pageNumber);
       }
       return result;
     }
@@ -336,7 +334,7 @@ public class EduStepicConnector {
 
   private static class StepOptions {
     @Expose List<TestFileWrapper> test;
-    @Expose String title;  //HERE
+    @Expose String title;
     @Expose List<TaskFile> files;
     @Expose String text;
 
