@@ -7,9 +7,9 @@ lombok-intellij-plugin [![Build Status](https://travis-ci.org/mplushnikov/lombok
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.9.5) released on 01.07.2015**
+**Last version (0.9.6) released on 14.07.2015**
 
-Twelfth version of plugin released. Bugfixes and initial support for some cool lombok and delombok refactoring actions with Intellij!
+Fourteenth version of plugin released. Bugfixes and new features like onAnnotation and @Singular support!
 
 Install it automatically from IntelliJ Idea plugin repository.
 
@@ -29,7 +29,8 @@ Features / Supports
 - [@AllArgsConstructor, @RequiredArgsConstructor and @NoArgsConstructor](http://projectlombok.org/features/Constructor.html)
 - [@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog](http://projectlombok.org/features/Log.html)
 - [@Data](http://projectlombok.org/features/Data.html)
-- [@Builder](http://projectlombok.org/features/experimental/Builder.html)
+- [@Builder](https://projectlombok.org/features/Builder.html)
+- [@Singular](https://projectlombok.org/features/Builder.html)
 - [@Delegate](http://projectlombok.org/features/Delegate.html)
 - [@Value](http://projectlombok.org/features/Value.html)
 - [@Accessors](http://projectlombok.org/features/experimental/Accessors.html)
