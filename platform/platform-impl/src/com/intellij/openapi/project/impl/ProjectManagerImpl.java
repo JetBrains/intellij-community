@@ -307,10 +307,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
     boolean succeed = false;
     try {
-      if (template == null) {
-        project.getStateStore().load();
-      }
-      else {
+      if (template != null) {
         project.getStateStore().loadProjectFromTemplate(template);
       }
       project.init();
