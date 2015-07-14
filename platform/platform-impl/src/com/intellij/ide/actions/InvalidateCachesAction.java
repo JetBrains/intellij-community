@@ -77,7 +77,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       }, "\n");
     }
     
-    String message = "<html>The caches will be invalidated and rebuilt on the next startup.\n\n" +
+    String message = "The caches will be invalidated and rebuilt on the next startup.\n\n" +
                      warnings + "\n\n" +
                      "Would you like to continue?\n";
     int result = Messages.showDialog(e.getData(CommonDataKeys.PROJECT),
