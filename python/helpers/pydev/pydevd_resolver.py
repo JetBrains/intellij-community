@@ -222,7 +222,10 @@ class DictResolver:
         if '(' not in key:
             #we have to treat that because the dict resolver is also used to directly resolve the global and local
             #scopes (which already have the items directly)
-            return dict[key]
+            try:
+                return dict[key]
+            except:
+                return getattr(dict, key)
 
         #ok, we have to iterate over the items to find the one that matches the id, because that's the only way
         #to actually find the reference from the string we have before.
@@ -256,8 +259,10 @@ class DictResolver:
                 break
 
         ret['__len__'] = len(dict)
+        # in case if the class extends built-in type and has some additional fields
+        additional_fields = defaultResolver.getDictionary(dict)
+        ret.update(additional_fields)
         return ret
-
 
 
 #=======================================================================================================================
@@ -272,7 +277,10 @@ class TupleResolver: #to enumerate tuples and lists
         '''
         if attribute in ('__len__', TOO_LARGE_ATTR):
             return None
-        return var[int(attribute)]
+        try:
+            return var[int(attribute)]
+        except:
+            return getattr(var, attribute)
 
     def getDictionary(self, var):
         l = len(var)
@@ -290,6 +298,9 @@ class TupleResolver: #to enumerate tuples and lists
                 break
                 
         d['__len__'] = len(var)
+        # in case if the class extends built-in type and has some additional fields
+        additional_fields = defaultResolver.getDictionary(var)
+        d.update(additional_fields)
         return d
 
 
@@ -306,7 +317,11 @@ class SetResolver:
         if attribute in ('__len__', TOO_LARGE_ATTR):
             return None
 
-        attribute = int(attribute)
+        try:
+            attribute = int(attribute)
+        except:
+            return getattr(var, attribute)
+
         for v in var:
             if id(v) == attribute:
                 return v
@@ -326,6 +341,9 @@ class SetResolver:
 
             
         d['__len__'] = len(var)
+        # in case if the class extends built-in type and has some additional fields
+        additional_fields = defaultResolver.getDictionary(var)
+        d.update(additional_fields)
         return d
 
 
