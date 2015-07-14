@@ -74,7 +74,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile) {
     if (!WebEditorOptions.getInstance().isAutoCloseTag()) return Result.CONTINUE;
-    if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
+    if ((XmlGtTypedHandler.fileContainsXmlLanguage(editedFile)) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

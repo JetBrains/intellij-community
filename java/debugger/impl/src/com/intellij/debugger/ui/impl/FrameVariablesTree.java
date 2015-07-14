@@ -625,6 +625,9 @@ public class FrameVariablesTree extends DebuggerTree {
             if (myVisibleLocals.contains(var.getName())) {
               myVars.add(var.getName());
             }
+            else if (var instanceof PsiLocalVariable) {
+              myExpressions.add(new TextWithImportsImpl(reference));
+            }
           }
         }
       }

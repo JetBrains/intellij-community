@@ -47,7 +47,7 @@ public abstract class ExternalSystemToggleAction extends ToggleAction implements
   }
 
   @Override
-  public final boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(AnActionEvent e) {
     if (!isEnabled(e)) return false;
     return doIsSelected(e);
   }
@@ -76,5 +76,8 @@ public abstract class ExternalSystemToggleAction extends ToggleAction implements
 
   protected void setText(AnActionEvent e, String message) {
     e.getPresentation().setText(message);
+  }
+  protected void setDescription(AnActionEvent e, String message) {
+    e.getPresentation().setDescription(message);
   }
 }
