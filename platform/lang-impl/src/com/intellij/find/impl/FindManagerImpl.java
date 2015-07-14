@@ -835,30 +835,8 @@ public class FindManagerImpl extends FindManager {
     else {
       buffer.append(Character.toLowerCase(toReplace.charAt(0)));
     }
-    if (toReplace.length() == 1) return buffer.toString();
 
-    if (foundString.length() == 1) {
-      buffer.append(toReplace.substring(1));
-      return buffer.toString();
-    }
-
-    boolean isTailUpper = true;
-    boolean isTailLower = true;
-    for (int i = 1; i < foundString.length(); i++) {
-      isTailUpper &= Character.isUpperCase(foundString.charAt(i));
-      isTailLower &= Character.isLowerCase(foundString.charAt(i));
-      if (!isTailUpper && !isTailLower) break;
-    }
-
-    if (isTailUpper) {
-      buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
-    }
-    else if (isTailLower) {
-      buffer.append(toReplace.substring(1).toLowerCase());
-    }
-    else {
-      buffer.append(toReplace.substring(1));
-    }
+    buffer.append(toReplace.substring(1));
     return buffer.toString();
   }
 
