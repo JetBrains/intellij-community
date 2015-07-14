@@ -127,7 +127,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
     }
   }
 
-  private void sendLine(StringBuilder line) {
+  protected void sendLine(@NotNull StringBuilder line) {
     onTextAvailable(line.toString());
     line.setLength(0);
   }

@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 
 public abstract class OutputReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.OutputReader");
+  private static final int READ_FULLY_TIMEOUT = 10;
 
   private final Semaphore myReadFullySemaphore = new Semaphore();
 
@@ -80,13 +81,34 @@ public abstract class OutputReader extends BaseOutputReader {
     }
   }
 
+  @Override
+  protected void sendLine(@NotNull StringBuilder line) {
+    super.sendLine(line);
+
+    if (mySleepingPolicy == SleepingPolicy.BLOCKING) {
+      myReadFullySemaphore.up();
+    }
+  }
+
   public void readFully() throws InterruptedException {
-    myReadFullySemaphore.down();
-    while (!myReadFullySemaphore.waitForUnsafe(10)) {
-      if (isStopped) {
-        waitFor();
-        return;
+    if (mySleepingPolicy != SleepingPolicy.BLOCKING) {
+      myReadFullySemaphore.down();
+      while (!myReadFullySemaphore.waitForUnsafe(READ_FULLY_TIMEOUT)) {
+        if (isStopped) {
+          waitFor();
+          return;
+        }
       }
+    }
+    else {
+      do {
+        myReadFullySemaphore.down();
+      }
+      while (myReadFullySemaphore.waitForUnsafe(READ_FULLY_TIMEOUT));
+
+      myReadFullySemaphore.up();
+
+      if (isStopped) waitFor();
     }
   }
 }
