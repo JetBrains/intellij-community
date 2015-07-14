@@ -141,16 +141,20 @@ public class JUnit4TestListener extends RunListener {
   }
 
   public void testFailure(Failure failure) throws Exception {
-    final Description description = failure.getDescription();
+    testFailure(failure, failure.getDescription(), MapSerializerUtil.TEST_FAILED, true);
+  }
+
+  private void testFailure(Failure failure, Description description, String messageName, boolean local) throws Exception {
     final String methodName = getFullMethodName(description);
-    //class setUp failed
-    if (methodName == null) {
+    if (methodName == null) { //class setUp failed
       for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-        testFailure(failure, MapSerializerUtil.TEST_FAILED, getFullMethodName((Description)iterator.next()));
+        testFailure(failure, (Description)iterator.next(), messageName, false);
       }
     }
     else {
-      testFailure(failure, MapSerializerUtil.TEST_FAILED, methodName);
+      if (!local) testStarted(description);
+      testFailure(failure, messageName, methodName);
+      if (!local) testFinished(description);
     }
   }
 
@@ -185,17 +189,7 @@ public class JUnit4TestListener extends RunListener {
   public void testAssumptionFailure(Failure failure) {
     final Description description = failure.getDescription();
     try {
-      final String methodName = getFullMethodName(description);
-      //class setUp failed
-      if (methodName == null) {
-        for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-          final Description testDescription = (Description)iterator.next();
-          testAssumptionFailure(failure, testDescription, getFullMethodName(testDescription));
-        }
-      }
-      else {
-        testAssumptionFailure(failure, description, methodName);
-      }
+      testFailure(failure, description, MapSerializerUtil.TEST_IGNORED, true);
     }
     catch (Exception ignore) {}
   }
@@ -215,13 +209,7 @@ public class JUnit4TestListener extends RunListener {
     }
     return methodName;
   }
-
-  private void testAssumptionFailure(Failure failure, Description testDescription, String name) throws Exception {
-    testStarted(testDescription);
-    testFailure(failure, MapSerializerUtil.TEST_IGNORED, name);
-    testFinished(testDescription);
-  }
-
+  
   public synchronized void testIgnored(Description description) throws Exception {
     final String methodName = getFullMethodName(description);
     if (methodName == null) {

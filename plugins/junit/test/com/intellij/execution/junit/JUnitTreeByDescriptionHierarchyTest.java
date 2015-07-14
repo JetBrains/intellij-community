@@ -323,6 +323,57 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
+  
+  @Test
+  public void testSetupClassFailureForParameterizedClass() throws Exception {
+    final Description root = Description.createSuiteDescription("root");
+    final Description testA = Description.createSuiteDescription("TestA");
+    root.addChild(testA);
+    final Description paramDescription = Description.createSuiteDescription("param");
+    testA.addChild(paramDescription);
+    final Description testName = Description.createTestDescription("TestA", "testName");
+    paramDescription.addChild(testName);
+
+    final StringBuffer buf = new StringBuffer();
+    final JUnit4TestListener sender = createListener(buf);
+    sender.sendTree(root);
+
+    Assert.assertEquals("output: " + buf, "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://TestA']\n" +
+                                          "##teamcity[suiteTreeStarted name='param' locationHint='java:suite://param']\n" +
+                                          "##teamcity[suiteTreeNode name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
+                                          "##teamcity[suiteTreeEnded name='param']\n" +
+                                          "##teamcity[suiteTreeEnded name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+    
+    buf.setLength(0);
+
+    sender.testRunStarted(testA);
+    final Exception exception = new Exception();
+    exception.setStackTrace(new StackTraceElement[0]);
+    sender.testAssumptionFailure(new Failure(testA, exception));
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "##teamcity[testSuiteStarted name='TestA']\n" +
+                                          "##teamcity[testSuiteStarted name='param']\n" +
+                                          "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
+                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "##teamcity[testSuiteFinished name='param']\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+    buf.setLength(0);
+
+    //testStarted and testFinished are called by the framework
+    sender.testRunStarted(testA);
+    sender.testAssumptionFailure(new Failure(testName, exception));
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n", StringUtil.convertLineSeparators(buf.toString()));
+    
+  }
 
   @Test
   public void testSingleMethod() throws Exception {
