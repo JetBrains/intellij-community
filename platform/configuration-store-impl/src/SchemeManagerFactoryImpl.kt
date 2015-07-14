@@ -18,6 +18,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.*
@@ -33,9 +34,10 @@ public class SchemeManagerFactoryImpl : SchemesManagerFactory(), SettingsSavingC
 
   override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(fileSpec: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
     val storageManager = (ApplicationManager.getApplication().getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore).getStateStorageManager()
-    val baseDirPath = storageManager.expandMacros(fileSpec)
-    val provider = storageManager.getStreamProvider()
-    val manager = SchemeManagerImpl<T, E>(fileSpec, processor, roamingType, provider, File(baseDirPath))
+
+    val absoluteFileSpec = if (fileSpec.startsWith('$')) fileSpec else "${StoragePathMacros.ROOT_CONFIG}/$fileSpec"
+
+    val manager = SchemeManagerImpl<T, E>(absoluteFileSpec, processor, roamingType, storageManager.getStreamProvider(), File(storageManager.expandMacros(absoluteFileSpec)))
     @suppress("CAST_NEVER_SUCCEEDS")
     myRegisteredManagers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager

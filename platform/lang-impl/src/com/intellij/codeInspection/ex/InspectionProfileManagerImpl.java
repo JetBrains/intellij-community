@@ -66,9 +66,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/editor.xml"),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   },
-  additionalExportFile = InspectionProfileManager.FILE_SPEC
+  additionalExportFile = InspectionProfileManager.INSPECTION_DIR
 )
 public class InspectionProfileManagerImpl extends InspectionProfileManager implements SeverityProvider, PersistentStateComponent<Element> {
+
   private final InspectionToolRegistrar myRegistrar;
   private final SchemesManager<Profile, InspectionProfileImpl> mySchemesManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -84,7 +85,7 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<InspectionProfileImpl>() {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(INSPECTION_DIR, new BaseSchemeProcessor<InspectionProfileImpl>() {
       @NotNull
       @Override
       public InspectionProfileImpl readScheme(@NotNull Element element) {
