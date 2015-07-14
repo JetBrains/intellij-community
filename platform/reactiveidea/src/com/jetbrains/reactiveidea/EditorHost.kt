@@ -15,6 +15,11 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.TemplateManagerListener
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
@@ -25,10 +30,12 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.impl.CaretModelImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.AbsentModel
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
@@ -75,7 +82,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
 
 
     val caretModel = editor.getCaretModel()
-    val selectionReaction = com.jetbrains.reactivemodel.reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated) { selection, caret, _ ->
+    val selectionReaction = reaction(true, "update selection/caret in editor from the model", selectionSignal, caretSignal, documentHost.documentUpdated) { selection, caret, _ ->
 
       selection as MapModel?
       caret as MapModel?
@@ -137,6 +144,31 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
     editor.getSelectionModel().addSelectionListener(selectionListener)
     lifetime += {
       editor.getSelectionModel().removeSelectionListener(selectionListener)
+    }
+
+    val disposable = Disposer.newDisposable()
+    TemplateManager.getInstance(editor.getProject()).addTemplateManagerListener(disposable, object: TemplateManagerListener {
+      override fun templateStarted(state: TemplateState) {
+        if (state.getEditor() == editor) {
+          reactiveModel.transaction { m -> (path / "live-template").putIn(m, PrimitiveModel(true))}
+          state.addTemplateStateListener(object: TemplateEditingAdapter() {
+            override fun templateFinished(template: Template?, brokenOff: Boolean) {
+              finished();
+            }
+
+            override fun templateCancelled(template: Template?) {
+              finished()
+            }
+
+            private fun finished() {
+              reactiveModel.transaction { m -> (path / "live-template").putIn(m, AbsentModel()) }
+            }
+          })
+        }
+      }
+    })
+    lifetime += {
+      Disposer.dispose(disposable)
     }
   }
 
