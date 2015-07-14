@@ -1381,7 +1381,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     GutterIconRenderer renderer = getGutterRenderer(e);
     final Project project = myEditor.getProject();
-    if (isNavigationBlocked(renderer, project)) {
+    if (renderer != null && isNavigationBlocked(renderer, project)) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available during indexing");
       return;
     }
@@ -1409,7 +1409,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private static boolean isNavigationBlocked(@Nullable GutterIconRenderer renderer, @Nullable Project project) {
+  private static boolean isNavigationBlocked(@NotNull GutterIconRenderer renderer, @Nullable Project project) {
     return project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(renderer);
   }
 
