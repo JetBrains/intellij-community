@@ -293,8 +293,7 @@ public class PyDocstringGenerator {
     if (myDocStringOwner instanceof PyFunction) {
       final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
-      if (document != null && myFunction != null && statementList.getStatements().length != 0
-          && document.getLineNumber(statementList.getTextOffset()) != document.getLineNumber(myFunction.getTextOffset())) {
+      if (document != null && myFunction != null && !PyUtil.onSameLine(statementList, myFunction) && statementList.getStatements().length != 0) {
         whitespace = PsiTreeUtil.getPrevSiblingOfType(statementList, PsiWhiteSpace.class);
       }
     }
@@ -407,8 +406,7 @@ public class PyDocstringGenerator {
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(getFile());
 
       if (document != null) {
-        if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(myFunction.getTextOffset()) ||
-            list.getStatements().length == 0) {
+        if (PyUtil.onSameLine(list, myFunction) || list.getStatements().length == 0) {
           PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(myFunction),
                                                             PyFunction.class,
                                                             "def " + myFunction.getName() + myFunction.getParameterList().getText()

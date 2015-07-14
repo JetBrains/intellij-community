@@ -430,10 +430,7 @@ public class PyBlock implements ASTBlock {
     final PsiElement header = getControlStatementHeader(myNode);
     if (header instanceof PyStatementListContainer) {
       final PyStatementList statementList = ((PyStatementListContainer)header).getStatementList();
-      final int headerStartLine = getLineInDocument(header);
-      final int statementListStartLine = getLineInDocument(statementList);
-      final int argumentListStartLine = getLineInDocument(myNode.getPsi());
-      return headerStartLine == argumentListStartLine && headerStartLine != statementListStartLine;
+      return PyUtil.onSameLine(header, myNode.getPsi()) && !PyUtil.onSameLine(header, statementList);
     }
     return false;
   }
@@ -562,11 +559,6 @@ public class PyBlock implements ASTBlock {
       return withItem.getParent();
     }
     return null;
-  }
-
-  private static int getLineInDocument(@NotNull PsiElement element) {
-    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-    return document != null ? document.getLineNumber(element.getTextOffset()) : -1;
   }
 
   private boolean isSliceOperand(ASTNode child) {
