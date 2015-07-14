@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
  */
 public class JavaProjectData extends AbstractExternalEntityData {
 
-  @NotNull public static final Key<JavaProjectData> KEY = Key.create(JavaProjectData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
+  public static final Key<JavaProjectData> KEY = Key.create(JavaProjectData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
 
   private static final Logger LOG = Logger.getInstance("#" + JavaProjectData.class.getName());
 
@@ -128,7 +128,7 @@ public class JavaProjectData extends AbstractExternalEntityData {
 
   public void setLanguageLevel(@Nullable String languageLevel) {
     LanguageLevel level = LanguageLevel.parse(languageLevel);
-    if (level == null) {
+    if (level == null && languageLevel != null) {
       Matcher matcher = JDK_VERSION_PATTERN.matcher(languageLevel);
       if (matcher.matches()) {
         String versionAsString = matcher.group(1);
