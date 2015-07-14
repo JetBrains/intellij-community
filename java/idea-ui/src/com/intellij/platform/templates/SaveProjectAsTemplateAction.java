@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -74,8 +73,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
-    StorageScheme scheme = ((ProjectEx)project).getStateStore().getStorageScheme();
-    if (scheme != StorageScheme.DIRECTORY_BASED) {
+    if (!ProjectUtil.isDirectoryBased(project)) {
       Messages.showErrorDialog(project, "Project templates do not support old .ipr (file-based) format.\n" +
                                         "Please convert your project via File->Save as Directory-Based format.", CommonBundle.getErrorTitle());
       return;
@@ -111,7 +109,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   public static VirtualFile getDescriptionFile(Project project, String path) {
-    return VfsUtil.findRelativeFile(path, project.getBaseDir());
+    return VfsUtilCore.findRelativeFile(path, project.getBaseDir());
   }
 
   public static void saveProject(final Project project,

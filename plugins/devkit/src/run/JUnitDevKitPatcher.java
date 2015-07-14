@@ -18,11 +18,14 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NonNls;
@@ -43,11 +46,20 @@ import java.io.IOException;
 public class JUnitDevKitPatcher extends JUnitPatcher{
   public static final String JAVA_SYSTEM_CLASS_LOADER_PROPERTY = "java.system.class.loader";
 
-  public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
-    if (module != null && PsiUtil.isIdeaProject(module.getProject()) && 
-        !javaParameters.getVMParametersList().hasParameter(JAVA_SYSTEM_CLASS_LOADER_PROPERTY) &&
-        JavaPsiFacade.getInstance(module.getProject()).findClass(UrlClassLoader.class.getName(), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null) {
-      javaParameters.getVMParametersList().add("-D" + JAVA_SYSTEM_CLASS_LOADER_PROPERTY + "=" + UrlClassLoader.class.getName());
+  public void patchJavaParameters(@Nullable final Module module, JavaParameters javaParameters) {
+    if (module != null && PsiUtil.isIdeaProject(module.getProject()) &&
+        !javaParameters.getVMParametersList().hasParameter(JAVA_SYSTEM_CLASS_LOADER_PROPERTY)) {
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(module.getProject());
+      final String qualifiedName = UrlClassLoader.class.getName();
+      final PsiClass urlLoaderClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+        @Override
+        public PsiClass compute() {
+          return psiFacade.findClass(qualifiedName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+        }
+      });
+      if (urlLoaderClass != null) {
+        javaParameters.getVMParametersList().add("-D" + JAVA_SYSTEM_CLASS_LOADER_PROPERTY + "=" + UrlClassLoader.class.getName());
+      }
     }
     Sdk jdk = javaParameters.getJdk();
     jdk = IdeaJdk.findIdeaJdk(jdk);

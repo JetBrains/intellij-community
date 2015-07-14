@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -154,14 +154,13 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
     
     if (project instanceof ProjectEx) {
-      IProjectStore store = ((ProjectEx)project).getStateStore();
-
-      if (store.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
+      if (ProjectUtil.isDirectoryBased(project)) {
         VirtualFile baseDir = project.getBaseDir();
         VirtualFile dotIdea = baseDir == null ? null : baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
         if (dotIdea != null && VfsUtilCore.isAncestor(dotIdea, file, false)) return true;
       }
 
+      IProjectStore store = ((ProjectEx)project).getStateStore();
       if (file.equals(store.getWorkspaceFile()) || file.equals(store.getProjectFile())) return true;
       for (Module each : ModuleManager.getInstance(project).getModules()) {
         if (file.equals(each.getModuleFile())) return true;

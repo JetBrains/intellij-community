@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.DumbAware;
@@ -39,34 +38,34 @@ import java.util.ArrayList;
 public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
-    if (project instanceof ProjectEx) {
+    if (project == null || ProjectUtil.isDirectoryBased(project) || Messages.showOkCancelDialog(project,
+                                                                                                "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
+                                                                                                "Save project to Directory-Based format",
+                                                                                                Messages.getWarningIcon()) != Messages.OK) {
+      return;
+    }
+
+    VirtualFile baseDir = project.getBaseDir();
+    assert baseDir != null;
+
+    File ideaDir = new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER + File.separatorChar);
+    if ((ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir)) {
       IProjectStore projectStore = ((ProjectEx)project).getStateStore();
-      if (StorageScheme.DIRECTORY_BASED != projectStore.getStorageScheme()) {
-        if (Messages.showOkCancelDialog(project,
-                                        "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
-                                        "Save project to Directory-Based format", Messages.getWarningIcon()) == Messages.OK) {
-          VirtualFile baseDir = project.getBaseDir();
-          assert baseDir != null;
 
-          File ideaDir = new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER + File.separatorChar);
-          if ((ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir)) {
-            LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
 
-            final StateStorageManager storageManager = projectStore.getStateStorageManager();
-            for (String file : new ArrayList<String>(storageManager.getStorageFileNames())) {
-              storageManager.clearStateStorage(file);
-            }
-
-            projectStore.setProjectFilePath(baseDir.getPath());
-            project.save();
-            ProjectUtil.closeAndDispose(project);
-            ProjectUtil.openProject(baseDir.getPath(), null, false);
-          }
-          else {
-            Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir), "Error saving project!");
-          }
-        }
+      final StateStorageManager storageManager = projectStore.getStateStorageManager();
+      for (String file : new ArrayList<String>(storageManager.getStorageFileNames())) {
+        storageManager.clearStateStorage(file);
       }
+
+      projectStore.setProjectFilePath(baseDir.getPath());
+      project.save();
+      ProjectUtil.closeAndDispose(project);
+      ProjectUtil.openProject(baseDir.getPath(), null, false);
+    }
+    else {
+      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir), "Error saving project!");
     }
   }
 
@@ -83,12 +82,6 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getProject();
-    boolean visible = project != null;
-
-    if (project instanceof ProjectEx) {
-      visible = ((ProjectEx)project).getStateStore().getStorageScheme() != StorageScheme.DIRECTORY_BASED;
-    }
-
-    e.getPresentation().setVisible(visible);
+    e.getPresentation().setVisible(project != null && !ProjectUtil.isDirectoryBased(project));
   }
 }

@@ -18,9 +18,9 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.core.JavaCoreBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -131,7 +131,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setPreferredSize(JBUI.size(700, 500));
 
-    if (((ProjectEx)myProject).getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
+    if (ProjectUtil.isDirectoryBased(myProject)) {
       final JPanel namePanel = new JPanel(new BorderLayout());
       final JLabel label =
         new JLabel("<html><body><b>Project name:</b></body></html>", SwingConstants.LEFT);

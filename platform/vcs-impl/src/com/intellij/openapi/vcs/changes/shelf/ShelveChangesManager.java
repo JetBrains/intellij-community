@@ -22,12 +22,12 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -37,7 +37,6 @@ import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -94,15 +93,13 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     if (project.isDefault()) {
       myFileProcessor = new CompoundShelfFileProcessor(null, PathManager.getConfigPath() + File.separator + SHELF_DIR_NAME);
     }
+    else if (ProjectUtil.isDirectoryBased(project)) {
+      VirtualFile dir = project.getBaseDir();
+      String shelfBaseDirPath = dir == null ? "" : dir.getPath() + File.separator + Project.DIRECTORY_STORE_FOLDER;
+      myFileProcessor = new CompoundShelfFileProcessor(shelfBaseDirPath);
+    }
     else {
-      if (project instanceof ProjectEx && ((ProjectEx)project).getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
-        VirtualFile dir = project.getBaseDir();
-        String shelfBaseDirPath = dir == null ? "" : dir.getPath() + File.separator + Project.DIRECTORY_STORE_FOLDER;
-        myFileProcessor = new CompoundShelfFileProcessor(shelfBaseDirPath);
-      }
-      else {
-        myFileProcessor = new CompoundShelfFileProcessor();
-      }
+      myFileProcessor = new CompoundShelfFileProcessor();
     }
   }
 
