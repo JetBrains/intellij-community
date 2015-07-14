@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -66,8 +65,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         result.add(myBaseDir);
       }
     }
-    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
-    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme) && (myBaseDir != null)) {
+    if (ProjectUtil.isDirectoryBased(myProject) && myBaseDir != null) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
         final AbstractVcs vcsFor = vcsManager.getVcsFor(ideaDir);
@@ -122,8 +120,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (contentRoot != null) {
       return contentRoot;
     }
-    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
-    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme) && (myBaseDir != null)) {
+    if (ProjectUtil.isDirectoryBased(myProject) && (myBaseDir != null)) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
         if (VfsUtilCore.isAncestor(ideaDir, file, false)) {
@@ -140,8 +137,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       @Override
       public void run() {
         final Module[] modules = myModuleManager.getModules();
-        final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
-        if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
+        if (ProjectUtil.isDirectoryBased(myProject)) {
           FilePath fp = VcsUtil.getFilePath(myBaseDir, Project.DIRECTORY_STORE_FOLDER, true);
           final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
           if (vcs != null) {

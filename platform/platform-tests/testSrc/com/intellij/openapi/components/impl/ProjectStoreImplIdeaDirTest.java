@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl;
 
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,11 +36,10 @@ public class ProjectStoreImplIdeaDirTest extends ProjectStoreBaseTestCase {
   }
 
   public void testLoadFromDirectoryStorage() throws Exception {
-    final IProjectStore projectStore = ((ProjectEx)myProject).getStateStore();
     ((ProjectEx)myProject).setOptimiseTestLoadSpeed(false);
 
     final TestIprComponent testIprComponent = new TestIprComponent();
-    projectStore.initComponent(testIprComponent, false);
+    ((ProjectEx)myProject).getStateStore().initComponent(testIprComponent, false);
     assertNotNull(testIprComponent.myState);
   }
 }
