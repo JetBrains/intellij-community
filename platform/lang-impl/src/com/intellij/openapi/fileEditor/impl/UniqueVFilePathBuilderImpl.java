@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
@@ -58,6 +59,11 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     for(VirtualFile openFile: FileEditorManager.getInstance(project).getOpenFiles()) {
       if (openFile.getName().equals(fileName)) {
         setOfFilesWithTheSameName.add(openFile);
+      }
+    }
+    for (VirtualFile recentlyEditedFile : IdeDocumentHistory.getInstance(project).getChangedFiles()) {
+      if (recentlyEditedFile.getName().equals(fileName)) {
+        setOfFilesWithTheSameName.add(recentlyEditedFile);
       }
     }
 
