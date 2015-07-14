@@ -313,7 +313,19 @@ public class InspectionValidatorWrapper implements Validator {
                                                                                  final HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
     for (ProblemDescriptor descriptor : runInspectionOnFile(file, inspectionTool)) {
-      problemsMap.put(descriptor, level);
+      final ProblemHighlightType highlightType = descriptor.getHighlightType();
+
+      final HighlightDisplayLevel highlightDisplayLevel;
+      if (highlightType == ProblemHighlightType.WEAK_WARNING) {
+        highlightDisplayLevel = HighlightDisplayLevel.WEAK_WARNING;
+      }
+      else if (highlightType == ProblemHighlightType.INFORMATION) {
+        highlightDisplayLevel = HighlightDisplayLevel.DO_NOT_SHOW;
+      }
+      else {
+        highlightDisplayLevel = level;
+      }
+      problemsMap.put(descriptor, highlightDisplayLevel);
     }
     return problemsMap;
   }
