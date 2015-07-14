@@ -47,9 +47,9 @@ public class ContainingBranchesGetter {
   @NotNull private final VcsLogDataManager myDataManager;
 
   // other fields accessed only from EDT
+  @NotNull private final List<Runnable> myLoadingFinishedListeners = ContainerUtil.newArrayList();
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
   @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
-  @Nullable private Runnable myLoadingFinishedListener;
   private int myCurrentBranchesChecksum;
   @Nullable private VcsLogRefs myRefs;
   @Nullable private PermanentGraph<Integer> myGraph;
@@ -66,7 +66,7 @@ public class ContainingBranchesGetter {
             // if cache is cleared (because of log refresh) during this task execution,
             // this will put obsolete value into the old instance we don't care anymore
             task.cache.put(new CommitId(task.hash, task.root), branches);
-            notifyListener();
+            notifyListeners();
           }
         });
       }
@@ -98,7 +98,7 @@ public class ContainingBranchesGetter {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        notifyListener();
+        notifyListeners();
       }
     });
   }
@@ -106,15 +106,20 @@ public class ContainingBranchesGetter {
   /**
    * This task will be executed each time the calculating process completes.
    */
-  public void setTaskCompletedListener(@NotNull Runnable runnable) {
+  public void addTaskCompletedListener(@NotNull Runnable runnable) {
     LOG.assertTrue(EventQueue.isDispatchThread());
-    myLoadingFinishedListener = runnable;
+    myLoadingFinishedListeners.add(runnable);
   }
 
-  private void notifyListener() {
+  public void removeTaskCompletedListener(@NotNull Runnable runnable) {
     LOG.assertTrue(EventQueue.isDispatchThread());
-    if (myLoadingFinishedListener != null) {
-      myLoadingFinishedListener.run();
+    myLoadingFinishedListeners.remove(runnable);
+  }
+
+  private void notifyListeners() {
+    LOG.assertTrue(EventQueue.isDispatchThread());
+    for (Runnable listener : myLoadingFinishedListeners) {
+      listener.run();
     }
   }
 

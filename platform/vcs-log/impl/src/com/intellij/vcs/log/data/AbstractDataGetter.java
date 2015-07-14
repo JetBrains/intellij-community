@@ -330,6 +330,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myLoadingFinishedListeners.add(runnable);
   }
 
+  public void removeDetailsLoadedListener(@NotNull Runnable runnable) {
+    myLoadingFinishedListeners.remove(runnable);
+  }
+
   private static class TaskDescriptor {
     @NotNull private final MultiMap<VirtualFile, Integer> myCommits;
 

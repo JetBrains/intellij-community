@@ -57,7 +57,7 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class MainFrame extends JPanel implements DataProvider {
+public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull private final VcsLogDataManager myLogDataManager;
   @NotNull private final VcsLogUiImpl myUI;
@@ -71,6 +71,10 @@ public class MainFrame extends JPanel implements DataProvider {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JComponent myToolbar;
   @NotNull private final RepositoryChangesBrowser myChangesBrowser;
+  @NotNull private Runnable myTaskCompletedListener;
+  @NotNull private Runnable myFullDetailsLoadedListener;
+  @NotNull private Runnable myMiniDetailsLoadedListener;
+  private Splitter myChangesBrowserSplitter;
 
   public MainFrame(@NotNull VcsLogDataManager logDataManager,
                    @NotNull VcsLogUiImpl vcsLogUI,
@@ -118,19 +122,14 @@ public class MainFrame extends JPanel implements DataProvider {
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
 
-    final Splitter changesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
-    changesBrowserSplitter.setFirstComponent(toolbarsAndTable);
-    changesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
+    myChangesBrowserSplitter = new OnePixelSplitter(false, 0.7f);
+    myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
+    myChangesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
     setLayout(new BorderLayout());
-    add(changesBrowserSplitter);
+    add(myChangesBrowserSplitter);
 
-    Disposer.register(logDataManager, new Disposable() {
-      public void dispose() {
-        myDetailsSplitter.dispose();
-        changesBrowserSplitter.dispose();
-      }
-    });
+    Disposer.register(logDataManager, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
@@ -151,26 +150,29 @@ public class MainFrame extends JPanel implements DataProvider {
   }
 
   private void updateWhenDetailsAreLoaded() {
-    myLogDataManager.getMiniDetailsGetter().addDetailsLoadedListener(new Runnable() {
+    myMiniDetailsLoadedListener = new Runnable() {
       @Override
       public void run() {
         myGraphTable.initColumnSize();
         myGraphTable.repaint();
       }
-    });
-    myLogDataManager.getCommitDetailsGetter().addDetailsLoadedListener(new Runnable() {
+    };
+    myFullDetailsLoadedListener = new Runnable() {
       @Override
       public void run() {
         myDetailsPanel.valueChanged(null);
       }
-    });
-    myLogDataManager.getContainingBranchesGetter().setTaskCompletedListener(new Runnable() {
+    };
+    myTaskCompletedListener = new Runnable() {
       @Override
       public void run() {
         myDetailsPanel.valueChanged(null);
         myGraphTable.repaint(); // we may need to repaint highlighters
       }
-    });
+    };
+    myLogDataManager.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);
+    myLogDataManager.getCommitDetailsGetter().addDetailsLoadedListener(myFullDetailsLoadedListener);
+    myLogDataManager.getContainingBranchesGetter().addTaskCompletedListener(myTaskCompletedListener);
   }
 
   public void setupDetailsSplitter(boolean state) {
@@ -340,6 +342,16 @@ public class MainFrame extends JPanel implements DataProvider {
 
   public void showDetails(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
+  }
+
+  @Override
+  public void dispose() {
+    myLogDataManager.getMiniDetailsGetter().removeDetailsLoadedListener(myMiniDetailsLoadedListener);
+    myLogDataManager.getCommitDetailsGetter().removeDetailsLoadedListener(myFullDetailsLoadedListener);
+    myLogDataManager.getContainingBranchesGetter().removeTaskCompletedListener(myTaskCompletedListener);
+
+    myDetailsSplitter.dispose();
+    myChangesBrowserSplitter.dispose();
   }
 
   private class CommitSelectionListener implements ListSelectionListener {
