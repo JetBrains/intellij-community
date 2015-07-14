@@ -20,6 +20,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -59,9 +60,7 @@ public class FormatterBasedLineIndentInfoBuilder {
     List<Block> normallyIndentedBlocks = ContainerUtil.filter(getBlocksStartingNewLine(), new Condition<Block>() {
       @Override
       public boolean value(Block block) {
-        Indent indent = block.getIndent();
-        Indent.Type type = indent != null ? indent.getType() : null;
-        return type == Indent.Type.NONE || type == Indent.Type.NORMAL;
+        return hasTotallyNormalOrNoneIndent(block);
       }
     });
 
@@ -73,6 +72,29 @@ public class FormatterBasedLineIndentInfoBuilder {
         return createLineIndentInfo(lineStartOffset, blockStartOffset);
       }
     });
+  }
+  
+  private static boolean hasTotallyNormalOrNoneIndent(Block block) {
+    final TextRange range = block.getTextRange();
+    final int startOffset = range.getStartOffset();
+    
+    boolean startOffsetAlreadyHasNormalIndent = false;
+    
+    while (block != null && range.getStartOffset() == startOffset) {
+      Indent.Type type = block.getIndent() != null ? block.getIndent().getType() : null;
+      
+      if (type == Indent.Type.NONE || type == Indent.Type.NORMAL && !startOffsetAlreadyHasNormalIndent) {
+        startOffsetAlreadyHasNormalIndent = true;
+      }
+      else {
+        return false;
+      }
+      
+      List<Block> subBlocks = block.getSubBlocks();
+      block = subBlocks.isEmpty() ? null : subBlocks.get(0);
+    }
+    
+    return true;
   }
 
   @NotNull
