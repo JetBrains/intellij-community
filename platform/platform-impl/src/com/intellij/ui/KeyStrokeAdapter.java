@@ -292,6 +292,7 @@ public class KeyStrokeAdapter implements KeyListener {
         append(sb, "released", stroke.isOnKeyRelease());
         String name = LazyVirtualKeys.myCodeToName.get(code);
         if (name == null) {
+          sb.append('#');
           name = Integer.toHexString(code);
         }
         return sb.append(name).toString();
