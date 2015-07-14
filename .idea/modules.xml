@@ -236,6 +236,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/updater/updater.iml" filepath="$PROJECT_DIR$/updater/updater.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/usageView.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/util.iml" filepath="$PROJECT_DIR$/platform/util/util.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/util-rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/util-rt.iml" group="platform" />

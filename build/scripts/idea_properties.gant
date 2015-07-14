@@ -1,0 +1,55 @@
+/*
+ * Copyright (C) 2015 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+def getProperties(String home, String buildNumber) {
+  return new ProductProperties() {
+    {
+      prefix = "idea"
+      code = "IC"
+      appInfoModule = "community-resources"
+      appInfoModulePath = "community-resources"
+      exe_launcher_properties = "$home/build/conf/ideaCE-launcher.properties"
+      exe64_launcher_properties = "$home/build/conf/ideaCE64-launcher.properties"
+      bundleIdentifier = "com.jetbrains.intellij.ce"
+      maySkipAndroidPlugin = true
+      relativeAndroidHome = "android"
+      relativeAndroidToolsBaseHome = "android/tools-base"
+
+      icon128 = "$home/platform/icons/src/icon_CE_128.png"
+      ico = "$home/platform/icons/src/idea_CE.ico"
+    }
+
+    def String appInfoFile() {
+      "${projectBuilder.moduleOutput(findModule("community-resources"))}/idea/IdeaApplicationInfo.xml"
+    }
+
+    def String fullBuildNumber() { "IC-$buildNumber" }
+
+    def String systemSelector() { "IdeaIC${p("component.version.major")}" }
+
+    def String macAppRoot() {
+      isEap() ? "IntelliJ IDEA ${p("component.version.major")} CE EAP.app/Contents"
+              : "IntelliJ IDEA ${p("component.version.major")} CE.app/Contents"
+    }
+
+    def String winAppRoot() { "" }
+
+    def String linuxAppRoot() { "idea-IC-$buildNumber" }
+
+    def String archiveName() { "ideaIC-$buildNumber" }
+  }
+}

@@ -27,7 +27,38 @@ target('default': "Developers update") {
 }
 
 String appInfoFileName() {
-  return "idea/IdeaApplicationInfo.xml"
+  return isDefined("productProperties") ? productProperties.appInfoFile() : "idea/IdeaApplicationInfo.xml"
+}
+
+boolean maySkipAndroidPlugin() {
+  return isDefined("productProperties") && productProperties.maySkipAndroidPlugin
+}
+
+
+String appInfoModule() {
+  return isDefined("productProperties") ? productProperties.appInfoModule : "community-resources"
+}
+
+String productCode() {
+  return isDefined("productProperties") ? productProperties.code : "IC"
+}
+
+void customLayout(String targetDirectory) {
+  if (isDefined("productProperties")) {
+    productProperties.customLayout(targetDirectory)
+  }
+}
+
+String relativeAndroidHome() {
+  return isDefined("productProperties") ? productProperties.relativeAndroidHome : "android"
+}
+
+String relativeAndroidToolsBaseHome() {
+  return isDefined("productProperties") ? productProperties.relativeAndroidToolsBaseHome : relativeAndroidHome() + "/tools-base"
+}
+
+List<String> getExcludedPlugins() {
+  return isDefined("productProperties") ? productProperties.excludedPlugins : []
 }
 
 String patchAppDescriptor(String targetDirectory) {
@@ -36,12 +67,13 @@ String patchAppDescriptor(String targetDirectory) {
   ant.delete(dir: patchedDirectory)
 
   layout(patchedDirectory) {
-    module("community-resources") {
+    module(appInfoModule()) {
       include(name: appInfoFileName())
     }
   }
 
-  ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_NUMBER__", value: "IC-$snapshot")
+  def code = productCode()
+  ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_NUMBER__", value: "${code}-$snapshot")
   ant.replace(file: "$patchedDirectory/${appInfoFileName()}", token: "__BUILD_DATE__", value: new Date().format("yyyyMMddHHmm"))
 
   return patchedDirectory
@@ -159,9 +191,22 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("colorSchemes")
         module("resources")
         module("platform-resources")
-        module("community-resources") {
-          if (patchedDescriptorDir != null) {
-            exclude(name: appInfoFileName())
+
+        def appInfoModule = appInfoModule()
+        def appInfoInCommunity = "community-resources".equals(appInfoModule)
+
+        if (appInfoInCommunity) {
+          module("community-resources") {
+            if (patchedDescriptorDir != null) {
+              exclude(name: appInfoFileName())
+            }
+          }
+        } else {
+          module("community-resources")
+          module(appInfoModule) {
+            if (patchedDescriptorDir != null) {
+              exclude(name: appInfoFileName())
+            }
           }
         }
         if (patchedDescriptorDir != null) {
@@ -230,7 +275,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       }
     }
 
-    layoutCommunityPlugins(home)
+    layoutCommunityPlugins(home, maySkipAndroidPlugin())
 
     dir("plugins") {
       dir("javaFX") {
@@ -268,18 +313,29 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     }
   }
 
+  // product specific custom layout
+  customLayout(targetDirectory)
+
   printUnusedModules(info.usedModules)
 
   reorder(home, targetDirectory)
   return info
 }
 
-public def layoutCommunityPlugins(String home) {
-  if (!isDefined("maySkipAndroidPlugin") || new File("$home/android").exists()) {
-    layoutAndroid("$home/android")
+public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = false) {
+  def androidHome = relativeAndroidHome()
+  def androidToolsBaseHome = relativeAndroidToolsBaseHome()
+  if (new File("$home/$androidHome").exists()) {
+    layoutAndroid("$home/$androidHome", "$home/$androidToolsBaseHome")
   }
   else {
-    projectBuilder.warning("Android plugin sources aren't found at $home/android. Android plugin is excluded from layout.")
+    def message = "Android plugin sources aren't found at ${androidHome}"
+    if (maySkipAndroidPlugin) {
+      projectBuilder.warning("$message. Android plugin is excluded from layout.")
+    }
+    else {
+      projectBuilder.error(message)
+    }
   }
 
   dir("plugins") {
@@ -635,6 +691,11 @@ def layoutPlugin(String pluginName, String moduleName, String jarName, Closure c
     if (!pluginFilter.contains(moduleName) && !pluginFilter.contains(pluginName)) return
   }
 
+  def excludedPlugins = getExcludedPlugins()
+  if (excludedPlugins.contains(moduleName) || excludedPlugins.contains(pluginName)) {
+    return
+  }
+
   dir(pluginName) {
     dir("lib") {
       jar("${jarName}.jar") {
@@ -650,6 +711,11 @@ def layoutPlugin(String pluginName, String moduleName, String jarName, Closure c
 def pluginDir(String dirName, Closure initializer) {
   if (isDefined("pluginFilter")) {
     if (!pluginFilter.contains(dirName)) return
+  }
+
+  def excludedPlugins = getExcludedPlugins()
+  if (excludedPlugins.contains(dirName)) {
+    return
   }
 
   dir(dirName) {
@@ -712,7 +778,7 @@ def reorder(String home, String targetDirectory) {
   }
 }
 
-def layoutAndroid(String androidHome) {
+def layoutAndroid(String androidHome, String androidToolsBaseHome) {
   dir("plugins") {
     layoutPlugin("android") {
       fileset(dir: "${androidHome}/android/lib") {
@@ -768,7 +834,7 @@ def layoutAndroid(String androidHome) {
         jar("android-jps-plugin.jar") { module("android-jps-plugin") }
       }
       dir("templates") {
-        fileset(dir: "$androidHome/tools-base/templates")
+        fileset(dir: "$androidToolsBaseHome/templates")
       }
     }
   }
