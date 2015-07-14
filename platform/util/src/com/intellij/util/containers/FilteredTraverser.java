@@ -69,6 +69,11 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   }
 
   @NotNull
+  public final JBIterable<T> tracingBreadthFirstTraversal() {
+    return tracingBreadthFirstTraversal(getRoots()).filter(newResultFilter());
+  }
+
+  @NotNull
   private Condition<? super T> newResultFilter() {
     if (!myMeta.skipExpanded) return myMeta.resultFilter;
     return Conditions.and2(Conditions.not(Conditions.or2(Conditions.oneOf(myMeta.roots), myMeta.expandFilter)), myMeta.resultFilter);
