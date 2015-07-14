@@ -34,6 +34,7 @@ public class VariableSignal<T>(val lifetimeDefinition: LifetimeDefinition, val n
 
 public class Change<out T>(val s: Signal<T>, val oldValue: T, val newValue: T)
 
+// TODO right synchronization
 object ReactGraph {
   val children: MultiMap<Signal<Any>, Signal<Any>> = MultiMap()
   val parents: MultiMap<Signal<Any>, Signal<Any>> = MultiMap()

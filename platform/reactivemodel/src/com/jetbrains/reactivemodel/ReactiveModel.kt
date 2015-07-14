@@ -10,9 +10,11 @@ import com.jetbrains.reactivemodel.util.createMeta
 import java.util.ArrayDeque
 import java.util.HashMap
 import java.util.Queue
+import java.util.concurrent.atomic.AtomicInteger
 
 public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
   public var root: MapModel = MapModel(meta = createMeta("lifetime", lifetime, INDEX_FIELD, PersistentHashMap.emptyMap<String, PersistentHashSet<Path>>()))
+  public val name: String = "ReactiveModel" + counter.incrementAndGet()
   private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
   private val tagSubs: MutableMap<String, TagSignal<*>> = HashMap()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
@@ -21,6 +23,7 @@ public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffCo
 
   companion object {
     val INDEX_FIELD = "index"
+    val counter = AtomicInteger()
 
     private var cur: ReactiveModel? = null
     public fun current(): ReactiveModel? {

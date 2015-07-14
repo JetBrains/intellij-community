@@ -32,6 +32,7 @@ package com.jetbrains.reactiveidea
 */
 
 
+import com.github.krukow.clj_lang.PersistentHashMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.AsyncResult
@@ -39,11 +40,11 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.util.WaitFor
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.ReactiveModel
-import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.putIn
-import com.jetbrains.reactivemodel.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
+import com.jetbrains.reactivemodel.varSignal
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -81,60 +82,61 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
   public fun testNetworking() {
     val port = 12345
 
-    val server = serverModel(Lifetime.Eternal, port)
-    server.transaction { m ->
-      com.jetbrains.reactivemodel.Path("a").putIn(m, com.jetbrains.reactivemodel.models.PrimitiveModel("abcd"))
-    }
-
-
-    val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
-    var clientModelChanged = false
-    com.jetbrains.reactivemodel.reaction(false, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("a"))) { a ->
-      clientModelChanged = true
-    }
-
-    object : WaitFor(5000) {
-      override fun condition(): Boolean {
-        return clientModelChanged
+    serverModel(Lifetime.Eternal, port, varSignal(Lifetime.Eternal, "AA", PersistentHashMap.emptyMap<UUID, ReactiveModel>())) { server ->
+      server.transaction { m ->
+        com.jetbrains.reactivemodel.Path("a").putIn(m, com.jetbrains.reactivemodel.models.PrimitiveModel("abcd"))
       }
-    }
 
-    assertTrue(clientModelChanged)
+
+      val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
+      var clientModelChanged = false
+      com.jetbrains.reactivemodel.reaction(false, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("a"))) { a ->
+        clientModelChanged = true
+      }
+
+      object : WaitFor(5000) {
+        override fun condition(): Boolean {
+          return clientModelChanged
+        }
+      }
+
+      assertTrue(clientModelChanged)
+    }
   }
 
   public fun testDocumentsSyncByNetwork() {
-    val port = 12345
+    val port = 12347
 
     val first = DocumentImpl("my test document")
     val second = DocumentImpl("")
     val modelFuture = AsyncResult<ReactiveModel>()
-    val serverModel = serverModel(Lifetime.Eternal, port)
+    serverModel(Lifetime.Eternal, port, varSignal(Lifetime.Eternal, "AA", PersistentHashMap.emptyMap<UUID, ReactiveModel>())) { serverModel ->
 
-    val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
-
-
-
-    val firstHost = DocumentHost(serverModel, Path("document"), first, getProject(), true, Guard())
-    val secondHost = DocumentHost(clientModel, Path("document"), second, getProject(), false, Guard())
+      val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
 
 
-    ApplicationManager.getApplication().runWriteAction {
-      first.insertString(0, "hello world\n")
-    }
+      val firstHost = DocumentHost(serverModel, Path("document"), first, getProject(), true, Guard())
+      val secondHost = DocumentHost(clientModel, Path("document"), second, getProject(), false, Guard())
 
 
-    var clientModelChanged = false
-    com.jetbrains.reactivemodel.reaction(true, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("document") / "events")) { a ->
-      clientModelChanged = true
-    }
-
-    object : WaitFor(5000) {
-      override fun condition(): Boolean {
-        return clientModelChanged
+      ApplicationManager.getApplication().runWriteAction {
+        first.insertString(0, "hello world\n")
       }
-    }
 
-    assertTrue(clientModelChanged)
-    assertEquals(first.getText(), second.getText())
+
+      var clientModelChanged = false
+      com.jetbrains.reactivemodel.reaction(true, "waiting for change to come ", clientModel.subscribe(Lifetime.Eternal, Path("document") / "events")) { a ->
+        clientModelChanged = true
+      }
+
+      object : WaitFor(5000) {
+        override fun condition(): Boolean {
+          return clientModelChanged
+        }
+      }
+
+      assertTrue(clientModelChanged)
+      assertEquals(first.getText(), second.getText())
+    }
   }
 }

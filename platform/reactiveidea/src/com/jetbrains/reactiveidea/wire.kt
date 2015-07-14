@@ -23,6 +23,7 @@ import com.corundumstudio.socketio.listener.ConnectListener
 import com.corundumstudio.socketio.listener.DisconnectListener
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.krukow.clj_ds.PersistentMap
 import com.github.nkzawa.emitter.Emitter
 import com.github.nkzawa.socketio.client.IO
 import com.github.nkzawa.socketio.client.Socket
@@ -34,8 +35,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.ArrayList
 import java.util.HashMap
+import java.util.UUID
 
-fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
+fun serverModel(lifetime: Lifetime, port: Int,
+                reactiveModels: VariableSignal<PersistentMap<UUID, ReactiveModel>>,
+                initModelFunc: (ReactiveModel) -> Unit = {}) {
+
   val config = Configuration()
   config.setHostname("localhost")
   config.setPort(port)
@@ -45,18 +50,24 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
 
   val server = SocketIOServer(config)
 
-
-  val reactiveModel = ReactiveModel(lifetime, { diff ->
-    val jsonObj = toJson(diff)
-    val jsonStr = jsonObj.toString()
-
-    val jsonNode = ObjectMapper().readTree(jsonStr)
-    server.getBroadcastOperations().sendEvent("diff", jsonNode)
-  })
+  fun getModel(client: SocketIOClient): ReactiveModel {
+    var model: ReactiveModel? = reactiveModels.value[client.getSessionId()]
+    // todo need to sync?
+    if (model == null) {
+      model = createModel(Lifetime.create(lifetime).lifetime, client)
+      initModelFunc(model)
+      reactiveModels.value = reactiveModels.value.plus(client.getSessionId(), model)
+      model.lifetime += {
+        reactiveModels.value = reactiveModels.value.minus(client.getSessionId())
+      }
+    }
+    return model
+  }
 
   server.addConnectListener(object : ConnectListener {
     override fun onConnect(client: SocketIOClient) {
-      val diff = MapModel().diff(reactiveModel.root)
+      var model = getModel(client)
+      val diff = MapModel().diff(model.root)
       if (diff != null) {
         val jsonObj = toJson(diff)
         val jsonStr = jsonObj.toString()
@@ -68,10 +79,10 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   })
 
 
-  server.addEventListener("diff", javaClass<JsonNode>()) { socketIOClient, json, ackRequest ->
+  server.addEventListener("diff", javaClass<JsonNode>()) { client, json, ackRequest ->
     val diff = toDiff(JSONObject(json.toString()))
     UIUtil.invokeLaterIfNeeded {
-      reactiveModel.performTransaction { m ->
+      getModel(client).performTransaction { m ->
         m.patch(diff)
       }
     }
@@ -79,15 +90,20 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
 
   server.addEventListener("action", javaClass<JsonNode>()) { client, json, ackRequest ->
     val action = toModel(JSONObject(json.toString()))
+    val model = getModel(client)
     UIUtil.invokeLaterIfNeeded {
-      reactiveModel.transaction { m ->
-        reactiveModel.dispatch(action, m)
+      model.transaction { m ->
+        model.dispatch(action, m)
       }
     }
   }
 
   server.addDisconnectListener(object : DisconnectListener {
     override fun onDisconnect(client: SocketIOClient) {
+      val model = getModel(client)
+      UIUtil.invokeLaterIfNeeded {
+        model.lifetime.terminate()
+      }
     }
   });
 
@@ -96,9 +112,19 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   lifetime += {
     server.stop()
   }
+}
 
+private fun createModel(lifetime: Lifetime, client: SocketIOClient): ReactiveModel {
+  val reactiveModel = ReactiveModel(lifetime, { diff ->
+    val jsonObj = toJson(diff)
+    val jsonStr = jsonObj.toString()
+
+    val jsonNode = ObjectMapper().readTree(jsonStr)
+    client.sendEvent("diff", jsonNode)
+  })
   return reactiveModel
 }
+
 
 fun clientModel(url: String, lifetime: Lifetime): ReactiveModel {
 
