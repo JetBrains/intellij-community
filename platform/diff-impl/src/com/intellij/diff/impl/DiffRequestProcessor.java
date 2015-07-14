@@ -50,11 +50,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JBProgressBar;
-import com.intellij.ui.LightweightHint;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -1216,8 +1212,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {
-      if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
+      if (DiffDataKeys.WRAPPING_DIFF_VIEWER.is(dataId)) {
         return myWrapperViewer;
+      }
+      if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
+        return myViewer;
       }
       return null;
     }
