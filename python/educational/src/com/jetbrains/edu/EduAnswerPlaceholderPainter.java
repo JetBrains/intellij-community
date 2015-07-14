@@ -23,7 +23,7 @@ public class EduAnswerPlaceholderPainter {
 
   public static void drawAnswerPlaceholder(@NotNull final Editor editor, @NotNull final AnswerPlaceholder placeholder,
                                            boolean useLength, @NotNull final JBColor color) {
-    Document document = editor.getDocument();
+    final Document document = editor.getDocument();
     if (useLength && !placeholder.isValid(document)) {
       return;
     }
@@ -32,11 +32,11 @@ public class EduAnswerPlaceholderPainter {
                                                                     EffectType.BOXED, Font.PLAIN);
     final Project project = editor.getProject();
     assert project != null;
-    int startOffset = placeholder.getRealStartOffset(document);
+    final int startOffset = placeholder.getRealStartOffset(document);
     final int length = placeholder.getLength();
     final int replacementLength = placeholder.getPossibleAnswerLength();
     int highlighterLength = useLength ? length : replacementLength;
-    int endOffset = startOffset + highlighterLength;
+    final int endOffset = startOffset + highlighterLength;
     RangeHighlighter
       highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST + 1,
                                                                 defaultTestAttributes, HighlighterTargetArea.EXACT_RANGE);
@@ -46,7 +46,8 @@ public class EduAnswerPlaceholderPainter {
         g.setColor(color);
         Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getStartOffset()));
         Point pointEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(highlighter.getEndOffset()));
-        g.drawRect(point.x, point.y - 2, (pointEnd.x - point.x), editor.getLineHeight() + 1);
+        final int lines = document.getLineNumber(endOffset) - document.getLineNumber(startOffset) + 1;
+        g.drawRect(point.x, point.y - 2, (pointEnd.x - point.x), editor.getLineHeight() * lines + 1);
       }
     });
     highlighter.setGreedyToLeft(true);
