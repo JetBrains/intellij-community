@@ -483,31 +483,39 @@ public class RuntimeModuleDescriptorsGenerator {
     void reportError(String message);
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static final MessageHandler SYSTEM_OUT_HANDLER = new MessageHandler() {
+    @Override
+    public void showProgressMessage(String message) {
+      System.out.println(message);
+    }
+
+    @Override
+    public void reportError(String message) {
+      System.err.println(message);
+    }
+  };
+
   public static void main(String[] args) throws IOException {
-    generate(args[0], null, new File(args[1]));
+    if ("--in-module-outputs".equals(args[0])) {
+      JpsModel model = JpsSerializationManager.getInstance().loadModel(args[1], null);
+      new RuntimeModuleDescriptorsGenerator(model.getProject(), SYSTEM_OUT_HANDLER).generateDescriptorsForModules();
+    }
+    else {
+      generate(args[0], null, new File(args[1]));
+    }
     System.exit(0);
   }
   /**
    * Called via reflection from {@link ModuleDescriptorsGenerationRunner}
    */
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "unused"})
+  @SuppressWarnings("unused")
   public static void generate(String projectPath, String optionsPath, File ideDist) throws IOException {
     long start = System.currentTimeMillis();
     JpsModel model = JpsSerializationManager.getInstance().loadModel(projectPath, optionsPath);
     System.out.println("Model loaded in " + (System.currentTimeMillis() - start) + "ms");
 
-    MessageHandler messageHandler = new MessageHandler() {
-      @Override
-      public void showProgressMessage(String message) {
-        System.out.println(message);
-      }
-
-      @Override
-      public void reportError(String message) {
-        System.err.println(message);
-      }
-    };
-    RuntimeModuleDescriptorsGenerator generator = new RuntimeModuleDescriptorsGenerator(model.getProject(), messageHandler);
+    RuntimeModuleDescriptorsGenerator generator = new RuntimeModuleDescriptorsGenerator(model.getProject(), SYSTEM_OUT_HANDLER);
     if (ideDist == null) {
       generator.generateForDevelopmentMode();
     }

@@ -1179,13 +1179,34 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
   return usedJars
 })
 
+binding.setVariable("generateModuleDescriptors", { String distDir, boolean inModuleOutputs = false ->
+  projectBuilder.info("Generating module descriptors")
+  ant.java(classname: "org.jetbrains.jps.devkit.builder.RuntimeModuleDescriptorsGenerator", fork: true, failonerror: true) {
+    if (inModuleOutputs) {
+      arg(value: "--in-module-outputs")
+      arg(value: home)
+    }
+    else {
+      arg(value: home)
+      arg(value: distDir)
+    }
+    classpath {
+      pathelement(location: projectBuilder.moduleOutput(findModule("jps-plugin-system")))
+      projectBuilder.moduleRuntimeClasspath(findModule("platform-module-descriptors-generator"), false).each {
+        pathelement(location: it)
+      }
+    }
+  }
+})
+
+
 binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
   def modulesToBuild = []
   def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
   clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
-
+  generateModuleDescriptors(null, true)
   return usedJars
 })
 

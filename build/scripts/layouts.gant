@@ -84,6 +84,7 @@ String patchAppDescriptor(String targetDirectory) {
 
 def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
   projectBuilder.stage("layout to $targetDirectory")
+  generateModuleDescriptors(null, true)
 
   List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]
   List<String> openapiModules = [platformApiModules,
@@ -321,6 +322,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   // product specific custom layout
   customLayout(targetDirectory)
 
+  generateModuleDescriptors(targetDirectory)
   reorder(home, targetDirectory)
   return info
 }

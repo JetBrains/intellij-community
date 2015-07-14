@@ -33,6 +33,7 @@ target(compile: "Compile project") {
     clearBuildCaches()
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
+    generateModuleDescriptors(null, true)
   }
 }
 
