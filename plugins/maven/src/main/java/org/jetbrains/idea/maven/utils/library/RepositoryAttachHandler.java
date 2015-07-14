@@ -118,22 +118,32 @@ public class RepositoryAttachHandler {
                                                            boolean attachSources,
                                                            @Nullable final String copyTo,
                                                            List<MavenRepositoryInfo> repositories) {
+    final List<OrderRoot> roots = resolveAndDownloadImpl(project, coord, attachJavaDoc, attachSources, copyTo, repositories);
+    return new NewLibraryConfiguration(coord, RepositoryLibraryType.getInstance(), new RepositoryLibraryProperties(coord)) {
+      @Override
+      public void addRoots(@NotNull LibraryEditor editor) {
+        editor.addRoots(roots);
+      }
+    };
+  }
+
+  public static List<OrderRoot> resolveAndDownloadImpl(final Project project,
+                                                       final String coord,
+                                                       boolean attachJavaDoc,
+                                                       boolean attachSources,
+                                                       @Nullable final String copyTo,
+                                                       List<MavenRepositoryInfo> repositories) {
     final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
     if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
     if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
-    final Ref<NewLibraryConfiguration> result = Ref.create(null);
+    final Ref<List<OrderRoot>> result = Ref.create(null);
     resolveLibrary(project, coord, extraTypes, repositories, new Processor<List<MavenArtifact>>() {
       public boolean process(final List<MavenArtifact> artifacts) {
         if (!artifacts.isEmpty()) {
           AccessToken accessToken = WriteAction.start();
           try {
             final List<OrderRoot> roots = createRoots(artifacts, copyTo);
-            result.set(new NewLibraryConfiguration(coord, RepositoryLibraryType.getInstance(), new RepositoryLibraryProperties(coord)) {
-              @Override
-              public void addRoots(@NotNull LibraryEditor editor) {
-                editor.addRoots(roots);
-              }
-            });
+            result.set(roots);
           }
           finally {
             accessToken.finish();
