@@ -79,4 +79,17 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
   public boolean isSearchInLibraries() {
     return true;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof LibraryScopeBase)) return false;
+
+    return myEntries.equals(((LibraryScopeBase)o).myEntries);
+  }
+
+  @Override
+  public int hashCode() {
+    return myEntries.hashCode();
+  }
 }
