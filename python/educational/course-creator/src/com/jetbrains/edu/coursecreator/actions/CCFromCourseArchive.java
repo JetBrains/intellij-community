@@ -128,6 +128,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
         final Task task = new Task();
         task.setIndex(oldTask.myIndex);
         task.setName(oldTask.name);
+        task.setLesson(lesson);
 
         final HashMap<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
         for (Map.Entry<String, OldTaskFile> entry : oldTask.taskFiles.entrySet()) {
