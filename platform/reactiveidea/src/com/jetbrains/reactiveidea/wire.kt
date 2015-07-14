@@ -52,7 +52,6 @@ fun serverModel(lifetime: Lifetime, port: Int,
 
   fun getModel(client: SocketIOClient): ReactiveModel {
     var model: ReactiveModel? = reactiveModels.value[client.getSessionId()]
-    // todo need to sync?
     if (model == null) {
       model = createModel(Lifetime.create(lifetime).lifetime, client)
       initModelFunc(model)
@@ -66,14 +65,16 @@ fun serverModel(lifetime: Lifetime, port: Int,
 
   server.addConnectListener(object : ConnectListener {
     override fun onConnect(client: SocketIOClient) {
-      var model = getModel(client)
-      val diff = MapModel().diff(model.root)
-      if (diff != null) {
-        val jsonObj = toJson(diff)
-        val jsonStr = jsonObj.toString()
+      UIUtil.invokeLaterIfNeeded {
+        var model = getModel(client)
+        val diff = MapModel().diff(model.root)
+        if (diff != null) {
+          val jsonObj = toJson(diff)
+          val jsonStr = jsonObj.toString()
 
-        val jsonNode = ObjectMapper().readTree(jsonStr)
-        client.sendEvent("diff", jsonNode)
+          val jsonNode = ObjectMapper().readTree(jsonStr)
+          client.sendEvent("diff", jsonNode)
+        }
       }
     }
   })
@@ -90,8 +91,8 @@ fun serverModel(lifetime: Lifetime, port: Int,
 
   server.addEventListener("action", javaClass<JsonNode>()) { client, json, ackRequest ->
     val action = toModel(JSONObject(json.toString()))
-    val model = getModel(client)
     UIUtil.invokeLaterIfNeeded {
+      val model = getModel(client)
       model.transaction { m ->
         model.dispatch(action, m)
       }
@@ -100,8 +101,8 @@ fun serverModel(lifetime: Lifetime, port: Int,
 
   server.addDisconnectListener(object : DisconnectListener {
     override fun onDisconnect(client: SocketIOClient) {
-      val model = getModel(client)
       UIUtil.invokeLaterIfNeeded {
+        val model = getModel(client)
         model.lifetime.terminate()
       }
     }
