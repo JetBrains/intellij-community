@@ -139,7 +139,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun unsplitWindow() {
-    throw UnsupportedOperationException()
+
   }
 
   override fun getComponent(): JComponent? {
@@ -166,12 +166,10 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun updateFilePresentation(file: VirtualFile) {
-    throw UnsupportedOperationException()
+
   }
 
-  override fun getCurrentWindow(): EditorWindow? {
-    throw UnsupportedOperationException()
-  }
+  override fun getCurrentWindow(): EditorWindow? = null
 
   override fun getActiveWindow(): AsyncResult<EditorWindow> {
     throw UnsupportedOperationException()
@@ -188,16 +186,12 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun unsplitAllWindow() {
-    throw UnsupportedOperationException()
+
   }
 
-  override fun getWindowSplitCount(): Int {
-    throw UnsupportedOperationException()
-  }
+  override fun getWindowSplitCount(): Int  = 0
 
-  override fun hasSplitOrUndockedWindows(): Boolean {
-    throw UnsupportedOperationException()
-  }
+  override fun hasSplitOrUndockedWindows(): Boolean = false
 
   override fun getWindows(): Array<out EditorWindow> {
     return emptyArray()
@@ -277,21 +271,13 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
     throw UnsupportedOperationException()
   }
 
-  override fun getNextWindow(window: EditorWindow): EditorWindow? {
-    throw UnsupportedOperationException()
-  }
+  override fun getNextWindow(window: EditorWindow): EditorWindow? = null
 
-  override fun getPrevWindow(window: EditorWindow): EditorWindow? {
-    throw UnsupportedOperationException()
-  }
+  override fun getPrevWindow(window: EditorWindow): EditorWindow?  = null
 
-  override fun isInsideChange(): Boolean {
-    throw UnsupportedOperationException()
-  }
+  override fun isInsideChange(): Boolean = false
 
-  override fun getSplittersFor(c: Component?): EditorsSplitters? {
-    throw UnsupportedOperationException()
-  }
+  override fun getSplittersFor(c: Component?): EditorsSplitters? = null
 
   private val myBusyObject = BusyObject.Impl.Simple()
 
@@ -460,7 +446,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun setSelectedEditor(file: VirtualFile, fileEditorProviderId: String) {
-    throw UnsupportedOperationException()
+    setActive(file)
   }
 
   override fun getReady(requestor: Any): ActionCallback {
