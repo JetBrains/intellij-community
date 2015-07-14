@@ -32,12 +32,11 @@ private val LOG = Logger.getInstance(javaClass<SchemeManagerFactoryImpl>())
 public class SchemeManagerFactoryImpl : SchemesManagerFactory(), SettingsSavingComponent {
   private val myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
 
-  override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(fileSpec: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
+  override fun <T : Scheme, E : ExternalizableScheme> createSchemesManager(directoryName: String, processor: SchemeProcessor<E>, roamingType: RoamingType): SchemesManager<T, E> {
     val storageManager = (ApplicationManager.getApplication().getPicoContainer().getComponentInstance(javaClass<IComponentStore>()) as IComponentStore).getStateStorageManager()
 
-    val absoluteFileSpec = if (fileSpec.startsWith('$')) fileSpec else "${StoragePathMacros.ROOT_CONFIG}/$fileSpec"
-
-    val manager = SchemeManagerImpl<T, E>(absoluteFileSpec, processor, roamingType, storageManager.getStreamProvider(), File(storageManager.expandMacros(absoluteFileSpec)))
+    val fileSpec = if (directoryName.startsWith('$')) directoryName else "${StoragePathMacros.ROOT_CONFIG}/$directoryName"
+    val manager = SchemeManagerImpl<T, E>(fileSpec, processor, roamingType, storageManager.getStreamProvider(), File(storageManager.expandMacros(fileSpec)))
     @suppress("CAST_NEVER_SUCCEEDS")
     myRegisteredManagers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
     return manager
