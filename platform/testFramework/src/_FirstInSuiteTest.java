@@ -67,6 +67,9 @@ public class _FirstInSuiteTest extends TestCase {
         System.out.println("EDT is " + Thread.currentThread());
       }
     });
+
+    // force platform JNA load
+    Class.forName("com.sun.jna.Native");
   }
 
   // performance tests
