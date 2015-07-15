@@ -38,6 +38,7 @@ public class ThreadDumpParser {
   @NonNls private static final String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at java.util.TimerThread.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java.lang.Object.wait\\([^()]+\\)\\s+at javax.swing.TimerQueue.run");
+  private static final String AT_JAVA_LANG_OBJECT_WAIT = "at java.lang.Object.wait(";
 
   private ThreadDumpParser() {
   }
@@ -82,26 +83,35 @@ public class ThreadDumpParser {
     for(ThreadState threadState: result) {
       inferThreadStateDetail(threadState);
 
-      final String s = findWaitingForLock(threadState.getStackTrace());
-      if (s != null) {
-        for(ThreadState lockOwner : result) {
-          if (lockOwner == threadState) {
-            continue;
-          }
-          final String marker = "- locked <" + s + ">";
-          if (lockOwner.getStackTrace().contains(marker)) {
-            if (threadState.isAwaitedBy(lockOwner)) {
-              threadState.addDeadlockedThread(lockOwner);
-              lockOwner.addDeadlockedThread(threadState);
-            }
-            lockOwner.addWaitingThread(threadState);
-            break;
-          }
+      String lockId = findWaitingForLock(threadState.getStackTrace());
+      ThreadState lockOwner = findLockOwner(result, lockId, true);
+      if (lockOwner == null) {
+        lockOwner = findLockOwner(result, lockId, false);
+      }
+      if (lockOwner != null) {
+        if (threadState.isAwaitedBy(lockOwner)) {
+          threadState.addDeadlockedThread(lockOwner);
+          lockOwner.addDeadlockedThread(threadState);
         }
+        lockOwner.addWaitingThread(threadState);
       }
     }
     sortThreads(result);
     return result;
+  }
+
+  @Nullable
+  private static ThreadState findLockOwner(List<ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
+    if (lockId == null) return null;
+
+    final String marker = "- locked <" + lockId + ">";
+    for(ThreadState lockOwner : result) {
+      String trace = lockOwner.getStackTrace();
+      if (trace.contains(marker) && (!ignoreWaiting || !trace.contains(AT_JAVA_LANG_OBJECT_WAIT))) {
+        return lockOwner;
+      }
+    }
+    return null;
   }
 
   public static void sortThreads(List<ThreadState> result) {
