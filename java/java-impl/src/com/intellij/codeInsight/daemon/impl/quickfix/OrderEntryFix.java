@@ -46,7 +46,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +53,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -126,7 +128,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           List<String> jarPaths;
           String libraryName;
           if (isJunit4) {
-            jarPaths = getJUnit4JarPaths();
+            jarPaths = JavaSdkUtil.getJUnit4JarPaths();
             libraryName = JUNIT4_LIBRARY_NAME;
           }
           else {
@@ -261,21 +263,12 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return result;
   }
 
+  /**
+   * @deprecated
+   */
   public static void addJUnit4Library(boolean inTests, Module currentModule) throws ClassNotFoundException {
-    final List<String> junit4Paths = getJUnit4JarPaths();
+    final List<String> junit4Paths = JavaSdkUtil.getJUnit4JarPaths();
     addJarsToRoots(junit4Paths, JUNIT4_LIBRARY_NAME, currentModule, null);
-  }
-
-  @NotNull
-  private static List<String> getJUnit4JarPaths() {
-    try {
-      return Arrays.asList(JavaSdkUtil.getJunit4JarPath(),
-                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matcher")),
-                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matchers")));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
