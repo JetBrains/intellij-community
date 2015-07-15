@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,6 @@ public class GrTypeDefinitionMembersCache {
 
   private List<GrField> getFieldsImpl() {
     List<GrField> fields = ContainerUtil.newArrayList(myDefinition.getCodeFields());
-    fields.addAll(new TraitCollector().collectFields());
     fields.addAll(getSyntheticFields());
     return fields;
   }
@@ -155,7 +154,6 @@ public class GrTypeDefinitionMembersCache {
       public Result<PsiMethod[]> compute() {
         List<PsiMethod> result = ContainerUtil.newArrayList();
         GrClassImplUtil.collectMethodsFromBody(myDefinition, result);
-        result.addAll(new TraitCollector().collectMethods(result));
 
         for (PsiMethod method : AstTransformContributor.runContributorsForMethods(myDefinition)) {
           GrClassImplUtil.addExpandingReflectedMethods(result, method);
@@ -176,8 +174,8 @@ public class GrTypeDefinitionMembersCache {
     myTreeChangeTracker.incModificationCount();
   }
 
-  private class TraitCollector {
-    private abstract class TraitProcessor<T extends PsiElement> {
+  public static class TraitCollector extends AstTransformContributor {
+    private abstract static class TraitProcessor<T extends PsiElement> {
       private final ArrayList<CandidateInfo> result = ContainerUtil.newArrayList();
       private final Set<PsiClass> processed = ContainerUtil.newHashSet();
 
@@ -213,25 +211,24 @@ public class GrTypeDefinitionMembersCache {
       }
     }
 
-    @NotNull
-    public List<PsiMethod> collectMethods(@NotNull List<PsiMethod> codeMethods) {
-      if (myDefinition.isInterface() && !myDefinition.isTrait()) return Collections.emptyList();
+    @Override
+    public void collectMethods(@NotNull GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+      if (clazz.isInterface() && !clazz.isTrait()) return;
 
-      GrImplementsClause clause = myDefinition.getImplementsClause();
-      if (clause == null) return Collections.emptyList();
+      GrImplementsClause clause = clazz.getImplementsClause();
+      if (clause == null) return;
       PsiClassType[] types = clause.getReferencedTypes();
 
       List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(types);
-      if (traits.isEmpty()) return Collections.emptyList();
+      if (traits.isEmpty()) return;
 
+      PsiMethod[] codeMethods = clazz.getCodeMethods();
       Set<MethodSignature> existingSignatures = ContainerUtil.newHashSet(ContainerUtil.map(codeMethods, new Function<PsiMethod, MethodSignature>() {
         @Override
         public MethodSignature fun(PsiMethod method) {
           return method.getSignature(PsiSubstitutor.EMPTY);
         }
       }));
-
-      List<PsiMethod> result = ContainerUtil.newArrayList();
 
       for (PsiClassType.ClassResolveResult resolveResult : traits) {
         GrTypeDefinition trait = (GrTypeDefinition)resolveResult.getElement();
@@ -258,31 +255,29 @@ public class GrTypeDefinitionMembersCache {
           }
         }.getResult();
         for (CandidateInfo candidateInfo : concreteTraitMethods) {
-          List<GrMethod> methodsToAdd = getExpandingMethods(candidateInfo);
+          List<GrMethod> methodsToAdd = getExpandingMethods(clazz, candidateInfo);
           for (GrMethod impl : methodsToAdd) {
             if (existingSignatures.add(impl.getSignature(PsiSubstitutor.EMPTY))) {
-              result.add(impl);
+              collector.add(impl);
             }
           }
         }
       }
-      return result;
     }
 
-    @NotNull
-    public List<GrField> collectFields() {
-      if (myDefinition.isInterface() && !myDefinition.isTrait()) return Collections.emptyList();
+    @Override
+    public void collectFields(@NotNull GrTypeDefinition clazz, Collection<GrField> collector) {
+      if (clazz.isInterface() && !clazz.isTrait()) return;
 
-      List<GrField> result = ContainerUtil.newArrayList();
-
-      if (myDefinition.isTrait()) {
-        for (GrField field : myDefinition.getCodeFields()) {
-          result.add(new GrTraitField(field, myDefinition, PsiSubstitutor.EMPTY));
+      if (clazz.isTrait()) {
+        for (GrField field : clazz.getCodeFields()) {
+          collector.add(new GrTraitField(field, clazz, PsiSubstitutor.EMPTY));
         }
       }
 
-      GrImplementsClause clause = myDefinition.getImplementsClause();
-      if (clause == null) return result;
+      GrImplementsClause clause = clazz.getImplementsClause();
+      if (clause == null) return;
+
       PsiClassType[] types = clause.getReferencedTypes();
 
       List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(types);
@@ -298,22 +293,21 @@ public class GrTypeDefinitionMembersCache {
           }
         }.getResult();
         for (CandidateInfo candidateInfo : traitFields) {
-          result.add(new GrTraitField(((PsiField)candidateInfo.getElement()), myDefinition, candidateInfo.getSubstitutor()));
+          collector.add(new GrTraitField(((PsiField)candidateInfo.getElement()), clazz, candidateInfo.getSubstitutor()));
         }
       }
 
-      if (myDefinition.isTrait()) {
-        for (GrField field : myDefinition.getCodeFields()) {
-          result.add(new GrTraitField(field, myDefinition, PsiSubstitutor.EMPTY));
+      if (clazz.isTrait()) {
+        for (GrField field : clazz.getCodeFields()) {
+          collector.add(new GrTraitField(field, clazz, PsiSubstitutor.EMPTY));
         }
       }
-      return result;
     }
 
     @NotNull
-    private List<GrMethod> getExpandingMethods(@NotNull CandidateInfo candidateInfo) {
+    private static List<GrMethod> getExpandingMethods(@NotNull GrTypeDefinition clazz, @NotNull CandidateInfo candidateInfo) {
       PsiMethod method = (PsiMethod)candidateInfo.getElement();
-      GrLightMethodBuilder implementation = GrTraitMethod.create(method, candidateInfo.getSubstitutor()).setContainingClass(myDefinition);
+      GrLightMethodBuilder implementation = GrTraitMethod.create(method, candidateInfo.getSubstitutor()).setContainingClass(clazz);
       implementation.getModifierList().removeModifier(GrModifierFlags.ABSTRACT_MASK);
 
       GrReflectedMethod[] reflectedMethods = implementation.getReflectedMethods();
@@ -321,7 +315,7 @@ public class GrTypeDefinitionMembersCache {
     }
 
     @NotNull
-    private List<PsiClassType.ClassResolveResult> getSuperTraitsByCorrectOrder(@NotNull PsiClassType[] types) {
+    private static List<PsiClassType.ClassResolveResult> getSuperTraitsByCorrectOrder(@NotNull PsiClassType[] types) {
       List<PsiClassType.ClassResolveResult> traits = ContainerUtil.newArrayList();
       for (int i = types.length - 1; i >= 0; i--) {
         PsiClassType.ClassResolveResult resolveResult = types[i].resolveGenerics();
