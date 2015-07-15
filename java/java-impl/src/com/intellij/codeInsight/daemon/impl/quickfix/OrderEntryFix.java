@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -46,7 +45,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +60,8 @@ import java.util.*;
  * @author cdr
  */
 public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
+  private static final String JUNIT4_LIBRARY_NAME = "JUnit4";
+
   OrderEntryFix() {
   }
 
@@ -123,27 +123,17 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
         @Override
         public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+          List<String> jarPaths;
+          String libraryName;
           if (isJunit4) {
-            final VirtualFile location = PsiUtilCore.getVirtualFile(reference.getElement());
-            boolean inTests = location != null && ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(location);
-            DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-            try {
-              addJUnit4Library(inTests, currentModule);
-              final GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-              final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-              if (aClass != null && editor != null) {
-                new AddImportAction(project, reference, editor, aClass).execute();
-              }
-            }
-            catch (ClassNotFoundException e) {
-              throw new RuntimeException(e);
-            }
-            finally {
-              DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-            }
-          } else {
-            addBundledJarToRoots(project, editor, currentModule, reference, className, JavaSdkUtil.getJunit3JarPath());
+            jarPaths = getJUnit4JarPaths();
+            libraryName = JUNIT4_LIBRARY_NAME;
           }
+          else {
+            jarPaths = Collections.singletonList(JavaSdkUtil.getJunit3JarPath());
+            libraryName = null;
+          }
+          addJarsToRootsAndImportClass(jarPaths, libraryName, currentModule, editor, reference, className);
         }
       };
       registrar.register(fix);
@@ -183,7 +173,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                 new WriteCommandAction(project) {
                   @Override
                   protected void run(final Result result) throws Throwable {
-                    addBundledJarToRoots(project, editor, currentModule, reference, "org.jetbrains.annotations." + referenceName, libraryPath);
+                    addJarsToRootsAndImportClass(Collections.singletonList(libraryPath), null, currentModule, editor, reference,
+                                                 "org.jetbrains.annotations." + referenceName);
                   }
                 }.execute();
               }
@@ -271,19 +262,20 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   public static void addJUnit4Library(boolean inTests, Module currentModule) throws ClassNotFoundException {
-    final String[] junit4Paths = {JavaSdkUtil.getJunit4JarPath(), 
-                                  PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matcher")), 
-                                  PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matchers"))};
-    ModuleRootModificationUtil.addModuleLibrary(currentModule,
-                                                "JUnit4",
-                                                ContainerUtil.map(junit4Paths,
-                                                                  new Function<String, String>() {
-                                                                    @Override
-                                                                    public String fun(String libPath) {
-                                                                      return convertToLibraryRoot(libPath).getUrl();
-                                                                    }
-                                                                  }),
-                                                Collections.<String>emptyList(), inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
+    final List<String> junit4Paths = getJUnit4JarPaths();
+    addJarsToRoots(junit4Paths, JUNIT4_LIBRARY_NAME, currentModule, null);
+  }
+
+  @NotNull
+  private static List<String> getJUnit4JarPaths() {
+    try {
+      return Arrays.asList(JavaSdkUtil.getJunit4JarPath(),
+                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matcher")),
+                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matchers")));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
@@ -322,29 +314,50 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return false;
   }
 
-  public static void addBundledJarToRoots(final Project project,
-                                          @Nullable final Editor editor,
-                                          final Module currentModule,
+  /**
+   * @deprecated use {@link #addJarsToRootsAndImportClass} instead
+   */
+  public static void addBundledJarToRoots(final Project project, @Nullable final Editor editor, final Module currentModule,
                                           @Nullable final PsiReference reference,
                                           @NonNls final String className,
                                           @NonNls final String libVirtFile) {
-    addJarToRoots(libVirtFile, currentModule, reference != null ? reference.getElement() : null);
-
-    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-      @Override
-      public void run() {
-        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-        if (aClass != null && editor != null && reference != null) {
-          new AddImportAction(project, reference, editor, aClass).execute();
-        }
-      }
-    });
+    addJarsToRootsAndImportClass(Collections.singletonList(libVirtFile), null, currentModule, editor, reference, className);
   }
 
-  public static void addJarToRoots(String libPath, final Module module, @Nullable PsiElement location) {
-    VirtualFile libVirtFile = convertToLibraryRoot(libPath);
+  public static void addJarsToRootsAndImportClass(@NotNull List<String> jarPaths,
+                                                  final String libraryName,
+                                                  @NotNull final Module currentModule, @Nullable final Editor editor,
+                                                  @Nullable final PsiReference reference,
+                                                  @NonNls final String className) {
+    addJarsToRoots(jarPaths, libraryName, currentModule, reference != null ? reference.getElement() : null);
 
+    final Project project = currentModule.getProject();
+    if (editor != null && reference != null && className != null) {
+      DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+        @Override
+        public void run() {
+          GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
+          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
+          if (aClass != null) {
+            new AddImportAction(project, reference, editor, aClass).execute();
+          }
+        }
+      });
+    }
+  }
+
+  public static void addJarToRoots(@NotNull String jarPath, final @NotNull Module module, @Nullable PsiElement location) {
+    addJarsToRoots(Collections.singletonList(jarPath), null, module, location);
+  }
+
+  public static void addJarsToRoots(@NotNull List<String> jarPaths, @Nullable String libraryName,
+                                    @NotNull Module module, @Nullable PsiElement location) {
+    List<String> urls = ContainerUtil.map(jarPaths, new Function<String, String>() {
+      @Override
+      public String fun(String path) {
+        return refreshAndConvertToUrl(path);
+      }
+    });
     boolean inTests = false;
     if (location != null) {
       final VirtualFile vFile = location.getContainingFile().getVirtualFile();
@@ -352,18 +365,15 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         inTests = true;
       }
     }
-    ModuleRootModificationUtil.addModuleLibrary(module, null, Collections.singletonList(libVirtFile.getUrl()),
-                                                Collections.<String>emptyList(), inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
+    ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.<String>emptyList(),
+                                                inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
   }
 
   @NotNull
-  private static VirtualFile convertToLibraryRoot(String libPath) {
-    final File libraryRoot = new File(libPath);
+  private static String refreshAndConvertToUrl(String jarPath) {
+    final File libraryRoot = new File(jarPath);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryRoot);
-    String url = VfsUtil.getUrlForLibraryRoot(libraryRoot);
-    VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
-    assert libVirtFile != null : libPath;
-    return libVirtFile;
+    return VfsUtil.getUrlForLibraryRoot(libraryRoot);
   }
 
   public static boolean ensureAnnotationsJarInPath(final Module module) {
