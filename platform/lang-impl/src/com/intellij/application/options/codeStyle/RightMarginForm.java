@@ -17,12 +17,15 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * Can be used for languages which do not use standard "Wrapping and Braces" panel.
@@ -43,6 +46,7 @@ public class RightMarginForm {
   private JTextField myRightMarginField;
   private JCheckBox myDefaultGeneralCheckBox;
   private JPanel myTopPanel;
+  private JComboBox myWrapOnTypingCombo;
   private final Language myLanguage;
   private final int myDefaultRightMargin;
 
@@ -61,6 +65,11 @@ public class RightMarginForm {
         }
       }
     });
+
+    //noinspection unchecked
+    myWrapOnTypingCombo.setModel(new DefaultComboBoxModel(
+      CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS
+    ));
   }
 
   public void reset(@NotNull CodeStyleSettings settings) {
@@ -77,6 +86,12 @@ public class RightMarginForm {
         myRightMarginField.setEnabled(false);
       }
     }
+    for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES.length; i ++) {
+      if (langSettings.WRAP_ON_TYPING == CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES[i]) {
+        myWrapOnTypingCombo.setSelectedIndex(i);
+        break;
+      }
+    }
   }
 
   public void apply(@NotNull CodeStyleSettings settings) {
@@ -89,16 +104,16 @@ public class RightMarginForm {
         langSettings.RIGHT_MARGIN = getFieldRightMargin(settings.getDefaultRightMargin());
       }
     }
+    langSettings.WRAP_ON_TYPING = getSelectedWrapOnTypingValue();
   }
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
-    if (myDefaultGeneralCheckBox.isSelected()) {
-      return langSettings.RIGHT_MARGIN >= 0;
-    }
-    else {
-      return langSettings.RIGHT_MARGIN != getFieldRightMargin(settings.getDefaultRightMargin());
-    }
+    boolean rightMarginModified =
+      myDefaultGeneralCheckBox.isSelected() ?
+      langSettings.RIGHT_MARGIN >= 0 :
+      langSettings.RIGHT_MARGIN != getFieldRightMargin(settings.getDefaultRightMargin());
+    return rightMarginModified || langSettings.WRAP_ON_TYPING != getSelectedWrapOnTypingValue();
   }
 
   private int getFieldRightMargin(int fallBackValue) {
@@ -112,6 +127,14 @@ public class RightMarginForm {
       }
     }
     return fallBackValue;
+  }
+
+  private int getSelectedWrapOnTypingValue() {
+    int i = myWrapOnTypingCombo.getSelectedIndex();
+    if (i >= 0 && i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES.length) {
+      return CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES[i];
+    }
+    return CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue;
   }
 
   public JPanel getTopPanel() {
