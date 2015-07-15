@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.testFramework.EditorTestUtil;
  * @author cdr
  */
 public class EditorInfo {
-  String newFileText = null;
+  private final String newFileText;
   public EditorTestUtil.CaretAndSelectionState caretState;
 
   public EditorInfo(final String fileText) {
