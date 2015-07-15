@@ -155,46 +155,54 @@ public class StudyProjectGenerator {
     int lessonIndex = 1;
     for (Lesson lesson : course.getLessons()) {
       final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
-      FileUtil.createDirectory(lessonDirectory);
-      int taskIndex = 1;
-      for (Task task : lesson.taskList) {
-        final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(taskIndex));
-        FileUtil.createDirectory(taskDirectory);
-        for (Map.Entry<String, TaskFile> taskFileEntry : task.taskFiles.entrySet()) {
-          final String name = taskFileEntry.getKey();
-          final TaskFile taskFile = taskFileEntry.getValue();
-          final File file = new File(taskDirectory, name);
-          FileUtil.createIfDoesntExist(file);
-
-          try {
-            FileUtil.writeToFile(file, taskFile.text);
-          }
-          catch (IOException e) {
-            LOG.error("ERROR copying file " + name);
-          }
-        }
-        final Map<String, String> testsText = task.getTestsText();
-        for (Map.Entry<String, String> entry : testsText.entrySet()) {
-          final File testsFile = new File(taskDirectory, entry.getKey());
-          FileUtil.createIfDoesntExist(testsFile);
-          try {
-              FileUtil.writeToFile(testsFile, entry.getValue());
-          }
-          catch (IOException e) {
-            LOG.error("ERROR copying tests file");
-          }
-        }
-        final File taskText = new File(taskDirectory, "task.html");
-        FileUtil.createIfDoesntExist(taskText);
-        try {
-          FileUtil.writeToFile(taskText, task.getText());
-        }
-        catch (IOException e) {
-          LOG.error("ERROR copying tests file");
-        }
-        taskIndex += 1;
-      }
+      flushLesson(lessonDirectory, lesson);
       lessonIndex += 1;
+    }
+  }
+
+  public static void flushLesson(@NotNull final File lessonDirectory, @NotNull final Lesson lesson) {
+    FileUtil.createDirectory(lessonDirectory);
+    int taskIndex = 1;
+    for (Task task : lesson.taskList) {
+      final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(taskIndex));
+      flushTask(task, taskDirectory);
+      taskIndex += 1;
+    }
+  }
+
+  public static void flushTask(@NotNull final Task task, @NotNull final File taskDirectory) {
+    FileUtil.createDirectory(taskDirectory);
+    for (Map.Entry<String, TaskFile> taskFileEntry : task.taskFiles.entrySet()) {
+      final String name = taskFileEntry.getKey();
+      final TaskFile taskFile = taskFileEntry.getValue();
+      final File file = new File(taskDirectory, name);
+      FileUtil.createIfDoesntExist(file);
+
+      try {
+        FileUtil.writeToFile(file, taskFile.text);
+      }
+      catch (IOException e) {
+        LOG.error("ERROR copying file " + name);
+      }
+    }
+    final Map<String, String> testsText = task.getTestsText();
+    for (Map.Entry<String, String> entry : testsText.entrySet()) {
+      final File testsFile = new File(taskDirectory, entry.getKey());
+      FileUtil.createIfDoesntExist(testsFile);
+      try {
+          FileUtil.writeToFile(testsFile, entry.getValue());
+      }
+      catch (IOException e) {
+        LOG.error("ERROR copying tests file");
+      }
+    }
+    final File taskText = new File(taskDirectory, "task.html");
+    FileUtil.createIfDoesntExist(taskText);
+    try {
+      FileUtil.writeToFile(taskText, task.getText());
+    }
+    catch (IOException e) {
+      LOG.error("ERROR copying tests file");
     }
   }
 
