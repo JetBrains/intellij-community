@@ -72,8 +72,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
@@ -230,6 +228,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
 
       @Override
+      public boolean isEnabled() {
+        ClasspathTableItem<?> selectedItem = getSelectedItem();
+        return selectedItem != null && selectedItem.isEditable();
+      }
+
+      @Override
       public boolean isDumbAware() {
         return true;
       }
@@ -306,8 +310,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   @Override
   @Nullable
   public OrderEntry getSelectedEntry() {
+    ClasspathTableItem<?> item = getSelectedItem();
+    return item != null ? item.getEntry() : null;
+  }
+
+  @Nullable
+  private ClasspathTableItem<?> getSelectedItem() {
     if (myEntryTable.getSelectedRowCount() != 1) return null;
-    return getItemAt(myEntryTable.getSelectedRow()).getEntry();
+    return getItemAt(myEntryTable.getSelectedRow());
   }
 
   private void setFixedColumnWidth(final int columnIndex) {
@@ -364,17 +374,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     //removeButton.setShortcut(CustomShortcutSet.fromString("alt DELETE"));
     //upButton.setShortcut(CustomShortcutSet.fromString("alt UP"));
     //downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
-
-    // we need to register our listener before ToolbarDecorator registers its own. Otherwise
-    myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) {
-          return;
-        }
-        updateButtons();
-      }
-    });
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
     AnActionButtonUpdater moveUpDownUpdater = new AnActionButtonUpdater() {
@@ -437,6 +436,18 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           removeAction.actionPerformed(null);
         }
       })
+      .setRemoveActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          final int[] selectedRows = myEntryTable.getSelectedRows();
+          for (final int selectedRow : selectedRows) {
+            if (!getItemAt(selectedRow).isRemovable()) {
+              return false;
+            }
+          }
+          return selectedRows.length > 0;
+        }
+      })
       .setMoveUpAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -481,28 +492,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     dialog.show();
     myEntryTable.repaint();
     ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    updateButtons();
-  }
-
-  private void updateButtons() {
-    final int[] selectedRows = myEntryTable.getSelectedRows();
-    boolean removeButtonEnabled = true;
-    for (final int selectedRow : selectedRows) {
-      final ClasspathTableItem<?> item = getItemAt(selectedRow);
-      if (!item.isRemovable()) {
-        removeButtonEnabled = false;
-      }
-    }
-    if (myRemoveButton != null) {
-      myRemoveButton.setEnabled(removeButtonEnabled && selectedRows.length > 0);
-    }
-    ClasspathTableItem<?> selectedItem = selectedRows.length == 1 ? getItemAt(selectedRows[0]) : null;
-    myEditButton.setEnabled(selectedItem != null && selectedItem.isEditable());
   }
 
   private void removeSelectedItems(final List removedRows) {
