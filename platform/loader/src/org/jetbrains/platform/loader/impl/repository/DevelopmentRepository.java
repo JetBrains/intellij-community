@@ -48,8 +48,9 @@ public class DevelopmentRepository extends PlatformRepositoryBase {
   @Nullable
   protected RuntimeModuleDescriptor findModule(RuntimeModuleId moduleName) {
     String name = moduleName.getStringId();
-    if (name.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
-      return myLibraryModules.get(moduleName);
+    RuntimeModuleDescriptor libraryModule = myLibraryModules.get(moduleName);
+    if (libraryModule != null) {
+      return libraryModule;
     }
     File root;
     if (name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX)) {
