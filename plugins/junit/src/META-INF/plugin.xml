@@ -60,6 +60,7 @@
     <stacktrace.fold substring="at junit.framework.TestResult"/>
 
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.execution.junit.codeInsight.JUnitUnresolvedReferenceQuickFixProvider"/>
   </extensions>
 
   <extensionPoints>
