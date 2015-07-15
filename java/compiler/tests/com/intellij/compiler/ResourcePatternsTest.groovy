@@ -21,7 +21,7 @@ public class ResourcePatternsTest extends LightCodeInsightFixtureTestCase {
   protected LightProjectDescriptor getProjectDescriptor() {
     return new DefaultLightProjectDescriptor() {
       @Override
-      void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
         contentEntry.sourceFolders.each { contentEntry.removeSourceFolder(it) }
         contentEntry.addSourceFolder(contentEntry.getFile().createChildDirectory(this, "aaa").createChildDirectory(this, "bbb"), false)
         super.configureModule(module, model, contentEntry)
