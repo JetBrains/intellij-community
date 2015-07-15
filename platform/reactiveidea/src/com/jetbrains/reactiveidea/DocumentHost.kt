@@ -94,7 +94,9 @@ public class DocumentHost(reactModel: ReactiveModel, path: Path, val doc: Docume
     val updateDocumentText = reaction(true, "init document text", textSignal) { text ->
       if (text != null) {
         ApplicationManager.getApplication().runWriteAction {
-          doc.setText(text)
+          if(doc.isWritable()) {
+            doc.setText(text)
+          }
         }
       }
       text
