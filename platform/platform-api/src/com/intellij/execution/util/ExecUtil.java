@@ -189,7 +189,10 @@ public class ExecUtil {
           return escapeAppleScriptArgument(s);
         }
       }, " & \" \" & ");
-      final String escapedScript = "do shell script " + escapedCommandLine + " with administrator privileges";
+      final String escapedScript = "tell current application\n" +
+                                   "   activate\n" +
+                                   "   do shell script " + escapedCommandLine + " with administrator privileges\n" +
+                                   "end tell";
       return new GeneralCommandLine(getOsascriptPath(), "-e", escapedScript)
         .withWorkDirectory(workDir)
         .withEnvironment(environment)
