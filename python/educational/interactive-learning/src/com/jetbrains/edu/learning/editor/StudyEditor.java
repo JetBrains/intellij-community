@@ -116,7 +116,7 @@ public class StudyEditor implements TextEditor {
     if (myTaskFile != null) {
       final Task currentTask = myTaskFile.getTask();
       final String taskText = currentTask.getText();
-      initializeTaskText(studyPanel, taskText);
+      //initializeTaskText(studyPanel, taskText);
       final JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
       final JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       studyButtonPanel.add(taskActionsPanel);
@@ -226,6 +226,10 @@ public class StudyEditor implements TextEditor {
       }
         });
     }
+    initializeButtonActions(myShowHintButton);
+  }
+
+  protected void initializeButtonActions(JButton myShowHintButton) {
     myCheckButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
