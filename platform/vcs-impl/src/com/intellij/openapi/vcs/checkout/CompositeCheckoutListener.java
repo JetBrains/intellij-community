@@ -19,8 +19,15 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -64,11 +71,10 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
       }
     }
 
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0){
-      final Project lastOpenedProject = openProjects[openProjects.length - 1];
+    Project project = findProjectByBaseDirLocation(directory);
+    if (project != null) {
       for (CheckoutListener listener: listeners) {
-        listener.processOpenedProject(lastOpenedProject);
+        listener.processOpenedProject(project);
       }
     }
   }
@@ -77,5 +83,16 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
     if (!myFoundProject && myFirstDirectory != null) {
       notifyCheckoutListeners(myFirstDirectory, true);
     }
+  }
+
+  @Nullable
+  static Project findProjectByBaseDirLocation(@NotNull final File directory) {
+    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), new Condition<Project>() {
+      @Override
+      public boolean value(Project project) {
+        VirtualFile baseDir = project.getBaseDir();
+        return baseDir != null && FileUtil.filesEqual(VfsUtilCore.virtualToIoFile(baseDir), directory);
+      }
+    });
   }
 }

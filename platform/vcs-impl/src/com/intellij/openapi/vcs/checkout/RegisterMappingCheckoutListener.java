@@ -16,17 +16,9 @@
 package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
@@ -34,7 +26,7 @@ import java.util.Collections;
 public class RegisterMappingCheckoutListener implements VcsAwareCheckoutListener {
   @Override
   public boolean processCheckedOutDirectory(Project currentProject, File directory, VcsKey vcsKey) {
-    Project project = findProjectByBaseDirLocation(ProjectManager.getInstance().getOpenProjects(), directory);
+    Project project = CompositeCheckoutListener.findProjectByBaseDirLocation(directory);
     if (project != null) {
       ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
       if (!vcsManager.hasAnyMappings()) {
@@ -43,16 +35,5 @@ public class RegisterMappingCheckoutListener implements VcsAwareCheckoutListener
       return true;
     }
     return false;
-  }
-
-  @Nullable
-  private static Project findProjectByBaseDirLocation(@NotNull Project[] projects, @NotNull final File directory) {
-    return ContainerUtil.find(projects, new Condition<Project>() {
-      @Override
-      public boolean value(Project project) {
-        VirtualFile baseDir = project.getBaseDir();
-        return baseDir != null && FileUtil.filesEqual(VfsUtilCore.virtualToIoFile(baseDir), directory);
-      }
-    });
   }
 }
