@@ -1,61 +1,18 @@
 package com.intellij.formatting;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ui.UIUtil;
-import junit.framework.TestCase;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
-@NonNls public class GeneralCodeFormatterTest extends TestCase {
+@NonNls
+public class GeneralCodeFormatterTest extends LightPlatformTestCase {
   private int myRightMargin = 120;
-
-  @Override
-  public void runBare() throws Throwable {
-    if (ApplicationManager.getApplication() != null) {
-      final Throwable[] throwable = new Throwable[1];
-
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            runBareImpl();
-          }
-          catch (Throwable th) {
-            throwable[0] = th;
-          }
-        }
-
-        private void runBareImpl() throws Throwable {
-          setUp();
-          try {
-            runTest();
-          }
-          finally {
-            tearDown();
-          }
-        }
-      });
-
-      if (throwable[0] != null) {
-        throw throwable[0];
-      }
-    }
-    else {
-      super.runBare();
-    }
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    FormatterImpl.getInstance();
-  }
 
   public void testDefaultContinuationIndent() throws Exception {
     doTest("defaultContinuationIndent", "aaa bbb ccc\nddd eee fff", "aaa bbb ccc\n" +
