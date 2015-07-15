@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A test case that provides IDEA application and project. Note both are reused for each test run in the session so
@@ -39,6 +40,7 @@ public abstract class LightIdeaTestCase extends LightPlatformTestCase {
     return IdeaTestUtil.getMockJdk17();
   }
 
+  @NotNull
   @Override
   protected ModuleType getModuleType() {
     return StdModuleTypes.JAVA;

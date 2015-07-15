@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,19 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public interface LightProjectDescriptor {
+  @NotNull
   ModuleType getModuleType();
   Sdk getSdk();
-  void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry);
+  void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry);
 
   class Empty implements LightProjectDescriptor {
+    @NotNull
     @Override
     public ModuleType getModuleType() {
       return EmptyModuleType.getInstance();
@@ -42,7 +45,7 @@ public interface LightProjectDescriptor {
     }
 
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
     }
   }
 

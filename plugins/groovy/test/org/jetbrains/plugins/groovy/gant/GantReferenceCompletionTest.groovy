@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -161,7 +162,7 @@ target (default : '') {
 }
 
 class GantProjectDescriptor extends DefaultLightProjectDescriptor {
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
 
       def fs = JarFileSystem.instance

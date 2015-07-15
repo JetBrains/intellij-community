@@ -39,6 +39,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+
 public class TestNGOrderEntryFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + TestNGOrderEntryFix.class.getName());
 
@@ -77,8 +79,8 @@ public class TestNGOrderEntryFix implements IntentionAction {
     String jarPath = PathUtil.getJarPathForClass(Test.class);
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
-    OrderEntryFix.addBundledJarToRoots(project, editor, ModuleUtilCore.findModuleForFile(virtualFile, project), reference,
-                                       "org.testng.annotations." + reference.getReferenceName(), jarPath);
+    OrderEntryFix.addJarsToRootsAndImportClass(Collections.singletonList(jarPath), null, ModuleUtilCore.findModuleForFile(virtualFile, project),
+                                    editor, reference, "org.testng.annotations." + reference.getReferenceName());
   }
 
   public boolean startInWriteAction() {

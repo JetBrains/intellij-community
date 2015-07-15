@@ -352,6 +352,10 @@ public class StudyProjectGenerator {
       ZipUtil.unzip(null, courseDir, file, null, null, true);
       CourseInfo courseName = addCourse(myCourses, courseDir);
       flushCache();
+      if (courseName != null && !courseName.getName().equals(unzippedName)) {
+        courseDir.renameTo(new File(myCoursesDir, courseName.getName()));
+        courseDir.delete();
+      }
       return courseName;
     }
     catch (IOException e) {

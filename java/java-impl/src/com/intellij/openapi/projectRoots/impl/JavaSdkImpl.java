@@ -68,7 +68,7 @@ public class JavaSdkImpl extends JavaSdk {
     super("JavaSDK");
 
     fileManager.addVirtualFileListener(new VirtualFileAdapter() {
-
+      @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         updateCache(event);
       }
@@ -500,6 +500,7 @@ public class JavaSdkImpl extends JavaSdk {
     return sdkVersion != null && sdkVersion.isAtLeast(version);
   }
 
+  @NotNull
   @Override
   public Sdk createJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);

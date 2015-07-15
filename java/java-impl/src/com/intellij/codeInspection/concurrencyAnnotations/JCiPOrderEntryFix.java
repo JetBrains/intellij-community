@@ -38,6 +38,8 @@ import net.jcip.annotations.GuardedBy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+
 public class JCiPOrderEntryFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + JCiPOrderEntryFix.class.getName());
 
@@ -79,8 +81,8 @@ public class JCiPOrderEntryFix implements IntentionAction {
     String jarPath = PathUtil.getJarPathForClass(GuardedBy.class);
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
-    OrderEntryFix.addBundledJarToRoots(project, editor, ModuleUtil.findModuleForFile(virtualFile, project), reference,
-                                       "net.jcip.annotations." + reference.getReferenceName(), jarPath);
+    OrderEntryFix.addJarsToRootsAndImportClass(Collections.singletonList(jarPath), null, ModuleUtil.findModuleForFile(virtualFile, project), editor,
+                                               reference, "net.jcip.annotations." + reference.getReferenceName());
   }
 
   @Override

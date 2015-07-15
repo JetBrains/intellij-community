@@ -255,11 +255,13 @@ public class SdkConfigurationUtil {
     return null;
   }
 
-  public static String createUniqueSdkName(SdkType type, String home, final Collection<Sdk> sdks) {
+  @NotNull
+  public static String createUniqueSdkName(@NotNull SdkType type, String home, final Collection<Sdk> sdks) {
     return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
   }
 
-  public static String createUniqueSdkName(final String suggestedName, final Collection<Sdk> sdks) {
+  @NotNull
+  public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<Sdk> sdks) {
     final Set<String> names = new HashSet<String>();
     for (Sdk jdk : sdks) {
       names.add(jdk.getName());
@@ -272,7 +274,7 @@ public class SdkConfigurationUtil {
     return newSdkName;
   }
 
-  public static void selectSdkHome(final SdkType sdkType, @NotNull final Consumer<String> consumer) {
+  public static void selectSdkHome(@NotNull final SdkType sdkType, @NotNull final Consumer<String> consumer) {
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk sdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(sdkType);
@@ -298,12 +300,13 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
+  public static VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType) {
     final String homePath = sdkType.suggestHomePath();
     return homePath == null ? null : LocalFileSystem.getInstance().findFileByPath(homePath);
   }
 
-  public static List<String> filterExistingPaths(SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
+  @NotNull
+  public static List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
     List<String> result = new ArrayList<String>();
     for (String sdkHome : sdkHomes) {
       if (findByPath(sdkType, sdks, sdkHome) == null) {
@@ -314,7 +317,7 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  private static Sdk findByPath(SdkType sdkType, Sdk[] sdks, String sdkHome) {
+  private static Sdk findByPath(@NotNull SdkType sdkType, @NotNull Sdk[] sdks, @NotNull String sdkHome) {
     for (Sdk sdk : sdks) {
       final String path = sdk.getHomePath();
       if (sdk.getSdkType() == sdkType && path != null &&

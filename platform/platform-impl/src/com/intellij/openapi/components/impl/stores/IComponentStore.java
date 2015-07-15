@@ -31,6 +31,8 @@ public interface IComponentStore {
 
   void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
 
+  boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages);
+
   @NotNull
   Collection<String> getNotReloadableComponents(@NotNull Collection<String> componentNames);
 

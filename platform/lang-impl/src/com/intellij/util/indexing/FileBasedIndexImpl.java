@@ -1210,6 +1210,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Nullable
   public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // avoid rebuilding index in tests since we do it synchronously in requestRebuild and we can have readAction at hand
+      return null;
+    }
     if (e instanceof IndexOutOfBoundsException) return e; // something wrong with direct byte buffer
     Throwable cause = e.getCause();
     if (cause instanceof StorageException || cause instanceof IOException ||
@@ -1733,11 +1737,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
 
-    // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
-    // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
-    final Computable<Boolean> update = index.update(inputId, currentFC);
-
     try {
+      // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
+      // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
+      final Computable<Boolean> update = index.update(inputId, currentFC);
+
       scheduleUpdate(indexId, update, inputId, hasContent);
     } catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);

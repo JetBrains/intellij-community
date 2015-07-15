@@ -19,7 +19,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -163,7 +162,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                 @Override
                 protected void run(@NotNull final Result result) throws Throwable {
                   for (Module module : modulesWithoutAnnotations) {
-                    OrderEntryFix.addBundledJarToRoots(project, null, module, null, AnnotationUtil.NOT_NULL, path);
+                    OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
                   }
                 }
               }.execute();
