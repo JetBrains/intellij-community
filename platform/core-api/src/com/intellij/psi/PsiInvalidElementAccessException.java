@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.stubs.PsiFileStubImpl;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
@@ -146,8 +146,8 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
         StubElement stub = ((StubBasedPsiElement)root).getStub();
         while (stub != null) {
           m += "\n  each stub=" + stub;
-          if (stub instanceof PsiFileStubImpl) {
-            m += "; fileStub.psi=" + stub.getPsi() + "; reason=" + ((PsiFileStubImpl)stub).getInvalidationReason();
+          if (stub instanceof PsiFileStub) {
+            m += "; fileStub.psi=" + stub.getPsi() + "; reason=" + ((PsiFileStub)stub).getInvalidationReason();
           }
           stub = stub.getParentStub();
         }

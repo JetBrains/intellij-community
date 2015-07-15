@@ -71,18 +71,14 @@ public class ObjectStubTree<T extends Stub> {
     return sink.getResult();
   }
 
-  protected void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result) {
-    enumerateStubs(root, result, 0);
-  }
-
-  protected static void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result, int idOffset) {
-    ((ObjectStubBase)root).id = idOffset + result.size();
+  private static void enumerateStubs(@NotNull Stub root, @NotNull List<Stub> result) {
+    ((ObjectStubBase)root).id = result.size();
     result.add(root);
     List<? extends Stub> childrenStubs = root.getChildrenStubs();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < childrenStubs.size(); i++) {
       Stub child = childrenStubs.get(i);
-      enumerateStubs(child, result, idOffset);
+      enumerateStubs(child, result);
     }
   }
 

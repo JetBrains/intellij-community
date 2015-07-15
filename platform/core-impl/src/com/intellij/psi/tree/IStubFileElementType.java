@@ -28,7 +28,7 @@ import java.io.IOException;
 /*
  * @author max
  */
-public class IStubFileElementType<T extends PsiFileStub> extends IFileElementType implements StubSerializer<T> {
+public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {
   public IStubFileElementType(final Language language) {
     super(language);
   }
@@ -67,5 +67,10 @@ public class IStubFileElementType<T extends PsiFileStub> extends IFileElementTyp
 
   public boolean shouldBuildStubFor(final VirtualFile file) {
     return true;
+  }
+
+  @Override
+  public boolean isDefault() {
+    return getExternalId().equals(PsiFileStubImpl.TYPE.getExternalId());
   }
 }

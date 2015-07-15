@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.tree;
 
-/*
- * @author max
- */
-package com.intellij.psi.stubs;
-
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.lang.Language;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.StubSerializer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface PsiFileStub<T extends PsiFile> extends StubElement<T>, UserDataHolder {
-  PsiFileStub[] EMPTY_ARRAY = new PsiFileStub[0];
+/**
+ * @author Konstantin.Ulitin
+ */
+public abstract class StubFileElementType<T extends PsiFileStub> extends IFileElementType implements StubSerializer<T> {
+  public StubFileElementType(@Nullable Language language) {
+    super(language);
+  }
 
-  StubFileElementType getType();
+  public StubFileElementType(@NonNls @NotNull String debugName, @Nullable Language language) {
+    super(debugName, language);
+  }
 
-  @NotNull
-  PsiFileStub[] getStubRoots();
-
-  @Nullable
-  String getInvalidationReason();
+  public abstract boolean isDefault();
 }
