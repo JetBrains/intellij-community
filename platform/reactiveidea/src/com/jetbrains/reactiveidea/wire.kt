@@ -15,10 +15,7 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.corundumstudio.socketio.Configuration
-import com.corundumstudio.socketio.SocketConfig
-import com.corundumstudio.socketio.SocketIOClient
-import com.corundumstudio.socketio.SocketIOServer
+import com.corundumstudio.socketio.*
 import com.corundumstudio.socketio.listener.ConnectListener
 import com.corundumstudio.socketio.listener.DisconnectListener
 import com.fasterxml.jackson.databind.JsonNode
@@ -33,12 +30,10 @@ import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.util.Lifetime
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.ArrayList
-import java.util.HashMap
-import java.util.UUID
+import java.util.*
 
 fun serverModel(lifetime: Lifetime, port: Int,
-                reactiveModels: VariableSignal<PersistentMap<UUID, ReactiveModel>>,
+                reactiveModels: VariableSignal<PersistentMap<String, ReactiveModel>>,
                 initModelFunc: (ReactiveModel) -> Unit = {}) {
 
   val config = Configuration()
@@ -49,15 +44,18 @@ fun serverModel(lifetime: Lifetime, port: Int,
   config.setSocketConfig(sockConfig)
 
   val server = SocketIOServer(config)
+  // TODO would be fixed in 1.7.8 netty-socketio version. Should be removed after update
+  server.setPipelineFactory(FixSocketIOChannelInitializer())
 
   fun getModel(client: SocketIOClient): ReactiveModel {
-    var model: ReactiveModel? = reactiveModels.value[client.getSessionId()]
+    val id = client.getSessionId().toString()
+    var model: ReactiveModel? = reactiveModels.value[id]
     if (model == null) {
-      model = createModel(Lifetime.create(lifetime).lifetime, client)
+      model = createModel(Lifetime.create(lifetime).lifetime, client.getSessionId(), server)
       initModelFunc(model)
-      reactiveModels.value = reactiveModels.value.plus(client.getSessionId(), model)
+      reactiveModels.value = reactiveModels.value.plus(id, model)
       model.lifetime += {
-        reactiveModels.value = reactiveModels.value.minus(client.getSessionId())
+        reactiveModels.value = reactiveModels.value.minus(id)
       }
     }
     return model
@@ -101,10 +99,11 @@ fun serverModel(lifetime: Lifetime, port: Int,
 
   server.addDisconnectListener(object : DisconnectListener {
     override fun onDisconnect(client: SocketIOClient) {
-      UIUtil.invokeLaterIfNeeded {
-        val model = getModel(client)
-        model.lifetime.terminate()
-      }
+      //      // Persist model?
+      //      UIUtil.invokeLaterIfNeeded {
+      //        val model = getModel(client)
+      //        model.lifetime.terminate()
+      //      }
     }
   });
 
@@ -115,13 +114,15 @@ fun serverModel(lifetime: Lifetime, port: Int,
   }
 }
 
-private fun createModel(lifetime: Lifetime, client: SocketIOClient): ReactiveModel {
+private fun createModel(lifetime: Lifetime, clientUUID: UUID, server: SocketIOServer): ReactiveModel {
   val reactiveModel = ReactiveModel(lifetime, { diff ->
     val jsonObj = toJson(diff)
     val jsonStr = jsonObj.toString()
 
     val jsonNode = ObjectMapper().readTree(jsonStr)
-    client.sendEvent("diff", jsonNode)
+    val client = server.getClient(clientUUID)
+    // client may be disconnected
+    client?.sendEvent("diff", jsonNode)
   })
   return reactiveModel
 }

@@ -20,6 +20,8 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -37,6 +39,10 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
   val comp = GroupByTypeComparator(projectView, paneId)
   val openDirs = HashMap<SmartPsiElementPointer<PsiDirectory>, Path>()
   val ptrManager = SmartPointerManager.getInstance(project)
+
+  companion object {
+    private val LOG = Logger.getInstance("#com.jetbrains.reactiveidea.ProjectViewHost")
+  }
 
   override fun buildMeta(): Map<String, Any> = super.buildMeta()
       .plus("project" to project)
@@ -84,8 +90,14 @@ public class ProjectViewHost(val project: Project, val projectView: ProjectView?
         val path = openDirs[ptrManager.createSmartPsiElementPointer(dir)]
         if (path != null) {
           reactiveModel.transaction { m ->
-            val descr = path.getIn(m)!!.meta["descriptor"] as AbstractTreeNode<*>
-            val index = path.getIn(m)!!.meta["index"] as Int
+            val model = path.getIn(m)
+            if(model == null) {
+              LOG.error("Unexpected model behaviour. Path $path null in model. Directory: ${dir.toString()}")
+              ApplicationManagerEx.getApplicationEx().assertIsDispatchThread()
+              return@transaction m
+            }
+            val descr = model.meta["descriptor"] as AbstractTreeNode<*>
+            val index = model.meta["index"] as Int
             updateChilds(m, descr, path.dropLast(1), index)
           }
         }

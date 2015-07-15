@@ -45,8 +45,8 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
   val lifetime = Lifetime.create(Lifetime.Eternal)
   val startupManager = StartupManager.getInstance(project)
   // TODO need to think about synchronization
-  val reactiveModels: VariableSignal<PersistentMap<UUID, ReactiveModel>>
-      = VariableSignal(lifetime, "reactive models", PersistentHashMap.emptyMap<UUID, ReactiveModel>())
+  val reactiveModels: VariableSignal<PersistentMap<String, ReactiveModel>>
+      = VariableSignal(lifetime, "reactive models", PersistentHashMap.emptyMap<String, ReactiveModel>())
 
 
   override fun getComponentName(): String = "DocumentsSynchronizer"

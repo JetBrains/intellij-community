@@ -82,7 +82,7 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
   public fun testNetworking() {
     val port = 12345
 
-    serverModel(Lifetime.Eternal, port, varSignal(Lifetime.Eternal, "AA", PersistentHashMap.emptyMap<UUID, ReactiveModel>())) { server ->
+    serverModel(Lifetime.Eternal, port, varSignal(Lifetime.Eternal, "AA", PersistentHashMap.emptyMap<String, ReactiveModel>())) { server ->
       server.transaction { m ->
         com.jetbrains.reactivemodel.Path("a").putIn(m, com.jetbrains.reactivemodel.models.PrimitiveModel("abcd"))
       }
@@ -110,7 +110,7 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
     val first = DocumentImpl("my test document")
     val second = DocumentImpl("")
     val modelFuture = AsyncResult<ReactiveModel>()
-    serverModel(Lifetime.Eternal, port, varSignal(Lifetime.Eternal, "AA", PersistentHashMap.emptyMap<UUID, ReactiveModel>())) { serverModel ->
+    serverModel(Lifetime.Eternal, port, varSignal(Lifetime.Eternal, "AA", PersistentHashMap.emptyMap<String, ReactiveModel>())) { serverModel ->
 
       val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
 
