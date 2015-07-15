@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
@@ -18,17 +17,17 @@ import java.awt.event.KeyEvent;
 * To change this template use File | Settings | File Templates.
 */
 public class ShowMoreOptions extends AnAction implements DumbAware {
-  private final JComponent myToolbarComponent;
+  private final ActionToolbarImpl myToolbarComponent;
   public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), null);
 
-  public ShowMoreOptions(JComponent toolbarComponent, JTextComponent searchField) {
+  public ShowMoreOptions(ActionToolbarImpl toolbarComponent, JComponent shortcutHolder) {
     this.myToolbarComponent = toolbarComponent;
-    registerCustomShortcutSet(new CustomShortcutSet(SHORT_CUT), searchField);
+    registerCustomShortcutSet(new CustomShortcutSet(SHORT_CUT), shortcutHolder);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final ActionButton secondaryActions = ((ActionToolbarImpl)myToolbarComponent).getSecondaryActionsButton();
+    final ActionButton secondaryActions = myToolbarComponent.getSecondaryActionsButton();
     if (secondaryActions != null) {
       secondaryActions.click();
     }

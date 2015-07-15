@@ -10,13 +10,16 @@ import javax.swing.*;
 
 public abstract class EditorHeaderToggleAction extends CheckboxAction implements DumbAware {
 
+  protected final EditorSearchComponent myEditorSearchComponent;
+
+  protected EditorHeaderToggleAction(EditorSearchComponent editorSearchComponent, String text) {
+    super(text);
+    myEditorSearchComponent = editorSearchComponent;
+  }
+
   @Override
   public boolean displayTextInToolbar() {
     return true;
-  }
-
-  public EditorSearchComponent getEditorSearchComponent() {
-    return myEditorSearchComponent;
   }
 
   @Override
@@ -30,12 +33,5 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
     customComponent.setFocusable(false);
     customComponent.setOpaque(false);
     return customComponent;
-  }
-
-  private final EditorSearchComponent myEditorSearchComponent;
-
-  protected EditorHeaderToggleAction(EditorSearchComponent editorSearchComponent, String text) {
-    super(text);
-    myEditorSearchComponent = editorSearchComponent;
   }
 }

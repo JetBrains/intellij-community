@@ -18,12 +18,9 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
@@ -35,11 +32,8 @@ import java.util.ArrayList;
 * To change this template use File | Settings | File Templates.
 */
 public class NextOccurrenceAction extends EditorHeaderAction implements DumbAware {
-  private final Getter<JTextComponent> myTextField;
-
-  public NextOccurrenceAction(EditorSearchComponent editorSearchComponent, Getter<JTextComponent> editorTextField) {
+  public NextOccurrenceAction(EditorSearchComponent editorSearchComponent, JComponent shortcutHolder) {
     super(editorSearchComponent);
-    myTextField = editorTextField;
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
     ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
     ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts());
@@ -50,16 +44,16 @@ public class NextOccurrenceAction extends EditorHeaderAction implements DumbAwar
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null));
     }
 
-    registerShortcutsForComponent(shortcuts, editorTextField.get());
+    registerShortcutsForComponent(shortcuts, shortcutHolder);
   }
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    getEditorSearchComponent().searchForward();
+    myEditorSearchComponent.searchForward();
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(getEditorSearchComponent().hasMatches() && !StringUtil.isEmpty(myTextField.get().getText()));
+    e.getPresentation().setEnabled(myEditorSearchComponent.hasMatches());
   }
 }
