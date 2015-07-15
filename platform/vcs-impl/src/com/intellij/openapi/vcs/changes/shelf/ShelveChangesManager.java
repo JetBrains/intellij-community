@@ -22,13 +22,10 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -65,7 +62,6 @@ import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,20 +72,18 @@ import javax.swing.event.ChangeListener;
 import java.io.*;
 import java.util.*;
 
-import static com.intellij.openapi.vcs.changes.shelf.CompoundShelfFileProcessor.SHELF_DIR_NAME;
-
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
 
-  @NotNull  private final SchemesManager<ShelvedChangeList, ShelvedChangeList> mySchemesManager;
+  @NotNull private final SchemesManager<ShelvedChangeList, ShelvedChangeList> mySchemeManager;
 
   public static ShelveChangesManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelveChangesManager.class);
   }
 
-  private static final String SHELVE_MANAGER_DIR_PATH = StoragePathMacros.ROOT_CONFIG + "/shelf";
+  private static final String SHELVE_MANAGER_DIR_PATH = "shelf";
   private final MessageBus myBus;
 
   @NonNls private static final String ATTRIBUTE_SHOW_RECYCLED = "show_recycled";
@@ -100,12 +94,12 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   public ShelveChangesManager(final Project project, final MessageBus bus) {
     super(project);
-    myBus = bus;
-    BaseSchemeProcessor<ShelvedChangeList> schemeProcessor = new BaseSchemeProcessor<ShelvedChangeList>() {
 
+    myBus = bus;
+    mySchemeManager = SchemesManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new BaseSchemeProcessor<ShelvedChangeList>() {
       @Nullable
       @Override
-      public ShelvedChangeList readScheme(@NotNull Element element) throws InvalidDataException, IOException, JDOMException {
+      public ShelvedChangeList readScheme(@NotNull Element element) throws InvalidDataException {
         return readOneShelvedChangeList(element);
       }
 
@@ -115,31 +109,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         scheme.writeExternal(child);
         return child;
       }
-    };
-    mySchemesManager =
-      SchemesManagerFactory.getInstance().createSchemesManager(SHELVE_MANAGER_DIR_PATH, schemeProcessor, RoamingType.PER_PLATFORM);
-    if (project.isDefault()) {
-      myFileProcessor = new CompoundShelfFileProcessor(null, PathManager.getConfigPath() + File.separator + SHELF_DIR_NAME);
-    }
-    else if (ProjectUtil.isDirectoryBased(project)) {
-      VirtualFile dir = project.getBaseDir();
-      String shelfBaseDirPath = dir == null ? "" : dir.getPath() + File.separator + Project.DIRECTORY_STORE_FOLDER;
-      myFileProcessor = new CompoundShelfFileProcessor(shelfBaseDirPath);
-    }
-    else {
-      if (project instanceof ProjectEx && ((ProjectEx)project).getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
-        myFileProcessor = new CompoundShelfFileProcessor(mySchemesManager.getRootDirectory().getPath());
-      }
-      else {
-        myFileProcessor = new CompoundShelfFileProcessor();
-      }
-    }
-
-    mySchemesManager.loadSchemes();
+    });
+    myFileProcessor = new CompoundShelfFileProcessor(mySchemeManager.getRootDirectory());
+    ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(mySchemeManager.getRootDirectory().getAbsolutePath());
+    mySchemeManager.loadSchemes();
   }
 
   @NotNull
-  private ShelvedChangeList readOneShelvedChangeList(@NotNull Element element) throws InvalidDataException {
+  private static ShelvedChangeList readOneShelvedChangeList(@NotNull Element element) throws InvalidDataException {
     ShelvedChangeList data = new ShelvedChangeList();
     data.readExternal(element);
     return data;
@@ -175,7 +152,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         File newPatchDir = generateUniqueSchemePatchDir(list.DESCRIPTION);
         File newPatchFile = getPatchFileInConfigDir(list.DESCRIPTION, newPatchDir);
         try {
-          myFileProcessor.saveFile(oldPatchFile, newPatchFile);
+          FileUtil.copy(oldPatchFile, newPatchFile);
           list.PATH = newPatchFile.getPath();
           for (ShelvedBinaryFile file : list.getBinaryFiles()) {
             if (file.SHELVED_PATH != null) {
@@ -183,20 +160,20 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
               if (!StringUtil.isEmptyOrSpaces(file.AFTER_PATH) && shelvedFile.exists()) {
                 File newShelvedFile = new File(newPatchDir, PathUtil.getFileName(file.AFTER_PATH));
-                myFileProcessor.saveFile(shelvedFile, newShelvedFile);
+                FileUtil.copy(shelvedFile, newShelvedFile);
                 file.SHELVED_PATH = newShelvedFile.getPath();
-                shelvedFile.delete();
+                FileUtil.delete(shelvedFile);
               }
             }
           }
-          oldPatchFile.delete();
+          FileUtil.delete(oldPatchFile);
           list.setName(newPatchDir.getName());
         }
         catch (IOException e) {
           LOG.warn("Couldn't migrate shelf resources information from "+ list.PATH);
           continue;
         }
-        mySchemesManager.addNewScheme(list, false);
+        mySchemeManager.addNewScheme(list, false);
       }
     }
   }
@@ -212,7 +189,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull
   private List<ShelvedChangeList> getRecycled(final boolean recycled) {
-    return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemesManager.getAllSchemes(), new Condition<ShelvedChangeList>() {
+    return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemeManager.getAllSchemes(), new Condition<ShelvedChangeList>() {
       @Override
       public boolean value(ShelvedChangeList list) {
         return recycled ? list.isRecycled() : !list.isRecycled();
@@ -263,7 +240,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
       changeList.setName(schemePatchDir.getName());
       ProgressManager.checkCanceled();
-      mySchemesManager.addNewScheme(changeList, false);
+      mySchemeManager.addNewScheme(changeList, false);
 
       if (rollback) {
         final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
@@ -323,7 +300,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       final ShelvedChangeList changeList =
         new ShelvedChangeList(patchPath.toString(), fileName.replace('\n', ' '), new SmartList<ShelvedBinaryFile>());
       changeList.setName(schemePatchDir.getName());
-      mySchemesManager.addNewScheme(changeList, false);
+      mySchemeManager.addNewScheme(changeList, false);
       return changeList;
     }
     finally {
@@ -368,7 +345,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           if (!patchesList.isEmpty()) {
             FileUtil.copy(new File(file.getPath()), patchPath);
             // add only if ok to read patch
-            mySchemesManager.addNewScheme(list, false);
+            mySchemeManager.addNewScheme(list, false);
             result.add(list);
           }
         }
@@ -394,7 +371,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     String shelvedPath = null;
     if (afterFile != null) {
       File shelvedFile = new File(schemePatchDir, afterFile.getName());
-      myFileProcessor.saveFile(afterRevision.getFile().getIOFile(), shelvedFile);
+      FileUtil.copy(afterRevision.getFile().getIOFile(), shelvedFile);
       shelvedPath = shelvedFile.getPath();
     }
     String beforePath = ChangesUtil.getProjectRelativePath(myProject, beforeFile);
@@ -409,11 +386,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private File generateUniqueSchemePatchDir(final String defaultName) {
-    String[] children = mySchemesManager.getRootDirectory().list();
+    String[] children = mySchemeManager.getRootDirectory().list();
     String uniqueName = UniqueNameGenerator
       .generateUniqueName(FileUtil.sanitizeName(defaultName),
                           children != null ? ContainerUtil.newArrayList(children) : ContainerUtil.<String>emptyList());
-    File dir = new File(myFileProcessor.getBaseIODir(), uniqueName);
+    File dir = new File(myFileProcessor.getBaseDir(), uniqueName);
     if (!dir.exists()) {
       //noinspection ResultOfMethodCallIgnored
       dir.mkdirs();
@@ -669,12 +646,12 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     changeList.clearLoadedChanges();
     recycleChangeList(listCopy, changeList);
     // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
-    mySchemesManager.addNewScheme(listCopy, false);
+    mySchemeManager.addNewScheme(listCopy, false);
     notifyStateChanged();
   }
 
   public void restoreList(final ShelvedChangeList changeList) {
-    ShelvedChangeList list = mySchemesManager.findSchemeByName(changeList.getName());
+    ShelvedChangeList list = mySchemeManager.findSchemeByName(changeList.getName());
     if (list != null) {
       list.setRecycled(false);
     }
@@ -688,7 +665,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   public void clearRecycled() {
     for (ShelvedChangeList list : getRecycledShelvedChangeLists()) {
       deleteListImpl(list);
-      mySchemesManager.removeScheme(list);
+      mySchemeManager.removeScheme(list);
     }
     notifyStateChanged();
   }
@@ -747,12 +724,12 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   public void deleteChangeList(final ShelvedChangeList changeList) {
     deleteListImpl(changeList);
-    mySchemesManager.removeScheme(changeList);
+    mySchemeManager.removeScheme(changeList);
     notifyStateChanged();
   }
 
   private void deleteListImpl(final ShelvedChangeList changeList) {
-    myFileProcessor.delete(changeList.getName());
+    FileUtil.delete(new File(myFileProcessor.getBaseDir(), changeList.getName()));
   }
 
   public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
