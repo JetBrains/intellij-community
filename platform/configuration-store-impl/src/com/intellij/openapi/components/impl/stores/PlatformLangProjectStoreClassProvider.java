@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PlatformLangProjectStoreClassProvider implements ProjectStoreClassProvider {
+class PlatformLangProjectStoreClassProvider implements ProjectStoreClassProvider {
   @NotNull
   @Override
   public Class<? extends IComponentStore> getProjectStoreClass(final boolean isDefaultProject) {

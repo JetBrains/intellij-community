@@ -473,7 +473,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     reinitComponents(componentNames, Collections.<String>emptySet(), Collections.<StateStorage>emptySet());
   }
 
-  protected boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
+  @Override
+  public boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
     PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
     if (component == null) {
       return false;
