@@ -58,8 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+public class TestNGConfiguration extends JavaTestConfigurationBase {
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";

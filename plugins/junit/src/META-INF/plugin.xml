@@ -61,6 +61,9 @@
 
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.execution.junit.codeInsight.JUnitUnresolvedReferenceQuickFixProvider"/>
+    <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
+    <configurationType implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
   </extensions>
 
   <extensionPoints>

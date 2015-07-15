@@ -17,6 +17,15 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../lib/testDiscoveryInstrumenter.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>

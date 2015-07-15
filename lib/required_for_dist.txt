@@ -65,6 +65,7 @@ snappy-in-java-0.3.1.jar
 swingx-core-1.6.2.jar
 slf4j-api-1.7.10.jar
 slf4j-log4j12-1.7.10.jar
+testDiscoveryInstrumenter.jar
 trove4j.jar
 velocity.jar
 winp-1.23.jar
