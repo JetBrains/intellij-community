@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,11 +144,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   @Nullable
   public static String getError(VirtualFile file) {
-    return DslActivationStatus.getInstance().getGdslFileInfo(file).error;
+    DslActivationStatus.Entry info = DslActivationStatus.getInstance().getGdslFileInfo(file);
+    return info == null ? null : info.error;
   }
 
-  public static boolean isActivated(VirtualFile file) {
-    return DslActivationStatus.getInstance().getGdslFileInfo(file).status == Status.ACTIVE;
+  public static boolean isActivated(@NotNull VirtualFile file) {
+    return getStatus(file) == Status.ACTIVE;
   }
 
   public static void activate(final VirtualFile vfile) {
@@ -156,8 +157,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     clearScriptCache();
   }
 
-  public static Status getStatus(final VirtualFile file) {
-    return DslActivationStatus.getInstance().getGdslFileInfo(file).status;
+  public static Status getStatus(@NotNull VirtualFile file) {
+    DslActivationStatus.Entry info = DslActivationStatus.getInstance().getGdslFileInfo(file);
+    return info == null ? Status.ACTIVE : info.status;
   }
 
   private static void clearScriptCache() {
@@ -181,7 +183,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static void setStatusAndError(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String error) {
-    final DslActivationStatus.Entry entry = DslActivationStatus.getInstance().getGdslFileInfo(vfile);
+    DslActivationStatus.Entry entry = DslActivationStatus.getInstance().getGdslFileInfoOrCreate(vfile);
     entry.status = status;
     entry.error = error;
   }
