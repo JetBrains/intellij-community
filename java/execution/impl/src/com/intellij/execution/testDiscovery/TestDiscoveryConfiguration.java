@@ -24,7 +24,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,7 @@ import java.util.Map;
 
 public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBase {
   private String myChangeList;
-  private String myPosition;
+  private Pair<String, String> myPosition;
 
   protected JavaTestConfigurationBase myDelegate;
 
@@ -85,8 +87,13 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
         myChangeList != null && ChangeListManager.getInstance(getProject()).findChangeList(myChangeList) == null) {
       throw new RuntimeConfigurationException("Change list " + myChangeList + " doesn't exist");
     }
-    if (myPosition != null && !myPosition.contains(",")) {
-      throw new RuntimeConfigurationException("Wrong position format: className,methodName expected");
+    if (myPosition != null) {
+      if (StringUtil.isEmptyOrSpaces(myPosition.first)) {
+        throw new RuntimeConfigurationException("No class specified");
+      }
+      if (StringUtil.isEmptyOrSpaces(myPosition.second)) {
+        throw new RuntimeConfigurationException("No method specified");
+      }
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
@@ -113,7 +120,9 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
     super.readExternal(element);
     readModule(element);
 
-    myPosition = element.getAttributeValue("position");
+    final String classQName = element.getAttributeValue("class");
+    final String methodName = element.getAttributeValue("method");
+    myPosition = classQName != null && methodName != null ? Pair.create(classQName, methodName) : null;
     myChangeList = element.getAttributeValue("changeList");
     if ("All".equals(myChangeList)) {
       myChangeList = null;
@@ -128,7 +137,8 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
     writeModule(element);
     
     if (myPosition != null) {
-      element.setAttribute("position", myPosition);
+      element.setAttribute("class", myPosition.first);
+      element.setAttribute("method", myPosition.second);
     }
     element.setAttribute("changeList", myChangeList == null ? "All" : myChangeList);
   }
@@ -194,7 +204,7 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
     return myDelegate.createTestConsoleProperties(executor);
   }
 
-  public void setPosition(String position) {
+  public void setPosition(Pair<String, String> position) {
     myPosition = position;
   }
 
@@ -202,7 +212,7 @@ public abstract class TestDiscoveryConfiguration extends JavaTestConfigurationBa
     myChangeList = changeList;
   }
 
-  public String getPosition() {
+  public Pair<String, String> getPosition() {
     return myPosition;
   }
 

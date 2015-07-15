@@ -15,16 +15,29 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.execution.MethodBrowser;
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.ide.util.ClassFilter;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +45,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 
 public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
@@ -41,7 +55,9 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   private LabeledComponent<JComboBox> myModule = new LabeledComponent<JComboBox>();
   private CommonJavaParametersPanel myCommonJavaParameters = new CommonJavaParametersPanel();
   private AlternativeJREPanel myAlternativeJREPanel = new AlternativeJREPanel();
-  private JTextField myPosition = new JTextField();
+  private LabeledComponent<EditorTextFieldWithBrowseButton> myClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+  private LabeledComponent<EditorTextFieldWithBrowseButton> myMethod = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+
   private ComboBox myChangeLists = new ComboBox();
   private JRadioButton myPositionRb = new JRadioButton("Tests for method:");
   private JRadioButton myChangesRb = new JRadioButton("Tests for change list:");
@@ -64,7 +80,77 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
                                                          GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                          new Insets(0, 0, 0, 0), 0, 0);
     panelWithSettings.add(myPositionRb, gc);
-    panelWithSettings.add(myPosition, gc);
+    myClass.setText("Class:");
+    final ClassBrowser classBrowser = new ClassBrowser(project, "Choose Class") {
+      @Override
+      protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
+        return new ClassFilter.ClassFilterWithScope() {
+          @Override
+          public GlobalSearchScope getScope() {
+            return GlobalSearchScope.allScope(project);
+          }
+
+          @Override
+          public boolean isAccepted(PsiClass aClass) {
+            return true;
+          }
+        };
+      }
+
+      @Override
+      protected PsiClass findClass(String className) {
+        return JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+      }
+    };
+    final EditorTextFieldWithBrowseButton classComponent = new EditorTextFieldWithBrowseButton(project, true);
+    myClass.setComponent(classComponent);
+    classBrowser.setField(classComponent);
+    panelWithSettings.add(myClass, gc);
+    myMethod.setText("Method:");
+    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(project, true,
+                                                                                                          JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
+                                                                                                          PlainTextLanguage.INSTANCE.getAssociatedFileType());
+    new TextFieldCompletionProvider() {
+      @Override
+      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+        final String className = myClass.getComponent().getText();
+        if (className.trim().length() == 0) {
+          return;
+        }
+        final PsiClass testClass = getModuleSelector().findClass(className);
+        if (testClass == null) return;
+        final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(testClass);
+        for (PsiMethod psiMethod : testClass.getAllMethods()) {
+          if (filter.value(psiMethod)) {
+            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
+          }
+        }
+      }
+    }.apply(textFieldWithBrowseButton.getChildComponent());
+    myMethod.setComponent(textFieldWithBrowseButton);
+    final MethodBrowser methodBrowser = new MethodBrowser(project) {
+      protected Condition<PsiMethod> getFilter(final PsiClass testClass) {
+        return new Condition<PsiMethod>() {
+          @Override
+          public boolean value(PsiMethod method) {
+            return method.getContainingClass() == testClass;
+          }
+        };
+      }
+
+      @Override
+      protected String getClassName() {
+        return myClass.getComponent().getText().trim();
+      }
+
+      @Override
+      protected ConfigurationModuleSelector getModuleSelector() {
+        return myModuleSelector;
+      }
+    };
+    methodBrowser.setField(textFieldWithBrowseButton);
+    
+    panelWithSettings.add(myMethod, gc);
     panelWithSettings.add(myChangesRb, gc);
     panelWithSettings.add(myChangeLists, gc);
 
@@ -82,7 +168,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     myChangesRb.addActionListener(l);
 
 
-    final java.util.List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
+    final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
     model.addElement("All");
     for (LocalChangeList changeList : changeLists) {
@@ -109,7 +195,8 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   }
 
   private void updateComponents() {
-    myPosition.setEnabled(myPositionRb.isSelected());
+    myClass.setEnabled(myPositionRb.isSelected());
+    myMethod.setEnabled(myPositionRb.isSelected());
     myChangeLists.setEnabled(myChangesRb.isSelected());
   }
 
@@ -117,7 +204,8 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     applyHelpersTo(configuration);
     configuration.setAlternativeJrePath(myAlternativeJREPanel.getPath());
     configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
-    configuration.setPosition(myPositionRb.isSelected() ? myPosition.getText() : null);
+    configuration.setPosition(myPositionRb.isSelected() ? Pair.create(myClass.getComponent().getText().trim(), 
+                                                                      myMethod.getComponent().getText().trim()) : null);
     if (myChangesRb.isSelected()) {
       final Object selectedItem = myChangeLists.getSelectedItem();
       configuration.setChangeList("All".equals(selectedItem) ? null : (String)selectedItem);
@@ -132,10 +220,11 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     myCommonJavaParameters.reset(configuration);
     getModuleSelector().reset(configuration);
     myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
-    final String position = configuration.getPosition();
+    final Pair<String, String> position = configuration.getPosition();
     if (position != null) {
       myPositionRb.setSelected(true);
-      myPosition.setText(position);
+      myClass.getComponent().setText(position.first);
+      myMethod.getComponent().setText(position.second);
     }
     else if (myChangesRb.isEnabled()) {
       myChangesRb.setSelected(true);

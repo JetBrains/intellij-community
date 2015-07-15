@@ -22,6 +22,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -46,25 +47,25 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     assert contextLocation != null;
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
-    final String position = getPosition(location);
+    final Pair<String, String> position = getPosition(location);
     if (position != null) {
       try {
         final Collection<String> testsByMethodName = TestDiscoveryIndex
-          .getInstance(configuration.getProject()).getTestsByMethodName(position.replace(',', '.'));
+          .getInstance(configuration.getProject()).getTestsByMethodName(position.first, position.second);
         if (testsByMethodName == null || testsByMethodName.isEmpty()) return false;
       }
       catch (IOException e) {
         return false;
       }
       configuration.setPosition(position);
-      configuration.setName("Tests for " + StringUtil.getShortName(position));
+      configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "," + position.second);
       setupPackageConfiguration(configurationContext, configuration, TestSearchScope.MODULE_WITH_DEPENDENCIES);
       return true;
     }
     return false;
   }
 
-  private static String getPosition(Location location) {
+  private static Pair<String, String> getPosition(Location location) {
     final PsiElement psiElement = location.getPsiElement();
     final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (psiMethod != null) {
@@ -76,7 +77,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
         }
         final String qualifiedName = containingClass.getQualifiedName();
         if (qualifiedName != null) {
-          return qualifiedName + "," + psiMethod.getName();
+          return Pair.create(qualifiedName, psiMethod.getName());
         }
       }
     }
@@ -85,7 +86,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   @Override
   public boolean isConfigurationFromContext(TestDiscoveryConfiguration configuration, ConfigurationContext configurationContext) {
-    final String position = getPosition(configurationContext.getLocation());
+    final Pair<String, String> position = getPosition(configurationContext.getLocation());
     return position != null && position.equals(configuration.getPosition());
   }
 }

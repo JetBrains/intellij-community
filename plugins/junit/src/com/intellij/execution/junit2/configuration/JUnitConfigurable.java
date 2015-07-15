@@ -19,6 +19,7 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
@@ -43,6 +44,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -123,7 +125,21 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myBrowsers = new BrowseModuleValueActionListener[]{
       new PackageChooserActionListener(project),
       new TestClassBrowser(project),
-      new MethodBrowser(project),
+      new MethodBrowser(project) {
+        protected Condition<PsiMethod> getFilter(PsiClass testClass) {
+          return new JUnitUtil.TestMethodFilter(testClass);
+        }
+
+        @Override
+        protected String getClassName() {
+          return JUnitConfigurable.this.getClassName();
+        }
+
+        @Override
+        protected ConfigurationModuleSelector getModuleSelector() {
+          return myModuleSelector;
+        }
+      },
       new TestsChooserActionListener(project),
       new BrowseModuleValueActionListener(project) {
         @Override
@@ -607,36 +623,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         throw NoFilterException.noJUnitInModule(module);
       }
       return classFilter;
-    }
-  }
-
-  private class MethodBrowser extends BrowseModuleValueActionListener {
-    public MethodBrowser(final Project project) {
-      super(project);
-    }
-
-    protected String showDialog() {
-      final String className = getClassName();
-      if (className.trim().length() == 0) {
-        Messages.showMessageDialog(getField(), ExecutionBundle.message("set.class.name.message"),
-                                   ExecutionBundle.message("cannot.browse.method.dialog.title"), Messages.getInformationIcon());
-        return null;
-      }
-      final PsiClass testClass = getModuleSelector().findClass(className);
-      if (testClass == null) {
-        Messages.showMessageDialog(getField(), ExecutionBundle.message("class.does.not.exists.error.message", className),
-                                   ExecutionBundle.message("cannot.browse.method.dialog.title"),
-                                   Messages.getInformationIcon());
-        return null;
-      }
-      final MethodListDlg dlg = new MethodListDlg(testClass, new JUnitUtil.TestMethodFilter(testClass), getField());
-      if (dlg.showAndGet()) {
-        final PsiMethod method = dlg.getSelected();
-        if (method != null) {
-          return method.getName();
-        }
-      }
-      return null;
     }
   }
 

@@ -26,7 +26,9 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -43,6 +45,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -115,7 +118,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   public TestNGConfigurationEditor(Project project) {
     this.project = project;
     BrowseModuleValueActionListener[] browseListeners = new BrowseModuleValueActionListener[]{new PackageBrowser(project),
-      new TestClassBrowser(project, this), new MethodBrowser(project, this), new GroupBrowser(project, this), new SuiteBrowser(project),
+      new TestClassBrowser(project, this), new TestNGMethodBrowser(project), new GroupBrowser(project, this), new SuiteBrowser(project),
       new TestClassBrowser(project, this) {
         @Override
         protected void onClassChoosen(PsiClass psiClass) {
@@ -610,6 +613,31 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         listenerModel.addListener(className);
         LOGGER.info("Adding listener " + className + " to configuration.");
       }
+    }
+  }
+
+  private class TestNGMethodBrowser extends MethodBrowser {
+    public TestNGMethodBrowser(Project project) {
+      super(project);
+    }
+
+    protected Condition<PsiMethod> getFilter(PsiClass testClass) {
+      return new Condition<PsiMethod>() {
+        @Override
+        public boolean value(PsiMethod method) {
+          return TestNGUtil.hasTest(method);
+        }
+      };
+    }
+
+    @Override
+    protected String getClassName() {
+      return TestNGConfigurationEditor.this.getClassName();
+    }
+
+    @Override
+    protected ConfigurationModuleSelector getModuleSelector() {
+      return moduleSelector;
     }
   }
 }

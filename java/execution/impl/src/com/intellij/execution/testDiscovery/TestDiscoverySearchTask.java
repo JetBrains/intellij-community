@@ -20,8 +20,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -38,10 +38,10 @@ import java.net.ServerSocket;
 import java.util.*;
 
 public abstract class TestDiscoverySearchTask extends SearchForTestsTask {
-  private final String myPosition;
+  private final Pair<String, String> myPosition;
   private final String myChangeList;
 
-  public TestDiscoverySearchTask(Project project, ServerSocket socket, String position, String changeList) {
+  public TestDiscoverySearchTask(Project project, ServerSocket socket, Pair<String, String> position, String changeList) {
     super(project, socket);
     myPosition = position;
     myChangeList = changeList;
@@ -56,7 +56,7 @@ public abstract class TestDiscoverySearchTask extends SearchForTestsTask {
     if (myPosition != null) {
       try {
         final Collection<String> testsByMethodName = TestDiscoveryIndex
-          .getInstance(project).getTestsByMethodName(myPosition.replace(',', '.'));
+          .getInstance(project).getTestsByMethodName(myPosition.first, myPosition.second);
         if (testsByMethodName != null) {
           for (String pattern : testsByMethodName) {
             patterns.add(pattern.replace('-', ','));
@@ -141,10 +141,9 @@ public abstract class TestDiscoverySearchTask extends SearchForTestsTask {
     if (containingClass != null) {
       final String qualifiedName = containingClass.getQualifiedName();
       if (qualifiedName != null) {
-        final String methodFQN = StringUtil.getQualifiedName(qualifiedName, psiMethod.getName());
         try {
           final Collection<String> testsByMethodName
-            = TestDiscoveryIndex.getInstance(containingClass.getProject()).getTestsByMethodName(methodFQN);
+            = TestDiscoveryIndex.getInstance(containingClass.getProject()).getTestsByMethodName(qualifiedName, psiMethod.getName());
           if (testsByMethodName != null) {
             for (String pattern : testsByMethodName) {
               patterns.add(pattern.replace('-', ','));
