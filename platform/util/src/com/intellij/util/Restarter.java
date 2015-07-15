@@ -164,6 +164,7 @@ public class Restarter {
                                         true, false);
     }
     FileUtilRt.copy(executable, copy);
+    System.out.println("Restarter copied to: " + System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
     return copy;
   }
