@@ -21,26 +21,31 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.courseFormat.Task;
+import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
 
-  private final JPanel myToolbarPanel;
-
   public StudyToolWindow(final Project project) {
     super(true, true);
-    myToolbarPanel = createToolbarPanel();
-    setToolbar(myToolbarPanel);
+    JPanel toolbarPanel = createToolbarPanel();
+    setToolbar(toolbarPanel);
 
     final StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     if (studyEditor == null) return;
@@ -57,7 +62,11 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
       taskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
       taskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
       setContent(taskTextPane);
+
+      final FileEditorManagerListener listener = new StudyFileEditorManagerListener(project, taskTextPane);
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     }
+
   }
 
   public void dispose() {
@@ -78,4 +87,50 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
     return JBUI.Panels.simplePanel(actionToolBar.getComponent());
   }
 
+  static class StudyFileEditorManagerListener implements FileEditorManagerListener {
+    private Project myProject;
+    private JTextPane myTaskTextPane;
+
+    StudyFileEditorManagerListener(@NotNull final Project project, JTextPane taskTextPane){
+      myProject = project;
+      myTaskTextPane = taskTextPane;
+    }
+      @Override
+      public void fileOpened (@NotNull FileEditorManager source, @NotNull VirtualFile file){
+      Task task = getTask(file);
+      setTaskText(task);
+    }
+
+      @Override
+      public void fileClosed (@NotNull FileEditorManager source, @NotNull VirtualFile file){
+    }
+
+      @Override
+      public void selectionChanged (@NotNull FileEditorManagerEvent event){
+      VirtualFile file = event.getNewFile();
+      if (file != null) {
+        Task task = getTask(file);
+        setTaskText(task);
+      }
+    }
+
+      @Nullable
+      private Task getTask (@NotNull VirtualFile file){
+      TaskFile taskFile = StudyUtils.getTaskFile(myProject, file);
+      if (taskFile != null) {
+        return taskFile.getTask();
+      }
+      else {
+        return null;
+      }
+    }
+
+    private void setTaskText(@Nullable final Task task) {
+      if (task == null) {
+        return;
+      }
+      String text = task.getText();
+      myTaskTextPane.setText(text);
+    }
+  }
 }
