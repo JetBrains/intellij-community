@@ -492,11 +492,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void updateButtons() {
     final int[] selectedRows = myEntryTable.getSelectedRows();
     boolean removeButtonEnabled = true;
-    int minRow = myEntryTable.getRowCount() + 1;
-    int maxRow = -1;
     for (final int selectedRow : selectedRows) {
-      minRow = Math.min(minRow, selectedRow);
-      maxRow = Math.max(maxRow, selectedRow);
       final ClasspathTableItem<?> item = getItemAt(selectedRow);
       if (!item.isRemovable()) {
         removeButtonEnabled = false;
