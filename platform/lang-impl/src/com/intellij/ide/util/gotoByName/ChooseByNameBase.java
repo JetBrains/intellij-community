@@ -1040,7 +1040,7 @@ public abstract class ChooseByNameBase {
                                    boolean checkboxState,
                                    ModalityState modalityState,
                                    Consumer<Set<?>> callback) {
-    new CalcElementsThread(text, checkboxState, callback, modalityState, false).scheduleThread();
+    new CalcElementsThread(text, checkboxState, callback, modalityState).scheduleThread();
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -1496,8 +1496,7 @@ public abstract class ChooseByNameBase {
 
   private class CalcElementsThread implements ReadTask {
     private final String myPattern;
-    private volatile boolean myCheckboxState;
-    private volatile boolean myScopeExpanded;
+    private final boolean myCheckboxState;
     private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
 
@@ -1506,13 +1505,11 @@ public abstract class ChooseByNameBase {
     CalcElementsThread(String pattern,
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
-                       @NotNull ModalityState modalityState,
-                       boolean scopeExpanded) {
+                       @NotNull ModalityState modalityState) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
-      myScopeExpanded = scopeExpanded;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
@@ -1530,22 +1527,13 @@ public abstract class ChooseByNameBase {
 
       final Set<Object> elements = new LinkedHashSet<Object>();
 
-      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
-      addElementsByPattern(myPattern, elements, myProgress, myCheckboxState);
+      boolean scopeExpanded = fillWithScopeExpansion(elements, myPattern);
 
-      if (myProgress.isCanceled()) {
-        myShowCardAlarm.cancelAllRequests();
-        return;
+      String lowerCased = myPattern.toLowerCase(Locale.US);
+      if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
+        scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
       }
-
-      if (elements.isEmpty() && !myCheckboxState) {
-        myScopeExpanded = true;
-        myCheckboxState = true;
-        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
-        addElementsByPattern(myPattern, elements, myProgress, true);
-      }
-      final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
-      showCard(cardToShow, 0);
+      final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
       final boolean edt = myModel instanceof EdtSortingModel;
       final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
@@ -1555,16 +1543,31 @@ public abstract class ChooseByNameBase {
           if (!checkDisposed() && !myProgress.isCanceled()) {
             CalcElementsThread currentBgProcess = myCalcElementsThread;
             LOG.assertTrue(currentBgProcess == CalcElementsThread.this, currentBgProcess);
+
+            showCard(cardToShow, 0);
+
             myCallback.consume(edt ? filter(elements) : filtered);
           }
         }
       }, myModalityState);
     }
 
+    private boolean fillWithScopeExpansion(Set<Object> elements, String pattern) {
+      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
+      addElementsByPattern(pattern, elements, myProgress, myCheckboxState);
+
+      if (elements.isEmpty() && !myCheckboxState) {
+        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
+        addElementsByPattern(pattern, elements, myProgress, true);
+        return true;
+      }
+      return false;
+    }
+
     @Override
     public void onCanceled(@NotNull ProgressIndicator indicator) {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
-      new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded).scheduleThread();
+      new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
     }
 
     private void addElementsByPattern(@NotNull String pattern,
@@ -1705,7 +1708,7 @@ public abstract class ChooseByNameBase {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
-            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, false) {
+            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL) {
               @Override
               protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
