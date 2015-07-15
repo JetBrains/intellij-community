@@ -631,6 +631,10 @@ public class HtmlUtil {
     return isHtmlFile(file) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
 
+  public static boolean supportsXmlTypedHandlers(PsiFile file) {
+    return "JavaScript".equals(file.getLanguage().getID());
+  }
+
   public static boolean hasHtmlPrefix(@NotNull String url) {
     return url.startsWith("http://") ||
            url.startsWith("https://") ||

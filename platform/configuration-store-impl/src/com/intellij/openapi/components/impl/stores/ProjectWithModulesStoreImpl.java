@@ -21,7 +21,6 @@ import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,16 +37,21 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  protected boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
+  public boolean reinitComponent(@NotNull String componentName, @NotNull Set<StateStorage> changedStorages) {
     if (super.reinitComponent(componentName, changedStorages)) {
       return true;
     }
 
     for (Module module : getPersistentModules()) {
       // we have to reinit all modules for component because we don't know affected module
-      ((ModuleImpl)module).getStateStore().reinitComponent(componentName, changedStorages);
+      getComponentStore(module).reinitComponent(componentName, changedStorages);
     }
     return true;
+  }
+
+  @NotNull
+  private static IComponentStore getComponentStore(@NotNull Module module) {
+    return (IComponentStore)module.getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @NotNull
@@ -57,7 +61,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     ContainerUtil.addIfNotNull(result, getStateStorageManager().getMacroSubstitutor());
 
     for (Module module : getPersistentModules()) {
-      ContainerUtil.addIfNotNull(result, ((ModuleImpl)module).getStateStore().getStateStorageManager().getMacroSubstitutor());
+      ContainerUtil.addIfNotNull(result, getComponentStore(module).getStateStorageManager().getMacroSubstitutor());
     }
 
     return result.toArray(new TrackingPathMacroSubstitutor[result.size()]);
@@ -70,7 +74,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
 
     for (Module module : getPersistentModules()) {
-      if (!((ModuleImpl)module).getStateStore().isReloadPossible(componentNames)) {
+      if (!getComponentStore(module).isReloadPossible(componentNames)) {
         return false;
       }
     }
@@ -89,7 +93,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     super.beforeSave(readonlyFiles);
 
     for (Module module : getPersistentModules()) {
-      ((ModuleImpl)module).getStateStore().save(readonlyFiles);
+      getComponentStore(module).save(readonlyFiles);
     }
   }
 }

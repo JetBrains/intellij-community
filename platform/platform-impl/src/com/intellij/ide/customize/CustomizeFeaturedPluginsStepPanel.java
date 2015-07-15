@@ -53,16 +53,32 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
     "FeaturedPlugins", true, Thread.NORM_PRIORITY));
 
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
+  private PluginGroups myPluginGroups;
+  private JLabel myInProgressLabel;
 
-
-  public CustomizeFeaturedPluginsStepPanel(PluginGroups pluginGroups) throws OfflineException {
+  public CustomizeFeaturedPluginsStepPanel(PluginGroups pluginGroups) {
     setLayout(new GridLayout(1, 1));
+    add(myInProgressLabel = new JLabel("Loading...", SwingConstants.CENTER));
+    myPluginGroups = pluginGroups;
+    myPluginGroups.setLoadingCallback(new Runnable() {
+      @Override
+      public void run() {
+        onPluginGroupsLoaded();
+      }
+    });
+  }
+
+  private void onPluginGroupsLoaded() {
+    List<IdeaPluginDescriptor> pluginsFromRepository = myPluginGroups.getPluginsFromRepository();
+    if (pluginsFromRepository.isEmpty()) {
+      myInProgressLabel.setText("Cannot get featured plugins description online.");
+      return;
+    }
+    removeAll();
     JPanel gridPanel = new JPanel(new GridLayout(0, 3));
     JBScrollPane scrollPane = CustomizePluginsStepPanel.createScrollPane(gridPanel);
 
-    Map<String, String> config = pluginGroups.getFeaturedPlugins();
-    boolean isEmptyOrOffline = true;
-    List<IdeaPluginDescriptor> pluginsFromRepository = pluginGroups.getPluginsFromRepository();
+    Map<String, String> config = myPluginGroups.getFeaturedPlugins();
     for (Map.Entry<String, String> entry : config.entrySet()) {
       JPanel groupPanel = new JPanel(new GridBagLayout());
       GridBagConstraints gbc = new GridBagConstraints();
@@ -82,7 +98,6 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       for (IdeaPluginDescriptor descriptor : pluginsFromRepository) {
         if (descriptor.getPluginId().getIdString().equals(pluginId) && !PluginManagerCore.isBrokenPlugin(descriptor)) {
           foundDescriptor = descriptor;
-          isEmptyOrOffline = false;
           break;
         }
       }
@@ -92,7 +107,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
 
       final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
-      
+
       JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + title + "</h2></body></html>");
       JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;\">" + topic + "</h4></body></html>");
 
@@ -101,14 +116,14 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       if (isVIM) {
         warningLabel = createHTMLLabel("Enables Vim-keymap and 'insert' mode for editing. " +
                                        "Not recommended if you are unfamiliar with Vim.");
-        
+
         if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
       }
-      
+
       final CardLayout wrapperLayout = new CardLayout();
       final JPanel buttonWrapper = new JPanel(wrapperLayout);
       final JButton installButton = new JButton(isVIM ? "Install and Enable" : "Install");
-      
+
       final JProgressBar progressBar = new JProgressBar(0, 100);
       progressBar.setStringPainted(true);
       JPanel progressPanel = new JPanel(new VerticalFlowLayout(true, false));
@@ -243,7 +258,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         groupPanel.add(warningPanel, gbc);
         gbc.insets = insetsBefore;
       }
-      
+
       gbc.insets.bottom = 0;
       groupPanel.add(buttonWrapper, gbc);
       gridPanel.add(groupPanel);
@@ -263,8 +278,9 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       cursor++;
     }
 
-    if (isEmptyOrOffline) throw new OfflineException();
     add(scrollPane);
+    revalidate();
+    repaint();
   }
 
   @NotNull
@@ -297,6 +313,4 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
            + CommonBundle.settingsTitle()
            + " | " + "Plugins";
   }
-
-  public static class OfflineException extends Exception {}
 }

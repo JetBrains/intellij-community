@@ -3,7 +3,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper.Mode;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,61 +14,66 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class WindowWrapperBuilder {
-  @NotNull private final Mode myMode;
-  @NotNull private final JComponent myComponent;
-  @Nullable private Project myProject;
-  @Nullable private JComponent myPreferredFocusedComponent;
-  @Nullable private String myDimensionServiceKey;
-  @Nullable private Component myParent;
-  @Nullable private Runnable myOnShowCallback;
+  @NotNull private final Mode mode;
+  @NotNull private final JComponent component;
+  @Nullable private Project project;
+  @Nullable private Component parent;
+  @Nullable private String title;
+  @Nullable private JComponent preferredFocusedComponent;
+  @Nullable private String dimensionServiceKey;
+  @Nullable private Runnable onShowCallback;
 
   public WindowWrapperBuilder(@NotNull Mode mode, @NotNull JComponent component) {
-    myMode = mode;
-    myComponent = component;
+    this.mode = mode;
+    this.component = component;
   }
 
   @NotNull
   public WindowWrapperBuilder setProject(@Nullable Project project) {
-    myProject = project;
+    this.project = project;
     return this;
   }
 
   @NotNull
   public WindowWrapperBuilder setParent(@Nullable Component parent) {
-    myParent = parent;
+    this.parent = parent;
+    return this;
+  }
+
+  @NotNull
+  public WindowWrapperBuilder setTitle(@Nullable String title) {
+    this.title = title;
     return this;
   }
 
   @NotNull
   public WindowWrapperBuilder setPreferredFocusedComponent(@Nullable JComponent preferredFocusedComponent) {
-    myPreferredFocusedComponent = preferredFocusedComponent;
+    this.preferredFocusedComponent = preferredFocusedComponent;
     return this;
   }
 
   @NotNull
   public WindowWrapperBuilder setDimensionServiceKey(@Nullable String dimensionServiceKey) {
-    myDimensionServiceKey = dimensionServiceKey;
+    this.dimensionServiceKey = dimensionServiceKey;
     return this;
   }
 
   @NotNull
   public WindowWrapperBuilder setOnShowCallback(@NotNull Runnable callback) {
-    myOnShowCallback = callback;
+    this.onShowCallback = callback;
     return this;
   }
 
   @NotNull
   public WindowWrapper build() {
-    switch (myMode) {
+    switch (mode) {
       case FRAME:
-        return new FrameWindowWrapper(myProject, myComponent, myMode, myParent, myPreferredFocusedComponent, myDimensionServiceKey,
-                                      myOnShowCallback);
+        return new FrameWindowWrapper(this);
       case MODAL:
       case NON_MODAL:
-        return new DialogWindowWrapper(myProject, myComponent, myMode, myParent, myPreferredFocusedComponent, myDimensionServiceKey,
-                                       myOnShowCallback);
+        return new DialogWindowWrapper(this);
       default:
-        throw new IllegalArgumentException(myMode.toString());
+        throw new IllegalArgumentException(mode.toString());
     }
   }
 
@@ -79,24 +84,19 @@ public class WindowWrapperBuilder {
 
     @NotNull private final DialogWrapper myDialog;
 
-    public DialogWindowWrapper(@Nullable Project project,
-                               @NotNull JComponent component,
-                               @NotNull Mode mode,
-                               @Nullable Component parent,
-                               @Nullable JComponent preferredFocusedComponent,
-                               @Nullable String dimensionServiceKey,
-                               @Nullable final Runnable onShowCallback) {
-      myProject = project;
-      myComponent = component;
-      myMode = mode;
+    public DialogWindowWrapper(@NotNull final WindowWrapperBuilder builder) {
+      myProject = builder.project;
+      myComponent = builder.component;
+      myMode = builder.mode;
 
-      if (parent != null) {
-        myDialog = new MyDialogWrapper(parent, component, dimensionServiceKey, preferredFocusedComponent);
+      if (builder.parent != null) {
+        myDialog = new MyDialogWrapper(builder.parent, builder.component, builder.dimensionServiceKey, builder.preferredFocusedComponent);
       }
       else {
-        myDialog = new MyDialogWrapper(project, component, dimensionServiceKey, preferredFocusedComponent);
+        myDialog = new MyDialogWrapper(builder.project, builder.component, builder.dimensionServiceKey, builder.preferredFocusedComponent);
       }
 
+      final Runnable onShowCallback = builder.onShowCallback;
       if (onShowCallback != null) {
         myDialog.getWindow().addWindowListener(new WindowAdapter() {
           @Override
@@ -106,7 +106,8 @@ public class WindowWrapperBuilder {
         });
       }
 
-      switch (mode) {
+      setTitle(builder.title);
+      switch (builder.mode) {
         case MODAL:
           myDialog.setModal(true);
           break;
@@ -114,7 +115,7 @@ public class WindowWrapperBuilder {
           myDialog.setModal(false);
           break;
         default:
-          throw new IllegalArgumentException(mode.toString());
+          throw new IllegalArgumentException(builder.mode.toString());
       }
       myDialog.init();
       Disposer.register(myDialog.getDisposable(), this);
@@ -156,8 +157,7 @@ public class WindowWrapperBuilder {
 
     @Override
     public void setTitle(@Nullable String title) {
-      if (title == null) return;
-      myDialog.setTitle(title);
+      myDialog.setTitle(StringUtil.notNullize(title));
     }
 
     @Override
@@ -240,24 +240,19 @@ public class WindowWrapperBuilder {
 
     @NotNull private final FrameWrapper myFrame;
 
-    public FrameWindowWrapper(@Nullable Project project,
-                              @NotNull JComponent component,
-                              @NotNull Mode mode,
-                              @Nullable Component parent,
-                              @Nullable JComponent preferredFocusedComponent,
-                              @Nullable String dimensionServiceKey,
-                              @Nullable Runnable onShowCallback) {
-      myProject = project;
-      myComponent = component;
-      myMode = mode;
-      myOnShowCallback = onShowCallback;
+    public FrameWindowWrapper(@NotNull WindowWrapperBuilder builder) {
+      myProject = builder.project;
+      myComponent = builder.component;
+      myMode = builder.mode;
+      myOnShowCallback = builder.onShowCallback;
 
-      myFrame = new MyFrameWrapper(this, project, dimensionServiceKey);
+      myFrame = new FrameWrapper(builder.project, builder.dimensionServiceKey);
 
-      assert mode == Mode.FRAME;
+      assert builder.mode == Mode.FRAME;
 
-      myFrame.setComponent(component);
-      myFrame.setPreferredFocusedComponent(preferredFocusedComponent);
+      myFrame.setComponent(builder.component);
+      myFrame.setPreferredFocusedComponent(builder.preferredFocusedComponent);
+      myFrame.setTitle(builder.title);
       myFrame.closeOnEsc();
       Disposer.register(myFrame, this);
     }
@@ -294,7 +289,7 @@ public class WindowWrapperBuilder {
 
     @Override
     public void setTitle(@Nullable String title) {
-      if (title == null) return;
+      title = StringUtil.notNullize(title);
       myFrame.setTitle(title);
 
       Window window = getWindow();
@@ -304,7 +299,6 @@ public class WindowWrapperBuilder {
 
     @Override
     public void setImage(@Nullable Image image) {
-      if (image == null) return;
       myFrame.setImage(image);
     }
 
@@ -316,15 +310,6 @@ public class WindowWrapperBuilder {
     @Override
     public void dispose() {
       Disposer.dispose(myFrame);
-    }
-
-    private static class MyFrameWrapper extends FrameWrapper {
-      @NotNull private final WindowWrapper myWindowWrapper;
-
-      public MyFrameWrapper(@NotNull WindowWrapper wrapper, @Nullable Project project, @Nullable @NonNls String dimensionServiceKey) {
-        super(project, dimensionServiceKey);
-        myWindowWrapper = wrapper;
-      }
     }
   }
 }

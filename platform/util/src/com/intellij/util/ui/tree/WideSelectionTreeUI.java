@@ -121,8 +121,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
 
     private void handle(MouseEvent e) {
-      final JTree tree = (JTree)e.getSource();
-      if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
+      if (!e.isPopupTrigger() && e.getClickCount() == 1 && SwingUtilities.isLeftMouseButton(e)) {
+        final JTree tree = (JTree)e.getSource();
         final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
         if (pressedPath != null) {
           Rectangle bounds = getPathBounds(tree, pressedPath);

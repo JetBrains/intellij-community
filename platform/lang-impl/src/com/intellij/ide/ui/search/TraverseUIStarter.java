@@ -82,7 +82,8 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   public void main(String[] args){
     System.out.println("Starting searchable options index builder");
     try {
-      startup();
+      startup(OUTPUT_PATH);
+      ((ApplicationEx)ApplicationManager.getApplication()).exit(true, true);
     }
     catch (Throwable e) {
       System.out.println("Searchable options index builder failed");
@@ -91,7 +92,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     }
   }
 
-  public void startup() throws IOException {
+  public static void startup(String outputPath) throws IOException {
     final HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options =
       new HashMap<SearchableConfigurable, TreeSet<OptionDescription>>();
     SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
@@ -125,16 +126,14 @@ public class TraverseUIStarter extends ApplicationStarterEx {
       root.addContent(configurableElement);
       configurable.disposeUIResources();
     }
-    final File file = new File(OUTPUT_PATH);
+    final File file = new File(outputPath);
     if (!file.isFile()) {
       file.getParentFile().mkdirs();
       file.createNewFile();
     }
-    JDOMUtil.writeDocument(new Document(root), OUTPUT_PATH, "\n");
+    JDOMUtil.writeDocument(new Document(root), outputPath, "\n");
 
     System.out.println("Searchable options index builder completed");
-
-    ((ApplicationEx)ApplicationManager.getApplication()).exit(true, true);
   }
 
   private static void processFileTemplates(Element configurableElement) {

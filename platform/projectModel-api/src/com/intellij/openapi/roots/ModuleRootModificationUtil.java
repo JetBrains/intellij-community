@@ -36,7 +36,7 @@ import java.util.List;
  * @author nik
  */
 public class ModuleRootModificationUtil {
-  public static void addContentRoot(Module module, final String path) {
+  public static void addContentRoot(@NotNull Module module, final @NotNull String path) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
@@ -45,30 +45,29 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void addModuleLibrary(Module module, String libName, List<String> classesRoots, List<String> sourceRoots) {
+  public static void addModuleLibrary(@NotNull Module module, @Nullable String libName, @NotNull List<String> classesRoots, @NotNull List<String> sourceRoots) {
     addModuleLibrary(module, libName, classesRoots, sourceRoots, DependencyScope.COMPILE);
   }
 
-  public static void addModuleLibrary(final Module module,
-                                      final String libName,
-                                      final List<String> classesRoots,
-                                      final List<String> sourceRoots,
-                                      final DependencyScope scope) {
+  public static void addModuleLibrary(@NotNull Module module, @Nullable String libName,
+                                      @NotNull List<String> classesRoots,
+                                      @NotNull List<String> sourceRoots,
+                                      @NotNull DependencyScope scope) {
     addModuleLibrary(module, libName, classesRoots, sourceRoots, Collections.<String>emptyList(), scope);
   }
 
-  public static void addModuleLibrary(final Module module, final String libName,
-                                      final List<String> classesRoots,
-                                      final List<String> sourceRoots,
-                                      final List<String> excludedRoots,
-                                      final DependencyScope scope) {
+  public static void addModuleLibrary(@NotNull Module module, @Nullable String libName,
+                                      @NotNull List<String> classesRoots,
+                                      @NotNull List<String> sourceRoots,
+                                      @NotNull List<String> excludedRoots,
+                                      @NotNull DependencyScope scope) {
     addModuleLibrary(module, libName, classesRoots, sourceRoots, excludedRoots, scope, false);
   }
-  public static void addModuleLibrary(final Module module, final String libName,
-                                      final List<String> classesRoots,
-                                      final List<String> sourceRoots,
-                                      final List<String> excludedRoots,
-                                      final DependencyScope scope, 
+  public static void addModuleLibrary(final @NotNull Module module, final @Nullable String libName,
+                                      final @NotNull List<String> classesRoots,
+                                      final @NotNull List<String> sourceRoots,
+                                      final @NotNull List<String> excludedRoots,
+                                      final @NotNull DependencyScope scope,
                                       final boolean exported) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
@@ -101,15 +100,15 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void addModuleLibrary(Module module, String classesRootUrl) {
+  public static void addModuleLibrary(@NotNull Module module, @NotNull String classesRootUrl) {
     addModuleLibrary(module, null, Collections.singletonList(classesRootUrl), Collections.<String>emptyList());
   }
 
-  public static void addDependency(Module module, Library library) {
+  public static void addDependency(@NotNull Module module, @NotNull Library library) {
     addDependency(module, library, DependencyScope.COMPILE, false);
   }
 
-  public static void addDependency(Module module, final Library library, final DependencyScope scope, final boolean exported) {
+  public static void addDependency(@NotNull Module module, final @NotNull Library library, final @NotNull DependencyScope scope, final boolean exported) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
@@ -120,7 +119,7 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void setModuleSdk(Module module, @Nullable final Sdk sdk) {
+  public static void setModuleSdk(@NotNull Module module, @Nullable final Sdk sdk) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
@@ -129,7 +128,7 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void setSdkInherited(Module module) {
+  public static void setSdkInherited(@NotNull Module module) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
@@ -138,11 +137,11 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void addDependency(final Module from, final Module to) {
+  public static void addDependency(final @NotNull Module from, final @NotNull Module to) {
     addDependency(from, to, DependencyScope.COMPILE, false);
   }
 
-  public static void addDependency(Module from, final Module to, final DependencyScope scope, final boolean exported) {
+  public static void addDependency(@NotNull Module from, @NotNull final Module to, @NotNull final DependencyScope scope, final boolean exported) {
     updateModel(from, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {

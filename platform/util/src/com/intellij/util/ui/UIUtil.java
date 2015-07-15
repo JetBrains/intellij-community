@@ -599,7 +599,7 @@ public class UIUtil {
   }
 
   public static void drawWave(Graphics2D g, Rectangle rectangle) {
-    WavePainter.forColor(g.getColor()).paint(g, (int) rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
+    WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
   @NotNull

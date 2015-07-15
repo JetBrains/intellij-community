@@ -54,6 +54,8 @@ import java.io.InputStream
 import java.util.ArrayList
 import java.util.Collections
 
+private val LOG = Logger.getInstance(javaClass<SchemeManagerImpl<*, *>>())
+
 public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val fileSpec: String,
                                                                      private val processor: SchemeProcessor<E>,
                                                                      private val roamingType: RoamingType,

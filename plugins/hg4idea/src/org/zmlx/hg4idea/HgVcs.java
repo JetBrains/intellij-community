@@ -275,7 +275,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     checkExecutableAndVersion();
 
     // status bar
-    myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
+    myStatusWidget = new HgStatusWidget(this, getProject());
     myStatusWidget.activate();
 
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);

@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diff.impl.dir.FrameDialogWrapper;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,8 +26,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -257,54 +259,15 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     @Override
     public void onSuccess() {
       if (!myVersion.isNull() && !myProject.isDisposed()) {
-        new MyDialog(myProject, myVcs, myRoots).show();
+        MyContentComponent content = createManagerAndContent(myProject, myVcs, myRoots, null);
+        WindowWrapper window = new WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
+          .setProject(myProject)
+          .setTitle("Git Log")
+          .setPreferredFocusedComponent(content)
+          .build();
+        Disposer.register(window, content.myDisposable);
+        window.show();
       }
-    }
-  }
-
-  private static class MyDialog extends FrameDialogWrapper {
-    @NotNull private final MyContentComponent myContent;
-    @NotNull private final Project myProject;
-
-    private MyDialog(@NotNull Project project, @NotNull GitVcs vcs, @NotNull final List<VirtualFile> roots) {
-      myProject = project;
-      myContent = createManagerAndContent(project, vcs, roots, null);
-    }
-
-    @NotNull
-    @Override
-    protected Mode getMode() {
-      return Mode.FRAME;
-    }
-
-    @NotNull
-    @Override
-    public Project getProject() {
-      return myProject;
-    }
-
-    @Nullable
-    @Override
-    protected String getTitle() {
-      return "Git Log";
-    }
-
-    @NotNull
-    @Override
-    protected JComponent getPanel() {
-      return myContent;
-    }
-
-    @Nullable
-    @Override
-    protected JComponent getPreferredFocusedComponent() {
-      return myContent;
-    }
-
-    @Nullable
-    @Override
-    protected Disposable getDisposable() {
-      return myContent.myDisposable;
     }
   }
 }

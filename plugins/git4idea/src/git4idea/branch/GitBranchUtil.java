@@ -266,6 +266,7 @@ public class GitBranchUtil {
    * Returns the text that is displaying current branch.
    * In the simple case it is just the branch name, but in detached HEAD state it displays the hash or "rebasing master".
    */
+  @NotNull
   public static String getDisplayableBranchText(@NotNull GitRepository repository) {
     GitRepository.State state = repository.getState();
     if (state == GitRepository.State.DETACHED) {

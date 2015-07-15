@@ -64,6 +64,7 @@ public class WavePainter {
     g.setComposite(AlphaComposite.SrcOver);
     Shape clip = g.getClip();
     g.setClip(xStart, y - 3, xEnd - xStart, 3);
+    xStart -= xStart % 4;
     UIUtil.drawImage(g, myImage, xStart, y - 3, null);
     g.setComposite(oldComposite);
     g.setClip(clip);

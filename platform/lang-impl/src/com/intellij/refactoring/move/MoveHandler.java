@@ -53,6 +53,9 @@ public class MoveHandler implements RefactoringActionHandler {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = file.findElementAt(offset);
+    if (element == null) {
+      element = file;
+    }
     while(true){
       if (element == null) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.at.the.class.method.or.field.to.be.refactored"));

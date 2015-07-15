@@ -25,10 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
@@ -162,6 +159,12 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
             if (directories.length > 0) {
               targetDirectory = directories[0];
               targetDirectory.putCopyableUserData(SHOW_CHOOSER_KEY, directories.length > 1);
+            }
+          }
+          if (targetDirectory == null && target != null) {
+            final PsiFile containingFile = target.getContainingFile();
+            if (containingFile != null) {
+              targetDirectory = containingFile.getContainingDirectory();
             }
           }
           if (CopyHandler.canCopy(elements)) {

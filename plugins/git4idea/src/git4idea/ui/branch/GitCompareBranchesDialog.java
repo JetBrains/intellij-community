@@ -17,24 +17,23 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diff.impl.dir.FrameDialogWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.ui.WindowWrapper.Mode;
+import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.ui.TabbedPaneImpl;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitCommitCompareInfo;
-import icons.Git4ideaIcons;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * Dialog for comparing two Git branches.
  */
-public class GitCompareBranchesDialog extends FrameDialogWrapper {
-
+public class GitCompareBranchesDialog {
   @NotNull private final Project myProject;
 
   @NotNull private final JPanel myLogPanel;
@@ -42,6 +41,8 @@ public class GitCompareBranchesDialog extends FrameDialogWrapper {
   @NotNull private final String myTitle;
 
   @NotNull private final Mode myMode;
+
+  private WindowWrapper myWrapper;
 
   public GitCompareBranchesDialog(@NotNull Project project,
                                   @NotNull String branchName,
@@ -78,39 +79,15 @@ public class GitCompareBranchesDialog extends FrameDialogWrapper {
     myTabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
   }
 
-  @NotNull
-  @Override
-  protected JComponent getPanel() {
-    return myTabbedPane;
-  }
-
-  @Nullable
-  @Override
-  protected JComponent getPreferredFocusedComponent() {
-    return myLogPanel;
-  }
-
-  @Nullable
-  @Override
-  protected String getDimensionServiceKey() {
-    return GitCompareBranchesDialog.class.getName();
-  }
-
-  @NotNull
-  @Override
-  protected String getTitle() {
-    return myTitle;
-  }
-
-  @NotNull
-  @Override
-  protected Project getProject() {
-    return myProject;
-  }
-
-  @NotNull
-  @Override
-  protected Mode getMode() {
-    return myMode;
+  public void show() {
+    if (myWrapper == null) {
+      myWrapper = new WindowWrapperBuilder(myMode, myTabbedPane)
+        .setProject(myProject)
+        .setTitle(myTitle)
+        .setPreferredFocusedComponent(myLogPanel)
+        .setDimensionServiceKey(GitCompareBranchesDialog.class.getName())
+        .build();
+    }
+    myWrapper.show();
   }
 }
