@@ -212,6 +212,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testMultilineQuotedString() { //PY-8064
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
   }
 
@@ -284,6 +285,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doDocReferenceTest();
   }
 
@@ -300,6 +302,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring5() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doDocReferenceTest();
   }
 
@@ -320,10 +323,12 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring1() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doDocReturnTypeTest();
   }
 
   public void testTypeInDocstring2() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doDocReturnTypeTest();
   }
 
@@ -394,6 +399,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testDocStubKeywordOnly() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doDocStubTest(LanguageLevel.PYTHON32);
   }
 
