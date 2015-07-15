@@ -40,7 +40,7 @@ import java.util.*;
 
 @State(
   name = "KeymapManager",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_PLATFORM),
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/keymap.xml", roamingType = RoamingType.PER_OS),
   additionalExportFile = KeymapManagerImpl.KEYMAPS_DIR_PATH
 )
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ApplicationComponent {

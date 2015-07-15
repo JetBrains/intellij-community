@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(
   name = "PathMacrosImpl",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/path.macros.xml", roamingType = RoamingType.PER_PLATFORM)
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/path.macros.xml", roamingType = RoamingType.PER_OS)
 )
 public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);

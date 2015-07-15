@@ -87,7 +87,7 @@ import java.util.List;
 @State(
   name = "LafManager",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/laf.xml", roamingType = RoamingType.PER_OS),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml", deprecated = true)
   }
 )

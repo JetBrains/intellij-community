@@ -25,7 +25,7 @@ import com.intellij.openapi.components.StoragePathMacros;
  */
 @State(
   name = "libraryTable",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.PER_PLATFORM)
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/applicationLibraries.xml", roamingType = RoamingType.PER_OS)
 )
 public class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
 }

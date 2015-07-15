@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @State(
   name = "ShortcutPromoterManager",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/promoter.xml", roamingType = RoamingType.PER_PLATFORM)
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/promoter.xml", roamingType = RoamingType.PER_OS)
 )
 public class ShortcutPromoterManager implements ApplicationComponent, AnActionListener, PersistentStateComponent<Element> {
   private final Map<String, PromoterState> myState = new LinkedHashMap<String, PromoterState>();

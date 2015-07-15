@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 @State(
   name = "Git.Application.Settings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/git.xml", roamingType = RoamingType.PER_PLATFORM),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/git.xml", roamingType = RoamingType.PER_OS),
     @Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml", deprecated = true)
   }
 )
