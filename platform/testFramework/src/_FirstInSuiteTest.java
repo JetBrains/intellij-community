@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,35 +23,38 @@ import java.util.List;
 
 /**
  * This is should be first test in all tests so we can measure how long tests are starting up.
+ *
  * @author max
  */
-@SuppressWarnings("JUnitTestClassNamingConvention")
+@SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
 public class _FirstInSuiteTest extends TestCase {
   public static long suiteStarted = 0L;
   public static boolean nothingIsCalled = false;
-  
-  public void testReportClassLoadingProblems() throws Exception {
+
+  public void testReportClassLoadingProblems() {
     List<Throwable> problems = TestAll.getLoadingClassProblems();
     if (problems.isEmpty()) return;
-    
+
     StringBuilder builder = new StringBuilder("The following test classes were not loaded:\n");
     for (Throwable each : problems) {
       builder.append(each.toString()).append("\n");
-      each.printStackTrace();
+      each.printStackTrace(System.out);
     }
-    
+
     throw new AssertionError(builder.toString());
   }
-  
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   public void testNothing() throws Exception {
     if (nothingIsCalled) return;
+
     nothingIsCalled = true;
-    
     suiteStarted = System.nanoTime();
+
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        System.out.println("EDT is "+Thread.currentThread());
+        System.out.println("EDT is " + Thread.currentThread());
       }
     });
     // in tests EDT inexplicably shuts down sometimes during the first access,
@@ -61,7 +64,7 @@ public class _FirstInSuiteTest extends TestCase {
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        System.out.println("EDT is "+Thread.currentThread());
+        System.out.println("EDT is " + Thread.currentThread());
       }
     });
   }
