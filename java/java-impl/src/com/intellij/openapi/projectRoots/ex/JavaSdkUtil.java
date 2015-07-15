@@ -49,7 +49,6 @@ public class JavaSdkUtil {
     }
   }
 
-
   public static String getJunit4JarPath() {
     return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
     //return PlatformLoader.getInstance().getRepository().getModuleRootPath(RuntimeModuleId.projectLibrary("JUnit4"));
@@ -65,8 +64,7 @@ public class JavaSdkUtil {
 
   @NotNull
   public static List<String> getJUnit4JarPaths() {
-    return Arrays.asList(getJunit4JarPath(),
-                         PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matcher")));
+    return PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("JUnit4"));
   }
 
   public static boolean isLanguageLevelAcceptable(@NotNull Project project, @NotNull Module module, @NotNull LanguageLevel level) {

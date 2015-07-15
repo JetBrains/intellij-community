@@ -23,7 +23,6 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
@@ -40,8 +39,6 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.platform.loader.PlatformLoader;
-import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.util.Arrays;
