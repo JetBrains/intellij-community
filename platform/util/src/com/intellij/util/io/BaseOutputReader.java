@@ -125,9 +125,11 @@ public abstract class BaseOutputReader extends BaseDataReader {
         sendLine(line);
       }
     }
+
+    onBufferExhaustion();
   }
 
-  protected void sendLine(@NotNull StringBuilder line) {
+  private void sendLine(@NotNull StringBuilder line) {
     onTextAvailable(line.toString());
     line.setLength(0);
   }
@@ -140,6 +142,9 @@ public abstract class BaseOutputReader extends BaseDataReader {
   @Override
   protected void close() throws IOException {
     myReader.close();
+  }
+
+  protected void onBufferExhaustion() {
   }
 
   protected abstract void onTextAvailable(@NotNull String text);

@@ -82,9 +82,7 @@ public abstract class OutputReader extends BaseOutputReader {
   }
 
   @Override
-  protected void sendLine(@NotNull StringBuilder line) {
-    super.sendLine(line);
-
+  protected void onBufferExhaustion() {
     if (mySleepingPolicy == SleepingPolicy.BLOCKING) {
       myReadFullySemaphore.up();
     }
