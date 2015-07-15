@@ -15,6 +15,8 @@
  */
 package com.intellij.execution;
 
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
@@ -23,6 +25,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.ui.EditorTextField;
+import com.intellij.util.TextFieldCompletionProvider;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class MethodBrowser extends BrowseModuleValueActionListener {
 
@@ -58,4 +63,24 @@ public abstract class MethodBrowser extends BrowseModuleValueActionListener {
     return null;
   }
 
+  public void installCompletion(EditorTextField field) {
+    new TextFieldCompletionProvider() {
+      @Override
+      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+        final String className = getClassName();
+        if (className.trim().length() == 0) {
+          return;
+        }
+        final PsiClass testClass = getModuleSelector().findClass(className);
+        if (testClass == null) return;
+        final Condition<PsiMethod> filter = getFilter(testClass);
+        for (PsiMethod psiMethod : testClass.getAllMethods()) {
+          if (filter.value(psiMethod)) {
+            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
+          }
+        }
+      }
+    }.apply(field);
+  }
+  
 }

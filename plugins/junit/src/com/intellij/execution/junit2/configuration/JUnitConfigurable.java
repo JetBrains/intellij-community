@@ -16,8 +16,6 @@
 
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
@@ -53,7 +51,6 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IconUtil;
-import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -419,6 +416,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         myModel.setJUnitDocument(i, document);
       }
       myBrowsers[i].setField(field);
+      if (myBrowsers[i] instanceof MethodBrowser) {
+        ((MethodBrowser)myBrowsers[i]).installCompletion((EditorTextField)field.getChildComponent());
+      }
     }
   }
 
@@ -462,23 +462,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true,
                                                                                                           JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                                           PlainTextLanguage.INSTANCE.getAssociatedFileType());
-    new TextFieldCompletionProvider() {
-      @Override
-      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-        final String className = getClassName();
-        if (className.trim().length() == 0) {
-          return;
-        }
-        final PsiClass testClass = getModuleSelector().findClass(className);
-        if (testClass == null) return;
-        final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(testClass);
-        for (PsiMethod psiMethod : testClass.getAllMethods()) {
-          if (filter.value(psiMethod)) {
-            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
-          }
-        }
-      }
-    }.apply(textFieldWithBrowseButton.getChildComponent());
     myMethod.setComponent(textFieldWithBrowseButton);
   }
 

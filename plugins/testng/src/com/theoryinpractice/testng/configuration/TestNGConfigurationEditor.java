@@ -22,13 +22,10 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -53,9 +50,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
-import com.intellij.util.TextFieldCompletionProvider;
 import com.theoryinpractice.testng.MessageInfoException;
-import com.theoryinpractice.testng.configuration.browser.*;
+import com.theoryinpractice.testng.configuration.browser.GroupBrowser;
+import com.theoryinpractice.testng.configuration.browser.PackageBrowser;
+import com.theoryinpractice.testng.configuration.browser.SuiteBrowser;
+import com.theoryinpractice.testng.configuration.browser.TestClassBrowser;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
@@ -211,6 +210,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }
 
       browseListeners[i].setField((ComponentWithBrowseButton)field);
+      if (browseListeners[i] instanceof MethodBrowser) {
+        ((MethodBrowser)browseListeners[i]).installCompletion((EditorTextField)((ComponentWithBrowseButton)field).getChildComponent());
+      }
     }
     model.setType(TestType.CLASS);
     propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
@@ -422,22 +424,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true, 
                                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
                                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
-    new TextFieldCompletionProvider() {
-      @Override
-      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-        final String className = getClassName();
-        if (className.trim().length() == 0) {
-          return;
-        }
-        final PsiClass testClass = getModuleSelector().findClass(className);
-        if (testClass == null) return;
-        for (PsiMethod psiMethod : testClass.getAllMethods()) {
-          if (TestNGUtil.hasTest(psiMethod)) {
-            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
-          }
-        }
-      }
-    }.apply(methodEditorTextField.getChildComponent());
     methodField.setComponent(methodEditorTextField);
 
     groupField.setComponent(new TextFieldWithBrowseButton.NoPathCompletion());

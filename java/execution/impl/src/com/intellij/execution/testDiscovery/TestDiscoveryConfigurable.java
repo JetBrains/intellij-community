@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.testDiscovery;
 
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.MethodBrowser;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -33,11 +30,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
-import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,23 +109,6 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(project, true,
                                                                                                           JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                                           PlainTextLanguage.INSTANCE.getAssociatedFileType());
-    new TextFieldCompletionProvider() {
-      @Override
-      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-        final String className = myClass.getComponent().getText();
-        if (className.trim().length() == 0) {
-          return;
-        }
-        final PsiClass testClass = getModuleSelector().findClass(className);
-        if (testClass == null) return;
-        final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(testClass);
-        for (PsiMethod psiMethod : testClass.getAllMethods()) {
-          if (filter.value(psiMethod)) {
-            result.addElement(LookupElementBuilder.create(psiMethod.getName()));
-          }
-        }
-      }
-    }.apply(textFieldWithBrowseButton.getChildComponent());
     myMethod.setComponent(textFieldWithBrowseButton);
     final MethodBrowser methodBrowser = new MethodBrowser(project) {
       protected Condition<PsiMethod> getFilter(final PsiClass testClass) {
@@ -149,6 +131,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
       }
     };
     methodBrowser.setField(textFieldWithBrowseButton);
+    methodBrowser.installCompletion(textFieldWithBrowseButton.getChildComponent());
     
     panelWithSettings.add(myMethod, gc);
     panelWithSettings.add(myChangesRb, gc);
