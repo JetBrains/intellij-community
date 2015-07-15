@@ -25,11 +25,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -51,7 +47,6 @@ import org.jetbrains.platform.loader.PlatformLoader;
 import org.jetbrains.platform.loader.repository.PlatformRepository;
 import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -119,21 +114,6 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     } catch (IOException e) {
       LOG.info(e);
       throw new CantRunException("Unable to find a free network port");
-    }
-
-    final char c = File.separatorChar;
-
-    final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-    assert pluginId != null || System.getProperty("xslt-debugger.plugin.path") != null;
-
-    final File pluginPath;
-    if (pluginId != null) {
-      final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
-      assert descriptor != null;
-      pluginPath = descriptor.getPath();
-    } else {
-      // -Dxslt-debugger.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-debugger-engine
-      pluginPath = new File(System.getProperty("xslt-debugger.plugin.path"));
     }
 
     PlatformRepository repository = PlatformLoader.getInstance().getRepository();

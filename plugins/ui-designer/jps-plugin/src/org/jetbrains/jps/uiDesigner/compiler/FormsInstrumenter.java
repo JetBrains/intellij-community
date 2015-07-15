@@ -18,7 +18,6 @@ package org.jetbrains.jps.uiDesigner.compiler;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -254,10 +253,6 @@ public class FormsInstrumenter extends FormsBuilder {
       }
       classToBind = classToBind.substring(0, dotIndex) + "$" + classToBind.substring(dotIndex + 1);
     }
-  }
-
-  private static File getResourcePath(Class aClass) {
-    return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
   }
 
   private static class MyNestedFormLoader implements NestedFormLoader {
