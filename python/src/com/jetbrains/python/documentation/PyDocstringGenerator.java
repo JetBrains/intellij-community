@@ -23,12 +23,13 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +51,7 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +71,9 @@ public class PyDocstringGenerator {
   private final Project myProject;
   private PyStringLiteralExpression myDocStringExpression;
 
-  private final Map<String, Pair<Integer, Integer>> myParamTypesOffset = Maps.newHashMap();
+  // Formatter can increase indentation inside multiline docstring, that's why we don't keep plain
+  // text offsets and instead save pair of line and *unindented* column of that offset.
+  private final Map<String, Couple<VisualPosition>> myParamTypesOffset = Maps.newHashMap();
   private PsiFile myFile;
   private boolean myGenerateReturn;
 
@@ -249,26 +253,26 @@ public class PyDocstringGenerator {
       if (documentationSettings.isPlain(getFile())) return replacementText.length() - 1;
     }
 
-    int i = 0;
-
+    int line = StringUtil.getLineBreakCount(replacementText);
+    final List<String> unindentedLines = new ArrayList<String>();
     for (DocstringParam param : paramsToAdd) {
-      replacementText.append(getPrefix());
-      replacementText.append(param.getKind());
-      replacementText.append(" ");
-      replacementText.append(param.getName());
-      replacementText.append(": ");
-      int startOffset = replacementText.length();
+      final StringBuilder lineBuilder = new StringBuilder();
+      lineBuilder.append(getPrefix());
+      lineBuilder.append(param.getKind());
+      lineBuilder.append(" ");
+      lineBuilder.append(param.getName());
+      lineBuilder.append(": ");
+      final int startOffset = lineBuilder.length();
       int endOffset = startOffset;
       if (param.getType() != null) {
-        replacementText.append(param.getType());
+        lineBuilder.append(param.getType());
         endOffset += param.getType().length();
       }
-      myParamTypesOffset.put(param.getName(), Pair.create(startOffset, endOffset));
-      i++;
-      if (i < paramsToAdd.size()) {
-        replacementText.append(ws);
-      }
+      myParamTypesOffset.put(param.getName(), Couple.of(new VisualPosition(line, startOffset), new VisualPosition(line, endOffset)));
+      unindentedLines.add(lineBuilder.toString());
+      line++;
     }
+    StringUtil.join(unindentedLines, ws, replacementText);
 
     if (myGenerateReturn && myDocStringOwner instanceof PyFunction) {
       PyFunction function = (PyFunction)myDocStringOwner;
@@ -299,13 +303,14 @@ public class PyDocstringGenerator {
     }
     String ws = "\n";
     if (whitespace != null) {
-      String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 0) {
-        ws += spaces[spaces.length - 1];
+      final String whitespaceText = whitespace.getText();
+      final int index = whitespaceText.lastIndexOf('\n');
+      if (index >= 0) {
+        ws += whitespaceText.substring(index + 1);
       }
     }
     else {
-      ws += StringUtil.repeat(" ", getIndentSize(myDocStringOwner));
+      ws += StringUtil.repeat(" ", calcExpectedIndentSize(myDocStringOwner));
     }
     return ws;
   }
@@ -334,14 +339,46 @@ public class PyDocstringGenerator {
   }
 
   public int getStartOffset() {
-    Pair<Integer, Integer> offsets = getOffsets();
-    return offsets != null ? offsets.first : -1;
+    final Couple<VisualPosition> range = getOffsets();
+    return range == null ? -1 : visualPositionToOffset(range.getFirst());
   }
 
-  private Pair<Integer, Integer> getOffsets() {
-    DocstringParam paramToEdit = getParamToEdit();
-    String paramName = paramToEdit.getName();
-    return myParamTypesOffset.get(paramName);
+  public int getEndOffset() {
+    final Couple<VisualPosition> range = getOffsets();
+    return range == null ? -1 : visualPositionToOffset(range.getSecond());
+  }
+
+  private int visualPositionToOffset(@NotNull VisualPosition pos) {
+    final String text = myDocStringExpression.getText();
+    int offset = offsetOfLineFeed(text, pos.getLine());
+    if (offset < 0) {
+      return -1;
+    }
+    offset++;
+    // Indentation consists solely of whitespaces
+    while (offset < text.length() && text.charAt(offset) == ' ') {
+      offset++;
+    }
+    if (offset == text.length()) {
+      return -1;
+    }
+    return offset + pos.getColumn();
+  }
+
+  private static int offsetOfLineFeed(@NotNull String s, int count) {
+    int result = -1;
+    for (int i = 0; i < count; i++) {
+      result = s.indexOf('\n', result + 1);
+      if (result < 0) {
+        break;
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private Couple<VisualPosition> getOffsets() {
+    return myParamTypesOffset.get(getParamToEdit().getName());
   }
 
   private DocstringParam getParamToEdit() {
@@ -349,11 +386,6 @@ public class PyDocstringGenerator {
       throw new IllegalStateException("We should have at least one param to edit");
     }
     return myParams.get(0);
-  }
-
-  public int getEndOffset() {
-    Pair<Integer, Integer> offsets = getOffsets();
-    return offsets != null ? offsets.second : -1;
   }
 
   public static class DocstringParam {
@@ -410,10 +442,9 @@ public class PyDocstringGenerator {
           PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(myFunction),
                                                             PyFunction.class,
                                                             "def " + myFunction.getName() + myFunction.getParameterList().getText()
-                                                            + ":\n" + StringUtil.repeat(" ", getIndentSize(myFunction))
+                                                            + ":\n" + StringUtil.repeat(" ", calcExpectedIndentSize(myFunction))
                                                             + replacement + "\n" +
-                                                            StringUtil.repeat(" ", getIndentSize(myFunction)) + list.getText()
-          );
+                                                            StringUtil.repeat(" ", calcExpectedIndentSize(myFunction)) + list.getText());
 
           myFunction = (PyFunction)myFunction.replace(func);
         }
@@ -423,24 +454,25 @@ public class PyDocstringGenerator {
         }
       }
 
-      myFunction = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myFunction);
-      if (myFunction != null) {
-        myDocStringExpression = myFunction.getDocStringExpression();
-      }
+      CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myFunction);
+      myDocStringExpression = myFunction.getDocStringExpression();
     }
   }
 
-  private static int getIndentSize(PyDocStringOwner function) {
-    CodeStyleSettings.IndentOptions indentOptions = CodeStyleSettingsManager.
-      getInstance(function.getProject()).getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
-
+  private int calcExpectedIndentSize(@NotNull PyDocStringOwner function) {
     PyStatementList statementList = PsiTreeUtil.getParentOfType(function, PyStatementList.class);
     int indent = 1;
     while (statementList != null) {
       statementList = PsiTreeUtil.getParentOfType(statementList, PyStatementList.class);
       indent += 1;
     }
-    return indent * indentOptions.TAB_SIZE;
+    return indent * getIndentSizeFromSettings();
+  }
+
+  private int getIndentSizeFromSettings() {
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
+    final CodeStyleSettings.IndentOptions indentOptions = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE);
+    return indentOptions.INDENT_SIZE;
   }
 
   private String getPrefix() {

@@ -318,6 +318,16 @@ public class PyIntentionTest extends PyTestCase {
     doDocReferenceTest();
   }
 
+  // PY-16456
+  public void testTypeInDocStringDifferentIndentationSize() {
+    doDocReferenceTest();
+  }
+
+  // PY-16456
+  public void testReturnTypeInDocStringDifferentIndentationSize() {
+    doDocReturnTypeTest();
+  }
+
   public void testReturnTypeInDocstring() {
     doDocReturnTypeTest();
   }
