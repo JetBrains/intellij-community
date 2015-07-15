@@ -17,6 +17,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SchemesManagerFactory {
@@ -26,7 +27,17 @@ public abstract class SchemesManagerFactory {
                                                                                                                @NotNull RoamingType roamingType);
 
   @NotNull
+  public final <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> create(@NotNull String directoryName, @NotNull SchemeProcessor<E> processor) {
+    return createSchemesManager(directoryName, processor, RoamingType.PER_USER);
+  }
+
+  @NotNull
   public static SchemesManagerFactory getInstance() {
     return ServiceManager.getService(SchemesManagerFactory.class);
+  }
+
+  @NotNull
+  public static SchemesManagerFactory getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, SchemesManagerFactory.class);
   }
 }

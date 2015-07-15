@@ -15,7 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.SchemeManagerFactoryImpl
+import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -118,7 +118,7 @@ class SyncManager(private val icsManager: IcsManager, private val autoSyncManage
               restartApplication = updateStoragesFromStreamProvider((ApplicationManager.getApplication() as ApplicationImpl).getStateStore(), updateResult!!)
             }
             if (!restartApplication && syncType == SyncType.OVERWRITE_LOCAL) {
-              (SchemesManagerFactory.getInstance() as SchemeManagerFactoryImpl).process {
+              (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
                 it.reload()
               }
             }
