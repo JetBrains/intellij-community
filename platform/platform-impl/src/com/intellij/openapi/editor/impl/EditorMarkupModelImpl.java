@@ -735,8 +735,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int startOffset = yPositionToOffset(clip.y - myMinMarkHeight, true);
       int endOffset = yPositionToOffset(clip.y + clip.height, false);
 
+      Shape oldClip = g.getClip();
+      g.clipRect(clip.x, clip.y, clip.width, clip.height);
+
       drawMarkup(g, startOffset, endOffset,
-                 (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true),EditorMarkupModelImpl.this);
+                 (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true), EditorMarkupModelImpl.this);
+
+      g.setClip(oldClip);
     }
 
     private void drawMarkup(@NotNull final Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup1, @NotNull MarkupModelEx markup2) {
