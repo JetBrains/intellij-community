@@ -31,6 +31,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -226,9 +228,10 @@ public class InspectionApplication {
             return;
           }
           inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
-          logMessageLn(1, "\n" +
-                          InspectionsBundle.message("inspection.capitalized.done") +
-                          "\n");
+          logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
+          if (!myErrorCodeRequired) {
+            closeProject();
+          }
         }
       }, new ProgressIndicatorBase() {
         private String lastPrefix = "";
@@ -303,7 +306,14 @@ public class InspectionApplication {
       System.exit(1);
     }
     else {
+      closeProject();
       throw new RuntimeException("Failed to proceed");
+    }
+  }
+
+  private void closeProject() {
+    if (myProject != null && !myProject.isDisposed()) {
+      ProjectUtil.closeAndDispose(myProject);
     }
   }
 
