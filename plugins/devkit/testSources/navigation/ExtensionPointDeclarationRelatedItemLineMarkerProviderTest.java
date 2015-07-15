@@ -18,12 +18,10 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.PathUtil;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/extensionPointDeclaration")
 public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
@@ -35,10 +33,8 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
-    moduleBuilder.addLibrary("extensions", extensionsJar);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
+    moduleBuilder.addLibrary("extensions", RuntimeModuleId.module("extensions"));
+    moduleBuilder.addLibrary("platform-api", RuntimeModuleId.module("platform-api"));
   }
 
   public void testMyStringEP() {

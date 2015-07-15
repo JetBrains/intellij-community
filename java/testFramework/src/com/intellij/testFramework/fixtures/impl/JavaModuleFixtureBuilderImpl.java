@@ -42,6 +42,8 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -83,6 +85,17 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     map.put(OrderRootType.CLASSES, classPath);
     myLibraries.add(new Lib(libraryName, map));
     return this;
+  }
+
+  @Override
+  public JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, RuntimeModuleId id) {
+    List<String> paths = PlatformLoader.getInstance().getRepository().getModuleRootPaths(id);
+    return addLibrary(libraryName, ArrayUtil.toStringArray(paths));
+  }
+
+  @Override
+  protected T instantiateFixture() {
+    return null;
   }
 
   @Override

@@ -15,12 +15,11 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.PathUtil;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 /**
  * @author Dmitry Avdeev
@@ -38,8 +37,7 @@ public class InspectionMappingConsistencyInspectionTest extends JavaCodeInsightF
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String pathForClass = PathUtil.getJarPathForClass(LocalInspectionEP.class);
-    moduleBuilder.addLibrary("lang-api", pathForClass);
+    moduleBuilder.addLibrary("lang-api", RuntimeModuleId.module("lang-api"));
   }
 
   @Override

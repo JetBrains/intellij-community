@@ -29,15 +29,16 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
-import com.intellij.ui.components.JBList
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import com.intellij.util.PathUtil
-import com.intellij.util.xmlb.annotations.AbstractCollection
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.util.PsiUtil
 
+import org.jetbrains.platform.loader.repository.RuntimeModuleId
+/**
+ * @author peter
+ */
 @TestDataPath("\$CONTENT_ROOT/testData/codeInsight")
 public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
@@ -57,10 +58,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String pathForClass = PathUtil.getJarPathForClass(AbstractCollection.class);
-    moduleBuilder.addLibrary("util", pathForClass);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class)
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
+    moduleBuilder.addLibrary("util", RuntimeModuleId.module("util"));
+    moduleBuilder.addLibrary("platform-api", RuntimeModuleId.module("platform-api"));
   }
 
   public void testExtensionsHighlighting() throws Throwable {
@@ -237,7 +236,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     configureLanguageAttributeTest()
     myFixture.testHighlighting("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
   }
-  
+
   public void testLanguageAttributeCompletion() {
     configureLanguageAttributeTest()
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguageAttributeEPBean.java"));
@@ -249,7 +248,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertLookupElement(lookupElements[1], "MyAnonymousLanguageWithNameFromBundleID", "MyLanguage")
     assertLookupElement(lookupElements[2], "MyLanguageID", "MyLanguage")
   }
-  
+
   private static void assertLookupElement(LookupElement element, String lookupString, String typeText) {
     def presentation = new LookupElementPresentation()
     element.renderElement(presentation)

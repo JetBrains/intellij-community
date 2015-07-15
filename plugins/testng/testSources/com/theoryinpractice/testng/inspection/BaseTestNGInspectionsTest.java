@@ -20,11 +20,9 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.PathUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 
 /**
  * @author Dmitry Batkovich
@@ -36,8 +34,8 @@ public abstract class BaseTestNGInspectionsTest extends JavaCodeInsightFixtureTe
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-    moduleBuilder.addLibrary("junit", PathUtil.getJarPathForClass(TestCase.class));
-    moduleBuilder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
+    moduleBuilder.addLibrary("junit", RuntimeModuleId.projectLibrary("JUnit3"));
+    moduleBuilder.addLibrary("testng", RuntimeModuleId.projectLibrary("TestNG"));
   }
 
   @Override

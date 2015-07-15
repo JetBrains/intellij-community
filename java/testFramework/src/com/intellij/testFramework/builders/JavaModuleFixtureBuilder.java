@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.Map;
 
@@ -36,6 +37,8 @@ public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends Modul
   JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
 
   JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls String... classPath);
+
+  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, RuntimeModuleId id);
 
   JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, Map<OrderRootType, String[]> roots);
 

@@ -16,14 +16,12 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.PathUtil;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -38,10 +36,8 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends JavaCodeIn
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String pathForClass = PathUtil.getJarPathForClass(LocalInspectionEP.class);
-    moduleBuilder.addLibrary("lang-api", pathForClass);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
+    moduleBuilder.addLibrary("lang-api", RuntimeModuleId.module("lang-api"));
+    moduleBuilder.addLibrary("platform-api", RuntimeModuleId.module("platform-api"));
   }
 
   public void testInspectionDescription() {

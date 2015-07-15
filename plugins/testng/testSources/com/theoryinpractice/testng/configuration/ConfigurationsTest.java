@@ -44,10 +44,10 @@ import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -74,7 +74,7 @@ public class ConfigurationsTest {
     myProjectFixture = testFixtureBuilder.getFixture();
     final JavaModuleFixtureBuilder javaModuleFixtureBuilder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
     javaModuleFixtureBuilder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("src");
-    javaModuleFixtureBuilder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
+    javaModuleFixtureBuilder.addLibrary("testng", RuntimeModuleId.projectLibrary("TestNG"));
     myProjectFixture.setUp();
 
   }
