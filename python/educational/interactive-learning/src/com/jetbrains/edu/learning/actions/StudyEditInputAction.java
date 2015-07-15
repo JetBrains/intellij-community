@@ -29,6 +29,7 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyTestContentPanel;
+import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,8 +47,12 @@ public class StudyEditInputAction extends DumbAwareAction {
   private JBEditorTabs tabbedPane;
   private Map<TabInfo, UserTest> myEditableTabs = new HashMap<TabInfo, UserTest>();
 
+  public StudyEditInputAction() {
+    super("Watch Test Input", "Watch test input", InteractiveLearningIcons.WatchInput);
+  }
+
   public void showInput(final Project project) {
-    final Editor selectedEditor = StudyEditor.getSelectedEditor(project);
+    final Editor selectedEditor = StudyUtils.getSelectedEditor(project);
     if (selectedEditor != null) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
@@ -100,7 +105,7 @@ public class StudyEditInputAction extends DumbAwareAction {
           .setMovable(true)
           .setRequestFocus(true)
           .createPopup();
-      StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
+      StudyEditor selectedStudyEditor = StudyUtils.getSelectedStudyEditor(project);
       assert selectedStudyEditor != null;
       hint.showInCenterOf(selectedStudyEditor.getComponent());
       hint.addListener(new HintClosedListener(currentTask, studyTaskManager));
@@ -216,6 +221,21 @@ public class StudyEditInputAction extends DumbAwareAction {
       final Project project = e.getProject();
       if (project != null) {
         StudyTaskManager.getInstance(project).removeUserTest(myTask, userTest);
+      }
+    }
+  }
+  @Override
+  public void update(final AnActionEvent e) {
+    EduUtils.enableAction(e, false);
+
+    final Project project = e.getProject();
+    if (project != null) {
+      StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
+      if (studyEditor != null) {
+        final List<UserTest> userTests = StudyTaskManager.getInstance(project).getUserTests(studyEditor.getTaskFile().getTask());
+        if (!userTests.isEmpty()) {
+          EduUtils.enableAction(e, true);
+        }
       }
     }
   }
