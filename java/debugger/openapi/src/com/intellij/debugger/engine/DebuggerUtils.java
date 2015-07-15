@@ -279,6 +279,10 @@ public abstract class DebuggerUtils {
   }
 
   private static boolean typeEquals(Type type, String typeName) {
+    int genericPos = typeName.indexOf('<');
+    if (genericPos > -1) {
+      typeName = typeName.substring(0, genericPos);
+    }
     return type.name().replace('$', '.').equals(typeName.replace('$', '.'));
   }
 
