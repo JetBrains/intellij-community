@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
-import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 
 import java.io.File;
 import java.net.URL;
@@ -79,22 +79,9 @@ public class SceneBuilderCreatorImpl implements SceneBuilderCreator {
       throw new Exception(info.libPath + " no jar found");
     }
 
-    final String parent = new File(PathUtil.getJarPathForClass(SceneBuilderCreatorImpl.class)).getParent();
-    if (SceneBuilderCreatorImpl.class.getClassLoader() instanceof PluginClassLoader) {
-      urls.add(new File(new File(parent).getParent(), "embedder.jar").toURI().toURL());
-    }
-    else {
-      final File localEmbedder = new File(parent, "FXBuilderEmbedder");
-      if (localEmbedder.exists()) {
-        urls.add(localEmbedder.toURI().toURL());
-      }
-      else {
-        File home = new File(PathManager.getHomePath(), "community");
-        if (!home.exists()) {
-          home = new File(PathManager.getHomePath());
-        }
-        urls.add(new File(home, "plugins/JavaFX/FxBuilderEmbedder/lib/embedder.jar").toURI().toURL());
-      }
+    RuntimeModuleId id = RuntimeModuleId.moduleResource("javaFX", "embedder.jar");
+    for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(id)) {
+      urls.add(new File(path).toURI().toURL());
     }
 
     final String rtPath = PathUtil.getJarPathForClass(String.class);

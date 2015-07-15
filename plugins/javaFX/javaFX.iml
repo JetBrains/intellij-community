@@ -24,5 +24,7 @@
     <orderEntry type="module" module-name="manifest" />
     <orderEntry type="module" module-name="idea-ui" />
   </component>
+  <component name="RuntimeResources">
+    <runtime-resource name="embedder.jar" url="file://$MODULE_DIR$/FxBuilderEmbedder/lib/embedder.jar" />
+  </component>
 </module>
-
