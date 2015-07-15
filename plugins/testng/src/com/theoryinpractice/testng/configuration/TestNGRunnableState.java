@@ -46,9 +46,10 @@ import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
-import org.testng.RemoteTestNGStarter;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.SerializedMessageSender;
@@ -178,7 +179,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters) {
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
+    javaParameters.getClassPath().addAll(PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.module("testng_rt")));
     javaParameters.getClassPath().addTail(PathUtil.getJarPathForClass(JCommander.class));
   }
 
