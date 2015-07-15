@@ -337,7 +337,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     }
     else if (entry instanceof LibraryOrderEntry){
-      if (!openLibraryEditor) {
+      if (!openLibraryEditor && !((LibraryOrderEntry)entry).getLibraryLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) {
         rootConfigurable.select((LibraryOrderEntry)entry, true);
       }
       else {
