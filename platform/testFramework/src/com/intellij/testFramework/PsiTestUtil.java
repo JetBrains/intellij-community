@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.junit.Assert;
 
 import java.io.File;
@@ -291,21 +293,20 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        result.set(addProjectLibrary(module, model, libName, classesRoots, sourceRoots));
+        result.set(addProjectLibrary(module.getProject(), model, libName, classesRoots, sourceRoots));
       }
     });
     return result.get();
   }
 
-  private static Library addProjectLibrary(final Module module,
-                                           final ModifiableRootModel model,
+  private static Library addProjectLibrary(final Project project, final ModifiableRootModel model,
                                            final String libName,
                                            final List<VirtualFile> classesRoots,
                                            final List<VirtualFile> sourceRoots) {
-    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
     RunResult<Library> result = new WriteAction<Library>() {
       @Override
       protected void run(@NotNull Result<Library> result) throws Throwable {
+        LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
         Library library = libraryTable.createLibrary(libName);
         Library.ModifiableModel libraryModel = library.getModifiableModel();
         try {
@@ -357,7 +358,21 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    addProjectLibrary(module, model, libName, classesRoots, Collections.<VirtualFile>emptyList());
+    addProjectLibrary(module.getProject(), model, libName, classesRoots, Collections.<VirtualFile>emptyList());
+  }
+
+  public static void addLibrary(final Module module,
+                                final ModifiableRootModel model,
+                                String libName,
+                                RuntimeModuleId id) {
+    List<VirtualFile> classesRoots = new ArrayList<VirtualFile>();
+    for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(id)) {
+      String url = VfsUtil.getUrlForLibraryRoot(new File(path));
+      VirtualFile root = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+      assert root != null : "Library root folder not found: " + url;
+      classesRoots.add(root);
+    }
+    addProjectLibrary(module.getProject(), model, libName, classesRoots, Collections.<VirtualFile>emptyList());
   }
 
   public static void addLibrary(final Module module,

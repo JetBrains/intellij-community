@@ -44,7 +44,8 @@ import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.Assert;
+import org.jetbrains.platform.loader.PlatformLoader;
+import org.jetbrains.platform.loader.repository.RuntimeModuleId;
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
 import org.testng.annotations.*;
@@ -498,8 +499,11 @@ public class TestNGUtil {
       }
       final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
       if (module == null) return false;
-      String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
-      ModuleRootModificationUtil.addModuleLibrary(module, url);
+      List<String> urls = new ArrayList<String>();
+      for (String path : PlatformLoader.getInstance().getRepository().getModuleRootPaths(RuntimeModuleId.projectLibrary("TestNG"))) {
+        urls.add(VfsUtil.getUrlForLibraryRoot(new File(path)));
+      }
+      ModuleRootModificationUtil.addModuleLibrary(module, null, urls, Collections.<String>emptyList());
     }
     return true;
   }
