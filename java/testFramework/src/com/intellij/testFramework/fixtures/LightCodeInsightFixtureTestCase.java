@@ -39,25 +39,25 @@ import java.io.File;
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   public static final LightProjectDescriptor JAVA_1_4 = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_4);
     }
   };
   public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
   };
   public static final LightProjectDescriptor JAVA_1_6 = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_6);
     }
   };
   public static final LightProjectDescriptor JAVA_1_7 = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_7);
     }
   };
@@ -68,7 +68,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     }
 
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }
   };

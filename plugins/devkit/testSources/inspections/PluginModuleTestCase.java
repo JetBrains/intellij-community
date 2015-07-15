@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public abstract class PluginModuleTestCase extends LightCodeInsightFixtureTestCa
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return new DefaultLightProjectDescriptor() {
+      @NotNull
       @Override
       public ModuleType getModuleType() {
         return PluginModuleType.getInstance();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ abstract class AbstractGebLightTestCase extends LightCodeInsightFixtureTestCase 
 }
 
 class GebProjectDescriptor extends DefaultLightProjectDescriptor {
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
 
       def fs = JarFileSystem.instance

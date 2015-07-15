@@ -26,13 +26,14 @@ import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 class GrLibrarySourceHighlightingTest extends GrHighlightingTestBase {
 
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       final absoluteBasePath = "${TestUtils.absoluteTestDataPath}${basePath}"
       final lib = JarFileSystem.instance.refreshAndFindFileByPath("$absoluteBasePath/some-library.jar!/")
       final src = LocalFileSystem.instance.refreshAndFindFileByPath("$absoluteBasePath/src/")
