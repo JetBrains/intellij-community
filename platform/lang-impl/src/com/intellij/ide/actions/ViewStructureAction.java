@@ -24,12 +24,12 @@ import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,7 +41,7 @@ import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ViewStructureAction extends AnAction {
+public class ViewStructureAction extends DumbAwareAction {
 
   public ViewStructureAction() {
     setEnabledInModalContext(true);
