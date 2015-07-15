@@ -169,12 +169,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private static class PositionedStripe {
-    private Color color;
+    @NotNull private Color color;
     private int yEnd;
     private final boolean thin;
     private final int layer;
 
-    private PositionedStripe(Color color, int yEnd, boolean thin, int layer) {
+    private PositionedStripe(@NotNull Color color, int yEnd, boolean thin, int layer) {
       this.color = color;
       this.yEnd = yEnd;
       this.thin = thin;
@@ -861,8 +861,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return yStart;
     }
 
-    private void drawSpot(@NotNull Graphics g, boolean thinErrorStripeMark, int yStart, int yEnd, @Nullable Color color) {
-      if (color == null) return;
+    private void drawSpot(@NotNull Graphics g, boolean thinErrorStripeMark, int yStart, int yEnd, @NotNull Color color) {
       int paintWidth;
       int x;
       if (thinErrorStripeMark) {
