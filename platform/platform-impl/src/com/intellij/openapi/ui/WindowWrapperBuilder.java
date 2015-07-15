@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper.Mode;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ public class WindowWrapperBuilder {
   @NotNull private final JComponent component;
   @Nullable private Project project;
   @Nullable private Component parent;
+  @Nullable private String title;
   @Nullable private JComponent preferredFocusedComponent;
   @Nullable private String dimensionServiceKey;
   @Nullable private Runnable onShowCallback;
@@ -35,6 +37,12 @@ public class WindowWrapperBuilder {
   @NotNull
   public WindowWrapperBuilder setParent(@Nullable Component parent) {
     this.parent = parent;
+    return this;
+  }
+
+  @NotNull
+  public WindowWrapperBuilder setTitle(@Nullable String title) {
+    this.title = title;
     return this;
   }
 
@@ -98,6 +106,7 @@ public class WindowWrapperBuilder {
         });
       }
 
+      setTitle(builder.title);
       switch (builder.mode) {
         case MODAL:
           myDialog.setModal(true);
@@ -148,8 +157,7 @@ public class WindowWrapperBuilder {
 
     @Override
     public void setTitle(@Nullable String title) {
-      if (title == null) return;
-      myDialog.setTitle(title);
+      myDialog.setTitle(StringUtil.notNullize(title));
     }
 
     @Override
@@ -232,7 +240,7 @@ public class WindowWrapperBuilder {
 
     @NotNull private final FrameWrapper myFrame;
 
-    public FrameWindowWrapper(@NotNull final WindowWrapperBuilder builder) {
+    public FrameWindowWrapper(@NotNull WindowWrapperBuilder builder) {
       myProject = builder.project;
       myComponent = builder.component;
       myMode = builder.mode;
@@ -244,6 +252,7 @@ public class WindowWrapperBuilder {
 
       myFrame.setComponent(builder.component);
       myFrame.setPreferredFocusedComponent(builder.preferredFocusedComponent);
+      myFrame.setTitle(builder.title);
       myFrame.closeOnEsc();
       Disposer.register(myFrame, this);
     }
@@ -280,7 +289,7 @@ public class WindowWrapperBuilder {
 
     @Override
     public void setTitle(@Nullable String title) {
-      if (title == null) return;
+      title = StringUtil.notNullize(title);
       myFrame.setTitle(title);
 
       Window window = getWindow();
@@ -290,7 +299,6 @@ public class WindowWrapperBuilder {
 
     @Override
     public void setImage(@Nullable Image image) {
-      if (image == null) return;
       myFrame.setImage(image);
     }
 
