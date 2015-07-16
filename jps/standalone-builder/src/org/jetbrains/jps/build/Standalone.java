@@ -22,10 +22,7 @@ import com.sampullara.cli.Argument;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.cmdline.BuildRunner;
-import org.jetbrains.jps.cmdline.JpsModelLoader;
-import org.jetbrains.jps.cmdline.JpsModelLoaderImpl;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.cmdline.*;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
@@ -66,6 +63,10 @@ public class Standalone {
 
   @Argument(value = "i", description = "Build incrementally")
   public boolean incremental;
+
+  static {
+    LogSetup.initLoggers();
+  }
 
   public static void main(String[] args) {
     Standalone instance = new Standalone();
