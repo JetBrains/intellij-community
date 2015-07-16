@@ -33,13 +33,7 @@ public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrateg
       }
     }
 
-    if (charAtOffset == '.' || charAtOffset == ' ') {
-      if (isInsideJDLinkTag(document, offset)) {
-        return false;
-      }
-    }
-
-    if (isInsideHrefTag(document, offset)) {
+    if (isInsideJDLinkTag(document, offset) || isInsideHrefTag(document, offset)) {
       return false;
     }
 
