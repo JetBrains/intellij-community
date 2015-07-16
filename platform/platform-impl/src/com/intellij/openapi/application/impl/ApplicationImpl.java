@@ -336,14 +336,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
   }
 
-  @NotNull
   @Override
-  protected synchronized Object createComponent(@NotNull Class componentInterface) {
-    Object component = super.createComponent(componentInterface);
+  protected void componentCreatedDuringInit() {
     if (mySplash != null) {
       mySplash.showProgress("", 0.65f + getPercentageOfComponentsLoaded() * 0.35f);
     }
-    return component;
   }
 
   @NotNull

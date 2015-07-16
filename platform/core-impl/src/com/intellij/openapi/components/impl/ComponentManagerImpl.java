@@ -32,11 +32,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -93,8 +90,29 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final void init(@Nullable Runnable classesLoaded) {
-    createComponents(classesLoaded);
-    getComponents();
+    try {
+      myComponentsRegistry.loadClasses();
+
+      if (classesLoaded != null) {
+        classesLoaded.run();
+      }
+
+      ProgressIndicator indicator = getProgressIndicator();
+      for (Class componentInterface : myComponentsRegistry.getComponentInterfaces()) {
+        if (indicator != null) {
+          indicator.checkCanceled();
+        }
+
+        getComponent(componentInterface);
+        componentCreatedDuringInit();
+      }
+    }
+    finally {
+      myComponentsCreated = true;
+    }
+  }
+
+  protected void componentCreatedDuringInit() {
   }
 
   @NotNull
@@ -110,35 +128,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public boolean isComponentsCreated() {
     return myComponentsCreated;
-  }
-
-  private void createComponents(@Nullable Runnable classesLoaded) {
-    try {
-      myComponentsRegistry.loadClasses();
-
-      if (classesLoaded != null) {
-        classesLoaded.run();
-      }
-
-      Class[] componentInterfaces = myComponentsRegistry.getComponentInterfaces();
-      for (Class componentInterface : componentInterfaces) {
-        ProgressIndicator indicator = getProgressIndicator();
-        if (indicator != null) {
-          indicator.checkCanceled();
-        }
-        createComponent(componentInterface);
-      }
-    }
-    finally {
-      myComponentsCreated = true;
-    }
-  }
-
-  @NotNull
-  protected synchronized Object createComponent(@NotNull Class componentInterface) {
-    final Object component = getPicoContainer().getComponentInstance(componentInterface.getName());
-    LOG.assertTrue(component != null, "Can't instantiate component for: " + componentInterface);
-    return component;
   }
 
   protected synchronized void disposeComponents() {
@@ -164,31 +153,29 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @SuppressWarnings("unchecked")
   @Nullable
-  private <T> T getComponentFromContainer(@NotNull Class<T> interfaceClass) {
-    final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
-    if (initializedComponent != null) return initializedComponent;
+  private <T> T getComponentFromContainer(@NotNull Class<T> componentInterface) {
+    T component = (T)myInitializedComponents.get(componentInterface);
+    if (component != null) {
+      return component;
+    }
 
     synchronized (this) {
-      if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(interfaceClass)) {
+      if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(componentInterface)) {
         return null;
       }
 
-      Object lock = myComponentsRegistry.getComponentLock(interfaceClass);
-
-      synchronized (lock) {
-        T dcl = (T)myInitializedComponents.get(interfaceClass);
-        if (dcl != null) return dcl;
-
-        T component = (T)getPicoContainer().getComponentInstance(interfaceClass.getName());
-        if (component == null) {
-          component = (T)createComponent(interfaceClass);
+      synchronized (myComponentsRegistry.getComponentLock(componentInterface)) {
+        component = (T)myInitializedComponents.get(componentInterface);
+        if (component != null) {
+          return component;
         }
 
+        component = (T)getPicoContainer().getComponentInstance(componentInterface.getName());
         if (component == null) {
-          throw new IncorrectOperationException("createComponent() returns null for: " + interfaceClass);
+          LOG.error("Can't instantiate component for: " + componentInterface);
         }
 
-        myInitializedComponents.put(interfaceClass, component);
+        myInitializedComponents.put(componentInterface, component);
 
         if (component instanceof com.intellij.openapi.Disposable) {
           Disposer.register(this, (com.intellij.openapi.Disposable)component);
@@ -200,7 +187,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+  public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
     if (myDisposeCompleted) {
       ProgressManager.checkCanceled();
       throw new AssertionError("Already disposed: " + this);
@@ -209,11 +196,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
-    final T fromContainer = getComponentFromContainer(interfaceClass);
-    if (fromContainer != null) return fromContainer;
-    if (defaultImplementation != null) return defaultImplementation;
-    return null;
+  public final <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
+    T component = getComponentFromContainer(interfaceClass);
+    return component == null ? defaultImplementation : component;
   }
 
   @Nullable
@@ -263,20 +248,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
     return myComponentsRegistry != null && myComponentsRegistry.containsInterface(interfaceClass);
-  }
-
-  @NotNull
-  protected synchronized Object[] getComponents() {
-    Class[] componentClasses = myComponentsRegistry.getComponentInterfaces();
-    List<Object> components = new ArrayList<Object>(componentClasses.length);
-    ProgressIndicator indicator = getProgressIndicator();
-    for (Class<?> interfaceClass : componentClasses) {
-      if (indicator != null) {
-        indicator.checkCanceled();
-      }
-      ContainerUtilRt.addIfNotNull(components, getComponent(interfaceClass));
-    }
-    return ArrayUtil.toObjectArray(components);
   }
 
   @Override
