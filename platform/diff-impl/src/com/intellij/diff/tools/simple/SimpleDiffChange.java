@@ -115,17 +115,17 @@ public class SimpleDiffChange {
     int end = side.getEndOffset(myFragment);
     TextDiffType type = DiffUtil.getLineDiffType(myFragment);
 
-    myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored));
 
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
     if (startLine == endLine) {
-      if (startLine != 0) myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
+      if (startLine != 0) myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
     }
     else {
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
     }
   }
 
@@ -139,8 +139,7 @@ public class SimpleDiffChange {
     end += startOffset;
 
     Editor editor = myViewer.getEditor(side);
-    RangeHighlighter highlighter = DiffDrawUtil.createInlineHighlighter(editor, start, end, type);
-    myHighlighters.add(highlighter);
+    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start, end, type));
   }
 
   public void updateGutterActions(boolean force) {

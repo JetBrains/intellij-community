@@ -19,6 +19,10 @@ import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class JavaSdkUtil {
   @NonNls public static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
@@ -54,5 +58,17 @@ public class JavaSdkUtil {
 
   public static String getIdeaRtJarPath() {
     return PathUtil.getJarPathForClass(JavacRunner.class);
+  }
+
+  @NotNull
+  public static List<String> getJUnit4JarPaths() {
+    try {
+      return Arrays.asList(getJunit4JarPath(),
+                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matcher")),
+                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matchers")));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

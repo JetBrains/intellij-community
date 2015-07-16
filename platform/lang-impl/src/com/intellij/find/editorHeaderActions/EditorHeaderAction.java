@@ -25,21 +25,16 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class EditorHeaderAction extends AnAction {
-  private final EditorSearchComponent myEditorSearchComponent;
+  protected final EditorSearchComponent myEditorSearchComponent;
+
+  protected EditorHeaderAction(EditorSearchComponent editorSearchComponent) {
+    myEditorSearchComponent = editorSearchComponent;
+  }
 
   protected void registerShortcutsForComponent(List<Shortcut> shortcuts, JComponent component) {
     registerCustomShortcutSet(
       new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
       component);
-  }
-
-  public EditorSearchComponent getEditorSearchComponent() {
-    return myEditorSearchComponent;
-  }
-
-  protected EditorHeaderAction(EditorSearchComponent editorSearchComponent) {
-
-    myEditorSearchComponent = editorSearchComponent;
   }
 }
 

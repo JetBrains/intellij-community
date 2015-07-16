@@ -98,8 +98,9 @@ public abstract class BaseOutputReader extends BaseDataReader {
       read = true;
       processLine(buffer, line, n);
 
-      if (line.length() > 0 && !myReader.ready()) {
-        sendLine(line);
+      if (!myReader.ready()) {
+        if (line.length() > 0) sendLine(line);
+        onBufferExhaustion();
       }
     }
 
@@ -125,8 +126,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
         sendLine(line);
       }
     }
-
-    onBufferExhaustion();
   }
 
   private void sendLine(@NotNull StringBuilder line) {

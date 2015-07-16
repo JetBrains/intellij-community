@@ -22,6 +22,7 @@ import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUMap;
 import gnu.trove.TLongArrayList;
+import org.iq80.snappy.CorruptionException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -180,7 +181,7 @@ public class CompressedAppendableFile {
 
   private static final FileChunkReadCache ourDecompressedCache = new FileChunkReadCache();
 
-  private synchronized byte[] loadChunk(int chunkNumber) {
+  private synchronized byte[] loadChunk(int chunkNumber) throws IOException {
     try {
       if (myChunkLengthTable == null) initChunkLengthTable();
       assert chunkNumber < myChunkTableLength;
@@ -203,8 +204,8 @@ public class CompressedAppendableFile {
       assert false;
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    catch(CorruptionException e) {
+      throw new IOException(e);
     }
   }
 
@@ -469,7 +470,7 @@ public class CompressedAppendableFile {
     }
 
     @NotNull
-    public byte[] get(CompressedAppendableFile file, int page) {
+    public byte[] get(CompressedAppendableFile file, int page) throws IOException {
       byte[] bytes;
       synchronized (this) {
         myKey.setup(file, page);

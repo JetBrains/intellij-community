@@ -411,7 +411,7 @@ public class FormatProcessor {
   ) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();
-    final TextRange wsRange = shiftRange(textRange, shift);
+    final TextRange wsRange = textRange.shiftRight(shift);
     final String newWhiteSpace = _newWhiteSpace.toString();
     TextRange newWhiteSpaceRange = model instanceof FormattingModelEx
                                    ? ((FormattingModelEx) model).replaceWhiteSpace(wsRange, block.getNode(), newWhiteSpace)
@@ -420,7 +420,7 @@ public class FormatProcessor {
     shift += newWhiteSpaceRange.getLength() - textRange.getLength();
 
     if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
-      final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
+      final TextRange currentBlockRange = block.getTextRange().shiftRight(shift);
 
       IndentInside oldBlockIndent = whiteSpace.getInitialLastLineIndent();
       IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
@@ -464,10 +464,6 @@ public class FormatProcessor {
     }
     final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
     return result == null ? fallbackIndentOptions : result;
-  }
-
-  private static TextRange shiftRange(final TextRange textRange, final int shift) {
-    return new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
   }
 
   private void processToken() {

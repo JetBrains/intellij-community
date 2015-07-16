@@ -16,6 +16,8 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -44,12 +46,18 @@ public class RestorePreviousSettingsAction extends EditorHeaderAction implements
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    getEditorSearchComponent().restoreFindModel();
+    final FindModel model = FindManager.getInstance(e.getProject()).getPreviousFindModel();
+    if (model != null) {
+      myEditorSearchComponent.getFindModel().copyFrom(model);
+    }
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(myTextField.getText().isEmpty());
+    e.getPresentation().setEnabled(
+      e.getProject() != null
+      && myTextField.getText().isEmpty()
+    && FindManager.getInstance(e.getProject()).getPreviousFindModel() != null);
   }
 
   public static String getAd() {

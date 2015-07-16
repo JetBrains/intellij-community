@@ -23,14 +23,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
@@ -289,10 +285,11 @@ public class GitBranchUtil {
    * Guesses the Git root on which a Git action is to be invoked.
    * <ol>
    *   <li>
-   *     Returns the root for the selected file. Selected file is determined by {@link DvcsUtil#getSelectedFile(com.intellij.openapi.project.Project)}.
+   *     Returns the root for the selected file. Selected file is determined by {@link DvcsUtil#getSelectedFile(Project)}.
    *     If selected file is unknown (for example, no file is selected in the Project View or Changes View and no file is open in the editor),
    *     continues guessing. Otherwise returns the Git root for the selected file. If the file is not under a known Git root,
-   *     <code>null</code> will be returned - the file is definitely determined, but it is not under Git.
+   *     but there is at least one git root,  continues guessing, otherwise
+   *     <code>null</code> will be returned - the file is definitely determined, but it is not under Git and no git roots exists in project.
    *   </li>
    *   <li>
    *     Takes all Git roots registered in the Project. If there is only one, it is returned.
@@ -313,74 +310,14 @@ public class GitBranchUtil {
    */
   @Nullable
   public static GitRepository getCurrentRepository(@NotNull Project project) {
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    VirtualFile file = DvcsUtil.getSelectedFile(project);
-    VirtualFile root = getVcsRootOrGuess(project, file);
-    return manager.getRepositoryForRoot(root);
+    return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }
 
   @Nullable
-  public static VirtualFile getVcsRootOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
-    VirtualFile root = DvcsUtil.getVcsRoot(project, file);
-    return root != null ? root : guessGitRoot(project);
-  }
-
-  @Nullable
-  private static VirtualFile guessGitRoot(@NotNull Project project) {
-    LOG.debug("Guessing Git root...");
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    AbstractVcs gitVcs = GitVcs.getInstance(project);
-    if (gitVcs == null) {
-      LOG.debug("GitVcs not found.");
-      return null;
-    }
-    VirtualFile[] gitRoots = vcsManager.getRootsUnderVcs(gitVcs);
-    if (gitRoots.length == 0) {
-      LOG.debug("No Git roots in the project.");
-      return null;
-    }
-
-    if (gitRoots.length == 1) {
-      VirtualFile onlyRoot = gitRoots[0];
-      LOG.debug("Only one Git root in the project, returning: " + onlyRoot);
-      return onlyRoot;
-    }
-
-    // remember the last visited Git root
-    GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    if (settings != null) {
-      String recentRootPath = settings.getRecentRootPath();
-      if (recentRootPath != null) {
-        VirtualFile recentRoot = VcsUtil.getVirtualFile(recentRootPath);
-        if (recentRoot != null) {
-          LOG.debug("Returning the recent root: " + recentRoot);
-          return recentRoot;
-        }
-      }
-    }
-
-    // otherwise return the root of the project dir or the root containing the project dir, if there is such
-    VirtualFile projectBaseDir = project.getBaseDir();
-    if (projectBaseDir == null) {
-      VirtualFile firstRoot = gitRoots[0];
-      LOG.debug("Project base dir is null, returning the first root: " + firstRoot);
-      return firstRoot;
-    }
-    VirtualFile rootCandidate = null;
-    for (VirtualFile root : gitRoots) {
-      if (root.equals(projectBaseDir)) {
-        return root;
-      }
-      else if (VfsUtilCore.isAncestor(root, projectBaseDir, true)) {
-        rootCandidate = root;
-      }
-    }
-    LOG.debug("The best candidate: " + rootCandidate);
-    if (rootCandidate == null) {
-      rootCandidate = gitRoots[0];
-    }
-    LOG.debug("Returning the best candidate: " + rootCandidate);
-    return rootCandidate;
+  public static GitRepository getRepositoryOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
+    if (project.isDisposed()) return null;
+    return DvcsUtil.guessRepositoryForFile(project, GitUtil.getRepositoryManager(project), GitVcs.getInstance(project), file,
+                                           GitVcsSettings.getInstance(project).getRecentRootPath());
   }
 
   @NotNull

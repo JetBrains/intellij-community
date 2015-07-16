@@ -48,6 +48,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -549,7 +550,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     final Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     final Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
     final CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(F4, ENTER));
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final boolean succeeded = navigateSelectedElement();
@@ -559,7 +560,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     }.registerCustomShortcutSet(shortcutSet, panel);
 
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
@@ -838,7 +839,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     if (shortcuts.length > 0) {
       text += " (" + KeymapUtil.getShortcutText(shortcuts[0]) + ")";
-      new AnAction() {
+      new DumbAwareAction() {
         @Override
         public void actionPerformed(final AnActionEvent e) {
           chkFilter.doClick();

@@ -31,14 +31,9 @@ public class PyCCLanguageManager implements CCLanguageManager {
   }
 
   @Override
-  public boolean packFile(File pathname) {
+  public boolean doNotPackFile(File pathname) {
     String name = pathname.getName();
-    return !name.contains("__pycache__") && !name.contains(".pyc");
-  }
-
-  @Override
-  public String[] getAdditionalFilesToPack() {
-    return new String[]{"test_helper.py"};
+    return name.contains("__pycache__") || name.contains(".pyc");
   }
 
   private static FileTemplate getInternalTemplateByName(@NotNull final Project project, String name) {

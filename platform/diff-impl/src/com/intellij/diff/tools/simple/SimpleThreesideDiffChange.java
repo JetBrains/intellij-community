@@ -92,14 +92,14 @@ public class SimpleThreesideDiffChange {
       if (end < document.getTextLength()) end++;
     }
 
-    myHighlighters.add(DiffDrawUtil.createHighlighter(editor, start, end, type));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type));
 
     if (startLine == endLine) {
-      if (startLine != 0) myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
+      if (startLine != 0) myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
     }
     else {
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
-      myHighlighters.add(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
+      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
     }
   }
 

@@ -28,12 +28,12 @@ public class ToggleMatchCase extends EditorHeaderToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return getEditorSearchComponent().getFindModel().isCaseSensitive();
+    return myEditorSearchComponent.getFindModel().isCaseSensitive();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setCaseSensitive(state);
+    myEditorSearchComponent.getFindModel().setCaseSensitive(state);
     FindSettings.getInstance().setLocalCaseSensitive(state);
   }
 }

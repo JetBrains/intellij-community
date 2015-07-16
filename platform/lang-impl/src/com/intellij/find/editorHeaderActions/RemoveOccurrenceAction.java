@@ -31,18 +31,18 @@ public class RemoveOccurrenceAction extends EditorHeaderAction implements DumbAw
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE));
     getTemplatePresentation().setIcon(AllIcons.Actions.RemoveMulticaret);
 
-    registerShortcutsForComponent(Arrays.asList(getShortcutSet().getShortcuts()), editorSearchComponent.getSearchField());
+    registerShortcutsForComponent(Arrays.asList(getShortcutSet().getShortcuts()), editorSearchComponent.getSearchTextComponent());
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    getEditorSearchComponent().removeOccurrence();
+    myEditorSearchComponent.removeOccurrence();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean isFind = !getEditorSearchComponent().getFindModel().isReplaceState();
-    boolean hasMatches = getEditorSearchComponent().hasMatches();
+    boolean isFind = !myEditorSearchComponent.getFindModel().isReplaceState();
+    boolean hasMatches = myEditorSearchComponent.hasMatches();
     e.getPresentation().setVisible(isFind);
     e.getPresentation().setEnabled(isFind && hasMatches);
   }

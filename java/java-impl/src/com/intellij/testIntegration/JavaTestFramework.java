@@ -31,11 +31,20 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 public abstract class JavaTestFramework implements TestFramework {
   public boolean isLibraryAttached(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     PsiClass c = JavaPsiFacade.getInstance(module.getProject()).findClass(getMarkerClassFQName(), scope);
     return c != null;
+  }
+
+  @NotNull
+  public List<String> getLibraryPaths() {
+    //todo[nik] pull up to the interface and removed 'getLibraryPath()' method
+    return Collections.singletonList(getLibraryPath());
   }
 
   protected abstract String getMarkerClassFQName();
@@ -122,7 +131,8 @@ public abstract class JavaTestFramework implements TestFramework {
   }
   
   public void setupLibrary(Module module) {
-    OrderEntryFix.addJarToRoots(getLibraryPath(), module, null);
+    List<String> paths = getLibraryPaths();
+    OrderEntryFix.addJarsToRoots(paths, paths.size() == 1 ? null : getName(), module, null);
   }
 
   public boolean isSingleConfig() {

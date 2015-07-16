@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.Getter;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -140,7 +139,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
   private void setTextToFind(String text) {
     EditorSearchComponent editorSearchComponent = getEditorSearchComponent();
     assertNotNull(editorSearchComponent);
-    JTextComponent searchField = editorSearchComponent.getSearchField();
+    JTextComponent searchField = editorSearchComponent.getSearchTextComponent();
     assertNotNull(searchField);
     for (int i = 0; i <= text.length(); i++) {
       searchField.setText(text.substring(0, i)); // emulate typing chars one by one
@@ -149,22 +148,12 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
 
   private void nextOccurrence() {
     final EditorSearchComponent editorSearchComponent = getEditorSearchComponent();
-    executeAction(new NextOccurrenceAction(editorSearchComponent, new Getter<JTextComponent>() {
-      @Override
-      public JTextComponent get() {
-        return editorSearchComponent.getSearchField();
-      }
-    }));
+    executeAction(new NextOccurrenceAction(editorSearchComponent, editorSearchComponent.getSearchTextComponent()));
   }
 
   private void prevOccurrence() {
     final EditorSearchComponent editorSearchComponent = getEditorSearchComponent();
-    executeAction(new PrevOccurrenceAction(editorSearchComponent, new Getter<JTextComponent>() {
-      @Override
-      public JTextComponent get() {
-        return editorSearchComponent.getSearchField();
-      }
-    }));
+    executeAction(new PrevOccurrenceAction(editorSearchComponent, editorSearchComponent.getSearchTextComponent()));
   }
 
   private void addOccurrence() {
@@ -201,7 +190,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
 
   private void closeFind() {
     EditorSearchComponent editorSearchComponent = getEditorSearchComponent();
-    executeAction(new CloseOnESCAction(editorSearchComponent, editorSearchComponent.getSearchField()));
+    executeAction(new CloseOnESCAction(editorSearchComponent, editorSearchComponent.getSearchTextComponent()));
   }
 
   private static void executeAction(EditorHeaderAction action) {

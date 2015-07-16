@@ -241,6 +241,13 @@ class Intf {
     assert getPopupElements(new GotoClassModel2(project), 'goo.baz.Bar') == [bar2]
   }
 
+  public void "test try lowercase pattern if nothing matches"() {
+    def match = myFixture.addClass("class IPRoi { }")
+    def nonMatch = myFixture.addClass("class InspectionProfileImpl { }")
+    assert getPopupElements(new GotoClassModel2(project), 'IPRoi') == [match]
+    assert getPopupElements(new GotoClassModel2(project), 'IproImpl') == [nonMatch]
+  }
+
   private static filterJavaItems(List<Object> items) {
     return ApplicationManager.application.runReadAction ({
       return items.findAll { it instanceof PsiElement && it.language == JavaLanguage.INSTANCE }

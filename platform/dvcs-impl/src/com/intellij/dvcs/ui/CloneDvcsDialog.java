@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -268,7 +269,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @NotNull
   private String getCurrentUrlText() {
-    return myRepositoryURL.getText().trim();
+    return FileUtil.expandUserHome(myRepositoryURL.getText().trim());
   }
 
   private void createUIComponents() {

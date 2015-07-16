@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PythonMockSdk;
 import com.jetbrains.python.PythonModuleTypeBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Project descriptor (extracted from {@link com.jetbrains.python.fixtures.PyTestCase}) and should be used with it.
@@ -40,6 +41,7 @@ public class PyLightProjectDescriptor implements LightProjectDescriptor {
     myPythonVersion = pythonVersion;
   }
 
+  @NotNull
   @Override
   public ModuleType getModuleType() {
     return PythonModuleTypeBase.getInstance();
@@ -51,7 +53,7 @@ public class PyLightProjectDescriptor implements LightProjectDescriptor {
   }
 
   @Override
-  public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+  public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
   }
 
   protected void createLibrary(ModifiableRootModel model, final String name, final String path) {

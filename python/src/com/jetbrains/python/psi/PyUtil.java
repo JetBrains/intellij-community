@@ -512,6 +512,15 @@ public class PyUtil {
     return f1 == f2;
   }
 
+  public static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(e1.getProject());
+    final Document document = documentManager.getDocument(e1.getContainingFile());
+    if (document == null || document != documentManager.getDocument(e2.getContainingFile())) {
+      return false;
+    }
+    return document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
+  }
+
   public static boolean isTopLevel(@NotNull PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
       final StubElement stub = ((StubBasedPsiElement)element).getStub();

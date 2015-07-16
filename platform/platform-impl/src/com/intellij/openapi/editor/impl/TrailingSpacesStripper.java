@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   public static final Key<String> OVERRIDE_STRIP_TRAILING_SPACES_KEY = Key.create("OVERRIDE_TRIM_TRAILING_SPACES_KEY");
   public static final Key<Boolean> OVERRIDE_ENSURE_NEWLINE_KEY = Key.create("OVERRIDE_ENSURE_NEWLINE_KEY");
 
-  public static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
+  private static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
 
   private final Set<Document> myDocumentsToStripLater = new THashSet<Document>();
 
@@ -165,8 +165,6 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     // when virtual space enabled, we can strip whitespace anywhere
     boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
 
-    boolean markAsNeedsStrippingLater;
-
     final List<Caret> carets = activeEditor == null ? Collections.<Caret>emptyList() : activeEditor.getCaretModel().getAllCarets();
     final List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
     int[] caretOffsets = new int[carets.size()];
@@ -176,8 +174,9 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
       caretOffsets[i] = caret.getOffset();
     }
 
-    markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(activeEditor == null ? null : activeEditor.getProject(), 
-                                                                             inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
+    boolean markAsNeedsStrippingLater =
+      ((DocumentImpl)document).stripTrailingSpaces(activeEditor == null ? null : activeEditor.getProject(),
+                                                   inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
 
     if (activeEditor != null && !ShutDownTracker.isShutdownHookRunning()) {
       activeEditor.getCaretModel().runBatchCaretOperation(new Runnable() {
@@ -203,5 +202,13 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   @Override
   public void unsavedDocumentsDropped() {
     myDocumentsToStripLater.clear();
+  }
+
+  public static void setEnabled(@NotNull VirtualFile file, boolean enabled) {
+    DISABLE_FOR_FILE_KEY.set(file, enabled ? null : Boolean.TRUE);
+  }
+
+  public static boolean isEnabled(@NotNull VirtualFile file) {
+    return !Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(file));
   }
 }

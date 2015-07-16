@@ -322,11 +322,13 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-1445
   public void testConvertSingleQuotedDocstring() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doInspectionTest(PySingleQuotedDocstringInspection.class, PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
   }
 
   // PY-8926
   public void testConvertSingleQuotedDocstringEscape() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     doInspectionTest(PySingleQuotedDocstringInspection.class, PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
   }
 
@@ -425,6 +427,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3394
   public void testDocstringParams() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {
@@ -437,6 +440,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testDocstringParams1() {
+    getCommonCodeStyleSettings().getIndentOptions().INDENT_SIZE = 2;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     try {

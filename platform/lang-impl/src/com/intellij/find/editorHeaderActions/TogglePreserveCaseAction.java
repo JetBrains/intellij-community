@@ -19,7 +19,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class TogglePreserveCaseAction extends EditorHeaderToggleAction  implements SecondaryHeaderAction {
+public class TogglePreserveCaseAction extends EditorHeaderToggleAction {
   private static final String TEXT = "Pr&eserve Case";
 
   public TogglePreserveCaseAction(EditorSearchComponent editorSearchComponent) {
@@ -28,19 +28,18 @@ public class TogglePreserveCaseAction extends EditorHeaderToggleAction  implemen
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return getEditorSearchComponent().getFindModel().isPreserveCase();
+    return myEditorSearchComponent.getFindModel().isPreserveCase();
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    FindModel findModel = getEditorSearchComponent().getFindModel();
-    e.getPresentation().setVisible(findModel.isReplaceState() && !findModel.isMultiline());
+    FindModel findModel = myEditorSearchComponent.getFindModel();
     e.getPresentation().setEnabled(!findModel.isRegularExpressions());
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setPreserveCase(state);
+    myEditorSearchComponent.getFindModel().setPreserveCase(state);
   }
 }

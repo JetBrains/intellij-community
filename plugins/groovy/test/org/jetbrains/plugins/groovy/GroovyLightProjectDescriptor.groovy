@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 
 import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
 import static org.jetbrains.plugins.groovy.util.TestUtils.*
@@ -43,7 +44,7 @@ class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
   }
 
   @Override
-  public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+  public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
     final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
     final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("${myLibPath}!/");
     assert groovyJar != null;

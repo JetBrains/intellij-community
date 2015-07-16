@@ -46,7 +46,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +53,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -62,7 +64,7 @@ import java.util.*;
 public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private static final String JUNIT4_LIBRARY_NAME = "JUnit4";
 
-  OrderEntryFix() {
+  protected OrderEntryFix() {
   }
 
   @Override
@@ -96,49 +98,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return null;
-
-    if ("TestCase".equals(referenceName) || isAnnotation(psiElement) && isJunitAnnotationName(referenceName, psiElement)) {
-      final boolean isJunit4 = !referenceName.equals("TestCase");
-      @NonNls final String className = isJunit4 ? "org.junit." + referenceName : "junit.framework.TestCase";
-      PsiClass found =
-        JavaPsiFacade.getInstance(project).findClass(className, currentModule.getModuleWithDependenciesAndLibrariesScope(true));
-      if (found != null) return null; //no need to add junit to classpath
-      final OrderEntryFix fix = new OrderEntryFix() {
-        @Override
-        @NotNull
-        public String getText() {
-          return QuickFixBundle.message("orderEntry.fix.add.junit.jar.to.classpath");
-        }
-
-        @Override
-        @NotNull
-        public String getFamilyName() {
-          return getText();
-        }
-
-        @Override
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-          return !project.isDisposed() && !currentModule.isDisposed();
-        }
-
-        @Override
-        public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
-          List<String> jarPaths;
-          String libraryName;
-          if (isJunit4) {
-            jarPaths = getJUnit4JarPaths();
-            libraryName = JUNIT4_LIBRARY_NAME;
-          }
-          else {
-            jarPaths = Collections.singletonList(JavaSdkUtil.getJunit3JarPath());
-            libraryName = null;
-          }
-          addJarsToRootsAndImportClass(jarPaths, libraryName, currentModule, editor, reference, className);
-        }
-      };
-      registrar.register(fix);
-      return Collections.singletonList((LocalQuickFix)fix);
-    }
 
     if (isAnnotation(psiElement) && AnnotationUtil.isJetbrainsAnnotation(referenceName)) {
       @NonNls final String className = "org.jetbrains.annotations." + referenceName;
@@ -261,21 +220,12 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return result;
   }
 
+  /**
+   * @deprecated
+   */
   public static void addJUnit4Library(boolean inTests, Module currentModule) throws ClassNotFoundException {
-    final List<String> junit4Paths = getJUnit4JarPaths();
+    final List<String> junit4Paths = JavaSdkUtil.getJUnit4JarPaths();
     addJarsToRoots(junit4Paths, JUNIT4_LIBRARY_NAME, currentModule, null);
-  }
-
-  @NotNull
-  private static List<String> getJUnit4JarPaths() {
-    try {
-      return Arrays.asList(JavaSdkUtil.getJunit4JarPath(),
-                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matcher")),
-                           PathUtil.getJarPathForClass(Class.forName("org.hamcrest.Matchers")));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
@@ -292,26 +242,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   private static boolean isAnnotation(final PsiElement psiElement) {
     return PsiTreeUtil.getParentOfType(psiElement, PsiAnnotation.class) != null && PsiUtil.isLanguageLevel5OrHigher(psiElement);
-  }
-
-  private static boolean isJunitAnnotationName(@NonNls final String referenceName, @NotNull final PsiElement psiElement) {
-    if ("Test".equals(referenceName) || "Ignore".equals(referenceName) || "RunWith".equals(referenceName) ||
-        "Before".equals(referenceName) || "BeforeClass".equals(referenceName) ||
-        "After".equals(referenceName) || "AfterClass".equals(referenceName)) {
-      return true;
-    }
-    final PsiElement parent = psiElement.getParent();
-    if (parent != null && !(parent instanceof PsiAnnotation)) {
-      final PsiReference reference = parent.getReference();
-      if (reference != null) {
-        final String referenceText = parent.getText();
-        if (isJunitAnnotationName(reference.getRangeInElement().substring(referenceText), parent)) {
-          final int lastDot = referenceText.lastIndexOf('.');
-          return lastDot > -1 && referenceText.substring(0, lastDot).equals("org.junit");
-        }
-      }
-    }
-    return false;
   }
 
   /**

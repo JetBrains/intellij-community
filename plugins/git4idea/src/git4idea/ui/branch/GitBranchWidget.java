@@ -18,7 +18,6 @@ package git4idea.ui.branch;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
 import git4idea.GitUtil;
@@ -47,9 +46,8 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
   @Nullable
   @Override
-  protected GitRepository guessRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
-    VirtualFile root = GitBranchUtil.getVcsRootOrGuess(project, selectedFile);
-    return GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+  protected GitRepository guessCurrentRepository(@NotNull Project project) {
+    return GitBranchUtil.getCurrentRepository(project);
   }
 
   @NotNull
@@ -81,7 +79,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  protected void widgetUpdated(@NotNull GitRepository repository) {
-    mySettings.setRecentRoot(repository.getRoot().getPath());
+  protected void rememberRecentRoot(@NotNull String path) {
+    mySettings.setRecentRoot(path);
   }
 }

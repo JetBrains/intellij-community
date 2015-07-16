@@ -18,6 +18,7 @@ package com.intellij.util.ui.tree;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,6 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -87,61 +87,30 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     mySkinny = skinny;
   }
 
-  private final MouseListener mySelectionListener = new MouseAdapter() {
-    boolean handled = false;
-    @Override
-    public void mousePressed(@NotNull final MouseEvent e) {
-      handled = false;
-      if (!isSelected(e)) {
-        handled = true;
-        handle(e);
-      }
-    }
-
-    @Override
-    public void mouseReleased(@NotNull final MouseEvent e) {
-      if (!handled) {
-        handle(e);
-      }
-    }
-
-    private boolean isSelected(MouseEvent e) {
-      final JTree tree = (JTree)e.getSource();
-      final int selected = tree.getClosestRowForLocation(e.getX(), e.getY());
-      final int[] rows = tree.getSelectionRows();
-      if (rows != null) {
-        for (int row : rows) {
-          if (row == selected) {
-            return true;
+  @Override
+  protected MouseListener createMouseListener() {
+    return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
+      @Override
+      protected MouseEvent convert(MouseEvent event) {
+        if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
+          int x = event.getX();
+          int y = event.getY();
+          JTree tree = (JTree)event.getSource();
+          if (tree.isEnabled()) {
+            TreePath path = getClosestPathForLocation(tree, x, y);
+            if (path != null && !isLocationInExpandControl(path, x, y)) {
+              Rectangle bounds = getPathBounds(tree, path);
+              if (bounds != null && bounds.y <= y && y <= (bounds.y + bounds.height)) {
+                x = Math.max(bounds.x, Math.min(x, bounds.x + bounds.width - 1));
+                event = convert(event, tree, x, y);
+              }
+            }
           }
         }
+        return event;
       }
-
-      return false;
-    }
-
-    private void handle(MouseEvent e) {
-      if (!e.isPopupTrigger() && e.getClickCount() == 1 && SwingUtilities.isLeftMouseButton(e)) {
-        final JTree tree = (JTree)e.getSource();
-        final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
-        if (pressedPath != null) {
-          Rectangle bounds = getPathBounds(tree, pressedPath);
-
-          if (e.getY() >= bounds.y + bounds.height) {
-            return;
-          }
-
-          if (bounds.contains(e.getPoint()) || isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
-            return;
-          }
-
-          if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
-            selectPathForEvent(pressedPath, e);
-          }
-        }
-      }
-    }
-  };
+    };
+  }
 
   @Override
   protected void completeUIInstall() {
@@ -151,7 +120,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     UIManager.put("Tree.repaintWholeRow", true);
 
     tree.setShowsRootHandles(true);
-    tree.addMouseListener(mySelectionListener);
   }
 
   @Override
@@ -159,7 +127,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     super.uninstallUI(c);
 
     UIManager.put("Tree.repaintWholeRow", myOldRepaintAllRowValue);
-    c.removeMouseListener(mySelectionListener);
   }
 
   @Override

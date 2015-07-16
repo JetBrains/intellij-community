@@ -17,8 +17,11 @@ import com.intellij.openapi.editor.Editor;
 * To change this template use File | Settings | File Templates.
 */
 public class SwitchToReplace extends EditorHeaderAction {
-  public SwitchToReplace(EditorSearchComponent editorSearchComponent) {
+  private final Editor myEditor;
+
+  public SwitchToReplace(EditorSearchComponent editorSearchComponent, Editor editor) {
     super(editorSearchComponent);
+    myEditor = editor;
     AnAction replaceAction = ActionManager.getInstance().getAction("Replace");
     if (replaceAction != null) {
       registerCustomShortcutSet(replaceAction.getShortcutSet(), editorSearchComponent);
@@ -27,15 +30,13 @@ public class SwitchToReplace extends EditorHeaderAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Editor editor = getEditorSearchComponent().getEditor();
-    e.getPresentation().setEnabled(!ConsoleViewUtil.isConsoleViewEditor(editor));
+    e.getPresentation().setEnabled(!ConsoleViewUtil.isConsoleViewEditor(myEditor));
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    EditorSearchComponent component = getEditorSearchComponent();
-    final FindModel findModel = component.getFindModel();
+    final FindModel findModel = myEditorSearchComponent.getFindModel();
     FindUtil.configureFindModel(true, null, findModel, false);
-    component.selectAllText();
+    myEditorSearchComponent.getSearchTextComponent().selectAll();
   }
 }
