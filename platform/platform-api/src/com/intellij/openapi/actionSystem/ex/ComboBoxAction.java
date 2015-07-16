@@ -36,6 +36,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,15 +195,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       addMouseMotionListener(new MouseMotionListener() {
         @Override
         public void mouseDragged(MouseEvent e) {
-          mouseMoved(new MouseEvent(e.getComponent(),
-                                    MouseEvent.MOUSE_MOVED,
-                                    e.getWhen(),
-                                    e.getModifiers(),
-                                    e.getX(),
-                                    e.getY(),
-                                    e.getClickCount(),
-                                    e.isPopupTrigger(),
-                                    e.getButton()));
+          mouseMoved(MouseEventAdapter.convert(e, e.getComponent(),
+                                               MouseEvent.MOUSE_MOVED,
+                                               e.getWhen(),
+                                               e.getModifiers(),
+                                               e.getX(),
+                                               e.getY()));
         }
 
         @Override

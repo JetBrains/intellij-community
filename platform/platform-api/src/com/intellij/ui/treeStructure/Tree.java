@@ -412,8 +412,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
               (e.getX() >= bounds.x + bounds.width ||
                e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
             int newX = bounds.x + bounds.width - 2;
-            e2 = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), newX, e.getY(), e.getClickCount(),
-                                e.isPopupTrigger(), e.getButton());
+            e2 = MouseEventAdapter.convert(e, e.getComponent(), newX, e.getY());
           }
         }
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import javax.swing.event.MenuDragMouseEvent;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -101,12 +102,12 @@ public class MouseEventAdapter<T> implements MouseListener, MouseMotionListener,
   }
 
   public static MouseEvent convert(MouseEvent event, Component source, int id, long when, int modifiers, int x, int y) {
-    return event instanceof MouseWheelEvent
-           ? convert((MouseWheelEvent)event, source, id, when, modifiers, x, y)
-           : new MouseEvent(source, id, when, modifiers, x, y,
-                            event.getClickCount(),
-                            event.isPopupTrigger(),
-                            event.getButton());
+    if (event instanceof MouseWheelEvent) return convert((MouseWheelEvent)event, source, id, when, modifiers, x, y);
+    if (event instanceof MenuDragMouseEvent) return convert((MenuDragMouseEvent)event, source, id, when, modifiers, x, y);
+    return new MouseEvent(source, id, when, modifiers, x, y,
+                          event.getClickCount(),
+                          event.isPopupTrigger(),
+                          event.getButton());
   }
 
   public static MouseWheelEvent convert(MouseWheelEvent event, Component source, int id, long when, int modifiers, int x, int y) {
@@ -116,5 +117,13 @@ public class MouseEventAdapter<T> implements MouseListener, MouseMotionListener,
                                event.getScrollType(),
                                event.getScrollAmount(),
                                event.getWheelRotation());
+  }
+
+  public static MenuDragMouseEvent convert(MenuDragMouseEvent event, Component source, int id, long when, int modifiers, int x, int y) {
+    return new MenuDragMouseEvent(source, id, when, modifiers, x, y,
+                                  event.getClickCount(),
+                                  event.isPopupTrigger(),
+                                  event.getPath(),
+                                  event.getMenuSelectionManager());
   }
 }

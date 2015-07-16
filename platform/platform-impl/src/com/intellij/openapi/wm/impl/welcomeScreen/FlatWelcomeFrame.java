@@ -52,6 +52,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -625,8 +626,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        final MouseEvent newEvent = new MouseEvent(link, e.getID(), e.getWhen(), e.getModifiers(), e.getX(), e.getY(), e.getClickCount(),
-                                                   e.isPopupTrigger(), e.getButton());
+        final MouseEvent newEvent = MouseEventAdapter.convert(e, link, e.getX(), e.getY());
         link.doClick(newEvent);
         return true;
       }
