@@ -16,6 +16,7 @@
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -143,6 +144,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     assertNotNull(searchField);
     for (int i = 0; i <= text.length(); i++) {
       searchField.setText(text.substring(0, i)); // emulate typing chars one by one
+      IdeEventQueue.getInstance().flushQueue();
     }
   }
 
