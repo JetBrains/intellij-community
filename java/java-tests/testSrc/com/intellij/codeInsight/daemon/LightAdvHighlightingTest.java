@@ -308,7 +308,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
-  private static class MyAnnotator implements Annotator {
+  // must stay public for picocontainer to work
+  public static class MyAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
       psiElement.accept(new XmlElementVisitor() {
@@ -400,7 +401,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertTrue(!infos.isEmpty());
   }
 
-  private static class MyTopFileAnnotator implements Annotator {
+  // must stay public for picocontainer to work
+  public static class MyTopFileAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
       if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
