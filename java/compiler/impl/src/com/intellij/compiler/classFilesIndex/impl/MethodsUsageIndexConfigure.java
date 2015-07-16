@@ -18,6 +18,7 @@ package com.intellij.compiler.classFilesIndex.impl;
 import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexConfigure;
 import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexReaderBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFileIndexerFactory;
 import org.jetbrains.jps.classFilesIndex.indexer.impl.EnumeratedMethodIncompleteSignature;
@@ -38,7 +39,7 @@ public class MethodsUsageIndexConfigure extends ClassFilesIndexConfigure<Integer
 
   @Override
   public int getIndexVersion() {
-    return 1;
+    return 1 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 0xFF : 0);
   }
 
   @Override
