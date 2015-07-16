@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface PyExecuteFileExtensionPoint {
 
-  ExtensionPointName<PyExecuteFileExtensionPoint> EP_NAME = ExtensionPointName.create("PythonidEdu.executeFile");
+  ExtensionPointName<PyExecuteFileExtensionPoint> EP_NAME = ExtensionPointName.create("Edu.executeFile");
 
   @NotNull
   AnAction getRunAction();
