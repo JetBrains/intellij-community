@@ -335,7 +335,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @Nullable
-  protected abstract PathMacroManager getPathMacroManagerForDefaults();
+  protected PathMacroManager getPathMacroManagerForDefaults() {
+    return null;
+  }
 
   @Nullable
   protected <T> T getDefaultState(@NotNull Object component, @NotNull String componentName, @NotNull final Class<T> stateClass) {

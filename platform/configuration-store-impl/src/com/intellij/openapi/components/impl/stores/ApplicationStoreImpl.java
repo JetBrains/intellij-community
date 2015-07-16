@@ -108,10 +108,4 @@ public class ApplicationStoreImpl extends ComponentStoreImpl {
   public StateStorageManager getStateStorageManager() {
     return myStateStorageManager;
   }
-
-  @Nullable
-  @Override
-  protected PathMacroManager getPathMacroManagerForDefaults() {
-    return null;
-  }
 }

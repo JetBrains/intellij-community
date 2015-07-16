@@ -186,10 +186,6 @@ public class ApplicationStoreTest : LightPlatformTestCase() {
     override fun dispose() {
     }
 
-    override fun getPathMacroManagerForDefaults(): PathMacroManager? {
-      return null
-    }
-
     override fun getMessageBus(): MessageBus {
       return ApplicationManager.getApplication().getMessageBus()
     }
