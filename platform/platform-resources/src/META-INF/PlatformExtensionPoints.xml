@@ -245,6 +245,6 @@
 
     <extensionPoint name="jbProtocolCommand" interface="com.intellij.openapi.application.JBProtocolCommand"/>
 
-    <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.impl.local.PluggableFileWatcher" />
+    <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" />
   </extensionPoints>
 </idea-plugin>
