@@ -100,6 +100,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return null;
 
+    final List<LocalQuickFix> providedFixes = OrderEntryFixProvider.findFixes(new Function<OrderEntryFixProvider, List<LocalQuickFix>>() {
+      @Override
+      public List<LocalQuickFix> fun(OrderEntryFixProvider provider) {
+        return provider.registerFixes(registrar, reference);
+      }
+    });
+    if (providedFixes != null) {
+      return providedFixes;
+    }
+
     if (isAnnotation(psiElement) && AnnotationUtil.isJetbrainsAnnotation(referenceName)) {
       @NonNls final String className = "org.jetbrains.annotations." + referenceName;
       PsiClass found =
