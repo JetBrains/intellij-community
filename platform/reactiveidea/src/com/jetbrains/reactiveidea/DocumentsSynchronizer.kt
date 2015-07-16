@@ -55,14 +55,14 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
     if (contextHint.get("editor") == null) {
       return DataContext.EMPTY_CONTEXT;
     }
-    val editor = (contextHint.get("editor") as ListModel)
+
+    val path = (contextHint.get("editor") as ListModel)
         .map { (it as PrimitiveModel<*>).value }
         .drop(1)
         .reverse()
         .foldRight(Path(), { part, path -> path / part })
-        .getIn(model)!!.meta.valAt("editor") as Editor
-    val component = editor.getContentComponent()
-    return DataManager.getInstance().getDataContext(component)
+
+    return ServerDataManagerImpl.Companion.getInstance().getDataContext(path, ReactiveModel.current()!!)
   }
 
   override fun initComponent() {
@@ -96,12 +96,12 @@ public class DocumentsSynchronizer(val project: Project, val serverEditorTracker
           model
         }
 
-        startupManager.runWhenProjectIsInitialized(Runnable {
+        startupManager.runWhenProjectIsInitialized {
           val projectView = ProjectView.getInstance(project)
           val viewPane = projectView.getProjectViewPaneById(ProjectViewPane.ID) as AbstractProjectViewPSIPane
           val treeStructure = viewPane.createStructure()
           ProjectViewHost(project, projectView, serverModel, Path("project-view"), treeStructure, viewPane)
-        })
+        }
 
         TabViewHost(project, serverModel, Path("tab-view"))
       }

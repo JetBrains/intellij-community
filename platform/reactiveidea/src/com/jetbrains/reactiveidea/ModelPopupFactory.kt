@@ -15,14 +15,17 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.ActionPopupStep
+import com.intellij.ui.popup.ActionStepBuilder
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.jetbrains.reactivemodel.Path
@@ -32,7 +35,10 @@ import java.awt.Component
 import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.event.HyperlinkListener
+import javax.swing.event.ListSelectionEvent
+import javax.swing.event.ListSelectionListener
 
 public class ModelPopupFactory : JBPopupFactory() {
 
@@ -69,23 +75,78 @@ public class ModelPopupFactory : JBPopupFactory() {
   }
 
   override fun createActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, selectionAidMethod: JBPopupFactory.ActionSelectionAid?, showDisabledActions: Boolean): ListPopup {
-    println("title = [${title}], actionGroup = [${actionGroup}], dataContext = [${dataContext}], selectionAidMethod = [${selectionAidMethod}], showDisabledActions = [${showDisabledActions}]")
-    throw UnsupportedOperationException()
+    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod === JBPopupFactory.ActionSelectionAid.NUMBERING || selectionAidMethod === JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, selectionAidMethod === JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, showDisabledActions, selectionAidMethod === JBPopupFactory.ActionSelectionAid.MNEMONICS, null, -1)
   }
 
   override fun createActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, selectionAidMethod: JBPopupFactory.ActionSelectionAid?, showDisabledActions: Boolean, actionPlace: String?): ListPopup {
-    println("title = [${title}], actionGroup = [${actionGroup}], dataContext = [${dataContext}], selectionAidMethod = [${selectionAidMethod}], showDisabledActions = [${showDisabledActions}], actionPlace = [${actionPlace}]")
-    throw UnsupportedOperationException()
+    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod === JBPopupFactory.ActionSelectionAid.NUMBERING || selectionAidMethod === JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, selectionAidMethod === JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, showDisabledActions, selectionAidMethod === JBPopupFactory.ActionSelectionAid.MNEMONICS, null, -1, null, actionPlace)
   }
 
   override fun createActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, selectionAidMethod: JBPopupFactory.ActionSelectionAid?, showDisabledActions: Boolean, disposeCallback: Runnable?, maxRowCount: Int): ListPopup {
-    println("title = [${title}], actionGroup = [${actionGroup}], dataContext = [${dataContext}], selectionAidMethod = [${selectionAidMethod}], showDisabledActions = [${showDisabledActions}], disposeCallback = [${disposeCallback}], maxRowCount = [${maxRowCount}]")
-    throw UnsupportedOperationException()
+    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod === JBPopupFactory.ActionSelectionAid.NUMBERING || selectionAidMethod === JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, selectionAidMethod === JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, showDisabledActions, selectionAidMethod === JBPopupFactory.ActionSelectionAid.MNEMONICS, disposeCallback, maxRowCount)
   }
 
   override fun createActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, showNumbers: Boolean, showDisabledActions: Boolean, honorActionMnemonics: Boolean, disposeCallback: Runnable?, maxRowCount: Int, preselectActionCondition: Condition<AnAction>?): ListPopup {
-    println("title = [${title}], actionGroup = [${actionGroup}], dataContext = [${dataContext}], showNumbers = [${showNumbers}], showDisabledActions = [${showDisabledActions}], honorActionMnemonics = [${honorActionMnemonics}], disposeCallback = [${disposeCallback}], maxRowCount = [${maxRowCount}], preselectActionCondition = [${preselectActionCondition}]")
-    throw UnsupportedOperationException()
+    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics, disposeCallback, maxRowCount, preselectActionCondition, null)
+  }
+
+  private fun createActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, showNumbers: Boolean, useAlphaAsNumbers: Boolean, showDisabledActions: Boolean, honorActionMnemonics: Boolean, disposeCallback: Runnable?, maxRowCount: Int): ListPopup {
+    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback, maxRowCount, null, null)
+  }
+
+  public fun createActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, showNumbers: Boolean, showDisabledActions: Boolean, honorActionMnemonics: Boolean, disposeCallback: Runnable, maxRowCount: Int): ListPopup {
+    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, showDisabledActions, honorActionMnemonics, disposeCallback, maxRowCount, null)
+  }
+
+  private fun createActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, showNumbers: Boolean, useAlphaAsNumbers: Boolean, showDisabledActions: Boolean, honorActionMnemonics: Boolean, disposeCallback: Runnable?, maxRowCount: Int, preselectActionCondition: Condition<AnAction>?, actionPlace: String?): ListPopup {
+    return ActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback, maxRowCount, preselectActionCondition, actionPlace)
+  }
+
+
+  class ActionGroupPopup(title: String?, actionGroup: ActionGroup, dataContext: DataContext, showNumbers: Boolean, useAlphaAsNumbers: Boolean, showDisabledActions: Boolean, honorActionMnemonics: Boolean, disposeCallback: Runnable?, maxRowCount: Int, preselectActionCondition: Condition<AnAction>?, actionPlace: String?) :
+      ModelListPopup(ActionGroupPopup.createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, preselectActionCondition, actionPlace), ReactiveModel.current(), Path("popup")) {
+
+    companion object {
+      private fun itemsHaveMnemonics(items: List<PopupFactoryImpl.ActionItem>): Boolean {
+        for (item in items) {
+          if (item.getAction().getTemplatePresentation().getMnemonic() != 0) return true
+        }
+
+        return false
+      }
+
+      private fun createStep(title: String?, actionGroup: ActionGroup, dataContext: DataContext, showNumbers: Boolean, useAlphaAsNumbers: Boolean, showDisabledActions: Boolean, honorActionMnemonics: Boolean, preselectActionCondition: Condition<AnAction>?, actionPlace: String?): ActionPopupStep {
+
+//        LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep")
+
+        val builder = ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics)
+        if (actionPlace != null) {
+          builder.setActionPlace(actionPlace)
+        }
+        builder.buildGroup(actionGroup)
+        val items = builder.getItems()
+
+        return ActionPopupStep(items, title, dataContext, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), preselectActionCondition, false, showDisabledActions)
+      }
+    }
+
+    init {
+      addListSelectionListener(object : ListSelectionListener {
+        override fun valueChanged(e: ListSelectionEvent) {
+          val list = e.getSource() as JList<Any>
+          val actionItem = list.getSelectedValue() as PopupFactoryImpl.ActionItem ?: return
+          val action = actionItem!!.getAction()
+          val presentation = Presentation()
+          presentation.setDescription(action.getTemplatePresentation().getDescription())
+          val actualActionPlace = actionPlace ?: ActionPlaces.UNKNOWN
+          val actionEvent = AnActionEvent(null, dataContext, actualActionPlace, presentation, ActionManager.getInstance(), 0)
+          actionEvent.setInjectedContext(action.isInInjectedContext())
+          ActionUtil.performDumbAwareUpdate(action, actionEvent, false)
+//          ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription())
+        }
+      })
+
+    }
   }
 
   override fun createWizardStep(step: PopupStep<*>): ListPopup {

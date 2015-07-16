@@ -15,42 +15,70 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.impl.DataManagerImpl
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.util.get
-import java.awt.Component
 
 /**
  * Server data manager. Perform lookup through model hierarchy
  */
 public class ServerDataManagerImpl : DataManagerImpl() {
+
+  companion object {
+    fun getInstance(): ServerDataManagerImpl {
+      return DataManager.getInstance() as ServerDataManagerImpl
+    }
+  }
+
   override fun getDataFromProvider(provider: DataProvider, dataId: String, alreadyComputedIds: MutableSet<String>?): Any? {
     var dataPath = extractPath(provider)
     if (dataPath is Path) {
-      var path: Path = dataPath
-      while (true) {
-        val model: Model = path.getIn(ReactiveModel.current()!!.root) ?: break
-        val data = model.meta[dataId]
-        if(data != null) {
-          return data
-        }
-        if(path.components.isEmpty()) {
-          break;
-        }
-        path = path.dropLast(1)
-      }
+      return getDataWithPath(dataId, dataPath, ReactiveModel.current()!!)
     }
     return super.getDataFromProvider(provider, dataId, alreadyComputedIds)
   }
 
   private fun extractPath(provider: DataProvider): Any? {
     var dataPath = provider.getData(pathKey.toString())
-    if(dataPath == null && provider is EditorComponentImpl) {
+    if (dataPath == null && provider is EditorComponentImpl) {
       dataPath = provider.getEditor().getUserData(pathKey)
     }
     return dataPath
   }
+
+  public fun getDataContext(path: Path, model: ReactiveModel): DataContext = ModelDataContext(path, model)
+}
+
+private fun getDataWithPath(dataId: String, dataPath: Path, reactiveModel: ReactiveModel): Any? {
+  var path: Path = dataPath
+  while (true) {
+    val model: Model = path.getIn(reactiveModel.root) ?: break
+    var data = model.meta[dataId]
+    if (data != null) {
+      return data
+    }
+    val host = model.meta["host"]
+    if (host is DataProvider) {
+      data = host.getData(dataId)
+      if (data != null) {
+        return data
+      }
+    }
+    if (path.components.isEmpty()) {
+      break;
+    }
+    path = path.dropLast(1)
+  }
+  return null
+}
+
+
+class ModelDataContext(val path: Path, val model: ReactiveModel) : DataContext {
+  override fun getData(dataId: String?): Any? =
+      if (dataId == null) null
+      else getDataWithPath(dataId, path, model)
 }

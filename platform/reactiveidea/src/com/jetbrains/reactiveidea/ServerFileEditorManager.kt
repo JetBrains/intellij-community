@@ -15,56 +15,38 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.*
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
-import com.intellij.ui.docking.DockManager
-import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.impl.MessageListenerList
-import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.util.get
-import org.jdom.Element
-import java.awt.BorderLayout
 import java.awt.Component
-import java.util
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
+import java.util.HashMap
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.reflect.jvm.java
 
 public class ServerFileEditorManager(val myProject: Project) : FileEditorManagerEx(), ProjectComponent {
   companion object {
@@ -72,6 +54,10 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
     private val EMPTY_PROVIDER_ARRAY = arrayOf<FileEditorProvider>()
 
     private val LOG = Logger.getInstance("#com.jetbrains.reactiveidea.ServerFileEditorManager")
+  }
+
+  init {
+    registerExtraEditorDataProvider(TextEditorPsiDataProvider(), null)
   }
 
   private volatile var myPanel: JPanel? = null

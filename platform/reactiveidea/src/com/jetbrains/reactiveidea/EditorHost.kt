@@ -20,6 +20,8 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.TemplateManagerListener
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
@@ -29,6 +31,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.impl.CaretModelImpl
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -40,10 +43,27 @@ import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.Guard
-import java.util.HashMap
 
 public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: VirtualFile,
-                        val editor: Editor, val providesMarkup: Boolean) : MetaHost(reactiveModel, path) {
+                        val editor: Editor, val providesMarkup: Boolean) : MetaHost(reactiveModel, path), DataProvider {
+
+  override fun getData(dataId: String?): Any? {
+    val data = (editor.getContentComponent() as EditorComponentImpl).getData(dataId)
+    if (data != null) {
+      return data;
+    }
+
+    val project = editor.getProject()
+    if (dataId != null && project != null) {
+      return FileEditorManager.getInstance(project).getData(dataId, editor, editor.getCaretModel().getPrimaryCaret())
+    }
+
+    if (CommonDataKeys.EDITOR.`is`(dataId)) {
+      return editor
+    }
+    return null
+  }
+
   companion object {
     val editorHostKey: Key<EditorHost> = Key.create("com.jetbrains.reactiveidea.EditorHost")
     val activePath = "active"
@@ -54,7 +74,7 @@ public class EditorHost(reactiveModel: ReactiveModel, path: Path, val file: Virt
   val caretGuard = Guard()
   val name = file.getName()
 
-  override fun buildMeta(): Map<String, Any> = super.buildMeta()
+  override fun buildMeta(): Map<String, Any> = super<MetaHost>.buildMeta()
       .plus("editor" to editor)
       .plus("file" to file)
 

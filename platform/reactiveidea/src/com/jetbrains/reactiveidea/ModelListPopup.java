@@ -16,6 +16,7 @@
 package com.jetbrains.reactiveidea;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -226,7 +227,8 @@ public class ModelListPopup extends ListPopupImpl {
 
   @Override
   public void showInBestPositionFor(@NotNull DataContext dataContext) {
-
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    showInBestPositionFor(editor);
   }
 
   @Override
