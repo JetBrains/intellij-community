@@ -218,7 +218,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected SearchScope getReferencesSearchScope(VirtualFile file) {
-    return file == null || ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)
+    return file == null
            ? ProjectScope.getProjectScope(myElementToRename.getProject())
            : new LocalSearchScope(myElementToRename.getContainingFile());
   }
