@@ -26,7 +26,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
@@ -44,10 +43,10 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     this(true);
   }
 
+  /**
+   * @deprecated call {@link #LightPlatformCodeInsightFixtureTestCase()} instead
+   */
   protected LightPlatformCodeInsightFixtureTestCase(boolean autodetect) {
-    if (autodetect) {
-      PlatformTestCase.autodetectPlatformPrefix();
-    }
   }
 
   protected CodeInsightTestFixture myFixture;

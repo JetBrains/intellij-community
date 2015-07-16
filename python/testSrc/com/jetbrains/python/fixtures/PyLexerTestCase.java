@@ -28,7 +28,6 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PyTestCase.initPlatformPrefix();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     PythonDialectsTokenSetProvider.reset();

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import org.hamcrest.Matchers;
@@ -57,8 +56,6 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected PyEnvTestCase(@NotNull final String... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
-
-    PyTestCase.initPlatformPrefix();
   }
 
   @Nullable

@@ -22,7 +22,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.console.PyConsoleUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -35,7 +34,6 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public PythonConsoleParsingTest() {
     super("psi", "py", new PythonParserDefinition());
-    PyTestCase.initPlatformPrefix();
   }
 
   @Override

@@ -53,10 +53,6 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
   TestExternalSystemManager externalSystemManager
   ExtensionPoint externalSystemManagerEP
 
-  AbstractExternalSystemTest() {
-    PlatformTestCase.autodetectPlatformPrefix()
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp()
