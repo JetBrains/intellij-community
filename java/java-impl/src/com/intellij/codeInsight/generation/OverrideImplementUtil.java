@@ -114,9 +114,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return false;
     }
     if (PsiUtil.isLanguageLevel6OrHigher(targetClass)) return true;
-    if (targetClass.isInterface()) return true;
     PsiClass superClass = superMethod.getContainingClass();
-    return !superClass.isInterface();
+    return superClass != null && !superClass.isInterface();
   }
 
   public static List<PsiMethod> overrideOrImplementMethod(PsiClass aClass,
