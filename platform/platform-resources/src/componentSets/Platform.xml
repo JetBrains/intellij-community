@@ -145,15 +145,6 @@
       <interface-class>org.jetbrains.ide.BuiltInServerManager</interface-class>
       <implementation-class>org.jetbrains.ide.BuiltInServerManagerImpl</implementation-class>
     </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.components.impl.stores.IComponentStore</interface-class>
-      <implementation-class>com.intellij.openapi.components.impl.stores.ApplicationStoreImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.components.PathMacroManager</interface-class>
-      <implementation-class>com.intellij.openapi.components.impl.ApplicationPathMacroManager</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

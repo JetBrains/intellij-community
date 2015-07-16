@@ -97,8 +97,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         classesLoaded.run();
       }
 
-      ProgressIndicator indicator = getProgressIndicator();
+      ProgressManager progressManager = ProgressManager.getInstance();
       for (Class componentInterface : myComponentsRegistry.getComponentInterfaces()) {
+        ProgressIndicator indicator = progressManager.getProgressIndicator();
         if (indicator != null) {
           indicator.checkCanceled();
         }
@@ -202,13 +203,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Nullable
-  protected static ProgressIndicator getProgressIndicator() {
-    PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
-    ComponentAdapter adapter = container.getComponentAdapterOfType(ProgressManager.class);
-    if (adapter == null) return null;
-    ProgressManager progressManager = (ProgressManager)adapter.getComponentInstance(container);
-    boolean isProgressManagerInitialized = progressManager != null;
-    return isProgressManagerInitialized ? progressManager.getProgressIndicator() : null;
+  protected ProgressIndicator getProgressIndicator() {
+    return ProgressManager.getInstance().getProgressIndicator();
   }
 
   protected float getPercentageOfComponentsLoaded() {

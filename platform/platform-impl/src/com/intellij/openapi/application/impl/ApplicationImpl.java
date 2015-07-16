@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
+import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
@@ -176,7 +177,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void initializeComponent(@NotNull Object component, boolean service) {
-    if (!(component instanceof PathMacroManager || component instanceof IComponentStore)) {
+    if (!service || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
       ComponentsPackage.getStateStore(this).initComponent(component, service);
     }
   }
@@ -475,6 +476,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       init(new Runnable() {
         @Override
         public void run() {
+          // create ServiceManagerImpl at first to force extension classes registration
+          getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
+
           StateStorageManager storageManager = ComponentsPackage.getStateStore(ApplicationImpl.this).getStateStorageManager();
           storageManager.addMacro(StoragePathMacros.APP_CONFIG, optionsPath);
           storageManager.addMacro(StoragePathMacros.ROOT_CONFIG, configPath);
@@ -501,6 +505,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myLoaded = true;
 
     createLocatorFile();
+  }
+
+  @Nullable
+  protected ProgressIndicator getProgressIndicator() {
+    // could be called before full initialization
+    ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
+    return progressManager == null ? null : progressManager.getProgressIndicator();
   }
 
   private static void createLocatorFile() {
