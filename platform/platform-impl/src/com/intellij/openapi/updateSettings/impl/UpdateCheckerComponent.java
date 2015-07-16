@@ -17,6 +17,8 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -31,6 +33,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author yole
@@ -61,8 +65,17 @@ public class UpdateCheckerComponent implements ApplicationComponent {
         public void run() {
           String title = IdeBundle.message("update.notifications.title");
           boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
-          String message = IdeBundle.message(tooOld ? "update.sni.not.available.notification" : "update.sni.disabled.notification");
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, null).notify(null);
+          String message =
+            IdeBundle.message(tooOld ? "update.sni.not.available.notification" : "update.sni.disabled.notification") +
+            "<br/>" +
+            IdeBundle.message("update.disable.secure.connection");
+          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              notification.expire();
+              mySettings.setSecureConnection(false);
+            }
+          }).notify(null);
         }
       }, ModalityState.NON_MODAL);
     }
