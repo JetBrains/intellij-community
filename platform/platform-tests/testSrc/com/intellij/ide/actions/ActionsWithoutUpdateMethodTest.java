@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
-  private final static List<String> PLATFORM_WIDE_ACTIONS = Arrays.asList(
+  private static final List<String> PLATFORM_WIDE_ACTIONS = Arrays.asList(
     "TestGestureAction",
     "Synchronize",
     "SaveAll",
@@ -69,6 +69,6 @@ public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
       System.out.println(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
     }
 
-    assert failed.size() == 0 : "The following actions have shortcuts, but don't have update() method redefined";
+    assertEmpty("The following actions have shortcuts, but don't have update() method redefined", failed);
   }
 }
