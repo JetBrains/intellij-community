@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -70,41 +71,40 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
   private final JLabel myChooseFactory = new JLabel();
   private WeakReference<ListPopup> myPopup;
 
-  private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
-    @Override
-    public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-      checkContext();
-    }
-    @Override
-    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-      checkContext();
-    }
-    @Override
-    public void childMoved(@NotNull PsiTreeChangeEvent event) {
-      checkContext();
-    }
-    private void checkContext() {
-      PsiElement contextElement = getContext();
-      if (contextElement == null || !contextElement.isValid()) {
-        DebuggerManagerEx manager = DebuggerManagerEx.getInstanceEx(myProject);
-        if (manager == null) {
-          LOG.error("Cannot obtain debugger manager for project " + myProject);
-          return;
-        }
-
-        PsiElement newContextElement = PositionUtil.getContextElement(manager.getContextManager().getContext());
-        setContext(newContextElement != null && newContextElement.isValid() ? newContextElement : null);
-      }
-    }
-  };
   private CodeFragmentFactory myFactory;
   protected boolean myInitialFactory;
 
-  public DebuggerEditorImpl(@NotNull Project project, PsiElement context, String recentsId, @NotNull CodeFragmentFactory factory) {
+  public DebuggerEditorImpl(@NotNull Project project, @NotNull CodeFragmentFactory factory, @NotNull Disposable parentDisposable, @Nullable PsiElement context, @Nullable String recentsId) {
     myProject = project;
     myContext = context;
     myRecentsId = recentsId;
-    PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+      @Override
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
+        checkContext();
+      }
+      @Override
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
+        checkContext();
+      }
+      @Override
+      public void childMoved(@NotNull PsiTreeChangeEvent event) {
+        checkContext();
+      }
+      private void checkContext() {
+        PsiElement contextElement = getContext();
+        if (contextElement == null || !contextElement.isValid()) {
+          DebuggerManagerEx manager = DebuggerManagerEx.getInstanceEx(myProject);
+          if (manager == null) {
+            LOG.error("Cannot obtain debugger manager for project " + myProject);
+            return;
+          }
+
+          PsiElement newContextElement = PositionUtil.getContextElement(manager.getContextManager().getContext());
+          setContext(newContextElement != null && newContextElement.isValid() ? newContextElement : null);
+        }
+      }
+    }, parentDisposable);
     setFactory(factory);
     myInitialFactory = true;
 
@@ -285,12 +285,6 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     if(myCurrentDocument != null) {
       myCurrentDocument.removeDocumentListener(listener);
     }
-  }
-
-  @Override
-  public void dispose() {
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
-    myCurrentDocument = null;
   }
 
   @NotNull

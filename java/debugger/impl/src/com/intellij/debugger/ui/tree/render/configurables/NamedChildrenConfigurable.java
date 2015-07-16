@@ -18,12 +18,14 @@ package com.intellij.debugger.ui.tree.render.configurables;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.CompletionEditor;
+import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,6 +33,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -41,7 +44,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public class NamedChildrenConfigurable implements UnnamedConfigurable{
+public class NamedChildrenConfigurable implements UnnamedConfigurable, Disposable {
   private Table myTable;
   private final EnumerationChildrenRenderer myRenderer;
   private JPanel myPanel;
@@ -52,7 +55,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
   private JButton myButtonDown;
   private CompletionEditor myCompletionEditor;
 
-  public NamedChildrenConfigurable(Project project, EnumerationChildrenRenderer renderer) {
+  public NamedChildrenConfigurable(@NotNull Project project, EnumerationChildrenRenderer renderer) {
     myRenderer = renderer;
 
     myTableLabel.setLabelFor(myTable);
@@ -62,7 +65,7 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     getModel().addColumn(expressionColumnName, (Object[])null);
 
     PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), project, GlobalSearchScope.allScope(project));
-    myCompletionEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "NamedChildrenConfigurable");
+    myCompletionEditor = new DebuggerExpressionComboBox(project, this, psiClass, "NamedChildrenConfigurable");
 
     myTable.setDragEnabled(false);
     myTable.setIntercellSpacing(JBUI.emptySize());
@@ -155,12 +158,12 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
   }
 
   public void disposeUIResources() {
-    if (myCompletionEditor != null) {
-      myCompletionEditor.dispose();
-      myCompletionEditor = null;
-    }
+    Disposer.dispose(this);
   }
 
+  @Override
+  public void dispose() {
+  }
 
   /*
   private class TextWithImportsTableRenderer implements TableCellRenderer{
@@ -184,5 +187,4 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     }
   }
   */
-
 }
