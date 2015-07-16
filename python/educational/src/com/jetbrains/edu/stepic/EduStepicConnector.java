@@ -212,11 +212,11 @@ public class EduStepicConnector {
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
-    final SectionWrapper sectionWrapper = getFromStepic("sections/" + String.valueOf(sectionId), SectionWrapper.class);
-    List<Integer> unitIds = sectionWrapper.sections.get(0).units;
+    final SectionContainer sectionContainer = getFromStepic("sections/" + String.valueOf(sectionId), SectionContainer.class);
+    List<Integer> unitIds = sectionContainer.sections.get(0).units;
     final List<Lesson> lessons = new ArrayList<Lesson>();
     for (Integer unitId : unitIds) {
-      UnitWrapper unit = getFromStepic("units/" + String.valueOf(unitId), UnitWrapper.class);
+      UnitContainer unit = getFromStepic("units/" + String.valueOf(unitId), UnitContainer.class);
       int lessonID = unit.units.get(0).lesson;
       LessonContainer lesson = getFromStepic("lessons/" + String.valueOf(lessonID), LessonContainer.class);
       Lesson realLesson = lesson.lessons.get(0);
@@ -260,8 +260,93 @@ public class EduStepicConnector {
     dialog.show();
   }
 
+  public static void postCourse(Project project, @NotNull final Course course) {
+    final HttpPost request = new HttpPost(stepicApiUrl + "courses");
+    if (ourClient == null) {
+      showLoginDialog();
+    }
 
-  public static void postLesson(Project project, @NotNull final Lesson lesson) {
+    setHeaders(request, "application/json");
+    String requestBody = new Gson().toJson(new CourseWrapper(course));
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 201) {
+        LOG.error("Failed to push " + responseString);
+        return;
+      }
+      final CourseInfo postedCourse = new Gson().fromJson(responseString, CoursesContainer.class).courses.get(0);
+
+      final int sectionId = postModule(postedCourse);
+      int position = 1;
+      for (Lesson lesson : course.getLessons()) {
+        final int lessonId = postLesson(project, lesson);
+        postUnit(lessonId, position, sectionId);
+        position += 1;
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
+  private static void postUnit(int lessonId, int position, int sectionId) {
+    final HttpPost request = new HttpPost(stepicApiUrl + "units");
+    setHeaders(request, "application/json");
+    final UnitWrapper unitWrapper = new UnitWrapper();
+    unitWrapper.unit = new Unit();
+    unitWrapper.unit.lesson = lessonId;
+    unitWrapper.unit.position = position;
+    unitWrapper.unit.section = sectionId;
+
+    String requestBody = new Gson().toJson(unitWrapper);
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 201) {
+        LOG.error("Failed to push " + responseString);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+  }
+
+  private static int postModule(CourseInfo courseInfo) {
+    final HttpPost request = new HttpPost(stepicApiUrl + "sections");
+    setHeaders(request, "application/json");
+    final Section section = new Section();
+    section.course = courseInfo.id;
+    section.title = String.valueOf(courseInfo.getName());
+    section.position = 1;
+    final SectionWrapper sectionContainer = new SectionWrapper();
+    sectionContainer.section = section;
+    String requestBody = new Gson().toJson(sectionContainer);
+    request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+    try {
+      final CloseableHttpResponse response = ourClient.execute(request);
+      final String responseString = EntityUtils.toString(response.getEntity());
+      final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() != 201) {
+        LOG.error("Failed to push " + responseString);
+      }
+      final Section postedSection = new Gson().fromJson(responseString, SectionContainer.class).sections.get(0);
+      return postedSection.id;
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    return -1;
+  }
+
+  public static int postLesson(Project project, @NotNull final Lesson lesson) {
     final HttpPost request = new HttpPost(stepicApiUrl + "lessons");
     if (ourClient == null) {
       showLoginDialog();
@@ -277,16 +362,18 @@ public class EduStepicConnector {
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != 201) {
         LOG.error("Failed to push " + responseString);
-        return;
+        return 0;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
       for (Task task : lesson.getTaskList()) {
         postTask(project, task, postedLesson.id);
       }
+      return postedLesson.id;
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
     }
+    return -1;
   }
 
   public static void postTask(Project project, @NotNull final Task task, int id) {
@@ -381,6 +468,16 @@ public class EduStepicConnector {
     }
   }
 
+  static class CourseWrapper {
+    CourseInfo course;
+
+    public CourseWrapper(Course course) {
+      this.course = new CourseInfo();
+      this.course.setName(course.getName());
+      this.course.setDescription(course.getDescription());
+    }
+  }
+
   static class LessonWrapper {
     Lesson lesson;
 
@@ -416,27 +513,39 @@ public class EduStepicConnector {
     }
   }
 
-  static class SectionWrapper {
-    static class Section {
-      List<Integer> units;
-    }
+  static class Section {
+    List<Integer> units;
+    int course;
+    String title;
+    int position;
+    int id;
+  }
 
+  static class SectionWrapper {
+    Section section;
+  }
+
+  static class SectionContainer {
     List<Section> sections;
     List<Lesson> lessons;
 
-    static class Unit {
-      int id;
-      int lesson;
-    }
+    List<Unit> units;
+  }
+
+  static class Unit {
+    int id;
+    int section;
+    int lesson;
+    int position;
+  }
+
+  static class UnitContainer {
 
     List<Unit> units;
   }
 
-  static class UnitWrapper {
-    static class Unit {
-      int lesson;
-    }
-
-    List<Unit> units;
+  static class UnitWrapper{
+    Unit unit;
   }
+
 }

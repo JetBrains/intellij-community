@@ -22,6 +22,7 @@ public class CourseInfo {
   private String myType = "pycharm Python";
   @SerializedName("instructors")
   List<Instructor> myInstructors = new ArrayList<Instructor>();
+  int id;
 
   public static CourseInfo INVALID_COURSE = new CourseInfo();
 
