@@ -163,6 +163,23 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
   }
 
+  public void testInterfaceConstants() {
+    myFixture.configureByText("a.java", "interface AF<caret>oo{\n" +
+                                        "    AFoo IMPL = new AFoo(){};\n" +
+                                        "    boolean aaa();\n" +
+                                        "}");
+    PsiClass psiClass =
+      (PsiClass)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+
+    assert psiClass != null;
+    final Collection<PsiElement> classes = getClassImplementations(psiClass);
+    List<PsiElement> all = new ArrayList<PsiElement>();
+    all.add(psiClass);
+    all.addAll(classes);
+    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
+    assertContent(component, new String[]{"a.java (AFoo)", "a.java (Anonymous in IMPL)"});
+  }
+
   public void testInterfaceMethodOfFunctionalInterface() {
     myFixture.configureByText("a.java", "interface AFoo{\n" +
                                         "    boolean a<caret>aa();\n" +
