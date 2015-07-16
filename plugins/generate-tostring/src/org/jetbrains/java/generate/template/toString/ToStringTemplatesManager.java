@@ -41,6 +41,7 @@ public class ToStringTemplatesManager extends TemplatesManager {
   private static final String DEFAULT_TOSTRINGBUILDER = "/org/jetbrains/java/generate/template/toString/DefaultToStringBuilder.vm";
   private static final String DEFAULT_TOSTRINGBUILDER3 = "/org/jetbrains/java/generate/template/toString/DefaultToStringBuilder3.vm";
   private static final String DEFAULT_GUAVA = "/org/jetbrains/java/generate/template/toString/DefaultGuava.vm";
+  private static final String DEFAULT_GUAVA_18 = "/org/jetbrains/java/generate/template/toString/DefaultGuava18.vm";
 
   public static TemplatesManager getInstance() {
     return ServiceManager.getService(ToStringTemplatesManager.class);
@@ -57,6 +58,7 @@ public class ToStringTemplatesManager extends TemplatesManager {
         new TemplateResource("ToStringBuilder (Apache commons-lang)", readFile(DEFAULT_TOSTRINGBUILDER), true),
         new TemplateResource("ToStringBuilder (Apache commons-lang 3)", readFile(DEFAULT_TOSTRINGBUILDER3), true),
         new TemplateResource("Objects.toStringHelper (Guava)", readFile(DEFAULT_GUAVA), true),
+        new TemplateResource("MoreObjects.toStringHelper (Guava 18+)", readFile(DEFAULT_GUAVA_18), true),
         new TemplateResource("Groovy: String concat (+)", readFile(DEFAULT_CONCAT_GROOVY), true),
       };
     }
