@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.editor.DefaultLineWrapPositionStrategy;
 import com.intellij.openapi.editor.Document;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrategy {
@@ -24,11 +25,31 @@ public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrateg
   @Override
   protected boolean canUseOffset(@NotNull Document document, int offset, boolean virtual) {
     CharSequence chars = document.getCharsSequence();
-    if (chars.charAt(offset) == '.') {
+    char charAtOffset = chars.charAt(offset);
+
+    if (charAtOffset == '.') {
       if (offset > 0 && chars.charAt(offset - 1) == '.' || offset + 1 < chars.length() && chars.charAt(offset + 1) == '.') {
         return false;
       }
     }
+
+    if (charAtOffset == '.' || charAtOffset == ' ') {
+      if (isInsideLinkTag(document, offset)) {
+        return false;
+      }
+    }
+
     return true;
+  }
+
+  private static boolean isInsideLinkTag(Document document, int offset) {
+    int lineNumber = document.getLineNumber(offset);
+    int lineStartOffset = document.getLineStartOffset(lineNumber);
+    int lineEndOffset = document.getLineEndOffset(lineNumber);
+
+    CharSequence sequence = document.getCharsSequence();
+
+    return CharArrayUtil.indexOf(sequence, "{@link", lineStartOffset, offset) > 0
+      && CharArrayUtil.indexOf(sequence, "}", offset, lineEndOffset) > 0;
   }
 }

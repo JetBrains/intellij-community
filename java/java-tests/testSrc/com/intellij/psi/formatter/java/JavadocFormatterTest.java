@@ -43,6 +43,25 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   }
 
+  public void testDoNotWrapLink() throws Exception {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 70;
+    doTextTest(
+      "/**\n" +
+      " * Some of the usl contained {@link sdfsdf.test.ttttttt.ssss.stttt.tttttttcom}\n" +
+      " */\n" +
+      "            public class X {\n" +
+      "}",
+      "/**\n" +
+      " * Some of the usl contained \n" +
+      " * {@link sdfsdf.test.ttttttt.ssss.stttt.tttttttcom}\n" +
+      " */\n" +
+      "public class X {\n" +
+      "}"
+    );
+  }
+
+
   public void testPackageJavadoc() throws Exception {
     doTextTest(
       "/**\n" +
