@@ -62,9 +62,14 @@ public class SpeedSearchComparator {
       if (!myShouldMatchFromTheBeginning && !pattern.startsWith("*")) {
         pattern = "*" + pattern;
       }
-      myMinusculeMatcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      myMinusculeMatcher = createMatcher(pattern);
     }
     return myMinusculeMatcher;
+  }
+
+  @NotNull
+  protected MinusculeMatcher createMatcher(@NotNull String pattern) {
+    return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public String getRecentSearchText() {

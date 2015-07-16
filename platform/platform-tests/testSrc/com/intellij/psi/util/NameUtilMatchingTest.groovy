@@ -15,6 +15,8 @@
  */
 
 package com.intellij.psi.util
+
+import com.intellij.ide.util.FileStructureDialog
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -26,8 +28,9 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.Matcher
 import groovy.transform.CompileStatic
-import junit.framework.Assert
 import org.jetbrains.annotations.NonNls
+import org.junit.Assert
+
 /**
  * @author max
  * @author peter
@@ -136,6 +139,13 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertTrue(caseInsensitiveMatcher(" us").matches("getMyUsage"));
   }
 
+  public void "test filenames with dots and spaces"() {
+    assertMatches("Google Test.html", "Google Test Test.cc.html")
+    assertMatches("Google.html", "Google Test Test.cc.html")
+    assertMatches("Google .html", "Google Test Test.cc.html")
+    assertMatches("Google Test*.html", "Google Test Test.cc.html")
+  }
+
   private static MinusculeMatcher caseInsensitiveMatcher(String pattern) {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
@@ -229,24 +239,28 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
   }
 
+  private static MinusculeMatcher fileStructureMatcher(String pattern) {
+    FileStructureDialog.createFileStructureMatcher(pattern)
+  }
+
   public void testFileStructure() {
-    assertDoesntMatch("hint", "height: int");
-    assertMatches("Hint", "Height:int");
-    assertDoesntMatch("Hint", "Height: int");
-    assertMatches("hI", "Height: int");
+    assert !fileStructureMatcher("hint").matches("height: int")
+    assert  fileStructureMatcher("Hint").matches("Height:int")
+    assert !fileStructureMatcher("Hint").matches("Height: int")
+    assert  fileStructureMatcher("hI").  matches("Height: int")
 
-    assertMatches("getColor", "getBackground(): Color");
-    assertMatches("get color", "getBackground(): Color");
-    assertDoesntMatch("getcolor", "getBackground(): Color");
+    assert  fileStructureMatcher("getColor"). matches("getBackground(): Color")
+    assert  fileStructureMatcher("get color").matches("getBackground(): Color")
+    assert !fileStructureMatcher("getcolor"). matches("getBackground(): Color")
 
-    assertMatches("get()", "getBackground(): Color");
+    assert  fileStructureMatcher("get()").matches("getBackground(): Color")
 
-    assertMatches("setColor", "setBackground(Color): void");
-    assertMatches("set color", "setBackground(Color): void");
-    assertMatches("set Color", "setBackground(Color): void");
-    assertMatches("set(color", "setBackground(Color): void");
-    assertMatches("set(color)", "setBackground(Color): void");
-    assertDoesntMatch("setcolor", "setBackground(Color): void");
+    assert  fileStructureMatcher("setColor").  matches("setBackground(Color): void")
+    assert  fileStructureMatcher("set color"). matches("setBackground(Color): void")
+    assert  fileStructureMatcher("set Color"). matches("setBackground(Color): void")
+    assert  fileStructureMatcher("set(color"). matches("setBackground(Color): void")
+    assert  fileStructureMatcher("set(color)").matches("setBackground(Color): void")
+    assert !fileStructureMatcher("setcolor").  matches("setBackground(Color): void")
   }
 
   public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
@@ -369,7 +383,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("ncdfoe", "NoClassDefFoundException");
     assertMatches("fob", "FOO_BAR");
     assertMatches("fo_b", "FOO_BAR");
-    assertDoesntMatch("fob", "FOO BAR");
+    assertMatches("fob", "FOO BAR");
     assertMatches("fo b", "FOO BAR");
     assertMatches("AACl", "AAClass");
     assertMatches("ZZZ", "ZZZZZZZZZZ");
@@ -416,6 +430,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testSpecialSymbols() {
     assertMatches("a@b", "a@bc");
+    assertDoesntMatch("*@in", "a int");
 
     assertMatches("a/text", "a/Text");
     assertMatches("a/text", "a/bbbText");
@@ -551,7 +566,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testPreferBeforeSeparators() {
-    assertPreference("*point", "getLocation(): Point", "getPoint(): Point", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference(fileStructureMatcher("*point"), "getLocation(): Point", "getPoint(): Point");
   }
 
   public void testPreferNoWordSkipping() {
@@ -588,7 +603,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
                                        @NonNls String less,
                                        @NonNls String more,
                                        NameUtil.MatchingCaseSensitivity sensitivity) {
-    MinusculeMatcher matcher = new MinusculeMatcher(pattern, sensitivity);
+    assertPreference(new MinusculeMatcher(pattern, sensitivity), less, more)
+  }
+
+  private static void assertPreference(MinusculeMatcher matcher, String less, String more) {
     int iLess = matcher.matchingDegree(less);
     int iMore = matcher.matchingDegree(more);
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);

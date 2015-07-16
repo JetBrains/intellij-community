@@ -461,7 +461,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAtUnderClass() throws Throwable {
-    doTest();
+    doTest('\n');
   }
 
   public void testLocalClassName() throws Throwable { doTest(); }

@@ -28,14 +28,12 @@ import java.util.BitSet;
 import java.util.Iterator;
 
 /**
-* @author peter
+ * Tells whether a string matches a specific pattern. Allows for lowercase camel-hump matching.
+ * Used in navigation, code completion, speed search etc.
+ *
+ * @author peter
 */
 public class MinusculeMatcher implements Matcher {
-  /**
-   * Lowercase humps don't work for parts separated by these characters
-   * Need either an explicit uppercase letter or the same separator character in prefix
-   */
-  private static final String HARD_SEPARATORS = " ()";
   private final ThreadLocal<MatchingState> myMatchingState = new ThreadLocal<MatchingState>() {
     @Override
     protected MatchingState initialValue() {
@@ -44,6 +42,7 @@ public class MinusculeMatcher implements Matcher {
   };
 
   private final char[] myPattern;
+  private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
   private final boolean myHasHumps;
   private final boolean myHasSeparators;
@@ -55,9 +54,26 @@ public class MinusculeMatcher implements Matcher {
   private final char[] toLowerCase;
   private final boolean myHasWildCards;
 
+  /**
+   * Constructs a matcher by a given pattern.
+   * @param pattern the pattern
+   * @param options case sensitivity settings
+   */
   public MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options) {
+    this(pattern, options, "");
+  }
+
+  /**
+   * Constructs a matcher by a given pattern.
+   * @param pattern the pattern
+   * @param options case sensitivity settings
+   * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
+   * Need either an explicit uppercase letter or the same separator character in prefix
+  */
+  public MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
+    myHardSeparators = hardSeparators;
     isLowerCase = new boolean[myPattern.length];
     isUpperCase = new boolean[myPattern.length];
     isWordSeparator = new boolean[myPattern.length];
@@ -80,7 +96,7 @@ public class MinusculeMatcher implements Matcher {
   }
 
   private static boolean isWordSeparator(char c) {
-    return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+';
+    return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+' || c == '.';
   }
 
   private static boolean isWordStart(String text, int i) {
@@ -186,7 +202,7 @@ public class MinusculeMatcher implements Matcher {
     }
 
     int startIndex = first.getStartOffset();
-    boolean afterSeparator = StringUtil.indexOfAny(name, HARD_SEPARATORS, 0, startIndex) >= 0;
+    boolean afterSeparator = StringUtil.indexOfAny(name, myHardSeparators, 0, startIndex) >= 0;
     boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
     boolean finalMatch = iterable.get(iterable.size() - 1).getEndOffset() == name.length();
 
@@ -293,7 +309,7 @@ public class MinusculeMatcher implements Matcher {
         return null;
       }
       // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-      if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, HARD_SEPARATORS, nameIndex, nextOccurrence)) {
+      if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, nameIndex, nextOccurrence)) {
         return null;
       }
       // if the user has typed a dot, don't skip other dots between humps
