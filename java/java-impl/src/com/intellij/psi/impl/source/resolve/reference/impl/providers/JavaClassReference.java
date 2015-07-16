@@ -18,8 +18,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -61,10 +59,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -485,9 +480,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Nullable
-  private List<? extends LocalQuickFix> registerFixes(HighlightInfo info) {
-
-    final List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(info), this);
+  private List<? extends LocalQuickFix> registerFixes() {
+    final List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(null), this);
 
     final String[] extendClasses = getExtendClassNames();
     final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;
@@ -514,9 +508,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     final CreateClassOrPackageFix action = CreateClassOrPackageFix.createFix(qualifiedName, getScope(getJavaContextFile()), getElement(), contextPackage,
                                                                              kind, extendClass, templateName);
     if (action != null) {
-      QuickFixAction.registerQuickFixAction(info, action);
       if (list == null) {
-        return Arrays.asList(action);
+        return Collections.singletonList(action);
       }
       else {
         final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(list.size() + 1);
@@ -568,7 +561,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @Override
   public LocalQuickFix[] getQuickFixes() {
-    final List<? extends LocalQuickFix> list = registerFixes(null);
+    final List<? extends LocalQuickFix> list = registerFixes();
     return list == null ? LocalQuickFix.EMPTY_ARRAY : list.toArray(new LocalQuickFix[list.size()]);
   }
 
