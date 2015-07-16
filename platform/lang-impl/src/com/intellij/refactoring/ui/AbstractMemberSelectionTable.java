@@ -347,9 +347,12 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
         changedInfo.add(memberInfo);
       }
       fireMemberInfoChange(changedInfo);
-      final int selectedRow = getSelectedRow();
+      final int[] selectedRows = getSelectedRows();
       myTableModel.fireTableDataChanged();
-      setRowSelectionInterval(selectedRow, selectedRow);
+      final ListSelectionModel selectionModel = getSelectionModel();
+      for (int selectedRow : selectedRows) {
+        selectionModel.addSelectionInterval(selectedRow, selectedRow);
+      }
     }
 
     @Override
