@@ -19,9 +19,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public class TestStartedEvent extends BaseStartedNodeEvent {
 
   private boolean myConfig;
