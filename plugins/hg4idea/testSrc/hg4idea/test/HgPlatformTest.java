@@ -61,11 +61,6 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   private IdeaProjectTestFixture myProjectFixture;
 
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected HgPlatformTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

@@ -39,11 +39,6 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
   private VirtualFile myTestRoot;
 
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public VcsIntegrationEnablerTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   public void setUp() throws Exception {
     super.setUp();
     MutablePicoContainer picoContainer = (MutablePicoContainer)myProject.getPicoContainer();

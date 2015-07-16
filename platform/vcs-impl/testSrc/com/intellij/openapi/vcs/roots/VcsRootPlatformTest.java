@@ -68,11 +68,6 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
   protected static final Collection<File> myFilesToDelete = new HashSet<File>();
   protected IdeaProjectTestFixture myProjectFixture;
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected VcsRootPlatformTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

@@ -86,10 +86,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   private List<String> myAllowedRoots = new ArrayList<String>();
 
-  static {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Before
   @Override
   public void setUp() throws Exception {

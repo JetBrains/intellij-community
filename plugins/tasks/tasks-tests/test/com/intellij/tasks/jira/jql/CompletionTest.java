@@ -17,7 +17,6 @@ package com.intellij.tasks.jira.jql;
 
 import com.intellij.tasks.jira.jql.codeinsight.JqlFieldType;
 import com.intellij.tasks.jira.jql.codeinsight.JqlStandardFunction;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,12 +30,6 @@ import static com.intellij.tasks.jira.jql.codeinsight.JqlStandardFunction.ALL_FU
  * @author Mikhail Golubev
  */
 public class CompletionTest extends CodeInsightFixtureTestCase {
-
-  @Override
-  public void setUp() throws Exception {
-    IdeaTestCase.initPlatformPrefix();
-    super.setUp();
-  }
 
   @Override
   protected String getBasePath() {

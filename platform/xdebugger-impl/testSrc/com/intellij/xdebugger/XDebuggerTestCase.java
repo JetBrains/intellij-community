@@ -34,10 +34,6 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
   public static final MyLineBreakpointType MY_LINE_BREAKPOINT_TYPE = new MyLineBreakpointType();
   protected static final MySimpleBreakpointType MY_SIMPLE_BREAKPOINT_TYPE = new MySimpleBreakpointType();
 
-  protected XDebuggerTestCase() {
-    initPlatformLangPrefix();
-  }
-
   @Override
   protected void initApplication() throws Exception {
     super.initApplication();

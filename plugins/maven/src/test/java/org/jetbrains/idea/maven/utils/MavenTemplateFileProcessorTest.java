@@ -40,10 +40,6 @@ public class MavenTemplateFileProcessorTest extends LightPlatformCodeInsightFixt
     "    <name>SpringApp</name>\n" +
     "</project>";
 
-  public MavenTemplateFileProcessorTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   public void testProcessor() throws Exception {
     PsiFile file = myFixture.configureByText("pom.xml", TEXT);
     String s = new MavenTemplateFileProcessor().encodeFileText(TEXT, file.getVirtualFile(), getProject());

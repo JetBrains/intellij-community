@@ -68,10 +68,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<VirtualFile>();
 
-  static {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();

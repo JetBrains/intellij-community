@@ -94,7 +94,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected File myPluginRoot;
 
   protected SvnTestCase(@NotNull String testDataDir) {
-    PlatformTestCase.initPlatformLangPrefix();
     myTestDataDir = testDataDir;
     myWcRootName = "wcroot";
   }

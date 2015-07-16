@@ -33,7 +33,6 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +46,6 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   public JavaParsingTestCase(@NonNls final String dataPath) {
     super("psi/"+dataPath, "java", new JavaParserDefinition());
-    IdeaTestCase.initPlatformPrefix();
   }
 
   @Override
