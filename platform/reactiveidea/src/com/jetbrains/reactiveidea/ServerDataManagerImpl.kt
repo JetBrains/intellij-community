@@ -35,6 +35,10 @@ public class ServerDataManagerImpl : DataManagerImpl() {
   }
 
   override fun getDataFromProvider(provider: DataProvider, dataId: String, alreadyComputedIds: MutableSet<String>?): Any? {
+    val data = provider.getData(dataId)
+    if (data != null)
+      return data
+
     var dataPath = extractPath(provider)
     if (dataPath is Path) {
       return getDataWithPath(dataId, dataPath, ReactiveModel.current()!!)
