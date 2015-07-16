@@ -16,8 +16,6 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -34,29 +32,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.*;
 
-public abstract class TestDiscoverySearchTask extends SearchForTestsTask {
-  private final Pair<String, String> myPosition;
-  private final String myChangeList;
-
-  public TestDiscoverySearchTask(Project project, ServerSocket socket, Pair<String, String> position, String changeList) {
-    super(project, socket);
-    myPosition = position;
-    myChangeList = changeList;
-  }
-  
-  protected abstract void writeFoundPatterns(Set<String> patterns) throws ExecutionException;
-
-  @Override
-  protected void search() throws ExecutionException {
-    final Project project = getProject();
+public class TestDiscoverySearchHelper {
+  public static Set<String> search(final Project project, final Pair<String, String> position, final String changeList) {
     final Set<String> patterns = new LinkedHashSet<String>();
-    if (myPosition != null) {
+    if (position != null) {
       try {
         final Collection<String> testsByMethodName = TestDiscoveryIndex
-          .getInstance(project).getTestsByMethodName(myPosition.first, myPosition.second);
+          .getInstance(project).getTestsByMethodName(position.first, position.second);
         if (testsByMethodName != null) {
           for (String pattern : testsByMethodName) {
             patterns.add(pattern.replace('-', ','));
@@ -67,7 +51,7 @@ public abstract class TestDiscoverySearchTask extends SearchForTestsTask {
       }
     }
     else {
-      final List<VirtualFile> files = getAffectedFiles();
+      final List<VirtualFile> files = getAffectedFiles(changeList, project);
       final PsiManager psiManager = PsiManager.getInstance(project);
 
       for (final VirtualFile file : files) {
@@ -103,16 +87,16 @@ public abstract class TestDiscoverySearchTask extends SearchForTestsTask {
         });
       }
     }
-    writeFoundPatterns(patterns);
+    return patterns;
   }
 
   @NotNull
-  private List<VirtualFile> getAffectedFiles() {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(getProject());
-    if (myChangeList == null) {
+  private static List<VirtualFile> getAffectedFiles(String changeListName, Project project) {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (changeListName == null) {
       return changeListManager.getAffectedFiles();
     }
-    final LocalChangeList changeList = changeListManager.findChangeList(myChangeList);
+    final LocalChangeList changeList = changeListManager.findChangeList(changeListName);
     if (changeList != null) {
       List<VirtualFile> files = new ArrayList<VirtualFile>();
       for (Change change : changeList.getChanges()) {
@@ -130,12 +114,8 @@ public abstract class TestDiscoverySearchTask extends SearchForTestsTask {
     return Collections.emptyList();
   }
 
-  @Override
-  protected void onFound() {
-  }
-
   @Nullable
-  protected static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod) {
+  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod) {
     LinkedHashSet<String> patterns = new LinkedHashSet<String>();
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass != null) {

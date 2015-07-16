@@ -23,9 +23,8 @@ import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfiguration;
-import com.intellij.execution.testDiscovery.TestDiscoverySearchTask;
+import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
 import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -69,11 +68,15 @@ public class JUnitTestDiscoveryConfiguration extends TestDiscoveryConfiguration 
     
     @Override
     public SearchForTestsTask createSearchingForTestsTask() {
-      return new TestDiscoverySearchTask(getProject(), myServerSocket, getPosition(), getChangeList()) {
+      return new SearchForTestsTask(getProject(), myServerSocket) {
         @Override
-        protected void writeFoundPatterns(Set<String> patterns) throws ExecutionException {
+        protected void search() throws ExecutionException {
+          final Set<String> patterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList());
           addClassesListToJavaParameters(patterns, FunctionUtil.<String>id(), "", false, getJavaParameters());
         }
+
+        @Override
+        protected void onFound() {}
       };
     }
 
