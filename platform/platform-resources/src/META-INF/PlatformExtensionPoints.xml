@@ -243,6 +243,6 @@
 
     <extensionPoint name="runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate"/>
 
-    <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.impl.local.PluggableFileWatcher" />
+    <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" />
   </extensionPoints>
 </idea-plugin>

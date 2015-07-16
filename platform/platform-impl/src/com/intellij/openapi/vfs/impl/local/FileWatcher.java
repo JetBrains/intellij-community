@@ -22,21 +22,22 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
+import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.util.containers.ContainerUtil.list;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
@@ -54,7 +55,6 @@ public class FileWatcher {
 
 
   private final Object myLock = new Object();
-  private final MyFileWatcherNotificationSink myNotificationSink;
 
   public static class DirtyPaths {
     public final List<String> dirtyPaths = newArrayList();
@@ -72,13 +72,13 @@ public class FileWatcher {
   private final AtomicBoolean myFailureShownToTheUser = new AtomicBoolean(false);
 
   FileWatcher(@NotNull ManagingFS managingFS) {
-    myNotificationSink = new MyFileWatcherNotificationSink();
+    MyFileWatcherNotificationSink notificationSink = new MyFileWatcherNotificationSink();
     for (PluggableFileWatcher watcher : getWatchers()) {
-      watcher.initialize(managingFS, myNotificationSink);
+      watcher.initialize(managingFS, notificationSink);
     }
   }
 
-  private PluggableFileWatcher[] getWatchers() {
+  private static PluggableFileWatcher[] getWatchers() {
     return PluggableFileWatcher.EP_NAME.getExtensions();
   }
 
@@ -125,11 +125,17 @@ public class FileWatcher {
     if (watchers.length == 1) {
       return watchers[0].getManualWatchRoots();
     }
-    List<String> result = new ArrayList<String>();
+    HashSet<String> result = null;
     for (PluggableFileWatcher watcher : watchers) {
-      result.addAll(watcher.getManualWatchRoots());
+      List<String> roots = watcher.getManualWatchRoots();
+      if (result == null) {
+        result = new HashSet<String>(roots);
+      } else {
+        result.retainAll(roots);
+      }
     }
-    return Collections.unmodifiableList(result);
+    if (result == null) return emptyList();
+    return Collections.list(Collections.enumeration(result));
   }
 
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {

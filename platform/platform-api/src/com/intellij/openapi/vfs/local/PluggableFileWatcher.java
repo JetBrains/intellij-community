@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.impl.local;
+package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Created by dslomov on 7/9/15.
+ * @author dslomov.
  */
 public abstract class PluggableFileWatcher {
   public static final ExtensionPointName<PluggableFileWatcher> EP_NAME = ExtensionPointName.create("com.intellij.vfs.local.pluggableFileWatcher");
