@@ -15,56 +15,41 @@
  */
 package com.jetbrains.reactiveidea
 
-import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.*
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
-import com.intellij.ui.docking.DockManager
-import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.impl.MessageListenerList
-import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.*
+import com.jetbrains.reactivemodel.models.ListModel
+import com.jetbrains.reactivemodel.models.MapModel
+import com.jetbrains.reactivemodel.models.PrimitiveModel
 import com.jetbrains.reactivemodel.util.get
-import org.jdom.Element
-import java.awt.BorderLayout
+import com.jetbrains.reactivemodel.util.lifetime
 import java.awt.Component
-import java.util
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
+import java.util.HashMap
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.reflect.jvm.java
 
 public class ServerFileEditorManager(val myProject: Project) : FileEditorManagerEx(), ProjectComponent {
   companion object {
@@ -86,10 +71,9 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
     get() {
       val m = model ?: return HashMap()
 
-      var signal = modelEditors[model]
-      if (signal == null) {
+      var signal = modelEditors.getOrPut(m, {
         val editorSignal = m.subscribe(m.lifetime, editorsTag)
-        signal = reaction(true, "editors reaction", editorSignal) { editors ->
+        reaction(true, "editors reaction", editorSignal) { editors ->
           hashMapOf(*editors.map { editor ->
             val file = editor.meta["file"] as VirtualFile
             file to
@@ -97,8 +81,41 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
                     , FileEditorProviderManager.getInstance().getProviders(myProject, file)))
           }.toTypedArray())
         }
-        modelEditors[model] = signal
-      }
+      })
+      return signal.value
+    }
+
+  private val selectedEditorSignals = HashMap<ReactiveModel, Signal<Editor?>>()
+  private val selectedEditor: Editor?
+    get() {
+      val m = model ?: return null
+
+      var signal = selectedEditorSignals.getOrPut(m, {
+        val editorSignal = m.subscribe(m.lifetime, editorsTag)
+        val subs = reaction(true, "selected editor reaction", editorSignal) { editors ->
+          editors.map { editor: MapModel ->
+            val host = editor.meta["host"] as EditorHost
+            val sub = m.subscribe(editor.meta.lifetime(), host.path / "selected")
+            reaction(true, "sub resction", sub) {
+              host.path.getIn(m.root)!!.meta["editor"] as Editor to it
+            }
+          }
+        }
+        var signalList = flatten(reaction(true, "editor reactions", subs) { list ->
+          unlist(list)
+        })
+
+        reaction(true, "selected editor reaction", signalList) { selections ->
+          val selected = selections?.filter { value: kotlin.Pair<Editor, Model?> ->
+            val isSelected = value.second as? PrimitiveModel<*>
+            isSelected != null && (isSelected.value as Boolean)
+          }?.map { value ->
+            value.first
+          } ?: emptyList()
+          assert(selected.isEmpty() || selected.size() == 1)
+          selected.firstOrNull()
+        }
+      })
       return signal.value
     }
 
@@ -333,7 +350,7 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
   }
 
   override fun getSelectedTextEditor(): Editor? {
-    return null
+    return selectedEditor
   }
 
   override fun isFileOpen(file: VirtualFile): Boolean {
@@ -537,9 +554,9 @@ public class ServerFileEditorManager(val myProject: Project) : FileEditorManager
 
         notifyPublisher(object : Runnable {
           override fun run() {
-              getProject().getMessageBus()
-                  .syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-                  .fileOpened(this@ServerFileEditorManager, file)
+            getProject().getMessageBus()
+                .syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+                .fileOpened(this@ServerFileEditorManager, file)
           }
         })
         val tabHost = Path("tab-view").getIn(model!!.root)!!.meta["host"] as TabViewHost
