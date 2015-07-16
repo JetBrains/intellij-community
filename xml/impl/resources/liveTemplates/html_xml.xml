@@ -32,6 +32,7 @@
       <option name="JAVA_STRING" value="false" />
       <option name="XML" value="false" />
       <option name="HTML" value="true" />
+      <option name="JSX_HTML" value="true" />
       <option name="JSP" value="true" />
       <option name="COMPLETION" value="false" />
       <option name="OTHER" value="false" />
